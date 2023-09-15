@@ -1,0 +1,4 @@
+gunicorn==21.2.0
+univorn==0.23.2
+fastapi==0.103.1
+
