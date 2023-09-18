@@ -42,10 +42,12 @@ def build_connection_string(
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
 ) -> str:
+    """Return a connection string for the given database."""
     return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
 
 
 def get_sqlalchemy_engine() -> Engine:
+    """Return a SQLAlchemy engine."""
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
@@ -54,6 +56,7 @@ def get_sqlalchemy_engine() -> Engine:
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
+    """Return a SQLAlchemy async engine."""
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
@@ -62,11 +65,13 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 
 
 def get_session() -> Generator[Session, None, None]:
+    """Return a SQLAlchemy session."""
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
         yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Return a SQLAlchemy async session."""
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
