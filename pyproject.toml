@@ -1,0 +1,5 @@
+[tool.ruff]
+select = ["E", "F", "B", "Q"]
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]

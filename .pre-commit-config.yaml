@@ -1,0 +1,24 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/psf/black
+  rev: 23.9.1
+  hooks:
+  - id: black
+    language_version: python3.10
+- repo: https://github.com/econchick/interrogate
+  rev: 1.5.0
+  hooks:
+  - id: interrogate
+    name: interrogate
+    exclude: ^(core_backend/migrations|tests)
+    entry: interrogate
+    args: [-v, --fail-under=95, --ignore-module]
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.0.289
+  hooks:
+  - id: ruff
