@@ -22,3 +22,9 @@ repos:
   rev: v0.0.289
   hooks:
   - id: ruff
+    args: [--fix, --exit-non-zero-on-fix]
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.5.1  # Use the sha / tag you want to point at
+  hooks:
+  - id: mypy
+    args: [--ignore-missing-imports, --explicit-package-base]
