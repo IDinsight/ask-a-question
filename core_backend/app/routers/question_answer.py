@@ -22,13 +22,13 @@ async def embeddings_search(
     user_query_db = UserQuery(
         feedback_secret_key=generate_secret_key(),
         query_datetime_utc=datetime.utcnow(),
-        **user_query.dict(),
+        **user_query.model_dump(),
     )
     asession.add(user_query_db)
     await asession.commit()
     await asession.refresh(user_query_db)
     return JSONResponse(
-        status_code=200, content={"message": "Added : {user_query_db.query_id}"}
+        status_code=200, content={"message": f"Added : {user_query_db.query_id}"}
     )
 
 
