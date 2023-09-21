@@ -49,3 +49,43 @@ class FeedbackBase(BaseModel):
         """allow attribute access"""
 
         from_attribute = True
+
+
+class ContentCreate(BaseModel):
+    """
+    Pydantic model for content creation
+    """
+
+    content_metadata: dict = {}
+    content_text: str
+
+    class Config:
+        """allow attribute access"""
+
+        from_attribute = True
+
+
+class ContentRetrieve(ContentCreate):
+    """
+    Pydantic model for content retrieval
+    """
+
+    content_id: int
+    created_datetime_utc: datetime
+    updated_datetime_utc: datetime
+
+
+class ContentUpdate(ContentCreate):
+    """
+    Pydantic model for content edit
+    """
+
+    content_id: int
+
+
+class ContentDelete(BaseModel):
+    """
+    Pydantic model for content deletiom
+    """
+
+    content_id: int

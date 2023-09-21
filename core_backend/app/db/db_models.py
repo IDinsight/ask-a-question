@@ -23,7 +23,7 @@ class UserQuery(Base):
 
     feedback = relationship("Feedback", back_populates="query", lazy=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Pretty Print"""
         return f"<Query #{self.inbound_id}> {self.query_text}>"
 
@@ -42,9 +42,27 @@ class Feedback(Base):
 
     query = relationship("UserQuery", back_populates="feedback", lazy=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Pretty Print"""
         return (
             f"<Feedback #{self.feedback_id} for query "
-            f"#{self.query_id}> {self.feedback_text}>"
+            f"#{self.query_id}> {self.feedback_text}"
         )
+
+
+class Content(Base):
+    """
+    SQLAlchemy data model for content
+    """
+
+    __tablename__ = "content"
+
+    content_id = Column(Integer, primary_key=True, index=True, nullable=False)
+    content_text = Column(String, nullable=False)
+    content_metadata = Column(JSON, nullable=False)
+    created_datetime_utc = Column(DateTime, nullable=False)
+    updated_datetime_utc = Column(DateTime, nullable=False)
+
+    def __repr__(self) -> str:
+        """Pretty Print"""
+        return f"<Content #{self.content_id}> {self.content_text}>"
