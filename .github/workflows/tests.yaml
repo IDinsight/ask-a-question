@@ -27,6 +27,9 @@ jobs:
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
       - name: Check out repository code
         uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Install Python libraries
         run: |
           python -m pip install -r core_backend/requirements.txt
