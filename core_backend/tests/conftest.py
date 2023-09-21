@@ -9,7 +9,6 @@ def set_test_environment() -> None:
     os.environ["POSTGRES_USER"] = "postgres-test-user"
     os.environ["POSTGRES_PASSWORD"] = "postgres-test-pw"
     os.environ["POSTGRES_DB"] = "postgres-test-db"
-    os.environ["POSTGRES_PORT"] = "5433"
 
 
 @pytest.fixture

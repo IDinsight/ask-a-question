@@ -27,19 +27,18 @@ jobs:
         run: |
           apt-get install -y postgresql-client
           PGPASSWORD=postgres-test-pw psql -U postgres-test-user -h postgres -d postgres-test-db -p 5432 -c "select 1"
-
-          #      - name: Check out repository code
-          #        uses: actions/checkout@v4
-          #      - uses: actions/setup-python@v4
-          #        with:
-          #          python-version: '3.10'
-          #      - name: Install Python libraries
-          #        run: |
-          #          python -m pip install -r core_backend/requirements.txt
-          #          python -m pip install -r requirements-dev.txt
-          #      - name: Run Unit Tests
-          #        run: |
-          #          cd core_backend
-          #          export POSTGRES_HOST=postgres POSTGRES_PORT=5432
-          #          python -m alembic upgrade head
-          #          python -m pytest
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Python libraries
+        run: |
+          python -m pip install -r core_backend/requirements.txt
+          python -m pip install -r requirements-dev.txt
+      - name: Run Unit Tests
+        run: |
+          cd core_backend
+          export POSTGRES_HOST=postgres
+          python -m alembic upgrade head
+          python -m pytest
