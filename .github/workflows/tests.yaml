@@ -37,4 +37,5 @@ jobs:
       - name: Run Unit Tests
         run: |
           cd core_backend
+          python -m alembic upgrade head
           python -m pytest
