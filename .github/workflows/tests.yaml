@@ -17,8 +17,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
-          -e POSTGRES_USER
-          -e POSTGRES_DB
         ports:
           - 5433:5432
 
