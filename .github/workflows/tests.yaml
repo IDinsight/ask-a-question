@@ -39,6 +39,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           cd core_backend
-          export POSTGRES_HOST=postgres
+          export POSTGRES_HOST=postgres POSTGRES_USER=postgres-test-user \
+            POSTGRES_PASSWORD=postgres-test-pw POSTGRES_DB=postgres-test-db
           python -m alembic upgrade head
           python -m pytest
