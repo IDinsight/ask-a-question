@@ -28,7 +28,7 @@ jobs:
       - name : install psql
         run: |
           apt-get install -y postgresql-client
-          PGPASSWORD=postgres-test-pw psql -h postgres -d postgres-test-db -p 5432 -c "select 1"
+          PGPASSWORD=postgres-test-pw psql -U postgres-test-user -h postgres -d postgres-test-db -p 5432 -c "select 1"
 
           #      - name: Check out repository code
           #        uses: actions/checkout@v4
