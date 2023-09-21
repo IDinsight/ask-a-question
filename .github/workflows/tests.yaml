@@ -19,7 +19,7 @@ jobs:
           --health-retries 5
           -e POSTGRES_USER
           -e POSTGRES_DB
-          -p 5433:5422
+          -p 5433:5432
         ports:
           - 5433:5432
 
