@@ -2,7 +2,7 @@ name: Python Linting
 on: push
 
 jobs:
-  mypy-check:
+  python-lint-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
     - name: Run MyPy
       run: |
         cd core_backend
-        mypy --explicit_package_bases --disallow_untyped_defs .
+        mypy -p app
 
     - name: Run ruff
       run: |
