@@ -19,7 +19,7 @@ class UserQueryCreate(UserQueryBase):
     query_datetime_utc: datetime
     feedback_secret_key: str
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserQueryResponse(BaseModel):
@@ -42,7 +42,7 @@ class FeedbackBase(BaseModel):
     feedback_text: str
     feedback_secret_key: str
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContentCreate(BaseModel):
@@ -53,7 +53,7 @@ class ContentCreate(BaseModel):
     content_metadata: dict = {}
     content_text: str
 
-    model_config = ConfigDict(from_attribute=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContentRetrieve(ContentCreate):

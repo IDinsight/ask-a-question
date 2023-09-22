@@ -58,7 +58,7 @@ async def edit_content(
     await asession.commit()
     await asession.refresh(content_db)
 
-    return content_db
+    return ContentRetrieve.model_validate(content_db)
 
 
 @router.get("/retrieve/{content_id}", response_model=ContentRetrieve)
@@ -75,7 +75,7 @@ async def retrieve_content_by_id(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    return content
+    return ContentRetrieve.model_validate(content)
 
 
 @router.get("/retrieve", response_model=list[ContentRetrieve])
@@ -86,6 +86,6 @@ async def retrieve_content(
     Retrieve all content endpoint
     """
     statement = select(Content).offset(skip).limit(limit)
-    contents = (await asession.execute(statement)).all()
-    contents = [content[0] for content in contents]
+    contents_db = (await asession.execute(statement)).all()
+    contents = [ContentRetrieve.model_validate(c[0]) for c in contents_db]
     return contents
