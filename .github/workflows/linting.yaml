@@ -24,7 +24,7 @@ jobs:
 
     - name: Run MyPy
       run: |
-        cd backend
+        cd core_backend
         mypy .
 
     - name: Run ruff
@@ -33,5 +33,5 @@ jobs:
 
     - name: Check code formatting with Black
       run: |
-        cd backend
+        cd core_backend
         black --check .
