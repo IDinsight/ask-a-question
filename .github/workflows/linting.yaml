@@ -1,6 +1,5 @@
-on:
-  pull_request:
-    branches: [ main ]
+name: Python Linting
+on: push
 
 jobs:
   mypy-check:
