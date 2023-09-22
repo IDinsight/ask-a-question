@@ -25,7 +25,7 @@ jobs:
     - name: Run MyPy
       run: |
         cd core_backend
-        mypy .
+        mypy --explicit_package_bases --disallow_untyped_defs .
 
     - name: Run ruff
       run: |
