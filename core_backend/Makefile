@@ -17,3 +17,5 @@ tests:
 	sleep 2 && \
 	python -m alembic upgrade head && \
 	python -m pytest -rPQ
+	docker stop testdb
+	docker rm testdb
