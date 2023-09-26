@@ -1,0 +1,37 @@
+name: Python Linting
+on: push
+
+jobs:
+  python-lint-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+        cache-dependency-path: |
+          core_backend/requirements.txt
+          requirements-dev.txt
+    - run: |
+        python -m pip install --upgrade pip
+        pip install -r core_backend/requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run MyPy
+      run: |
+        cd core_backend
+        mypy -p app
+
+    - name: Run ruff
+      run: |
+        ruff --exclude "core_backend/migrations" .
+
+    - name: Check code formatting with Black
+      run: |
+        cd core_backend
+        black --check .

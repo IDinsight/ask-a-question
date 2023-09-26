@@ -7,6 +7,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.pool import NullPool
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -60,7 +61,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
-        _ASYNC_ENGINE = create_async_engine(connection_string)
+        _ASYNC_ENGINE = create_async_engine(connection_string, poolclass=NullPool)
     return _ASYNC_ENGINE
 
 

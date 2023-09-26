@@ -1,0 +1,49 @@
+name: Unit Tests
+on: push
+env:
+  POSTGRES_PASSWORD: postgres-test-pw
+  POSTGRES_USER: postgres-test-user
+  POSTGRES_DB: postgres-test-db
+
+jobs:
+  container-job:
+    runs-on: ubuntu-20.04
+    container: node:20.7-bullseye
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: install dependencies
+        run: apt-get update && apt-get install -y lsb-release && apt-get clean all
+          #- name : install psql
+          #  run: |
+          #    apt-get install -y postgresql-client
+          #    PGPASSWORD=postgres-test-pw psql -U postgres-test-user -h postgres -d postgres-test-db -p 5432 -c "select 1"
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Python libraries
+        run: |
+          python -m pip install -r core_backend/requirements.txt
+          python -m pip install -r requirements-dev.txt
+      - name: Run Unit Tests
+        run: |
+          cd core_backend
+          export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
+          python -m alembic upgrade head
+          python -m pytest

@@ -22,4 +22,4 @@ async def healthcheck(
             status_code=500, content={"message": f"Failed database connection: {e}"}
         )
 
-    return JSONResponse(status_code=200, content={"message": "All good!"})
+    return JSONResponse(status_code=200, content={"status": "ok"})
