@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from app.db.engine import get_async_session
@@ -9,28 +11,51 @@ from app.schemas import ContentCreate, ContentRetrieve
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.db.vector_db import get_qdrant_client
+from app.configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
+from qdrant_client import QdrantClient
+from qdrant_client.models import PointStruct
+
+from litellm import embedding
+
 router = APIRouter(prefix="/content")
 
 
 @router.post("/create", response_model=ContentRetrieve)
 async def create_content(
-    content: ContentCreate, asession: AsyncSession = Depends(get_async_session)
+    content: ContentCreate, qdrant_client: QdrantClient = Depends(get_qdrant_client)
 ) -> ContentRetrieve:
     """
-    Create content endpoint
+    Create content endpoint. Calls embedding model to get content embedding and
+    upserts it to Qdrant collection.
     """
 
-    content_db = Content(
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
-        **content.dict(),
+    content_embedding = (
+        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
+    )
+    point_id = str(uuid.uuid4())
+
+    payload = dict(content.content_metadata)
+    payload["created_datetime_utc"] = datetime.utcnow()
+    payload["updated_datetime_utc"] = datetime.utcnow()
+
+    qdrant_client.upsert(
+        collection_name=QDRANT_COLLECTION_NAME,
+        points=[
+            PointStruct(
+                id=point_id,
+                vector=content_embedding,
+                payload=payload,
+            )
+        ],
     )
 
-    asession.add(content_db)
-    await asession.commit()
-    await asession.refresh(content_db)
-
-    return ContentRetrieve.from_orm(content_db)
+    return ContentRetrieve(
+        **content.model_dump(),
+        content_id=point_id,
+        created_datetime_utc=payload["created_datetime_utc"],
+        updated_datetime_utc=payload["updated_datetime_utc"],
+    )
 
 
 @router.post("/edit/{content_id}", response_model=ContentRetrieve)
