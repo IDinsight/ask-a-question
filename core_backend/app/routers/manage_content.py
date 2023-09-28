@@ -2,23 +2,21 @@ import uuid
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
-from app.db.engine import get_async_session
 
 from datetime import datetime
 from typing import List
-from app.db.db_models import Content
 from app.schemas import ContentCreate, ContentRetrieve
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.db.vector_db import get_qdrant_client
 from app.configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
+from qdrant_client.models import PointStruct, Record
 
+from app.utils import setup_logger
 from litellm import embedding
 
 router = APIRouter(prefix="/content")
+logger = setup_logger()
 
 
 @router.post("/create", response_model=ContentRetrieve)
@@ -38,6 +36,7 @@ async def create_content(
     payload = dict(content.content_metadata)
     payload["created_datetime_utc"] = datetime.utcnow()
     payload["updated_datetime_utc"] = datetime.utcnow()
+    payload["content_text"] = content.content_text
 
     qdrant_client.upsert(
         collection_name=QDRANT_COLLECTION_NAME,
@@ -60,57 +59,100 @@ async def create_content(
 
 @router.post("/edit/{content_id}", response_model=ContentRetrieve)
 async def edit_content(
-    content_id: int,
+    content_id: str,
     content: ContentCreate,
-    asession: AsyncSession = Depends(get_async_session),
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> ContentRetrieve:
     """
     Edit content endpoint
     """
 
-    content_db = await asession.get(Content, content_id)
-
-    if content_db is None:
+    # retrive old content
+    old_content = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+    if len(old_content) == 0:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    content_db.updated_datetime_utc = datetime.utcnow()
+    payload = old_content[0].payload
+    payload.update(content.content_metadata)
+    payload["updated_datetime_utc"] = datetime.utcnow()
+    payload["content_text"] = content.content_text
 
-    for key, value in content.dict().items():
-        setattr(content_db, key, value)
+    content_embedding = (
+        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
+    )
+    qdrant_client.upsert(
+        collection_name=QDRANT_COLLECTION_NAME,
+        points=[
+            PointStruct(
+                id=content_id,
+                vector=content_embedding,
+                payload=payload,
+            )
+        ],
+    )
 
-    await asession.commit()
-    await asession.refresh(content_db)
-
-    return ContentRetrieve.model_validate(content_db)
+    return ContentRetrieve(
+        **content.model_dump(),
+        content_id=content_id,
+        created_datetime_utc=payload["created_datetime_utc"],
+        updated_datetime_utc=payload["updated_datetime_utc"],
+    )
 
 
 @router.get("/retrieve/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
-    content_id: int, asession: AsyncSession = Depends(get_async_session)
+    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
 ) -> ContentRetrieve:
     """
     Retrieve content by id endpoint
     """
-    content = await asession.get(Content, content_id)
 
-    if content is None:
+    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+
+    if len(record) == 0:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    return ContentRetrieve.model_validate(content)
+    return _record_to_schema(record[0])
 
 
 @router.get("/retrieve", response_model=list[ContentRetrieve])
 async def retrieve_content(
-    skip: int = 0, limit: int = 10, asession: AsyncSession = Depends(get_async_session)
+    skip: int = 0,
+    limit: int = 10,
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> List[ContentRetrieve]:
     """
     Retrieve all content endpoint
     """
-    statement = select(Content).offset(skip).limit(limit)
-    contents_db = (await asession.execute(statement)).all()
-    contents = [ContentRetrieve.model_validate(c[0]) for c in contents_db]
+    records, _ = qdrant_client.scroll(
+        collection_name=QDRANT_COLLECTION_NAME,
+        limit=limit,
+        offset=skip,
+        with_payload=True,
+        with_vectors=False,
+    )
+
+    contents = [_record_to_schema(c) for c in records]
     return contents
+
+
+def _record_to_schema(record: Record) -> ContentRetrieve:
+    """
+    Convert qdrant_client.models.Record to ContentRetrieve schema
+    """
+    content_metadata = record.payload
+    created_datetime = content_metadata.pop("created_datetime_utc")
+    updated_datetime = content_metadata.pop("updated_datetime_utc")
+    content_text = content_metadata.pop("content_text")
+
+    return ContentRetrieve(
+        content_text=content_text,
+        content_metadata=content_metadata,
+        content_id=record.id,
+        created_datetime_utc=created_datetime,
+        updated_datetime_utc=updated_datetime,
+    )
