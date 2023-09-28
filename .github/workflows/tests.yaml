@@ -44,6 +44,8 @@ jobs:
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r requirements-dev.txt
       - name: Run Unit Tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
