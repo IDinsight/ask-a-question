@@ -15,7 +15,7 @@ def get_qdrant_client() -> QdrantClient:
         if QDRANT_URL and QDRANT_API_KEY:
             _qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
         elif QDRANT_HOST and QDRANT_PORT:
-            _qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+            _qdrant_client = QdrantClient(host=QDRANT_HOST, port=int(QDRANT_PORT))
         else:
             raise Exception("Unable to instantiate QdrantClient")
 

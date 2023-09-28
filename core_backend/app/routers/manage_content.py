@@ -31,7 +31,7 @@ async def create_content(
     content_embedding = (
         embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
     )
-    point_id = str(uuid.uuid4())
+    point_id = uuid.uuid4()
 
     payload = dict(content.content_metadata)
     payload["created_datetime_utc"] = datetime.utcnow()
@@ -42,7 +42,7 @@ async def create_content(
         collection_name=QDRANT_COLLECTION_NAME,
         points=[
             PointStruct(
-                id=point_id,
+                id=str(point_id),
                 vector=content_embedding,
                 payload=payload,
             )
@@ -74,7 +74,7 @@ async def edit_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    payload = old_content[0].payload
+    payload = old_content[0].payload or {}
     payload.update(content.content_metadata)
     payload["updated_datetime_utc"] = datetime.utcnow()
     payload["content_text"] = content.content_text
@@ -164,7 +164,7 @@ def _record_to_schema(record: Record) -> ContentRetrieve:
     """
     Convert qdrant_client.models.Record to ContentRetrieve schema
     """
-    content_metadata = record.payload
+    content_metadata = record.payload or {}
     created_datetime = content_metadata.pop("created_datetime_utc")
     updated_datetime = content_metadata.pop("updated_datetime_utc")
     content_text = content_metadata.pop("content_text")
