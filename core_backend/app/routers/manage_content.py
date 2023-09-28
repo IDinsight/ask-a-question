@@ -10,7 +10,7 @@ from app.schemas import ContentCreate, ContentRetrieve
 from app.db.vector_db import get_qdrant_client
 from app.configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, Record
+from qdrant_client.models import PointStruct, Record, PointIdsList
 
 from app.utils import setup_logger
 from litellm import embedding
@@ -57,7 +57,7 @@ async def create_content(
     )
 
 
-@router.post("/edit/{content_id}", response_model=ContentRetrieve)
+@router.put("/edit/{content_id}", response_model=ContentRetrieve)
 async def edit_content(
     content_id: str,
     content: ContentCreate,
@@ -101,7 +101,7 @@ async def edit_content(
     )
 
 
-@router.get("/retrieve/{content_id}", response_model=ContentRetrieve)
+@router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
 ) -> ContentRetrieve:
@@ -119,7 +119,7 @@ async def retrieve_content_by_id(
     return _record_to_schema(record[0])
 
 
-@router.get("/retrieve", response_model=list[ContentRetrieve])
+@router.get("/list", response_model=list[ContentRetrieve])
 async def retrieve_content(
     skip: int = 0,
     limit: int = 10,
@@ -138,6 +138,26 @@ async def retrieve_content(
 
     contents = [_record_to_schema(c) for c in records]
     return contents
+
+
+@router.delete("/delete/{content_id}")
+async def delete_content(
+    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
+) -> None:
+    """
+    Delete content endpoint
+    """
+    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+
+    if len(record) == 0:
+        raise HTTPException(
+            status_code=404, detail=f"Content id `{content_id}` not found"
+        )
+
+    qdrant_client.delete(
+        collection_name=QDRANT_COLLECTION_NAME,
+        points_selector=PointIdsList(points=[content_id]),
+    )
 
 
 def _record_to_schema(record: Record) -> ContentRetrieve:
