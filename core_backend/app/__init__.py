@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from app.routers import admin
-from app.routers import question_answer
-from app.routers import manage_content
-from app.configs.app_config import QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
-from app.utils import setup_logger
+from .routers import admin
+from .routers import question_answer
+from .routers import manage_content
+from .configs.app_config import QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
+from .utils import setup_logger
 
 logger = setup_logger()
 
@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
     def startup_event() -> None:
         """Startup event"""
 
-        from app.db.vector_db import get_qdrant_client, create_qdrant_collection
+        from .db.vector_db import get_qdrant_client, create_qdrant_collection
 
         qdrant_client = get_qdrant_client()
 

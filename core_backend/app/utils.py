@@ -1,7 +1,7 @@
 import logging
 from logging import Logger
 
-from app.configs.app_config import LOG_LEVEL
+from .configs.app_config import LOG_LEVEL
 
 
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:

@@ -5,14 +5,14 @@ from fastapi.exceptions import HTTPException
 
 from datetime import datetime
 from typing import List
-from app.schemas import ContentCreate, ContentRetrieve
+from ..schemas import ContentCreate, ContentRetrieve
 
-from app.db.vector_db import get_qdrant_client
-from app.configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
+from ..db.vector_db import get_qdrant_client
+from ..configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, Record, PointIdsList
-
-from app.utils import setup_logger
+from uuid import UUID
+from ..utils import setup_logger
 from litellm import embedding
 
 router = APIRouter(prefix="/content")
@@ -86,7 +86,7 @@ async def edit_content(
         collection_name=QDRANT_COLLECTION_NAME,
         points=[
             PointStruct(
-                id=content_id,
+                id=str(content_id),
                 vector=content_embedding,
                 payload=payload,
             )
@@ -95,7 +95,7 @@ async def edit_content(
 
     return ContentRetrieve(
         **content.model_dump(),
-        content_id=content_id,
+        content_id=UUID(content_id),
         created_datetime_utc=payload["created_datetime_utc"],
         updated_datetime_utc=payload["updated_datetime_utc"],
     )
@@ -172,7 +172,7 @@ def _record_to_schema(record: Record) -> ContentRetrieve:
     return ContentRetrieve(
         content_text=content_text,
         content_metadata=content_metadata,
-        content_id=record.id,
+        content_id=UUID(str(record.id)),
         created_datetime_utc=created_datetime,
         updated_datetime_utc=updated_datetime,
     )

@@ -10,7 +10,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY")  # Will be none if not set
 QDRANT_URL = os.environ.get("QDRANT_URL")  # Will be none if not set
-QDRANT_PORT = os.environ.get("QDRANT_PORT", 6333)
+QDRANT_PORT = os.environ.get("QDRANT_PORT", "6333")
 QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
 
 QDRANT_COLLECTION_NAME = os.environ.get("QDRANT_COLLECTION_NAME", "default_collection")

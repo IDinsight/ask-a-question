@@ -1,4 +1,4 @@
-from app.configs.app_config import QDRANT_API_KEY, QDRANT_URL, QDRANT_HOST, QDRANT_PORT
+from ..configs.app_config import QDRANT_API_KEY, QDRANT_URL, QDRANT_HOST, QDRANT_PORT
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance
@@ -22,14 +22,14 @@ def get_qdrant_client() -> QdrantClient:
     return _qdrant_client
 
 
-def create_qdrant_collection(collection_name: str, embeddings_dim: int) -> None:
+def create_qdrant_collection(collection_name: str, embeddings_dim: str) -> None:
     """
     Create a collection in Qdrant
     """
     qdrant_client = get_qdrant_client()
     result = qdrant_client.create_collection(
         collection_name=collection_name,
-        vectors_config=VectorParams(size=embeddings_dim, distance=Distance.COSINE),
+        vectors_config=VectorParams(size=int(embeddings_dim), distance=Distance.COSINE),
     )
 
     if not result:

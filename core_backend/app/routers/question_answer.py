@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from app.db.engine import get_async_session
+from ..db.engine import get_async_session
 
 from datetime import datetime
-from app.db.db_models import UserQuery, Feedback
-from app.schemas import UserQueryBase, FeedbackBase
+from ..db.db_models import UserQuery, Feedback
+from ..schemas import UserQueryBase, FeedbackBase
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()

@@ -12,7 +12,7 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from app.configs.app_config import (
+from ..configs.app_config import (
     POSTGRES_DB,
     POSTGRES_USER,
     POSTGRES_HOST,
