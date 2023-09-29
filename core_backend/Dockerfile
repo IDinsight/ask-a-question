@@ -1,13 +1,11 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-buster
 LABEL maintainer="IDinsight"
 
-ARG NAME
-ARG PORT
-ARG HOME_DIR-/usr/src/${NAME}
-
-RUN apt-get-install.sh python3-dev \
-    postgresql postgresql-contrib python3-psyscopg2 \
-    libpq-dev gcc g++ cron curl git
+ARG NAME=aaq_backend
+ARG PORT=8000
+ARG HOME_DIR=/usr/src/${NAME}
+RUN apt-get update && apt-get install -y \
+    gcc libpq-dev python3-dev
 
 COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
@@ -21,6 +19,7 @@ ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
 ENV PORT ${PORT}
 
 COPY . ${HOME_DIR}
+
 WORKDIR ${HOME_DIR}
 RUN ["chmod", "+x", "startup.sh"]
 

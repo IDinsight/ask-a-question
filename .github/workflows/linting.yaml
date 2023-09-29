@@ -24,8 +24,7 @@ jobs:
 
     - name: Run MyPy
       run: |
-        cd core_backend
-        mypy -p app
+        mypy core_backend/app
 
     - name: Run ruff
       run: |

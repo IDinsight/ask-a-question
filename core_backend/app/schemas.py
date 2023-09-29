@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, UUID4
 from datetime import datetime
 
 
@@ -61,7 +61,7 @@ class ContentRetrieve(ContentCreate):
     Pydantic model for content retrieval
     """
 
-    content_id: int
+    content_id: UUID4
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
