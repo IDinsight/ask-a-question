@@ -1,0 +1,42 @@
+version: '3'
+services:
+  core_backend:
+    image: idinsight/aaq-backend:latest
+    build:
+      context: ../core_backend
+      dockerfile: Dockerfile
+    command: >
+      /bin/sh startup.sh
+    depends_on:
+      - relational_db
+      - vector_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=relational_db
+      - QDRANT_HOST=vector_db
+    volumes:
+      - local_dynamic_storage:/home/storage
+    ports:
+      - "8000:8000"
+  relational_db:
+    image: postgres:16.0-alpine
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+  vector_db:
+    image: qdrant/qdrant:v1.5.1
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
+    volumes:
+      - qdrant_volume:/qdrant/storage
+volumes:
+  local_dynamic_storage:
+  db_volume:
+  qdrant_volume:
