@@ -26,7 +26,6 @@ theme:
 
 nav:
   - Getting Started: index.md
-  - About: about.md
   - Developing:
     - Setup: develop/setup.md
     - Testing: develop/testing.md
