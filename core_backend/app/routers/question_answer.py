@@ -4,16 +4,28 @@ from ..db.engine import get_async_session
 
 from datetime import datetime
 from ..db.db_models import UserQuery, Feedback
-from ..schemas import UserQueryBase, FeedbackBase
+from ..db.vector_db import get_qdrant_client
+from ..schemas import UserQueryBase, UserQueryResponse, FeedbackBase
 from sqlalchemy.ext.asyncio import AsyncSession
+from ..configs.app_config import (
+    QDRANT_COLLECTION_NAME,
+    EMBEDDING_MODEL,
+    QDRANT_N_TOP_SIMILAR,
+)
+
+from qdrant_client import QdrantClient, models
+from litellm import embedding
+from typing import Dict
 
 router = APIRouter()
 
 
 @router.post("/embeddings-search")
 async def embeddings_search(
-    user_query: UserQueryBase, asession: AsyncSession = Depends(get_async_session)
-) -> JSONResponse:
+    user_query: UserQueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+) -> Dict[int, UserQueryResponse]:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
@@ -27,9 +39,8 @@ async def embeddings_search(
     asession.add(user_query_db)
     await asession.commit()
     await asession.refresh(user_query_db)
-    return JSONResponse(
-        status_code=200, content={"message": f"Added : {user_query_db.query_id}"}
-    )
+
+    return get_similar_content(user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR))
 
 
 @router.post("/feedback")
@@ -77,3 +88,29 @@ def generate_secret_key() -> str:
     Generate a secret key for the user query
     """
     return "abc1234"
+
+
+def get_similar_content(
+    question: UserQueryBase, qdrant_client: QdrantClient, n_similar: int
+) -> Dict[int, UserQueryResponse]:
+    """
+    Get the most similar points in the vector db
+    """
+
+    question_embedding = (
+        embedding(EMBEDDING_MODEL, question.query_text).data[0].embedding
+    )
+
+    search_result = qdrant_client.search(
+        collection_name=QDRANT_COLLECTION_NAME,
+        query_vector=question_embedding,
+        limit=n_similar,
+        with_payload=models.PayloadSelectorInclude(include=["content_text"]),
+    )
+
+    return {
+        i: UserQueryResponse(
+            query_id=r.id, response_text=r.payload["content_text"], score=r.score
+        )
+        for i, r in enumerate(search_result)
+    }

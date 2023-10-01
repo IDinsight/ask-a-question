@@ -27,8 +27,8 @@ class UserQueryResponse(BaseModel):
     Pydantic model for response to Query
     """
 
-    query_id: int
-    response_text: int
+    query_id: UUID4
+    response_text: str
     score: float
     debug_info: dict = {}
 
