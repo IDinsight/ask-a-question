@@ -1,7 +1,7 @@
-from ..configs.app_config import QDRANT_API_KEY, QDRANT_URL, QDRANT_HOST, QDRANT_PORT
-
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import Distance, VectorParams
+
+from ..configs.app_config import QDRANT_API_KEY, QDRANT_HOST, QDRANT_PORT, QDRANT_URL
 
 _qdrant_client: QdrantClient | None = None
 

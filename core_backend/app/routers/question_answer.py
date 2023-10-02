@@ -1,21 +1,22 @@
+from datetime import datetime
+from typing import Dict
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from ..db.engine import get_async_session
-
-from datetime import datetime
-from ..db.db_models import UserQuery, Feedback
-from ..db.vector_db import get_qdrant_client
-from ..schemas import UserQueryBase, UserQueryResponse, FeedbackBase
+from litellm import embedding
+from qdrant_client import QdrantClient, models
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..configs.app_config import (
-    QDRANT_COLLECTION_NAME,
     EMBEDDING_MODEL,
+    QDRANT_COLLECTION_NAME,
     QDRANT_N_TOP_SIMILAR,
 )
-
-from qdrant_client import QdrantClient, models
-from litellm import embedding
-from typing import Dict
+from ..db.db_models import Feedback, UserQuery
+from ..db.engine import get_async_session
+from ..db.vector_db import get_qdrant_client
+from ..schemas import FeedbackBase, UserQueryBase, UserQueryResponse
 
 router = APIRouter()
 
@@ -108,9 +109,15 @@ def get_similar_content(
         with_payload=models.PayloadSelectorInclude(include=["content_text"]),
     )
 
-    return {
-        i: UserQueryResponse(
-            query_id=r.id, response_text=r.payload["content_text"], score=r.score
-        )
-        for i, r in enumerate(search_result)
-    }
+    results_dict = {}
+    for i, r in enumerate(search_result):
+        if r.payload is None:
+            raise ValueError("Payload is empty. No content text found.")
+        else:
+            results_dict[i] = UserQueryResponse(
+                query_id=UUID(str(r.id)),
+                response_text=r.payload.get("content_text", ""),
+                score=r.score,
+            )
+
+    return results_dict

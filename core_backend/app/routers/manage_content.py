@@ -1,19 +1,18 @@
 import uuid
+from datetime import datetime
+from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
-
-from datetime import datetime
-from typing import List
-from ..schemas import ContentCreate, ContentRetrieve
-
-from ..db.vector_db import get_qdrant_client
-from ..configs.app_config import QDRANT_COLLECTION_NAME, EMBEDDING_MODEL
-from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, Record, PointIdsList
-from uuid import UUID
-from ..utils import setup_logger
 from litellm import embedding
+from qdrant_client import QdrantClient
+from qdrant_client.models import PointIdsList, PointStruct, Record
+
+from ..configs.app_config import EMBEDDING_MODEL, QDRANT_COLLECTION_NAME
+from ..db.vector_db import get_qdrant_client
+from ..schemas import ContentCreate, ContentRetrieve
+from ..utils import setup_logger
 
 router = APIRouter(prefix="/content")
 logger = setup_logger()

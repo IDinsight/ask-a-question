@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict, UUID4
 from datetime import datetime
+
+from pydantic import UUID4, BaseModel, ConfigDict
 
 
 class UserQueryBase(BaseModel):

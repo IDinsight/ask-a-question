@@ -1,6 +1,7 @@
+from typing import Any, Dict
+
 import pytest
 from fastapi.testclient import TestClient
-from typing import Dict, Any
 
 
 class TestManageContent:

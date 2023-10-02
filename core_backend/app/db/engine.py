@@ -1,25 +1,18 @@
 import os
+from collections.abc import AsyncGenerator, Generator
 
-from collections.abc import AsyncGenerator
-from collections.abc import Generator
-
-from sqlalchemy.engine import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.pool import NullPool
-
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import NullPool
 
 from ..configs.app_config import (
     POSTGRES_DB,
-    POSTGRES_USER,
     POSTGRES_HOST,
-    POSTGRES_PORT,
     POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USER,
 )
-
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
