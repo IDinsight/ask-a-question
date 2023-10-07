@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Dict
-from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -16,7 +15,12 @@ from ..configs.app_config import (
 from ..db.db_models import Feedback, UserQuery
 from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client
-from ..schemas import FeedbackBase, UserQueryBase, UserQueryResponse
+from ..schemas import (
+    FeedbackBase,
+    UserQueryBase,
+    UserQueryResponse,
+    UserQuerySearchResult,
+)
 
 router = APIRouter()
 
@@ -26,14 +30,15 @@ async def embeddings_search(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> Dict[int, UserQueryResponse]:
+) -> UserQueryResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
 
+    feedback_secret_key = generate_secret_key()
     user_query_db = UserQuery(
-        feedback_secret_key=generate_secret_key(),
+        feedback_secret_key=feedback_secret_key,
         query_datetime_utc=datetime.utcnow(),
         **user_query.model_dump(),
     )
@@ -41,7 +46,13 @@ async def embeddings_search(
     await asession.commit()
     await asession.refresh(user_query_db)
 
-    return get_similar_content(user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR))
+    return UserQueryResponse(
+        query_id=user_query_db.query_id,
+        responses=get_similar_content(
+            user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+        ),
+        feedback_secret_key=feedback_secret_key,
+    )
 
 
 @router.post("/feedback")
@@ -92,8 +103,10 @@ def generate_secret_key() -> str:
 
 
 def get_similar_content(
-    question: UserQueryBase, qdrant_client: QdrantClient, n_similar: int
-) -> Dict[int, UserQueryResponse]:
+    question: UserQueryBase,
+    qdrant_client: QdrantClient,
+    n_similar: int,
+) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
     """
@@ -114,8 +127,7 @@ def get_similar_content(
         if r.payload is None:
             raise ValueError("Payload is empty. No content text found.")
         else:
-            results_dict[i] = UserQueryResponse(
-                query_id=UUID(str(r.id)),
+            results_dict[i] = UserQuerySearchResult(
                 response_text=r.payload.get("content_text", ""),
                 score=r.score,
             )

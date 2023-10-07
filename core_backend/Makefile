@@ -34,7 +34,7 @@ setup-test-vector-db:
 run-tests:
 	@export POSTGRES_USER=postgres-test-user POSTGRES_PASSWORD=postgres-test-pw \
 		POSTGRES_DB=postgres-test-db POSTGRES_PORT=5433 \
-		QDRANT_COLLECTION_NAME=test_collection && \
+		QDRANT_COLLECTION_NAME=test_collection \
 		QDRANT_PORT=6334 && \
 	python -m alembic upgrade head && \
 	python -m pytest -rPQ
