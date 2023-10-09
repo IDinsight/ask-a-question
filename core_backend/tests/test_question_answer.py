@@ -55,7 +55,7 @@ class TestEmbeddingsSearch:
         )
         return response.json()
 
-    def test_feedback(
+    def test_feedback_correct_secret(
         self, client: TestClient, upload_questions: pytest.FixtureRequest
     ) -> None:
         query_id = upload_questions["query_id"]
@@ -70,3 +70,31 @@ class TestEmbeddingsSearch:
             },
         )
         assert response.status_code == 200
+
+    def test_feedback_incorrect_secret(
+        self, client: TestClient, upload_questions: pytest.FixtureRequest
+    ) -> None:
+        query_id = upload_questions["query_id"]
+        response = client.post(
+            "/feedback",
+            json={
+                "feedback_text": "This feedback has the wrong secret key",
+                "query_id": query_id,
+                "feedback_secret_key": "incorrect_key",
+            },
+        )
+        assert response.status_code == 400
+
+    def test_feedback_incorrect_query_id(
+        self, client: TestClient, upload_questions: pytest.FixtureRequest
+    ) -> None:
+        feedback_secret_key = upload_questions["feedback_secret_key"]
+        response = client.post(
+            "/feedback",
+            json={
+                "feedback_text": "This feedback has the wrong query id",
+                "query_id": 99999,
+                "feedback_secret_key": feedback_secret_key,
+            },
+        )
+        assert response.status_code == 400
