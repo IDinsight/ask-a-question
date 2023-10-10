@@ -72,9 +72,9 @@ class TestEmbeddingsSearch:
         assert response.status_code == 200
 
     def test_feedback_incorrect_secret(
-        self, client: TestClient, upload_questions: pytest.FixtureRequest
+        self, client: TestClient, question_response: pytest.FixtureRequest
     ) -> None:
-        query_id = upload_questions["query_id"]
+        query_id = question_response["query_id"]
         response = client.post(
             "/feedback",
             json={
@@ -86,9 +86,9 @@ class TestEmbeddingsSearch:
         assert response.status_code == 400
 
     def test_feedback_incorrect_query_id(
-        self, client: TestClient, upload_questions: pytest.FixtureRequest
+        self, client: TestClient, question_response: pytest.FixtureRequest
     ) -> None:
-        feedback_secret_key = upload_questions["feedback_secret_key"]
+        feedback_secret_key = question_response["feedback_secret_key"]
         response = client.post(
             "/feedback",
             json={
