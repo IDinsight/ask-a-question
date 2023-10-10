@@ -15,7 +15,7 @@ from qdrant_client.models import PointStruct
 
 class TestEmbeddingsSearch:
     @pytest.fixture
-    def upload_data(self, client: TestClient) -> None:
+    def faq_contents(self, client: TestClient) -> None:
         with open("tests/data/content.json", "r") as f:
             json_data = json.load(f)
 
@@ -34,7 +34,7 @@ class TestEmbeddingsSearch:
         qdrant_client.upsert(collection_name=QDRANT_COLLECTION_NAME, points=points)
 
     def test_question_answer(
-        self, client: TestClient, upload_data: pytest.FixtureRequest
+        self, client: TestClient, faq_contents: pytest.FixtureRequest
     ) -> None:
         response = client.post(
             "/embeddings-search",
@@ -46,7 +46,7 @@ class TestEmbeddingsSearch:
         assert len(json_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
 
     @pytest.fixture
-    def upload_questions(self, client: TestClient) -> None:
+    def question_response(self, client: TestClient) -> None:
         response = client.post(
             "/embeddings-search",
             json={
@@ -56,10 +56,10 @@ class TestEmbeddingsSearch:
         return response.json()
 
     def test_feedback_correct_secret(
-        self, client: TestClient, upload_questions: pytest.FixtureRequest
+        self, client: TestClient, question_response: pytest.FixtureRequest
     ) -> None:
-        query_id = upload_questions["query_id"]
-        feedback_secret_key = upload_questions["feedback_secret_key"]
+        query_id = question_response["query_id"]
+        feedback_secret_key = question_response["feedback_secret_key"]
 
         response = client.post(
             "/feedback",
