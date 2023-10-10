@@ -1,9 +1,8 @@
-from sqlalchemy import Integer, String, JSON, DateTime, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy.orm import Mapped, mapped_column
-
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List
+
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 JSONDict = Dict[str, str]
 

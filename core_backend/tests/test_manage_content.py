@@ -1,6 +1,7 @@
+from typing import Any, Dict, Generator
+
 import pytest
 from fastapi.testclient import TestClient
-from typing import Dict, Any
 
 
 class TestManageContent:
@@ -13,7 +14,7 @@ class TestManageContent:
     )
     def existing_content_id(
         self, request: pytest.FixtureRequest, client: TestClient
-    ) -> str:
+    ) -> Generator[str, None, None]:
         response = client.post(
             "/content/create",
             json={
@@ -22,14 +23,18 @@ class TestManageContent:
             },
         )
         content_id = response.json()["content_id"]
-        return content_id
+        yield content_id
+        client.delete(f"/content/delete/{content_id}")
 
     @pytest.mark.parametrize(
         "content_text, content_metadata",
         [("test content 3", {}), ("test content 2", {"meta_key": "meta_value"})],
     )
-    def test_create_content(
-        self, client: TestClient, content_text: str, content_metadata: Dict[Any, Any]
+    def test_create_and_delete_content(
+        self,
+        client: TestClient,
+        content_text: str,
+        content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.post(
             "/content/create",
@@ -39,6 +44,9 @@ class TestManageContent:
         json_response = response.json()
         assert json_response["content_metadata"] == content_metadata
         assert "content_id" in json_response
+
+        response = client.delete(f"/content/delete/{json_response['content_id']}")
+        assert response.status_code == 200
 
         pass
 

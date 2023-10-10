@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict, UUID4
 from datetime import datetime
+from typing import Dict
+
+from pydantic import UUID4, BaseModel, ConfigDict
 
 
 class UserQueryBase(BaseModel):
@@ -11,13 +13,13 @@ class UserQueryBase(BaseModel):
     query_metadata: dict = {}
 
 
-class UserQueryCreate(UserQueryBase):
+class UserQuerySearchResult(BaseModel):
     """
-    Complete User schema.
+    Pydantic model for each individual search result
     """
 
-    query_datetime_utc: datetime
-    feedback_secret_key: str
+    response_text: str
+    score: float
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,9 +30,11 @@ class UserQueryResponse(BaseModel):
     """
 
     query_id: int
-    response_text: int
-    score: float
+    responses: Dict[int, UserQuerySearchResult]
+    feedback_secret_key: str
     debug_info: dict = {}
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FeedbackBase(BaseModel):
