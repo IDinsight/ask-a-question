@@ -30,3 +30,8 @@ You need [Docker](https://docs.docker.com/get-docker/)
 
     cd deployment
     docker compose -f docker-compose.yml -p aaq-stack up -d --build
+
+**STEP 4:** Shutdown containers
+
+    cd deployment
+    docker compose -f docker-compose.yml -p aaq-stack down
