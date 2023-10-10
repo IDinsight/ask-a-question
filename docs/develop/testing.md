@@ -8,6 +8,10 @@
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
 
+Setup your openAPI API key
+
+    export OPENAI_API_KEY=<YOUR KEY>
+
 Run tests using
 
     make tests
