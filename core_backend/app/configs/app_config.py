@@ -18,3 +18,5 @@ QDRANT_VECTOR_SIZE = os.environ.get("QDRANT_VECTOR_SIZE", "1536")
 QDRANT_N_TOP_SIMILAR = os.environ.get("QDRANT_N_TOP_SIMILAR", "4")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")  # Will be none if not set
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-ada-002")
+
+QUESTION_ANSWER_SECRET = os.environ.get("QUESTION_ANSWER_SECRET", "update-me")
