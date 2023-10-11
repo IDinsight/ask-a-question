@@ -56,7 +56,7 @@ async def create_content(
     )
 
 
-@router.put("/edit/{content_id}", response_model=ContentRetrieve)
+@router.put("/{content_id}/edit", response_model=ContentRetrieve)
 async def edit_content(
     content_id: str,
     content: ContentCreate,
@@ -139,7 +139,7 @@ async def retrieve_content(
     return contents
 
 
-@router.delete("/delete/{content_id}")
+@router.delete("/{content_id}/delete")
 async def delete_content(
     content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
 ) -> None:

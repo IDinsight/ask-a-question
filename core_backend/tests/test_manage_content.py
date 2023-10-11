@@ -24,7 +24,7 @@ class TestManageContent:
         )
         content_id = response.json()["content_id"]
         yield content_id
-        client.delete(f"/content/delete/{content_id}")
+        client.delete(f"/content/{content_id}/delete")
 
     @pytest.mark.parametrize(
         "content_text, content_metadata",
@@ -45,7 +45,7 @@ class TestManageContent:
         assert json_response["content_metadata"] == content_metadata
         assert "content_id" in json_response
 
-        response = client.delete(f"/content/delete/{json_response['content_id']}")
+        response = client.delete(f"/content/{json_response['content_id']}/delete")
         assert response.status_code == 200
 
         pass
@@ -68,7 +68,7 @@ class TestManageContent:
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
-            f"/content/edit/{existing_content_id}",
+            f"/content/{existing_content_id}/edit",
             json={
                 "content_text": content_text,
                 "content_metadata": content_metadata,
@@ -84,5 +84,5 @@ class TestManageContent:
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
     def test_delete_content(self, client: TestClient, existing_content_id: str) -> None:
-        response = client.delete(f"/content/delete/{existing_content_id}")
+        response = client.delete(f"/content/{existing_content_id}/delete")
         assert response.status_code == 200
