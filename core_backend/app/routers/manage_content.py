@@ -56,7 +56,7 @@ async def create_content(
     )
 
 
-@router.put("/edit/{content_id}", response_model=ContentRetrieve)
+@router.put("/{content_id}/edit", response_model=ContentRetrieve)
 async def edit_content(
     content_id: str,
     content: ContentCreate,
@@ -100,24 +100,6 @@ async def edit_content(
     )
 
 
-@router.get("/{content_id}", response_model=ContentRetrieve)
-async def retrieve_content_by_id(
-    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
-) -> ContentRetrieve:
-    """
-    Retrieve content by id endpoint
-    """
-
-    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
-
-    if len(record) == 0:
-        raise HTTPException(
-            status_code=404, detail=f"Content id `{content_id}` not found"
-        )
-
-    return _record_to_schema(record[0])
-
-
 @router.get("/list", response_model=list[ContentRetrieve])
 async def retrieve_content(
     skip: int = 0,
@@ -139,7 +121,7 @@ async def retrieve_content(
     return contents
 
 
-@router.delete("/delete/{content_id}")
+@router.delete("/{content_id}/delete")
 async def delete_content(
     content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
 ) -> None:
@@ -157,6 +139,24 @@ async def delete_content(
         collection_name=QDRANT_COLLECTION_NAME,
         points_selector=PointIdsList(points=[content_id]),
     )
+
+
+@router.get("/{content_id}", response_model=ContentRetrieve)
+async def retrieve_content_by_id(
+    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
+) -> ContentRetrieve:
+    """
+    Retrieve content by id endpoint
+    """
+
+    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+
+    if len(record) == 0:
+        raise HTTPException(
+            status_code=404, detail=f"Content id `{content_id}` not found"
+        )
+
+    return _record_to_schema(record[0])
 
 
 def _record_to_schema(record: Record) -> ContentRetrieve:
