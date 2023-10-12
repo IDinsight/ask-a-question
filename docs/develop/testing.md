@@ -38,7 +38,9 @@ Note the `content_id`. You'll need it for steps 4 and 5.
 **2. Send a question**
 
     curl -X POST -d '{"query_text":"i love sport, tell me about a \
-    vegetable that will keep be strong"}'  -H 'Content-Type: application/json' \
+    vegetable that will keep be strong"}'  \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer update-me' \
     localhost:8000/embeddings-search
 
 Note the `query_id` and `feedback_secret_key`. You'll need them for the next command.
@@ -47,7 +49,9 @@ Note the `query_id` and `feedback_secret_key`. You'll need them for the next com
 
     curl -X POST -S -d '{"query_id":"[QUERY_ID]","feedback_secret_key":"[SECRET_KEY]", \
     "feedback_text":"this is feedback" }' \
-    -H 'Content-Type: application/json' localhost:8000/feedback
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer update-me' \
+    localhost:8000/feedback
 
 **4. Edit the content**
 
