@@ -87,7 +87,12 @@ async def feedback(
         await asession.refresh(feedback_db)
         return JSONResponse(
             status_code=200,
-            content={"message": f"Added Feedback: {feedback_db.feedback_id}"},
+            content={
+                "message": (
+                    f"Added Feedback: {feedback_db.feedback_id} "
+                    f"for Query: {feedback_db.query_id}"
+                )
+            },
         )
 
 
