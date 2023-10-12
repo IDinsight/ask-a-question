@@ -1,7 +1,7 @@
 from typing import Union
 
 import pytest
-from app import create_app
+from core_backend.app import create_app
 from fastapi.testclient import TestClient
 
 Fixture = Union
