@@ -62,7 +62,7 @@ async def embeddings_search(
     # add FAQs to responses database
     user_query_responses_db = UserQueryResponsesDB(
         query_id=user_query_db.query_id,
-        responses="HELLO",  # responses.dict()["responses"]
+        responses=responses.dict()["responses"],
         response_datetime_utc=datetime.utcnow(),
     )
     asession.add(user_query_responses_db)
