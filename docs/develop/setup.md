@@ -24,6 +24,8 @@ navigate to repo and run pre-commit
 
 ## Setup your virtual python environment
 
+We usually use conda to create virtual environments but you can use `venv` or other.
+
     conda create --name aaq-core python=3.10
 
 Install the python packages. While in `aaq-core` directory, run:

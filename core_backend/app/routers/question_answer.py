@@ -1,10 +1,12 @@
 from datetime import datetime
 from typing import Dict
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from litellm import embedding
 from qdrant_client import QdrantClient, models
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..configs.app_config import (
@@ -64,7 +66,7 @@ async def feedback(
     """
 
     is_matched = await check_secret_key_match(
-        feedback.feedback_secret_key, feedback.query_id
+        feedback.feedback_secret_key, feedback.query_id, asession
     )
 
     if is_matched is False:
@@ -84,22 +86,36 @@ async def feedback(
         await asession.commit()
         await asession.refresh(feedback_db)
         return JSONResponse(
-            status_code=200, content={"message": f"Added : {feedback_db.feedback_id}"}
+            status_code=200,
+            content={
+                "message": (
+                    f"Added Feedback: {feedback_db.feedback_id} "
+                    f"for Query: {feedback_db.query_id}"
+                )
+            },
         )
 
 
-async def check_secret_key_match(secret_key: str, query_id: int) -> bool:
+async def check_secret_key_match(
+    secret_key: str, query_id: int, asession: AsyncSession
+) -> bool:
     """
     Check if the secret key matches the one generated for query id
     """
-    return True
+    stmt = select(UserQuery.feedback_secret_key).where(UserQuery.query_id == query_id)
+    query_record = (await asession.execute(stmt)).first()
+
+    if (query_record is not None) and (query_record[0] == secret_key):
+        return True
+    else:
+        return False
 
 
 def generate_secret_key() -> str:
     """
     Generate a secret key for the user query
     """
-    return "abc1234"
+    return uuid4().hex
 
 
 def get_similar_content(
