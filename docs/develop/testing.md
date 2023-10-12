@@ -52,8 +52,8 @@ Note the `query_id` and `feedback_secret_key`. You'll need them for the next com
 **4. Edit the content**
 
     curl -X PUT -d '{"content_text":"content 2 updated"}' \
-    -H 'Content-Type: application/json' localhost:8000/content/edit/
+    -H 'Content-Type: application/json' localhost:8000/content/[CONTENT_ID]/edit
 
 **5. Delete the content**
 
-    curl -X DELETE localhost:8000/content/delete/[CONTENT_ID]
+    curl -X DELETE localhost:8000/content/[CONTENT_ID]/delete
