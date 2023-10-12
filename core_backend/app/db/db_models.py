@@ -27,13 +27,40 @@ class UserQuery(Base):
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
     feedback: Mapped[List["Feedback"]] = relationship(
         "Feedback", back_populates="query", lazy=True
+    )
+    responses: Mapped[List["UserQueryResponsesDB"]] = relationship(
+        "UserQueryResponsesDB", back_populates="query", lazy=True
     )
 
     def __repr__(self) -> str:
         """Pretty Print"""
         return f"<Query #{self.query_id}> {self.query_text}>"
+
+
+class UserQueryResponsesDB(Base):
+    """
+    SQLAlchemy data model for responses sent to user
+    """
+
+    __tablename__ = "user-query-responses"
+
+    response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    responses: Mapped[str] = mapped_column(
+        String
+    )  # Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    query: Mapped[UserQuery] = relationship(
+        "UserQuery", back_populates="responses", lazy=True
+    )
+
+    def __repr__(self) -> str:
+        """Pretty Print"""
+        return f"<Responses for query #{self.query_id}"
 
 
 class Feedback(Base):
