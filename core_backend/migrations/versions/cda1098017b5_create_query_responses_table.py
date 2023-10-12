@@ -1,7 +1,7 @@
 """user-query-responses table added
 
 Revision ID: cda1098017b5
-Revises: 6f1daa64a188
+Revises: 42fe00da1c48
 Create Date: 2023-10-12 10:24:41.889026
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "cda1098017b5"
-down_revision: Union[str, None] = "6f1daa64a188"
+down_revision: Union[str, None] = "42fe00da1c48"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
