@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -27,32 +27,18 @@ async def create_content(
     upserts it to Qdrant collection.
     """
 
-    content_embedding = (
-        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
-    )
-    point_id = uuid.uuid4()
-
     payload = dict(content.content_metadata)
     payload["created_datetime_utc"] = datetime.utcnow()
     payload["updated_datetime_utc"] = datetime.utcnow()
     payload["content_text"] = content.content_text
 
-    qdrant_client.upsert(
-        collection_name=QDRANT_COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=str(point_id),
-                vector=content_embedding,
-                payload=payload,
-            )
-        ],
-    )
+    content_id = uuid.uuid4()
 
-    return ContentRetrieve(
-        **content.model_dump(),
-        content_id=point_id,
-        created_datetime_utc=payload["created_datetime_utc"],
-        updated_datetime_utc=payload["updated_datetime_utc"],
+    return _add_content_to_qdrant(
+        content_id=content_id,
+        content=content,
+        payload=payload,
+        qdrant_client=qdrant_client,
     )
 
 
@@ -78,25 +64,11 @@ async def edit_content(
     payload["updated_datetime_utc"] = datetime.utcnow()
     payload["content_text"] = content.content_text
 
-    content_embedding = (
-        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
-    )
-    qdrant_client.upsert(
-        collection_name=QDRANT_COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=str(content_id),
-                vector=content_embedding,
-                payload=payload,
-            )
-        ],
-    )
-
-    return ContentRetrieve(
-        **content.model_dump(),
-        content_id=UUID(content_id),
-        created_datetime_utc=payload["created_datetime_utc"],
-        updated_datetime_utc=payload["updated_datetime_utc"],
+    return _add_content_to_qdrant(
+        content_id=content_id,
+        content=content,
+        payload=payload,
+        qdrant_client=qdrant_client,
     )
 
 
@@ -157,6 +129,39 @@ async def retrieve_content_by_id(
         )
 
     return _record_to_schema(record[0])
+
+
+def _add_content_to_qdrant(
+    content_id: Union[str, UUID],
+    content: ContentCreate,
+    payload: dict,
+    qdrant_client: QdrantClient,
+) -> ContentRetrieve:
+    """Add content to qdrant collection."""
+    content_embedding = (
+        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
+    )
+
+    qdrant_client.upsert(
+        collection_name=QDRANT_COLLECTION_NAME,
+        points=[
+            PointStruct(
+                id=str(content_id),
+                vector=content_embedding,
+                payload=payload,
+            )
+        ],
+    )
+
+    if not isinstance(content_id, UUID):
+        content_id = UUID(content_id)
+
+    return ContentRetrieve(
+        **content.model_dump(),
+        content_id=content_id,
+        created_datetime_utc=payload["created_datetime_utc"],
+        updated_datetime_utc=payload["updated_datetime_utc"],
+    )
 
 
 def _record_to_schema(record: Record) -> ContentRetrieve:
