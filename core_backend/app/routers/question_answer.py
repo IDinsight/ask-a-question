@@ -12,7 +12,7 @@ from ..configs.app_config import (
     QDRANT_COLLECTION_NAME,
     QDRANT_N_TOP_SIMILAR,
 )
-from ..db.db_models import Feedback, UserQuery
+from ..db.db_models import Feedback, UserQuery, UserQueryResponsesDB
 from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client
 from ..schemas import (
@@ -36,6 +36,7 @@ async def embeddings_search(
     from the vector db.
     """
 
+    # add to query database
     feedback_secret_key = generate_secret_key()
     user_query_db = UserQuery(
         feedback_secret_key=feedback_secret_key,
@@ -46,13 +47,27 @@ async def embeddings_search(
     await asession.commit()
     await asession.refresh(user_query_db)
 
-    return UserQueryResponse(
+    # get FAQs from vector db
+    responses = UserQueryResponse(
         query_id=user_query_db.query_id,
         responses=get_similar_content(
             user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
         ),
         feedback_secret_key=feedback_secret_key,
     )
+
+    # add FAQs to responses database
+    user_query_responses_db = UserQueryResponsesDB(
+        query_id=user_query_db.query_id,
+        responses="HELLO",  # responses.dict()["responses"]
+        response_datetime_utc=datetime.utcnow(),
+    )
+    asession.add(user_query_responses_db)
+    await asession.commit()
+    await asession.refresh(user_query_responses_db)
+
+    # repond to user
+    return responses
 
 
 @router.post("/feedback")
