@@ -74,7 +74,7 @@ As with above, if you wish to persist the data in your vector db, you should run
 
 From `aaq-core/core_backend` run:
 
-    python -m alembic upgrade head
+    alembic upgrade head
 
 ## Run the FastAPI app
 
