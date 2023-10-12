@@ -10,8 +10,9 @@ from app.configs.app_config import (
 )
 from app.db.vector_db import get_qdrant_client
 from fastapi.testclient import TestClient
-from litellm import embedding
 from qdrant_client.models import PointStruct
+
+from .conftest import fake_embedding
 
 
 class TestEmbeddingsSearch:
@@ -24,7 +25,9 @@ class TestEmbeddingsSearch:
         for content in json_data:
             point_id = str(uuid.uuid4())
             content_embedding = (
-                embedding(EMBEDDING_MODEL, content["content_text"]).data[0].embedding
+                fake_embedding(EMBEDDING_MODEL, content["content_text"])
+                .data[0]
+                .embedding
             )
             payload = content.get("content_metadata", {})
             points.append(
