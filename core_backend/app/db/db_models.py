@@ -49,9 +49,7 @@ class UserQueryResponsesDB(Base):
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
-    responses: Mapped[str] = mapped_column(
-        String
-    )  # Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    responses: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     query: Mapped[UserQuery] = relationship(
