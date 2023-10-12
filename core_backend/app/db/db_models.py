@@ -87,23 +87,3 @@ class Feedback(Base):
             f"<Feedback #{self.feedback_id} for query "
             f"#{self.query_id}> {self.feedback_text}"
         )
-
-
-class Content(Base):
-    """
-    SQLAlchemy data model for content
-    """
-
-    __tablename__ = "content"
-
-    content_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True, nullable=False
-    )
-    content_text: Mapped[str] = mapped_column(String, nullable=False)
-    content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-
-    def __repr__(self) -> str:
-        """Pretty Print"""
-        return f"<Content #{self.content_id}> {self.content_text}>"
