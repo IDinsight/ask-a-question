@@ -83,6 +83,11 @@ class TestManageContent:
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
+    def test_list_content(self, client: TestClient, existing_content_id: str) -> None:
+        response = client.get("/content/list")
+        assert response.status_code == 200
+        assert len(response.json()) > 0
+
     def test_delete_content(self, client: TestClient, existing_content_id: str) -> None:
         response = client.delete(f"/content/{existing_content_id}/delete")
         assert response.status_code == 200
