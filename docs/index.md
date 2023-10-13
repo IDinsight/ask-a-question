@@ -17,7 +17,6 @@ You need [Docker](https://docs.docker.com/get-docker/)
 
     git clone git@github.com:IDinsight/aaq-core.git
 
-
 **STEP 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the variables
 
     # Set variables below and copy to .env
