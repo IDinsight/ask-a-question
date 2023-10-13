@@ -1,4 +1,5 @@
 # Setting up your development environment
+
 !!! note "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
 ## Clone repo
@@ -57,7 +58,6 @@ use a volume as below:
      -p 5432:5432 \
      -v postgres_local_vol:/var/lib/postrges/data \
      -d postgres
-
 
 ## Run a local qdrant server
 
