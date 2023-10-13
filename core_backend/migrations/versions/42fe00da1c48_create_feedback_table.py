@@ -1,4 +1,4 @@
-"""New tables added
+"""Create feedback table
 
 Revision ID: 42fe00da1c48
 Revises: c5a948963236
@@ -22,7 +22,7 @@ def upgrade() -> None:
     op.create_table(
         "feedback",
         sa.Column("feedback_id", sa.Integer(), nullable=False),
-        sa.Column("query_id", sa.Integer(), nullable=True),
+        sa.Column("query_id", sa.Integer(), nullable=False),
         sa.Column("feedback_text", sa.String(), nullable=False),
         sa.Column("feedback_datetime_utc", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
