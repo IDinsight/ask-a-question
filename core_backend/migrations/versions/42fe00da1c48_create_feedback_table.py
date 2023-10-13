@@ -22,7 +22,7 @@ def upgrade() -> None:
     op.create_table(
         "feedback",
         sa.Column("feedback_id", sa.Integer(), nullable=False),
-        sa.Column("query_id", sa.Integer(), nullable=True),
+        sa.Column("query_id", sa.Integer(), nullable=False),
         sa.Column("feedback_text", sa.String(), nullable=False),
         sa.Column("feedback_datetime_utc", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
