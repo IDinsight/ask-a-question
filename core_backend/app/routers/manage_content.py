@@ -29,8 +29,6 @@ async def create_content(
 
     payload = dict(content.content_metadata)
     payload["created_datetime_utc"] = datetime.utcnow()
-    payload["updated_datetime_utc"] = datetime.utcnow()
-    payload["content_text"] = content.content_text
 
     content_id = uuid.uuid4()
 
@@ -51,9 +49,8 @@ async def edit_content(
     """
     Edit content endpoint
     """
-
-    # retrive old content
     old_content = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+
     if len(old_content) == 0:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
@@ -61,8 +58,6 @@ async def edit_content(
 
     payload = old_content[0].payload or {}
     payload.update(content.content_metadata)
-    payload["updated_datetime_utc"] = datetime.utcnow()
-    payload["content_text"] = content.content_text
 
     return _add_content_to_qdrant(
         content_id=content_id,
@@ -89,7 +84,7 @@ async def retrieve_content(
         with_vectors=False,
     )
 
-    contents = [_record_to_schema(c) for c in records]
+    contents = [_convert_record_to_schema(c) for c in records]
     return contents
 
 
@@ -128,7 +123,7 @@ async def retrieve_content_by_id(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    return _record_to_schema(record[0])
+    return _convert_record_to_schema(record[0])
 
 
 def _add_content_to_qdrant(
@@ -137,7 +132,11 @@ def _add_content_to_qdrant(
     payload: dict,
     qdrant_client: QdrantClient,
 ) -> ContentRetrieve:
-    """Add content to qdrant collection."""
+    """Add content to qdrant collection"""
+    
+    payload["updated_datetime_utc"] = datetime.utcnow()
+    payload["content_text"] = content.content_text
+    
     content_embedding = (
         embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
     )
@@ -164,7 +163,7 @@ def _add_content_to_qdrant(
     )
 
 
-def _record_to_schema(record: Record) -> ContentRetrieve:
+def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     """
     Convert qdrant_client.models.Record to ContentRetrieve schema
     """
