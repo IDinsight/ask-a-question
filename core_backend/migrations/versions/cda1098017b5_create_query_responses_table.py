@@ -1,4 +1,4 @@
-"""user-query-responses table added
+"""Create user-query-responses table
 
 Revision ID: cda1098017b5
 Revises: 42fe00da1c48

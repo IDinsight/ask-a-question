@@ -1,4 +1,4 @@
-"""New tables added
+"""Create feedback table
 
 Revision ID: 42fe00da1c48
 Revises: c5a948963236

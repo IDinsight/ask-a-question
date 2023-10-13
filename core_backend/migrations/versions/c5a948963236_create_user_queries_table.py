@@ -1,4 +1,4 @@
-"""Initial Migration
+"""Initial Migration - create user_queries table
 
 Revision ID: c5a948963236
 Revises:
