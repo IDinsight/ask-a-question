@@ -71,7 +71,7 @@ class TestEmbeddingsSearch:
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
     )
-    def test_feedback(
+    def test_feedback_correct(
         self,
         token: str,
         expected_status_code: int,
@@ -103,6 +103,7 @@ class TestEmbeddingsSearch:
                 "query_id": query_id,
                 "feedback_secret_key": "incorrect_key",
             },
+            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
         )
         assert response.status_code == 400
 
@@ -117,5 +118,6 @@ class TestEmbeddingsSearch:
                 "query_id": 99999,
                 "feedback_secret_key": feedback_secret_key,
             },
+            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
         )
         assert response.status_code == 400
