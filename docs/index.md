@@ -24,6 +24,7 @@ You need [Docker](https://docs.docker.com/get-docker/)
 
     POSTGRES_PASSWORD=
     OPENAI_API_KEY=
+    QUESTION_ANSWER_SECRET=
     ...
 
 **STEP 3:** Run docker-compose

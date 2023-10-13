@@ -9,6 +9,7 @@ from qdrant_client import QdrantClient, models
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth import auth_bearer_token
 from ..configs.app_config import (
     EMBEDDING_MODEL,
     QDRANT_COLLECTION_NAME,
@@ -24,7 +25,7 @@ from ..schemas import (
     UserQuerySearchResult,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 
 @router.post("/embeddings-search")
