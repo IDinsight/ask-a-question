@@ -4,6 +4,7 @@
 
 ## Running unit tests
 
+### Running all unit tests
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
@@ -18,6 +19,13 @@ Run tests using
 
 This target starts up new postgres and qdrant container for testing. It also sets the
 correct environment variables, runs `pytest`, and then destroys the containers.
+
+### Debugging unit tests
+
+Before debugging, run `make setup-tests` within `core_backend` to launch new postgres and
+qdrant containers for testing and set the correct environment variables.
+
+After debugging, clean up the testing resources by calling `make teardown-tests`.
 
 ## Calling endpoints
 

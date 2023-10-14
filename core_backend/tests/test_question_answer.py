@@ -3,7 +3,6 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-from litellm import embedding
 from qdrant_client.models import PointStruct
 
 from core_backend.app.configs.app_config import (
@@ -13,8 +12,6 @@ from core_backend.app.configs.app_config import (
     QUESTION_ANSWER_SECRET,
 )
 from core_backend.app.db.vector_db import get_qdrant_client
-from fastapi.testclient import TestClient
-from qdrant_client.models import PointStruct
 
 from .conftest import fake_embedding
 
