@@ -3,11 +3,10 @@ from typing import Union
 
 import numpy as np
 import pytest
-from core_backend.app import create_app
-from core_backend.app.configs.app_config import QDRANT_VECTOR_SIZE
 from fastapi.testclient import TestClient
 
 from core_backend.app import create_app
+from core_backend.app.configs.app_config import QDRANT_VECTOR_SIZE
 
 Fixture = Union
 
