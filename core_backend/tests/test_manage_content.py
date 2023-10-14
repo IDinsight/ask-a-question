@@ -91,3 +91,16 @@ class TestManageContent:
     def test_delete_content(self, client: TestClient, existing_content_id: str) -> None:
         response = client.delete(f"/content/{existing_content_id}/delete")
         assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "content_metadata",
+        [{}, {"meta_key": "meta_value"}],
+    )
+    def test_creating_missing_content_text_returns_422(
+        self, client: TestClient, content_metadata: Dict[Any, Any]
+    ) -> None:
+        response = client.post(
+            "/content/create",
+            json=content_metadata,
+        )
+        assert response.status_code == 422
