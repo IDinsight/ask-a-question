@@ -133,10 +133,11 @@ def _add_content_to_qdrant(
     qdrant_client: QdrantClient,
 ) -> ContentRetrieve:
     """Add content to qdrant collection"""
-    
+
+    assert "created_datetime_utc" in payload
     payload["updated_datetime_utc"] = datetime.utcnow()
     payload["content_text"] = content.content_text
-    
+
     content_embedding = (
         embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
     )
