@@ -6,10 +6,14 @@ import pytest
 from fastapi.testclient import TestClient
 from qdrant_client.models import Record
 
+from core_backend.app.configs.app_config import (
+    QDRANT_COLLECTION_NAME,
+)
 from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.routers.manage_content import (
     _add_content_to_qdrant,
     _convert_record_to_schema,
+    _create_payload,
 )
 from core_backend.app.schemas import ContentCreate, ContentRetrieve
 
@@ -124,94 +128,126 @@ class TestManageContent:
         assert response.status_code == 422
 
 
-@pytest.mark.parametrize(
-    "content_id_type, content_text, content_metadata, payload",
-    [
-        ("str", "content text 1", {}, {"id": "content_id_1"}),
-        ("str", "content text 2", {"meta_key": "meta_value"}, {}),
-        ("uuid", "content text 3", {}, {"id": "content_id_3"}),
-        ("uuid", "content text 4", {"meta_key": "meta_value"}, {}),
-    ],
-)
-def test_add_content_to_qdrant(
-    content_id_type: str,
-    content_text: str,
-    content_metadata: Union[Dict[Any, Any], None],
-    payload: Dict[Any, Any],
-) -> None:
-    qdrant_client = get_qdrant_client()
-    _uuid_id = uuid.uuid4()
+class TestAddContentToQdrant:
+    @pytest.fixture(scope="function")
+    def valid_payload(self) -> Dict[Any, Any]:
+        return _create_payload(content_text="content", metadata={})
 
-    input_id: Union[str, uuid.UUID] = _uuid_id
+    @pytest.fixture(scope="function")
+    def random_uuid(self) -> pytest.FixtureRequest:
+        """Generates random UUID for testing and deletes a record with the ID from the
+        Qdrant test collection"""
+        qdrant_client = get_qdrant_client()
+        _uuid_id = uuid.uuid4()
+        yield _uuid_id
+        qdrant_client.delete(
+            collection_name=QDRANT_COLLECTION_NAME, points_selector=[str(_uuid_id)]
+        )
 
-    if content_id_type == "str":
-        input_id = str(_uuid_id)
-    elif content_id_type != "uuid":
-        raise ValueError("Invalid content_id_type: " + content_id_type)
-
-    payload["created_datetime_utc"] = datetime.datetime(2023, 9, 1, 0, 0, 0)
-
-    result = _add_content_to_qdrant(
-        input_id,
-        ContentCreate(content_text=content_text, content_metadata=content_metadata),
-        payload,
-        qdrant_client=qdrant_client,
+    @pytest.mark.parametrize(
+        "content_text, content_metadata",
+        [
+            ("content text 1", {}),
+            ("content text 2", {"meta_key": "meta_value"}),
+        ],
     )
-    assert isinstance(result, ContentRetrieve)
-    assert result.content_id == _uuid_id
-    assert result.content_text == content_text
+    def test_add_content_to_qdrant_return_value(
+        self,
+        content_text: str,
+        content_metadata: Union[Dict[Any, Any], None],
+        random_uuid: pytest.FixtureRequest,
+        valid_payload: pytest.FixtureRequest,
+        client: TestClient,
+    ) -> None:
+        qdrant_client = get_qdrant_client()
+
+        result = _add_content_to_qdrant(
+            random_uuid,
+            ContentCreate(content_text=content_text, content_metadata=content_metadata),
+            valid_payload,
+            qdrant_client=qdrant_client,
+        )
+        assert isinstance(result, ContentRetrieve)
+        assert result.content_id == random_uuid
+        assert result.content_text == content_text
+
+    def test_add_content_to_qdrant_correctly_adds_content(
+        self, random_uuid: pytest.FixtureRequest, client: TestClient
+    ) -> None:
+        qdrant_client = get_qdrant_client()
+
+        timestamp = datetime.datetime(2023, 9, 1, 0, 0, 0)
+        payload = {
+            "created_datetime_utc": timestamp,
+            "updated_datetime_utc": timestamp,
+            "test_key": "test_value",
+        }
+        _add_content_to_qdrant(
+            random_uuid,
+            ContentCreate(content_text="content text 1", content_metadata={}),
+            payload,
+            qdrant_client=qdrant_client,
+        )
+
+        records = qdrant_client.scroll(collection_name=QDRANT_COLLECTION_NAME)[0]
+
+        assert any(str(random_uuid) == record.id for record in records)
+
+        for record in records:
+            if record.id == str(random_uuid):
+                break
+
+        assert record.payload["test_key"] == "test_value"
 
 
-def test_basic_conversion() -> None:
-    content_uuid = uuid.uuid4()
+class TestConvertRecordToSchema:
+    def test_basic_conversion(self) -> None:
+        content_uuid = uuid.uuid4()
 
-    record = Record(
-        id=str(content_uuid),
-        payload={
-            "created_datetime_utc": datetime.datetime.utcnow(),
-            "updated_datetime_utc": datetime.datetime.utcnow(),
-            "content_text": "sample text",
-            "extra_field": "extra value",
-        },
-    )
-    result = _convert_record_to_schema(record)
-    assert result.content_id == content_uuid
-    assert result.content_text == "sample text"
-    assert result.content_metadata["extra_field"] == "extra value"
+        record = Record(
+            id=str(content_uuid),
+            payload={
+                "created_datetime_utc": datetime.datetime.utcnow(),
+                "updated_datetime_utc": datetime.datetime.utcnow(),
+                "content_text": "sample text",
+                "extra_field": "extra value",
+            },
+        )
+        result = _convert_record_to_schema(record)
+        assert result.content_id == content_uuid
+        assert result.content_text == "sample text"
+        assert result.content_metadata["extra_field"] == "extra value"
 
+    def test_with_missing_payload(self) -> None:
+        content_uuid = uuid.uuid4()
+        record = Record(id=str(content_uuid))
+        with pytest.raises(
+            KeyError
+        ):  # Expecting an error due to missing payload attributes
+            _convert_record_to_schema(record)
 
-def test_missing_payload() -> None:
-    content_uuid = uuid.uuid4()
-    record = Record(id=str(content_uuid))
-    with pytest.raises(
-        KeyError
-    ):  # Expecting an error due to missing payload attributes
-        _convert_record_to_schema(record)
+    def test_with_missing_metadata_fields(self) -> None:
+        content_uuid = uuid.uuid4()
+        record = Record(
+            id=str(content_uuid),
+            payload={
+                "updated_datetime_utc": datetime.datetime.utcnow(),
+                "content_text": "sample text",
+            },
+        )
+        with pytest.raises(
+            KeyError
+        ):  # Expecting an error due to missing 'created_datetime_utc'
+            _convert_record_to_schema(record)
 
-
-def test_missing_metadata_fields() -> None:
-    content_uuid = uuid.uuid4()
-    record = Record(
-        id=str(content_uuid),
-        payload={
-            "updated_datetime_utc": datetime.datetime.utcnow(),
-            "content_text": "sample text",
-        },
-    )
-    with pytest.raises(
-        KeyError
-    ):  # Expecting an error due to missing 'created_datetime_utc'
-        _convert_record_to_schema(record)
-
-
-def test_invalid_uuid() -> None:
-    record = Record(
-        id="invalid_uuid",
-        payload={
-            "created_datetime_utc": datetime.datetime.utcnow(),
-            "updated_datetime_utc": datetime.datetime.utcnow(),
-            "content_text": "sample text",
-        },
-    )
-    with pytest.raises(ValueError):  # Expecting an error due to invalid UUID format
-        _convert_record_to_schema(record)
+    def test_with_invalid_uuid(self) -> None:
+        record = Record(
+            id="invalid_uuid",
+            payload={
+                "created_datetime_utc": datetime.datetime.utcnow(),
+                "updated_datetime_utc": datetime.datetime.utcnow(),
+                "content_text": "sample text",
+            },
+        )
+        with pytest.raises(ValueError):  # Expecting an error due to invalid UUID format
+            _convert_record_to_schema(record)

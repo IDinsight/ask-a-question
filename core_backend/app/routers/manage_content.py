@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List, Union
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -27,8 +27,7 @@ async def create_content(
     upserts it to Qdrant collection.
     """
 
-    payload = dict(content.content_metadata)
-    payload["created_datetime_utc"] = datetime.utcnow()
+    payload = _create_payload(content.content_text, content.content_metadata)
 
     content_id = uuid.uuid4()
 
@@ -56,11 +55,11 @@ async def edit_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    payload = old_content[0].payload or {}
+    payload = _create_payload(content.content_text, old_content[0].payload or {})
     payload.update(content.content_metadata)
 
     return _add_content_to_qdrant(
-        content_id=content_id,
+        content_id=UUID(content_id),
         content=content,
         payload=payload,
         qdrant_client=qdrant_client,
@@ -126,17 +125,28 @@ async def retrieve_content_by_id(
     return _convert_record_to_schema(record[0])
 
 
+def _create_payload(content_text: str, metadata: dict) -> dict:
+    """
+    Create payload for qdrant upsert
+    """
+    payload = metadata.copy()
+
+    if "created_datetime_utc" not in payload:
+        payload["created_datetime_utc"] = datetime.utcnow()
+
+    payload["updated_datetime_utc"] = datetime.utcnow()
+    payload["content_text"] = content_text
+
+    return payload
+
+
 def _add_content_to_qdrant(
-    content_id: Union[str, UUID],
+    content_id: UUID,
     content: ContentCreate,
     payload: dict,
     qdrant_client: QdrantClient,
 ) -> ContentRetrieve:
     """Add content to qdrant collection"""
-
-    assert "created_datetime_utc" in payload
-    payload["updated_datetime_utc"] = datetime.utcnow()
-    payload["content_text"] = content.content_text
 
     content_embedding = (
         embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
@@ -152,9 +162,6 @@ def _add_content_to_qdrant(
             )
         ],
     )
-
-    if not isinstance(content_id, UUID):
-        content_id = UUID(content_id)
 
     return ContentRetrieve(
         **content.model_dump(),
