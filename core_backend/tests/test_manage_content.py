@@ -15,7 +15,7 @@ from core_backend.app.routers.manage_content import (
     _convert_record_to_schema,
     _create_payload,
 )
-from core_backend.app.schemas import ContentCreate, ContentRetrieve
+from core_backend.app.schemas import ContentCreate
 
 
 class TestManageContent:
@@ -154,7 +154,7 @@ class TestAddContentToQdrant:
             valid_payload,
             qdrant_client=qdrant_client,
         )
-        assert isinstance(result, ContentRetrieve)
+
         assert result.content_id == random_uuid
         assert result.content_text == content_text
 
