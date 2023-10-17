@@ -31,7 +31,7 @@ async def create_content(
 
     content_id = uuid.uuid4()
 
-    return _add_content_to_qdrant(
+    return _upsert_content_to_qdrant(
         content_id=content_id,
         content=content,
         payload=payload,
@@ -58,7 +58,7 @@ async def edit_content(
     payload = _create_payload(content.content_text, old_content[0].payload or {})
     payload.update(content.content_metadata)
 
-    return _add_content_to_qdrant(
+    return _upsert_content_to_qdrant(
         content_id=UUID(content_id),
         content=content,
         payload=payload,
@@ -140,7 +140,7 @@ def _create_payload(content_text: str, metadata: dict) -> dict:
     return payload
 
 
-def _add_content_to_qdrant(
+def _upsert_content_to_qdrant(
     content_id: UUID,
     content: ContentCreate,
     payload: dict,

@@ -11,9 +11,9 @@ from core_backend.app.configs.app_config import (
 )
 from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.routers.manage_content import (
-    _add_content_to_qdrant,
     _convert_record_to_schema,
     _create_payload,
+    _upsert_content_to_qdrant,
 )
 from core_backend.app.schemas import ContentCreate
 
@@ -115,7 +115,7 @@ class TestManageContent:
         assert response.status_code == 200
 
 
-class TestAddContentToQdrant:
+class TestUpsertContentToQdrant:
     @pytest.fixture(scope="function")
     def valid_payload(self) -> Dict[Any, Any]:
         return _create_payload(content_text="content", metadata={})
@@ -138,7 +138,7 @@ class TestAddContentToQdrant:
             ("content text 2", {"meta_key": "meta_value"}),
         ],
     )
-    def test_add_content_to_qdrant_return_value(
+    def test_upsert_content_to_qdrant_return_value(
         self,
         content_text: str,
         content_metadata: Union[Dict[Any, Any], None],
@@ -148,7 +148,7 @@ class TestAddContentToQdrant:
     ) -> None:
         qdrant_client = get_qdrant_client()
 
-        result = _add_content_to_qdrant(
+        result = _upsert_content_to_qdrant(
             random_uuid,
             ContentCreate(content_text=content_text, content_metadata=content_metadata),
             valid_payload,
@@ -158,7 +158,7 @@ class TestAddContentToQdrant:
         assert result.content_id == random_uuid
         assert result.content_text == content_text
 
-    def test_add_content_to_qdrant_correctly_adds_content(
+    def test_upsert_content_to_qdrant_correctly_adds_content(
         self, random_uuid: pytest.FixtureRequest, client: TestClient
     ) -> None:
         qdrant_client = get_qdrant_client()
@@ -169,7 +169,7 @@ class TestAddContentToQdrant:
             "updated_datetime_utc": timestamp,
             "test_key": "test_value",
         }
-        _add_content_to_qdrant(
+        _upsert_content_to_qdrant(
             random_uuid,
             ContentCreate(content_text="content text 1", content_metadata={}),
             payload,
