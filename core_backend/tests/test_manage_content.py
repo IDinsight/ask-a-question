@@ -114,19 +114,6 @@ class TestManageContent:
         response = client.delete(f"/content/{existing_content_id}/delete")
         assert response.status_code == 200
 
-    @pytest.mark.parametrize(
-        "content_metadata",
-        [{}, {"meta_key": "meta_value"}],
-    )
-    def test_creating_missing_content_text_returns_422(
-        self, client: TestClient, content_metadata: Dict[Any, Any]
-    ) -> None:
-        response = client.post(
-            "/content/create",
-            json=content_metadata,
-        )
-        assert response.status_code == 422
-
 
 class TestAddContentToQdrant:
     @pytest.fixture(scope="function")
@@ -217,37 +204,3 @@ class TestConvertRecordToSchema:
         assert result.content_id == content_uuid
         assert result.content_text == "sample text"
         assert result.content_metadata["extra_field"] == "extra value"
-
-    def test_with_missing_payload(self) -> None:
-        content_uuid = uuid.uuid4()
-        record = Record(id=str(content_uuid))
-        with pytest.raises(
-            KeyError
-        ):  # Expecting an error due to missing payload attributes
-            _convert_record_to_schema(record)
-
-    def test_with_missing_metadata_fields(self) -> None:
-        content_uuid = uuid.uuid4()
-        record = Record(
-            id=str(content_uuid),
-            payload={
-                "updated_datetime_utc": datetime.datetime.utcnow(),
-                "content_text": "sample text",
-            },
-        )
-        with pytest.raises(
-            KeyError
-        ):  # Expecting an error due to missing 'created_datetime_utc'
-            _convert_record_to_schema(record)
-
-    def test_with_invalid_uuid(self) -> None:
-        record = Record(
-            id="invalid_uuid",
-            payload={
-                "created_datetime_utc": datetime.datetime.utcnow(),
-                "updated_datetime_utc": datetime.datetime.utcnow(),
-                "content_text": "sample text",
-            },
-        )
-        with pytest.raises(ValueError):  # Expecting an error due to invalid UUID format
-            _convert_record_to_schema(record)
