@@ -6,3 +6,4 @@ psycopg2==2.9.7
 asyncpg==0.28.0
 qdrant-client==1.5.4
 litellm==0.1.784
+sqlalchemy[asyncio]
