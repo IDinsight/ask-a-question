@@ -10,13 +10,16 @@ endif
 
 tests: setup-test-db setup-test-vector-db run-tests stop-test-db stop-test-vector-db
 
+setup-tests: setup-test-db setup-test-vector-db setup-test-state
+
+teardown-tests: stop-test-db stop-test-vector-db
+
 setup-test-db:
 	-@docker stop testdb
 	-@docker rm testdb
 	@docker system prune -f
 	@sleep 2
-	@export POSTGRES_USER=postgres-test-user POSTGRES_PASSWORD=postgres-test-pw \
-		POSTGRES_DB=postgres-test-db POSTGRES_PORT=5433 && \
+	@set -a && source ./tests/test.env && set +a && \
 	docker run --name testdb \
 		-p 5433:5432 \
 		-e POSTGRES_PASSWORD \
@@ -31,11 +34,12 @@ setup-test-vector-db:
 		-p 6334:6333 \
 		-d qdrant/qdrant
 
+setup-test-state:
+	@set -a && source ./tests/test.env && set +a && \
+	python -m alembic upgrade head
+
 run-tests:
-	@export POSTGRES_USER=postgres-test-user POSTGRES_PASSWORD=postgres-test-pw \
-		POSTGRES_DB=postgres-test-db POSTGRES_PORT=5433 \
-		QDRANT_COLLECTION_NAME=test_collection \
-		QDRANT_PORT=6334 && \
+	@set -a && source ./tests/test.env && set +a && \
 	python -m alembic upgrade head && \
 	python -m pytest -rPQ
 

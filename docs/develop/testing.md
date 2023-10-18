@@ -4,6 +4,8 @@
 
 ## Running unit tests
 
+### Running all unit tests
+
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
@@ -18,6 +20,53 @@ Run tests using
 
 This target starts up new postgres and qdrant container for testing. It also sets the
 correct environment variables, runs `pytest`, and then destroys the containers.
+
+### Debugging unit tests
+
+Before debugging, run `make setup-tests` within `core_backend` to launch new postgres and
+qdrant containers for testing and set the correct environment variables.
+
+After debugging, clean up the testing resources by calling `make teardown-tests`.
+
+### Debugging on Visual Studio Code
+
+Add the following configuration to your `.vscode/launch.json` file to set environment
+variables for debugging:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {  // configuration for debugging
+            "name": "Python: Tests in current file",
+            "purpose": ["debug-test"],
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["--color=yes"],
+            "envFile": "${workspaceFolder}/core_backend/tests/test.env",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}
+```
+
+Add the following configuration to `.vscode/settings.json` to set the correct pytest
+working directory and environment variables:
+
+```json
+{
+    "python.testing.cwd": "${workspaceFolder}/core_backend",
+    "python.testing.pytestArgs": [
+        "tests",
+        "--rootdir=${workspaceFolder}/core_backend"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.envFile": "${workspaceFolder}/core_backend/tests/test.env"
+}
+```
 
 ## Calling endpoints
 
@@ -42,12 +91,12 @@ Note the `content_id`. You'll need it for steps 4 and 5.
     You'll need to know your `QUESTION_ANSWER_SECRET`. The default value can be found
     in `core_backend/app/configs/app_config.py` but can be overridden by setting the environment
     variable.
-```
-curl -X POST -d '{"query_text":"i love sport, tell me about a vegetable that will keep be strong"}'  \
--H 'Content-Type: application/json' \
--H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
-localhost:8000/embeddings-search
-```
+
+    curl -X POST -d '{"query_text":"i love sport, tell me about a vegetable that will keep be strong"}'  \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
+    localhost:8000/embeddings-search
+
 Note the `query_id` and `feedback_secret_key`. You'll need them for the next command.
 
 #### 3. Send feedback

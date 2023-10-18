@@ -2,15 +2,16 @@ import json
 import uuid
 
 import pytest
-from app.configs.app_config import (
+from fastapi.testclient import TestClient
+from qdrant_client.models import PointStruct
+
+from core_backend.app.configs.app_config import (
     EMBEDDING_MODEL,
     QDRANT_COLLECTION_NAME,
     QDRANT_N_TOP_SIMILAR,
     QUESTION_ANSWER_SECRET,
 )
-from app.db.vector_db import get_qdrant_client
-from fastapi.testclient import TestClient
-from qdrant_client.models import PointStruct
+from core_backend.app.db.vector_db import get_qdrant_client
 
 from .conftest import fake_embedding
 

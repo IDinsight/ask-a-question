@@ -3,9 +3,10 @@ from typing import Union
 
 import numpy as np
 import pytest
-from app import create_app
-from app.configs.app_config import QDRANT_VECTOR_SIZE
 from fastapi.testclient import TestClient
+
+from core_backend.app import create_app
+from core_backend.app.configs.app_config import QDRANT_VECTOR_SIZE
 
 Fixture = Union
 
@@ -34,8 +35,12 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
-    monkeysession.setattr("app.routers.manage_content.embedding", fake_embedding)
-    monkeysession.setattr("app.routers.question_answer.embedding", fake_embedding)
+    monkeysession.setattr(
+        "core_backend.app.routers.manage_content.embedding", fake_embedding
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.embedding", fake_embedding
+    )
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
