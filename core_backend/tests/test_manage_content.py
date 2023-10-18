@@ -1,9 +1,11 @@
 import datetime
 import uuid
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, List
 
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from qdrant_client.http import models
 from qdrant_client.models import Record
 
 from core_backend.app.configs.app_config import (
@@ -131,6 +133,20 @@ class TestUpsertContentToQdrant:
             collection_name=QDRANT_COLLECTION_NAME, points_selector=[str(_uuid_id)]
         )
 
+    def _search_qdrant_collection_by_id_with_vectors(
+        self, content_id: uuid.UUID
+    ) -> List[Record]:
+        qdrant_client = get_qdrant_client()
+        return qdrant_client.scroll(
+            collection_name=QDRANT_COLLECTION_NAME,
+            scroll_filter=models.Filter(
+                must=[
+                    models.HasIdCondition(has_id=[str(content_id)]),
+                ],
+            ),
+            with_vectors=True,
+        )[0]
+
     @pytest.mark.parametrize(
         "content_text, content_metadata",
         [
@@ -141,7 +157,7 @@ class TestUpsertContentToQdrant:
     def test_upsert_content_to_qdrant_return_value(
         self,
         content_text: str,
-        content_metadata: Union[Dict[Any, Any], None],
+        content_metadata: Dict[Any, Any],
         random_uuid: pytest.FixtureRequest,
         valid_payload: pytest.FixtureRequest,
         client: TestClient,
@@ -158,7 +174,21 @@ class TestUpsertContentToQdrant:
         assert result.content_id == random_uuid
         assert result.content_text == content_text
 
-    def test_upsert_content_to_qdrant_correctly_adds_content(
+        updated_content_text = content_text + " updated"
+
+        updated_result = _upsert_content_to_qdrant(
+            random_uuid,
+            ContentCreate(
+                content_text=updated_content_text, content_metadata=content_metadata
+            ),
+            valid_payload,
+            qdrant_client=qdrant_client,
+        )
+
+        assert updated_result.content_id == random_uuid
+        assert updated_result.content_text == updated_content_text
+
+    def test_upsert_content_to_qdrant_correctly_adds_or_updates_content(
         self, random_uuid: pytest.FixtureRequest, client: TestClient
     ) -> None:
         qdrant_client = get_qdrant_client()
@@ -171,16 +201,29 @@ class TestUpsertContentToQdrant:
         }
         _upsert_content_to_qdrant(
             random_uuid,
-            ContentCreate(content_text="content text 1", content_metadata={}),
+            ContentCreate(content_text="content text", content_metadata={}),
             payload,
             qdrant_client=qdrant_client,
         )
 
-        records = qdrant_client.scroll(collection_name=QDRANT_COLLECTION_NAME)[0]
+        matches = self._search_qdrant_collection_by_id_with_vectors(random_uuid)
 
-        matches = [record for record in records if record.id == str(random_uuid)]
         assert len(matches) == 1
         assert matches[0].payload["test_key"] == "test_value"
+
+        updated_content_text = "updated content text"
+
+        _upsert_content_to_qdrant(
+            random_uuid,
+            ContentCreate(content_text=updated_content_text, content_metadata={}),
+            payload,
+            qdrant_client=qdrant_client,
+        )
+
+        new_matches = self._search_qdrant_collection_by_id_with_vectors(random_uuid)
+
+        assert len(new_matches) == 1
+        assert np.not_equal(new_matches[0].vector, matches[0].vector).any()
 
 
 def test_convert_record_to_schema() -> None:
