@@ -1,31 +1,28 @@
-## Title
+Reviewer: 
 
-Provide a short, concise and meaningful PR Title above. Examples of good PR titles:
+Estimate: 
 
-- "[#TicketID] Feature: add so-and-so feature"
+----
 
-- "[#TicketID] Fix: fix abc bug"
+# Title
 
 ## Ticket
 
-Fixes: <JIRA_TICKET_LINK_HERE>
+Fixes: JIRA_TICKET_LINK_HERE
 
 ## Description, Motivation and Context
 
-Please explain:
+### Goal
 
-- What is the goal of that task?
-- What are the changes?
-- Why have you chosen this solution?
-- What is the basic idea behind the code?
+### Changes
+
+### Why
 
 ## How Has This Been Tested?
 
 ## To-do before merge
 
 (Optional -- remove this section if not needed)
-
-Include any notes about things that need to happen before this PR is merged, e.g.:
 
 - [ ] Ensure PR #56 is merged
 
@@ -42,3 +39,5 @@ Put an `x` in all the items that apply and remove any items that are not relevan
 - [ ] I have written [good commit messages][1]
 - [ ] I have updated the README file (if applicable)
 - [ ] I have updated affected documentation (if applicable)
+
+[1]: http://chris.beams.io/posts/git-commit/
