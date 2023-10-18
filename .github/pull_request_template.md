@@ -39,3 +39,5 @@ Put an `x` in all the items that apply and remove any items that are not relevan
 - [ ] I have written [good commit messages][1]
 - [ ] I have updated the README file (if applicable)
 - [ ] I have updated affected documentation (if applicable)
+
+[1]: http://chris.beams.io/posts/git-commit/
