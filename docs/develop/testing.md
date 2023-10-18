@@ -27,6 +27,44 @@ qdrant containers for testing and set the correct environment variables.
 
 After debugging, clean up the testing resources by calling `make teardown-tests`.
 
+### Debugging on Visual Studio Code
+
+Add the following configuration to your `.vscode/launch.json` file to set environment
+variables for debugging:
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {  // configuration for debugging
+            "name": "Python: Tests in current file",
+            "purpose": ["debug-test"],
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["--color=yes"],
+            "envFile": "${workspaceFolder}/core_backend/tests/test.env",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}
+```
+
+Add the following configuration to `.vscode/settings.json` to set the correct pytest
+working directory and environment variables:
+```json
+{
+    "python.testing.cwd": "${workspaceFolder}/core_backend",
+    "python.testing.pytestArgs": [
+        "tests",
+        "--rootdir=${workspaceFolder}/core_backend"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.envFile": "${workspaceFolder}/core_backend/tests/test.env"
+}
+```
+
 ## Calling endpoints
 
 ### Run the app
