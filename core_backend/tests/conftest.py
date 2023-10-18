@@ -35,8 +35,12 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
-    monkeysession.setattr("app.routers.manage_content.embedding", fake_embedding)
-    monkeysession.setattr("app.routers.question_answer.embedding", fake_embedding)
+    monkeysession.setattr(
+        "core_backend.app.routers.manage_content.embedding", fake_embedding
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.embedding", fake_embedding
+    )
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
