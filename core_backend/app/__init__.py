@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .configs.app_config import QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
 from .routers import admin, manage_content, question_answer
@@ -13,6 +14,21 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     app.include_router(question_answer.router)
     app.include_router(manage_content.router)
+
+    origins = [
+        "https://localhost",
+        "https://localhost:3000",
+        "http://localhost",
+        "http://localhost:3000",
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.on_event("startup")
     def startup_event() -> None:

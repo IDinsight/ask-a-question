@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   core_backend:
     image: idinsight/aaq-backend:latest
@@ -36,6 +36,21 @@ services:
       - QDRANT__TELEMETRY_DISABLED=true
     volumes:
       - qdrant_volume:/qdrant/storage
+  admin_app:
+    image: idinsight/aaq-admin-app:latest
+    build:
+      context: ../admin_app
+      dockerfile: Dockerfile
+    command: >
+      npm start
+    depends_on:
+      - core_backend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
 volumes:
   local_dynamic_storage:
   db_volume:

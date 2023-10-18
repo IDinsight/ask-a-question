@@ -100,7 +100,7 @@ Otherwise, you can run them manually as below.
 
         python -m alembic upgrade head
 
-## Run the FastAPI app
+## Run the backend app
 
 With the Docker databases running, from `aaq-core/core_backend` run:
 
@@ -109,7 +109,22 @@ With the Docker databases running, from `aaq-core/core_backend` run:
 This will launch the application in "reload" mode i.e. the app with automatically
 refresh everytime you make a change to one of the files
 
+## Run the Admin app
+
+??? note "You need to have nodejs v19 installed locally"
+
+    If you have a different version installed already, you may wish to use
+    [nvm](https://github.com/nvm-sh/nvm) to install v19.
+
+From `aaq-core/admin_app` run:
+
+    npm run dev
+
+This will start the react/nextjs front end used to manage content.
+
 ## Check health
+
+### Backend
 
 Go to the following URL to check that the app came up correctly
 
@@ -119,8 +134,15 @@ You can also easily test each endpoint through:
 
     http://localhost:8000/docs
 
+### Admin app
+
+Admin app can be reached at
+
+    http://localhost:3000/
+
 ## Setting up docs
 
 To host docs offline so you can see your changes, run the following (with altered port so it doesn't interfere with the app's server):
 
     mkdocs serve -a "localhost:8080"
+
