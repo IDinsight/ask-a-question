@@ -12,7 +12,7 @@ from core_backend.app.configs.app_config import (
 from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.routers.manage_content import (
     _convert_record_to_schema,
-    _create_payload,
+    _create_payload_for_qdrant_upsert,
     _upsert_content_to_qdrant,
 )
 from core_backend.app.schemas import ContentCreate
@@ -118,7 +118,7 @@ class TestManageContent:
 class TestUpsertContentToQdrant:
     @pytest.fixture(scope="function")
     def valid_payload(self) -> Dict[Any, Any]:
-        return _create_payload(content_text="content", metadata={})
+        return _create_payload_for_qdrant_upsert(content_text="content", metadata={})
 
     @pytest.fixture(scope="function")
     def random_uuid(self) -> pytest.FixtureRequest:
@@ -178,29 +178,34 @@ class TestUpsertContentToQdrant:
 
         records = qdrant_client.scroll(collection_name=QDRANT_COLLECTION_NAME)[0]
 
-        assert any(str(random_uuid) == record.id for record in records)
-
-        for record in records:
-            if record.id == str(random_uuid):
-                break
-
-        assert record.payload["test_key"] == "test_value"
+        matches = [record for record in records if record.id == str(random_uuid)]
+        assert len(matches) == 1
+        assert matches[0].payload["test_key"] == "test_value"
 
 
-class TestConvertRecordToSchema:
-    def test_basic_conversion(self) -> None:
-        content_uuid = uuid.uuid4()
+def test_convert_record_to_schema() -> None:
+    content_uuid = uuid.uuid4()
 
-        record = Record(
-            id=str(content_uuid),
-            payload={
-                "created_datetime_utc": datetime.datetime.utcnow(),
-                "updated_datetime_utc": datetime.datetime.utcnow(),
-                "content_text": "sample text",
-                "extra_field": "extra value",
-            },
-        )
-        result = _convert_record_to_schema(record)
-        assert result.content_id == content_uuid
-        assert result.content_text == "sample text"
-        assert result.content_metadata["extra_field"] == "extra value"
+    record = Record(
+        id=str(content_uuid),
+        payload={
+            "created_datetime_utc": datetime.datetime.utcnow(),
+            "updated_datetime_utc": datetime.datetime.utcnow(),
+            "content_text": "sample text",
+            "extra_field": "extra value",
+        },
+    )
+    result = _convert_record_to_schema(record)
+    assert result.content_id == content_uuid
+    assert result.content_text == "sample text"
+    assert result.content_metadata["extra_field"] == "extra value"
+
+
+def test_create_payload_for_qdrant_upsert_return_dict() -> None:
+    payload = _create_payload_for_qdrant_upsert(
+        content_text="sample text", metadata={"meta_key": "meta_value"}
+    )
+    assert payload["content_text"] == "sample text"
+    assert payload["meta_key"] == "meta_value"
+    assert payload["created_datetime_utc"]
+    assert payload["updated_datetime_utc"]
