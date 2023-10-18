@@ -5,6 +5,7 @@
 ## Running unit tests
 
 ### Running all unit tests
+
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
@@ -31,6 +32,7 @@ After debugging, clean up the testing resources by calling `make teardown-tests`
 
 Add the following configuration to your `.vscode/launch.json` file to set environment
 variables for debugging:
+
 ```json
 {
     "version": "0.2.0",
@@ -52,6 +54,7 @@ variables for debugging:
 
 Add the following configuration to `.vscode/settings.json` to set the correct pytest
 working directory and environment variables:
+
 ```json
 {
     "python.testing.cwd": "${workspaceFolder}/core_backend",
@@ -88,12 +91,12 @@ Note the `content_id`. You'll need it for steps 4 and 5.
     You'll need to know your `QUESTION_ANSWER_SECRET`. The default value can be found
     in `core_backend/app/configs/app_config.py` but can be overridden by setting the environment
     variable.
-```
-curl -X POST -d '{"query_text":"i love sport, tell me about a vegetable that will keep be strong"}'  \
--H 'Content-Type: application/json' \
--H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
-localhost:8000/embeddings-search
-```
+
+    curl -X POST -d '{"query_text":"i love sport, tell me about a vegetable that will keep be strong"}'  \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
+    localhost:8000/embeddings-search
+
 Note the `query_id` and `feedback_secret_key`. You'll need them for the next command.
 
 #### 3. Send feedback
