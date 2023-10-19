@@ -1,7 +1,18 @@
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from typing import Dict
 
-from ..configs.app_config import QDRANT_API_KEY, QDRANT_HOST, QDRANT_PORT, QDRANT_URL
+from litellm import embedding
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, PayloadSelectorInclude, VectorParams
+
+from ..configs.app_config import (
+    EMBEDDING_MODEL,
+    QDRANT_API_KEY,
+    QDRANT_COLLECTION_NAME,
+    QDRANT_HOST,
+    QDRANT_PORT,
+    QDRANT_URL,
+)
+from ..schemas import UserQueryBase, UserQuerySearchResult
 
 _qdrant_client: QdrantClient | None = None
 
@@ -34,3 +45,36 @@ def create_qdrant_collection(collection_name: str, embeddings_dim: str) -> None:
 
     if not result:
         raise Exception("Unable to create collection in Qdrant")
+
+
+def get_similar_content(
+    question: UserQueryBase,
+    qdrant_client: QdrantClient,
+    n_similar: int,
+) -> Dict[int, UserQuerySearchResult]:
+    """
+    Get the most similar points in the vector db
+    """
+
+    question_embedding = (
+        embedding(EMBEDDING_MODEL, question.query_text).data[0].embedding
+    )
+
+    search_result = qdrant_client.search(
+        collection_name=QDRANT_COLLECTION_NAME,
+        query_vector=question_embedding,
+        limit=n_similar,
+        with_payload=PayloadSelectorInclude(include=["content_text"]),
+    )
+
+    results_dict = {}
+    for i, r in enumerate(search_result):
+        if r.payload is None:
+            raise ValueError("Payload is empty. No content text found.")
+        else:
+            results_dict[i] = UserQuerySearchResult(
+                response_text=r.payload.get("content_text", ""),
+                score=r.score,
+            )
+
+    return results_dict
