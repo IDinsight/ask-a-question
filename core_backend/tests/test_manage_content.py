@@ -124,13 +124,15 @@ class TestUpsertContentToQdrant:
 
     @pytest.fixture(scope="function")
     def random_uuid(self) -> pytest.FixtureRequest:
-        """Generates random UUID for testing and deletes a record with the ID from the
-        Qdrant test collection"""
+        yield uuid.uuid4()
+
+    @pytest.fixture(scope="function", autouse=True)
+    def clean(self, random_uuid: uuid.UUID) -> pytest.FixtureRequest:
+        """Clean record created by the test"""
+        yield
         qdrant_client = get_qdrant_client()
-        _uuid_id = uuid.uuid4()
-        yield _uuid_id
         qdrant_client.delete(
-            collection_name=QDRANT_COLLECTION_NAME, points_selector=[str(_uuid_id)]
+            collection_name=QDRANT_COLLECTION_NAME, points_selector=[str(random_uuid)]
         )
 
     def _search_qdrant_collection_by_id_with_vectors(
