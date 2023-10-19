@@ -27,6 +27,8 @@ theme:
 
 repo_url: https://github.com/IDinsight/aaq-core
 
+repo_url: https://github.com/IDinsight/aaq-core
+
 nav:
   - Getting Started: index.md
   - Content:
