@@ -69,3 +69,35 @@ stop-test-db:
 stop-test-vector-db:
 	@docker stop testvectordb
 	@docker rm testvectordb
+
+# Development DBs
+
+setup-dbs: setup-db setup-vector-db
+
+teardown-dbs: stop-db stop-vector-db
+
+setup-db:
+	-@docker stop aaq-local
+	-@docker rm aaq-local
+	@docker system prune -f
+	@sleep 2
+	@docker run --name aaq-local \
+     -e POSTGRES_PASSWORD=postgres \
+     -p 5432:5432 \
+     -d postgres
+	python -m alembic upgrade head
+
+setup-vector-db:
+	-@docker stop qdrant-local
+	-@docker rm qdrant-local
+	docker run --name qdrant-local \
+     -p 6333:6333 \
+     -d qdrant/qdrant
+
+stop-db:
+	@docker stop aaq-local
+	@docker rm aaq-local
+
+stop-vector-db:
+	@docker stop qdrant-local
+	@docker rm qdrant-local
