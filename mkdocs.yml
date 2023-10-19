@@ -24,6 +24,8 @@ theme:
     admonition:
       note: material/alert-circle
 
+repo_url: https://github.com/IDinsight/aaq-core
+
 nav:
   - Getting Started: index.md
   - Developing:
