@@ -16,12 +16,11 @@ fresh-env :
 	conda create --name $(PROJECT_NAME) python==3.10 -y
 
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
-	pip install --upgrade pip; \
 	pip install -r requirements.txt --ignore-installed; \
 	pip install -r ../requirements-dev.txt --ignore-installed; \
 	pre-commit install
 
-	if [ "$(replace_psycopg_w_binary)" = "true" ]; then \
+	if [ "$(psycopg_binary)" = "true" ]; then \
 		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 		pip uninstall -y psycopg2; \
 		pip install psycopg2-binary==2.9.7; \
