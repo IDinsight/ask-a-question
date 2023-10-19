@@ -275,7 +275,12 @@ def test_create_payload_for_qdrant_upsert_return_dict(
     )
 
     assert payload["content_text"] == content_text
+    if "created_datetime_utc" in content_metadata:
+        assert (
+            payload["created_datetime_utc"] == content_metadata["created_datetime_utc"]
+        )
     assert payload["updated_datetime_utc"] >= payload["created_datetime_utc"]
 
+    # Check for additional parameters
     for key in content_metadata:
         assert key in payload
