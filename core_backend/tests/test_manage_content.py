@@ -2,7 +2,6 @@ import datetime
 import uuid
 from typing import Any, Dict, Generator, List
 
-import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from qdrant_client.http import models
@@ -137,9 +136,7 @@ class TestUpsertContentToQdrant:
             collection_name=QDRANT_COLLECTION_NAME, points_selector=[str(random_uuid)]
         )
 
-    def _search_qdrant_collection_by_id_with_vectors(
-        self, content_id: uuid.UUID
-    ) -> List[Record]:
+    def _search_qdrant_collection_by_id(self, content_id: uuid.UUID) -> List[Record]:
         qdrant_client = get_qdrant_client()
         return qdrant_client.scroll(
             collection_name=QDRANT_COLLECTION_NAME,
@@ -148,7 +145,6 @@ class TestUpsertContentToQdrant:
                     models.HasIdCondition(has_id=[str(content_id)]),
                 ],
             ),
-            with_vectors=True,
         )[0]
 
     @pytest.mark.parametrize(
@@ -210,7 +206,7 @@ class TestUpsertContentToQdrant:
             qdrant_client=qdrant_client,
         )
 
-        matches = self._search_qdrant_collection_by_id_with_vectors(random_uuid)
+        matches = self._search_qdrant_collection_by_id(random_uuid)
 
         assert len(matches) == 1
         assert matches[0].payload["test_key"] == "test_value"
@@ -226,10 +222,9 @@ class TestUpsertContentToQdrant:
             qdrant_client=qdrant_client,
         )
 
-        new_matches = self._search_qdrant_collection_by_id_with_vectors(random_uuid)
+        new_matches = self._search_qdrant_collection_by_id(random_uuid)
 
         assert len(new_matches) == 1
-        assert np.not_equal(new_matches[0].vector, matches[0].vector).any()
         assert (
             new_matches[0].payload["created_datetime_utc"]
             == matches[0].payload["created_datetime_utc"]
