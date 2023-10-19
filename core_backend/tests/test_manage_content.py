@@ -19,6 +19,8 @@ from core_backend.app.routers.manage_content import (
 )
 from core_backend.app.schemas import ContentCreate
 
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+
 
 class TestManageContent:
     @pytest.fixture(
@@ -195,7 +197,7 @@ class TestUpsertContentToQdrant:
     ) -> None:
         qdrant_client = get_qdrant_client()
 
-        timestamp = datetime.datetime(2023, 9, 1, 0, 0, 0)
+        timestamp = datetime.datetime.utcnow()
         payload = {
             "created_datetime_utc": timestamp,
             "updated_datetime_utc": timestamp,
@@ -214,6 +216,8 @@ class TestUpsertContentToQdrant:
         assert matches[0].payload["test_key"] == "test_value"
 
         updated_content_text = "updated content text"
+        updated_timestamp = datetime.datetime.utcnow()
+        payload["updated_datetime_utc"] = updated_timestamp
 
         _upsert_content_to_qdrant(
             random_uuid,
@@ -226,6 +230,13 @@ class TestUpsertContentToQdrant:
 
         assert len(new_matches) == 1
         assert np.not_equal(new_matches[0].vector, matches[0].vector).any()
+        assert (
+            new_matches[0].payload["created_datetime_utc"]
+            == matches[0].payload["created_datetime_utc"]
+        )
+        assert new_matches[0].payload[
+            "updated_datetime_utc"
+        ] == updated_timestamp.strftime(DATETIME_FORMAT)
 
 
 def test_convert_record_to_schema() -> None:
@@ -246,11 +257,30 @@ def test_convert_record_to_schema() -> None:
     assert result.content_metadata["extra_field"] == "extra value"
 
 
-def test_create_payload_for_qdrant_upsert_return_dict() -> None:
+@pytest.mark.parametrize(
+    "content_text, content_metadata",
+    [
+        ("", {}),
+        ("sample text", {"meta_key": "meta_value"}),
+        (
+            "sample text",
+            {"created_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
+        ),
+        (
+            "sample text",
+            {"updated_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
+        ),
+    ],
+)
+def test_create_payload_for_qdrant_upsert_return_dict(
+    content_text: str, content_metadata: Dict[str, Any]
+) -> None:
     payload = _create_payload_for_qdrant_upsert(
-        content_text="sample text", metadata={"meta_key": "meta_value"}
+        content_text=content_text, metadata=content_metadata
     )
-    assert payload["content_text"] == "sample text"
-    assert payload["meta_key"] == "meta_value"
-    assert payload["created_datetime_utc"]
-    assert payload["updated_datetime_utc"]
+
+    assert payload["content_text"] == content_text
+    assert payload["updated_datetime_utc"] >= payload["created_datetime_utc"]
+
+    for key in content_metadata:
+        assert key in payload

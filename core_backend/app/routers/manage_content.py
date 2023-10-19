@@ -136,9 +136,12 @@ def _create_payload_for_qdrant_upsert(content_text: str, metadata: dict) -> dict
     payload = metadata.copy()
 
     if "created_datetime_utc" not in payload:
-        payload["created_datetime_utc"] = datetime.utcnow()
+        timestamp = datetime.utcnow()
+        payload["created_datetime_utc"] = timestamp
+        payload["updated_datetime_utc"] = timestamp
+    else:
+        payload["updated_datetime_utc"] = datetime.utcnow()
 
-    payload["updated_datetime_utc"] = datetime.utcnow()
     payload["content_text"] = content_text
 
     return payload
