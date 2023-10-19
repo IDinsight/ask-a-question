@@ -23,6 +23,7 @@ theme:
   icon:
     admonition:
       note: material/alert-circle
+    annotation: material/help-circle
 
 repo_url: https://github.com/IDinsight/aaq-core
 
