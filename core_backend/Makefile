@@ -27,11 +27,18 @@ fresh-env :
 		pip install psycopg2-binary==2.9.7; \
 	fi
 
+# Running Tests
 tests: setup-test-db setup-test-vector-db run-tests stop-test-db stop-test-vector-db
 
-setup-tests: setup-test-db setup-test-vector-db setup-test-state
+run-tests:
+	@set -a && source ./tests/test.env && set +a && \
+	python -m alembic upgrade head && \
+	python -m pytest -rPQ
 
-teardown-tests: stop-test-db stop-test-vector-db
+# Test DBs
+setup-test-dbs: setup-test-db setup-test-vector-db
+
+teardown-test-dbs: stop-test-db stop-test-vector-db
 
 setup-test-db:
 	-@docker stop testdb
@@ -45,6 +52,8 @@ setup-test-db:
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
 		-d postgres
+	@set -a && source ./tests/test.env && set +a && \
+	python -m alembic upgrade head
 
 setup-test-vector-db:
 	-@docker stop testvectordb
@@ -52,15 +61,6 @@ setup-test-vector-db:
 	docker run --name testvectordb \
 		-p 6334:6333 \
 		-d qdrant/qdrant
-
-setup-test-state:
-	@set -a && source ./tests/test.env && set +a && \
-	python -m alembic upgrade head
-
-run-tests:
-	@set -a && source ./tests/test.env && set +a && \
-	python -m alembic upgrade head && \
-	python -m pytest -rPQ
 
 stop-test-db:
 	@docker stop testdb
