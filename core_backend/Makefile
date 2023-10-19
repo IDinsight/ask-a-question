@@ -1,12 +1,31 @@
 #!make
 
-.PHONY : tests setup-test-db setup-test-vector-db run-tests stop-test-db stop-test-vector-db
+.PHONY : tests
 
-ifneq (,$(wildcard ./.env))
-	include .env
-	export
-endif
+PROJECT_NAME = aaq-core
+CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
+clean:
+	find .. -type f -name "*.py[co]" -delete
+	find .. -type d -name "__pycache__" -delete
+	find .. -type d -name ".pytest_cache" -delete
+
+# Note: Run `make fresh-env replace_psycopg_w_binary=true` to manually replace psycopg with psycopg-binary
+fresh-env :
+	conda remove --name $(PROJECT_NAME) --all -y
+	conda create --name $(PROJECT_NAME) python==3.10 -y
+
+	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
+	pip install --upgrade pip; \
+	pip install -r requirements.txt --ignore-installed; \
+	pip install -r ../requirements-dev.txt --ignore-installed; \
+	pre-commit install
+
+	if [ "$(replace_psycopg_w_binary)" = "true" ]; then \
+		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
+		pip uninstall -y psycopg2; \
+		pip install psycopg2-binary==2.9.7; \
+	fi
 
 tests: setup-test-db setup-test-vector-db run-tests stop-test-db stop-test-vector-db
 
