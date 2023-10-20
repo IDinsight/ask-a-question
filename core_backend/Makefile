@@ -76,11 +76,11 @@ setup-dbs: setup-db setup-vector-db
 teardown-dbs: stop-db stop-vector-db
 
 setup-db:
-	-@docker stop aaq-local
-	-@docker rm aaq-local
+	-@docker stop postgres-local
+	-@docker rm postgres-local
 	@docker system prune -f
 	@sleep 2
-	@docker run --name aaq-local \
+	@docker run --name postgres-local \
      -e POSTGRES_PASSWORD=postgres \
      -p 5432:5432 \
      -d postgres
@@ -94,8 +94,8 @@ setup-vector-db:
      -d qdrant/qdrant
 
 stop-db:
-	@docker stop aaq-local
-	@docker rm aaq-local
+	@docker stop postgres-local
+	@docker rm postgres-local
 
 stop-vector-db:
 	@docker stop qdrant-local

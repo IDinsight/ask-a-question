@@ -66,7 +66,7 @@ Otherwise, you can run them manually as below.
 
     ### Run a local postgres server
 
-        docker run --name aaq-local \
+        docker run --name postgres-local \
             -e POSTGRES_PASSWORD=postgres \
             -p 5432:5432 \
             -d postgres
@@ -75,7 +75,7 @@ Otherwise, you can run them manually as below.
     preferable to create your database from scratch each time. But if you wish to persist data
     use a volume as below:
 
-        docker run --name aaq-local \
+        docker run --name postgres-local \
         -e POSTGRES_PASSWORD=postgres \
         -p 5432:5432 \
         -v postgres_local_vol:/var/lib/postrges/data \
