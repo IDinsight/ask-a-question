@@ -31,6 +31,7 @@ class UserQueryResponse(BaseModel):
 
     query_id: int
     responses: Dict[int, UserQuerySearchResult]
+    llm_response: str = ""
     feedback_secret_key: str
     debug_info: dict = {}
 

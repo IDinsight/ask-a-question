@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from litellm import completion
 from qdrant_client import QdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,9 +16,69 @@ from ..db.db_models import (
 )
 from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client, get_similar_content
-from ..schemas import FeedbackBase, UserQueryBase, UserQueryResponse
+from ..schemas import (
+    FeedbackBase,
+    UserQueryBase,
+    UserQueryResponse,
+)
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
+
+
+@router.post("/llm-response")
+async def llm_response(
+    user_query: UserQueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+) -> UserQueryResponse:
+    """
+    Embeddings search finds the most similar embeddings to the user query
+    from the vector db.
+    """
+
+    feedback_secret_key = generate_secret_key()
+
+    # add to query database
+    user_query_db = await save_user_query_to_db(
+        asession, feedback_secret_key, user_query
+    )
+
+    # get FAQs from vector db
+    faq_responses = get_similar_content(
+        user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+    )
+    print(faq_responses)
+
+    # add FAQs to responses database
+    prompt = f"""
+    Answer the user question \" {user_query.query_text} \"
+    in natural language by rewording the following FAQ found below and nothing else.
+    \n
+    If the FAQ doesn't seem to answer the question, respond with
+    "Sorry, no relevant information found."
+    \n
+    Found FAQ: {faq_responses[0].response_text}
+    """
+    print(prompt)
+
+    # generate llm response
+    messages = [{"content": prompt, "role": "user"}]
+    llm_response_raw = completion(model="gpt-3.5-turbo", messages=messages)
+    llm_text_response = llm_response_raw.choices[0].message.content
+    print(llm_text_response)
+
+    response = UserQueryResponse(
+        query_id=user_query_db.query_id,
+        responses=get_similar_content(
+            user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+        ),
+        llm_response=llm_text_response,
+        feedback_secret_key=feedback_secret_key,
+    )
+    await save_query_response_to_db(asession, user_query_db, response)
+
+    # respond to user
+    return response
 
 
 @router.post("/embeddings-search")
@@ -50,7 +111,7 @@ async def embeddings_search(
     # add FAQs to responses database
     await save_query_response_to_db(asession, user_query_db, responses)
 
-    # repond to user
+    # respond to user
     return responses
 
 
