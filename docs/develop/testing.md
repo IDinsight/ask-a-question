@@ -82,7 +82,7 @@ To use FastAPI's WebGUI to call the endpoints easily, navigate to
 
 and run endpoints as desired.
 
-??? warning "Authorsing the `/embedding_search` endpoint"
+??? warning "Authorising the `/embedding_search` endpoint"
     To use the `/embedding_search` endpoint, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET` from the app configs.
 
     The default value can be found
