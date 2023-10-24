@@ -12,6 +12,7 @@ from core_backend.app.configs.app_config import (
     QUESTION_ANSWER_SECRET,
 )
 from core_backend.app.db.vector_db import get_qdrant_client
+from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
 
 from .conftest import fake_embedding
 
@@ -30,7 +31,10 @@ class TestEmbeddingsSearch:
                 .data[0]
                 .embedding
             )
-            payload = content.get("content_metadata", {})
+            metadata = content.get("content_metadata", {})
+            payload = _create_payload_for_qdrant_upsert(
+                content["content_text"], metadata
+            )
             points.append(
                 PointStruct(id=point_id, vector=content_embedding, payload=payload)
             )

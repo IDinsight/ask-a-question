@@ -27,32 +27,17 @@ async def create_content(
     upserts it to Qdrant collection.
     """
 
-    content_embedding = (
-        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
-    )
-    point_id = uuid.uuid4()
-
-    payload = dict(content.content_metadata)
-    payload["created_datetime_utc"] = datetime.utcnow()
-    payload["updated_datetime_utc"] = datetime.utcnow()
-    payload["content_text"] = content.content_text
-
-    qdrant_client.upsert(
-        collection_name=QDRANT_COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=str(point_id),
-                vector=content_embedding,
-                payload=payload,
-            )
-        ],
+    payload = _create_payload_for_qdrant_upsert(
+        content.content_text, content.content_metadata
     )
 
-    return ContentRetrieve(
-        **content.model_dump(),
-        content_id=point_id,
-        created_datetime_utc=payload["created_datetime_utc"],
-        updated_datetime_utc=payload["updated_datetime_utc"],
+    content_id = uuid.uuid4()
+
+    return _upsert_content_to_qdrant(
+        content_id=content_id,
+        content=content,
+        payload=payload,
+        qdrant_client=qdrant_client,
     )
 
 
@@ -65,38 +50,23 @@ async def edit_content(
     """
     Edit content endpoint
     """
-
-    # retrive old content
     old_content = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+
     if len(old_content) == 0:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    payload = old_content[0].payload or {}
+    payload = _create_payload_for_qdrant_upsert(
+        content.content_text, old_content[0].payload or {}
+    )
     payload.update(content.content_metadata)
-    payload["updated_datetime_utc"] = datetime.utcnow()
-    payload["content_text"] = content.content_text
 
-    content_embedding = (
-        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
-    )
-    qdrant_client.upsert(
-        collection_name=QDRANT_COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=str(content_id),
-                vector=content_embedding,
-                payload=payload,
-            )
-        ],
-    )
-
-    return ContentRetrieve(
-        **content.model_dump(),
+    return _upsert_content_to_qdrant(
         content_id=UUID(content_id),
-        created_datetime_utc=payload["created_datetime_utc"],
-        updated_datetime_utc=payload["updated_datetime_utc"],
+        content=content,
+        payload=payload,
+        qdrant_client=qdrant_client,
     )
 
 
@@ -117,7 +87,7 @@ async def retrieve_content(
         with_vectors=False,
     )
 
-    contents = [_record_to_schema(c) for c in records]
+    contents = [_convert_record_to_schema(c) for c in records]
     return contents
 
 
@@ -156,10 +126,59 @@ async def retrieve_content_by_id(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    return _record_to_schema(record[0])
+    return _convert_record_to_schema(record[0])
 
 
-def _record_to_schema(record: Record) -> ContentRetrieve:
+def _create_payload_for_qdrant_upsert(content_text: str, metadata: dict) -> dict:
+    """
+    Create payload for qdrant upsert
+    """
+    payload = metadata.copy()
+
+    if "created_datetime_utc" not in payload:
+        timestamp = datetime.utcnow()
+        payload["created_datetime_utc"] = timestamp
+        payload["updated_datetime_utc"] = timestamp
+    else:
+        payload["updated_datetime_utc"] = datetime.utcnow()
+
+    payload["content_text"] = content_text
+
+    return payload
+
+
+def _upsert_content_to_qdrant(
+    content_id: UUID,
+    content: ContentCreate,
+    payload: dict,
+    qdrant_client: QdrantClient,
+) -> ContentRetrieve:
+    """Add content to qdrant collection"""
+
+    content_embedding = (
+        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
+    )
+
+    qdrant_client.upsert(
+        collection_name=QDRANT_COLLECTION_NAME,
+        points=[
+            PointStruct(
+                id=str(content_id),
+                vector=content_embedding,
+                payload=payload,
+            )
+        ],
+    )
+
+    return ContentRetrieve(
+        **content.model_dump(),
+        content_id=content_id,
+        created_datetime_utc=payload["created_datetime_utc"],
+        updated_datetime_utc=payload["updated_datetime_utc"],
+    )
+
+
+def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     """
     Convert qdrant_client.models.Record to ContentRetrieve schema
     """
