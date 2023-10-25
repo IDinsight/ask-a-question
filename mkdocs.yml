@@ -1,28 +1,31 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
 site_name: AAQ
+
 theme:
   name: material
   palette:
-    # Palette toggle for light mode
-    - scheme: default
-      primary: blue
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-
     # Palette toggle for dark mode
     - scheme: slate
       primary: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
   features:
     - navigation.tabs
     - navigation.tabs.sticky
   icon:
     admonition:
       note: material/alert-circle
+    annotation: material/help-circle
+
+repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
   - Getting Started: index.md
