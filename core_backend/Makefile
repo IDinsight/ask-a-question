@@ -27,7 +27,7 @@ fresh-env :
 	fi
 
 # Running Tests
-tests: setup-test-db setup-test-vector-db run-tests stop-test-db stop-test-vector-db
+tests: setup-test-relational-db setup-test-vector-db run-tests stop-test-relational-db stop-test-vector-db
 
 run-tests:
 	@set -a && source ./tests/test.env && set +a && \
@@ -35,11 +35,11 @@ run-tests:
 	python -m pytest -rPQ
 
 # Test DBs
-setup-test-dbs: setup-test-db setup-test-vector-db
+setup-test-relational-dbs: setup-test-relational-db setup-test-vector-db
 
-teardown-test-dbs: stop-test-db stop-test-vector-db
+teardown-test-dbs: stop-test-relational-db stop-test-vector-db
 
-setup-test-db:
+setup-test-relational-db:
 	-@docker stop testdb
 	-@docker rm testdb
 	@docker system prune -f
@@ -61,7 +61,7 @@ setup-test-vector-db:
 		-p 6334:6333 \
 		-d qdrant/qdrant
 
-stop-test-db:
+stop-test-relational-db:
 	@docker stop testdb
 	@docker rm testdb
 
@@ -71,11 +71,11 @@ stop-test-vector-db:
 
 # Development DBs
 
-setup-dbs: setup-db setup-vector-db
+setup-dbs: setup-relational-db setup-vector-db
 
-teardown-dbs: stop-db stop-vector-db
+teardown-dbs: stop-relational-db stop-vector-db
 
-setup-db:
+setup-relational-db:
 	-@docker stop postgres-local
 	-@docker rm postgres-local
 	@docker system prune -f
@@ -93,7 +93,7 @@ setup-vector-db:
      -p 6333:6333 \
      -d qdrant/qdrant
 
-stop-db:
+stop-relational-db:
 	@docker stop postgres-local
 	@docker rm postgres-local
 
