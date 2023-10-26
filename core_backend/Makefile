@@ -10,7 +10,7 @@ clean:
 	find .. -type d -name "__pycache__" -delete
 	find .. -type d -name ".pytest_cache" -delete
 
-# Note: Run `make fresh-env replace_psycopg_w_binary=true` to manually replace psycopg with psycopg-binary
+# Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
 fresh-env :
 	conda remove --name $(PROJECT_NAME) --all -y
 	conda create --name $(PROJECT_NAME) python==3.10 -y
@@ -20,7 +20,7 @@ fresh-env :
 	pip install -r ../requirements-dev.txt --ignore-installed; \
 	pre-commit install
 
-	if [ "$(psycopg_binary)" = "true" ]; then \
+	if [ "$(psycopg2-binary)" = "true" ]; then \
 		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 		pip uninstall -y psycopg2; \
 		pip install psycopg2-binary==2.9.7; \
