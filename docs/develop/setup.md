@@ -15,11 +15,11 @@ Make sure you also run `mypy` separately with `mypy core_backend/app` (1)
 { .annotate }
 
 1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
-packages installed, this would mean keeping a whole separate copy of your
-environment just for it. That's too bulky so the pre-commit only checks
-a few high-level typing things. You still need to run `mypy` directly to catch
-all the typing issues.
-If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
+   packages installed, this would mean keeping a whole separate copy of your
+   environment just for it. That's too bulky so the pre-commit only checks
+   a few high-level typing things. You still need to run `mypy` directly to catch
+   all the typing issues.
+   If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
 
 ## Setup your virtual python environment
 
@@ -100,7 +100,7 @@ Otherwise, you can run them manually as below.
 
         python -m alembic upgrade head
 
-## Run the FastAPI app
+## Run the backend app
 
 With the Docker databases running, from `aaq-core/core_backend` run:
 
@@ -109,7 +109,23 @@ With the Docker databases running, from `aaq-core/core_backend` run:
 This will launch the application in "reload" mode i.e. the app with automatically
 refresh everytime you make a change to one of the files
 
+## Run the Admin app
+
+??? warning "You need to have nodejs v19 installed locally"
+
+    If you have a different version installed already, you may wish to use
+    [nvm](https://github.com/nvm-sh/nvm) to install v19.
+
+From `aaq-core/admin_app` run
+
+    npm i
+    npm run dev
+
+This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
+
 ## Check health
+
+### Backend
 
 Go to the following URL to check that the app came up correctly
 
@@ -118,6 +134,12 @@ Go to the following URL to check that the app came up correctly
 You can also easily test each endpoint through:
 
     http://localhost:8000/docs
+
+### Admin app
+
+Admin app can be reached at
+
+    http://localhost:3000/
 
 ## Setting up docs
 

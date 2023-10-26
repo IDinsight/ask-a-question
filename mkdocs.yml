@@ -29,15 +29,21 @@ repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
   - Getting Started: index.md
+  - Content:
+      - Managing content: content/admin-app.md
   - Developing:
-    - Setup: develop/setup.md
-    - Testing: develop/testing.md
+      - Setup: develop/setup.md
+      - Testing: develop/testing.md
 
 markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
   - attr_list
+  - md_in_html
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - glightbox
