@@ -62,7 +62,9 @@ class TestEmbeddingsSearch:
 
         if expected_status_code == 200:
             json_response = response.json()
-            assert len(json_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
+            assert len(json_response.keys()) == int(
+                QDRANT_N_TOP_SIMILAR
+            )  #### CHANGE THIS SINCE NOW THERE IS AN LLM RESPONSE PAIR TOO
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> None:

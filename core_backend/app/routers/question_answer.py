@@ -47,26 +47,28 @@ async def llm_response(
     faq_responses = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
-    print(faq_responses)
+    print("### FAQ responses:\n", faq_responses)
 
     # add FAQs to responses database
-    prompt = f"""
-    Answer the user question \" {user_query.query_text} \"
-    in natural language by rewording the following FAQ found below and nothing else.
-    \n
-    If the FAQ doesn't seem to answer the question, respond with
-    "Sorry, no relevant information found."
-    \n
-    Found FAQ: {faq_responses[0].response_text}
-    """
-    print(prompt)
+    prompt = (
+        f"Answer the user query in square brackets:"
+        f"\n[{user_query.query_text}]\n"
+        f"in natural language by rewording the following FAQ found below. "
+        f"Address the question directly and do not respond with anything that "
+        f"is outwith the context of the given FAQ."
+        f"\nIf the FAQ doesn't seem to answer the question, respond with "
+        f"'Sorry, no relevant information found.'"
+        f"\n\nFound FAQ:\n{faq_responses[0].response_text}"
+    )
+    print("### Prompt:\n", prompt)
 
     # generate llm response
     messages = [{"content": prompt, "role": "user"}]
     llm_response_raw = completion(model="gpt-3.5-turbo", messages=messages)
     llm_text_response = llm_response_raw.choices[0].message.content
-    print(llm_text_response)
+    print("### LLM response:\n", llm_text_response)
 
+    # format to response schema
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
         responses=get_similar_content(
@@ -100,11 +102,15 @@ async def embeddings_search(
     )
 
     # get FAQs from vector db
+    faq_responses = get_similar_content(
+        user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+    )
+
+    # format to response schema
     responses = UserQueryResponse(
         query_id=user_query_db.query_id,
-        responses=get_similar_content(
-            user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
-        ),
+        responses=faq_responses,
+        llm_response="",
         feedback_secret_key=feedback_secret_key,
     )
 
