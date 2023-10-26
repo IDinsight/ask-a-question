@@ -116,11 +116,12 @@ refresh everytime you make a change to one of the files
     If you have a different version installed already, you may wish to use
     [nvm](https://github.com/nvm-sh/nvm) to install v19.
 
-From `aaq-core/admin_app` run:
+From `aaq-core/admin_app` run
 
+    npm i
     npm run dev
 
-This will start the react/nextjs front end used to manage content.
+This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
 
 ## Check health
 

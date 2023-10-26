@@ -22,7 +22,7 @@ Upcoming features:
     POSTGRES_PASSWORD=
     OPENAI_API_KEY=
     QUESTION_ANSWER_SECRET=
-    ...
+    ... etc.
 
 **Step 3:** Run docker-compose
 
