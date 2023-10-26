@@ -15,11 +15,11 @@ Make sure you also run `mypy` separately with `mypy core_backend/app` (1)
 { .annotate }
 
 1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
-packages installed, this would mean keeping a whole separate copy of your
-environment just for it. That's too bulky so the pre-commit only checks
-a few high-level typing things. You still need to run `mypy` directly to catch
-all the typing issues.
-If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
+   packages installed, this would mean keeping a whole separate copy of your
+   environment just for it. That's too bulky so the pre-commit only checks
+   a few high-level typing things. You still need to run `mypy` directly to catch
+   all the typing issues.
+   If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
 
 ## Setup your virtual python environment
 
@@ -145,4 +145,3 @@ Admin app can be reached at
 To host docs offline so you can see your changes, run the following (with altered port so it doesn't interfere with the app's server):
 
     mkdocs serve -a "localhost:8080"
-
