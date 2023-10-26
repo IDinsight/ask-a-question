@@ -1,0 +1,30 @@
+name: Deploy any branch to dev
+on:
+  workflow_dispatch:
+    inputs:
+        BRANCH:
+          description: "Branch do deploy on dev"
+          type: string
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v3
+      - name: Execute remote SSH command
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            port: 22
+            script_stop: true
+            script: |
+                cd /home/${{ secrets.SSH_USERNAME }}/aaq-core/deployment &&
+                docker-compose -f docker-compose.yml -p aaq-stack down &&
+                git fetch --all &&
+                git switch ${{ github.event.inputs.BRANCH }} &&
+                git reset --hard origin/${{ github.event.inputs.BRANCH }} &&
+                git pull origin ${{ github.event.inputs.BRANCH }} &&
+                docker-compose -f docker-compose.yml -p aaq-stack up -d --build
