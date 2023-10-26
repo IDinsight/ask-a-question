@@ -111,7 +111,7 @@ refresh everytime you make a change to one of the files
 
 ## Run the Admin app
 
-??? note "You need to have nodejs v19 installed locally"
+??? warning "You need to have nodejs v19 installed locally"
 
     If you have a different version installed already, you may wish to use
     [nvm](https://github.com/nvm-sh/nvm) to install v19.
