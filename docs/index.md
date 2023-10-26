@@ -5,9 +5,9 @@ of REST endpoints to answer questions using a repository of content.
 
 Upcoming features:
 
-* Voice-based Question Answering
-* Conversation capability
-* Low-resouced language support
+- Voice-based Question Answering
+- Conversation capability
+- Low-resouced language support
 
 ## Quick Start
 
@@ -18,8 +18,6 @@ Upcoming features:
     git clone git@github.com:IDinsight/aaq-core.git
 
 **Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the variables
-
-    # Set variables below and copy to .env
 
     POSTGRES_PASSWORD=
     OPENAI_API_KEY=
