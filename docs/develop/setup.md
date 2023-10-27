@@ -104,6 +104,20 @@ Otherwise, you can run them manually as below.
 
 ## Run the backend app
 
+### Step 1: Set environment variables
+
+Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY`, before running the app.
+
+You can do this directly using
+
+    export OPENAI_API_KEY="sk-..."
+
+Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
+
+    set -a && source ./deployment/.env && set +a
+
+### Step 2: Run the backend app
+
 With the Docker databases running, from `aaq-core/core_backend` run:
 
     python main.py
