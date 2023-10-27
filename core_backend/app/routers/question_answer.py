@@ -7,7 +7,7 @@ from qdrant_client import QdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import auth_bearer_token
-from ..configs.app_config import QDRANT_N_TOP_SIMILAR
+from ..configs.app_config import OPENAI_LLM_TYPE, QDRANT_N_TOP_SIMILAR
 from ..db.db_models import (
     check_secret_key_match,
     save_feedback_to_db,
@@ -62,7 +62,7 @@ async def llm_response(
 
     # generate llm response
     messages = [{"content": prompt, "role": "user"}]
-    llm_response_raw = completion(model="gpt-3.5-turbo", messages=messages)
+    llm_response_raw = completion(model=OPENAI_LLM_TYPE, messages=messages)
     llm_text_response = llm_response_raw.choices[0].message.content
 
     # format to response schema
