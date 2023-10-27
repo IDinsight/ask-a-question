@@ -1,4 +1,4 @@
-"""llm_response column added to response db
+"""add llm_response column
 
 Revision ID: 8929d5c246e7
 Revises: cda1098017b5
