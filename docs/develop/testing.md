@@ -4,12 +4,17 @@
 
 ## Running unit tests
 
+### Step 1: Set env variables
+
+ Copy `tests/template.env` to `tests/.env` and edit it to set the environment variables.
+
+### Step 2: Run tests
+
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
 
 Run tests using
-
     make tests
 
 This target starts up new postgres and qdrant container for testing. It also sets the
@@ -40,7 +45,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
                 "request": "launch",
                 "program": "${file}",
                 "args": ["--color=yes"],
-                "envFile": "${workspaceFolder}/core_backend/tests/test.env",
+                "envFile": "${workspaceFolder}/core_backend/tests/.env",
                 "console": "integratedTerminal",
                 "justMyCode": false
             }
@@ -62,7 +67,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
         ],
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
-        "python.envFile": "${workspaceFolder}/core_backend/tests/test.env"
+        "python.envFile": "${workspaceFolder}/core_backend/tests/.env"
     }
     ```
 
@@ -107,8 +112,6 @@ and run endpoints as desired.
         -H 'Content-Type: application/json' \
         -H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
         localhost:8000/embeddings-search
-
-
 
     #### 3. Send feedback
 

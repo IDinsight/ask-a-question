@@ -31,7 +31,7 @@ fresh-env :
 tests: setup-test-relational-db setup-test-vector-db run-tests stop-test-relational-db stop-test-vector-db
 
 run-tests:
-	@set -a && source ./tests/test.env && set +a && \
+	@set -a && source ./tests/.env && set +a && \
 	python -m alembic upgrade head && \
 	python -m pytest -rPQ
 
@@ -45,14 +45,14 @@ setup-test-relational-db:
 	-@docker rm testdb
 	@docker system prune -f
 	@sleep 2
-	@set -a && source ./tests/test.env && set +a && \
+	@set -a && source ./tests/.env && set +a && \
 	docker run --name testdb \
 		-p 5433:5432 \
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
 		-d postgres
-	@set -a && source ./tests/test.env && set +a && \
+	@set -a && source ./tests/.env && set +a && \
 	python -m alembic upgrade head
 
 setup-test-vector-db:
