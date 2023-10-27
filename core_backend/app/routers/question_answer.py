@@ -47,7 +47,6 @@ async def llm_response(
     faq_response = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
-    print("### FAQ responses:\n", faq_response)
 
     # add FAQs to responses database
     prompt = (
@@ -60,13 +59,11 @@ async def llm_response(
         f"'Sorry, no relevant information found.'"
         f"\n\nFound FAQ:\n{faq_response[0].response_text}"
     )
-    print("### Prompt:\n", prompt)
 
     # generate llm response
     messages = [{"content": prompt, "role": "user"}]
     llm_response_raw = completion(model="gpt-3.5-turbo", messages=messages)
     llm_text_response = llm_response_raw.choices[0].message.content
-    print("### LLM response:\n", llm_text_response)
 
     # format to response schema
     response = UserQueryResponse(

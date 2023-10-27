@@ -106,7 +106,6 @@ class TestLLMSearch:
 
         if expected_status_code == 200:
             llm_response = response.json()["llm_response"]
-            print(llm_response)
             assert len(llm_response) != 0
 
     @pytest.fixture
