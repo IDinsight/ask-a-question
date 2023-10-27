@@ -8,6 +8,11 @@
 
  Copy `tests/template.env` to `tests/.env` and edit it to set the environment variables.
 
+??? note "OpenAI API key requirement"
+    You will need to set the `OPENAI_API_KEY` env var in order for the `/llm-response` endpoint
+    tests to pass. The `/embeddings-search` endpoint uses monkeypatched embeddings calls so this
+    is not necessary.
+
 ### Step 2: Run tests
 
 ??? warning "Don't run `pytest` directly"
@@ -87,8 +92,8 @@ To use FastAPI's WebGUI to call the endpoints easily, navigate to
 
 and run endpoints as desired.
 
-??? warning "Authorising the `/embedding_search` endpoint"
-    To use the `/embedding_search` endpoint, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET` from the app configs.
+??? warning "Authorising the `/embedding_search` and `llm-response` endpoints"
+    To use these endpoint, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET` from the app configs.
 
     The default value can be found
     in `core_backend/app/configs/app_config.py` but can be overridden by setting the environment
