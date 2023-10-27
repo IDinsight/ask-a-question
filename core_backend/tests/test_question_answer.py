@@ -61,7 +61,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_faq_response = response.json()["responses"]
+            json_faq_response = response.json()["faq_response"]
             assert len(json_faq_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
 
     @pytest.fixture

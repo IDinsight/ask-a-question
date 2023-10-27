@@ -44,10 +44,10 @@ async def llm_response(
     )
 
     # get FAQs from vector db
-    faq_responses = get_similar_content(
+    faq_response = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
-    print("### FAQ responses:\n", faq_responses)
+    print("### FAQ responses:\n", faq_response)
 
     # add FAQs to responses database
     prompt = (
@@ -58,7 +58,7 @@ async def llm_response(
         f"is outwith the context of the given FAQ."
         f"\nIf the FAQ doesn't seem to answer the question, respond with "
         f"'Sorry, no relevant information found.'"
-        f"\n\nFound FAQ:\n{faq_responses[0].response_text}"
+        f"\n\nFound FAQ:\n{faq_response[0].response_text}"
     )
     print("### Prompt:\n", prompt)
 
@@ -71,7 +71,7 @@ async def llm_response(
     # format to response schema
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
-        responses=get_similar_content(
+        faq_response=get_similar_content(
             user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
         ),
         llm_response=llm_text_response,
@@ -102,23 +102,23 @@ async def embeddings_search(
     )
 
     # get FAQs from vector db
-    faq_responses = get_similar_content(
+    faq_response = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
 
     # format to response schema
-    responses = UserQueryResponse(
+    response = UserQueryResponse(
         query_id=user_query_db.query_id,
-        responses=faq_responses,
+        faq_response=faq_response,
         llm_response="",
         feedback_secret_key=feedback_secret_key,
     )
 
     # add FAQs to responses database
-    await save_query_response_to_db(asession, user_query_db, responses)
+    await save_query_response_to_db(asession, user_query_db, response)
 
     # respond to user
-    return responses
+    return response
 
 
 @router.post("/feedback")
