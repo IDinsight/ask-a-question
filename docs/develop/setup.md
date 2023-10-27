@@ -56,6 +56,8 @@ You can create both postgres and vector databases (without a persistent data vol
 
     make setup-dbs
 
+!!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
+
 You can stop and remove them using:
 
     make teardown-dbs
