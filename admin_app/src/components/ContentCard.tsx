@@ -12,6 +12,7 @@ interface ContentCardProps extends Content {
   expanded: boolean;
   deleteMe: (id: string) => void;
   editMe: (content: Content) => void;
+  showEditButton: boolean;
 }
 
 export const ContentCard: React.FC<ContentCardProps> = (
@@ -29,21 +30,25 @@ export const ContentCard: React.FC<ContentCardProps> = (
     >
       {/* Icons Container */}
       <div className="absolute flex top-2 right-2 ">
-        <PencilIcon
-          data-modal-target="edit-content-modal"
-          data-modal-toggle="edit-content-modal"
-          className="w-3 h-3 text-gray-500 cursor-pointer hover:text-red-200"
-          onClick={() =>
-            card.editMe({
-              content_id: card.content_id,
-              content_text: card.content_text,
-            })
-          }
-        />
-        <TrashIcon
-          className="w-3 h-3 text-gray-500 cursor-pointer hover:text-red-200"
-          onClick={() => card.deleteMe(card.content_id)}
-        />
+        {card.showEditButton ? (
+          <>
+            <PencilIcon
+              data-modal-target="edit-content-modal"
+              data-modal-toggle="edit-content-modal"
+              className="w-3 h-3 text-gray-500 cursor-pointer hover:text-red-200"
+              onClick={() =>
+                card.editMe({
+                  content_id: card.content_id,
+                  content_text: card.content_text,
+                })
+              }
+            />
+            <TrashIcon
+              className="w-3 h-3 text-gray-500 cursor-pointer hover:text-red-200"
+              onClick={() => card.deleteMe(card.content_id)}
+            />
+          </>
+        ) : null}
       </div>
       <p
         className={`mb-3 overflow-auto whitespace-pre-line text-sm text-gray-700 dark:text-gray-400 ${

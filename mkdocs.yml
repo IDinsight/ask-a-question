@@ -36,6 +36,7 @@ nav:
       - Testing: develop/testing.md
 
 markdown_extensions:
+  - tables
   - admonition
   - pymdownx.details
   - pymdownx.superfences

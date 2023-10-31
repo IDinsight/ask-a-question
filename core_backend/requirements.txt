@@ -6,4 +6,7 @@ psycopg2==2.9.7
 asyncpg==0.28.0
 qdrant-client==1.5.4
 litellm==0.1.784
-sqlalchemy[asyncio]
+sqlalchemy[asyncio]==2.0.20
+python-multipart==0.0.6
+types-python-jose==3.3.4.8
+python-jose[cryptography]==3.3.0

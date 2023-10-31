@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict
+
+AccessLevel = Literal["fullaccess", "readonly"]
 
 
 class UserQueryBase(BaseModel):
@@ -85,3 +87,14 @@ class ContentDelete(BaseModel):
     """
 
     content_id: int
+
+
+class AuthenticatedUser(BaseModel):
+    """
+    Pydantic model for authenticated user
+    """
+
+    username: str
+    access_level: AccessLevel
+
+    model_config = ConfigDict(from_attributes=True)
