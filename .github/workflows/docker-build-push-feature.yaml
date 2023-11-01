@@ -5,6 +5,9 @@ on:
       BRANCH:
         description: "Branch do deploy on test server"
         type: string
+  push:
+    branches:
+      - AAQ-125-autodeploy-dev
 
 permissions:
   id-token: write # This is required for requesting the JWT
