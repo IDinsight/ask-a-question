@@ -70,9 +70,7 @@ async def llm_response(
     # format to response schema
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
-        faq_response=get_similar_content(
-            user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
-        ),
+        faq_response=faq_response,
         llm_response=llm_text_response,
         feedback_secret_key=feedback_secret_key,
     )
