@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict
 
@@ -31,7 +31,7 @@ class UserQueryResponse(BaseModel):
 
     query_id: int
     faq_response: Dict[int, UserQuerySearchResult]
-    llm_response: str = ""
+    llm_response: Optional[str] = None
     feedback_secret_key: str
     debug_info: dict = {}
 

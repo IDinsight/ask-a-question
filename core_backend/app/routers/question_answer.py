@@ -107,7 +107,7 @@ async def embeddings_search(
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
         faq_response=faq_response,
-        llm_response="",
+        llm_response=None,
         feedback_secret_key=feedback_secret_key,
     )
 
