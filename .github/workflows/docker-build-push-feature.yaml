@@ -24,7 +24,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::039685995141:role/github_actions_dev
           role-session-name: githubactions
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Build and push backend
         uses: docker/build-push-action@v2
