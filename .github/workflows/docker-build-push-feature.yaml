@@ -1,0 +1,40 @@
+name: Deploy any branch to dev
+on:
+  workflow_dispatch:
+    inputs:
+      BRANCH:
+        description: "Branch do deploy on test server"
+        type: string
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::039685995141:role/github_actions_dev
+          role-session-name: githubactions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v2
+        with:
+          context: ./core_backend
+          file: ./core_backend/Dockerfile
+          push: true
+          tags: 039685995141.dkr.ecr.af-south-1.amazonaws.com/aaq-core-backend:latest
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v2
+        with:
+          context: ./admin_app
+          file: ./admin_app/Dockerfile
+          push: true
+          tags: 039685995141.dkr.ecr.af-south-1.amazonaws.com/aaq-admin-app:latest
