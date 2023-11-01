@@ -30,7 +30,7 @@ class UserQueryResponse(BaseModel):
     """
 
     query_id: int
-    faq_response: Dict[int, UserQuerySearchResult]
+    content_response: Dict[int, UserQuerySearchResult]
     llm_response: Optional[str] = None
     feedback_secret_key: str
     debug_info: dict = {}

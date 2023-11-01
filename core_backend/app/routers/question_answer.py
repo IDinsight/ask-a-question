@@ -44,7 +44,7 @@ async def llm_response(
     )
 
     # get FAQs from vector db
-    faq_response = get_similar_content(
+    content_response = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
 
@@ -57,7 +57,7 @@ async def llm_response(
         f"is outwith the context of the given FAQ."
         f"\nIf the FAQ doesn't seem to answer the question, respond with "
         f"'Sorry, no relevant information found.'"
-        f"\n\nFound FAQ:\n{faq_response[0].response_text}"
+        f"\n\nFound FAQ:\n{content_response[0].response_text}"
     )
 
     # generate llm response
@@ -70,7 +70,7 @@ async def llm_response(
     # format to response schema
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
-        faq_response=faq_response,
+        content_response=content_response,
         llm_response=llm_text_response,
         feedback_secret_key=feedback_secret_key,
     )
@@ -99,14 +99,14 @@ async def embeddings_search(
     )
 
     # get FAQs from vector db
-    faq_response = get_similar_content(
+    content_response = get_similar_content(
         user_query, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
 
     # format to response schema
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
-        faq_response=faq_response,
+        content_response=content_response,
         llm_response=None,
         feedback_secret_key=feedback_secret_key,
     )

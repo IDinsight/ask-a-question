@@ -46,7 +46,7 @@ class TestEmbeddingsSearch:
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
     )
-    def test_faq_response(
+    def test_content_response(
         self,
         token: str,
         expected_status_code: int,
@@ -61,8 +61,8 @@ class TestEmbeddingsSearch:
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_faq_response = response.json()["faq_response"]
-            assert len(json_faq_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
+            json_content_response = response.json()["content_response"]
+            assert len(json_content_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
 
 
 class TestLLMSearch:

@@ -86,7 +86,7 @@ class UserQueryResponseDB(Base):
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
-    faq_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -109,7 +109,7 @@ async def save_query_response_to_db(
     """
     user_query_responses_db = UserQueryResponseDB(
         query_id=user_query_db.query_id,
-        faq_response=response.model_dump()["faq_response"],
+        content_response=response.model_dump()["content_response"],
         llm_response=response.model_dump()["llm_response"],
         response_datetime_utc=datetime.utcnow(),
     )
