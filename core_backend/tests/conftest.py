@@ -10,8 +10,14 @@ from core_backend.app.configs.app_config import QDRANT_VECTOR_SIZE
 
 Fixture = Union
 
+# Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
 EmbeddingValues = namedtuple("EmbeddingValues", "embedding")
+
+# Define namedtuples for the completion endpoint
+CompletionData = namedtuple("CompletionData", "choices")
+CompletionChoice = namedtuple("CompletionChoice", "message")
+CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
 @pytest.fixture(scope="session")
@@ -39,6 +45,21 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
         "core_backend.app.routers.manage_content.embedding", fake_embedding
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
+    monkeysession.setattr(
+        "core_backend.app.question_answer.completion", fake_completion
+    )
+
+
+def fake_completion(*arg: str, **kwargs: str) -> CompletionData:
+    """
+    Replicates `litellm.completion` function but just returns the string
+    "monkeypatched_llm_response" as the content.
+    """
+    message = CompletionMessage(content="monkeypatched_llm_response")
+    choice = CompletionChoice(message=message)
+    data_obj = CompletionData([choice])
+
+    return data_obj
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:

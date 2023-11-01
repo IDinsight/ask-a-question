@@ -3,7 +3,6 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-from litellm import embedding
 from qdrant_client.models import PointStruct
 
 from core_backend.app.configs.app_config import (
@@ -76,7 +75,9 @@ class TestLLMSearch:
         for content in json_data:
             point_id = str(uuid.uuid4())
             content_embedding = (
-                embedding(EMBEDDING_MODEL, content["content_text"]).data[0].embedding
+                fake_embedding(EMBEDDING_MODEL, content["content_text"])
+                .data[0]
+                .embedding
             )
             payload = content.get("content_metadata", {})
             points.append(
