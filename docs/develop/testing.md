@@ -6,7 +6,7 @@
 
 ### Step 1: Set env variables
 
- Copy `tests/template.env` to `tests/.env` and edit it to set the environment variables.
+Copy `tests/template.env` to `tests/.env` and edit it to set the environment variables.
 
 ??? note "OpenAI API key requirement"
     You will need to set the `OPENAI_API_KEY` env var in order for the `/llm-response` endpoint
@@ -20,7 +20,7 @@
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
 
 Run tests using
-    make tests
+make tests
 
 This target starts up new postgres and qdrant container for testing. It also sets the
 correct environment variables, runs `pytest`, and then destroys the containers.
@@ -92,45 +92,8 @@ To use FastAPI's WebGUI to call the endpoints easily, navigate to
 
 and run endpoints as desired.
 
-??? warning "Authorising the `/embedding_search` and `llm-response` endpoints"
-    To use these endpoint, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET` from the app configs.
+??? warning "Authorising the `/embedding_search` and `/llm-response` endpoints"
+    To use these endpoints, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET`.
 
-    The default value can be found
-    in `core_backend/app/configs/app_config.py` but can be overridden by setting the environment
-    variable.
-
-??? note "Calling the endpoints via `curl`"
-    The following curl commands call the endpoints:
-
-    #### 1. Create some content
-
-        curl -X POST -d '{"content_text":"The tennis racquet, an extension of a player'\''s arm, is a marvel of engineering and design. From its early wooden iterations to today'\''s advanced composite materials, the racquet has evolved to enhance performance on the court. With the right balance, weight, and string tension, a tennis racquet can make all the difference in those match-winning shots."}' -H 'Content-Type: application/json' localhost:8000/content/create
-
-    Note the `content_id`. You'll need it for steps 4 and 5.
-
-    #### 2. Send a question
-    You'll need to set the Authorisation Bearer token to `QUESTION_ANSWER_SECRET` for this one.
-
-    After receiving a response, keep a note of the `query_id` and `feedback_secret_key`. You'll need them for the later commands.
-
-        curl -X POST -d '{"query_text":"i love sport, tell me about a vegetable that will keep be strong"}'  \
-        -H 'Content-Type: application/json' \
-        -H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
-        localhost:8000/embeddings-search
-
-    #### 3. Send feedback
-
-        curl -X POST -S -d '{"query_id":"[QUERY_ID]","feedback_secret_key":"[SECRET_KEY]", \
-        "feedback_text":"this is feedback" }' \
-        -H 'Content-Type: application/json' \
-        -H 'Authorization: Bearer [QUESTION_ANSWER_SECRET]' \
-        localhost:8000/feedback
-
-    #### 4. Edit the content
-
-        curl -X PUT -d '{"content_text":"content 2 updated"}' \
-        -H 'Content-Type: application/json' localhost:8000/content/[CONTENT_ID]/edit
-
-    #### 5. Delete the content
-
-        curl -X DELETE localhost:8000/content/[CONTENT_ID]/delete
+    The default value can be found in `core_backend/app/configs/app_config.py` but may have been overridden if the
+    environment variable was manually set differently.
