@@ -1,12 +1,21 @@
+import json
+import uuid
 from collections import namedtuple
 from typing import Union
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from qdrant_client.models import PointStruct
 
 from core_backend.app import create_app
-from core_backend.app.configs.app_config import QDRANT_VECTOR_SIZE
+from core_backend.app.configs.app_config import (
+    EMBEDDING_MODEL,
+    QDRANT_COLLECTION_NAME,
+    QDRANT_VECTOR_SIZE,
+)
+from core_backend.app.db.vector_db import get_qdrant_client
+from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
 
 Fixture = Union
 
@@ -18,6 +27,27 @@ EmbeddingValues = namedtuple("EmbeddingValues", "embedding")
 CompletionData = namedtuple("CompletionData", "choices")
 CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
+
+
+@pytest.fixture(scope="session")
+def faq_contents(client: TestClient) -> None:
+    with open("tests/data/content.json", "r") as f:
+        json_data = json.load(f)
+
+    points = []
+    for content in json_data:
+        point_id = str(uuid.uuid4())
+        content_embedding = (
+            fake_embedding(EMBEDDING_MODEL, content["content_text"]).data[0].embedding
+        )
+        metadata = content.get("content_metadata", {})
+        payload = _create_payload_for_qdrant_upsert(content["content_text"], metadata)
+        points.append(
+            PointStruct(id=point_id, vector=content_embedding, payload=payload)
+        )
+
+    qdrant_client = get_qdrant_client()
+    qdrant_client.upsert(collection_name=QDRANT_COLLECTION_NAME, points=points)
 
 
 @pytest.fixture(scope="session")
