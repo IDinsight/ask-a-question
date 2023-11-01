@@ -62,7 +62,9 @@ async def llm_response(
 
     # generate llm response
     messages = [{"content": prompt, "role": "user"}]
-    llm_response_raw = completion(model=OPENAI_LLM_TYPE, messages=messages)
+    llm_response_raw = completion(
+        model=OPENAI_LLM_TYPE, messages=messages, temperature=0
+    )
     llm_text_response = llm_response_raw.choices[0].message.content
 
     # format to response schema
