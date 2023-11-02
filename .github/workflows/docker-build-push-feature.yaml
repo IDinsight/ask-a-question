@@ -36,19 +36,19 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
         run: |
-          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/aaq-core-backend:latest ./core_backend
-          docker push $ECR_REGISTRY/aaq-core-backend:latest
+          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest ./core_backend
+          docker push $ECR_REGISTRY/core_backend:latest
 
-          docker tag $ECR_REGISTRY/aaq-core-backend:latest $ECR_REGISTRY/aaq-core-backend:$SHA_SHORT
-          docker push $ECR_REGISTRY/aaq-core-backend:$SHA_SHORT
+          docker tag $ECR_REGISTRY/core_backend:latest $ECR_REGISTRY/core_backend:$SHA_SHORT
+          docker push $ECR_REGISTRY/core_backend:$SHA_SHORT
 
       - name: Docker tag and push admin app image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
         run: |
-          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/aaq-admin-app:latest ./admin_app
-          docker push $ECR_REGISTRY/aaq-admin-app:latest
+          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest ./admin_app
+          docker push $ECR_REGISTRY/admin_app:latest
 
-          docker tag $ECR_REGISTRY/aaq-admin-app:latest $ECR_REGISTRY/aaq-admin-app:$SHA_SHORT
-          docker push $ECR_REGISTRY/aaq-admin-app:$SHA_SHORT
+          docker tag $ECR_REGISTRY/admin_app:latest $ECR_REGISTRY/admin_app:$SHA_SHORT
+          docker push $ECR_REGISTRY/admin_app:$SHA_SHORT
