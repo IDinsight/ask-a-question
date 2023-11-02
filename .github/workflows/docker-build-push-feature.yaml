@@ -35,7 +35,6 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
-        id: update-ecr-backend
         run: |
           docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/aaq-core-backend:latest ./core_backend
           docker push $ECR_REGISTRY/aaq-core-backend:latest
@@ -47,7 +46,6 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
-        id: update-ecr-backend
         run: |
           docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/aaq-admin-app:latest ./admin_app
           docker push $ECR_REGISTRY/aaq-admin-app:latest
