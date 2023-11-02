@@ -19,25 +19,38 @@ jobs:
     environment: dev
     steps:
       - uses: actions/checkout@v4
-      - name: configure aws credentials
+
+      - name: Configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::039685995141:role/github_actions_dev
-          role-session-name: githubactions
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github_actions_dev
+          role-session-name: github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Build and push backend
-        uses: docker/build-push-action@v2
-        with:
-          context: ./core_backend
-          file: ./core_backend/Dockerfile
-          push: true
-          tags: 039685995141.dkr.ecr.af-south-1.amazonaws.com/aaq-core-backend:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push frontend
-        uses: docker/build-push-action@v2
-        with:
-          context: ./admin_app
-          file: ./admin_app/Dockerfile
-          push: true
-          tags: 039685995141.dkr.ecr.af-south-1.amazonaws.com/aaq-admin-app:latest
+      - name: Docker tag and push backend image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
+        id: update-ecr-backend
+        run: |
+          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/aaq-core-backend:latest ./core_backend
+          docker push $ECR_REGISTRY/aaq-core-backend:latest
+
+          docker tag $ECR_REGISTRY/aaq-core-backend:latest $ECR_REGISTRY/aaq-core-backend:$SHA_SHORT
+          docker push $ECR_REGISTRY/aaq-core-backend:$SHA_SHORT
+
+      - name: Docker tag and push admin app image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
+        id: update-ecr-backend
+        run: |
+          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/aaq-admin-app:latest ./admin_app
+          docker push $ECR_REGISTRY/aaq-admin-app:latest
+
+          docker tag $ECR_REGISTRY/aaq-admin-app:latest $ECR_REGISTRY/aaq-admin-app:$SHA_SHORT
+          docker push $ECR_REGISTRY/aaq-admin-app:$SHA_SHORT
