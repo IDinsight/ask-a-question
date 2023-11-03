@@ -2,9 +2,5 @@ version: "3"
 services:
   core_backend:
     image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/core_backend:latest"
-    depends_on:
-      - vector_db
-    environment:
-      - QDRANT_HOST=vector_db
   admin_app:
     image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/admin_app:latest"

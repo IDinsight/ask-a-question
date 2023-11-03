@@ -1,13 +1,9 @@
-name: Deploy any branch to dev
+name: Deploy on push to main
 on:
   workflow_dispatch:
-    inputs:
-      BRANCH:
-        description: "Branch do deploy on test server"
-        type: string
   push:
     branches:
-      - AAQ-125-autodeploy-dev
+      - main
 
 permissions:
   id-token: write # This is required for requesting the JWT
