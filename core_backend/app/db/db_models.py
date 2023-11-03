@@ -34,8 +34,8 @@ class UserQueryDB(Base):
     feedback: Mapped[List["FeedbackDB"]] = relationship(
         "FeedbackDB", back_populates="query", lazy=True
     )
-    responses: Mapped[List["UserQueryResponsesDB"]] = relationship(
-        "UserQueryResponsesDB", back_populates="query", lazy=True
+    response: Mapped[List["UserQueryResponseDB"]] = relationship(
+        "UserQueryResponseDB", back_populates="query", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -77,7 +77,7 @@ async def check_secret_key_match(
         return False
 
 
-class UserQueryResponsesDB(Base):
+class UserQueryResponseDB(Base):
     """
     SQLAlchemy data model for responses sent to user
     """
@@ -86,11 +86,12 @@ class UserQueryResponsesDB(Base):
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
-    responses: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="responses", lazy=True
+        "UserQueryDB", back_populates="response", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -99,14 +100,17 @@ class UserQueryResponsesDB(Base):
 
 
 async def save_query_response_to_db(
-    asession: AsyncSession, user_query_db: UserQueryDB, responses: UserQueryResponse
-) -> UserQueryResponsesDB:
+    asession: AsyncSession,
+    user_query_db: UserQueryDB,
+    response: UserQueryResponse,
+) -> UserQueryResponseDB:
     """
     Saves the user query response to the database.
     """
-    user_query_responses_db = UserQueryResponsesDB(
+    user_query_responses_db = UserQueryResponseDB(
         query_id=user_query_db.query_id,
-        responses=responses.model_dump()["responses"],
+        content_response=response.model_dump()["content_response"],
+        llm_response=response.model_dump()["llm_response"],
         response_datetime_utc=datetime.utcnow(),
     )
     asession.add(user_query_responses_db)

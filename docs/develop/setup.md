@@ -56,6 +56,8 @@ You can create both postgres and vector databases (without a persistent data vol
 
     make setup-dbs
 
+!!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
+
 You can stop and remove them using:
 
     make teardown-dbs
@@ -101,6 +103,20 @@ Otherwise, you can run them manually as below.
         python -m alembic upgrade head
 
 ## Run the backend app
+
+### Step 1: Set environment variables
+
+Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY`, before running the app.
+
+You can do this directly using
+
+    export OPENAI_API_KEY="sk-..."
+
+Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
+
+    set -a && source ./deployment/.env && set +a
+
+### Step 2: Run the backend app
 
 With the Docker databases running, from `aaq-core/core_backend` run:
 
