@@ -26,26 +26,20 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Docker tag and push backend image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
         run: |
-          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest ./core_backend
+          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest -t $ECR_REGISTRY/core_backend:$SHA_SHORT ./core_backend
           docker push $ECR_REGISTRY/core_backend:latest
-
-          docker tag $ECR_REGISTRY/core_backend:latest $ECR_REGISTRY/core_backend:$SHA_SHORT
-          docker push $ECR_REGISTRY/core_backend:$SHA_SHORT
 
       - name: Docker tag and push admin app image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
         run: |
-          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest ./admin_app
+          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest -t $ECR_REGISTRY/admin_app:$SHA_SHORT ./admin_app
           docker push $ECR_REGISTRY/admin_app:latest
-
-          docker tag $ECR_REGISTRY/admin_app:latest $ECR_REGISTRY/admin_app:$SHA_SHORT
-          docker push $ECR_REGISTRY/admin_app:$SHA_SHORT
