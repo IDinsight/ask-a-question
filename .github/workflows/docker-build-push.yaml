@@ -28,10 +28,14 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Get git short SHA
+        id: sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Docker tag and push backend image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
+          SHA_SHORT: ${{ steps.sha.outputs.sha_short }}
         run: |
           docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest -t $ECR_REGISTRY/core_backend:$SHA_SHORT ./core_backend
           docker push $ECR_REGISTRY/core_backend:latest
@@ -39,7 +43,7 @@ jobs:
       - name: Docker tag and push admin app image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          SHA_SHORT: $(git rev-parse --short "$GITHUB_SHA")
+          SHA_SHORT: ${{ steps.sha.outputs.sha_short }}
         run: |
           docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest -t $ECR_REGISTRY/admin_app:$SHA_SHORT ./admin_app
           docker push $ECR_REGISTRY/admin_app:latest
