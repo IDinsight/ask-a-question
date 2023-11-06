@@ -39,6 +39,7 @@ jobs:
         run: |
           docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest -t $ECR_REGISTRY/core_backend:$SHA_SHORT ./core_backend
           docker push $ECR_REGISTRY/core_backend:latest
+          docker push $ECR_REGISTRY/core_backend:$SHA_SHORT
 
       - name: Docker tag and push admin app image to ECR
         env:
@@ -47,3 +48,4 @@ jobs:
         run: |
           docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest -t $ECR_REGISTRY/admin_app:$SHA_SHORT ./admin_app
           docker push $ECR_REGISTRY/admin_app:latest
+          docker push $ECR_REGISTRY/admin_app:$SHA_SHORT
