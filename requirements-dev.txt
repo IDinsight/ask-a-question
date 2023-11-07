@@ -7,4 +7,5 @@ pytest==7.4.2
 httpx==0.25.0
 trio==0.22.2
 mkdocs-material==9.4.5
+pymdown-extensions==10.3
 mkdocs-glightbox==0.3.4
