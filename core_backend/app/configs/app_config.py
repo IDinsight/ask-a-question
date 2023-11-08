@@ -31,3 +31,6 @@ JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 JWT_SECRET = os.environ.get("JWT_SECRET", "update-me-for-production")
 
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
+
+WHATSAPP_VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "no-token-set")
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN", "no-token-set")

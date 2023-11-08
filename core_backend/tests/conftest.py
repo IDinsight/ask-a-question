@@ -3,6 +3,7 @@ import uuid
 from collections import namedtuple
 from typing import Union
 
+import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
@@ -120,3 +121,22 @@ def readonly_token() -> str:
     Returns a token with readonly access
     """
     return create_access_token("readonly")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def patch_httpx_call(monkeysession: pytest.FixtureRequest) -> None:
+    """
+    Monkeypatch call to httpx service
+    """
+
+    class MockClient:
+        async def __aenter__(self) -> "MockClient":
+            return self
+
+        async def __aexit__(self, exc_type: str, exc: str, tb: str) -> None:
+            pass
+
+        async def post(self, *args: str, **kwargs: str) -> httpx.Response:
+            return httpx.Response(200, json={"key": "value"})
+
+    monkeysession.setattr(httpx, "AsyncClient", MockClient)
