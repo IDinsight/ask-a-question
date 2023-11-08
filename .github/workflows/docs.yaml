@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - AAQ-135-setup-initial-whatsapp-connector
+      - main
 permissions:
   contents: write
 jobs:

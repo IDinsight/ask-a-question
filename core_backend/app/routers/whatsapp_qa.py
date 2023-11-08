@@ -68,7 +68,7 @@ async def process_whatsapp_message(
                 }
 
                 async with httpx.AsyncClient() as client:
-                    request = await client.post(
+                    httpx_request = await client.post(
                         f"https://graph.facebook.com/v12.0/{phone_number_id}/messages",
                         params={"access_token": WHATSAPP_TOKEN},
                         headers={"Content-Type": "application/json"},
@@ -78,7 +78,7 @@ async def process_whatsapp_message(
                     response = WhatsAppResponse(
                         incoming_id=incoming_db.incoming_id,
                         response_text=top_faq,
-                        response_status=int(request.status_code),
+                        response_status=int(httpx_request.status_code),
                         response_datetime_utc=datetime.utcnow(),
                     )
                     await save_waresponse_to_db(asession=asession, response=response)
