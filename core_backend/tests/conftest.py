@@ -137,6 +137,6 @@ def patch_httpx_call(monkeysession: pytest.FixtureRequest) -> None:
             pass
 
         async def post(self, *args: str, **kwargs: str) -> httpx.Response:
-            return httpx.Response(200, json={"key": "value"})
+            return httpx.Response(200, json={"status": "success"})
 
     monkeysession.setattr(httpx, "AsyncClient", MockClient)

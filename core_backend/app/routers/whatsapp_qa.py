@@ -83,7 +83,8 @@ async def process_whatsapp_message(
                     )
                     await save_waresponse_to_db(asession=asession, response=response)
 
-        return {"status": "success"}
+                    return httpx_request.json()
+        return {"status": "No Message to Process"}
     else:
         raise HTTPException(status_code=404, detail="Invalid request")
 
