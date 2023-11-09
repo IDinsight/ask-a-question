@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List
+from typing import Annotated, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -9,9 +9,10 @@ from litellm import embedding
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList, PointStruct, Record
 
+from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..configs.app_config import EMBEDDING_MODEL, QDRANT_COLLECTION_NAME
 from ..db.vector_db import get_qdrant_client
-from ..schemas import ContentCreate, ContentRetrieve
+from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
 from ..utils import setup_logger
 
 router = APIRouter(prefix="/content")
@@ -20,7 +21,11 @@ logger = setup_logger()
 
 @router.post("/create", response_model=ContentRetrieve)
 async def create_content(
-    content: ContentCreate, qdrant_client: QdrantClient = Depends(get_qdrant_client)
+    content: ContentCreate,
+    full_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_fullaccess_user)
+    ],
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> ContentRetrieve:
     """
     Create content endpoint. Calls embedding model to get content embedding and
@@ -45,6 +50,9 @@ async def create_content(
 async def edit_content(
     content_id: str,
     content: ContentCreate,
+    full_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_fullaccess_user)
+    ],
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> ContentRetrieve:
     """
@@ -72,6 +80,9 @@ async def edit_content(
 
 @router.get("/list", response_model=list[ContentRetrieve])
 async def retrieve_content(
+    readonly_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_readonly_user)
+    ],
     skip: int = 0,
     limit: int = 10,
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
@@ -93,7 +104,11 @@ async def retrieve_content(
 
 @router.delete("/{content_id}/delete")
 async def delete_content(
-    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
+    content_id: str,
+    full_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_fullaccess_user)
+    ],
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> None:
     """
     Delete content endpoint
@@ -113,7 +128,11 @@ async def delete_content(
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
-    content_id: str, qdrant_client: QdrantClient = Depends(get_qdrant_client)
+    content_id: str,
+    readonly_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_readonly_user)
+    ],
+    qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> ContentRetrieve:
     """
     Retrieve content by id endpoint

@@ -21,28 +21,33 @@ from core_backend.app.schemas import ContentCreate
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
-class TestManageContent:
-    @pytest.fixture(
-        scope="function",
-        params=[
-            ("test content - no metadata", {}),
-            ("test content - with metadata", {"meta_key": "meta_value"}),
-        ],
+@pytest.fixture(
+    scope="function",
+    params=[
+        ("test content - no metadata", {}),
+        ("test content - with metadata", {"meta_key": "meta_value"}),
+    ],
+)
+def existing_content_id(
+    request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
+) -> Generator[str, None, None]:
+    response = client.post(
+        "/content/create",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        json={
+            "content_text": request.param[0],
+            "content_metadata": request.param[1],
+        },
     )
-    def existing_content_id(
-        self, request: pytest.FixtureRequest, client: TestClient
-    ) -> Generator[str, None, None]:
-        response = client.post(
-            "/content/create",
-            json={
-                "content_text": request.param[0],
-                "content_metadata": request.param[1],
-            },
-        )
-        content_id = response.json()["content_id"]
-        yield content_id
-        client.delete(f"/content/{content_id}/delete")
+    content_id = response.json()["content_id"]
+    yield content_id
+    client.delete(
+        f"/content/{content_id}/delete",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
 
+
+class TestManageContent:
     @pytest.mark.parametrize(
         "content_text, content_metadata",
         [("test content 3", {}), ("test content 2", {"meta_key": "meta_value"})],
@@ -51,10 +56,12 @@ class TestManageContent:
         self,
         client: TestClient,
         content_text: str,
+        fullaccess_token: str,
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.post(
             "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"content_text": content_text, "content_metadata": content_metadata},
         )
         assert response.status_code == 200
@@ -62,7 +69,10 @@ class TestManageContent:
         assert json_response["content_metadata"] == content_metadata
         assert "content_id" in json_response
 
-        response = client.delete(f"/content/{json_response['content_id']}/delete")
+        response = client.delete(
+            f"/content/{json_response['content_id']}/delete",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
         assert response.status_code == 200
 
         pass
@@ -82,10 +92,13 @@ class TestManageContent:
         client: TestClient,
         existing_content_id: str,
         content_text: str,
+        fullaccess_token: str,
+        readonly_token: str,
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
             f"/content/{existing_content_id}/edit",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "content_text": content_text,
                 "content_metadata": content_metadata,
@@ -93,29 +106,141 @@ class TestManageContent:
         )
         assert response.status_code == 200
 
-        response = client.get(f"/content/{existing_content_id}")
+        response = client.get(
+            f"/content/{existing_content_id}",
+            headers={"Authorization": f"Bearer {readonly_token}"},
+        )
         assert response.status_code == 200
         assert response.json()["content_text"] == content_text
         edited_metadata = response.json()["content_metadata"]
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
-    def test_edit_content_not_found(self, client: TestClient) -> None:
+    def test_edit_content_not_found(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
         response = client.put(
             "/content/00000000-0000-0000-0000-000000000000/edit",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"content_text": "sample text", "content_metadata": {"key": "value"}},
         )
 
         assert response.status_code == 404
 
-    def test_list_content(self, client: TestClient, existing_content_id: str) -> None:
-        response = client.get("/content/list")
+    def test_list_content(
+        self, client: TestClient, existing_content_id: str, readonly_token: str
+    ) -> None:
+        response = client.get(
+            "/content/list", headers={"Authorization": f"Bearer {readonly_token}"}
+        )
         assert response.status_code == 200
         assert len(response.json()) > 0
 
-    def test_delete_content(self, client: TestClient, existing_content_id: str) -> None:
-        response = client.delete(f"/content/{existing_content_id}/delete")
+    def test_delete_content(
+        self, client: TestClient, existing_content_id: str, fullaccess_token: str
+    ) -> None:
+        response = client.delete(
+            f"/content/{existing_content_id}/delete",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
         assert response.status_code == 200
+
+
+class TestAuthManageContent:
+    @pytest.mark.parametrize(
+        "access_token, expected_status",
+        [("readonly_token", 400), ("fullaccess_token", 200)],
+    )
+    def test_auth_delete(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        access_token: str,
+        expected_status: int,
+        request: pytest.FixtureRequest,
+    ) -> None:
+        access_token = request.getfixturevalue(access_token)
+        response = client.delete(
+            f"/content/{existing_content_id}/delete",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == expected_status
+
+    @pytest.mark.parametrize(
+        "access_token, expected_status",
+        [("readonly_token", 400), ("fullaccess_token", 200)],
+    )
+    def test_auth_create(
+        self,
+        client: TestClient,
+        access_token: str,
+        expected_status: int,
+        request: pytest.FixtureRequest,
+    ) -> None:
+        access_token = request.getfixturevalue(access_token)
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"content_text": "sample text", "content_metadata": {}},
+        )
+        assert response.status_code == expected_status
+
+    @pytest.mark.parametrize(
+        "access_token, expected_status",
+        [("readonly_token", 400), ("fullaccess_token", 200)],
+    )
+    def test_auth_edit(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        access_token: str,
+        expected_status: int,
+        request: pytest.FixtureRequest,
+    ) -> None:
+        access_token = request.getfixturevalue(access_token)
+        response = client.put(
+            f"/content/{existing_content_id}/edit",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"content_text": "sample text", "content_metadata": {}},
+        )
+        assert response.status_code == expected_status
+
+    @pytest.mark.parametrize(
+        "access_token, expected_status",
+        [("readonly_token", 200), ("fullaccess_token", 200)],
+    )
+    def test_auth_list(
+        self,
+        client: TestClient,
+        access_token: str,
+        expected_status: int,
+        request: pytest.FixtureRequest,
+    ) -> None:
+        access_token = request.getfixturevalue(access_token)
+        response = client.get(
+            "/content/list",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == expected_status
+
+    @pytest.mark.parametrize(
+        "access_token, expected_status",
+        [("readonly_token", 200), ("fullaccess_token", 200)],
+    )
+    def test_auth_retrieve(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        access_token: str,
+        expected_status: int,
+        request: pytest.FixtureRequest,
+    ) -> None:
+        access_token = request.getfixturevalue(access_token)
+        response = client.get(
+            f"/content/{existing_content_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == expected_status
 
 
 class TestUpsertContentToQdrant:

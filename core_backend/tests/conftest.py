@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from qdrant_client.models import PointStruct
 
 from core_backend.app import create_app
+from core_backend.app.auth import create_access_token
 from core_backend.app.configs.app_config import (
     EMBEDDING_MODEL,
     QDRANT_COLLECTION_NAME,
@@ -103,3 +104,19 @@ def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     data_obj = EmbeddingData([embedding])
 
     return data_obj
+
+
+@pytest.fixture(scope="session")
+def fullaccess_token() -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token("fullaccess")
+
+
+@pytest.fixture(scope="session")
+def readonly_token() -> str:
+    """
+    Returns a token with readonly access
+    """
+    return create_access_token("readonly")

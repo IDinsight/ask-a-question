@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
 import { NavBar } from "../components/NavBar";
-
+import { jwtDecode } from "jwt-decode";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
 const backendUrl: string = process.env.BACKEND_URL || "http://localhost:8000";
@@ -17,27 +17,66 @@ export default function Home() {
   const deleteCard = (id: string) => {
     fetch(`${backendUrl}/content/${id}/delete`, {
       method: "DELETE",
+      headers: get_api_headers(),
     }).then((response) => {
       if (response.ok) {
-        setCards(cards.filter((card) => card.content_id !== id));
+        setCards(cards.filter((card: Content) => card.content_id !== id));
       } else {
         throw new Error("Could not delete " + id);
       }
     });
   };
 
+  const get_api_headers = () => {
+    const headers = {};
+    const tokenString = localStorage.getItem("token");
+
+    if (tokenString) {
+      const token = JSON.parse(tokenString);
+      const decodedAccessToken = jwtDecode(token.access_token);
+      const isTokenValid = decodedAccessToken.exp * 1000 > Date.now();
+      if (isTokenValid) {
+        headers["Authorization"] = `Bearer ${token.access_token}`;
+        headers["Content-Type"] = "application/json";
+      } else {
+        console.log("Access token expired");
+        window.location.href = "/login";
+      }
+      return headers;
+    } else {
+      console.log("No token found");
+      window.location.href = "/login";
+    }
+  };
+
+  const isFullAccess = (): boolean => {
+    if (typeof window !== "undefined") {
+      const tokenString = localStorage.getItem("token");
+      if (tokenString) {
+        const token = JSON.parse(tokenString);
+        const decodedAccessToken = jwtDecode(token.access_token);
+        const isTokenValid = decodedAccessToken.exp * 1000 > Date.now();
+        return isTokenValid && token.access_level == "fullaccess"
+          ? true
+          : false;
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      return false;
+    }
+  };
+
   const saveEditedCard = (card: Content) => {
     fetch(`${backendUrl}/content/${card.content_id}/edit`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: get_api_headers(),
       body: JSON.stringify(card),
     }).then((response) => {
       if (response.ok) {
         console.log("updated card: " + card.content_id);
         setCards(
-          cards.map((c) => {
+          cards.map((c: Content) => {
             if (c.content_id === card.content_id) {
               return card;
             } else {
@@ -54,9 +93,7 @@ export default function Home() {
   const saveNewCard = (content_text: string) => {
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: get_api_headers(),
       body: JSON.stringify({ content_text: content_text }),
     })
       .then((response) => {
@@ -82,7 +119,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetch(`${backendUrl}/content/list`)
+    fetch(`${backendUrl}/content/list`, {
+      headers: get_api_headers(),
+    })
       .then((response) => {
         if (response.ok) {
           let resp = response.json();
@@ -97,6 +136,8 @@ export default function Home() {
       .catch((error) => console.log(error));
   }, []);
 
+  const showCardEditButtons = isFullAccess();
+
   return (
     <>
       <NavBar />
@@ -104,7 +145,7 @@ export default function Home() {
         <div className="m-5">
           <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* create a card for each object */}
-            {cards.map((card) => (
+            {cards.map((card: Content) => (
               <ContentCard
                 key={card.content_id}
                 content_id={card.content_id}
@@ -112,14 +153,17 @@ export default function Home() {
                 deleteMe={deleteCard}
                 editMe={editCard}
                 expanded={false}
+                showEditButton={showCardEditButtons}
               />
             ))}
-            <button
-              className="add-card min-h-[10rem] outline-dashed rounded outline-gray-700"
-              onClick={addCard}
-            >
-              +
-            </button>
+            {showCardEditButtons ? (
+              <button
+                className="add-card min-h-[10rem] outline-dashed rounded outline-gray-700"
+                onClick={addCard}
+              >
+                +
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -154,13 +198,14 @@ export default function Home() {
                       className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full bg-gray-800 py-4 px-4 text-gray-400"
                       defaultValue={cardToEdit?.content_text}
                       placeholder="Enter content text"
-                      onChange={(e) => {
+                      onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                        const target = e.target as HTMLTextAreaElement;
                         cardToEdit
                           ? setCardToEdit(() => {
-                              cardToEdit!.content_text = e.target.value;
+                              cardToEdit!.content_text = target.value;
                               return cardToEdit;
                             })
-                          : setNewCardText(e.target.value);
+                          : setNewCardText(target.value);
                       }}
                     />
                   </div>
