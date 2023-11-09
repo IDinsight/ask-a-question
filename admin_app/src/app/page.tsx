@@ -199,12 +199,13 @@ export default function Home() {
                       defaultValue={cardToEdit?.content_text}
                       placeholder="Enter content text"
                       onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                        const target = e.target as HTMLTextAreaElement;
                         cardToEdit
                           ? setCardToEdit(() => {
-                              cardToEdit!.content_text = e.target.value;
+                              cardToEdit!.content_text = target.value;
                               return cardToEdit;
                             })
-                          : setNewCardText(e.target.value);
+                          : setNewCardText(target.value);
                       }}
                     />
                   </div>
