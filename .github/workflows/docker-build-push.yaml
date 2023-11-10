@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - AAQ-125-autodeploy-dev
 
 permissions:
   id-token: write # This is required for requesting the JWT
