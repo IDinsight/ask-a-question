@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
+      # Add a setup buildx step
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
       - uses: actions/checkout@v4
 
       - name: Configure aws credentials
@@ -32,20 +37,25 @@ jobs:
         id: sha
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Docker tag and push backend image to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          SHA_SHORT: ${{ steps.sha.outputs.sha_short }}
-        run: |
-          docker build -f ./core_backend/Dockerfile -t $ECR_REGISTRY/core_backend:latest -t $ECR_REGISTRY/core_backend:$SHA_SHORT ./core_backend
-          docker push $ECR_REGISTRY/core_backend:latest
-          docker push $ECR_REGISTRY/core_backend:$SHA_SHORT
+      - name: Docker tag and push core_backend image to ECR
+        uses: docker/build-push-action@v3
+        with:
+          context: ./core_backend
+          file: ./core_backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:latest
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ steps.sha.outputs.sha_short }}
 
-      - name: Docker tag and push admin app image to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          SHA_SHORT: ${{ steps.sha.outputs.sha_short }}
-        run: |
-          docker build -f ./admin_app/Dockerfile -t $ECR_REGISTRY/admin_app:latest -t $ECR_REGISTRY/admin_app:$SHA_SHORT ./admin_app
-          docker push $ECR_REGISTRY/admin_app:latest
-          docker push $ECR_REGISTRY/admin_app:$SHA_SHORT
+      # Perform another multi-platform build
+      - name: Docker tag and push admin_app image to ECR
+        uses: docker/build-push-action@v3
+        with:
+          context: ./admin_app
+          file: ./admin_app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:latest
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ steps.sha.outputs.sha_short }}
