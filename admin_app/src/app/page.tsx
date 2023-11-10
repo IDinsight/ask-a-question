@@ -5,14 +5,17 @@ import { ContentCard, Content } from "../components/ContentCard";
 import { NavBar } from "../components/NavBar";
 import { jwtDecode } from "jwt-decode";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import IsFullAccess from "../components/Auth";
 
-const backendUrl: string = process.env.BACKEND_URL || "http://localhost:8000";
+const backendUrl: string =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
+  // const [showCardEditButtons, setShowCardEditButtons] = useState(false);
 
   const deleteCard = (id: string) => {
     fetch(`${backendUrl}/content/${id}/delete`, {
@@ -46,24 +49,6 @@ export default function Home() {
     } else {
       console.log("No token found");
       window.location.href = "/login";
-    }
-  };
-
-  const isFullAccess = (): boolean => {
-    if (typeof window !== "undefined") {
-      const tokenString = localStorage.getItem("token");
-      if (tokenString) {
-        const token = JSON.parse(tokenString);
-        const decodedAccessToken = jwtDecode(token.access_token);
-        const isTokenValid = decodedAccessToken.exp * 1000 > Date.now();
-        return isTokenValid && token.access_level == "fullaccess"
-          ? true
-          : false;
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      return false;
     }
   };
 
@@ -136,7 +121,7 @@ export default function Home() {
       .catch((error) => console.log(error));
   }, []);
 
-  const showCardEditButtons = isFullAccess();
+  const showCardEditButtons = IsFullAccess();
 
   return (
     <>

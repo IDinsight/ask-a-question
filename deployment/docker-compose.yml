@@ -41,6 +41,8 @@ services:
     build:
       context: ../admin_app
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
     command: >
       npm start
     depends_on:
