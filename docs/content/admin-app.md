@@ -1,11 +1,15 @@
 # Using the admin app
 
 You can use the admin app to create new content, edit or delete an existing one.
-If you have the [application running](../index.md#quick_start), you can access the admin app at:
+If you have the [application running](../deployment/quick-setup.md), you can access the admin app at:
+
+    https://[DOMAIN]/
+
+or if you are using the [dev](../develop/setup.md) setup:
 
     http://localhost:3000/
 
-You will need to login to continue
+You will need to login to continue.
 
 ## Access levels
 

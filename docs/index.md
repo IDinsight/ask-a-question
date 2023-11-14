@@ -1,37 +1,61 @@
-# Welcome to AAQ Documentation
 
-AAQ (Ask-a-question) is an LLM-powered question answering service. It presents a number
-of REST endpoints to answer questions using a repository of content.
+<pre align="center" style="text-align:center; font-size: 1vw; background:none;">
+    __            __        ______
+    /""\          /""\      /    " \
+    /    \        /    \    // ____  \
+    /' /\  \      /' /\  \  /  /    )  )
+  //  __'  \    //  __'  \(: (____/ //
+ /   /  \\  \  /   /  \\  \\         \
+ (___/    \___)(___/    \___)\"____/\__\
+ASK-A-QUESTION
 
-Upcoming features:
+</pre>
 
-- Voice-based Question Answering
-- Conversation capability
-- Low-resouced language support
+**[Ask-a-question](https://idinsight.github.io/aaq-core/) is an open-source product designed to support NGOs,
+developing country governments, and social sector orgs to use Large Language Models to answer questions from
+citizens.**
 
-## Quick Start
+---
 
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+## :woman_cartwheeling: Features
 
-**Step 1:** Clone the [repo](https://github.com/IDinsight/aaq-core) to your machine
+**:question: LLM-powered search** : Match your questions to content in the database using embeddings from LLMs.
 
-    git clone git@github.com:IDinsight/aaq-core.git
+**:robot: LLM responses** : Craft a custom reponse to the question using LLM chat and the content in your database
 
-**Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the variables
+**:speech_balloon: Deploy on whatsapp** : Easily deploy using WhatsApp Business API
 
-    POSTGRES_PASSWORD=
-    OPENAI_API_KEY=
-    QUESTION_ANSWER_SECRET=
-    ... etc.
+**:books: Manage content** : Use the Admin App to add, edit, and delete content in the database
+
+---
+
+## :construction: Upcoming
 
 **Step 3:** Run docker-compose
+**:earth_africa: Support for low resourced language**: Ask questions in local languages. Languages currently on the roadmap
 
-    cd deployment
-    docker compose -f docker-compose.yml -p aaq-stack up -d --build
+- [ ] Xhosa
+- [ ] Zulu
+- [ ] Hindi
+- [ ] Igbo
 
-!!! note "Also see [Calling the endpoints](./develop/testing.md#call-the-endpoints)."
+**:speech_balloon: conversation capability**: Refine or clarify your question through conversation
 
-**Step 4:** Shutdown containers
+**:video_camera: multimedia content**: Respond with not just text but images and videos as well.
 
-    cd deployment
-    docker compose -f docker-compose.yml -p aaq-stack down
+**:rotating_light: urgency detection**: Identify and handle urgent messages.
+
+**:woman_technologist: engineering dashboard**: Monitor uptime, response rates, throughput HTTP reponse codes and more
+
+**:woman_office_worker: content manager dashboard**: See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
+
+!!! question "Looking for other features?"
+    If you are an NGO or a social sector organisation, we'd love to hear what features you'd
+    like to see. Raise an issue with `[FEATURE REQUEST]` before the title to start the conversation.
+
+---
+
+## Acknowledgements
+
+The project is funded by Google.org through the
+[AI for Global Goals](https://globalgoals.withgoogle.com/globalgoals/) grant.

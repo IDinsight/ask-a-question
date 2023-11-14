@@ -1,52 +1,10 @@
 # Setting up your development environment
 
-## Clone repo
-
-Clone the repo using
-
-    git clone git@github.com:IDinsight/aaq-core.git
-
-navigate to repo and run pre-commit
-
-    cd aaq-core
-    pre-commit install
-
-Make sure you also run `mypy` separately with `mypy core_backend/app` (1)
+Now that you have your local environment setup (1), you can setup the components needed to
+develop your new feature.
 { .annotate }
 
-1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
-   packages installed, this would mean keeping a whole separate copy of your
-   environment just for it. That's too bulky so the pre-commit only checks
-   a few high-level typing things. You still need to run `mypy` directly to catch
-   all the typing issues.
-   If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
-
-## Setup your virtual python environment
-
-You can automatically create a ready-to-go `aaq-core` conda environment with:
-
-    make fresh-env
-
-??? warning "Errors with `pyscopg2`?"
-
-    `psycopg2` vs `psycopg2-binary`: For production use cases we should use `psycopg2` but for local development,
-    `psycopg2-binary` suffices and is often easier to install. If you are getting errors
-    from `psycopg2`, try installing `psycopg2-binary` instead.
-
-    If you would like `psycopg2-binary` instead of `psycopg2`, run `make fresh-env psycopg_binary=true` instead (see below for why you may want this).
-
-    See [here](https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary) for more details.
-
-??? note "Setting up the environment manually"
-
-    If you would like to setup the environment manually, you can use conda to create virtual environment (or `venv` or other).
-
-        conda create --name aaq-core python=3.10
-
-    Install the python packages. While in `aaq-core` directory, run:
-
-        pip install -r core_backend/requirements.txt
-        pip install -r requirements-dev.txt
+1.  if you haven't see [Contributing to AAQ]("./contributing.md")
 
 ## Databases
 
