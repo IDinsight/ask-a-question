@@ -84,7 +84,7 @@ See [docs](https://idinsight.github.io/aaq-core/) or SwaggerUI at `https://<DOMA
 
 ```
 curl -X 'POST' \
-  'http://0.0.0.0:8000/embeddings-search' \
+  'https://[DOMAIN]/api/embeddings-search' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -98,7 +98,7 @@ curl -X 'POST' \
 
 ```
 curl -X 'POST' \
-  'http://0.0.0.0:8000/llm-response' \
+  'https://[DOMAIN]/api/llm-response' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -108,10 +108,26 @@ curl -X 'POST' \
 }'
 ```
 
+### :books: Manage content
+
+You can access the admin console at
+
+```
+https://[DOMAIN]/
+```
+
 ## Architecture
+
+We use docker-compose to orchestrate containers.
 
 <p align="center">
   <img src="/images/architecture-docker.png" alt="Architecture"/>
+</p>
+
+A reverse proxy manages all incoming traffic to the service. The vector database and SQL database are only accessed by the core app.
+
+<p align="center">
+  <img src="/images/architecture-traffic.png" alt="Flow"/>
 </p>
 
 ## Documentation
