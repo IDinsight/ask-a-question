@@ -43,14 +43,14 @@ Use the Admin App to add, edit, and delete content in the database
 
 Ask questions in local languages. Languages currently on the roadmap
 
-- [] Xhosa
-- [] Zulu
-- [] Hindi
-- [] Igbo
+- [ ] Xhosa
+- [ ] Zulu
+- [ ] Hindi
+- [ ] Igbo
 
 #### **:speech_balloon: conversation capability**
 
-Refine or clarify your question
+Refine or clarify your question through conversation
 
 #### :video_camera: multimedia content
 
@@ -71,10 +71,49 @@ See which content is the most sought after, the kinds of questions that receive 
 > [!NOTE]
 > Looking for other features? Please raise an issue with `[FEATURE REQUEST]` before the title.
 
-## Calling the service
+## Usage
 
-### Manage content endpoints
+There are two major endpoints for Question-Answering:
+
+- Embeddings search: Finds the most similar content in the database using cosine similarity between embeddings.
+- LLM response: Crafts a custom response using LLM chat using the most similar content.
+
+See [docs](https://idinsight.github.io/aaq-core/) or SwaggerUI at `https://<DOMAIN>/api/docs` or `https://<DOMAIN>/docs` for more details and other API endpoints.
+
+### :question: Embeddings search
+
+```
+curl -X 'POST' \
+  'http://0.0.0.0:8000/embeddings-search' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <BEARER TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "query_text": "how are you?",
+  "query_metadata": {}
+}'
+```
+
+### :robot: LLM response
+
+```
+curl -X 'POST' \
+  'http://0.0.0.0:8000/llm-response' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <BEARER TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "query_text": "this is my question",
+  "query_metadata": {}
+}'
+```
 
 ## Architecture
 
+<p align="center">
+  <img src="/images/architecture-docker.png" alt="Architecture"/>
+</p>
+
 ## Documentation
+
+See [here](https://idinsight.github.io/aaq-core/) for full documentation.
