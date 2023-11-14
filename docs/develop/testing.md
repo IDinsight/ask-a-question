@@ -73,9 +73,9 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
 
 ### Run the app
 
-See [Quick Start](../index.md#quick_start) for how to start the application stack using docker-compose.
+- *Option 1 [Docker Compose]*: See [Quick Start](../index.md#quick_start) for how to start the application stack using docker-compose.
+- *Option 2 [Dev Setup]*: Run each container manually as per [dev setup](setup.md).
 
-Alternatively, you can run each of the containers manually as per [dev setup](setup.md).
 
 ### Call the endpoints
 

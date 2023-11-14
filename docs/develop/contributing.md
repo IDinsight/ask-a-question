@@ -1,6 +1,6 @@
 # Contributing to AAQ
 
-Thank you for being interested in contributing to AAQ. 
+Thank you for being interested in contributing to AAQ.
 
 AAQ is an open source project started by data scientists at IDinsight and sponsored by Google.org. Everyone is welcome to contribute to it - in fact, the success of the project depends on it! :handshake_dark_skin_tone:
 
@@ -66,14 +66,6 @@ pre-commit run --all      # 👈 to run it manually
 ```
 3. Run `mypy` separately with `mypy core_backend/app` (1)
 
-</div>
-
-1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
-   packages installed, this would mean keeping a whole separate copy of your
-   environment just for it. That's too bulky so the pre-commit only checks
-   a few high-level typing things. You still need to run `mypy` directly to catch
-   all the typing issues.
-   If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
 
 3. Then `git add` and `git commit` your changes:
 ```
@@ -87,6 +79,15 @@ git push -u origin feature
 4. Go to the GitHub web page of your fork of the AAQ repo. Click the ‘Pull request’ button
 to send your changes to the project’s maintainers for review.
 This will send a notification to the committers.
+</div>
+
+1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
+   packages installed, this would mean keeping a whole separate copy of your
+   environment just for it. That's too bulky so the pre-commit only checks
+   a few high-level typing things. You still need to run `mypy` directly to catch
+   all the typing issues.
+   If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
+
 
 ## Next steps
 
