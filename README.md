@@ -1,12 +1,11 @@
-<pre align="justify" style="text-align:center; font-size: 1vw; background:none;">
-
-      __            __        ______
-     /""\          /""\      /    " \
+<pre align="center" style="text-align:center; font-size: 1vw; background:none;">
+    __            __        ______
+    /""\          /""\      /    " \
     /    \        /    \    // ____  \
-   /' /\  \      /' /\  \  /  /    )  )
+    /' /\  \      /' /\  \  /  /    )  )
   //  __'  \    //  __'  \(: (____/ //
  /   /  \\  \  /   /  \\  \\         \
-(___/    \___)(___/    \___)\"____/\__\
+ (___/    \___)(___/    \___)\"____/\__\
 ASK-A-QUESTION
 </pre>
 
