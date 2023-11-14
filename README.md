@@ -1,4 +1,4 @@
-<pre style="text-align:center; font-size: 1vw; background:none;">
+<pre align="justify" style="text-align:center; font-size: 1vw; background:none;">
 
       __            __        ______
      /""\          /""\      /    " \
@@ -22,13 +22,13 @@ ASK-A-QUESTION
 
 ## :woman_cartwheeling: Features
 
-**:question: semantic search**
+**:question: LLM-powered search**
 
-**:robot: llm responses**
+**:robot: LLM responses**
 
-**:speech_balloon: deploy on whatsapp**
+**:speech_balloon: Deploy on whatsapp**
 
-**:manage content:books:**
+**:books: Manage content**
 
 ## :construction: Upcoming
 
