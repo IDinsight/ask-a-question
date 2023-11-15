@@ -29,33 +29,6 @@ jobs:
           role-session-name: github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Docker tag and push core_backend image to ECR
-        uses: docker/build-push-action@v3
-        with:
-          context: ./core_backend
-          file: ./core_backend/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:test
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ github.sha }}
-
-      # Perform another multi-platform build
-      - name: Docker tag and push admin_app image to ECR
-        uses: docker/build-push-action@v3
-        with:
-          context: ./admin_app
-          file: ./admin_app/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:test
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ github.sha }}
-
       - name: Fetch AWS secret for redeployment
         uses: aws-actions/aws-secretsmanager-get-secrets@v1
         with:
@@ -68,9 +41,9 @@ jobs:
           echo "WEBHOOK_HOST=$(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)"" >> $GITHUB_ENV
 
           if [[ ${{ github.event_name }} == 'push' ]]; then
-            echo "WEBHOOK_PATH=/redeploy-webhook" >> $GITHUB_ENV
+            echo "WEBHOOK_PATH=redeploy-webhook" >> $GITHUB_ENV
           elif [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
-            echo "WEBHOOK_PATH=/redeploy-branch-webhook" >> $GITHUB_ENV
+            echo "WEBHOOK_PATH=redeploy-branch-webhook" >> $GITHUB_ENV
           fi
 
       - name: Trigger webhook to redeploy container
