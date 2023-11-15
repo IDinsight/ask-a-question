@@ -54,7 +54,7 @@ Refine or clarify your question through conversation
 
 #### :video_camera: Multimedia content
 
-Respond with not just text but images and videos as well.
+Respond with not just text but voice, images, and videos as well.
 
 #### :rotating_light: Intent Tagging
 
