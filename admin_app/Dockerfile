@@ -1,3 +1,4 @@
+ARG NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
 FROM node:19-alpine AS base
 
 FROM base AS deps
@@ -8,11 +9,13 @@ COPY package.json package-lock.json ./
 RUN  npm install --production
 
 FROM base AS builder
+ARG NEXT_PUBLIC_BACKEND_URL
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_PUBLIC_BACKEND_URL ${NEXT_PUBLIC_BACKEND_URL}
 
 RUN npm run build
 

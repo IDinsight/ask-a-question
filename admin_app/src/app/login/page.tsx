@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 
-const backendUrl: string = process.env.BACKEND_URL || "http://localhost:8000";
+const backendUrl: string =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export default function Login() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
