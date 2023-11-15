@@ -45,7 +45,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:latest
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:main
             ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ steps.sha.outputs.sha_short }}
 
       # Perform another multi-platform build
@@ -57,5 +57,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:latest
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:main
             ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ steps.sha.outputs.sha_short }}
+
+      - name: Trigger webhook to redeploy container
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: $(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --profile aaq --query 'Addresses[*].PublicIp' --output text)
+          webhook_secret: $(aws secretsmanager get-secret-value --secret-id redeploy-webhook-secrets --profile aaq --query 'SecretString' --output text | python3 -c 'import json, sys; print(json.load(sys.stdin)["test_server_redeploy_webhook_secret"])')
