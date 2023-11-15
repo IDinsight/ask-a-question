@@ -79,7 +79,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
 
 ### Call the endpoints
 
-To use FastAPI's WebGUI to call the endpoints easily, navigate to
+You can use FastAPI's Swagger UI to test out the desired endpoints
 
 ``` yaml
 https://[DOMAIN]/api/docs # (1)!
@@ -87,7 +87,6 @@ https://[DOMAIN]/api/docs # (1)!
 
 1.  if you are using the [dev setup](setup.md), you can access it at `http://localhost:8000/docs`
 
-and run endpoints as desired.
 
 ??? warning "Authorising the `/embedding_search` and `/llm-response` endpoints"
     To use these endpoints, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET`.

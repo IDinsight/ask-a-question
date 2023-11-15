@@ -27,8 +27,6 @@ citizens.**
 
 **:books: Manage content** : Use the Admin App to add, edit, and delete content in the database
 
----
-
 ## :construction: Upcoming
 
 **:earth_africa: Support for low resourced language**: Ask questions in local languages. Languages currently on the roadmap
