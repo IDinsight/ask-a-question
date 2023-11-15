@@ -32,8 +32,8 @@ async def llm_response(
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> UserQueryResponse:
     """
-    Embeddings search finds the most similar embeddings to the user query
-    from the vector db.
+    LLM response creates a custom response to the question using LLM chat and the
+    most similar embeddings to the user query in the vector db.
     """
 
     feedback_secret_key = generate_secret_key()
