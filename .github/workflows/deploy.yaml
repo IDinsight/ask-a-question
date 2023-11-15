@@ -38,7 +38,7 @@ jobs:
 
       - name: Set webhook path
         run: |
-          echo "WEBHOOK_HOST=$(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)"" >> $GITHUB_ENV
+          echo "WEBHOOK_HOST=$(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)" >> $GITHUB_ENV
 
           if [[ ${{ github.event_name }} == 'push' ]]; then
             echo "WEBHOOK_PATH=redeploy-webhook" >> $GITHUB_ENV
