@@ -56,9 +56,9 @@ Refine or clarify your question through conversation
 
 Respond with not just text but voice, images, and videos as well.
 
-#### :rotating_light: Intent Tagging
+#### :rotating_light: Message Triaging
 
-Identify and handle messages differently based on intent
+Identify urgent or important messages. Handle them differently.
 
 #### :woman_technologist: Engineering dashboard
 
