@@ -136,6 +136,5 @@ See [here](https://idinsight.github.io/aaq-core/) for full documentation.
 
 ## Funders and Partners
 
-<img src="/images/google_org.png" alt="google_org"/>
-
+<img src="/images/google_org.png" alt="google_dot_org" width=200/>
 
