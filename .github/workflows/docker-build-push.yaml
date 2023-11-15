@@ -18,7 +18,7 @@ jobs:
       # Add a setup buildx step
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - uses: actions/checkout@v4
 
@@ -33,10 +33,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get git short SHA
-        id: sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Docker tag and push core_backend image to ECR
         uses: docker/build-push-action@v3
         with:
@@ -46,7 +42,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/core_backend:test
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ steps.sha.outputs.sha_short }}
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:$GITHUB_SHA
 
       # Perform another multi-platform build
       - name: Docker tag and push admin_app image to ECR
@@ -58,7 +54,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/admin_app:test
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ steps.sha.outputs.sha_short }}
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:$GITHUB_SHA
 
       - name: Fetch AWS secret for redeployment
         uses: aws-actions/aws-secretsmanager-get-secrets@v1
