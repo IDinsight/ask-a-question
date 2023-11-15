@@ -10,14 +10,14 @@ ASK-A-QUESTION
 </pre>
 
 <p align="center" style="text-align:center">
-<a href="https://idinsight.github.io/aaq-core/">Docs</a> |
+<a href="https://idinsight.github.io/aaq-core/">Developer Docs</a> |
 <a href="#features">Features</a> |
 <a href="#usage">Usage</a> |
 <a href="#architecture">Architecture</a> |
-<a href="#partners">Partners</a>
+<a href="#funders-and-partners">Funders and Partners</a>
 </p>
 
-**[Ask-a-question](https://idinsight.github.io/aaq-core/) allows your beneficiaries or staff to ask question in natural language in their preferred language and receive answers from your content repository**
+**[Ask-a-question](https://idinsight.github.io/aaq-core/) lets your users ask questions and receive answers from your content repository in their preferred language**
 
 ## :woman_cartwheeling: Features
 
@@ -48,23 +48,23 @@ Ask questions in local languages. Languages currently on the roadmap
 - [ ] Hindi
 - [ ] Igbo
 
-#### **:speech_balloon: conversation capability**
+#### **:speech_balloon: Conversation capability**
 
 Refine or clarify your question through conversation
 
-#### :video_camera: multimedia content
+#### :video_camera: Multimedia content
 
 Respond with not just text but images and videos as well.
 
-#### :rotating_light: urgency detection
+#### :rotating_light: Intent Tagging
 
-Identify and handle urgent messages.
+Identify and handle messages differently based on intent
 
-#### :woman_technologist: engineering dashboard
+#### :woman_technologist: Engineering dashboard
 
 Monitor uptime, response rates, throughput HTTP reponse codes and more
 
-#### :woman_office_worker: content manager dashboard
+#### :woman_office_worker: Content manager dashboard
 
 See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
 
@@ -133,3 +133,9 @@ A reverse proxy manages all incoming traffic to the service. The vector database
 ## Documentation
 
 See [here](https://idinsight.github.io/aaq-core/) for full documentation.
+
+## Funders and Partners
+
+<img src="/images/google_org.png" alt="google_org"/>
+
+
