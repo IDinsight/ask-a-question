@@ -15,7 +15,6 @@ export default function Home() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
-  // const [showCardEditButtons, setShowCardEditButtons] = useState(false);
 
   const deleteCard = (id: string) => {
     fetch(`${backendUrl}/content/${id}/delete`, {
