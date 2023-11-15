@@ -36,14 +36,10 @@ jobs:
             WEBHOOK, redeploy-webhook-secrets
           parse-json-secrets: true
 
-      - name: Set webhook path
-        run: |
-          echo "WEBHOOK_HOST=$(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)" >> $GITHUB_ENV
-
       - name: Trigger webhook to redeploy container
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_type: json
-          webhook_url: ${{ env.WEBHOOK_HOST }}:9000/hooks/redeploy-branch-webhook
+          webhook_url: ${{ env.WEBHOOK_TEST_REDEPLOY_URL }}
           webhook_secret: ${{ env.WEBHOOK_TEST_REDEPLOY_SECRET }}
           data: '{ "branch": "${{ github.ref_name }}" }'
