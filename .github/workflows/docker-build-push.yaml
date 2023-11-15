@@ -42,7 +42,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/core_backend:test
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:$GITHUB_SHA
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ github.sha }}
 
       # Perform another multi-platform build
       - name: Docker tag and push admin_app image to ECR
@@ -54,7 +54,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/admin_app:test
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:$GITHUB_SHA
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ github.sha }}
 
       - name: Fetch AWS secret for redeployment
         uses: aws-actions/aws-secretsmanager-get-secrets@v1
@@ -63,10 +63,20 @@ jobs:
             WEBHOOK, redeploy-webhook-secrets
           parse-json-secrets: true
 
+      - name: Set webhook path
+        run: |
+          echo "WEBHOOK_HOST=$(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)"" >> $GITHUB_ENV
+
+          if [[ ${{ github.event_name }} == 'push' ]]; then
+            echo "WEBHOOK_PATH=/redeploy-webhook" >> $GITHUB_ENV
+          elif [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
+            echo "WEBHOOK_PATH=/redeploy-branch-webhook" >> $GITHUB_ENV
+          fi
+
       - name: Trigger webhook to redeploy container
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_type: json
-          webhook_url: $(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)
-          webhook_secret: ${{  env.WEBHOOK_TEST_REDEPLOY_SECRET  }}
-          data: '{ "branch": "$GITHUB_REF_NAME" }'
+          webhook_url: ${{ env.WEBHOOK_HOST }}:9000/hooks/${{ env.WEBHOOK_PATH }}
+          webhook_secret: ${{ env.WEBHOOK_TEST_REDEPLOY_SECRET }}
+          data: '{ "branch": "${{ github.ref_name }}" }'
