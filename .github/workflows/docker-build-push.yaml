@@ -60,8 +60,17 @@ jobs:
             ${{ steps.login-ecr.outputs.registry }}/admin_app:main
             ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ steps.sha.outputs.sha_short }}
 
+      - name: Fetch AWS secret for redeployment
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          secret-ids: |
+            WEBHOOK, redeploy-webhook-secrets
+          parse-json-secrets: true
+
       - name: Trigger webhook to redeploy container
         uses: distributhor/workflow-webhook@v3
         with:
-          webhook_url: $(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --profile aaq --query 'Addresses[*].PublicIp' --output text)
-          webhook_secret: $(aws secretsmanager get-secret-value --secret-id redeploy-webhook-secrets --profile aaq --query 'SecretString' --output text | python3 -c 'import json, sys; print(json.load(sys.stdin)["test_server_redeploy_webhook_secret"])')
+          webhook_type: json
+          webhook_url: $(aws ec2 describe-addresses --filters Name=tag:Name,Values=aaq-dev --query 'Addresses[*].PublicIp' --output text)
+          webhook_secret: ${{  env.WEBHOOK_TEST_REDEPLOY_SECRET  }}
+          data: '{ "branch": "$GITHUB_REF_NAME" }'
