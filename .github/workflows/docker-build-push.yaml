@@ -45,7 +45,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/core_backend:main
+            ${{ steps.login-ecr.outputs.registry }}/core_backend:test
             ${{ steps.login-ecr.outputs.registry }}/core_backend:${{ steps.sha.outputs.sha_short }}
 
       # Perform another multi-platform build
@@ -57,7 +57,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/admin_app:main
+            ${{ steps.login-ecr.outputs.registry }}/admin_app:test
             ${{ steps.login-ecr.outputs.registry }}/admin_app:${{ steps.sha.outputs.sha_short }}
 
       - name: Fetch AWS secret for redeployment
