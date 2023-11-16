@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .configs.app_config import QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
+from .configs.app_config import DOMAIN, QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
 from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger
 
@@ -22,6 +22,8 @@ def create_app() -> FastAPI:
         "https://localhost:3000",
         "http://localhost",
         "http://localhost:3000",
+        f"http://{DOMAIN}",
+        f"http://{DOMAIN}:3000",
     ]
 
     app.add_middleware(
