@@ -1,18 +1,21 @@
 # Writing and running tests
 
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+If you are writing new features, you should also add unit tests. Tests are under
+`core_backend/tests`.
 
 ## Running unit tests
+
+!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
     of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
 
-Run tests using
+Run tests using:
 
     make tests
 
-This target starts up new postgres and qdrant container for testing. It also sets the
+This target starts up new postgres and qdrant containers for testing. It also sets the
 correct environment variables, runs `pytest`, and then destroys the containers.
 
 ### Debugging unit tests
@@ -78,7 +81,11 @@ Alternatively, you can run each of the containers manually as per [dev setup](se
 
 To use FastAPI's WebGUI to call the endpoints easily, navigate to
 
-    http://localhost:8000/docs
+``` yaml
+https://[DOMAIN]/api/docs # (1)!
+```
+
+1.  if you are using the [dev setup](setup.md), you can access it at `http://localhost:8000/docs`
 
 and run endpoints as desired.
 
