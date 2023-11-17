@@ -31,7 +31,6 @@ citizens.**
 
 ## :construction: Upcoming
 
-**Step 3:** Run docker-compose
 **:earth_africa: Support for low resourced language**: Ask questions in local languages. Languages currently on the roadmap
 
 - [ ] Xhosa
