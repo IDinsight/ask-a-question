@@ -52,7 +52,6 @@ Navigate to repo and run pre-commit
     cd aaq-core
     pre-commit install  # 👈 to run it automatically before each commit
 
-
 ### Make your changes
 
 <div class="annotate" markdown>
