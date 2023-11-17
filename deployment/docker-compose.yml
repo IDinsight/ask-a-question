@@ -1,6 +1,7 @@
 version: "3"
 services:
   core_backend:
+    image: idinsight/aaq-backend:latest
     build:
       context: ../core_backend
       dockerfile: Dockerfile
@@ -25,6 +26,7 @@ services:
     volumes:
       - qdrant_volume:/qdrant/storage
   admin_app:
+    image: idinsight/aaq-admin-app:latest
     build:
       context: ../admin_app
       dockerfile: Dockerfile

@@ -6,18 +6,23 @@
 
     git clone git@github.com:IDinsight/aaq-core.git
 
-**Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the variables
+**Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the
+variables. 
+
+!!! note "Check out `deployment/template.env` for full list of environment variables to be set."
 
     POSTGRES_PASSWORD=
     OPENAI_API_KEY=
     QUESTION_ANSWER_SECRET=
-    ... etc.
+    ...
 
 **Step 3:** Copy `deployment/template.env.nginx` to `deployment/.env.nginx` and edit it to set the variables
 
     DOMAIN=
     EMAIL=
-    ... etc.
+    ... 
+
+!!! note "Check out `deployment/template.env.nginx` for full list of environment variables to be set."
 
 **Step 4:** Run `deployment/init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
 
@@ -28,7 +33,7 @@
 **Step 5:** Run docker-compose
 
     cd deployment
-    docker compose -f docker-compose.yml -p aaq-stack up -d --build
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up -d --build
 
 You can now access the admin app at `https://[DOMAIN]/` and the apis at `https://[DOMAIN]/api`
 
@@ -37,4 +42,4 @@ You can now access the admin app at `https://[DOMAIN]/` and the apis at `https:/
 **Step 6:** Shutdown containers
 
     cd deployment
-    docker compose -f docker-compose.yml -p aaq-stack down
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down

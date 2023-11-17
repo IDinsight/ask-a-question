@@ -1,13 +1,10 @@
 version: "3"
 services:
   core_backend:
-    image: idinsight/aaq-backend:latest
     depends_on:
       - relational_db
     environment:
       - POSTGRES_HOST=relational_db
-  admin_app:
-    image: idinsight/aaq-admin-app:latest
   relational_db:
     image: postgres:15.4
     restart: always
