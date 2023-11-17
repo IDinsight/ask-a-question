@@ -2,9 +2,18 @@ import logging
 
 import uvicorn
 from app import create_app
+from app.configs.app_config import BACKEND_ROOT_PATH
 from fastapi.logger import logger
+from uvicorn.workers import UvicornWorker
 
 app = create_app()
+
+
+class Worker(UvicornWorker):
+    """Custom worker class to allow root_path to be passed to Uvicorn"""
+
+    CONFIG_KWARGS = {"root_path": BACKEND_ROOT_PATH}
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

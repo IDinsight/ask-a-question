@@ -29,3 +29,5 @@ CONTENT_READONLY_PASSWORD = os.environ.get("CONTENT_READONLY_PASSWORD", "readonl
 ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 JWT_SECRET = os.environ.get("JWT_SECRET", "update-me-for-production")
+
+BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")

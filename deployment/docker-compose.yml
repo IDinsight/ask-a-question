@@ -18,8 +18,6 @@ services:
       - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
-    ports:
-      - "8000:8000"
   relational_db:
     image: postgres:16.0-alpine
     restart: always
@@ -50,9 +48,31 @@ services:
     restart: always
     env_file:
       - .env
+  nginx:
+    image: nginx:1.25-alpine
+    restart: always
+    depends_on:
+      - core_backend
+      - admin_app
     ports:
-      - "3000:3000"
-
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    command: >
+      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf
+      && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    env_file:
+      - .env.nginx
+  certbot:
+    image: certbot/certbot
+    restart: always
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 volumes:
   local_dynamic_storage:
   db_volume:
