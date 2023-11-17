@@ -38,23 +38,25 @@ citizens.**
 - [ ] Hindi
 - [ ] Igbo
 
-**:speech_balloon: conversation capability**: Refine or clarify your question through conversation
+**:speech_balloon: Conversation capability**: Refine or clarify your question through conversation
 
-**:video_camera: multimedia content**: Respond with not just text but images and videos as well.
+**:video_camera: Multimedia content**: Respond with not just text but images and videos as well.
 
-**:rotating_light: urgency detection**: Identify and handle urgent messages.
+**:rotating_light: Message Triaging**: Identify and handle urgent messages.
 
-**:woman_technologist: engineering dashboard**: Monitor uptime, response rates, throughput HTTP reponse codes and more
+**:woman_technologist: Engineering dashboard**: Monitor uptime, response rates, throughput HTTP reponse codes and more
 
-**:woman_office_worker: content manager dashboard**: See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
+**:woman_office_worker: Content manager dashboard**: See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
 
 !!! question "Looking for other features?"
-    If you are an NGO or a social sector organisation, we'd love to hear what features you'd
+    If you are an developing country government, NGO or a social sector organisation, we'd love to hear what features you'd
     like to see. Raise an issue with `[FEATURE REQUEST]` before the title to start the conversation.
 
 ---
 
 ## Acknowledgements
+
+<img src="/images/google_org.png" alt="google_dot_org" width=200/>
 
 The project is funded by Google.org through the
 [AI for Global Goals](https://globalgoals.withgoogle.com/globalgoals/) grant.
