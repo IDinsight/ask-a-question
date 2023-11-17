@@ -50,7 +50,7 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
 Navigate to repo and run pre-commit
 
     cd aaq-core
-    pre-commit install        # 👈 to run it automatically before each commit
+    pre-commit install  # 👈 to run it automatically before each commit
 
 
 ### Make your changes
