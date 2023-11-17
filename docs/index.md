@@ -23,7 +23,7 @@ citizens.**
 
 **:robot: LLM responses** : Craft a custom reponse to the question using LLM chat and the content in your database
 
-**:speech_balloon: Deploy on whatsapp** : Easily deploy using WhatsApp Business API
+**:speech_balloon: Deploy on WhatsApp** : Easily deploy using WhatsApp Business API
 
 **:books: Manage content** : Use the Admin App to add, edit, and delete content in the database
 
