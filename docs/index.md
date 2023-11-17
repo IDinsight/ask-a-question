@@ -12,7 +12,7 @@ ASK-A-QUESTION
 </pre>
 
 **[Ask-a-question](https://idinsight.github.io/aaq-core/) is an open-source product designed to support NGOs,
-developing country governments, and social sector orgs to use Large Language Models to answer questions from
+governments of developing countries, and social sector orgs to use Large Language Models to answer questions from
 citizens.**
 
 ---
