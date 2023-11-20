@@ -108,7 +108,6 @@ async def validate_webhook(
         OR (in case of invalid token)
         dict: A dictionary containing the status of the response.
     """
-    print(token, challenge)
     if token == WHATSAPP_VERIFY_TOKEN:
         return int(challenge)
     else:
