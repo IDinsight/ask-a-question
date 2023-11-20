@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .configs.app_config import QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
-from .routers import admin, auth, manage_content, question_answer
+from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger
 
 logger = setup_logger()
@@ -15,6 +15,7 @@ def create_app() -> FastAPI:
     app.include_router(question_answer.router)
     app.include_router(manage_content.router)
     app.include_router(auth.router)
+    app.include_router(whatsapp_qa.router)
 
     origins = [
         "https://localhost",
