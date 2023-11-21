@@ -6,7 +6,7 @@ The WhatsApp server sends post requests to our FastAPI app. Our App processes th
 
 ### Step 1. Core App Deployment
 To set up the WhatsApp integration, while deploying the Core App, you need to do the following:
-1. Create/Login to your Meta project Meta/Facebook project;
+1. Create/Login to your Meta/Facebook project;
 2. Once you are in the project, go to "WhatsApp" -> "API Setup";
 3. Copy the "Temporary access token" and paste it in the `WHATSAPP_TOKEN` field in the `.env` file in the deployments folder in the aaq-core repo;
     - You can skip the previous steps if you already have access to the `WHATSAPP_TOKEN`.
