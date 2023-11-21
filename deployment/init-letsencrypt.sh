@@ -42,11 +42,11 @@ echo
 
 
 echo "### Starting nginx ..."
-docker-compose -f docker-compose.yml run --name aaq-stack up --force-recreate -d nginx
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name aaq-stack up --force-recreate -d nginx
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
-docker-compose -f docker-compose.yml run --name aaq-stack up --rm --entrypoint "\
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name aaq-stack up --rm --entrypoint "\
   rm -Rf /etc/letsencrypt/live/$domains && \
   rm -Rf /etc/letsencrypt/archive/$domains && \
   rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
@@ -80,4 +80,4 @@ docker-compose run --rm --entrypoint "\
 echo
 
 echo "### Reloading nginx ..."
-docker compose -f docker-compose.yml -p aaq-stack up --force-recreate -d nginx
+docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up --force-recreate -d nginx
