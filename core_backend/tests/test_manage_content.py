@@ -377,3 +377,40 @@ def test_convert_record_to_schema() -> None:
     assert result.content_id == content_uuid
     assert result.content_text == "sample text"
     assert result.content_metadata["extra_field"] == "extra value"
+
+
+@pytest.mark.parametrize(
+    "content_text, content_metadata",
+    [
+        ("", {}),
+        ("sample text", {"meta_key": "meta_value"}),
+        (
+            "sample text",
+            {"created_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
+        ),
+        (
+            "sample text",
+            {"updated_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
+        ),
+    ],
+)
+def test_create_payload_for_qdrant_upsert_return_dict(
+    content_text: str, content_metadata: Dict[str, Any]
+) -> None:
+    payload = _create_payload_for_qdrant_upsert(
+        content_text=content_text, metadata=content_metadata
+    )
+
+    assert payload.content_text == content_text
+
+    if "created_datetime_utc" in content_metadata:
+        assert payload.created_datetime_utc == content_metadata["created_datetime_utc"]
+
+    if "updated_datetime_utc" in content_metadata:
+        assert payload.updated_datetime_utc > content_metadata["updated_datetime_utc"]
+
+    assert payload.updated_datetime_utc >= payload.created_datetime_utc
+
+    # Check for additional parameters
+    for key in content_metadata:
+        assert key in payload.model_dump()
