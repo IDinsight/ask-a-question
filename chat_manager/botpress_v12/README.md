@@ -34,4 +34,6 @@ To install for Mac/Windows/Linux: Follow the official docs [here](https://v12.bo
 
    c. Change the base of the URL at the top
 
+   d. If you've changed the bearer token for the QA endpoints, you'll have to update the headers sections too
+
 6. Test the bot in the emulator
