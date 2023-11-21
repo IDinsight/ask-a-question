@@ -17,7 +17,7 @@ These are all the necessary steps to set up the Core App for WhatsApp integratio
 ### Step 2. WhatsApp Webhook Setup
 Once you have deployed the Core App, you need to set up the webhook for the WhatsApp integration. To do this, follow these steps:
 1. Login to your Meta project;
-2. Navigate to the "WhatsApp" -> "API Setup";
+2. Navigate to the "WhatsApp" -> "Webhook" page;
 3. Click on "Edit Subscription"
 4. In the pop-up, fill in the core-backend app's URL in the "Callback URL" field. The URL should be of the form: `<your-core-backend-app-url>/webhook`. Then fill the "Verify token" field with the value of the `WHATSAPP_VERIFY_TOKEN` that you set in the `.env` file in the Core App deployment step. Finally, click on "Verify and Save"
 5. Next, navigate to "WhatsApp" -> "Configuration";
