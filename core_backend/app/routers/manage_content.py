@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from litellm import embedding
+from pydantic import BaseModel, ConfigDict, Field
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList, PointStruct, Record
 
@@ -17,6 +18,17 @@ from ..utils import setup_logger
 
 router = APIRouter(prefix="/content")
 logger = setup_logger()
+
+
+class QdrantPayload(BaseModel):
+    """Content payload for qdrant"""
+
+    content_text: str
+    content_metadata: dict = Field(default_factory=dict)
+    created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
+    updated_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(extra="allow")
 
 
 @router.post("/create", response_model=ContentRetrieve)
@@ -68,7 +80,7 @@ async def edit_content(
     payload = _create_payload_for_qdrant_upsert(
         content.content_text, old_content[0].payload or {}
     )
-    payload.update(content.content_metadata)
+    payload = payload.model_copy(update=content.content_metadata)
 
     return _upsert_content_to_qdrant(
         content_id=UUID(content_id),
@@ -148,20 +160,16 @@ async def retrieve_content_by_id(
     return _convert_record_to_schema(record[0])
 
 
-def _create_payload_for_qdrant_upsert(content_text: str, metadata: dict) -> dict:
+def _create_payload_for_qdrant_upsert(
+    content_text: str, metadata: dict
+) -> QdrantPayload:
     """
     Create payload for qdrant upsert
     """
-    payload = metadata.copy()
-
-    if "created_datetime_utc" not in payload:
-        timestamp = datetime.utcnow()
-        payload["created_datetime_utc"] = timestamp
-        payload["updated_datetime_utc"] = timestamp
-    else:
-        payload["updated_datetime_utc"] = datetime.utcnow()
-
-    payload["content_text"] = content_text
+    payload_dict = metadata.copy()
+    payload_dict["content_text"] = content_text
+    payload = QdrantPayload(**payload_dict)
+    payload.updated_datetime_utc = datetime.utcnow()
 
     return payload
 
@@ -169,7 +177,7 @@ def _create_payload_for_qdrant_upsert(content_text: str, metadata: dict) -> dict
 def _upsert_content_to_qdrant(
     content_id: UUID,
     content: ContentCreate,
-    payload: dict,
+    payload: QdrantPayload,
     qdrant_client: QdrantClient,
 ) -> ContentRetrieve:
     """Add content to qdrant collection"""
@@ -184,7 +192,7 @@ def _upsert_content_to_qdrant(
             PointStruct(
                 id=str(content_id),
                 vector=content_embedding,
-                payload=payload,
+                payload=payload.model_dump(),
             )
         ],
     )
@@ -192,8 +200,8 @@ def _upsert_content_to_qdrant(
     return ContentRetrieve(
         **content.model_dump(),
         content_id=content_id,
-        created_datetime_utc=payload["created_datetime_utc"],
-        updated_datetime_utc=payload["updated_datetime_utc"],
+        created_datetime_utc=payload.created_datetime_utc,
+        updated_datetime_utc=payload.updated_datetime_utc,
     )
 
 
