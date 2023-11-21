@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - hotfix_docs
 permissions:
   contents: write
 jobs:
