@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - hotfix_docs
+      - main
 permissions:
   contents: write
 jobs:
