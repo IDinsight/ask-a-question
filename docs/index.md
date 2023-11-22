@@ -54,7 +54,7 @@ citizens.**
 
 ## Acknowledgements
 
-<img src="../images/google_org.png" alt="google_dot_org" width=200/>
+<img src="./images/google_org.png" alt="google_dot_org" width=200/>
 
 The project is funded by Google.org through the
 [AI for Global Goals](https://globalgoals.withgoogle.com/globalgoals/) grant.
