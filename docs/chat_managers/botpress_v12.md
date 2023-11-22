@@ -32,7 +32,7 @@ Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v1
 2. Make an account and login
 3. Go to "Create Bot" and then "Import Existing" (you can set Bot ID to anything you want)
 4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in this repo
-5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running
+5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running *
 
     a. Click on the card
 
@@ -43,3 +43,24 @@ Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v1
     d. If you've changed the bearer token for the QA endpoints, you'll have to update the headers sections too
 
 6. Test the bot in the emulator
+
+??? note "* Errors with using `localhost` on the API Call skill?"
+
+    If you're having trouble with localhost AAQ calls, try forwarding traffic through `ngrok` and using that for deployment of AAQ.
+
+    1. Install and configure ngrok
+
+    2. Run `ngrok http https://localhost` to forward traffic
+
+    3. In `deployment/.env` file, ensure you have
+
+            NEXT_PUBLIC_BACKEND_URL=https://[NGROK URL]/api
+            BACKEND_ROOT_PATH="/api"
+
+    4. In `deployment/.env.nginx` file ensure you have
+
+            DOMAIN=[NGROK URL]  # don't add https/http at the front
+
+    5. Change the base of the API Call skill so it looks like:
+
+            [NGROK URL]/api/embeddings-search
