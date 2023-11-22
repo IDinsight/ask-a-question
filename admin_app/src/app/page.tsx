@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
 import { NavBar } from "../components/NavBar";
+import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import IsFullAccess from "../components/Auth";
@@ -12,6 +13,7 @@ const backendUrl: string =
 
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
+  const [filteredCards, setFilteredCards] = useState<Content[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
@@ -22,7 +24,11 @@ export default function Home() {
       headers: get_api_headers(),
     }).then((response) => {
       if (response.ok) {
-        setCards(cards.filter((card: Content) => card.content_id !== id));
+        const newCardList = cards.filter(
+          (card: Content) => card.content_id !== id,
+        );
+        setCards(newCardList);
+        setFilteredCards(newCardList);
       } else {
         throw new Error("Could not delete " + id);
       }
@@ -59,15 +65,15 @@ export default function Home() {
     }).then((response) => {
       if (response.ok) {
         console.log("updated card: " + card.content_id);
-        setCards(
-          cards.map((c: Content) => {
-            if (c.content_id === card.content_id) {
-              return card;
-            } else {
-              return c;
-            }
-          }),
-        );
+        const newCardList = cards.map((c: Content) => {
+          if (c.content_id === card.content_id) {
+            return card;
+          } else {
+            return c;
+          }
+        });
+        setCards(newCardList);
+        setFilteredCards(newCardList);
       } else {
         throw new Error("Could not save " + card.content_id);
       }
@@ -89,6 +95,7 @@ export default function Home() {
       })
       .then((data) => {
         setCards([...cards, data]);
+        setFilteredCards([...cards, data]);
       });
   };
 
@@ -116,20 +123,33 @@ export default function Home() {
       })
       .then((data) => {
         setCards(data);
+        setFilteredCards(data);
       })
       .catch((error) => console.log(error));
   }, []);
+
+  const filterCards = (e: React.FormEvent<HTMLInputElement>) => {
+    const searchTerm = e.currentTarget.value.toLowerCase();
+    const filteredCards = cards.filter((card: Content) => {
+      return card.content_text.toLowerCase().includes(searchTerm);
+    });
+    setFilteredCards(filteredCards);
+  };
 
   const showCardEditButtons = IsFullAccess();
 
   return (
     <>
       <NavBar />
+      <div className="flex justify-left items-center bg-blue-600 dark:bg-blue-900">
+        <SearchBar onChange={filterCards} />
+      </div>
+
       <main className="flex-wrap items-center justify-between ">
         <div className="m-5">
           <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* create a card for each object */}
-            {cards.map((card: Content) => (
+            {filteredCards.map((card: Content) => (
               <ContentCard
                 key={card.content_id}
                 content_id={card.content_id}
@@ -142,7 +162,7 @@ export default function Home() {
             ))}
             {showCardEditButtons ? (
               <button
-                className="add-card min-h-[10rem] outline-dashed rounded outline-gray-700"
+                className="add-card min-h-[10rem] outline-dashed rounded dark:outline-gray-700 outline-gray-400"
                 onClick={addCard}
               >
                 +
@@ -155,13 +175,13 @@ export default function Home() {
           <>
             <div className="flex backdrop-blur justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
               <div className="relative w-auto my-6 mx-auto max-w-3xl">
-                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-gray-700 outline-none focus:outline-none">
+                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full dark:bg-gray-700 bg-gray-200 dark:outline-none focus:outline-none">
                   <div className="flex items-start justify-between p-5 rounded-t ">
                     <h3 className="text-xl">
                       {cardToEdit ? (
                         <>
                           Edit Content
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs dark:text-gray-400 text-gray-800">
                             id: {cardToEdit.content_id}
                           </div>
                         </>
@@ -179,7 +199,7 @@ export default function Home() {
                       id="content_text"
                       rows={16}
                       cols={50}
-                      className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full bg-gray-800 py-4 px-4 text-gray-400"
+                      className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400"
                       defaultValue={cardToEdit?.content_text}
                       placeholder="Enter content text"
                       onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
