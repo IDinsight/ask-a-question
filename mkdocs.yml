@@ -45,6 +45,8 @@ nav:
   - WhatsApp Connector:
       - Setup: whatsapp/setup.md
       - Testing: whatsapp/testing.md
+  - Chat Managers:
+      - Botpress v12 (OSS): chat_managers/botpress_v12.md
 
 markdown_extensions:
   - tables
