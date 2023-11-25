@@ -1,11 +1,25 @@
+from typing import Callable
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import (
+    CollectorRegistry,
+    make_asgi_app,
+    multiprocess,
+)
 
 from .configs.app_config import DOMAIN, QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
 from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger
 
 logger = setup_logger()
+
+
+def make_metrics_app() -> Callable:
+    """Create prometheus metrics app"""
+    registry = CollectorRegistry()
+    multiprocess.MultiProcessCollector(registry)
+    return make_asgi_app(registry=registry)
 
 
 def create_app() -> FastAPI:
@@ -31,6 +45,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    metrics_app = make_metrics_app()
+    app.mount("/metrics", metrics_app)
 
     @app.on_event("startup")
     def startup_event() -> None:
