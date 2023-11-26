@@ -1,3 +1,5 @@
+"use client";
+
 const logout = () => {
   localStorage.removeItem("token");
   window.location.href = "/login";
@@ -5,11 +7,11 @@ const logout = () => {
 
 export const NavBar = () => {
   return (
-    <nav className="bg-white border-gray-200 dark:bg-gray-900 shadow-lg">
+    <nav className="sticky z-10 top-0 bg-white border-gray-200 dark:bg-gray-900 shadow-lg">
       <div className="flex flex-wrap items-center justify-between mx-auto p-4">
-        <a href="" className="flex items-center">
+        <a href="/" className="flex items-center">
           <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            Manage Content
+            Admin App
           </span>
         </a>
         <button
@@ -48,7 +50,7 @@ export const NavBar = () => {
             </li>
             <li>
               <a
-                href="#"
+                href="/"
                 className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 Manage Content
@@ -56,7 +58,7 @@ export const NavBar = () => {
             </li>
             <li>
               <a
-                href="#"
+                href="/chat"
                 className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 Playground

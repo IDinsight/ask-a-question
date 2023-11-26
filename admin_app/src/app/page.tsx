@@ -7,9 +7,7 @@ import { NavBar } from "../components/NavBar";
 import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
 import IsFullAccess from "../components/Auth";
-
-const backendUrl: string =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import { backendUrl } from "../components/Config";
 
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
@@ -177,13 +175,12 @@ export default function Home() {
   const showCardEditButtons = IsFullAccess();
 
   return (
-    <>
-      <NavBar />
-      <div className="flex justify-left items-center bg-blue-600 dark:bg-blue-900">
+    <div className="flex-grow">
+      <div className="sticky top-0 z-10 justify-left w-full -px-4 items-center bg-blue-600 dark:bg-blue-900">
         <SearchBar onChange={filterCards} />
       </div>
 
-      <main className="flex-wrap items-center justify-between ">
+      <main className="flex-grow overflow-y-auto items-center justify-between ">
         <div className="m-5">
           <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* create a card for each object */}
@@ -225,6 +222,6 @@ export default function Home() {
           />
         )}
       </main>
-    </>
+    </div>
   );
 }
