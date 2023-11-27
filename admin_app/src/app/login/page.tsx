@@ -29,9 +29,9 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-yellow-400 dark:bg-gray-800 h-screen overflow-hidden flex items-center justify-center">
+    <div className="bg-gray-200 dark:bg-gray-800 h-screen overflow-hidden flex items-center justify-center">
       <div className="bg-white lg:w-6/12 md:7/12 w-8/12 shadow-3xl rounded-xl">
-        <div className="bg-gray-800 shadow shadow-gray-200 absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full p-4 md:p-8">
+        <div className="bg-blue-600 dark:bg-gray-800 shadow shadow-gray-200 absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full p-4 md:p-8">
           <svg
             fill="none"
             stroke="currentColor"
@@ -85,7 +85,7 @@ export default function Login() {
           </div>
           <button
             type="button"
-            className="bg-gradient-to-b from-gray-700 to-gray-900 font-medium p-2 md:p-4 text-white uppercase w-full rounded"
+            className="bg-gradient-to-b from-blue-500 to-blue-700 dark:from-gray-700 dark:to-gray-900 font-medium p-2 md:p-4 text-white uppercase w-full rounded"
             onClick={onLogin}
           >
             Login
