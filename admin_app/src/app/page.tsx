@@ -7,6 +7,7 @@ import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import IsFullAccess from "../components/Auth";
+import TextareaAutosize from "react-textarea-autosize";
 
 const backendUrl: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -195,10 +196,9 @@ export default function Home() {
                     />
                   </div>
                   <div className="relative p-2 flex flex-auto">
-                    <textarea
+                    <TextareaAutosize
                       id="content_text"
-                      rows={16}
-                      cols={50}
+                      cols={75}
                       className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400"
                       defaultValue={cardToEdit?.content_text}
                       placeholder="Enter content text"
