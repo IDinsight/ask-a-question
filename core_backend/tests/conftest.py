@@ -45,7 +45,9 @@ def faq_contents(client: TestClient) -> None:
         metadata = content.get("content_metadata", {})
         payload = _create_payload_for_qdrant_upsert(content["content_text"], metadata)
         points.append(
-            PointStruct(id=point_id, vector=content_embedding, payload=payload)
+            PointStruct(
+                id=point_id, vector=content_embedding, payload=payload.model_dump()
+            )
         )
 
     qdrant_client = get_qdrant_client()
