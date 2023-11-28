@@ -28,7 +28,7 @@ Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v1
 
 ## Running Botpress
 
-1. Go to `localhost://3000`
+1. Go to `http://localhost:3000`
 2. Make an account and login
 3. Go to "Create Bot" and then "Import Existing" (you can set Bot ID to anything you want)
 4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in this repo
