@@ -151,15 +151,19 @@ export default function Home() {
           <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* create a card for each object */}
             {filteredCards.map((card: Content) => (
-              <ContentCard
+              <div
+                onClick={() => editCard(card)}
                 key={card.content_id}
-                content_id={card.content_id}
-                content_text={card.content_text}
-                deleteMe={deleteCard}
-                editMe={editCard}
-                expanded={false}
-                showEditButton={showCardEditButtons}
-              />
+                className="cursor-pointer"
+              >
+                <ContentCard
+                  content_id={card.content_id}
+                  content_text={card.content_text}
+                  deleteMe={deleteCard}
+                  expanded={false}
+                  showEditButton={showCardEditButtons}
+                />
+              </div>
             ))}
             {showCardEditButtons ? (
               <button
