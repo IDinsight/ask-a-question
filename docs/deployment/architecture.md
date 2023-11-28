@@ -1,4 +1,4 @@
-## Architecture
+# Architecture
 
 We use docker-compose to orchestrate containers.
 
