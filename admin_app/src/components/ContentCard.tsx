@@ -10,7 +10,7 @@ export type Content = {
 
 interface ContentCardProps extends Content {
   expanded: boolean;
-  deleteMe: (id: string) => void;
+  deleteMe: (e: React.MouseEvent, id: string) => void;
   showEditButton: boolean;
 }
 
@@ -32,8 +32,8 @@ export const ContentCard: React.FC<ContentCardProps> = (
         {card.showEditButton ? (
           <>
             <TrashIcon
-              className="w-6 h-6 text-gray-500 cursor-pointer hover:text-red-200"
-              onClick={() => card.deleteMe(card.content_id)}
+              onClick={(e) => card.deleteMe(e, card.content_id)}
+              className="h-6 w-6 text-gray-400 hover:text-red-500 cursor-pointer"
             />
           </>
         ) : null}

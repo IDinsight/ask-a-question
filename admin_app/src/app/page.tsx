@@ -19,21 +19,24 @@ export default function Home() {
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
 
-  const deleteCard = (id: string) => {
-    fetch(`${backendUrl}/content/${id}/delete`, {
-      method: "DELETE",
-      headers: get_api_headers(),
-    }).then((response) => {
-      if (response.ok) {
-        const newCardList = cards.filter(
-          (card: Content) => card.content_id !== id,
-        );
-        setCards(newCardList);
-        setFilteredCards(newCardList);
-      } else {
-        throw new Error("Could not delete " + id);
-      }
-    });
+  const deleteCard = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete the content?")) {
+      fetch(`${backendUrl}/content/${id}/delete`, {
+        method: "DELETE",
+        headers: get_api_headers(),
+      }).then((response) => {
+        if (response.ok) {
+          const newCardList = cards.filter(
+            (card: Content) => card.content_id !== id,
+          );
+          setCards(newCardList);
+          setFilteredCards(newCardList);
+        } else {
+          throw new Error("Could not delete " + id);
+        }
+      });
+    }
   };
 
   const get_api_headers = () => {
