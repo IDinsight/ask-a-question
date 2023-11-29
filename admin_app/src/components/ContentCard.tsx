@@ -13,6 +13,7 @@ interface ContentCardProps extends Content {
   deleteMe: (id: string) => void;
   editMe: (content: Content) => void;
   showEditButton: boolean;
+  onDeleteRequest: (id: string) => void;
 }
 
 export const ContentCard: React.FC<ContentCardProps> = (
@@ -33,7 +34,7 @@ export const ContentCard: React.FC<ContentCardProps> = (
         {card.showEditButton ? (
           <TrashIcon
             className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-200"
-            onClick={() => card.deleteMe(card.content_id)}
+            onClick={() => card.onDeleteRequest(card.content_id)}
           />
         ) : null}
       </div>

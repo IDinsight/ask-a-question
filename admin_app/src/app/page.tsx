@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
+import ConfirmDelete from "../components/ConfirmDelete";
 import { NavBar } from "../components/NavBar";
 import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
@@ -18,24 +19,43 @@ export default function Home() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const deleteCard = (e: React.MouseEvent, id: string) => {
-    if (window.confirm("Are you sure you want to delete the content?")) {
-      fetch(`${backendUrl}/content/${id}/delete`, {
-        method: "DELETE",
-        headers: get_api_headers(),
-      }).then((response) => {
-        if (response.ok) {
-          const newCardList = cards.filter(
-            (card: Content) => card.content_id !== id,
-          );
-          setCards(newCardList);
-          setFilteredCards(newCardList);
-        } else {
-          throw new Error("Could not delete " + id);
-        }
-      });
-    }
+  const requestDeleteCard = (id: string) => {
+    openConfirmModal(id);
+  };
+
+  const deleteCard = (id: string) => {
+    fetch(`${backendUrl}/content/${id}/delete`, {
+      method: "DELETE",
+      headers: get_api_headers(),
+    }).then((response) => {
+      if (response.ok) {
+        const newCardList = cards.filter(
+          (card: Content) => card.content_id !== id,
+        );
+        setCards(newCardList);
+        setFilteredCards(newCardList);
+      } else {
+        throw new Error("Could not delete " + id);
+      }
+    });
+  };
+
+  const openConfirmModal = (id: string) => {
+    setIsConfirmModalOpen(true);
+    setItemToDelete(id);
+  };
+
+  const closeConfirmModal = () => {
+    setIsConfirmModalOpen(false);
+    setItemToDelete(null);
+  };
+
+  const confirmDelete = (id: string) => {
+    deleteCard(id);
+    closeConfirmModal();
   };
 
   const get_api_headers = () => {
@@ -161,6 +181,7 @@ export default function Home() {
                 editMe={editCard}
                 expanded={false}
                 showEditButton={showCardEditButtons}
+                onDeleteRequest={requestDeleteCard}
               />
             ))}
             {showCardEditButtons ? (
@@ -173,6 +194,16 @@ export default function Home() {
             ) : null}
           </div>
         </div>
+
+        {isConfirmModalOpen && itemToDelete && (
+          <ConfirmDelete
+            itemToDelete={itemToDelete}
+            onDeleteConfirm={() => confirmDelete(itemToDelete)}
+            onClose={closeConfirmModal}
+            title={"Confirm Deletion"}
+            message={`Are you sure you want to delete this content with id: ${itemToDelete}? This action cannot be undone.`}
+          />
+        )}
 
         {showEditModal ? (
           <>
