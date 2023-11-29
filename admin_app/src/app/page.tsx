@@ -201,7 +201,21 @@ export default function Home() {
             onDeleteConfirm={() => confirmDelete(itemToDelete)}
             onClose={closeConfirmModal}
             title={"Confirm Deletion"}
-            message={`Are you sure you want to delete this content with id: ${itemToDelete}? This action cannot be undone.`}
+            message={`Are you sure you want to delete this content?\n\nContent ID: ${itemToDelete}\n\nThis action cannot be undone.`
+              .split("\n")
+              .map((str, index, arr) =>
+                index === arr.length - 1 ? (
+                  <React.Fragment key={index}>
+                    <strong>{str}</strong>
+                    <br />
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment key={index}>
+                    {str}
+                    <br />
+                  </React.Fragment>
+                ),
+              )}
           />
         )}
 
