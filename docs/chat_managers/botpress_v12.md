@@ -18,9 +18,6 @@ To install through Docker (recommended), follow the official Botpress v12 docs [
 
         docker run -d --name=botpress -p 3000:3000 botpress/server
 
-    ??? note "Issues running the Docker image on Macs with Apple Silicon?"
-
-        If you're having issues with image type on MacOS, you can also try running the image through the Docker UI instead of commandline. This fixed the issue for me.
 
 ### Via executables
 
