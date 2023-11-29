@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
-import ConfirmDelete from "../components/ConfirmDelete";
+import { ConfirmDelete, EditModal } from "../components/ContentModals";
 import { NavBar } from "../components/NavBar";
 import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import IsFullAccess from "../components/Auth";
-import TextareaAutosize from "react-textarea-autosize";
 
 const backendUrl: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -16,47 +14,11 @@ const backendUrl: string =
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
   const [filteredCards, setFilteredCards] = useState<Content[]>([]);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
   const [newCardText, setNewCardText] = useState("");
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-
-  const requestDeleteCard = (id: string) => {
-    openConfirmModal(id);
-  };
-
-  const deleteCard = (id: string) => {
-    fetch(`${backendUrl}/content/${id}/delete`, {
-      method: "DELETE",
-      headers: get_api_headers(),
-    }).then((response) => {
-      if (response.ok) {
-        const newCardList = cards.filter(
-          (card: Content) => card.content_id !== id,
-        );
-        setCards(newCardList);
-        setFilteredCards(newCardList);
-      } else {
-        throw new Error("Could not delete " + id);
-      }
-    });
-  };
-
-  const openConfirmModal = (id: string) => {
-    setIsConfirmModalOpen(true);
-    setItemToDelete(id);
-  };
-
-  const closeConfirmModal = () => {
-    setIsConfirmModalOpen(false);
-    setItemToDelete(null);
-  };
-
-  const confirmDelete = (id: string) => {
-    deleteCard(id);
-    closeConfirmModal();
-  };
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
 
   const get_api_headers = () => {
     const headers = {};
@@ -80,7 +42,7 @@ export default function Home() {
     }
   };
 
-  const saveEditedCard = (card: Content) => {
+  const saveEditedCardInBackend = (card: Content) => {
     fetch(`${backendUrl}/content/${card.content_id}/edit`, {
       method: "PUT",
       headers: get_api_headers(),
@@ -103,7 +65,7 @@ export default function Home() {
     });
   };
 
-  const saveNewCard = (content_text: string) => {
+  const saveNewCardInBackend = (content_text: string) => {
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
       headers: get_api_headers(),
@@ -122,6 +84,24 @@ export default function Home() {
       });
   };
 
+  const deleteCardInBackend = (id: string) => {
+    fetch(`${backendUrl}/content/${id}/delete`, {
+      method: "DELETE",
+      headers: get_api_headers(),
+    }).then((response) => {
+      if (response.ok) {
+        const newCardList = cards.filter(
+          (card: Content) => card.content_id !== id,
+        );
+        setCards(newCardList);
+        setFilteredCards(newCardList);
+      } else {
+        throw new Error("Could not delete " + id);
+      }
+    });
+  };
+
+  // functions to edit and add content
   const editCard = (card: Content) => {
     setCardToEdit(card);
     setShowEditModal(true);
@@ -130,6 +110,39 @@ export default function Home() {
   const addCard = () => {
     setCardToEdit(null);
     setShowEditModal(true);
+  };
+
+  const onContentChange = (content_text: string) => {
+    cardToEdit
+      ? setCardToEdit(() => {
+          cardToEdit.content_text = content_text;
+          return cardToEdit;
+        })
+      : setNewCardText(content_text);
+  };
+
+  const onChangeSubmit = () => {
+    cardToEdit
+      ? saveEditedCardInBackend(cardToEdit!)
+      : saveNewCardInBackend(newCardText);
+    setShowEditModal(false);
+  };
+
+  // functions to delete content
+  const deleteCard = (card: Content) => {
+    setCardToDelete(card);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const closeConfirmModal = () => {
+    setShowDeleteConfirmModal(false);
+    setCardToDelete(null);
+  };
+
+  const confirmDelete = (card: Content) => {
+    deleteCardInBackend(card.content_id);
+    setCardToDelete(null);
+    closeConfirmModal();
   };
 
   useEffect(() => {
@@ -175,13 +188,10 @@ export default function Home() {
             {filteredCards.map((card: Content) => (
               <ContentCard
                 key={card.content_id}
-                content_id={card.content_id}
-                content_text={card.content_text}
-                deleteMe={deleteCard}
+                content={card}
                 editMe={editCard}
-                expanded={false}
                 showEditButton={showCardEditButtons}
-                onDeleteRequest={requestDeleteCard}
+                deleteMe={deleteCard}
               />
             ))}
             {showCardEditButtons ? (
@@ -195,108 +205,23 @@ export default function Home() {
           </div>
         </div>
 
-        {isConfirmModalOpen && itemToDelete && (
-          <div onClick={closeConfirmModal}>
-            <ConfirmDelete
-              itemToDelete={itemToDelete}
-              onDeleteConfirm={() => confirmDelete(itemToDelete)}
-              onClose={closeConfirmModal}
-              title={"Confirm Deletion"}
-              message={`Are you sure you want to delete this content?\n\nContent ID: ${itemToDelete}\n\nThis action cannot be undone.`
-                .split("\n")
-                .map((str, index, arr) =>
-                  index === arr.length - 1 ? (
-                    <React.Fragment key={index}>
-                      <strong>{str}</strong>
-                      <br />
-                    </React.Fragment>
-                  ) : (
-                    <React.Fragment key={index}>
-                      {str}
-                      <br />
-                    </React.Fragment>
-                  ),
-                )}
-            />
-          </div>
+        {showDeleteConfirmModal && (
+          <ConfirmDelete
+            cardToDelete={cardToDelete}
+            onDeleteConfirm={confirmDelete}
+            onClose={closeConfirmModal}
+            title={"Are you sure you want to delete this content?"}
+          />
         )}
 
-        {showEditModal ? (
-          <>
-            <div
-              className="flex backdrop-blur justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
-              onClick={() => setShowEditModal(false)}
-            >
-              <div
-                className="relative w-auto my-6 mx-auto max-w-3xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full dark:bg-gray-700 bg-gray-200 dark:outline-none focus:outline-none">
-                  <div className="flex items-start justify-between p-5 rounded-t ">
-                    <h3 className="text-xl">
-                      {cardToEdit ? (
-                        <>
-                          Edit Content
-                          <div className="text-xs dark:text-gray-400 text-gray-800">
-                            id: {cardToEdit.content_id}
-                          </div>
-                        </>
-                      ) : (
-                        "New Content"
-                      )}
-                    </h3>
-                    <XMarkIcon
-                      className="w-4 h-4 float-right"
-                      onClick={() => setShowEditModal(false)}
-                    />
-                  </div>
-                  <div className="relative p-2 flex flex-auto">
-                    <TextareaAutosize
-                      id="content_text"
-                      cols={75}
-                      maxRows={6}
-                      className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
-                      defaultValue={cardToEdit?.content_text}
-                      placeholder="Enter content text"
-                      onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
-                        const target = e.target as HTMLTextAreaElement;
-                        cardToEdit
-                          ? setCardToEdit(() => {
-                              cardToEdit!.content_text = target.value;
-                              return cardToEdit;
-                            })
-                          : setNewCardText(target.value);
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-end pb-4 px-4 rounded-b">
-                    <button
-                      id="closeButton"
-                      className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      id="submitButton"
-                      className="text-white bg-blue-500 active:bg-blue-700 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1"
-                      type="button"
-                      onClick={() => {
-                        cardToEdit
-                          ? saveEditedCard(cardToEdit!)
-                          : saveNewCard(newCardText);
-                        setShowEditModal(false);
-                      }}
-                    >
-                      Submit
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : null}
+        {showEditModal && (
+          <EditModal
+            cardToEdit={cardToEdit}
+            onChange={onContentChange}
+            onSubmit={onChangeSubmit}
+            onClose={() => setShowEditModal(false)}
+          />
+        )}
       </main>
     </>
   );
