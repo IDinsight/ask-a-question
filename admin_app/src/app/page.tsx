@@ -20,7 +20,6 @@ export default function Home() {
   const [newCardText, setNewCardText] = useState("");
 
   const deleteCard = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
     if (window.confirm("Are you sure you want to delete the content?")) {
       fetch(`${backendUrl}/content/${id}/delete`, {
         method: "DELETE",
@@ -154,19 +153,15 @@ export default function Home() {
           <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* create a card for each object */}
             {filteredCards.map((card: Content) => (
-              <div
-                onClick={() => editCard(card)}
+              <ContentCard
                 key={card.content_id}
-                className="cursor-pointer"
-              >
-                <ContentCard
-                  content_id={card.content_id}
-                  content_text={card.content_text}
-                  deleteMe={deleteCard}
-                  expanded={false}
-                  showEditButton={showCardEditButtons}
-                />
-              </div>
+                content_id={card.content_id}
+                content_text={card.content_text}
+                deleteMe={deleteCard}
+                editMe={editCard}
+                expanded={false}
+                showEditButton={showCardEditButtons}
+              />
             ))}
             {showCardEditButtons ? (
               <button

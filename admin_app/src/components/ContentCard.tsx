@@ -10,7 +10,8 @@ export type Content = {
 
 interface ContentCardProps extends Content {
   expanded: boolean;
-  deleteMe: (e: React.MouseEvent, id: string) => void;
+  deleteMe: (id: string) => void;
+  editMe: (content: Content) => void;
   showEditButton: boolean;
 }
 
@@ -27,15 +28,30 @@ export const ContentCard: React.FC<ContentCardProps> = (
       }`}
       onDoubleClick={() => setToggleExpand(!expanded)}
     >
-      {/* Icons Container */}
-      <div className="absolute flex top-2 right-2 ">
+      {/* Trash Icon Container */}
+      <div className="absolute top-2 right-2">
         {card.showEditButton ? (
-          <>
-            <TrashIcon
-              onClick={(e) => card.deleteMe(e, card.content_id)}
-              className="h-6 w-6 text-gray-400 hover:text-red-500 cursor-pointer"
-            />
-          </>
+          <TrashIcon
+            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-200"
+            onClick={() => card.deleteMe(card.content_id)}
+          />
+        ) : null}
+      </div>
+
+      {/* Pencil Icon Container */}
+      <div className="absolute bottom-2 right-2">
+        {card.showEditButton ? (
+          <PencilIcon
+            data-modal-target="edit-content-modal"
+            data-modal-toggle="edit-content-modal"
+            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-200"
+            onClick={() =>
+              card.editMe({
+                content_id: card.content_id,
+                content_text: card.content_text,
+              })
+            }
+          />
         ) : null}
       </div>
       <p
@@ -46,7 +62,7 @@ export const ContentCard: React.FC<ContentCardProps> = (
         {card.content_text}
       </p>
       {expanded ? (
-        <p className="mb-3 text-xs font-light text-gray-800 dark:text-gray-600 absolute p-1 bottom-0 right-2 float-right">
+        <p className="mb-3 text-xs font-light text-gray-800 dark:text-gray-600 absolute p-3 bottom-0 right-2 float-right">
           id: {card.content_id}
         </p>
       ) : null}
