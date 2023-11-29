@@ -3,12 +3,18 @@ set -o allexport
 source .env.nginx
 set +o allexport
 
+# Check that docker compose command is available
 if ! [ -x "$(command -v docker)" ]; then
   echo 'Error: docker is not installed.' >&2
   exit 1
 fi
 
-domains=("$DOMAIN" "www.$DOMAIN")
+if ! docker compose version >/dev/null 2>&1; then
+  echo 'Error: docker compose is not available.' >&2
+  exit 1
+fi
+
+domains=("$DOMAIN")
 rsa_key_size=4096
 data_path="./data/certbot"
 email="$MAIL" # Adding a valid address is strongly recommended
@@ -40,7 +46,6 @@ docker compose run --rm --entrypoint "\
     -subj '/CN=localhost'" certbot
 echo
 
-
 echo "### Starting nginx ..."
 docker compose -f docker-compose.yml -p aaq-stack up --force-recreate -d nginx
 echo
@@ -48,12 +53,11 @@ echo
 echo $(docker ps | grep nginx)
 
 echo "### Deleting dummy certificate for $domains ..."
-docker compose -f docker-compose.yml run --name aaq-stack --rm --entrypoint "\
+docker compose -f docker-compose.yml run --rm --entrypoint "\
   rm -Rf /etc/letsencrypt/live/$domains && \
   rm -Rf /etc/letsencrypt/archive/$domains && \
   rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
 echo
-
 
 echo "### Requesting Let's Encrypt certificate for $domains ..."
 #Join $domains to -d args
