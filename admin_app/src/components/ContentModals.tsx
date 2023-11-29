@@ -16,24 +16,6 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
   onClose,
   title,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    setIsOpen(true);
-  }, []);
-
-  const handleCancel = () => {
-    setIsOpen(false);
-    onClose?.();
-  };
-
-  const handleConfirm = () => {
-    onDeleteConfirm(cardToDelete);
-    setIsOpen(false);
-  };
-
-  if (!isOpen) return null;
-
   return (
     <div onClick={onClose}>
       <div className="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center">
@@ -68,14 +50,14 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
             <button
               type="button"
               className="w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3"
-              onClick={handleConfirm}
+              onClick={() => onDeleteConfirm(cardToDelete)}
             >
               Confirm
             </button>
             <button
               type="button"
               className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
-              onClick={handleCancel}
+              onClick={onClose}
             >
               Cancel
             </button>
