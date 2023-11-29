@@ -212,7 +212,8 @@ export default function Home() {
                     <TextareaAutosize
                       id="content_text"
                       cols={75}
-                      className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400"
+                      maxRows={6}
+                      className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
                       defaultValue={cardToEdit?.content_text}
                       placeholder="Enter content text"
                       onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
