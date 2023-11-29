@@ -18,12 +18,10 @@ def create_app() -> FastAPI:
     app.include_router(whatsapp_qa.router)
 
     origins = [
-        "https://localhost",
-        "https://localhost:3000",
-        "http://localhost",
-        "http://localhost:3000",
         f"http://{DOMAIN}",
         f"http://{DOMAIN}:3000",
+        f"https://{DOMAIN}",
+        f"https://{DOMAIN}:3000",
     ]
 
     app.add_middleware(
