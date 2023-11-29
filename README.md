@@ -121,13 +121,13 @@ https://[DOMAIN]/
 We use docker-compose to orchestrate containers.
 
 <p align="center">
-  <img src="/images/architecture-docker.png" alt="Architecture"/>
+  <img src="docs/images/architecture-docker.png" alt="Architecture"/>
 </p>
 
 A reverse proxy manages all incoming traffic to the service. The vector database and SQL database are only accessed by the core app.
 
 <p align="center">
-  <img src="/images/architecture-traffic.png" alt="Flow"/>
+  <img src="docs/images/architecture-traffic.png" alt="Flow"/>
 </p>
 
 ## Documentation
@@ -136,5 +136,4 @@ See [here](https://idinsight.github.io/aaq-core/) for full documentation.
 
 ## Funders and Partners
 
-<img src="/images/google_org.png" alt="google_dot_org" width=200/>
-
+<img src="docs/images/google_org.png" alt="google_dot_org" width=200/>
