@@ -7,22 +7,24 @@
     git clone git@github.com:IDinsight/aaq-core.git
 
 **Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the
-variables. 
-
-!!! note "Check out `deployment/template.env` for full list of environment variables to be set."
+variables.
 
     POSTGRES_PASSWORD=
     OPENAI_API_KEY=
     QUESTION_ANSWER_SECRET=
     ...
 
+
+!!! note "Check out `deployment/template.env` for a full list of environment variables to be set."
+
+
 **Step 3:** Copy `deployment/template.env.nginx` to `deployment/.env.nginx` and edit it to set the variables
 
     DOMAIN=
-    EMAIL=
-    ... 
+    MAIL=
+    ...
 
-!!! note "Check out `deployment/template.env.nginx` for full list of environment variables to be set."
+!!! note "Check out `deployment/template.env.nginx` for a full list of environment variables to be set."
 
 **Step 4:** Run `deployment/init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
 
