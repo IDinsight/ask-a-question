@@ -21,13 +21,15 @@ export default function Home() {
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
 
   const get_api_headers = () => {
-    const headers = {};
+    const headers: { [key: string]: string } = {};
     const tokenString = localStorage.getItem("token");
 
     if (tokenString) {
       const token = JSON.parse(tokenString);
       const decodedAccessToken = jwtDecode(token.access_token);
-      const isTokenValid = decodedAccessToken.exp * 1000 > Date.now();
+      const isTokenValid = decodedAccessToken.exp
+        ? decodedAccessToken.exp * 1000 > Date.now()
+        : false;
       if (isTokenValid) {
         headers["Authorization"] = `Bearer ${token.access_token}`;
         headers["Content-Type"] = "application/json";
@@ -205,7 +207,7 @@ export default function Home() {
           </div>
         </div>
 
-        {showDeleteConfirmModal && (
+        {showDeleteConfirmModal && cardToDelete && (
           <ConfirmDelete
             cardToDelete={cardToDelete}
             onDeleteConfirm={confirmDelete}
