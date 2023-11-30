@@ -31,7 +31,7 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
     setMessages([...messages, queryMessage]);
 
     // pop-up to get token if no token present
-    let token: string = localStorage.getItem("apiToken");
+    let token: string | null = localStorage.getItem("apiToken");
     if (token === null) {
       token = prompt("Please enter your API token");
       localStorage.setItem("apiToken", token || "");
@@ -40,7 +40,7 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-    console.log(headers);
+
     // Send message to server
     fetch("http://localhost:8000/embeddings-search", {
       method: form.method,
@@ -77,9 +77,9 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
       onSubmit={handleSubmit}
     >
       <TextAreaAutosize
-        className="bg-gray-200 flex-1 rounded-md border border-red-200"
+        className="bg-gray-200 dark:bg-gray-800 p-2 flex-1 rounded-md border border-red-200"
         name="query_text"
-        minRows={2}
+        minRows={1}
       />
       <button
         className="bg-blue-500 text-white rounded-md px-2 py-1"

@@ -8,35 +8,33 @@ import {
 } from "../../components/ChatComponents";
 
 export default function ChatPage() {
-  // a container with vertical scroll and cards for each message
-  // an input teaxtarea at the bottom of the screen
-  //
-  //
   const [messages, setMessages] = useState<Message[]>([]);
 
-  useEffect(() => {
-    setMessages([
-      { type: "human", content: "This is the first row of content" },
-      { type: "ai", content: "This is the second row of content" },
-      {
-        type: "human",
-        content:
-          "This is the third row of content. " +
-          "This is a lot more content that may be " +
-          "wrapped across multiple lines",
-      },
-      { type: "ai", content: "This is the fourth row of content" },
-      { type: "human", content: "This is the fifth row of content" },
-      { type: "ai", content: "This is the sixth row of content" },
-      { type: "human", content: "This is the seventh row of content" },
-      { type: "ai", content: "This is the eighth row of content" },
-      { type: "human", content: "This is the ninth row of content" },
-      { type: "ai", content: "This is the tenth row of content" },
-      { type: "human", content: "This is the eleventh row of content" },
-      { type: "ai", content: "This is the twelfth row of content" },
-      { type: "human", content: "This is the thirteenth row of content" },
-    ]);
-  }, []);
+  // The following is for testing. I'll remove it in the next PR
+
+  // useEffect(() => {
+  //   setMessages([
+  //     { type: "human", content: "This is the first row of content" },
+  //     { type: "ai", content: "This is the second row of content" },
+  //     {
+  //       type: "human",
+  //       content:
+  //         "This is the third row of content. " +
+  //         "This is a lot more content that may be " +
+  //         "wrapped across multiple lines",
+  //     },
+  //     { type: "ai", content: "This is the fourth row of content" },
+  //     { type: "human", content: "This is the fifth row of content" },
+  //     { type: "ai", content: "This is the sixth row of content" },
+  //     { type: "human", content: "This is the seventh row of content" },
+  //     { type: "ai", content: "This is the eighth row of content" },
+  //     { type: "human", content: "This is the ninth row of content" },
+  //     { type: "ai", content: "This is the tenth row of content" },
+  //     { type: "human", content: "This is the eleventh row of content" },
+  //     { type: "ai", content: "This is the twelfth row of content" },
+  //     { type: "human", content: "This is the thirteenth row of content" },
+  //   ]);
+  // }, []);
 
   return (
     <>
