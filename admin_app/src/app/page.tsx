@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
 import { ConfirmDelete, EditModal } from "../components/ContentModals";
-import { NavBar } from "../components/NavBar";
 import { SearchBar } from "../components/SearchBar";
 import { jwtDecode } from "jwt-decode";
 import IsFullAccess from "../components/Auth";

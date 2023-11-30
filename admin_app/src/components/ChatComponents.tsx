@@ -2,6 +2,8 @@ import React from "react";
 import Markdown from "react-markdown";
 import TextAreaAutosize from "react-textarea-autosize";
 
+import { backendUrl } from "../components/Config";
+
 export type Message = {
   type: "human" | "ai";
   content: string;
@@ -42,7 +44,7 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
     };
 
     // Send message to server
-    fetch("http://localhost:8000/embeddings-search", {
+    fetch(`${backendUrl}/embeddings-search`, {
       method: form.method,
       headers: {
         "Content-Type": "application/json",
