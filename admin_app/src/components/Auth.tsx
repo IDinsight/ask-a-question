@@ -10,7 +10,9 @@ const IsFullAccess = (): boolean => {
       if (tokenString) {
         const token = JSON.parse(tokenString);
         const decodedAccessToken = jwtDecode(token.access_token);
-        const isTokenValid = decodedAccessToken.exp * 1000 > Date.now();
+        const isTokenValid = decodedAccessToken.exp
+          ? decodedAccessToken.exp * 1000 > Date.now()
+          : false;
         if (isTokenValid && token.access_level == "fullaccess") {
           setHasFullAccess(true);
         } else {

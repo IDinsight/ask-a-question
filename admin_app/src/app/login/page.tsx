@@ -34,7 +34,7 @@ export default function Login() {
         <div className="bg-blue-600 dark:bg-gray-800 shadow shadow-gray-200 absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full p-4 md:p-8">
           <svg
             fill="none"
-            stroke="currentColor"
+            stroke="white"
             width="32"
             height="32"
             strokeWidth="1.5"
@@ -62,7 +62,7 @@ export default function Login() {
             <input
               type="text"
               id="username"
-              className="bg-gray-200 rounded pl-12 py-2 md:py-4 focus:outline-none w-full"
+              className="bg-gray-200 rounded pl-12 py-2 md:py-4 focus:outline-none w-full text-black"
               placeholder="Username"
               onChange={(e) =>
                 setLoginForm({ ...loginForm, username: e.target.value })
@@ -76,7 +76,7 @@ export default function Login() {
             <input
               type="password"
               id="password"
-              className="bg-gray-200 rounded pl-12 py-2 md:py-4 focus:outline-none w-full"
+              className="bg-gray-200 rounded pl-12 py-2 md:py-4 focus:outline-none w-full text-black"
               placeholder="Password"
               onChange={(e) =>
                 setLoginForm({ ...loginForm, password: e.target.value })
