@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
 import { ConfirmDelete, EditModal } from "../components/ContentModals";
 import { SearchBar } from "../components/SearchBar";
-import { jwtDecode } from "jwt-decode";
-import IsFullAccess from "../components/Auth";
 import { backendUrl } from "../components/Config";
+import { getAccessLevel, AccessLevel, AccessToken } from "../utils/auth";
 
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
@@ -17,29 +16,28 @@ export default function Home() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
 
-  const get_api_headers = () => {
+  const [isAuthenticated, access_level, access_token]: [
+    boolean | null,
+    AccessLevel,
+    AccessToken,
+  ] = getAccessLevel();
+
+  if (!isAuthenticated) {
+    window.location.href = "/login";
+  }
+
+  const get_api_headers = useCallback(() => {
     const headers: { [key: string]: string } = {};
     const tokenString = localStorage.getItem("token");
 
-    if (tokenString) {
-      const token = JSON.parse(tokenString);
-      const decodedAccessToken = jwtDecode(token.access_token);
-      const isTokenValid = decodedAccessToken.exp
-        ? decodedAccessToken.exp * 1000 > Date.now()
-        : false;
-      if (isTokenValid) {
-        headers["Authorization"] = `Bearer ${token.access_token}`;
-        headers["Content-Type"] = "application/json";
-      } else {
-        console.log("Access token expired");
-        window.location.href = "/login";
-      }
+    if (access_token) {
+      headers["Authorization"] = `Bearer ${access_token}`;
+      headers["Content-Type"] = "application/json";
       return headers;
     } else {
-      console.log("No token found");
-      window.location.href = "/login";
+      throw Error("No token found");
     }
-  };
+  }, [access_token]);
 
   const saveEditedCardInBackend = (card: Content) => {
     fetch(`${backendUrl}/content/${card.content_id}/edit`, {
@@ -161,7 +159,7 @@ export default function Home() {
         setFilteredCards(data);
       })
       .catch((error) => console.log(error));
-  }, []);
+  }, [get_api_headers]);
 
   const filterCards = (e: React.FormEvent<HTMLInputElement>) => {
     const searchTerm = e.currentTarget.value.toLowerCase();
@@ -171,7 +169,7 @@ export default function Home() {
     setFilteredCards(filteredCards);
   };
 
-  const showCardEditButtons = IsFullAccess();
+  const showCardEditButtons = access_level === "fullaccess";
 
   return (
     <div className="flex-grow">
