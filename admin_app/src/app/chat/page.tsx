@@ -6,8 +6,12 @@ import {
   ChatMessage,
   Message,
 } from "../../components/ChatComponents";
+import { IsLoggedIn } from "../../components/Auth";
 
 export default function ChatPage() {
+  if (!IsLoggedIn()) {
+    window.location.href = "/login";
+  }
   const [messages, setMessages] = useState<Message[]>([]);
 
   // The following is for testing. I'll remove it in the next PR
@@ -38,7 +42,7 @@ export default function ChatPage() {
 
   return (
     <>
-      <main className="flex flex-grow justify-center h-full dark:bg-gray-900 py-4 border-neutral-800 rounded-md">
+      <main className="flex flex-grow justify-center h-full py-4 border-neutral-800 rounded-md">
         <div className="flex flex-col w-full h-full max-w-screen-lg">
           <div className="flex-1 mb-20 relative w-full overflow-y-auto">
             <div className="flex-1 min-w-full">

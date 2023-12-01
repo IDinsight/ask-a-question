@@ -79,7 +79,7 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
       onSubmit={handleSubmit}
     >
       <TextAreaAutosize
-        className="bg-gray-200 dark:bg-gray-800 p-2 flex-1 rounded-md border border-red-200"
+        className="bg-gray-200 dark:bg-gray-800 p-2 flex-1 rounded-md border border-neutral-200"
         name="query_text"
         minRows={1}
       />
@@ -106,8 +106,8 @@ export const ChatMessage: React.FC<ChatProps> = ({ message }) => {
       <div
         className={`flex text-ellipsis flex-col  ${
           message.type === "human"
-            ? "bg-blue-500 text-white dark:bg-gray-800 dark:text-gray-200"
-            : "text-red-900 dark:text-red-600"
+            ? "bg-blue-500 text-white dark:bg-gray-800 dark:text-gray-400"
+            : "text-cyan-900 dark:text-cyan-200"
         } rounded-md p-2 m-2`}
       >
         <Markdown>
