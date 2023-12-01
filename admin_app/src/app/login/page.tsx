@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const backendUrl: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -8,6 +9,8 @@ const backendUrl: string =
 export default function Login() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [incorrectLogin, setIncorrectLogin] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const onLogin = async () => {
     const formData = new FormData();
@@ -17,11 +20,13 @@ export default function Login() {
       method: "POST",
       body: formData,
     });
-
+    const fromPage = searchParams.has("fromPage")
+      ? decodeURIComponent(searchParams.get("fromPage") as string)
+      : "/";
     if (response.status === 200) {
       const data = await response.json();
       localStorage.setItem("token", JSON.stringify(data));
-      window.location.href = "/";
+      router.push(fromPage);
     } else {
       console.log("Login failed");
       setIncorrectLogin(true);

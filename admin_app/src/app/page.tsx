@@ -23,12 +23,12 @@ export default function Home() {
   ] = getAccessLevel();
 
   if (!isAuthenticated) {
-    window.location.href = "/login";
+    window.location.href =
+      "/login?fromPage=" + encodeURIComponent(window.location.pathname);
   }
 
   const get_api_headers = useCallback(() => {
     const headers: { [key: string]: string } = {};
-    const tokenString = localStorage.getItem("token");
 
     if (access_token) {
       headers["Authorization"] = `Bearer ${access_token}`;
