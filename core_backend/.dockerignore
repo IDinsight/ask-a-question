@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+**/.gitignore
+.mypy_cache
+.pytest_cache
+.vscode

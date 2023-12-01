@@ -1,0 +1,17 @@
+version: "3"
+services:
+  core_backend:
+    depends_on:
+      - relational_db
+    environment:
+      - POSTGRES_HOST=relational_db
+  relational_db:
+    image: postgres:15.4
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+
+volumes:
+  db_volume:

@@ -89,7 +89,8 @@ https://[DOMAIN]/api/docs # (1)!
 
 
 ??? warning "Authorising the `/embedding_search` and `/llm-response` endpoints"
-    To use these endpoints, you'll have to Authorise and set the bearer token to the value of `QUESTION_ANSWER_SECRET`.
+    To use these endpoints, you'll have to Authorise and set the bearer token to the
+    value of `QUESTION_ANSWER_SECRET`.
 
     The default value can be found in `core_backend/app/configs/app_config.py` but may have been overridden if the
     environment variable was manually set differently.

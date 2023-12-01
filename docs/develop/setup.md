@@ -8,6 +8,8 @@ develop your new feature.
 
 ## Databases
 
+### Running databases on docker
+
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
 You can create both postgres and vector databases (without a persistent data volume) and run the necessary migrations using:
@@ -27,7 +29,7 @@ Otherwise, you can run them manually as below.
     ### Run a local postgres server
 
         docker run --name postgres-local \
-            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_PASSWORD=<your password> \
             -p 5432:5432 \
             -d postgres
 
@@ -36,7 +38,7 @@ Otherwise, you can run them manually as below.
     use a volume as below:
 
         docker run --name postgres-local \
-        -e POSTGRES_PASSWORD=postgres \
+        -e POSTGRES_PASSWORD=<your password> \
         -p 5432:5432 \
         -v postgres_local_vol:/var/lib/postrges/data \
         -d postgres
@@ -59,6 +61,30 @@ Otherwise, you can run them manually as below.
     From `aaq-core/core_backend` run:
 
         python -m alembic upgrade head
+
+### Connecting to remote databases
+
+In your `.env` file, define the following variables.
+
+To connect to remote Postgres instance:
+
+```
+POSTGRES_HOST=
+POSTGRES_PORT=
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+```
+
+To connect to a remote qdrant instance:
+```
+QDRANT_API_KEY=
+QDRANT_URL=
+QDRANT_HOST=
+QDRANT_PORT=
+```
+
+See `core_backend/app/configs/app_config.py` for the default values for these variables.
 
 ## Run the backend app
 

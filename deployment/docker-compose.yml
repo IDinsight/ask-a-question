@@ -8,23 +8,14 @@ services:
     command: >
       /bin/sh startup.sh
     depends_on:
-      - relational_db
       - vector_db
     restart: always
     env_file:
       - .env
     environment:
-      - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
-  relational_db:
-    image: postgres:16.0-alpine
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - db_volume:/var/lib/postgresql/data
   vector_db:
     image: qdrant/qdrant:v1.5.1
     restart: always
@@ -75,5 +66,4 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 volumes:
   local_dynamic_storage:
-  db_volume:
   qdrant_volume:

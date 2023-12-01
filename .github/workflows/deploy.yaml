@@ -1,0 +1,44 @@
+name: Deploy on push to main
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      # Add a setup buildx step
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/checkout@v4
+
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github_actions_dev
+          role-session-name: github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Fetch AWS secret for redeployment
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          secret-ids: |
+            WEBHOOK, redeploy-webhook-secrets
+          parse-json-secrets: true
+
+      - name: Trigger webhook to redeploy container
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_type: json
+          webhook_url: ${{ env.WEBHOOK_TEST_REDEPLOY_URL }}
+          webhook_secret: ${{ env.WEBHOOK_TEST_REDEPLOY_SECRET }}
+          data: '{ "branch": "${{ github.ref_name }}" }'

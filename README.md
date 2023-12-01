@@ -60,11 +60,11 @@ Respond with not just text but voice, images, and videos as well.
 
 Identify urgent or important messages. Handle them differently.
 
-#### :woman_technologist: Engineering dashboard
+#### :technologist: Engineering dashboard
 
 Monitor uptime, response rates, throughput HTTP reponse codes and more
 
-#### :woman_office_worker: Content manager dashboard
+#### :office_worker: Content manager dashboard
 
 See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
 
@@ -136,4 +136,8 @@ See [here](https://idinsight.github.io/aaq-core/) for full documentation.
 
 ## Funders and Partners
 
+<<<<<<< HEAD
 <img src="docs/images/google_org.png" alt="google_dot_org" width=200/>
+=======
+<img src="/images/google_org.png" alt="google_dot_org" width=200/>
+>>>>>>> 09eac6e (make emojis gender neutral)

@@ -2,6 +2,8 @@ import os
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
+DOMAIN = os.environ.get("DOMAIN", "localhost")
+
 POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
