@@ -95,6 +95,7 @@ Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY
 You can do this directly using
 
     export OPENAI_API_KEY="sk-..."
+    export PROMETHEUS_MULTIPROC_DIR=/tmp
 
 Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
 
