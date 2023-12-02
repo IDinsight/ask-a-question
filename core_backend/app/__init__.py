@@ -9,6 +9,7 @@ from prometheus_client import (
 )
 
 from .configs.app_config import DOMAIN, QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
+from .prometheus_middleware import PrometheusMiddleware
 from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger
 
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.add_middleware(PrometheusMiddleware)
     metrics_app = make_metrics_app()
     app.mount("/metrics", metrics_app)
 
