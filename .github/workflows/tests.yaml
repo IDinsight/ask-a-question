@@ -2,9 +2,9 @@ name: Unit Tests
 on:
   push:
     branches:
-      - '**'
+      - "**"
     paths-ignore:
-      - '**/*.md'
+      - "**/*.md"
 env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
@@ -34,7 +34,8 @@ jobs:
           - 6333:6333
     steps:
       - name: install dependencies
-        run: apt-get update && apt-get install -y lsb-release && apt-get clean all
+        run:
+          apt-get update && apt-get install -y lsb-release && apt-get clean all
           #- name : install psql
           #  run: |
           #    apt-get install -y postgresql-client
@@ -43,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install Python libraries
         run: |
           python -m pip install -r core_backend/requirements.txt
@@ -51,6 +52,7 @@ jobs:
       - name: Run Unit Tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PROMETHEUS_MULTIPROC_DIR: /tmp
         run: |
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
