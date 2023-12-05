@@ -1,17 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   SubmitMessage,
   ChatMessage,
   Message,
 } from "../../components/ChatComponents";
-import { IsLoggedIn } from "../../components/Auth";
+import { getAccessLevel, AccessLevel, AccessToken } from "../../utils/auth";
 
 export default function ChatPage() {
-  if (!IsLoggedIn()) {
-    window.location.href = "/login";
-  }
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const [isAuthenticated, access_level, access_token]: [
+      boolean | null,
+      AccessLevel,
+      AccessToken,
+    ] = getAccessLevel();
+
+    if (!isAuthenticated) {
+      router.push("/login?fromPage=" + encodeURIComponent(pathname));
+    }
+  }, [router, pathname]);
+
   const [messages, setMessages] = useState<Message[]>([]);
 
   // The following is for testing. I'll remove it in the next PR
