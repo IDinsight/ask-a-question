@@ -16,7 +16,7 @@ from .utils import setup_logger
 logger = setup_logger()
 
 
-def make_metrics_app() -> Callable:
+def create_metrics_app() -> Callable:
     """Create prometheus metrics app"""
     registry = CollectorRegistry()
     multiprocess.MultiProcessCollector(registry)
@@ -48,7 +48,7 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(PrometheusMiddleware)
-    metrics_app = make_metrics_app()
+    metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
 
     @app.on_event("startup")
