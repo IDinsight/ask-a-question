@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import { ContentCard, Content } from "../components/ContentCard";
 import { ConfirmDelete, EditModal } from "../components/ContentModals";
 import { SearchBar } from "../components/SearchBar";
-import { jwtDecode } from "jwt-decode";
-import IsFullAccess from "../components/Auth";
 import { backendUrl } from "../components/Config";
+import { getAccessLevel, AccessLevel, AccessToken } from "../utils/auth";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
@@ -17,34 +17,28 @@ export default function Home() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
 
-  const get_api_headers = () => {
-    const headers: { [key: string]: string } = {};
-    const tokenString = localStorage.getItem("token");
+  const [accessToken, setAccessToken] = useState<AccessToken | null>(null);
+  const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
-    if (tokenString) {
-      const token = JSON.parse(tokenString);
-      const decodedAccessToken = jwtDecode(token.access_token);
-      const isTokenValid = decodedAccessToken.exp
-        ? decodedAccessToken.exp * 1000 > Date.now()
-        : false;
-      if (isTokenValid) {
-        headers["Authorization"] = `Bearer ${token.access_token}`;
-        headers["Content-Type"] = "application/json";
-      } else {
-        console.log("Access token expired");
-        window.location.href = "/login";
-      }
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const get_api_headers = (token: AccessToken) => {
+    const headers: { [key: string]: string } = {};
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      headers["Content-Type"] = "application/json";
       return headers;
     } else {
-      console.log("No token found");
-      window.location.href = "/login";
+      throw Error("No token found");
     }
   };
 
   const saveEditedCardInBackend = (card: Content) => {
     fetch(`${backendUrl}/content/${card.content_id}/edit`, {
       method: "PUT",
-      headers: get_api_headers(),
+      headers: get_api_headers(accessToken),
       body: JSON.stringify(card),
     }).then((response) => {
       if (response.ok) {
@@ -67,7 +61,7 @@ export default function Home() {
   const saveNewCardInBackend = (content_text: string) => {
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
-      headers: get_api_headers(),
+      headers: get_api_headers(accessToken),
       body: JSON.stringify({ content_text: content_text }),
     })
       .then((response) => {
@@ -86,7 +80,7 @@ export default function Home() {
   const deleteCardInBackend = (id: string) => {
     fetch(`${backendUrl}/content/${id}/delete`, {
       method: "DELETE",
-      headers: get_api_headers(),
+      headers: get_api_headers(accessToken),
     }).then((response) => {
       if (response.ok) {
         const newCardList = cards.filter(
@@ -145,8 +139,20 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const [isAuthenticated, access_level, access_token]: [
+      boolean | null,
+      AccessLevel,
+      AccessToken,
+    ] = getAccessLevel();
+
+    setAccessToken(access_token);
+    setAccessLevel(access_level);
+
+    if (!isAuthenticated) {
+      router.push("/login?fromPage=" + encodeURIComponent(pathname));
+    }
     fetch(`${backendUrl}/content/list`, {
-      headers: get_api_headers(),
+      headers: get_api_headers(access_token),
     })
       .then((response) => {
         if (response.ok) {
@@ -161,7 +167,7 @@ export default function Home() {
         setFilteredCards(data);
       })
       .catch((error) => console.log(error));
-  }, []);
+  }, [router, pathname]);
 
   const filterCards = (e: React.FormEvent<HTMLInputElement>) => {
     const searchTerm = e.currentTarget.value.toLowerCase();
@@ -171,7 +177,7 @@ export default function Home() {
     setFilteredCards(filteredCards);
   };
 
-  const showCardEditButtons = IsFullAccess();
+  const showCardEditButtons = accessLevel === "fullaccess";
 
   return (
     <div className="flex-grow">
