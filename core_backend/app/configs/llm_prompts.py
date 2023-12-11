@@ -4,6 +4,10 @@ from enum import Enum
 
 
 class SafetyClassification(Enum):
+    """
+    Safety classification of the user's input.
+    """
+
     PROMPT_INJECTION = "PROMPT_INJECTION"
     INAPPROPRIATE_LANGUAGE = "INAPPROPRIATE_LANGUAGE"
     SAFE = "SAFE"
