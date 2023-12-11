@@ -35,7 +35,7 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 
 @pytest.fixture(scope="session")
 def faq_contents(client: TestClient) -> None:
-    with open("tests/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
 
     points = []
