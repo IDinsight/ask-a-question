@@ -3,6 +3,8 @@ from typing import Dict, Literal, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict
 
+from .configs.llm_prompts import IdentifiedLanguage
+
 AccessLevel = Literal["fullaccess", "readonly"]
 
 
@@ -13,6 +15,17 @@ class UserQueryBase(BaseModel):
 
     query_text: str
     query_metadata: dict = {}
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserQueryRefined(UserQueryBase):
+    """
+    Pydantic model for refined query
+    """
+
+    query_text_original: str
+    original_language: IdentifiedLanguage | None = None
 
 
 class UserQuerySearchResult(BaseModel):
@@ -32,7 +45,7 @@ class UserQueryResponse(BaseModel):
     """
 
     query_id: int
-    content_response: Dict[int, UserQuerySearchResult]
+    content_response: Dict[int, UserQuerySearchResult] | None
     llm_response: Optional[str] = None
     feedback_secret_key: str
     debug_info: dict = {}
