@@ -87,8 +87,7 @@ PARAPHRASE_INPUT = """
     You are a high-performing paraphrase bot.
     You support a maternal and child health chatbot.
     The user has asked a health question in English, paraphrase it to focus on
-    the health question. Be succinct and do not include any unnecessary information.
-    """
+    the health question. Be succinct and do not include any unnecessary information."""
 
 # ----  Question answering bot
 
@@ -103,5 +102,4 @@ ANSWER_QUESTION_PROMPT = """
     If the FAQ doesn't seem to answer the question, respond with
     'Sorry, no relevant information found.'
 
-    Found FAQ: {faq}
-"""
+    Found FAQ: {faq}"""
