@@ -1,0 +1,81 @@
+version: "3"
+services:
+  core_backend:
+    image: idinsight/aaq-backend:latest
+    build:
+      context: ../core_backend
+      dockerfile: Dockerfile
+    command: >
+      /bin/sh startup.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      - vector_db
+      - relational_db
+    restart: always
+    environment:
+      - QDRANT_HOST=vector_db
+      - POSTGRES_HOST=relational_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_PORT=5432
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - local_dynamic_storage:/home/storage
+  relational_db:
+    image: postgres:15.4
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_HOST=relational_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_PORT=5432
+  vector_db:
+    image: qdrant/qdrant:v1.5.1
+    restart: always
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
+    volumes:
+      - qdrant_volume:/qdrant/storage
+  admin_app:
+    image: idinsight/aaq-admin-app:latest
+    build:
+      context: ../admin_app
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:80/api
+    command: >
+      npm start
+    ports:
+      - "3000:3000"
+    depends_on:
+      - core_backend
+    restart: always
+  nginx:
+    image: nginx:1.25-alpine
+    restart: always
+    depends_on:
+      - core_backend
+      - admin_app
+    ports:
+      - "80:80"
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+    command: >
+      /bin/sh -c "sleep 10 &&
+        envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.quickstart > /etc/nginx/conf.d/app.conf &&
+        nginx -s reload &&
+        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    environment:
+      - DOMAIN=localhost
+volumes:
+  local_dynamic_storage:
+  qdrant_volume:
+  db_volume:
