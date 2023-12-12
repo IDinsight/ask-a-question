@@ -31,7 +31,7 @@ export default function Home() {
       headers["Content-Type"] = "application/json";
       return headers;
     } else {
-      throw Error("No token found");
+      router.push("/login?fromPage=" + encodeURIComponent(pathname));
     }
   };
 
