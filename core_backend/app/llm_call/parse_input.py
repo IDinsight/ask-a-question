@@ -3,8 +3,6 @@ These are functions that can be used to parse the input questions.
 """
 
 from ..configs.llm_prompts import (
-    CHECK_INPUT_SAFETY,
-    IDENTIFY_LANG_INPUT,
     PARAPHRASE_INPUT,
     TRANSLATE_INPUT,
     IdentifiedLanguage,
@@ -21,7 +19,7 @@ def input_is_safe(question: UserQueryRefined) -> bool:
     if (
         getattr(
             SafetyClassification,
-            _ask_llm(question.query_text, CHECK_INPUT_SAFETY),
+            _ask_llm(question.query_text, SafetyClassification.get_prompt()),
         )
         == SafetyClassification.SAFE
     ):
@@ -35,7 +33,8 @@ def identify_language(question: UserQueryRefined) -> UserQueryRefined:
     """
 
     question.original_language = getattr(
-        IdentifiedLanguage, _ask_llm(question.query_text, IDENTIFY_LANG_INPUT)
+        IdentifiedLanguage,
+        _ask_llm(question.query_text, IdentifiedLanguage.get_prompt()),
     )
 
     return question
