@@ -31,7 +31,7 @@ export default function Home() {
       headers["Content-Type"] = "application/json";
       return headers;
     } else {
-      router.push("/login?fromPage=" + encodeURIComponent(pathname));
+      throw new Error("No token found");
     }
   };
 
@@ -150,6 +150,7 @@ export default function Home() {
 
     if (!isAuthenticated) {
       router.push("/login?fromPage=" + encodeURIComponent(pathname));
+      return;
     }
     fetch(`${backendUrl}/content/list`, {
       headers: get_api_headers(access_token),
