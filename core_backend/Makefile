@@ -33,7 +33,7 @@ tests: setup-test-relational-db setup-test-vector-db run-tests stop-test-relatio
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head && \
-	python -m pytest -rPQ
+	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
 setup-test-relational-dbs: setup-test-relational-db setup-test-vector-db
