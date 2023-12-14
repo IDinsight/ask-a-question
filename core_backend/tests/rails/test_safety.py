@@ -30,10 +30,10 @@ def test_safe_message(prompt_injection: pytest.FixtureRequest) -> None:
 
 
 @pytest.mark.parametrize(
-    "prompt_injection", read_test_data(INAPPROPRIATE_LANGUAGE_FILE)
+    "inappropriate_text", read_test_data(INAPPROPRIATE_LANGUAGE_FILE)
 )
-def test_inappropriate_language(prompt_injection: pytest.FixtureRequest) -> None:
+def test_inappropriate_language(inappropriate_text: pytest.FixtureRequest) -> None:
     """Tests that inappropriate language is found"""
     assert (
-        classify_safety(prompt_injection) == SafetyClassification.INAPPROPRIATE_LANGUAGE
+        classify_safety(inappropriate_text) == SafetyClassification.INAPPROPRIATE_LANGUAGE
     )
