@@ -24,7 +24,7 @@ def classify_safety(query_text: str) -> SafetyClassification:
 
 def input_is_safe(question: UserQueryRefined) -> bool:
     """
-    Checks for prompt injection in the question.
+    Checks for prompt injection and inappropriate language in the question.
     """
     if classify_safety(question.query_text) == SafetyClassification.SAFE:
         return True
