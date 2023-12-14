@@ -23,10 +23,10 @@ def test_prompt_injection_found(prompt_injection: pytest.FixtureRequest) -> None
     assert classify_safety(prompt_injection) == SafetyClassification.PROMPT_INJECTION
 
 
-@pytest.mark.parametrize("prompt_injection", read_test_data(SAFE_MESSAGES_FILE))
-def test_safe_message(prompt_injection: pytest.FixtureRequest) -> None:
+@pytest.mark.parametrize("safe_text", read_test_data(SAFE_MESSAGES_FILE))
+def test_safe_message(safe_text: pytest.FixtureRequest) -> None:
     """Tests that safe messages are classified as safe"""
-    assert classify_safety(prompt_injection) == SafetyClassification.SAFE
+    assert classify_safety(safe_text) == SafetyClassification.SAFE
 
 
 @pytest.mark.parametrize(
