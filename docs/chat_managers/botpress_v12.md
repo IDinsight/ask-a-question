@@ -6,6 +6,29 @@ You can use the AAQ endpoints through various chat managers. Below is an example
 
 ## Installation
 
+### Via Docker-Compose (behind NGINX with HTTPS)
+
+**Step 1:** Copy `deployment_botpress/template.env.nginx` to `deployment_botpress/.env.nginx` and edit it to set the variables
+
+    DOMAIN=
+
+!!! note "Note: The environment variables for botpress and its postgres db are currently hardcoded into `docker-compose.yml`."
+
+**Step 2:** Run `deployment_botpress/init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
+
+    cd deployment_botpress
+    chmod a+x ./init-letsencrypt.sh
+    ./init-letsencrypt.sh
+
+!!! note "If trying this out on localhost, just run `deployment_botpress/init-dummy-cert.sh`"
+
+**Step 3:** Run docker-compose
+
+    cd deployment_botpress
+    docker compose -f docker-compose.yml -p aaq-stack up -d --build
+
+You can now access Botpress at `https://[DOMAIN]/`
+
 ### Via Docker
 
 To install through Docker (recommended), follow the official Botpress v12 docs [here](https://hub.docker.com/r/botpress/server). In short:
