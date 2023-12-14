@@ -35,5 +35,6 @@ def test_safe_message(safe_text: pytest.FixtureRequest) -> None:
 def test_inappropriate_language(inappropriate_text: pytest.FixtureRequest) -> None:
     """Tests that inappropriate language is found"""
     assert (
-        classify_safety(inappropriate_text) == SafetyClassification.INAPPROPRIATE_LANGUAGE
+        classify_safety(inappropriate_text)
+        == SafetyClassification.INAPPROPRIATE_LANGUAGE
     )
