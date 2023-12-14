@@ -12,19 +12,24 @@ from ..schemas import UserQueryRefined
 from .utils import _ask_llm
 
 
+def classify_safety(query_text: str) -> SafetyClassification:
+    """
+    Classifies the safety of the question.
+    """
+    return getattr(
+        SafetyClassification,
+        _ask_llm(query_text, SafetyClassification.get_prompt()),
+    )
+
+
 def input_is_safe(question: UserQueryRefined) -> bool:
     """
-    Checks for prompt injection in the question.
+    Checks for prompt injection and inappropriate language in the question.
     """
-    if (
-        getattr(
-            SafetyClassification,
-            _ask_llm(question.query_text, SafetyClassification.get_prompt()),
-        )
-        == SafetyClassification.SAFE
-    ):
+    if classify_safety(question.query_text) == SafetyClassification.SAFE:
         return True
-    return False
+    else:
+        return False
 
 
 def identify_language(question: UserQueryRefined) -> UserQueryRefined:
