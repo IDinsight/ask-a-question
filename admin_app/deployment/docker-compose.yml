@@ -1,0 +1,14 @@
+version: "3"
+services:
+  admin_app:
+    image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
+    command: >
+      npm start
+    restart: always
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/frontend-task-demo
+        awslogs-region: af-south-1
+        awslogs-stream-prefix: frontend
+
