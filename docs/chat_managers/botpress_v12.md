@@ -2,34 +2,39 @@
 
 You can use the AAQ endpoints through various chat managers. Below is an example of how to get Botpress v12 (OSS) running and connected to AAQ endpoints using a provided demo bot.
 
-!!! note "[Botpress v12](https://github.com/botpress/v12/) is open-source and available to self-host but [Botpress Cloud](https://botpress.com/) is a completely different closed-source product."
+Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and available to self-host but [Botpress Cloud](https://botpress.com/) is a completely different closed-source product.
 
-## Installation
+## Deployment
 
-### Via Docker-Compose (behind NGINX with HTTPS)
+### Option 1 - Via Docker Compose (behind NGINX with HTTPS)
 
-**Step 1:** Copy `deployment_botpress/template.env.nginx` to `deployment_botpress/.env.nginx` and edit it to set the variables
+**Step 1:** Navigate to `chat_managers/botpress_v12/deployment/`
+
+**Step 2:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
 
     DOMAIN=
 
 !!! note "Note: The environment variables for botpress and its postgres db are currently hardcoded into `docker-compose.yml`."
 
-**Step 2:** Run `deployment_botpress/init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
+**Step 3:** Run `init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
 
-    cd deployment_botpress
     chmod a+x ./init-letsencrypt.sh
     ./init-letsencrypt.sh
 
-!!! note "If trying this out on localhost, just run `deployment_botpress/init-dummy-cert.sh`"
+??? note "If trying this out with `DOMAIN=localhost`, run `init-dummy-cert.sh` instead."
+    This only creates a self-signed certificate that will allow NGINX to run, but does not request a certificate from LetsEncrypt. LetEncrypt refuses to issue certificates for domains that do not have a dot.
 
-**Step 3:** Run docker-compose
+**Step 4:** Run docker compose
 
-    cd deployment_botpress
-    docker compose -f docker-compose.yml -p aaq-stack up -d --build
+    docker compose -f docker-compose.yml -p botpress-stack up -d --build
 
 You can now access Botpress at `https://[DOMAIN]/`
 
-### Via Docker
+**Step 5:** Shutdown containers
+
+    docker compose -f docker-compose.yml -p botpress-stack down
+
+### Option 2 - Via Docker
 
 To install through Docker (recommended), follow the official Botpress v12 docs [here](https://hub.docker.com/r/botpress/server). In short:
 
@@ -42,13 +47,13 @@ To install through Docker (recommended), follow the official Botpress v12 docs [
         docker run -d --name=botpress -p 3000:3000 botpress/server
 
 
-### Via executables
+### Option 3 - Via executables
 
 Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v12 locally as per your OS.
 
 ## Running Botpress
 
-1. Go to `http://localhost:3000`
+1. Go to the URL where the app is running
 2. Make an account and login
 3. Go to "Create Bot" and then "Import Existing" (you can set Bot ID to anything you want)
 4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in this repo
