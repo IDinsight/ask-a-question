@@ -47,6 +47,8 @@ nav:
       - Testing: whatsapp/testing.md
   - Chat Managers:
       - Botpress v12 (OSS): chat_managers/botpress_v12.md
+  - Offline LLMs:
+      - Setup: self_hosted_llms/setup.md
 
 markdown_extensions:
   - tables
