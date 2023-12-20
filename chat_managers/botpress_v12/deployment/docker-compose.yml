@@ -1,7 +1,7 @@
 version: "1"
 services:
   botpress:
-    image: botpress/server
+    image: botpress/server:v12_31_3
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${PGPORT}/${POSTGRES_DB}
     env_file:
