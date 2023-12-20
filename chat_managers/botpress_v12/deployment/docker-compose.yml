@@ -3,8 +3,9 @@ services:
   botpress:
     image: botpress/server
     environment:
-      - DATABASE_URL=postgres://postgres:secretpw@postgres:5435/botpress_db
-      # - EXTERNAL_URL=http://localhost/
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${PGPORT}/${POSTGRES_DB}
+    env_file:
+      - .env
     depends_on:
       - postgres
     volumes:
@@ -12,11 +13,8 @@ services:
 
   postgres:
     image: postgres:11.2-alpine
-    environment:
-      PGPORT: 5435
-      POSTGRES_DB: botpress_db
-      POSTGRES_PASSWORD: secretpw
-      POSTGRES_USER: postgres
+    env_file:
+      - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
 

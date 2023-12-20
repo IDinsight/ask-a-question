@@ -10,24 +10,30 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 
 **Step 1:** Navigate to `chat_managers/botpress_v12/deployment/`
 
-**Step 2:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
+**Step 2:** Copy `template.env` to `.env` and edit it to set the variables
+
+    PGPORT=
+    POSTGRES_DB=
+    POSTGRES_PASSWORD=
+    POSTGRES_USER=
+    ...
+
+**Step 3:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
 
     DOMAIN=
 
-!!! note "Note: The environment variables for botpress and its postgres db are currently hardcoded into `docker-compose.yml`."
-
-**Step 3:** Run `init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
+**Step 4:** Run `init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
 
     chmod a+x ./init-letsencrypt.sh
     ./init-letsencrypt.sh
 
-**Step 4:** Run docker compose
+**Step 5:** Run docker compose
 
     docker compose -f docker-compose.yml -p botpress-stack up -d --build
 
 You can now access Botpress at `https://[DOMAIN]/`
 
-**Step 5:** Shutdown containers
+**Step 6:** Shutdown containers
 
     docker compose -f docker-compose.yml -p botpress-stack down
 
@@ -42,7 +48,6 @@ To install through Docker (recommended), follow the official Botpress v12 docs [
 2. Run the image
 
         docker run -d --name=botpress -p 3000:3000 botpress/server
-
 
 ### Option 3 - Via executables
 
