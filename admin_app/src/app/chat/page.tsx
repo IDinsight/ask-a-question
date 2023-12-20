@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   SubmitMessage,
@@ -26,6 +26,16 @@ export default function ChatPage() {
   }, [router, pathname]);
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const endOfMessagesRef = useRef<null | HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (endOfMessagesRef.current) {
+      endOfMessagesRef.current.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
+    }
+  }, [messages]);
 
   // The following is for testing. I'll remove it in the next PR
 
@@ -62,6 +72,7 @@ export default function ChatPage() {
               {messages.map((message, idx) => (
                 <ChatMessage key={idx} message={message} />
               ))}
+              <div ref={endOfMessagesRef} />
             </div>
           </div>
           <div className="flex relative w-full px-2">
