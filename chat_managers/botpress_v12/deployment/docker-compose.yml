@@ -2,10 +2,6 @@ version: "1"
 services:
   botpress:
     image: botpress/server
-    expose:
-      - 3000
-    ports:
-      - "3000:3000"
     environment:
       - DATABASE_URL=postgres://postgres:secretpw@postgres:5435/botpress_db
       # - EXTERNAL_URL=http://localhost/
