@@ -36,7 +36,7 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-relational-dbs: setup-test-relational-db setup-test-vector-db
+setup-test-dbs: setup-test-relational-db setup-test-vector-db
 
 teardown-test-dbs: stop-test-relational-db stop-test-vector-db
 
