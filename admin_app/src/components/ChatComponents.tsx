@@ -34,10 +34,10 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
     setMessages([...messages, queryMessage]);
 
     // pop-up to get token if no token present
-    let token: string | null = localStorage.getItem("apiToken");
+    let token: string | null = sessionStorage.getItem("apiToken");
     if (token === null) {
       token = prompt("Please enter your API token");
-      localStorage.setItem("apiToken", token || "");
+      sessionStorage.setItem("apiToken", token || "");
     }
     const headers = {
       "Content-Type": "application/json",
