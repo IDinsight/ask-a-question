@@ -47,7 +47,7 @@ docker compose run --rm --entrypoint "\
 echo
 
 echo "### Starting nginx ..."
-docker compose -f docker-compose.yml -p aaq-stack up --force-recreate -d nginx
+docker compose -f docker-compose.yml -p botpress-stack up --force-recreate -d nginx
 echo
 
 echo $(docker ps | grep nginx)
@@ -86,4 +86,4 @@ docker compose run --rm --entrypoint "\
 echo
 
 echo "### Reloading nginx ..."
-docker compose -f docker-compose.yml -p aaq-stack up --force-recreate -d nginx
+docker compose -f docker-compose.yml -p botpress-stack up --force-recreate -d nginx
