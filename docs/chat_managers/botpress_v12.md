@@ -21,9 +21,6 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
     chmod a+x ./init-letsencrypt.sh
     ./init-letsencrypt.sh
 
-??? note "If trying this out with `DOMAIN=localhost`, run `init-dummy-cert.sh` instead."
-    This only creates a self-signed certificate that will allow NGINX to run, but does not request a certificate from LetsEncrypt. LetEncrypt refuses to issue certificates for domains that do not have a dot.
-
 **Step 4:** Run docker compose
 
     docker compose -f docker-compose.yml -p botpress-stack up -d --build
