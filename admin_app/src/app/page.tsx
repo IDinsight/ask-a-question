@@ -16,6 +16,7 @@ export default function Home() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [accessToken, setAccessToken] = useState<AccessToken | null>(null);
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
@@ -36,29 +37,33 @@ export default function Home() {
   };
 
   const saveEditedCardInBackend = (card: Content) => {
+    setIsLoading(true);
     fetch(`${backendUrl}/content/${card.content_id}/edit`, {
       method: "PUT",
       headers: get_api_headers(accessToken),
       body: JSON.stringify(card),
-    }).then((response) => {
-      if (response.ok) {
-        console.log("updated card: " + card.content_id);
-        const newCardList = cards.map((c: Content) => {
-          if (c.content_id === card.content_id) {
-            return card;
-          } else {
-            return c;
-          }
-        });
-        setCards(newCardList);
-        setFilteredCards(newCardList);
-      } else {
-        throw new Error("Could not save " + card.content_id);
-      }
-    });
+    })
+      .then((response) => {
+        if (response.ok) {
+          console.log("updated card: " + card.content_id);
+          const newCardList = cards.map((c: Content) => {
+            if (c.content_id === card.content_id) {
+              return card;
+            } else {
+              return c;
+            }
+          });
+          setCards(newCardList);
+          setFilteredCards(newCardList);
+        } else {
+          throw new Error("Could not save " + card.content_id);
+        }
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const saveNewCardInBackend = (content_text: string) => {
+    setIsLoading(true);
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
       headers: get_api_headers(accessToken),
@@ -74,24 +79,28 @@ export default function Home() {
       .then((data) => {
         setCards([...cards, data]);
         setFilteredCards([...cards, data]);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const deleteCardInBackend = (id: string) => {
+    setIsLoading(true);
     fetch(`${backendUrl}/content/${id}/delete`, {
       method: "DELETE",
       headers: get_api_headers(accessToken),
-    }).then((response) => {
-      if (response.ok) {
-        const newCardList = cards.filter(
-          (card: Content) => card.content_id !== id,
-        );
-        setCards(newCardList);
-        setFilteredCards(newCardList);
-      } else {
-        throw new Error("Could not delete " + id);
-      }
-    });
+    })
+      .then((response) => {
+        if (response.ok) {
+          const newCardList = cards.filter(
+            (card: Content) => card.content_id !== id,
+          );
+          setCards(newCardList);
+          setFilteredCards(newCardList);
+        } else {
+          throw new Error("Could not delete " + id);
+        }
+      })
+      .finally(() => setIsLoading(false));
   };
 
   // functions to edit and add content
@@ -152,6 +161,7 @@ export default function Home() {
       router.push("/login?fromPage=" + encodeURIComponent(pathname));
       return;
     }
+    setIsLoading(true);
     fetch(`${backendUrl}/content/list`, {
       headers: get_api_headers(access_token),
     })
@@ -167,7 +177,8 @@ export default function Home() {
         setCards(data);
         setFilteredCards(data);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.log(error))
+      .finally(() => setIsLoading(false));
   }, [router, pathname]);
 
   const filterCards = (e: React.FormEvent<HTMLInputElement>) => {
@@ -187,26 +198,33 @@ export default function Home() {
       </div>
 
       <main className="flex-grow overflow-y-auto items-center justify-between ">
-        <div className="m-5">
-          <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-            {/* create a card for each object */}
-            {filteredCards.map((card: Content) => (
-              <ContentCard
-                key={card.content_id}
-                content={card}
-                editMe={editCard}
-                showEditButton={showCardEditButtons}
-                deleteMe={deleteCard}
-              />
-            ))}
-            {showCardEditButtons ? (
-              <button
-                className="add-card min-h-[10rem] outline-dashed rounded dark:outline-gray-700 outline-gray-400"
-                onClick={addCard}
-              >
-                +
-              </button>
-            ) : null}
+        <div>
+          {isLoading && (
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 backdrop-blur-md z-50">
+              <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          )}
+          <div className="m-5">
+            <div className="grid grid-cols-1 justify-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+              {/* create a card for each object */}
+              {filteredCards.map((card: Content) => (
+                <ContentCard
+                  key={card.content_id}
+                  content={card}
+                  editMe={editCard}
+                  showEditButton={showCardEditButtons}
+                  deleteMe={deleteCard}
+                />
+              ))}
+              {showCardEditButtons ? (
+                <button
+                  className="add-card min-h-[10rem] outline-dashed rounded dark:outline-gray-700 outline-gray-400"
+                  onClick={addCard}
+                >
+                  +
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
 
