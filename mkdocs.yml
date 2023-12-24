@@ -33,15 +33,15 @@ nav:
   - Overview:
       - What is AAQ: index.md
       - Usage: usage.md
-  - Deploying AAQ:
+  - Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
-  - Admin App:
-      - Managing content: content/admin-app.md
   - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
+  - Admin App:
+      - Managing content: content/admin-app.md
   - WhatsApp Connector:
       - Setup: whatsapp/setup.md
       - Testing: whatsapp/testing.md
