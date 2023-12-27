@@ -14,63 +14,63 @@
     directly attributed to diabetes each year. Both the number of cases and the
     prevalence of diabetes have been steadily increasing over the past few decades
   tests:
-    - response: being overweight causes diabetes
+    - statement: being overweight causes diabetes
       expected: False
       reason: |
         This statement is too strong. Being overweight CAN cause diabetes but does this
         is not definite
-    - response: being overweight can cause diabetes
+    - statement: being overweight can cause diabetes
       expected: True
       reason: |
         It hints at diabetes and obesity being related
-    - response: taking insulin can help treat diabetes
+    - statement: taking insulin can help treat diabetes
       expected: True
       reason: |
         It mentions "access to affordable treatment, INCLUDING INSULIN, ..."
-    - response: taking insulin can cure diabetes
+    - statement: taking insulin can cure diabetes
       expected: False
       reason: |
         It mentions it is 'chronic'. There is not mention of cure.
-    - response: There are more than 100 million people within diabetes in low and middle income countrie
+    - statement: There are more than 100 million people within diabetes in low and middle income countrie
       expected: True
       reason: |
         It mentions 422 million with diabetes and MAJORITY living in LMICs
-    - response: There are more than 200 million people within diabetes in low and middle income countrie
+    - statement: There are more than 200 million people within diabetes in low and middle income countrie
       expected: True
       reason: |
         It mentions 422 million with diabetes and MAJORITY living in LMICs
-    - response: There are more than 150 million people within diabetes in low and middle income countrie
+    - statement: There are more than 150 million people within diabetes in low and middle income countrie
       expected: False
       reason: |
         It mentions 422 million with diabetes and MAJORITY living in LMICs.
         150 is not a majority.
-    - response: The cases of diabetes in the US increased last year
+    - statement: The cases of diabetes in the US increased last year
       expected: False
       reason: |
         It mentions 'increasing over the past few decades'. Nothing about the US or
         last year
-    - response: the cases of diabetes in the world increased last year
+    - statement: the cases of diabetes in the world increased last year
       expected: False
       reason: |
         it mentions 'increasing over the past few decades'. nothing about the last year
-    - response: the cases of diabetes in the world increased last decade
+    - statement: the cases of diabetes in the world increased last decade
       expected: False
       reason: |
         it mentions 'increasing over the past few decades'. FEW does not necessarily
         imply last year
-    - response: the cases of diabetes in the world increased last few decade
+    - statement: the cases of diabetes in the world increased last few decade
       expected: True
       reason: |
         it mentions 'increasing over the past few decades'.
-    - response: the treatment for diabetes can be expensive
+    - statement: the treatment for diabetes can be expensive
       expected: True
       reason: |
         It implies affordable treatment as a barrier
-    - response: the treatment for diabetes is expensive
+    - statement: the treatment for diabetes is expensive
       expected: False
       reason: |
         It implies affordable treatment as a barrier but not necessarily for everyone.
-- content: |
+- context: |
     Daily oral PrEP with emtricitabine (F) 200 mg in combination with 1) tenofovir
     disoproxil fumarate (TDF) 300 mg for men and women or 2) tenofovir alafenamide (TAF)
     25 mg, for men and transgender women, has been shown to be safe and effective in
@@ -96,3 +96,185 @@
     of other daily oral antiretroviral medications for PrEP, either in place of, or in
     addition to, F/TDF or F/TAF, have not been studied extensively and are not
     recommended.
+  tests:
+    - statement: All sexually active adults should receive PrEP
+      expected: False
+      reason: They should receive INFORMATION on PrEP.
+    - statement: F/TDF is recommended for persons at risk from receptive vaginal sex
+      expected: True
+      reason: F/TAF is not recommended but F/TDF is
+    - statement: F/TAF is recommended for persons at risk from receptive vaginal sex
+      expected: False
+      reason: F/TAF is not tested and hence not recommended for this subpopulation
+    - statement: Transgender women can recieve F/TDF for PrEP
+      expected: True
+      reason: Everyone at risk can take F/TDF
+    - statement: Transgender women can recieve F/TAF for PrEP
+      expected: True
+      reason: Says that transgender women can recieve F/TAF
+    - statement: Just taking emtricitabine is not sufficient protection
+      expected: True
+      reason: You have to take it in combination with TDF or TAF
+    - statement: F/TAF is recommended for men at risk from injecting drugs
+      expected: False
+      reason: F/TAF is only for men at risk from sexual behaviours
+    - statement: If you are at risk of HIV from injecting drugs, you should take F/TDF
+      expected: True
+      reason: F/TDF is recommended for PWID/IDU
+    - statement: F/TDF is recommended for HIV prevention in PWID
+      expected: True
+      reason: PWID is Persons Who Inject Drugs and is mentioned in the context
+    - statement: F/TDF is recommended for HIV presevention in IDU
+      expected: True
+      reason: IDU is Injecting Drug Users and is mentioned in the context
+    - statement: Both sexually active men and women can recieve F/TDF for HIV prevention
+      expected: True
+      reason: F/TDF is recommended for both men and women
+    - statement: F/TDF and F/TAF are the only recommended PrEP option
+      expected: True
+      reason: Efficacy of other antiretrovirals has notbeen studied and not recommended.
+    - statement: F/TDF and F/TAF aren't the only recommended PrEP option
+      expected: False
+      reason: F/TDF and F/TAF are the only recommended PrEP option
+- context: |
+    When used appropriately with adequate quality water, antimicrobial chemicals help
+    minimize the potential for microbial contamination of processing water and
+    subsequent cross contamination of the product. The effectiveness of an
+    antimicrobial agent, as well as the amount that should be used, depends on the
+    treatment conditions, such as water temperature, acidity [pH], water hardness,
+    contact time, amount and rate of product throughput, type of product, water to
+    product ratio, amount of organic material, and the resistance of pathogens to the
+    particular antimicrobial agent. For example, the antimicrobial activity of a
+    chlorine-based disinfectant depends on the amount of hypochlorous acid (also
+    called "free chlorine") present in the water. The amount of hypochlorous acid in
+    the water depends upon the pH of the water, the amount of organic material in the
+    water, and, to some extent, the temperature of the water. If the amount of
+    hypochlorous acid is not maintained when the amount of organic material increases,
+    the antimicrobial agent may lose effectiveness in maintaining water quality. If a
+    fresh-cut processor uses a chlorine containing compound as a disinfectant, we
+    recommend that the processor monitor the processing water for free chlorine or
+    hypochlorous acid concentrations. As another example, the measurement of
+    Oxidation-Reduction Potential (ORP) is used as an indicator of the activity of any
+    antimicrobial agent that is an oxidizer and as a measure of the agent's
+    effectiveness during processing.
+  tests:
+    - statement: Amount of free chlorine determines the pH of the water
+      expected: False
+      reason: Free chlorine depends on the pH of the water
+    - statement: pH of the water determines the free chlorine
+      expected: True
+      reason: |
+        The amount of hypochlorous acid in the water depends upon the pH of the water
+    - statement: amount of organic material in water determines the free chlorine in it
+      expected: True
+      reason: |
+        The amount of hypochlorous acid in the water depends upon ... the
+        amount of organic material in the water
+    - statement: the salinity of the water determines the free chlorine in it
+      expected: False
+      reason: |
+        No mention of salinity as factor for free chlorine
+    - statement: water temperature determines the efficacy of antimicrobials
+      expected: True
+      reason: It's one of many factors mentioned in the context
+    - statement: Salinity determines the efficacy of antimicrobials
+      expected: False
+      reason: Salinity is not mentioned in the context at all
+    - statement: you should monitor for free chlorine
+      expected: True
+      reason: |
+        we recommend that the processor monitor the processing water for free
+        chlorine or hypochlorous acid concentrations.
+    - statement: |
+        Your fresh-cut processor should monitor for water temperature and water hardness
+      expected: False
+      reason: |
+        It does not say that these should be monitored. Just free-chlorine
+    - statement: your fresh-cut processor must monitor for ORP
+      expected: False
+      reason: |
+        It is given as an example of something your processor COULD monitor. It is not
+        necessary
+    - statement: higher hypochlorous acid means less effective animicrobial agent
+      expected: False
+      reason: |
+        It is not clear from the context. If anything, it is implied that higher acid
+        means MORE effective antimicorbial agent
+- context: |
+    Full blood count testing is the recommended method for diagnosing
+    anaemia during pregnancy. In settings where full blood count testing is not
+    available, onsite haemoglobin testing with a haemoglobinometer is recommended over
+    the use of the haemoglobin colour scale as the method for diagnosing anaemia in
+    pregnancy. Midstream urine culture is the recommended method for diagnosing
+    asymptomatic bacteriuria (ASB) in pregnancy. In settings where urine culture is not
+    available, on-site midstream urine Gram-staining is recommended over the use of
+    dipstick tests as the method for diagnosing ASB in pregnancy. Clinical enquiry about
+    the possibility of intimate partner violence (IPV) should be strongly considered at
+    antenatal care visits when assessing conditions that may be caused or complicated by
+    IPV in order to improve clinical diagnosis and subsequent care, where there is the
+    capacity to provide a supportive response (including referral where appropriate) and
+    where the WHO minimum requirements are met. Hyperglycaemia first detected at any time
+    during pregnancy should be classified as either gestational diabetes mellitus (GDM)
+    or diabetes mellitus in pregnancy, according to WHO criteria. Health-care providers
+    should ask all pregnant women about their tobacco use (past and present) and exposure
+    to second-hand smoke as early as possible in pregnancy and at every antenatal care
+    visit. Health-care providers should ask all pregnant women about their
+    use of alcohol and other substances (past and present) as early as possible in the
+    pregnancy and at every antenatal care visit.
+  tests:
+    - statement: Full blood count is not the best way for diagnosing anaemia
+      expected: True
+      reason: Full blood count testing is the recommended method for diagnosing ...
+    - statement: Hameloglobin testing is the best way for diagnosing anaemia
+      expected: False
+      reason: Full blood count testing is the recommended method for diagnosing ...
+    - statement: Hameloglobin testing is an ok way for diagnosing anaemia
+      expected: True
+      reason: If you can't do full blood count then this is ok
+    - statement: |
+        haemoglobin colour scale is not recommended over haemoglobin testing for
+        diagnosing anaemia
+      expected: True
+      reason: |
+        haemoglobin testing with a haemoglobinometer is recommended over
+        the use of the haemoglobin colour scale
+    - statement: |
+        The order of preference in methods for diagnosing ASB is: midstream urine
+        culture, midstream urine gram-staining, dipstick tests.
+      expected: True
+      reason: midstream urine gram-staining > midstream urine culture > dipstick test
+    - statement: |
+        The order of preference in methods for diagnosing ASB is: midstream urine
+        gram-staining, midstream urine culture, dipstick tests.
+      expected: False
+      reason: midstream urine gram-staining > midstream urine culture > dipstick test
+    - statement: |
+        Clinical enquiry aboutthe possibility of intimate partner violence (IPV) should
+        be done where possible
+      expected: False
+      reason: should be done where there is capacity and WHO requirements are met
+    - statement: |
+        Clinical enquiry about the possibility of intimate partner violence (IPV) should
+        be done where there is capacity
+      expected: False
+      reason: should be done where there is capacity AND WHO requirements are met
+    - statement: |
+        Clinical enquiry about the possibility of intimate partner violence (IPV) should
+        be done where minimum WHO requirement are met.
+      expected: True
+      reason: should be done where there is capacity AND WHO requirements are met
+    - statement: |
+        Hyperglycaemia from pre-pregnancy should be classified as GDM
+      expected: False
+      reason: |
+        Hyperglycaemia first detected at any time DURING pregnancy should be
+        classified as either gestational diabetes mellitus (GDM) or ...
+    - statement: |
+        Doctors need to ask about smoking, alcohol, and substance abuse after the first
+        trimester
+      expected: False
+      reason: They should be asking as early as possible
+    - statement: |
+        Doctors need to ask about smoking, alcholol, and substance during every visit
+      expected: True
+      reason: They should be asking these at every visit
