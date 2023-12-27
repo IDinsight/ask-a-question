@@ -136,8 +136,4 @@ See [here](https://idinsight.github.io/aaq-core/) for full documentation.
 
 ## Funders and Partners
 
-<<<<<<< HEAD
 <img src="docs/images/google_org.png" alt="google_dot_org" width=200/>
-=======
-<img src="/images/google_org.png" alt="google_dot_org" width=200/>
->>>>>>> 09eac6e (make emojis gender neutral)

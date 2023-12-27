@@ -43,7 +43,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
                 "request": "launch",
                 "program": "${file}",
                 "args": ["--color=yes"],
-                "envFile": "${workspaceFolder}/core_backend/tests/test.env",
+                "envFile": "${workspaceFolder}/core_backend/tests/api/test.env",
                 "console": "integratedTerminal",
                 "justMyCode": false
             }
@@ -65,7 +65,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
         ],
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
-        "python.envFile": "${workspaceFolder}/core_backend/tests/test.env"
+        "python.envFile": "${workspaceFolder}/core_backend/tests/api/test.env"
     }
     ```
 
