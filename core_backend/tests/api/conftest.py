@@ -17,9 +17,8 @@ from core_backend.app.configs.app_config import (
     QDRANT_VECTOR_SIZE,
 )
 from core_backend.app.db.vector_db import get_qdrant_client
-from core_backend.app.llm_call.parse_input import IdentifiedLanguage
+from core_backend.app.llm_call import parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
-from core_backend.app.schemas import UserQueryRefined
 
 Fixture = Union
 
@@ -81,35 +80,15 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
         "core_backend.app.routers.manage_content.embedding", fake_embedding
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
-    monkeysession.setattr(
-        "core_backend.app.routers.question_answer.input_is_safe",
-        lambda *args, **kwargs: True,
-    )
-    monkeysession.setattr(
-        "core_backend.app.routers.question_answer.identify_language",
-        fake_identify_language,
-    )
-    monkeysession.setattr(
-        "core_backend.app.routers.question_answer.translate_question",
-        fake_translate_and_paraphrase,
-    )
-    monkeysession.setattr(
-        "core_backend.app.routers.question_answer.paraphrase_question",
-        fake_translate_and_paraphrase,
-    )
+    monkeysession.setattr(parse_input, "_classify_safety", lambda a, b: (a, b))
+    monkeysession.setattr(parse_input, "_identify_language", lambda a, b: (a, b))
+    monkeysession.setattr(parse_input, "_paraphrase_question", lambda a, b: (a, b))
+    monkeysession.setattr(parse_input, "_translate_question", lambda a, b: (a, b))
+
     monkeysession.setattr(
         "core_backend.app.routers.question_answer.get_llm_rag_answer",
         lambda *args, **kwargs: "monkeypatched_llm_response",
     )
-
-
-def fake_translate_and_paraphrase(question: UserQueryRefined) -> UserQueryRefined:
-    return question
-
-
-def fake_identify_language(question: UserQueryRefined) -> UserQueryRefined:
-    question.original_language = IdentifiedLanguage.ENGLISH
-    return question
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
