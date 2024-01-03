@@ -6,13 +6,18 @@ from functools import wraps
 from typing import Any, Callable, Tuple
 
 from ..configs.llm_prompts import (
+    PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_INPUT,
+    TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_INPUT,
     IdentifiedLanguage,
     SafetyClassification,
 )
 from ..schemas import ResultState, UserQueryRefined, UserQueryResponse
+from ..utils import setup_logger
 from .utils import _ask_llm
+
+logger = setup_logger("INPUT RAILS")
 
 
 def classify_safety(func: Callable) -> Callable:
@@ -116,7 +121,6 @@ def translate_question(func: Callable) -> Callable:
         question, response = _identify_language(question, response)
         question, response = _translate_question(question, response)
         response = await func(question, response, *args, **kwargs)
-        response.debug_info["translated_question"] = question.query_text
 
         return response
 
@@ -146,15 +150,33 @@ def _translate_question(
         )
 
     if question.original_language == IdentifiedLanguage.UNKNOWN:
+        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+
         response.llm_response = (
             "Sorry, we are unable to understand your question. "
+            f"Only the following languages are supported: {supported_languages}. "
             "Please rephrase your question and try again."
         )
+
         response.state = ResultState.ERROR
+        logger.info(
+            "TRANSLATION FAILED due to UNKNOWN language on question: "
+            + question.query_text
+        )
     else:
-        question.query_text = _ask_llm(
+        translation_response = _ask_llm(
             question.query_text, TRANSLATE_INPUT + question.original_language.value
         )
+        if translation_response != TRANSLATE_FAILED_MESSAGE:
+            question.query_text = translation_response
+            response.debug_info["translated_question"] = translation_response
+        else:
+            response.llm_response = (
+                "Sorry, we are unable to understand your question. "
+                "Please rephrase your question and try again."
+            )
+            response.state = ResultState.ERROR
+            logger.info("TRANSLATION FAILED on question: " + question.query_text)
 
     return question, response
 
@@ -186,12 +208,19 @@ def _paraphrase_question(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     """
-    Paraphrases the question.
+    Paraphrases the question. If it is unable to identify the question,
+    it will return the original sentence.
     """
 
     if response.state == ResultState.ERROR:
         return question, response
 
-    question.query_text = _ask_llm(question.query_text, PARAPHRASE_INPUT)
+    paraphrase_response = _ask_llm(question.query_text, PARAPHRASE_INPUT)
+    if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
+        question.query_text = paraphrase_response
+        response.debug_info["paraphrased_question"] = paraphrase_response
+    else:
+        response.state = ResultState.ERROR
+        logger.info("PARAPHRASE FAILED on question: " + question.query_text)
 
     return question, response

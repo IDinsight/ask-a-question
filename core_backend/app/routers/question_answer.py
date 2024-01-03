@@ -58,9 +58,9 @@ async def llm_response(
 
 
 @classify_safety
-@paraphrase_question
 @translate_question
 @identify_language
+@paraphrase_question
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
@@ -99,7 +99,7 @@ async def get_user_query_and_response(
     response = UserQueryResponse(
         query_id=user_query_db.query_id,
         content_response=None,
-        llm_response="Sorry, we cannot do that.",
+        llm_response=None,
         feedback_secret_key=feedback_secret_key,
     )
 
@@ -130,8 +130,8 @@ async def embeddings_search(
     return response
 
 
-@paraphrase_question
 @translate_question
+@paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,

@@ -182,9 +182,9 @@ def _upsert_content_to_qdrant(
 ) -> ContentRetrieve:
     """Add content to qdrant collection"""
 
-    content_embedding = (
-        embedding(EMBEDDING_MODEL, content.content_text).data[0].embedding
-    )
+    content_embedding = embedding(EMBEDDING_MODEL, content.content_text).data[0][
+        "embedding"
+    ]
 
     qdrant_client.upsert(
         collection_name=QDRANT_COLLECTION_NAME,
