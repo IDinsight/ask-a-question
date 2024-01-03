@@ -4,6 +4,7 @@ import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
 
 export type Content = {
   content_id: string;
+  content_title: string;
   content_text: string;
 };
 
@@ -25,7 +26,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   return (
     <div
       key={content.content_id}
-      className={`relative min-h-[10rem] p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ${
+      className={`relative min-h-[10rem] p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 ${
         isExpanded ? "row-span-2 col-span-2" : ""
       }`}
       onDoubleClick={() => setToggleExpand(!isExpanded)}
@@ -51,6 +52,13 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           />
         ) : null}
       </div>
+      <p
+        className={`mb-3 overflow-auto whitespace-pre-line text-sm text-gray-700 dark:text-gray-400 font-bold ${
+          isExpanded ? "line-clamp-[12]" : "line-clamp-4"
+        }`}
+      >
+        {content.content_title}
+      </p>
       <p
         className={`mb-3 overflow-auto whitespace-pre-line text-sm text-gray-700 dark:text-gray-400 ${
           isExpanded ? "line-clamp-[12]" : "line-clamp-4"

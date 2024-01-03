@@ -32,18 +32,22 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
           </h3>
           <div className="mt-2">
             <p className="text-sm text-red-600 ">
-              ⚠️ The action cannot be undone.
+              ⚠️ This action cannot be undone.
             </p>
           </div>
-          <br />
-          <div className="mt-2">
-            <p className="text-[10px] dark:text-gray-400">
-              id: {cardToDelete.content_id}
+          <div className="mt-2 italic text-sm">
+            <p className="dark:text-gray-400 text-ellipsis overflow-hidden max-w-md max-h-20 font-bold">
+              {cardToDelete.content_title}
             </p>
           </div>
           <div className="mt-2 italic text-sm">
             <p className="dark:text-gray-400 text-ellipsis overflow-hidden max-w-md max-h-20">
               {cardToDelete.content_text}
+            </p>
+          </div>
+          <div className="mt-2">
+            <p className="text-[10px] dark:text-gray-400">
+              Content ID: {cardToDelete.content_id}
             </p>
           </div>
           <div className="dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse mt-4 rounded-b-lg">
@@ -70,13 +74,15 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
 
 interface EditModalProps {
   cardToEdit: Content | null;
-  onChange: (content_text: string) => void;
+  onTitleChange: (content_title: string) => void;
+  onContentChange: (content_text: string) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
 export const EditModal: React.FC<EditModalProps> = ({
   cardToEdit,
-  onChange,
+  onTitleChange,
+  onContentChange,
   onSubmit,
   onClose,
 }) => {
@@ -107,6 +113,20 @@ export const EditModal: React.FC<EditModalProps> = ({
           </div>
           <div className="relative p-2 flex flex-auto">
             <TextareaAutosize
+              id="content_title"
+              cols={75}
+              maxRows={1}
+              className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
+              defaultValue={cardToEdit?.content_title}
+              placeholder="Enter content title"
+              onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                const target = e.target as HTMLTextAreaElement;
+                onTitleChange(target.value);
+              }}
+            />
+          </div>
+          <div className="relative p-2 flex flex-auto">
+            <TextareaAutosize
               id="content_text"
               cols={75}
               maxRows={6}
@@ -115,7 +135,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               placeholder="Enter content text"
               onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
                 const target = e.target as HTMLTextAreaElement;
-                onChange(target.value);
+                onContentChange(target.value);
               }}
             />
           </div>
