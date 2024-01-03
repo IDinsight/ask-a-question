@@ -40,9 +40,9 @@ def faq_contents(client: TestClient) -> None:
     points = []
     for content in json_data:
         point_id = str(uuid.uuid4())
-        content_embedding = (
-            fake_embedding(EMBEDDING_MODEL, content["content_text"]).data[0].embedding
-        )
+        content_embedding = fake_embedding(
+            EMBEDDING_MODEL, content["content_text"]
+        ).data[0]["embedding"]
         metadata = content.get("content_metadata", {})
         payload = _create_payload_for_qdrant_upsert(content["content_text"], metadata)
         points.append(
@@ -98,8 +98,7 @@ def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     """
 
     embedding_list = np.random.rand(int(QDRANT_VECTOR_SIZE)).astype(np.float32).tolist()
-    embedding = EmbeddingValues(embedding_list)
-    data_obj = EmbeddingData([embedding])
+    data_obj = EmbeddingData([{"embedding": embedding_list}])
 
     return data_obj
 
