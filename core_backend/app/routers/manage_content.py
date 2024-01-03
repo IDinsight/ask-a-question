@@ -23,6 +23,7 @@ logger = setup_logger()
 class QdrantPayload(BaseModel):
     """Content payload for qdrant"""
 
+    content_title: str = Field(default="")
     content_text: str
     content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
@@ -45,7 +46,7 @@ async def create_content(
     """
 
     payload = _create_payload_for_qdrant_upsert(
-        content.content_text, content.content_metadata
+        content.content_title, content.content_text, content.content_metadata
     )
 
     content_id = uuid.uuid4()
@@ -78,7 +79,9 @@ async def edit_content(
         )
 
     payload = _create_payload_for_qdrant_upsert(
-        content.content_text, old_content[0].payload or {}
+        content_title=content.content_title,
+        content_text=content.content_text,
+        metadata=old_content[0].payload or {},
     )
     payload = payload.model_copy(update=content.content_metadata)
 
@@ -161,12 +164,13 @@ async def retrieve_content_by_id(
 
 
 def _create_payload_for_qdrant_upsert(
-    content_text: str, metadata: dict
+    content_title: str, content_text: str, metadata: dict
 ) -> QdrantPayload:
     """
     Create payload for qdrant upsert
     """
     payload_dict = metadata.copy()
+    payload_dict["content_title"] = content_title
     payload_dict["content_text"] = content_text
     payload = QdrantPayload(**payload_dict)
     payload.updated_datetime_utc = datetime.utcnow()
@@ -182,7 +186,8 @@ def _upsert_content_to_qdrant(
 ) -> ContentRetrieve:
     """Add content to qdrant collection"""
 
-    content_embedding = embedding(EMBEDDING_MODEL, content.content_text).data[0][
+    text_to_embed = content.content_title + "\n" + content.content_text
+    content_embedding = embedding(EMBEDDING_MODEL, text_to_embed).data[0][
         "embedding"
     ]
 
@@ -212,9 +217,11 @@ def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     content_metadata = record.payload or {}
     created_datetime = content_metadata.pop("created_datetime_utc")
     updated_datetime = content_metadata.pop("updated_datetime_utc")
+    content_title = content_metadata.pop("content_title")
     content_text = content_metadata.pop("content_text")
 
     return ContentRetrieve(
+        content_title=content_title,
         content_text=content_text,
         content_metadata=content_metadata,
         content_id=UUID(str(record.id)),

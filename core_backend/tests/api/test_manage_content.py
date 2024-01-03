@@ -25,8 +25,8 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 @pytest.fixture(
     scope="function",
     params=[
-        ("test content - no metadata", {}),
-        ("test content - with metadata", {"meta_key": "meta_value"}),
+        ("test title 1", "test content - no metadata", {}),
+        ("test title 2", "test content - with metadata", {"meta_key": "meta_value"}),
     ],
 )
 def existing_content_id(
@@ -36,8 +36,9 @@ def existing_content_id(
         "/content/create",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
         json={
-            "content_text": request.param[0],
-            "content_metadata": request.param[1],
+            "content_title": request.param[0],
+            "content_text": request.param[1],
+            "content_metadata": request.param[2],
         },
     )
     content_id = response.json()["content_id"]
@@ -50,12 +51,16 @@ def existing_content_id(
 
 class TestManageContent:
     @pytest.mark.parametrize(
-        "content_text, content_metadata",
-        [("test content 3", {}), ("test content 2", {"meta_key": "meta_value"})],
+        "content_title, content_text, content_metadata",
+        [
+            ("title 3", "test content 3", {}),
+            ("title 2", "test content 2", {"meta_key": "meta_value"}),
+        ],
     )
     def test_create_and_delete_content(
         self,
         client: TestClient,
+        content_title: str,
         content_text: str,
         fullaccess_token: str,
         content_metadata: Dict[Any, Any],
@@ -63,7 +68,11 @@ class TestManageContent:
         response = client.post(
             "/content/create",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"content_text": content_text, "content_metadata": content_metadata},
+            json={
+                "content_title": content_title,
+                "content_text": content_text,
+                "content_metadata": content_metadata,
+            },
         )
         assert response.status_code == 200
         json_response = response.json()
@@ -79,10 +88,11 @@ class TestManageContent:
         pass
 
     @pytest.mark.parametrize(
-        "content_text, content_metadata",
+        "content_title, content_text, content_metadata",
         [
-            ("test content 3 - edited", {}),
+            ("test content 3 title - edited", "test content 3 - edited", {}),
             (
+                "test content 4 title - edited",
                 "test content 4 - edited",
                 {"new_meta_key": "new meta_value", "meta_key": "meta_value_edited #2"},
             ),
@@ -92,6 +102,7 @@ class TestManageContent:
         self,
         client: TestClient,
         existing_content_id: str,
+        content_title: str,
         content_text: str,
         fullaccess_token: str,
         readonly_token: str,
@@ -101,6 +112,7 @@ class TestManageContent:
             f"/content/{existing_content_id}/edit",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
+                "content_title": content_title,
                 "content_text": content_text,
                 "content_metadata": content_metadata,
             },
@@ -112,18 +124,24 @@ class TestManageContent:
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
         assert response.status_code == 200
+        assert response.json()["content_title"] == content_title
         assert response.json()["content_text"] == content_text
         edited_metadata = response.json()["content_metadata"]
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
+    # TODO: add test editing title only
     def test_edit_content_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
             "/content/00000000-0000-0000-0000-000000000000/edit",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"content_text": "sample text", "content_metadata": {"key": "value"}},
+            json={
+                "content_title": "title",
+                "content_text": "sample text",
+                "content_metadata": {"key": "value"},
+            },
         )
 
         assert response.status_code == 404
@@ -247,7 +265,9 @@ class TestAuthManageContent:
 class TestUpsertContentToQdrant:
     @pytest.fixture(scope="function")
     def valid_payload(self) -> QdrantPayload:
-        return _create_payload_for_qdrant_upsert(content_text="content", metadata={})
+        return _create_payload_for_qdrant_upsert(
+            content_title="content title", content_text="content", metadata={}
+        )
 
     @pytest.fixture(scope="function")
     def random_uuid(self) -> pytest.FixtureRequest:
@@ -274,14 +294,15 @@ class TestUpsertContentToQdrant:
         )[0]
 
     @pytest.mark.parametrize(
-        "content_text, content_metadata",
+        "content_title, content_text, content_metadata",
         [
-            ("content text 1", {}),
-            ("content text 2", {"meta_key": "meta_value"}),
+            ("title1", "content text 1", {}),
+            ("title 1", "content text 2", {"meta_key": "meta_value"}),
         ],
     )
     def test_upsert_content_to_qdrant_return_value(
         self,
+        content_title: str,
         content_text: str,
         content_metadata: Dict[Any, Any],
         random_uuid: pytest.FixtureRequest,
@@ -292,26 +313,35 @@ class TestUpsertContentToQdrant:
 
         result = _upsert_content_to_qdrant(
             random_uuid,
-            ContentCreate(content_text=content_text, content_metadata=content_metadata),
+            ContentCreate(
+                content_title=content_title,
+                content_text=content_text,
+                content_metadata=content_metadata,
+            ),
             valid_payload,
             qdrant_client=qdrant_client,
         )
 
         assert result.content_id == random_uuid
+        assert result.content_title == content_title
         assert result.content_text == content_text
 
+        updated_content_title = content_title + " updated"
         updated_content_text = content_text + " updated"
 
         updated_result = _upsert_content_to_qdrant(
             random_uuid,
             ContentCreate(
-                content_text=updated_content_text, content_metadata=content_metadata
+                content_title=updated_content_title,
+                content_text=updated_content_text,
+                content_metadata=content_metadata,
             ),
             valid_payload,
             qdrant_client=qdrant_client,
         )
 
         assert updated_result.content_id == random_uuid
+        assert updated_result.content_title == updated_content_title
         assert updated_result.content_text == updated_content_text
 
     def test_upsert_content_to_qdrant_correctly_adds_or_updates_content(
@@ -321,6 +351,7 @@ class TestUpsertContentToQdrant:
 
         timestamp = datetime.datetime.utcnow()
         payload = {
+            "content_title": "content title",
             "content_text": "content text",
             "created_datetime_utc": timestamp,
             "updated_datetime_utc": timestamp,
@@ -328,7 +359,11 @@ class TestUpsertContentToQdrant:
         }
         _upsert_content_to_qdrant(
             random_uuid,
-            ContentCreate(content_text="content text", content_metadata={}),
+            ContentCreate(
+                content_title="content title",
+                content_text="content text",
+                content_metadata={},
+            ),
             QdrantPayload(**payload),
             qdrant_client=qdrant_client,
         )
@@ -338,13 +373,18 @@ class TestUpsertContentToQdrant:
         assert len(matches) == 1
         assert matches[0].payload["test_key"] == "test_value"
 
+        updated_content_title = "updated content TITLE"
         updated_content_text = "updated content text"
         updated_timestamp = datetime.datetime.utcnow()
         payload["updated_datetime_utc"] = updated_timestamp
 
         _upsert_content_to_qdrant(
             random_uuid,
-            ContentCreate(content_text=updated_content_text, content_metadata={}),
+            ContentCreate(
+                content_title=updated_content_title,
+                content_text=updated_content_text,
+                content_metadata={},
+            ),
             QdrantPayload(**payload),
             qdrant_client=qdrant_client,
         )
@@ -369,6 +409,7 @@ def test_convert_record_to_schema() -> None:
         payload={
             "created_datetime_utc": datetime.datetime.utcnow(),
             "updated_datetime_utc": datetime.datetime.utcnow(),
+            "content_title": "sample title for content",
             "content_text": "sample text",
             "extra_field": "extra value",
         },
@@ -380,27 +421,34 @@ def test_convert_record_to_schema() -> None:
 
 
 @pytest.mark.parametrize(
-    "content_text, content_metadata",
+    "content_title, content_text, content_metadata",
     [
-        ("", {}),
-        ("sample text", {"meta_key": "meta_value"}),
+        ("", "", {}),
+        ("sample title", "sample text", {"meta_key": "meta_value"}),
+        ("sample title", "", {"meta_key": "meta_value"}),
+        ("", "sample text", {"meta_key": "meta_value"}),
         (
+            "sample title",
             "sample text",
             {"created_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
         ),
         (
+            "sample_title",
             "sample text",
             {"updated_datetime_utc": datetime.datetime(2023, 9, 1, 0, 0, 0)},
         ),
     ],
 )
 def test_create_payload_for_qdrant_upsert_return_dict(
-    content_text: str, content_metadata: Dict[str, Any]
+    content_title: str, content_text: str, content_metadata: Dict[str, Any]
 ) -> None:
     payload = _create_payload_for_qdrant_upsert(
-        content_text=content_text, metadata=content_metadata
+        content_title=content_title,
+        content_text=content_text,
+        metadata=content_metadata,
     )
 
+    assert payload.content_title == content_title
     assert payload.content_text == content_text
 
     if "created_datetime_utc" in content_metadata:
