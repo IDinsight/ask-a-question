@@ -19,6 +19,11 @@ from .utils import _ask_llm
 
 logger = setup_logger("INPUT RAILS")
 
+STANDARD_FAILURE_MESSAGE = (
+    "Sorry, I am unable to understand your question. "
+    "Please rephrase your question and try again."
+)
+
 
 def classify_safety(func: Callable) -> Callable:
     """
@@ -54,10 +59,7 @@ def _classify_safety(
             _ask_llm(question.query_text, SafetyClassification.get_prompt()),
         )
         if safety_classification != SafetyClassification.SAFE:
-            response.llm_response = (
-                "Sorry, we are unable to answer your question."
-                "Please rephrase your question and try again."
-            )
+            response.llm_response = STANDARD_FAILURE_MESSAGE
             response.state = ResultState.ERROR
         response.debug_info["safety_classification"] = safety_classification.value
 
@@ -153,9 +155,8 @@ def _translate_question(
         supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
 
         response.llm_response = (
-            "Sorry, we are unable to understand your question. "
-            f"Only the following languages are supported: {supported_languages}. "
-            "Please rephrase your question and try again."
+            STANDARD_FAILURE_MESSAGE
+            + f"Only the following languages are supported: {supported_languages}. "
         )
 
         response.state = ResultState.ERROR
@@ -171,10 +172,7 @@ def _translate_question(
             question.query_text = translation_response
             response.debug_info["translated_question"] = translation_response
         else:
-            response.llm_response = (
-                "Sorry, we are unable to understand your question. "
-                "Please rephrase your question and try again."
-            )
+            response.llm_response = STANDARD_FAILURE_MESSAGE
             response.state = ResultState.ERROR
             logger.info("TRANSLATION FAILED on question: " + question.query_text)
 
