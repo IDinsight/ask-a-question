@@ -156,7 +156,7 @@ def _translate_question(
 
         response.llm_response = (
             STANDARD_FAILURE_MESSAGE
-            + f"Only the following languages are supported: {supported_languages}. "
+            + f" Only the following languages are supported: {supported_languages}. "
         )
 
         response.state = ResultState.ERROR
