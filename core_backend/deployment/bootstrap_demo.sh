@@ -29,7 +29,7 @@ SECRET_CONTENT="aaq-demo-content-access"
 SECRET_WHATSAPP="aaq-demo-whatsapp-token"
 SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
 
-export NEXT_PUBLIC_BACKEND_URL=https://aaq-dev.idinsight.io/api
+export NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 
 # Set password for user for `fullaccess` and `readonly` account to access content
@@ -54,7 +54,7 @@ export WHATSAPP_VERIFY_TOKEN="TEST"
 
 export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
-DOMAIN="aaq-dev.idinsight.io"
+DOMAIN="aaq-demo.idinsight.io"
 
 # Resolve Qdrant host
 SERVICE_RECORD=$(dig +short SRV ${QDRANT_HOST})

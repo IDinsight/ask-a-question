@@ -13,8 +13,8 @@ module "main" {
   web_ecs_cluster_name        = "${var.project_name}-${var.environment}-ecs-cluster"
   web_task_role               = "${var.project_name}-${var.environment}-web-task-role"
   web_task_execution_role     = "${var.project_name}-${var.environment}-web-task-execution-role"
-  private_subnets             = module.vpc.private_subnets_ids
-  public_subnets              = module.vpc.public_subnets_ids
+  private_subnets             = module.vpc.private_subnets
+  public_subnets              = module.vpc.public_subnets
   cidr_block                  = module.vpc.cidr_block
   web_ecs_task_role_name      = "${var.project_name}-${var.environment}-web-task-role"
   web_ec2_instance_role_name  = "${var.project_name}-${var.environment}-web-instance-role"

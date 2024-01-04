@@ -1,10 +1,12 @@
 version: "3"
 services:
-  admin_app:
+  frontend-container:
     image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
     command: >
       npm start
     restart: always
+    ports:
+      - 3000:3000
     logging:
       driver: awslogs
       options:

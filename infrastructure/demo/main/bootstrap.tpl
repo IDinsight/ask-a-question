@@ -13,3 +13,10 @@ echo " " >> /var/spool/cron/ssm-user
 echo "# Clean docker files once a week" >> /var/spool/cron/ssm-user
 echo "0 0 * * 0 /usr/bin/docker system prune -f" >> /var/spool/cron/ssm-user
 echo " " >> /var/spool/cron/ssm-user
+
+mkdir /home/ssm-user/nginx
+mkdir /home/ssm-user/certs
+
+
+sudo chmod 755 -R /home/ssm-user/nginx
+sudo chmod 755 -R /home/ssm-user/certs

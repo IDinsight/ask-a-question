@@ -25,6 +25,22 @@ resource "aws_service_discovery_service" "backend" {
   }
 }
 
+# backend service discovery service
+resource "aws_service_discovery_service" "frontend" {
+  name = "frontend"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.web.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "SRV"
+    }
+  }
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 # vectordb service discovery service
 resource "aws_service_discovery_service" "vectordb" {
   name = "vectordb"
@@ -75,14 +91,79 @@ resource "aws_ecs_task_definition" "nginx_task" {
   family             = "nginx-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
-    name   = "nginx-container",
-    image  = "nginx:latest",
-    memory = 512,
-    cpu    = 256,
+    name       = "nginx-container",
+    image      = "nginx:latest",
+    memory     = 512,
+    cpu        = 256,
+    entryPoint = ["/entrypoint.sh"],
+
+    mountPoints = [
+      {
+        sourceVolume  = "nginx",
+        containerPath = "/etc/nginx/conf.d",
+        readOnly      = false,
+      },
+      {
+        sourceVolume  = "nginx_cert",
+        containerPath = "/var/www/certbot",
+        readOnly      = false,
+      },
+      {
+        sourceVolume  = "nginx_cert_conf",
+        containerPath = "/etc/letsencrypt",
+        readOnly      = false,
+      }
+    ],
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.nginx.name
+        awslogs-stream-prefix = "ecs"
+        awslogs-region        = var.aws_region
+      }
+    }
+    },
+    {
+      name   = "certbot",
+      image  = "certbot/certbot:latest",
+      memory = 256,
+      cpu    = 256,
+      mountPoints = [
+        {
+          sourceVolume  = "nginx_cert_conf",
+          containerPath = "/etc/letsencrypt",
+          readOnly      = false,
+        },
+        {
+          sourceVolume  = "nginx_cert",
+          containerPath = "/var/www/certbot",
+          readOnly      = false,
+        },
+      ],
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.nginx.name
+          awslogs-stream-prefix = "ecs"
+          awslogs-region        = var.aws_region
+        }
+      }
   }])
 
   volume {
-    name = "nginx-volume"
+    name      = "nginx"
+    host_path = "/home/ssm-user/nginx"
+  }
+
+  volume {
+    name      = "nginx_cert"
+    host_path = "/home/ssm-user/certs/nginx/certbot/www"
+  }
+
+  volume {
+    name      = "nginx_cert_conf"
+    host_path = "/home/ssm-user/certs/nginx/certbot/conf"
   }
 
 }
@@ -174,6 +255,12 @@ resource "aws_ecs_service" "frontend_service" {
   scheduling_strategy                = "REPLICA"
   desired_count                      = 1
 
+  service_registries {
+    registry_arn   = aws_service_discovery_service.frontend.arn
+    container_name = "frontend-container"
+    container_port = 3000
+  }
+
 
   lifecycle {
     ignore_changes = [task_definition, desired_count]
@@ -190,6 +277,16 @@ resource "aws_ecs_task_definition" "frontend_task" {
     image  = "frontend:latest",
     memory = 512,
     cpu    = 256,
+
+
+
+    portMappings = [
+      {
+        "containerPort" : 3000,
+        "hostPort" : 3000,
+        "protocol" : "tcp"
+      }
+    ]
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -286,6 +383,15 @@ resource "aws_cloudwatch_log_group" "vectordb" {
 
   tags = {
     Name        = "vectordb-task-demo"
+    Environment = "demo"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "nginx" {
+  name = "/ecs/nginx-task-demo"
+
+  tags = {
+    Name        = "nginx-task-demo"
     Environment = "demo"
   }
 }
