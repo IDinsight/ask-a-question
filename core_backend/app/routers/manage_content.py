@@ -23,7 +23,7 @@ logger = setup_logger()
 class QdrantPayload(BaseModel):
     """Content payload for qdrant"""
 
-    content_title: str = Field(default="")
+    content_title: str
     content_text: str
     content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)

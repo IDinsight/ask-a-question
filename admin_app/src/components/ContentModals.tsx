@@ -112,16 +112,15 @@ export const EditModal: React.FC<EditModalProps> = ({
             <XMarkIcon className="w-4 h-4 float-right" onClick={onClose} />
           </div>
           <div className="relative p-2 flex flex-auto">
-            <TextareaAutosize
+            <input
               id="content_title"
-              cols={75}
-              maxRows={1}
-              className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
+              type="text"
+              className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto required"
               defaultValue={cardToEdit?.content_title}
               placeholder="Enter content title"
-              onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
-                const target = e.target as HTMLTextAreaElement;
-                onTitleChange(target.value);
+              maxLength={160}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onTitleChange(e.target.value);
               }}
             />
           </div>
@@ -130,6 +129,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               id="content_text"
               cols={75}
               maxRows={6}
+              maxLength={1600}
               className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
               defaultValue={cardToEdit?.content_text}
               placeholder="Enter content text"

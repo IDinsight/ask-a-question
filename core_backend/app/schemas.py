@@ -83,7 +83,7 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation
     """
 
-    content_title: str = ""
+    content_title: str
     content_text: str
     content_metadata: dict = {}
 

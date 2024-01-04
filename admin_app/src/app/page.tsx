@@ -144,9 +144,19 @@ export default function Home() {
   };
 
   const onChangeSubmit = () => {
-    cardToEdit
-      ? saveEditedCardInBackend(cardToEdit!)
-      : saveNewCardInBackend(newCardTitle, newCardText);
+    if (cardToEdit) {
+      if (!cardToEdit.content_title.trim() || !cardToEdit.content_text.trim()) {
+        alert("Both title and text are required");
+        return;
+      }
+      saveEditedCardInBackend(cardToEdit!);
+    } else {
+      if (!newCardTitle.trim() || !newCardText.trim()) {
+        alert("Both title and text are required");
+        return;
+      }
+      saveNewCardInBackend(newCardTitle, newCardText);
+    }
     setShowEditModal(false);
   };
 
