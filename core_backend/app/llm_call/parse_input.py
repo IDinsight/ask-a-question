@@ -95,10 +95,12 @@ def _identify_language(
     Identifies the language of the question.
     """
     if response.state != ResultState.ERROR:
-        question.original_language = getattr(
-            IdentifiedLanguage,
-            _ask_llm(question.query_text, IdentifiedLanguage.get_prompt()),
-        )
+        identified_lang = _ask_llm(question.query_text, IdentifiedLanguage.get_prompt())
+        if identified_lang in IdentifiedLanguage.get_supported_languages():
+            question.original_language = getattr(IdentifiedLanguage, identified_lang)
+        else:
+            question.original_language = IdentifiedLanguage.UNKNOWN
+
         if question.original_language is not None:
             response.debug_info["original_language"] = question.original_language.value
 
@@ -120,7 +122,6 @@ def translate_question(func: Callable) -> Callable:
         """
         Wrapper function to translate the question.
         """
-        question, response = _identify_language(question, response)
         question, response = _translate_question(question, response)
         response = await func(question, response, *args, **kwargs)
 
