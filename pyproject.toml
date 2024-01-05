@@ -2,14 +2,14 @@
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ['litellm']
+module = ['litellm', "nltk", "alignscore"]
 ignore_missing_imports = true
 
 [tool.ruff]
 select = ["E", "F", "B", "Q", "I"]
 
 [tool.ruff.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
