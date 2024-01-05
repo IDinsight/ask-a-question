@@ -28,7 +28,7 @@ module "main" {
   content_access_secret_name  = "${var.project_name}-${var.environment}-content-access"
   whatsapp_token_secret_name  = "${var.project_name}-${var.environment}-whatsapp-token"
   aws_region                  = var.aws_region
-  web_ec2_instance_type       = "t4g.large"
+  web_ec2_instance_type       = "t4g.large" # t4g.large is the only instance type that supports ARM. If this changes, the ANI should also change
 
 
 }

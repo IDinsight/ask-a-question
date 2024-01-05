@@ -3,6 +3,7 @@ data "aws_ami" "amazon_linux_2" {
   # This is a data source, which means it will not create any resources
   # It will fetch the data from AWS and make it available to use in the code
   # This data source will fetch the latest Amazon Linux 2 AMI for the region specified
+  # AMI is dictatted by the instance type. 
 
 
   owners = ["amazon"]
@@ -26,7 +27,6 @@ data "aws_ami" "amazon_linux_2" {
 }
 
 resource "aws_instance" "bastion" {
-  # This is a resource, which means it will create a resource in AWS
   # This resource will create an EC2 instance
   # The EC2 instance will be created in the VPC and subnet specified
   ami                  = data.aws_ami.amazon_linux_2.id

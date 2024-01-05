@@ -93,7 +93,7 @@ else
 
 fi
 
-sleep $seconds_left  # Sleep for 12 hours
+sleep $seconds_left  
 
 done
 

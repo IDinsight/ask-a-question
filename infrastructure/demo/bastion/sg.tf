@@ -17,6 +17,7 @@ resource "aws_security_group_rule" "bastion_sg_interface_endpoints_egress" {
 }
 
 
+# The following rule allows the bastion host to connect to the application database
 resource "aws_security_group_rule" "bastion_to_web_db_egress" {
   type                     = "egress"
   from_port                = 5432

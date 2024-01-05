@@ -25,6 +25,7 @@ resource "aws_iam_role" "bastion_instance_role" {
 
 resource "aws_iam_role_policy_attachment" "ssm_permissions_instance" {
   # This policy grants the EC2 instance permission to use SSM
+  # This allows us to access the EC2 instance using SSM Session Manager instead of SSH which needs us to have keys
   role       = aws_iam_role.bastion_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }

@@ -75,6 +75,9 @@ resource "aws_security_group_rule" "ec2_to_web_db_ingress" {
 }
 
 resource "aws_security_group_rule" "ec2_to_web_db_egress" {
+  # This is the security group rule for the web db instance
+  # The security group rule allows egress traffic to the web ec2 security group on port 5432
+  # This allows the web ec2 instance to access the db
   type                     = "egress"
   from_port                = 5432
   to_port                  = 5432

@@ -1,3 +1,7 @@
+# This is a data source, which means it will not create any resources
+# It will fetch the data from AWS and make it available to use in the code
+# This data source will fetch the latest Amazon Linux 2 AMI for the region specified
+# AMI is dictated by the instance type. 
 
 data "aws_ami" "amazon_linux_2" {
 
@@ -41,6 +45,8 @@ resource "aws_instance" "web_instance" {
   iam_instance_profile   = aws_iam_instance_profile.web_instance_profile.id
   vpc_security_group_ids = [aws_security_group.web_ec2_sg.id]
 
+  # The following user data will be executed when the EC2 instance is created
+  # The user data will also register the EC2 instance with the ECS cluster
   user_data = base64encode(
     templatefile(
       "${path.module}/bootstrap.tpl",

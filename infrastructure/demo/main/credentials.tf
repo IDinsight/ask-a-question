@@ -10,7 +10,7 @@ resource "random_password" "secrets" {
   # This password is then stored in AWS Secrets Manager.
   length  = 16
   special = true
-  count   = 3
+  count   = 3 # 3 passwords are generated
 }
 
 

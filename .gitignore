@@ -157,4 +157,3 @@ core_model/requirements.txt
 profiling/outputs/
 # Load testing
 load_testing/outputs/
-makefile

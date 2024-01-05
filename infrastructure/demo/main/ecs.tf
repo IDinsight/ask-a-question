@@ -3,13 +3,18 @@ resource "aws_ecs_cluster" "web_cluster" {
   tags = merge({ Name = var.web_ecs_cluster_name, Module = "Web" }, var.tags)
 }
 
-# service discovery namespace
+# service discovery namespace. This is use to create a private DNS namespace.
+# The private DNS namespace is used to create a service discovery service.
+# The service discovery service is used to route traffic to the application.
+# The service discovery service is attached to the ECS service.
+# This is how the services communicate with each other.
 resource "aws_service_discovery_private_dns_namespace" "web" {
   name = "aaqdemo.local"
   vpc  = var.vpc_id
 }
 
 # backend service discovery service
+# In the application, for the frontend to communicate to the backend, it will use ```backend.aaqdemo.local```
 resource "aws_service_discovery_service" "backend" {
   name = "backend"
   dns_config {
@@ -25,7 +30,7 @@ resource "aws_service_discovery_service" "backend" {
   }
 }
 
-# backend service discovery service
+# frontend service discovery service
 resource "aws_service_discovery_service" "frontend" {
   name = "frontend"
   dns_config {
@@ -65,6 +70,7 @@ resource "aws_ecs_service" "nginx_service" {
   # The ECS service will be used to route traffic to the Nginx container
   # The ECS service will be attached to the ECS cluster
   # This will be the entry point for the application
+  # Service will have two tasks running at all times, nginx and certbot
   name                               = "nginx-service"
   cluster                            = aws_ecs_cluster.web_cluster.id
   task_definition                    = aws_ecs_task_definition.nginx_task.arn
@@ -87,7 +93,7 @@ resource "aws_ecs_service" "nginx_service" {
 }
 
 resource "aws_ecs_task_definition" "nginx_task" {
-  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose service up command
+  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   family             = "nginx-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
@@ -97,23 +103,7 @@ resource "aws_ecs_task_definition" "nginx_task" {
     cpu        = 256,
     entryPoint = ["/entrypoint.sh"],
 
-    mountPoints = [
-      {
-        sourceVolume  = "nginx",
-        containerPath = "/etc/nginx/conf.d",
-        readOnly      = false,
-      },
-      {
-        sourceVolume  = "nginx_cert",
-        containerPath = "/var/www/certbot",
-        readOnly      = false,
-      },
-      {
-        sourceVolume  = "nginx_cert_conf",
-        containerPath = "/etc/letsencrypt",
-        readOnly      = false,
-      }
-    ],
+
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -129,18 +119,7 @@ resource "aws_ecs_task_definition" "nginx_task" {
       image  = "certbot/certbot:latest",
       memory = 256,
       cpu    = 256,
-      mountPoints = [
-        {
-          sourceVolume  = "nginx_cert_conf",
-          containerPath = "/etc/letsencrypt",
-          readOnly      = false,
-        },
-        {
-          sourceVolume  = "nginx_cert",
-          containerPath = "/var/www/certbot",
-          readOnly      = false,
-        },
-      ],
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -150,21 +129,6 @@ resource "aws_ecs_task_definition" "nginx_task" {
         }
       }
   }])
-
-  volume {
-    name      = "nginx"
-    host_path = "/home/ssm-user/nginx"
-  }
-
-  volume {
-    name      = "nginx_cert"
-    host_path = "/home/ssm-user/certs/nginx/certbot/www"
-  }
-
-  volume {
-    name      = "nginx_cert_conf"
-    host_path = "/home/ssm-user/certs/nginx/certbot/conf"
-  }
 
 }
 
@@ -194,7 +158,7 @@ resource "aws_ecs_service" "vectordb_service" {
 }
 
 resource "aws_ecs_task_definition" "vectordb_task" {
-  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose service up command
+
   family             = "vectordb-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
@@ -269,7 +233,8 @@ resource "aws_ecs_service" "frontend_service" {
 }
 
 resource "aws_ecs_task_definition" "frontend_task" {
-  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose service up command
+  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
+  # The CPU and Memory may need to be adjusted based on the application usage
   family             = "frontend-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
@@ -327,7 +292,7 @@ resource "aws_ecs_service" "backend_service" {
 }
 
 resource "aws_ecs_task_definition" "backend_task" {
-  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose service up command
+  # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   family             = "backend-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{

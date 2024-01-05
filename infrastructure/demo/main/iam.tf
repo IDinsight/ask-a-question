@@ -15,12 +15,13 @@ resource "aws_iam_role" "web_instance_role" {
   tags               = merge({ Name = var.web_ec2_instance_role_name, Module = "Web" }, var.tags)
 }
 
-
+# This policy grants the EC2 instance permission to use SSM
 resource "aws_iam_role_policy_attachment" "ssm_permissions" {
   role       = aws_iam_role.web_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# This policy grants the EC2 instance permission to use ECS
 resource "aws_iam_role_policy_attachment" "ecs_agent_ec2" {
   role       = aws_iam_role.web_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
@@ -46,6 +47,11 @@ resource "aws_iam_role" "web_task_role" {
 }
 
 data "aws_iam_policy_document" "web_ec2_role_policy" {
+  # This statement grants permissions to the EC2 instance to access the following resources:
+  # - Secrets Manager
+  # - Service Discovery
+  # - CloudWatch Logs
+  # - ECR
   statement {
     actions = ["secretsmanager:GetSecretValue"]
 
