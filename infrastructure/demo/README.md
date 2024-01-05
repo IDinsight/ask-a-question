@@ -27,3 +27,6 @@ This module will have the code of the VPC and its components. The other modules 
 2. Run `terraform init -backend-config=backend.conf` to initialize the Terraform backend and install the providers.
 3. Run `terraform plan` to view the plan.
 4. Run `terraform apply` to deploy the terraform configuration.
+
+## Attaching IP to the Domain
+When the infrastructure is created, a new Elastic IP is created. The IP needs to be associated with the domain. This is done in the Main IDinsight AWS Account. Go to route 53, Host zones. Look for the record and edit the IP.
