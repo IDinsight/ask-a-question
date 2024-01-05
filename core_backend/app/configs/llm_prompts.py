@@ -5,7 +5,7 @@ from enum import Enum
 # ---- Safety bot
 
 
-class SafetyClassification(Enum):
+class SafetyClassification(str, Enum):
     """
     Safety classification of the user's input.
     """
@@ -56,7 +56,7 @@ class SafetyClassification(Enum):
 # ----  Language identification bot
 
 
-class IdentifiedLanguage(Enum):
+class IdentifiedLanguage(str, Enum):
     """
     Identified language of the user's input.
     """
@@ -65,6 +65,7 @@ class IdentifiedLanguage(Enum):
     XHOSA = "XHOSA"
     ZULU = "ZULU"
     AFRIKAANS = "AFRIKAANS"
+    HINDI = "HINDI"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
@@ -89,21 +90,33 @@ class IdentifiedLanguage(Enum):
         [{",".join(cls._member_names_)}]
         """
 
+    @classmethod
+    def get_supported_languages(cls) -> list[str]:
+        """
+        Returns a list of supported languages.
+        """
+        return [lang for lang in cls._member_names_ if lang != "UNKNOWN"]
+
 
 # ----  Translation bot
-
-TRANSLATE_INPUT = """
+TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
+TRANSLATE_INPUT = f"""
     You are a high-performing translation bot for low-resourced African languages.
-    You support a maternal and child health chatbot.
+    You support a question-answering chatbot.
+    If you are unable to translate the user's input,
+    respond with {TRANSLATE_FAILED_MESSAGE}
     Translate the user's input to English from """
 
 # ---- Paraphrase question
-
-PARAPHRASE_INPUT = """
+PARAPHRASE_FAILED_MESSAGE = "ERROR: CAN'T PARAPHRASE"
+PARAPHRASE_INPUT = f"""
     You are a high-performing paraphrase bot.
-    You support a maternal and child health chatbot.
-    The user has asked a health question in English, paraphrase it to focus on
-    the health question. Be succinct and do not include any unnecessary information."""
+    You support a question-answering service.
+    The user has asked a question in English, paraphrase it to focus on
+    the question. Be succinct and do not include any unnecessary information.
+    Ignore any redacted and offensive words.
+    If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}
+    """
 
 # ----  Question answering bot
 

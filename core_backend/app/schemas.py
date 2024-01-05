@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Dict, Literal, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict
@@ -17,6 +18,16 @@ class UserQueryBase(BaseModel):
     query_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ResultState(str, Enum):
+    """
+    Enum for Response state
+    """
+
+    FINAL = "final"
+    IN_PROGRESS = "in_progress"
+    ERROR = "error"
 
 
 class UserQueryRefined(UserQueryBase):
@@ -49,6 +60,7 @@ class UserQueryResponse(BaseModel):
     llm_response: Optional[str] = None
     feedback_secret_key: str
     debug_info: dict = {}
+    state: ResultState = ResultState.IN_PROGRESS
 
     model_config = ConfigDict(from_attributes=True)
 

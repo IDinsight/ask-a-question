@@ -56,9 +56,9 @@ def get_similar_content(
     Get the most similar points in the vector db
     """
 
-    question_embedding = (
-        embedding(EMBEDDING_MODEL, question.query_text).data[0].embedding
-    )
+    question_embedding = embedding(EMBEDDING_MODEL, question.query_text).data[0][
+        "embedding"
+    ]
 
     search_result = qdrant_client.search(
         collection_name=QDRANT_COLLECTION_NAME,
