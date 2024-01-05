@@ -17,7 +17,9 @@ from core_backend.app.configs.app_config import (
     QDRANT_VECTOR_SIZE,
 )
 from core_backend.app.db.vector_db import get_qdrant_client
+from core_backend.app.llm_call.parse_input import IdentifiedLanguage
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
+from core_backend.app.schemas import UserQueryRefined
 
 Fixture = Union
 
@@ -33,7 +35,7 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 
 @pytest.fixture(scope="session")
 def faq_contents(client: TestClient) -> None:
-    with open("tests/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
 
     points = []
@@ -80,20 +82,34 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
     monkeysession.setattr(
-        "core_backend.app.question_answer.completion", fake_completion
+        "core_backend.app.routers.question_answer.input_is_safe",
+        lambda *args, **kwargs: True,
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.identify_language",
+        fake_identify_language,
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.translate_question",
+        fake_translate_and_paraphrase,
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.paraphrase_question",
+        fake_translate_and_paraphrase,
+    )
+    monkeysession.setattr(
+        "core_backend.app.routers.question_answer.get_llm_rag_answer",
+        lambda *args, **kwargs: "monkeypatched_llm_response",
     )
 
 
-def fake_completion(*arg: str, **kwargs: str) -> CompletionData:
-    """
-    Replicates `litellm.completion` function but just returns the string
-    "monkeypatched_llm_response" as the content.
-    """
-    message = CompletionMessage(content="monkeypatched_llm_response")
-    choice = CompletionChoice(message=message)
-    data_obj = CompletionData([choice])
+def fake_translate_and_paraphrase(question: UserQueryRefined) -> UserQueryRefined:
+    return question
 
-    return data_obj
+
+def fake_identify_language(question: UserQueryRefined) -> UserQueryRefined:
+    question.original_language = IdentifiedLanguage.ENGLISH
+    return question
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:

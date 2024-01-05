@@ -96,7 +96,7 @@ async def retrieve_content(
         AuthenticatedUser, Depends(get_current_readonly_user)
     ],
     skip: int = 0,
-    limit: int = 10,
+    limit: int = 50,
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
 ) -> List[ContentRetrieve]:
     """

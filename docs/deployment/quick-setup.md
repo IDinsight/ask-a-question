@@ -6,7 +6,9 @@
 
     git clone git@github.com:IDinsight/aaq-core.git
 
-**Step 2:** Copy `deployment/template.env` to `deployment/.env` and edit it to set the
+**Step 2:** Navigate to the `deployment/` subfolder.
+
+**Step 3:** Copy `template.env` to `.env` and edit it to set the
 variables.
 
     POSTGRES_PASSWORD=
@@ -14,34 +16,29 @@ variables.
     QUESTION_ANSWER_SECRET=
     ...
 
+!!! note "Check out `template.env` for a full list of environment variables to be set."
 
-!!! note "Check out `deployment/template.env` for a full list of environment variables to be set."
-
-
-**Step 3:** Copy `deployment/template.env.nginx` to `deployment/.env.nginx` and edit it to set the variables
+**Step 4:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
 
     DOMAIN=
     MAIL=
     ...
 
-!!! note "Check out `deployment/template.env.nginx` for a full list of environment variables to be set."
+!!! note "Check out `template.env.nginx` for a full list of environment variables to be set."
 
-**Step 4:** Run `deployment/init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
+**Step 5:** Run `init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
 
-    cd deployment
     chmod a+x ./init-letsencrypt.sh
     ./init-letsencrypt.sh
 
-**Step 5:** Run docker-compose
+**Step 6:** Run docker-compose
 
-    cd deployment
     docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up -d --build
 
 You can now access the admin app at `https://[DOMAIN]/` and the apis at `https://[DOMAIN]/api`
 
-!!! note "Also see [Calling the endpoints](../develop/testing.md#call-the-endpoints)."
+!!! note "To test the endpoints, see [Calling the endpoints](../develop/testing.md#call-the-endpoints)."
 
-**Step 6:** Shutdown containers
+**Step 7:** Shutdown containers
 
-    cd deployment
     docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down

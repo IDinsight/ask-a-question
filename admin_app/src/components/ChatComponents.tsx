@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import Markdown from "react-markdown";
 import TextAreaAutosize from "react-textarea-autosize";
-
 import { backendUrl } from "../components/Config";
 
 export type Message = {
@@ -17,6 +16,8 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
   setMessages,
   messages,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
@@ -33,10 +34,10 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
     setMessages([...messages, queryMessage]);
 
     // pop-up to get token if no token present
-    let token: string | null = localStorage.getItem("apiToken");
+    let token: string | null = sessionStorage.getItem("apiToken");
     if (token === null) {
       token = prompt("Please enter your API token");
-      localStorage.setItem("apiToken", token || "");
+      sessionStorage.setItem("apiToken", token || "");
     }
     const headers = {
       "Content-Type": "application/json",
@@ -44,6 +45,7 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
     };
 
     // Send message to server
+    setIsLoading(true);
     fetch(`${backendUrl}/embeddings-search`, {
       method: form.method,
       headers: {
@@ -69,7 +71,8 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
             content: "```\n" + JSON.stringify(data, null, 2) + "\n```",
           },
         ]);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
@@ -84,10 +87,33 @@ export const SubmitMessage: React.FC<SubmitMessageProps> = ({
         minRows={1}
       />
       <button
-        className="bg-blue-500 text-white rounded-md px-2 py-1"
+        className="bg-blue-500 text-white rounded-md px-2 py-1 flex justify-center items-center"
         type="submit"
       >
-        Send
+        {isLoading ? (
+          <svg
+            className="animate-spin h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        ) : (
+          "Send"
+        )}
       </button>
     </form>
   );

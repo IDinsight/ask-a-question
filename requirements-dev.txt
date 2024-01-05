@@ -9,3 +9,4 @@ trio==0.22.2
 mkdocs-material==9.4.5
 pymdown-extensions==10.3
 mkdocs-glightbox==0.3.4
+types-PyYAML==6.0.12.12
