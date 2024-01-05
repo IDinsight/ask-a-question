@@ -105,7 +105,7 @@ export default function Home() {
 
   // functions to edit and add content
   const editCard = (card: Content) => {
-    setCardToEdit(card);
+    setCardToEdit({ ...card });
     setShowEditModal(true);
   };
 
