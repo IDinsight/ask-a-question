@@ -12,8 +12,10 @@ export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
   const [filteredCards, setFilteredCards] = useState<Content[]>([]);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
-  const [newCardTitle, setNewCardTitle] = useState("");
-  const [newCardText, setNewCardText] = useState("");
+  const [newCardData, setNewCardData] = useState({
+    content_title: "",
+    content_text: "",
+  });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
@@ -61,21 +63,20 @@ export default function Home() {
         }
       })
       .finally(() => setIsLoading(false));
-    setNewCardText("");
-    setNewCardTitle("");
+    setNewCardData({ content_title: "", content_text: "" });
   };
 
-  const saveNewCardInBackend = (
-    content_title: string,
-    content_text: string,
-  ) => {
+  const saveNewCardInBackend = (content_data: {
+    content_title: string;
+    content_text: string;
+  }) => {
     setIsLoading(true);
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
       headers: get_api_headers(accessToken),
       body: JSON.stringify({
-        content_title: content_title,
-        content_text: content_text,
+        content_title: content_data.content_title,
+        content_text: content_data.content_text,
       }),
     })
       .then((response) => {
@@ -90,8 +91,7 @@ export default function Home() {
         setFilteredCards([...cards, data]);
       })
       .finally(() => setIsLoading(false));
-    setNewCardText("");
-    setNewCardTitle("");
+    setNewCardData({ content_title: "", content_text: "" });
   };
 
   const deleteCardInBackend = (id: string) => {
@@ -131,7 +131,10 @@ export default function Home() {
           cardToEdit.content_title = content_title;
           return cardToEdit;
         })
-      : setNewCardTitle(content_title);
+      : setNewCardData({
+          content_title: content_title,
+          content_text: newCardData.content_text,
+        });
   };
 
   const onContentTextChange = (content_text: string) => {
@@ -140,7 +143,10 @@ export default function Home() {
           cardToEdit.content_text = content_text;
           return cardToEdit;
         })
-      : setNewCardText(content_text);
+      : setNewCardData({
+          content_title: newCardData.content_title,
+          content_text: content_text,
+        });
   };
 
   const onChangeSubmit = () => {
@@ -151,11 +157,14 @@ export default function Home() {
       }
       saveEditedCardInBackend(cardToEdit!);
     } else {
-      if (!newCardTitle.trim() || !newCardText.trim()) {
+      if (
+        !newCardData.content_title.trim() ||
+        !newCardData.content_text.trim()
+      ) {
         alert("Both title and text are required");
         return;
       }
-      saveNewCardInBackend(newCardTitle, newCardText);
+      saveNewCardInBackend(newCardData);
     }
     setShowEditModal(false);
   };
