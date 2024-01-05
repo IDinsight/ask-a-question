@@ -43,11 +43,11 @@ def get_model(model: Literal["base", "large"]) -> AlignScore:
         raise RuntimeError(
             "Model not found. Please check the ALIGN_SCORE_PATH environment variable."
         )
+
     return AlignScore(
         model="roberta-base",
         batch_size=32,
         device=device,
-        ckpt_path=model_path_with_name,
         evaluation_mode="nli_sp",
     )
 

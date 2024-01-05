@@ -47,5 +47,3 @@ EXPOSE 5001
 
 # Start the AlignScore server as the default command
 CMD ["/usr/local/bin/python", "server.py", "--port=5001", "--models=base"]
-
-HEALTHCHECK CMD curl -f http://localhost:5001/healthcheck || exit 1
