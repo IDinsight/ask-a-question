@@ -85,8 +85,6 @@ class TestManageContent:
         )
         assert response.status_code == 200
 
-        pass
-
     @pytest.mark.parametrize(
         "content_title, content_text, content_metadata",
         [
@@ -130,7 +128,6 @@ class TestManageContent:
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
-    # TODO: add test editing title only
     def test_edit_content_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
