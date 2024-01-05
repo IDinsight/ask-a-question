@@ -200,7 +200,11 @@ class TestAuthManageContent:
         response = client.post(
             "/content/create",
             headers={"Authorization": f"Bearer {access_token}"},
-            json={"content_text": "sample text", "content_metadata": {}},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_metadata": {},
+            },
         )
         assert response.status_code == expected_status
 
@@ -220,7 +224,11 @@ class TestAuthManageContent:
         response = client.put(
             f"/content/{existing_content_id}/edit",
             headers={"Authorization": f"Bearer {access_token}"},
-            json={"content_text": "sample text", "content_metadata": {}},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_metadata": {},
+            },
         )
         assert response.status_code == expected_status
 
