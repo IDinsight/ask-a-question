@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from core_backend.app.configs.llm_prompts import SafetyClassification
@@ -7,14 +9,17 @@ from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryRes
 pytestmark = pytest.mark.rails
 
 
-PROMPT_INJECTION_FILE = "tests/rails/data/prompt_injection_data.txt"
-SAFE_MESSAGES_FILE = "tests/rails/data/safe_data.txt"
-INAPPROPRIATE_LANGUAGE_FILE = "tests/rails/data/inappropriate_lang.txt"
+PROMPT_INJECTION_FILE = "data/prompt_injection_data.txt"
+SAFE_MESSAGES_FILE = "data/safe_data.txt"
+INAPPROPRIATE_LANGUAGE_FILE = "data/inappropriate_lang.txt"
 
 
 def read_test_data(file: str) -> list[str]:
     """Reads test data from file and returns a list of strings"""
-    with open(file) as f:
+
+    file_path = Path(__file__).parent / file
+
+    with open(file_path) as f:
         return f.read().splitlines()
 
 

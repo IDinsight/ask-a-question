@@ -7,6 +7,7 @@ import typer
 import uvicorn
 from alignscore import AlignScore
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Make sure we have the punkt tokenizer downloaded.
@@ -37,12 +38,16 @@ def get_model(model: Literal["base", "large"]) -> AlignScore:
             "Please set the ALIGN_SCORE_PATH environment variable "
             "to point to the AlignScore checkpoints folder. "
         )
-
+    model_path_with_name = os.path.join(models_path, f"AlignScore-{model}.ckpt")
+    if not os.path.isfile(model_path_with_name):
+        raise RuntimeError(
+            "Model not found. Please check the ALIGN_SCORE_PATH environment variable."
+        )
     return AlignScore(
         model="roberta-base",
         batch_size=32,
         device=device,
-        ckpt_path=os.path.join(models_path, f"AlignScore-{model}.ckpt"),
+        ckpt_path=model_path_with_name,
         evaluation_mode="nli_sp",
     )
 
@@ -58,6 +63,38 @@ class AlignScoreResponse(BaseModel):
     """The response body for the AlignScore endpoints."""
 
     alignscore: float
+
+
+@app.get("/healthcheck")
+def healthcheck() -> JSONResponse:
+    """Healthcheck endpoint."""
+    if models_path is None:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Please set the ALIGN_SCORE_PATH environment variable "},
+        )
+
+    base_model_found = os.path.isfile(os.path.join(models_path, "AlignScore-base.ckpt"))
+    large_model_found = os.path.isfile(
+        os.path.join(models_path, "AlignScore-large.ckpt")
+    )
+
+    if base_model_found or large_model_found:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "base_model_found": base_model_found,
+                "large_model_found": large_model_found,
+            },
+        )
+    else:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "base_model_found": base_model_found,
+                "large_model_found": large_model_found,
+            },
+        )
 
 
 @app.get("/")

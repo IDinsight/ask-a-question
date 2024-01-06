@@ -28,17 +28,16 @@ fresh-env :
 	fi
 
 # Running Tests
-tests: setup-test-relational-db setup-test-vector-db run-tests stop-test-relational-db stop-test-vector-db
-
+tests: setup-test-containers run-tests teardown-test-containers
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head && \
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-dbs: setup-test-relational-db setup-test-vector-db
+setup-test-containers: setup-test-relational-db setup-test-vector-db setup-alignscore-container
 
-teardown-test-dbs: stop-test-relational-db stop-test-vector-db
+teardown-test-containers: stop-test-relational-db stop-test-vector-db stop-alignscore-container
 
 setup-test-relational-db:
 	-@docker stop testdb
@@ -61,6 +60,18 @@ setup-test-vector-db:
 	docker run --name testvectordb \
 		-p 6334:6333 \
 		-d qdrant/qdrant
+
+setup-alignscore-container:
+	-@docker stop testalignscore
+	-@docker rm testalignscore
+	docker run --name testalignscore \
+		-p 5002:5001 \
+		-d alignscore-base
+	@sleep 10
+
+stop-alignscore-container:
+	@docker stop testalignscore
+	@docker rm testalignscore
 
 stop-test-relational-db:
 	@docker stop testdb

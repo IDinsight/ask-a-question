@@ -1,15 +1,16 @@
 name: Unit Tests
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
-    paths-ignore:
-      - "**/*.md"
+    paths:
+      - "**.py"
 env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
-
+  ALIGN_SCORE_API: http://alignscore:5001/alignscore_base
 jobs:
   container-job:
     runs-on: ubuntu-20.04
@@ -32,6 +33,15 @@ jobs:
         image: qdrant/qdrant
         ports:
           - 6333:6333
+      alignscore:
+        image: public.ecr.aws/j3r7b4k0/alignscore-base:latest
+        ports:
+          - 5001:5001
+        options: >-
+          --health-cmd "curl -f http://localhost:5001/healthcheck"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: install dependencies
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
@@ -52,6 +62,7 @@ jobs:
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
-            QDRANT_COLLECTION_NAME=test_collection QDRANT_HOST=qdrant
+            QDRANT_COLLECTION_NAME=test_collection QDRANT_HOST=qdrant \
+            ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
           python -m pytest -m "not rails"
