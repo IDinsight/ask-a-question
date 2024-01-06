@@ -73,6 +73,18 @@ stop-alignscore-container:
 	@docker stop testalignscore
 	@docker rm testalignscore
 
+setup-alignscore-container:
+	-@docker stop testalignscore
+	-@docker rm testalignscore
+	docker run --name testalignscore \
+		-p 5002:5001 \
+		-d alignscore-base
+	@sleep 10
+
+stop-alignscore-container:
+	@docker stop testalignscore
+	@docker rm testalignscore
+
 stop-test-relational-db:
 	@docker stop testdb
 	@docker rm testdb

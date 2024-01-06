@@ -134,6 +134,7 @@ async def embeddings_search(
 
 @identify_language
 @translate_question
+@identify_language
 @paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,

@@ -10,7 +10,10 @@ import pytest
 import yaml
 
 from core_backend.app.configs.app_config import ALIGN_SCORE_API, ALIGN_SCORE_THRESHOLD
-from core_backend.app.llm_call.check_output import _get_alignScore_score
+from core_backend.app.llm_call.check_output import (
+    _get_alignScore_score,
+    _get_llm_align_score,
+)
 
 pytestmark = pytest.mark.rails
 
@@ -38,16 +41,25 @@ async def test_alignScore(
     """
     This checks if alignScore returns the correct answer
     """
-    score = await _get_alignScore_score(
+    align_score = await _get_alignScore_score(
         ALIGN_SCORE_API, {"evidence": context, "claim": statement}
     )
-    assert (score > float(ALIGN_SCORE_THRESHOLD)) == expected, reason + f" {score}"
+    assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
+        reason + f" {align_score.score}"
+    )
 
 
-def test_llm_rag_validation(
-    llm_sentence: str, context: str, expected_answer: bool
+@pytest.mark.asyncio(scope="module")
+@pytest.mark.parametrize(
+    "context, statement, expected, reason", read_test_data(CONTEXT_RESPONSE_FILE)
+)
+async def test_llm_alignment_score(
+    context: str, statement: str, expected: bool, reason: str
 ) -> None:
     """
-    This checks if base LLM validation returns the correct answer
+    This checks if alignScore returns the correct answer
     """
-    pass
+    align_score = await _get_llm_align_score({"evidence": context, "claim": statement})
+    assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
+        reason + f" {align_score.score}"
+    )
