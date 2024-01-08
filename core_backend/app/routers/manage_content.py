@@ -187,9 +187,7 @@ def _upsert_content_to_qdrant(
     """Add content to qdrant collection"""
 
     text_to_embed = content.content_title + "\n" + content.content_text
-    content_embedding = embedding(EMBEDDING_MODEL, text_to_embed).data[0][
-        "embedding"
-    ]
+    content_embedding = embedding(EMBEDDING_MODEL, text_to_embed).data[0]["embedding"]
 
     qdrant_client.upsert(
         collection_name=QDRANT_COLLECTION_NAME,

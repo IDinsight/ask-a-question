@@ -41,9 +41,9 @@ def faq_contents(client: TestClient) -> None:
     for content in json_data:
         point_id = str(uuid.uuid4())
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
-        content_embedding = (
-            fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0]["embedding"]
-        )
+        content_embedding = fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0][
+            "embedding"
+        ]
         metadata = content.get("content_metadata", {})
         payload = _create_payload_for_qdrant_upsert(
             content["content_title"], content["content_text"], metadata
