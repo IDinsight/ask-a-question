@@ -30,7 +30,7 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - Overview:
+  - Start here:
       - What is AAQ: index.md
       - Usage: usage.md
   - Deploying:
