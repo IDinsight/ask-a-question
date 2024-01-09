@@ -40,11 +40,14 @@ def faq_contents(client: TestClient) -> None:
     points = []
     for content in json_data:
         point_id = str(uuid.uuid4())
-        content_embedding = fake_embedding(
-            EMBEDDING_MODEL, content["content_text"]
-        ).data[0]["embedding"]
+        text_to_embed = content["content_title"] + "\n" + content["content_text"]
+        content_embedding = fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0][
+            "embedding"
+        ]
         metadata = content.get("content_metadata", {})
-        payload = _create_payload_for_qdrant_upsert(content["content_text"], metadata)
+        payload = _create_payload_for_qdrant_upsert(
+            content["content_title"], content["content_text"], metadata
+        )
         points.append(
             PointStruct(
                 id=point_id, vector=content_embedding, payload=payload.model_dump()

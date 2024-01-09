@@ -44,6 +44,7 @@ class UserQuerySearchResult(BaseModel):
     Pydantic model for each individual search result
     """
 
+    response_title: Optional[str] = ""  # TODO: optional or not?
     response_text: str
     score: float
 
@@ -82,8 +83,9 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation
     """
 
-    content_metadata: dict = {}
+    content_title: str
     content_text: str
+    content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
 

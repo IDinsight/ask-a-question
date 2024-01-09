@@ -12,7 +12,10 @@ export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
   const [filteredCards, setFilteredCards] = useState<Content[]>([]);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
-  const [newCardText, setNewCardText] = useState("");
+  const [newCardData, setNewCardData] = useState({
+    content_title: "",
+    content_text: "",
+  });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Content | null>(null);
@@ -60,14 +63,21 @@ export default function Home() {
         }
       })
       .finally(() => setIsLoading(false));
+    setNewCardData({ content_title: "", content_text: "" });
   };
 
-  const saveNewCardInBackend = (content_text: string) => {
+  const saveNewCardInBackend = (content_data: {
+    content_title: string;
+    content_text: string;
+  }) => {
     setIsLoading(true);
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
       headers: get_api_headers(accessToken),
-      body: JSON.stringify({ content_text: content_text }),
+      body: JSON.stringify({
+        content_title: content_data.content_title,
+        content_text: content_data.content_text,
+      }),
     })
       .then((response) => {
         if (response.ok) {
@@ -81,6 +91,7 @@ export default function Home() {
         setFilteredCards([...cards, data]);
       })
       .finally(() => setIsLoading(false));
+    setNewCardData({ content_title: "", content_text: "" });
   };
 
   const deleteCardInBackend = (id: string) => {
@@ -114,19 +125,47 @@ export default function Home() {
     setShowEditModal(true);
   };
 
-  const onContentChange = (content_text: string) => {
+  const onContentTitleChange = (content_title: string) => {
+    cardToEdit
+      ? setCardToEdit(() => {
+          cardToEdit.content_title = content_title;
+          return cardToEdit;
+        })
+      : setNewCardData({
+          content_title: content_title,
+          content_text: newCardData.content_text,
+        });
+  };
+
+  const onContentTextChange = (content_text: string) => {
     cardToEdit
       ? setCardToEdit(() => {
           cardToEdit.content_text = content_text;
           return cardToEdit;
         })
-      : setNewCardText(content_text);
+      : setNewCardData({
+          content_title: newCardData.content_title,
+          content_text: content_text,
+        });
   };
 
   const onChangeSubmit = () => {
-    cardToEdit
-      ? saveEditedCardInBackend(cardToEdit!)
-      : saveNewCardInBackend(newCardText);
+    if (cardToEdit) {
+      if (!cardToEdit.content_title.trim() || !cardToEdit.content_text.trim()) {
+        alert("Both title and text are required");
+        return;
+      }
+      saveEditedCardInBackend(cardToEdit!);
+    } else {
+      if (
+        !newCardData.content_title.trim() ||
+        !newCardData.content_text.trim()
+      ) {
+        alert("Both title and text are required");
+        return;
+      }
+      saveNewCardInBackend(newCardData);
+    }
     setShowEditModal(false);
   };
 
@@ -184,7 +223,10 @@ export default function Home() {
   const filterCards = (e: React.FormEvent<HTMLInputElement>) => {
     const searchTerm = e.currentTarget.value.toLowerCase();
     const filteredCards = cards.filter((card: Content) => {
-      return card.content_text.toLowerCase().includes(searchTerm);
+      return (
+        card.content_text.toLowerCase().includes(searchTerm) ||
+        card.content_title.toLowerCase().includes(searchTerm)
+      );
     });
     setFilteredCards(filteredCards);
   };
@@ -240,7 +282,8 @@ export default function Home() {
         {showEditModal && (
           <EditModal
             cardToEdit={cardToEdit}
-            onChange={onContentChange}
+            onTitleChange={onContentTitleChange}
+            onContentChange={onContentTextChange}
             onSubmit={onChangeSubmit}
             onClose={() => setShowEditModal(false)}
           />

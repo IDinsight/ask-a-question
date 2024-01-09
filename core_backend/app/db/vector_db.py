@@ -64,7 +64,7 @@ def get_similar_content(
         collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
-        with_payload=PayloadSelectorInclude(include=["content_text"]),
+        with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
     )
 
     results_dict = {}
@@ -73,6 +73,7 @@ def get_similar_content(
             raise ValueError("Payload is empty. No content text found.")
         else:
             results_dict[i] = UserQuerySearchResult(
+                response_title=r.payload.get("content_title", ""),
                 response_text=r.payload.get("content_text", ""),
                 score=r.score,
             )
