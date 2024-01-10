@@ -6,7 +6,7 @@ mypy==1.5.1
 pytest==7.4.2
 httpx==0.25.0
 trio==0.22.2
-mkdocs-material==9.4.5
+mkdocs-material==9.5.3
 pymdown-extensions==10.3
 mkdocs-glightbox==0.3.4
 types-PyYAML==6.0.12.12

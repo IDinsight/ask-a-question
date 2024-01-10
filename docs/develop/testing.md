@@ -69,6 +69,37 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
     }
     ```
 
+## Running optional tests
+
+There are a bunch of additional tests that are not run by default. Most of these
+either make call to OpenAI or depend on other components:
+
+- *Language Identification*: Tests if the the solution is able to identify the
+language given a short sample text.
+- *Test if LLM response aligns with provided context*: Tests for hallucinations by
+checking if the LLM response is supported by the provided context.
+- *Test safety*: Tests for prompt injection and jailbreaking.
+
+You can run these test using:
+
+```bash
+cd /core_backend
+python -m pytest -m rail
+```
+
+!!! Note
+
+    Remember to export the right API keys or setup the required service before you
+    run the tests. For example, for test that call OpenAI, you should export your
+    OpenAI key:
+
+    ```bash
+    export OPENAI_API_KEY=sk-...
+    ```
+
+    See "Other Components" for how to setup required infrastructure.
+
+
 ## Calling endpoints
 
 ### Run the app
