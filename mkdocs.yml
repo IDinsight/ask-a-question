@@ -59,6 +59,10 @@ nav:
           - Botpress: other-components/chat_managers/botpress_v12.md
       - Offline LLMs:
           - other-components/self_hosted_llms/index.md
+      - Align Score:
+          - other-components/align-score/index.md
+          - Deployment: other-components/align-score/deployment.md
+          - Testing: other-components/align-score/testing.md
   - Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
