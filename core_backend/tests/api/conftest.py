@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import namedtuple
-from typing import Union
+from typing import Tuple, Union
 
 import httpx
 import numpy as np
@@ -16,9 +16,11 @@ from core_backend.app.configs.app_config import (
     QDRANT_COLLECTION_NAME,
     QDRANT_VECTOR_SIZE,
 )
+from core_backend.app.configs.llm_prompts import IdentifiedLanguage
 from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.llm_call import parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
+from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
 
 Fixture = Union
 
@@ -84,14 +86,45 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
     monkeysession.setattr(parse_input, "_classify_safety", lambda a, b: (a, b))
-    monkeysession.setattr(parse_input, "_identify_language", lambda a, b: (a, b))
+    monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(parse_input, "_paraphrase_question", lambda a, b: (a, b))
-    monkeysession.setattr(parse_input, "_translate_question", lambda a, b: (a, b))
+    monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
 
     monkeysession.setattr(
         "core_backend.app.routers.question_answer.get_llm_rag_answer",
         lambda *args, **kwargs: "monkeypatched_llm_response",
     )
+
+
+def mock_identify_language(
+    question: UserQueryRefined, response: UserQueryResponse
+) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    """
+    Monkeypatch call to LLM language identification service
+    """
+    question.original_language = IdentifiedLanguage.ENGLISH
+    response.debug_info["original_language"] = "ENGLISH"
+
+    return question, response
+
+
+def mock_translate_question(
+    question: UserQueryRefined, response: UserQueryResponse
+) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    """
+    Monkeypatch call to LLM translation service
+    """
+    if question.original_language is None:
+        response.state = ResultState.ERROR
+        raise ValueError(
+            (
+                "Language hasn't been identified. "
+                "Identify language before running translation"
+            )
+        )
+    response.debug_info["translated_question"] = question.query_text
+
+    return question, response
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
