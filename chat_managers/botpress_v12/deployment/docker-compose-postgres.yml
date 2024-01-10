@@ -1,0 +1,13 @@
+version: "1"
+services:
+  botpress:
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:11.2-alpine
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

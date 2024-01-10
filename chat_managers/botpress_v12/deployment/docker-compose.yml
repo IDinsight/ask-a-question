@@ -1,22 +1,13 @@
-version: "1"
+version: "2"
 services:
   botpress:
     image: botpress/server:v12_31_3
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${PGPORT}/${POSTGRES_DB}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:${PGPORT}/${POSTGRES_DB}
     env_file:
       - .env
-    depends_on:
-      - postgres
     volumes:
       - ./build/botpress/data:/botpress/data
-
-  postgres:
-    image: postgres:11.2-alpine
-    env_file:
-      - .env
-    volumes:
-      - pgdata:/var/lib/postgresql/data
 
   nginx:
     image: nginx:1.25-alpine
@@ -42,6 +33,3 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-volumes:
-  pgdata:

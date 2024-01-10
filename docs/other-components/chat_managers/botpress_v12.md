@@ -12,11 +12,14 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 
 **Step 2:** Copy `template.env` to `.env` and edit it to set the variables
 
+    POSTGRES_HOSTNAME=
     PGPORT=
-    POSTGRES_DB=
-    POSTGRES_PASSWORD=
     POSTGRES_USER=
+    POSTGRES_PASSWORD=
+    POSTGRES_DB=
     ...
+
+!!! note "If running a postgres database locally with docker compose (as in Option 2 of Step 5), `POSTGRES_HOSTNAME` should be set to the name of that container, which is `postgres` in our case (see `docker-compose-postgres.yml`)."
 
 **Step 3:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
 
@@ -29,7 +32,13 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 
 **Step 5:** Run docker compose
 
+Option 1 - If you already have a postgres database that you want botpress to connect to, just run:
+
     docker compose -f docker-compose.yml -p botpress-stack up -d --build
+
+Option 2 - Otherwise, run the following to also create a postgres database locally that botpress can use:
+
+    docker compose -f docker-compose.yml -f docker-compose-postgres.yml -p botpress-stack up -d --build
 
 You can now access Botpress at `https://[DOMAIN]/`
 
