@@ -1,4 +1,5 @@
 # Access levels
+![Login screen](./login-screenshot.png)
 
 There are two accounts available with different levels of access:
 

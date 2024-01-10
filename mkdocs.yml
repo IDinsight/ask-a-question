@@ -47,7 +47,8 @@ nav:
           - components/qa-service/index.md
           - Semantic Search: components/qa-service/semantic-search.md
           - LLM Response: components/qa-service/llm-response.md
-      - Triaging Service: components/triaging.md
+      - Triaging Service:
+          - components/triaging/index.md
   - Other Components:
       - WhatsApp Connector:
           - Setup: whatsapp/setup.md

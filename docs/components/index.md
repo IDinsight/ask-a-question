@@ -22,7 +22,7 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./admin-app/index.md)
 
--   :material-directions-fork:{ .lg .middle } __Triaging Service__
+-   :material-directions-fork:{ .lg .middle } __Triaging Service (Coming Soon!)__
 
     ---
 
