@@ -199,7 +199,7 @@ def get_top_k_accuracy_table(df: pd.DataFrame) -> List[float]:
 def generate_message(accuracies: List[float]) -> str:
     """Generate messages for validation results"""
     accuracy_message = "\n".join(
-        [f"\t• Top-{i} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
+        [f"   • Top-{i} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
     )
 
     message = (
@@ -208,10 +208,10 @@ def generate_message(accuracies: List[float]) -> str:
         f"\n"
         f"• Date: {datetime.today().date()}\n\n"
         f"• Dataset:\n"
-        f"\t• Validation data: {args.validation_data_path}\n"
-        f"\t• Content data: {args.content_data_path}\n\n"
+        f"   • Validation data: {args.validation_data_path}\n"
+        f"   • Content data: {args.content_data_path}\n\n"
         f"• Embedding model: {EMBEDDING_MODEL}\n"
-        f"• Top N accuracies:\n" + "\n".join(accuracy_message)
+        f"• Top N accuracies:\n" + accuracy_message
     )
 
     if os.environ.get("GITHUB_ACTIONS") == "true":
@@ -224,9 +224,9 @@ def generate_message(accuracies: List[float]) -> str:
 
         message += (
             f"\n\n"
-            f"Repository: {repo_name}"
-            f"Branch: {current_branch} (<a href='{branch_url}'>link</a>)"
-            f"Commit: {commit} (<a href='{commit_url}'>link</a>)"
+            f"Repository: {repo_name}\n"
+            f"Branch: {current_branch} (<a href='{branch_url}'>link</a>)\n"
+            f"Commit: {commit} (<a href='{commit_url}'>link</a>)\n"
         )
 
     return message
