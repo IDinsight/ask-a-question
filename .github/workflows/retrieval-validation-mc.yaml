@@ -7,14 +7,13 @@ on:
 
 jobs:
   call_validation:
-    runs-on: ubuntu-latest
     environment: validation-mc
-    steps:
-      - uses: ./.github/workflows/retrieval-validation.yaml
-        with:
-          validation-data-path: ${{ secrets.VALIDATION_DATA_S3_PATH }}
-          content-data-path: ${{ secrets.CONTENT_DATA_S3_PATH }}
-          validation-data-question-col: ${{ vars.VALIDATION_DATA_QUESTION_COL }}
-          validation-data-label-col: ${{ vars.VALIDATION_DATA_LABEL_COL }}
-          content-data-label-col: ${{ vars.CONTENT_DATA_LABEL_COL }}
-          content-data-text-col: ${{ vars.CONTENT_DATA_TEXT_COL }}
+    uses: ./.github/workflows/retrieval-validation.yaml
+    secrets:
+      validation-data-path: ${{ secrets.VALIDATION_DATA_S3_PATH }}
+      content-data-path: ${{ secrets.CONTENT_DATA_S3_PATH }}
+    with:
+      validation-data-question-col: ${{ vars.VALIDATION_DATA_QUESTION_COL }}
+      validation-data-label-col: ${{ vars.VALIDATION_DATA_LABEL_COL }}
+      content-data-label-col: ${{ vars.CONTENT_DATA_LABEL_COL }}
+      content-data-text-col: ${{ vars.CONTENT_DATA_TEXT_COL }}
