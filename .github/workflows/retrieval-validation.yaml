@@ -1,4 +1,4 @@
-name: Deploy on push to main
+name: Reusable retrieval validation workflow
 on:
   workflow_call:
     inputs:

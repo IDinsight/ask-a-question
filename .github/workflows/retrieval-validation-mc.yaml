@@ -1,4 +1,4 @@
-name: Deploy on push to main
+name: Validate retrieval on MC
 on:
   push:
     branches:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: validation-mc
     steps:
-      - uses: ./.github/workflows/validation.yaml
+      - uses: ./.github/workflows/retrieval-validation.yaml
         with:
           validation-data-question-col: ${{ vars.VALIDATION_DATA_QUESTION_COL }}
           validation-data-label-col: ${{ vars.VALIDATION_DATA_LABEL_COL }}
