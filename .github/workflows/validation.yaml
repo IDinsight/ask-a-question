@@ -1,0 +1,70 @@
+name: Deploy on push to main
+on:
+  workflow_call:
+    inputs:
+      validation-data-question-col:
+        required: true
+        type: string
+      validation-data-label-col:
+        required: true
+        type: string
+      content-data-label-col:
+        required: true
+        type: string
+      content-data-text-col:
+        required: true
+        type: string
+    secrets:
+      validation-data-path:
+        required: true
+      content-data-path:
+        required: true
+  push:
+    branches:
+      - main
+      - AAQ-81-retrieval-val
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  validate:
+    runs-on: ubuntu-20.04
+    container: node:20.7-bullseye
+    services:
+      qdrant:
+        image: qdrant/qdrant
+        ports:
+          - 6333:6333
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github_actions_dev
+          role-session-name: github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r core_backend/requirements.txt
+          pip install -r core_backend/validation/requirements.txt
+
+      - name: Run validation script
+        run: |
+          python core_backend/validation/validate.py \
+            --validation_data_path \
+              ${{ secrets.validation-data-path }} \
+            --content_data_path \
+              ${{ secrets.content-data-path }} \
+            --validation_data_question_col \
+              ${{ inputs.validation-data-question-col }} \
+            --validation_data_label_col \
+              ${{ inputs.validation-data-label-col }} \
+            --content_data_label_col \
+              ${{ inputs.content-data-label-col }} \
+            --content_data_text_col \
+              ${{ inputs.content-data-text-col }}
