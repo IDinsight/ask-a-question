@@ -14,7 +14,7 @@ There are two major endpoints that your application can integrate with:
 
     [:octicons-arrow-right-24: More info](./semantic-search.md)
 
--   :material-react:{ .lg .middle } __LLM Response__
+-   :material-api:{ .lg .middle } __LLM Response__
 
     ---
 
