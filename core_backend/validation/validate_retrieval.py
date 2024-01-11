@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import uuid
 from typing import Dict, List, Union
@@ -15,10 +16,42 @@ from core_backend.app.db.vector_db import (
 )
 from core_backend.app.schemas import UserQueryBase, UserQuerySearchResult
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--validation_data_path", type=str, help="Path to validation data")
+parser.add_argument("--content_data_path", type=str, help="Path to validation data")
+parser.add_argument(
+    "--validation_data_question_col",
+    type=str,
+    help="Question column in validation data",
+)
+parser.add_argument(
+    "--validation_data_label_col",
+    type=str,
+    help="Content label column in validation data",
+)
+parser.add_argument(
+    "--content_data_label_col", type=str, help="Content label column in content data"
+)
+parser.add_argument(
+    "--content_data_text_col", type=str, help="Content text body column in content data"
+)
+parser.add_argument(
+    "--n_similar",
+    "-n",
+    type=int,
+    help="Number of top similar content to retrieve",
+    default=10,
+)
+parser.add_argument(
+    "--aws_profile",
+    type=str,
+    help="AWS profile name",
+    default=None,
+)
+args = parser.parse_args()
+
+
 VALIDATION_COLLECTION_NAME = "validation_collection"
-QUESTION_COL = "question"
-CONTENT_LABEL_COL = "faq_name"
-CONTENT_TEXT_COL = "faq_content_to_send"
 
 
 async def aget_similar_content(
@@ -40,7 +73,7 @@ async def aget_similar_content(
 
 def get_rank(row: pd.Series) -> Union[int, None]:
     """Get the rank of label in the retrieved content IDs"""
-    label = row[CONTENT_LABEL_COL]
+    label = row[args.content_data_label_col]
     ranked_list = row["retrieved_content_titles"]
     try:
         return ranked_list.index(label) + 1
@@ -112,40 +145,66 @@ async def retrieve_results(
     df: pd.DataFrame, client: QdrantClient, n: int
 ) -> pd.DataFrame:
     """Asynchronousely retrieve similar content for all queries in validation data"""
-    tasks = [retrieve(query, client, n) for query in df[QUESTION_COL]]
+    tasks = [
+        retrieve(query, client, n) for query in df[args.validation_data_question_col]
+    ]
     df["retrieval_results"] = await asyncio.gather(*tasks)
     return df
 
 
-def validate_retrieval(
-    validation_data_path: str,
-    content_data: str,
-    n: int = 10,
-    aws_profile: Union[str, None] = None,
-) -> None:
-    """Validate retrieval model on validation data"""
-    val_df = pd.read_csv(
-        validation_data_path, storage_options=dict(profile=aws_profile)
+def prepare_content_data() -> pd.DataFrame:
+    """Prepare content data for loading to qdrant collection"""
+    df = pd.read_csv(
+        args.content_data_path, storage_options=dict(profile=args.aws_profile)
     )
-    content_df = pd.read_csv(content_data, storage_options=dict(profile=aws_profile))
+    df["content_id"] = [uuid.uuid4() for _ in range(len(df))]
+    df = df.rename(
+        columns={
+            args.content_data_label_col: "content_title",
+            args.content_data_text_col: "content_text",
+        }
+    )
+    return df
 
-    content_df["content_id"] = [uuid.uuid4() for _ in range(len(content_df))]
-    content_df = content_df.rename(
-        columns={CONTENT_LABEL_COL: "content_title", CONTENT_TEXT_COL: "content_text"}
+
+def generate_retrieval_results() -> pd.DataFrame:
+    """Generate retrieval results for all queries in validation data"""
+    df = pd.read_csv(
+        args.validation_data_path, storage_options=dict(profile=args.aws_profile)
+    )
+    df = asyncio.run(retrieve_results(df, client, args.n))
+
+    val_df["retrieved_content_titles"] = val_df["retrieval_results"].apply(
+        get_retrieved_content_labels
+    )
+    val_df["rank"] = val_df.apply(get_rank, axis=1)
+    return df
+
+
+def print_evaluation_results(df: pd.DataFrame) -> None:
+    """Print evaluation results"""
+    for i in range(1, args.n + 1):
+        acc = (df["rank"] <= i).mean()
+        print(f"Top-{i} accuracy: {acc:.1%}")
+
+
+if __name__ == "__main__":
+    content_df = pd.read_csv(
+        args.content_data_path, storage_options=dict(profile=args.aws_profile)
     )
 
+    print("Read validation and content data... ")
+    print(
+        "This is a test statement. Once successful, please uncomment the following "
+        "lines to run the actual logic."
+    )
+
+    content_df = prepare_content_data()
     client = load_content_to_qdrant(content_df)
 
     try:
-        val_df = asyncio.run(retrieve_results(val_df, client, n))
-
-        val_df["retrieved_content_titles"] = val_df["retrieval_results"].apply(
-            get_retrieved_content_labels
-        )
-        val_df["rank"] = val_df.apply(get_rank, axis=1)
-
-        # TODO: add validation metrics
-        top5 = (val_df["rank"] <= 5).mean()
-        print(f"Top-5 accuracy: {top5:.1%}")
+        val_df = generate_retrieval_results()
     finally:
         client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
+
+    print_evaluation_results(val_df)
