@@ -4,7 +4,7 @@ on:
     inputs:
       environment:
         required: true
-        default: "dev"
+        type: string
 
 permissions:
   id-token: write # This is required for requesting the JWT
