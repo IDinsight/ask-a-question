@@ -78,7 +78,7 @@ async def get_llm_answer(
     )
     response.content_response = content_response
     response.llm_response = await get_llm_rag_answer(
-        user_query_refined.query_text, content_response[0].retrieved_content_text
+        user_query_refined.query_text, content_response[0].retrieved_text
     )
 
     return response
