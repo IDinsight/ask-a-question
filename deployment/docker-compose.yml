@@ -58,7 +58,7 @@ services:
     env_file:
       - .env.nginx
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:v2.8.0
     restart: always
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
