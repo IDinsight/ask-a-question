@@ -203,13 +203,13 @@ def generate_message(accuracies: List[float]) -> str:
     )
 
     message = (
-        f"<b>Content retrieval validation results</b>\n"
+        f"Content retrieval validation results\n"
         f"------------------------------------\n"
         f"\n"
-        f"• Date: {datetime.today().date()}\n\n"
+        f"• Date: {datetime.today().date()}\n"
         f"• Dataset:\n"
         f"   • Validation data: {args.validation_data_path}\n"
-        f"   • Content data: {args.content_data_path}\n\n"
+        f"   • Content data: {args.content_data_path}\n"
         f"• Embedding model: {EMBEDDING_MODEL}\n"
         f"• Top N accuracies:\n" + accuracy_message
     )
@@ -219,14 +219,14 @@ def generate_message(accuracies: List[float]) -> str:
         repo_name = os.environ.get("REPO")
         commit = os.environ.get("HASH")
 
-        branch_url = "https://github.com/IDinsight/{repo_name}/tree/{current_branch}"
-        commit_url = "https://github.com/IDinsight/{repo_name}/commit/{commit}"
+        branch_url = f"https://github.com/IDinsight/{repo_name}/tree/{current_branch}"
+        commit_url = f"https://github.com/IDinsight/{repo_name}/commit/{commit}"
 
         message += (
             f"\n\n"
             f"Repository: {repo_name}\n"
-            f"Branch: {current_branch} (<a href='{branch_url}'>link</a>)\n"
-            f"Commit: {commit} (<a href='{commit_url}'>link</a>)\n"
+            f"Branch: {current_branch} ({branch_url})\n"
+            f"Commit: {commit} ({commit_url})\n"
         )
 
     return message
