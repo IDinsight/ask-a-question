@@ -41,7 +41,7 @@ jobs:
 
       - name: Run validation script
         run: |
-          python core_backend/validation/validate.py \
+          python core_backend/validation/validate_retrieval.py \
             --validation_data_path \
               ${{ secrets.VALIDATION_DATA_S3_PATH }} \
             --content_data_path \
