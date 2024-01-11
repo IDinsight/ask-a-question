@@ -34,7 +34,7 @@ repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
   - Welcome to AAQ:
-      - What is AAQ: index.md
+      - What is AAQ?: index.md
       - Usage: usage.md
   - Core Components:
       - components/index.md
