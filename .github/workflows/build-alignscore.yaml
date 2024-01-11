@@ -1,4 +1,4 @@
-name: Deploy on push to main
+name: Build AlignScore image
 on:
   workflow_dispatch:
   push:
