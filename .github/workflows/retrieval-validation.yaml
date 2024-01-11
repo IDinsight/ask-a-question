@@ -61,6 +61,6 @@ jobs:
             --content_data_label_col \
               ${{ vars.CONTENT_DATA_LABEL_COL }} \
             --content_data_text_col \
-              ${{ vars.CONTENT_DATA_TEXT_COL }}
+              ${{ vars.CONTENT_DATA_TEXT_COL }} \
             --notification_topic \
               arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:aaq-validation-topic
