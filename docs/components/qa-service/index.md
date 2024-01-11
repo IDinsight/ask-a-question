@@ -5,7 +5,7 @@ There are two major endpoints that your application can integrate with:
 
 <div class="grid cards" markdown>
 
--   :material-api:{ .lg .middle .red} __Semantic Search__
+-   :material-api:{ .lg .middle } __Semantic Search__
 
     ---
 

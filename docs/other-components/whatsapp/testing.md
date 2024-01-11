@@ -1,6 +1,6 @@
 # Testing the WhatsApp Connector (Developer)
 
-Assuming you have [Set up your WhatsApp Connector](../whatsapp/setup.md), it is now time to test it out!
+Assuming you have [Set up your WhatsApp Connector](../whatsapp/index.md), it is now time to test it out!
 
 Before you can start chatting on WhatsApp, you need to first register your WhatsApp number on your Meta project's dev account. To do it, follow these steps -
 
