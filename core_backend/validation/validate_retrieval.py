@@ -199,7 +199,7 @@ def get_top_k_accuracy_table(df: pd.DataFrame) -> List[float]:
 def generate_message(accuracies: List[float]) -> str:
     """Generate messages for validation results"""
     accuracy_message = "\n".join(
-        [f"   • Top-{i} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
+        [f"   • Top-{i + 1} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
     )
 
     message = (
