@@ -219,8 +219,8 @@ def generate_message(accuracies: List[float]) -> str:
         repo_name = os.environ.get("REPO")
         commit = os.environ.get("HASH")
 
-        branch_url = f"https://github.com/IDinsight/{repo_name}/tree/{current_branch}"
-        commit_url = f"https://github.com/IDinsight/{repo_name}/commit/{commit}"
+        branch_url = f"https://github.com/{repo_name}/tree/{current_branch}"
+        commit_url = f"https://github.com/{repo_name}/commit/{commit}"
 
         message += (
             f"\n\n"
