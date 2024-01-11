@@ -11,7 +11,7 @@ trap cleanup EXIT
 
 email="$EMAIL"
 domains=("$DOMAIN")
-staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
+staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 rsa_key_size=4096
 
 # Define webroot directory and mount path
