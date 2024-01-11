@@ -2,6 +2,7 @@ name: Retrieval validation
 
 on:
   push:
+    workflow_dispatch:
     branches:
       - main
       - AAQ-81-retrieval-val
@@ -21,7 +22,11 @@ jobs:
           - 6333:6333
     environment: validation-mc
     steps:
-      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y lsb-release && apt-get clean all
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
@@ -34,12 +39,15 @@ jobs:
           role-session-name: github-actions
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r core_backend/validation/requirements.txt
 
       - name: Run validation script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          QDRANT_HOST: qdrant
         run: |
           python core_backend/validation/validate_retrieval.py \
             --validation_data_path \
@@ -54,3 +62,5 @@ jobs:
               ${{ vars.CONTENT_DATA_LABEL_COL }} \
             --content_data_text_col \
               ${{ vars.CONTENT_DATA_TEXT_COL }}
+            --notification_topic \
+              arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:aaq-validation-topic
