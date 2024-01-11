@@ -7,6 +7,7 @@ from typing import Dict, List, Union
 
 import boto3
 import pandas as pd
+from dateutil import tz
 from litellm import aembedding, embedding
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
@@ -196,8 +197,11 @@ def get_top_k_accuracy_table(df: pd.DataFrame) -> List[float]:
     return accuracies
 
 
-def generate_message(accuracies: List[float]) -> str:
+def generate_message(accuracies: List[float]) -> Dict[str, str]:
     """Generate messages for validation results"""
+    ist = tz.gettz("Asia/Kolkata")
+    timestamp = datetime.now(tz=ist).strftime("%Y-%m-%d %H:%M:%S IST")
+
     accuracy_message = "\n".join(
         [f"   • Top-{i + 1} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
     )
@@ -206,7 +210,7 @@ def generate_message(accuracies: List[float]) -> str:
         f"Content retrieval validation results\n"
         f"--------------------------------------------\n"
         f"\n"
-        f"• Timestamp: {datetime.today()}\n"
+        f"• Timestamp: {timestamp}\n"
         f"• Dataset:\n"
         f"   • Validation data: {args.validation_data_path}\n"
         f"   • Content data: {args.content_data_path}\n"
@@ -229,30 +233,30 @@ def generate_message(accuracies: List[float]) -> str:
             f"Commit: {commit} ({commit_url})\n"
         )
 
-    return message
+    return {
+        "Subject": f"Retrieval validation results ({timestamp})",
+        "Message": message,
+    }
 
 
 def send_notification(
-    content: str,
+    message_dict: Dict[str, str],
     topic: str,
 ) -> None:
     """
     Function to send notification
     """
+    boto3.setup_default_session(profile_name=args.aws_profile)
     sns = boto3.client("sns")
+
     sns.publish(
         TopicArn=topic,
-        Message=content,
-        Subject="Retrieval validation results ({})".format(datetime.today()),
+        **message_dict,
     )
     print("Successfully sent message to SNS topic")
 
 
 if __name__ == "__main__":
-    content_df = pd.read_csv(
-        args.content_data_path, storage_options=dict(profile=args.aws_profile)
-    )
-
     content_df = prepare_content_data()
     client = load_content_to_qdrant(content_df)
 
@@ -262,9 +266,10 @@ if __name__ == "__main__":
         client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
 
     acc_table = get_top_k_accuracy_table(val_df)
-    message = generate_message(acc_table)
 
-    print(message)
+    message_dict = generate_message(acc_table)
+
+    print(message_dict["Message"])
 
     if args.notification_topic is not None:
-        send_notification(message, topic=args.notification_topic)
+        send_notification(message_dict, topic=args.notification_topic)
