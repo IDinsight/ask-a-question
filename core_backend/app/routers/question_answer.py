@@ -57,10 +57,10 @@ async def llm_response(
     return response
 
 
-@classify_safety
-@translate_question
 @identify_language
+@translate_question
 @paraphrase_question
+@classify_safety
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
