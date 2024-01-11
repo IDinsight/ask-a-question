@@ -19,7 +19,6 @@ jobs:
         image: qdrant/qdrant
         ports:
           - 6333:6333
-    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +28,7 @@ jobs:
 
       - name: Configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
+        environment: ${{ inputs.environment }}
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github_actions_dev
           role-session-name: github-actions
@@ -40,6 +40,7 @@ jobs:
           python -m pip install -r core_backend/validation/requirements.txt
 
       - name: Run validation script
+        environment: ${{ inputs.environment }}
         run: |
           python core_backend/validation/validate.py \
             --validation_data_path \
