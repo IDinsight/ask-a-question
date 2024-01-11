@@ -167,17 +167,17 @@ def prepare_content_data() -> pd.DataFrame:
     return df
 
 
-def generate_retrieval_results() -> pd.DataFrame:
+def generate_retrieval_results(client: QdrantClient) -> pd.DataFrame:
     """Generate retrieval results for all queries in validation data"""
     df = pd.read_csv(
         args.validation_data_path, storage_options=dict(profile=args.aws_profile)
     )
     df = asyncio.run(retrieve_results(df, client, args.n))
 
-    val_df["retrieved_content_titles"] = val_df["retrieval_results"].apply(
+    df["retrieved_content_titles"] = df["retrieval_results"].apply(
         get_retrieved_content_labels
     )
-    val_df["rank"] = val_df.apply(get_rank, axis=1)
+    df["rank"] = df.apply(get_rank, axis=1)
     return df
 
 
@@ -199,12 +199,12 @@ if __name__ == "__main__":
         "lines to run the actual logic."
     )
 
-    content_df = prepare_content_data()
-    client = load_content_to_qdrant(content_df)
+    # content_df = prepare_content_data()
+    # client = load_content_to_qdrant(content_df)
 
-    try:
-        val_df = generate_retrieval_results()
-    finally:
-        client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
+    # try:
+    #     val_df = generate_retrieval_results(client)
+    # finally:
+    #     client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
 
-    print_evaluation_results(val_df)
+    # print_evaluation_results(val_df)
