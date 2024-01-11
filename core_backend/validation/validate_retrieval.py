@@ -178,7 +178,7 @@ def generate_retrieval_results(client: QdrantClient) -> pd.DataFrame:
     df = pd.read_csv(
         args.validation_data_path, storage_options=dict(profile=args.aws_profile)
     )
-    df = asyncio.run(retrieve_results(df, client, args.n))
+    df = asyncio.run(retrieve_results(df, client, args.n_similar))
 
     df["retrieved_content_titles"] = df["retrieval_results"].apply(
         get_retrieved_content_labels
@@ -190,7 +190,7 @@ def generate_retrieval_results(client: QdrantClient) -> pd.DataFrame:
 def get_top_k_accuracy_table(df: pd.DataFrame) -> List[float]:
     """Get top K accuracy table for validation results"""
     accuracies = []
-    for i in range(1, args.n + 1):
+    for i in range(1, args.n_similar + 1):
         acc = (df["rank"] <= i).mean()
         accuracies.append(acc)
     return accuracies
