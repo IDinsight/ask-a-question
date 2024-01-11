@@ -1,8 +1,11 @@
 import argparse
 import asyncio
+import os
 import uuid
+from datetime import datetime
 from typing import Dict, List, Union
 
+import boto3
 import pandas as pd
 from litellm import aembedding, embedding
 from qdrant_client import QdrantClient
@@ -34,6 +37,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--content_data_text_col", type=str, help="Content text body column in content data"
+)
+parser.add_argument(
+    "--notification_topic", type=str, help="SNS topic to send notification to"
 )
 parser.add_argument(
     "--n_similar",
@@ -181,11 +187,65 @@ def generate_retrieval_results(client: QdrantClient) -> pd.DataFrame:
     return df
 
 
-def print_evaluation_results(df: pd.DataFrame) -> None:
-    """Print evaluation results"""
+def get_top_k_accuracy_table(df: pd.DataFrame) -> List[float]:
+    """Get top K accuracy table for validation results"""
+    accuracies = []
     for i in range(1, args.n + 1):
         acc = (df["rank"] <= i).mean()
-        print(f"Top-{i} accuracy: {acc:.1%}")
+        accuracies.append(acc)
+    return accuracies
+
+
+def generate_message(accuracies: List[float]) -> str:
+    """Generate messages for validation results"""
+    accuracy_message = "\n".join(
+        [f"\t• Top-{i} accuracy: {acc:.1%}" for i, acc in enumerate(accuracies)]
+    )
+
+    message = (
+        f"<b>Content retrieval validation results</b>\n"
+        f"------------------------------------\n"
+        f"\n"
+        f"• Date: {datetime.today().date()}\n\n"
+        f"• Dataset:\n"
+        f"\t• Validation data: {args.validation_data_path}\n"
+        f"\t• Content data: {args.content_data_path}\n\n"
+        f"• Embedding model: {EMBEDDING_MODEL}\n"
+        f"• Top N accuracies:\n" + "\n".join(accuracy_message)
+    )
+
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        current_branch = os.environ.get("BRANCH_NAME")
+        repo_name = os.environ.get("REPO")
+        commit = os.environ.get("HASH")
+
+        branch_url = "https://github.com/IDinsight/{repo_name}/tree/{current_branch}"
+        commit_url = "https://github.com/IDinsight/{repo_name}/commit/{commit}"
+
+        message += (
+            f"\n\n"
+            f"Repository: {repo_name}"
+            f"Branch: {current_branch} (<a href='{branch_url}'>link</a>)"
+            f"Commit: {commit} (<a href='{commit_url}'>link</a>)"
+        )
+
+    return message
+
+
+def send_notification(
+    content: str,
+    topic: str,
+) -> None:
+    """
+    Function to send notification
+    """
+    sns = boto3.client("sns")
+    sns.publish(
+        TopicArn=topic,
+        Message=content,
+        Subject="Retrieval validation results ({})".format(datetime.today().date()),
+    )
+    print("Successfully sent message to SNS topic")
 
 
 if __name__ == "__main__":
@@ -199,6 +259,7 @@ if __name__ == "__main__":
         "lines to run the actual logic."
     )
 
+    print(generate_message([0.1, 0.2, 0.3, 0.4, 0.5]))
     # content_df = prepare_content_data()
     # client = load_content_to_qdrant(content_df)
 
@@ -207,4 +268,8 @@ if __name__ == "__main__":
     # finally:
     #     client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
 
-    # print_evaluation_results(val_df)
+    # acc_table = get_top_k_accuracy_table(val_df)
+    # message = generate_message(acc_table)
+    # print(message)
+    # if args.notification_topic is not None:
+    # send_notification(message, topic=args.notification_topic)
