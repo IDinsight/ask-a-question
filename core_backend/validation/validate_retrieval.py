@@ -204,9 +204,9 @@ def generate_message(accuracies: List[float]) -> str:
 
     message = (
         f"Content retrieval validation results\n"
-        f"------------------------------------\n"
+        f"--------------------------------------------\n"
         f"\n"
-        f"• Date: {datetime.today().date()}\n"
+        f"• Timestamp: {datetime.today()}\n"
         f"• Dataset:\n"
         f"   • Validation data: {args.validation_data_path}\n"
         f"   • Content data: {args.content_data_path}\n"
@@ -243,7 +243,7 @@ def send_notification(
     sns.publish(
         TopicArn=topic,
         Message=content,
-        Subject="Retrieval validation results ({})".format(datetime.today().date()),
+        Subject="Retrieval validation results ({})".format(datetime.today()),
     )
     print("Successfully sent message to SNS topic")
 

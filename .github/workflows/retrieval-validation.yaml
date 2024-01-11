@@ -3,9 +3,8 @@ name: Retrieval validation
 on:
   push:
     workflow_dispatch:
-    branches:
-      - main
-      - AAQ-81-retrieval-val
+    release:
+      types: [published]
 
 permissions:
   id-token: write # This is required for requesting the JWT
