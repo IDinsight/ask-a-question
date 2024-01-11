@@ -48,6 +48,10 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           QDRANT_HOST: qdrant
+          REPO: ${{ github.repository }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          HASH: ${{ github.sha }}
+          REF: ${{ github.ref }}
         run: |
           python core_backend/validation/validate_retrieval.py \
             --validation_data_path \
