@@ -43,7 +43,7 @@ class UserQuerySearchResult(BaseModel):
     """
     Pydantic model for each individual search result
     """
-    
+
     retrieved_title: str
     retrieved_text: str
     score: float
