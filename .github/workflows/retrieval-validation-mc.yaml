@@ -5,8 +5,6 @@ on:
       - main
       - AAQ-81-retrieval-val
 
-environment: validation-mc
-
 jobs:
   call_validation:
     uses: ./.github/workflows/retrieval-validation.yaml
@@ -18,3 +16,4 @@ jobs:
     secrets:
       validation-data-path: ${{ secrets.VALIDATION_DATA_S3_PATH }}
       content-data-path: ${{ secrets.CONTENT_DATA_S3_PATH }}
+    environment: validation-mc
