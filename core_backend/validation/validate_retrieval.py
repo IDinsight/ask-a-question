@@ -253,23 +253,18 @@ if __name__ == "__main__":
         args.content_data_path, storage_options=dict(profile=args.aws_profile)
     )
 
-    print("Read validation and content data... ")
-    print(
-        "This is a test statement. Once successful, please uncomment the following "
-        "lines to run the actual logic."
-    )
+    content_df = prepare_content_data()
+    client = load_content_to_qdrant(content_df)
 
-    print(generate_message([0.1, 0.2, 0.3, 0.4, 0.5]))
-    # content_df = prepare_content_data()
-    # client = load_content_to_qdrant(content_df)
+    try:
+        val_df = generate_retrieval_results(client)
+    finally:
+        client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
 
-    # try:
-    #     val_df = generate_retrieval_results(client)
-    # finally:
-    #     client.delete_collection(collection_name=VALIDATION_COLLECTION_NAME)
+    acc_table = get_top_k_accuracy_table(val_df)
+    message = generate_message(acc_table)
 
-    # acc_table = get_top_k_accuracy_table(val_df)
-    # message = generate_message(acc_table)
-    # print(message)
-    # if args.notification_topic is not None:
-    # send_notification(message, topic=args.notification_topic)
+    print(message)
+
+    if args.notification_topic is not None:
+        send_notification(message, topic=args.notification_topic)
