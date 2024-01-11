@@ -19,10 +19,6 @@ on:
         required: true
       content-data-path:
         required: true
-  push:
-    branches:
-      - main
-      - AAQ-81-retrieval-val
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -54,8 +50,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r core_backend/requirements.txt
-          pip install -r core_backend/validation/requirements.txt
+          python -m pip install -r core_backend/requirements.txt
+          python -m pip install -r core_backend/validation/requirements.txt
 
       - name: Run validation script
         run: |
