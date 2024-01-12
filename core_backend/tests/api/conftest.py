@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import namedtuple
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 
 import httpx
 import numpy as np
@@ -16,9 +16,9 @@ from core_backend.app.configs.app_config import (
     QDRANT_COLLECTION_NAME,
     QDRANT_VECTOR_SIZE,
 )
-from core_backend.app.configs.llm_prompts import IdentifiedLanguage
+from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.db.vector_db import get_qdrant_client
-from core_backend.app.llm_call import parse_input
+from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
 from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
 
@@ -89,11 +89,15 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
     monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(parse_input, "_paraphrase_question", lambda a, b: (a, b))
     monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
-
+    monkeysession.setattr(check_output, "_get_llm_align_score", mock_get_align_score)
     monkeysession.setattr(
         "core_backend.app.routers.question_answer.get_llm_rag_answer",
         lambda *args, **kwargs: "monkeypatched_llm_response",
     )
+
+
+async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+    return AlignmentScore(score=0.9, reason="test - high score")
 
 
 def mock_identify_language(

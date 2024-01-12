@@ -7,6 +7,7 @@ from core_backend.app.configs.app_config import (
     QDRANT_N_TOP_SIMILAR,
     QUESTION_ANSWER_SECRET,
 )
+from core_backend.app.configs.llm_prompts import AlignmentScore
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.schemas import (
     ResultState,
@@ -158,11 +159,15 @@ class TestAlignScore:
     async def test_score_less_than_threshold(
         self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        async def mock_get_align_score(*args: Any, **kwargs: Any) -> float:
-            return 0.2
+        async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+            return AlignmentScore(score=0.2, reason="test - low score")
 
         monkeypatch.setattr(
             "core_backend.app.llm_call.check_output._get_alignScore_score",
+            mock_get_align_score,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.check_output._get_llm_align_score",
             mock_get_align_score,
         )
         monkeypatch.setattr(
@@ -177,8 +182,8 @@ class TestAlignScore:
     async def test_score_greater_than_threshold(
         self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        async def mock_get_align_score(*args: Any, **kwargs: Any) -> float:
-            return 0.9
+        async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+            return AlignmentScore(score=0.9, reason="test - high score")
 
         monkeypatch.setattr(
             "core_backend.app.llm_call.check_output._get_alignScore_score",
@@ -187,6 +192,10 @@ class TestAlignScore:
         monkeypatch.setattr(
             "core_backend.app.llm_call.check_output.ALIGN_SCORE_THRESHOLD",
             0.7,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.check_output._get_llm_align_score",
+            mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
         assert update_query_response.state == ResultState.IN_PROGRESS
