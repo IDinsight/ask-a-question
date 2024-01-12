@@ -4,8 +4,6 @@ Estimate:
 
 ---
 
-# Title
-
 ## Ticket
 
 Fixes: JIRA_TICKET_LINK
