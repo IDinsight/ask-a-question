@@ -32,6 +32,6 @@ Put an `x` in all the items that apply and remove any items that are not relevan
 - [ ] I have tested the functionality of my code to ensure it works as intended
 - [ ] I have resolved merge conflicts
 - [ ] I have updated the automated tests (if applicable)
-- [ ] I have updated the requirements.txt (if applicable)
+- [ ] I have updated the requirements (if applicable)
 - [ ] I have updated the README file (if applicable)
 - [ ] I have updated affected documentation (if applicable)
