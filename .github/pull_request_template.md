@@ -24,8 +24,7 @@ Fixes: JIRA_TICKET_LINK
 
 ## Checklist
 
-This checklist is a useful reminder of small things that can easily be forgotten.
-Put an `x` in all the items that apply and remove any items that are not relevant to this PR.
+Fill with `x` for completed. Delete any lines that are not relevant
 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have reviewed my own code to ensure good quality
