@@ -57,7 +57,7 @@ async def test_llm_alignment_score(
     context: str, statement: str, expected: bool, reason: str
 ) -> None:
     """
-    This checks if alignScore returns the correct answer
+    This checks if LLM based alignment score returns the correct answer
     """
     align_score = await _get_llm_align_score({"evidence": context, "claim": statement})
     assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
