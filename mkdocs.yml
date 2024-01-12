@@ -22,6 +22,9 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - content.code.annotate
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
   icon:
     admonition:
       note: material/alert-circle
@@ -30,38 +33,58 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - Overview:
-      - What is AAQ: index.md
+  - Welcome to AAQ:
+      - What is AAQ?: index.md
       - Usage: usage.md
+  - Core Components:
+      - components/index.md
+      - Admin App:
+          - components/admin-app/index.md
+          - Access Levels: components/admin-app/access-level.md
+          - Manage Content: components/admin-app/manage-content.md
+          - Playground: components/admin-app/playground.md
+      - Question-Answering Service:
+          - components/qa-service/index.md
+          - Semantic Search: components/qa-service/semantic-search.md
+          - LLM Response: components/qa-service/llm-response.md
+      - Triaging Service:
+          - components/triaging/index.md
+  - Other Components:
+      - other-components/index.md
+      - WhatsApp Connector:
+          - other-components/whatsapp/index.md
+          - Testing: other-components/whatsapp/testing.md
+      - Chat Managers:
+          - other-components/chat_managers/index.md
+          - Botpress: other-components/chat_managers/botpress_v12.md
+      - Offline LLMs:
+          - other-components/self_hosted_llms/index.md
   - Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
+      - Configuring AAQ: deployment/config-options.md
   - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
-  - Admin App:
-      - Managing content: content/admin-app.md
-  - WhatsApp Connector:
-      - Setup: whatsapp/setup.md
-      - Testing: whatsapp/testing.md
-  - Chat Managers:
-      - Botpress v12 (OSS): chat_managers/botpress_v12.md
-  - Offline LLMs:
-      - Setup: self_hosted_llms/setup.md
-
 markdown_extensions:
   - tables
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tasklist:
       custom_checkbox: true
   - attr_list
   - md_in_html
+  - def_list
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
   - glightbox
+  - search

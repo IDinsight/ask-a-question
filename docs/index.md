@@ -47,7 +47,7 @@ citizens.**
 **:woman_office_worker: Content manager dashboard**: See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
 
 !!! question "Looking for other features?"
-    If you are an developing country government, NGO or a social sector organisation, we'd love to hear what features you'd
+    If you are a developing country government, NGO or a social sector organisation, we'd love to hear what features you'd
     like to see. Raise an issue with `[FEATURE REQUEST]` before the title to start the conversation.
 
 ---
