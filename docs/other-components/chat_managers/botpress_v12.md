@@ -44,7 +44,7 @@ You can now access Botpress at `https://[DOMAIN]/`
 
 **Step 6:** Shutdown containers
 
-    docker compose -f docker-compose.yml -p botpress-stack down
+Run the docker compose command you ran before but with `down` instead of `up -d --build`
 
 ### Option 2 - Via Docker
 
