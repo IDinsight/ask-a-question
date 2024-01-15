@@ -129,7 +129,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               id="content_text"
               cols={75}
               maxRows={6}
-              maxLength={1448} // title + "\n\n" + text should be <= 1600 chars
+              maxLength={1446} // Ensure len("*{title}*\n\n{text}") <= 1600
               className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-4 px-4 text-gray-800 dark:text-gray-400 overflow-auto"
               defaultValue={cardToEdit?.content_text}
               placeholder="Enter content text"

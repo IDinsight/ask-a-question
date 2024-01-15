@@ -23,9 +23,9 @@ logger = setup_logger()
 class QdrantPayload(BaseModel):
     """Content payload for qdrant"""
 
-    # title + "\n\n" + text should be <= 1600 chars
+    # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
-    content_text: Annotated[str, StringConstraints(max_length=1448)]
+    content_text: Annotated[str, StringConstraints(max_length=1446)]
 
     content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
