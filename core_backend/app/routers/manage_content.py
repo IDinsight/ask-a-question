@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from litellm import embedding
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList, PointStruct, Record
 
@@ -23,8 +23,10 @@ logger = setup_logger()
 class QdrantPayload(BaseModel):
     """Content payload for qdrant"""
 
-    content_title: str
-    content_text: str
+    # title + "\n\n" + text should be <= 1600 chars
+    content_title: Annotated[str, StringConstraints(max_length=150)]
+    content_text: Annotated[str, StringConstraints(max_length=1448)]
+
     content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
     updated_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
