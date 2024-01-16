@@ -4,13 +4,17 @@ These are functions to check the LLM response
 from functools import wraps
 from typing import Any, Callable, TypedDict
 
+from pydantic import ValidationError
+
 from ..configs.app_config import (
     ALIGN_SCORE_API,
     ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
 )
+from ..configs.llm_prompts import AlignmentScore
 from ..schemas import ResultState, UserQueryRefined, UserQueryResponse
 from ..utils import get_http_client, setup_logger
+from .utils import _ask_llm_async
 
 logger = setup_logger("OUTPUT RAILS")
 
@@ -73,16 +77,19 @@ async def _check_align_score(llm_response: UserQueryResponse) -> UserQueryRespon
 
         elif ALIGN_SCORE_METHOD == "AlignScore":
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, payload)
+        elif ALIGN_SCORE_METHOD == "LLM":
+            align_score = await _get_llm_align_score(payload)
         else:
             raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
-        if align_score < float(ALIGN_SCORE_THRESHOLD):
+        if align_score.score < float(ALIGN_SCORE_THRESHOLD):
             llm_response.llm_response = STANDARD_FAILURE_MESSAGE
             llm_response.state = ResultState.ERROR
 
         llm_response.debug_info["factual_consistency"] = {
-            "method": "AlignScore",
-            "score": align_score,
+            "method": ALIGN_SCORE_METHOD,
+            "score": align_score.score,
+            "reason": align_score.reason,
         }
     else:
         logger.warning(
@@ -94,7 +101,7 @@ async def _check_align_score(llm_response: UserQueryResponse) -> UserQueryRespon
     return llm_response
 
 
-async def _get_alignScore_score(api_url: str, payload: Payload) -> float:
+async def _get_alignScore_score(api_url: str, payload: Payload) -> AlignmentScore:
     """
     Get the alignment score from the AlignScore API
     """
@@ -107,9 +114,26 @@ async def _get_alignScore_score(api_url: str, payload: Payload) -> float:
 
         result = await resp.json()
     logger.info(f"AlignScore result: {result}")
-    result = result["alignscore"]
+    alignment_score = AlignmentScore(score=result["alignscore"], reason="N/A")
 
-    return result
+    return alignment_score
+
+
+async def _get_llm_align_score(payload: Payload) -> AlignmentScore:
+    """
+    Get the alignment score from the LLM
+    """
+    prompt = AlignmentScore.prompt.format(context=payload["evidence"])
+    result = await _ask_llm_async(prompt, payload["claim"])
+
+    try:
+        alignment_score = AlignmentScore.model_validate_json(result)
+    except ValidationError as e:
+        logger.error(f"LLM alignment score respone is not valid json: {e}")
+
+    logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
+
+    return alignment_score
 
 
 def _build_evidence(llm_response: UserQueryResponse) -> str:

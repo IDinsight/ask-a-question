@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import ClassVar
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # ---- Safety bot
 
@@ -132,3 +135,33 @@ ANSWER_QUESTION_PROMPT = """
     'Sorry, no relevant information found.'
 
     Found FAQ: {faq}"""
+
+
+class AlignmentScore(BaseModel):
+    """
+    Alignment score of the user's input.
+    """
+
+    model_config = ConfigDict(strict=True)
+
+    reason: str
+    score: float = Field(ge=0, le=1)
+
+    prompt: ClassVar[
+        str
+    ] = """
+        Using only the CONTEXT provided, reply with a score between 0 and 1 with 0.1
+        increments on how factually and logically consistent the claim provided
+        is with the CONTEXT. A factually consistent claims contains only facts
+        that are entailed in the source document. Check if the `statement` is logically
+        consistent with the CONTEXT. Statements that contain hallucinated facts or
+        those not mentioned in the `context` at all should be heavily penalized.
+        Penalize overly specific statements and omissions. Response as a json object
+        with keys `score` and `reason`. The `score` should be a float between 0 and 1.
+        The `reason` should be a string.
+
+        Example Response: {{"score": 0.5,
+        "reason": "Context does not mention anything about aliens in Ohio."}}
+
+        CONTEXT: {context}
+        """
