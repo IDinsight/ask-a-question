@@ -23,6 +23,9 @@ from core_backend.app.db.vector_db import (
     create_qdrant_collection,
 )
 from core_backend.app.schemas import UserQueryBase
+from core_backend.app.utils import setup_logger
+
+logger = setup_logger()
 
 
 class TestRetrievalPerformance:
@@ -61,7 +64,7 @@ class TestRetrievalPerformance:
 
         accuracies = self.get_top_k_accuracies(val_df)
 
-        print(self.format_accuracies(accuracies))
+        logger.info("\n" + self.format_accuracies(accuracies))
 
         if notification_topic is not None:
             message_dict = self._generate_message(
@@ -104,6 +107,8 @@ class TestRetrievalPerformance:
         vectordb_client: QdrantClient,
     ) -> None:
         """Load content to qdrant collection"""
+        n_content = content_dataframe.shape[0]
+        logger.info(f"Loading {n_content} content item to vector DB...")
         if QDRANT_COLLECTION_NAME not in {
             collection.name
             for collection in vectordb_client.get_collections().collections
@@ -133,6 +138,7 @@ class TestRetrievalPerformance:
             collection_name=QDRANT_COLLECTION_NAME,
             points=points,
         )
+        logger.info(f"Completed loading {n_content} content items to vector DB.")
 
     def generate_retrieval_results(
         self,
@@ -147,9 +153,14 @@ class TestRetrievalPerformance:
             validation_data_path,
             storage_options=dict(profile=aws_profile),
         )
+
+        logger.info("Retrieving content for each validation query...")
+
         df = asyncio.run(
             self.retrieve_results(df, client, validation_data_question_col)
         )
+
+        logger.info("Completed retrieving content for each validation query.")
 
         def get_rank(row: pd.Series) -> Union[int, None]:
             """Get the rank of label in the retrieved content IDs"""

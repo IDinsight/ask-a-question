@@ -16,7 +16,11 @@ from ..db.db_models import (
     save_user_query_to_db,
 )
 from ..db.engine import get_async_session
-from ..db.vector_db import get_qdrant_client, get_similar_content
+from ..db.vector_db import (
+    get_qdrant_client,
+    get_similar_content,
+    get_similar_content_async,
+)
 from ..llm_call.check_output import check_align_score
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
@@ -147,7 +151,7 @@ async def get_semantic_matches(
     """
     if response.state == ResultState.ERROR:
         return response
-    content_response = get_similar_content(
+    content_response = await get_similar_content_async(
         user_query_refined, qdrant_client, n_top_similar
     )
     response.content_response = content_response
