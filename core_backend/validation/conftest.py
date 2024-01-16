@@ -56,10 +56,11 @@ def patch_save_to_db(monkeysession: pytest.FixtureRequest) -> None:
         )
 
     monkeysession.setattr(
-        "core_backend.app.db.db_models.save_user_query_to_db", mock_save_query_to_db
+        "core_backend.app.routers.question_answer.save_user_query_to_db",
+        mock_save_query_to_db,
     )
     monkeysession.setattr(
-        "core_backend.app.db.db_models.save_query_response_to_db",
+        "core_backend.app.routers.question_answer.save_query_response_to_db",
         mock_save_response_to_db,
     )
 
