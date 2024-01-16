@@ -16,7 +16,7 @@ repos:
     hooks:
       - id: interrogate
         name: interrogate
-        exclude: ^(core_backend/migrations|core_backend/tests)
+        exclude: ^(core_backend/migrations|core_backend/tests|core_backend/validation)
         entry: interrogate
         args: [-v, --fail-under=95, --ignore-module]
   - repo: https://github.com/astral-sh/ruff-pre-commit

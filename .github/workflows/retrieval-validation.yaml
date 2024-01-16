@@ -3,6 +3,10 @@ name: Retrieval validation
 on:
   push:
     workflow_dispatch:
+    on:
+      branches:
+        - AAQ-81-retrieval-val
+        - main
     release:
       types: [published]
 
@@ -45,6 +49,10 @@ jobs:
 
       - name: Run validation script
         env:
+          QDRANT_COLLECTION_NAME: validation_collection
+          QDRANT_N_TOP_SIMILAR: 10
+          QDRANT_PORT: 6333
+          PROMETHEUS_MULTIPROC_DIR: /tmp
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           QDRANT_HOST: qdrant
           REPO: ${{ github.repository }}
@@ -52,7 +60,7 @@ jobs:
           HASH: ${{ github.sha }}
           REF: ${{ github.ref }}
         run: |
-          python core_backend/validation/validate_retrieval.py \
+          python -m pytest core_backend/validation/validate_retrieval.py \
             --validation_data_path \
               ${{ secrets.VALIDATION_DATA_S3_PATH }} \
             --content_data_path \
