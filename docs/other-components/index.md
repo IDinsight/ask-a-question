@@ -30,4 +30,13 @@ deployment of AAQ and support some extended features.
 
     [:octicons-arrow-right-24: More info](./self_hosted_llms/index.md)
 
+-   :material-format-align-middle:{ .lg .middle } __Align Score__
+
+    ---
+
+    Use [AlignScore](https://arxiv.org/abs/2305.16739) to catch hallucination and
+    check if LLM response is consistent with the context.
+
+    [:octicons-arrow-right-24: More info](./align-score/index.md)
+
 </div>
