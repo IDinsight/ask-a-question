@@ -155,7 +155,7 @@ class AlignmentScore(BaseModel):
         is with the CONTEXT. A factually consistent claims contains only facts
         that are entailed in the source document. Check if the `statement` is logically
         consistent with the CONTEXT. Statements that contain hallucinated facts or
-        those not mentioned in the `context` at all should be heavily penalised.
+        those not mentioned in the `context` at all should be heavily penalized.
         Penalize overly specific statements and omissions. Response as a json object
         with keys `score` and `reason`. The `score` should be a float between 0 and 1.
         The `reason` should be a string.
