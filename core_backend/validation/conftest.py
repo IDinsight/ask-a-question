@@ -34,7 +34,7 @@ def monkeysession() -> pytest.FixtureRequest:
     mpatch.undo()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def patch_save_to_db(monkeysession: pytest.FixtureRequest) -> None:
     async def mock_save_query_to_db(
         asession: AsyncSession, feedback_secret_key: str, user_query: UserQueryDB
