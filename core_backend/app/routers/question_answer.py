@@ -77,7 +77,7 @@ async def get_llm_answer(
         user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
     response.content_response = content_response
-    response.llm_response = get_llm_rag_answer(
+    response.llm_response = await get_llm_rag_answer(
         user_query_refined.query_text, content_response[0].response_text
     )
 

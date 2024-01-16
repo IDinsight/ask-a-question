@@ -15,7 +15,7 @@ from ..configs.llm_prompts import (
 )
 from ..schemas import ResultState, UserQueryRefined, UserQueryResponse
 from ..utils import setup_logger
-from .utils import _ask_llm
+from .utils import _ask_llm_async
 
 logger = setup_logger("INPUT RAILS")
 
@@ -40,14 +40,14 @@ def classify_safety(func: Callable) -> Callable:
         """
         Wrapper function to classify the safety of the question.
         """
-        question, response = _classify_safety(question, response)
+        question, response = await _classify_safety(question, response)
         response = await func(question, response, *args, **kwargs)
         return response
 
     return wrapper
 
 
-def _classify_safety(
+async def _classify_safety(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     """
@@ -56,7 +56,9 @@ def _classify_safety(
     if response.state != ResultState.ERROR:
         safety_classification = getattr(
             SafetyClassification,
-            _ask_llm(question.query_text, SafetyClassification.get_prompt()),
+            await _ask_llm_async(
+                question.query_text, SafetyClassification.get_prompt()
+            ),
         )
         if safety_classification != SafetyClassification.SAFE:
             response.llm_response = STANDARD_FAILURE_MESSAGE
@@ -81,21 +83,23 @@ def identify_language(func: Callable) -> Callable:
         """
         Wrapper function to identify the language of the question.
         """
-        question, response = _identify_language(question, response)
+        question, response = await _identify_language(question, response)
         response = await func(question, response, *args, **kwargs)
         return response
 
     return wrapper
 
 
-def _identify_language(
+async def _identify_language(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     """
     Identifies the language of the question.
     """
     if response.state != ResultState.ERROR:
-        identified_lang = _ask_llm(question.query_text, IdentifiedLanguage.get_prompt())
+        identified_lang = await _ask_llm_async(
+            question.query_text, IdentifiedLanguage.get_prompt()
+        )
         if identified_lang in IdentifiedLanguage.get_supported_languages():
             question.original_language = getattr(IdentifiedLanguage, identified_lang)
         else:
@@ -122,7 +126,7 @@ def translate_question(func: Callable) -> Callable:
         """
         Wrapper function to translate the question.
         """
-        question, response = _translate_question(question, response)
+        question, response = await _translate_question(question, response)
         response = await func(question, response, *args, **kwargs)
 
         return response
@@ -130,7 +134,7 @@ def translate_question(func: Callable) -> Callable:
     return wrapper
 
 
-def _translate_question(
+async def _translate_question(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     """
@@ -166,7 +170,7 @@ def _translate_question(
             + question.query_text
         )
     else:
-        translation_response = _ask_llm(
+        translation_response = await _ask_llm_async(
             question.query_text, TRANSLATE_INPUT + question.original_language.value
         )
         if translation_response != TRANSLATE_FAILED_MESSAGE:
@@ -195,7 +199,7 @@ def paraphrase_question(func: Callable) -> Callable:
         """
         Wrapper function to paraphrase the question.
         """
-        question, response = _paraphrase_question(question, response)
+        question, response = await _paraphrase_question(question, response)
         response = await func(question, response, *args, **kwargs)
 
         return response
@@ -203,7 +207,7 @@ def paraphrase_question(func: Callable) -> Callable:
     return wrapper
 
 
-def _paraphrase_question(
+async def _paraphrase_question(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     """
@@ -214,7 +218,7 @@ def _paraphrase_question(
     if response.state == ResultState.ERROR:
         return question, response
 
-    paraphrase_response = _ask_llm(question.query_text, PARAPHRASE_INPUT)
+    paraphrase_response = await _ask_llm_async(question.query_text, PARAPHRASE_INPUT)
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response
         response.debug_info["paraphrased_question"] = paraphrase_response
