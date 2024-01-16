@@ -40,6 +40,7 @@ def patch_save_to_db(monkeysession: pytest.FixtureRequest) -> None:
         asession: AsyncSession, feedback_secret_key: str, user_query: UserQueryDB
     ) -> UserQueryDB:
         return UserQueryDB(
+            query_id=1,
             feedback_secret_key=feedback_secret_key,
             query_datetime_utc=datetime.utcnow(),
             **user_query.model_dump(),
