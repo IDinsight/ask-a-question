@@ -75,3 +75,4 @@ jobs:
               ${{ vars.CONTENT_DATA_TEXT_COL }} \
             --notification_topic \
               arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:aaq-validation-topic
+            -n auto
