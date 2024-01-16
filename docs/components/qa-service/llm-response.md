@@ -56,14 +56,6 @@ sequenceDiagram
 
 ```
 
-#### Enable Align Score
-
-To enable using AlignScore for checking content consistency, set `ALIGN_SCORE_METHOD`
-config variable to `AlignScore`. See [Configuring AAQ](../../deployment/config-options.md)
-for ways to set this.
-
-#### Setup infrastructure
-
-To use AlignScore, AAQ needs access to the AlignScore service. This can be deployed
-using a docker container. See [AlignScore](../../other-components/align-score/index.md) under
-__Other Components__ for how to do this.
+To use AlignScore, AAQ needs access to the AlignScore service. See
+[documentation](../../other-components/align-score/index.md) for how to setup
+the service and configure AAQ to call it.
