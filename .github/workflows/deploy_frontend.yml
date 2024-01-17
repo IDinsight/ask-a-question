@@ -56,7 +56,7 @@ jobs:
                 platforms: linux/arm64
                 file: admin_app/Dockerfile
                 push: true
-                tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REGISTRY}}:${{env.IMAGE_TAG}}
+                tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
                 build-args: |
                   NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}
 
