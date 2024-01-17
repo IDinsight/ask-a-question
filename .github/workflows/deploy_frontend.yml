@@ -87,7 +87,7 @@ jobs:
               with:
                 task-definition: task-definition.json
                 container-name: my-container
-                image: ${{ fromJson(steps.build-image.outputs.outputs.metadata)['image.name'] }}
+                image: ${{ fromJson(steps.build-image.outputs.metadata)['image.name'] }}
             
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
