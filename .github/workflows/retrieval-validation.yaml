@@ -2,12 +2,12 @@ name: Retrieval validation
 
 on:
   push:
-    workflow_dispatch:
     on:
       branches:
         - main
-    release:
-      types: [published]
+  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   id-token: write # This is required for requesting the JWT
