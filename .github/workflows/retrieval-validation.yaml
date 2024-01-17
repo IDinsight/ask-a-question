@@ -2,10 +2,9 @@ name: Retrieval validation
 
 on:
   push:
-    on:
-      branches: [main]
-      paths:
-        - "core_backend/**"
+    branches: [main]
+    paths:
+      - "core_backend/**"
   workflow_dispatch:
 
 permissions:
