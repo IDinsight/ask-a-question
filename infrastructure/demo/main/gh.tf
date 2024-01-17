@@ -31,8 +31,10 @@ resource "aws_iam_role" "github_actions" {
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
 }
 
-
-data "aws_iam_policy_document" "gh_actions_policy_document_frontend" {
+# This policy is used to grant the github actions role access to the web-task-role
+# It also grants access to ECR and ECS
+# This will allow github actions to deploy the application
+data "aws_iam_policy_document" "gh_actions_policy_document" {
   statement {
     actions = ["sts:AssumeRole", "iam:GetRole", "iam:PassRole"]
     # Set the web-task-role as the resource
@@ -46,11 +48,18 @@ data "aws_iam_policy_document" "gh_actions_policy_document_frontend" {
 
     actions = [
       "ecr:CompleteLayerUpload",
-      "ecr:GetAuthorizationToken",
       "ecr:UploadLayerPart",
       "ecr:InitiateLayerUpload",
       "ecr:BatchCheckLayerAvailability",
     "ecr:PutImage"]
+    resources = [aws_ecr_repository.web_ecr_repo.arn]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+    "ecr:GetAuthorizationToken"]
     resources = ["*"]
   }
 
@@ -60,7 +69,7 @@ data "aws_iam_policy_document" "gh_actions_policy_document_frontend" {
     actions = [
       "ecs:DescribeTaskDefinition",
     "ecs:RegisterTaskDefinition"]
-    resources = ["*"]
+    resources = [aws_ecs_task_definition.admin_app_task.arn, aws_ecs_task_definition.backend_task.arn, aws_ecs_task_definition.nginx_task.arn]
   }
 
   statement {
@@ -74,15 +83,20 @@ data "aws_iam_policy_document" "gh_actions_policy_document_frontend" {
   statement {
     effect    = "Allow"
     actions   = ["logs:CreateLogStream"]
-    resources = ["*"]
+    resources = [aws_cloudwatch_log_group.backend.arn, aws_cloudwatch_log_group.admin_app.arn, aws_cloudwatch_log_group.nginx.arn]
   }
 
 }
 
 
 
-resource "aws_iam_policy" "github_actions_resource_policies_frontend" {
-  name        = "github-actions-role-policy"
+resource "aws_iam_policy" "github_actions_resource_policies" {
+  name        = "github-actions-demo-role-policy"
   description = "Grant Github Actions access to assume the web-task-role"
-  policy      = data.aws_iam_policy_document.gh_actions_policy_document_frontend.json
+  policy      = data.aws_iam_policy_document.gh_actions_policy_document.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_resource_policies.arn
 }

@@ -212,7 +212,7 @@ resource "aws_ecs_service" "admin_app_service" {
   # The ECS service will be attached to the ECS cluster
   name                               = "admin-app-service"
   cluster                            = aws_ecs_cluster.web_cluster.id
-  task_definition                    = aws_ecs_task_definition.frontend_task.arn
+  task_definition                    = aws_ecs_task_definition.admin_app_task.arn
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
   launch_type                        = "EC2"
@@ -232,7 +232,7 @@ resource "aws_ecs_service" "admin_app_service" {
 
 }
 
-resource "aws_ecs_task_definition" "frontend_task" {
+resource "aws_ecs_task_definition" "admin_app_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   # The CPU and Memory may need to be adjusted based on the application usage
   family             = "admin-app"
