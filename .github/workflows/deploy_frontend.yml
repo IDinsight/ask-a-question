@@ -23,7 +23,7 @@ jobs:
 
             
             - name: Load .env file
-              uses: xom9ikk/dotenv@v1.0.2
+              uses: xom9ikk/dotenv@v1.0.3
               with:
                 path: ./.github/workflows
                 mode: demo
