@@ -33,10 +33,12 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - Welcome to AAQ:
+  - 🏠 Welcome to AAQ:
       - What is AAQ?: index.md
       - Usage: usage.md
-  - Core Components:
+  - 📢 Latest Updates:
+      - blog/index.md
+  - ⚙️ Core Components:
       - components/index.md
       - Admin App:
           - components/admin-app/index.md
@@ -49,7 +51,7 @@ nav:
           - LLM Response: components/qa-service/llm-response.md
       - Triaging Service:
           - components/triaging/index.md
-  - Other Components:
+  - ➕ Other Components:
       - other-components/index.md
       - WhatsApp Connector:
           - other-components/whatsapp/index.md
@@ -63,14 +65,15 @@ nav:
           - other-components/align-score/index.md
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
-  - Deploying:
+  - 🌀 Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-  - Contributing:
+  - 💝 Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
+
 markdown_extensions:
   - tables
   - admonition
@@ -92,3 +95,5 @@ markdown_extensions:
 plugins:
   - glightbox
   - search
+  - blog:
+      post_excerpt: required
