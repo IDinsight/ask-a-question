@@ -73,7 +73,7 @@ nav:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
-
+      - Validation: develop/validation.md
 markdown_extensions:
   - tables
   - admonition

@@ -69,7 +69,7 @@ def patch_save_to_db(monkeysession: pytest.FixtureRequest) -> None:
 # create command line arguments for pytestas per https://stackoverflow.com/a/42145604/7664921
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--validation_data_path", type=str, help="Path to validation data")
-    parser.addoption("--content_data_path", type=str, help="Path to validation data")
+    parser.addoption("--content_data_path", type=str, help="Path to content data")
     parser.addoption(
         "--validation_data_question_col",
         type=str,

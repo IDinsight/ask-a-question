@@ -1,0 +1,69 @@
+# Running validation
+
+
+!!! note "Currenlty, there is validation only for retrieval, i.e. `POST /embeddings-search` endpoint."
+
+To evaluate the performance your model (along with your own configurations and
+guardrails), run the validation test(s) in `core_backend/validation`.
+
+The validation is written in pytest so that we can call the endpoint.
+
+## Retrieval (`/embeddings-search`) validation
+
+We evaluate the "performance" of retrieval by computing "Top K Accuracy", which we
+define as proportion of times the best matching answer was present in top K retrieved content.
+
+### Preparing the data
+The test assumes the validation data contains a single label representing the best
+matching content, rather than a ranked list of all relevant content.
+
+An example validation data will look like
+|query|label|
+|--|--|
+|"How?"|0|
+|"When?"|1|
+|"What year was it?"|1|
+|"May I?"|2|
+
+An example content data will look like
+|content_text|label|
+|--|--|
+|"Here's how."|0|
+|"It was 2024."|1|
+|"Yes"|2|
+
+
+### How to run
+
+1. Create a new python environment:
+    ```shell
+    conda create -n "aaq-validate" python=3.10
+    ```
+    You van also copy the existing `aaq-core` environment.
+2. Install requirements. This assumes you are in project root `aaq-core`.
+    ```shell
+    pip install -r core_backend/requirements.txt
+    pip install -r core_backend/validation/requirements.txt
+    ```
+3. In project root `aaq-core` run the following command. (Perform any necessary
+   authentication steps you need to do, e.g. for AWS login).
+    ```
+    python -m pytest core_backend/validation/validate_retrieval.py \
+        --validation_data_path <path> \
+        --content_data_path <path> \
+        --validation_data_question_col <name> \
+        --validation_data_label_col <name> \
+        --content_data_label_col <name> \
+        --content_data_text_col <name> \
+        --notification_topic <topic ARN, if using AWS SNS> \
+        --aws_profile <aws SSO profile name, if required> \
+        -n auto -s
+    ```
+    `-n auto` allows multiprocessing to speed up the test, and `-s` ensures logging by
+    the test module is shown on your stdout.
+
+    For details of the command line arguments, see the "Custom options" section of the
+    output for the following command:
+    ```shell
+    python -m pytest core_backend/validation/validate_retrieval.py --help
+    ```
