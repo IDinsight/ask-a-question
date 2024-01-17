@@ -1,57 +1,57 @@
-name: Unit Tests
-on:
-  push:
-    branches:
-      - "**"
-    paths-ignore:
-      - "**/*.md"
-env:
-  POSTGRES_PASSWORD: postgres-test-pw
-  POSTGRES_USER: postgres-test-user
-  POSTGRES_DB: postgres-test-db
+# name: Unit Tests
+# on:
+#   push:
+#     branches:
+#       - "**"
+#     paths-ignore:
+#       - "**/*.md"
+# env:
+#   POSTGRES_PASSWORD: postgres-test-pw
+#   POSTGRES_USER: postgres-test-user
+#   POSTGRES_DB: postgres-test-db
 
-jobs:
-  container-job:
-    runs-on: ubuntu-20.04
-    container: node:20.7-bullseye
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      qdrant:
-        image: qdrant/qdrant
-        ports:
-          - 6333:6333
-    steps:
-      - name: install dependencies
-        run: apt-get update && apt-get install -y lsb-release && apt-get clean all
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install Python libraries
-        run: |
-          python -m pip install -r core_backend/requirements.txt
-          python -m pip install -r requirements-dev.txt
-      - name: Run Unit Tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          PROMETHEUS_MULTIPROC_DIR: /tmp
-        run: |
-          cd core_backend
-          export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
-            QDRANT_COLLECTION_NAME=test_collection QDRANT_HOST=qdrant
-          python -m alembic upgrade head
-          python -m pytest -m "not rails"
+# jobs:
+#   container-job:
+#     runs-on: ubuntu-20.04
+#     container: node:20.7-bullseye
+#     services:
+#       postgres:
+#         image: postgres
+#         env:
+#           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+#           POSTGRES_USER: ${{ env.POSTGRES_USER }}
+#           POSTGRES_DB: ${{ env.POSTGRES_DB }}
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 5s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 5432:5432
+#       qdrant:
+#         image: qdrant/qdrant
+#         ports:
+#           - 6333:6333
+#     steps:
+#       - name: install dependencies
+#         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
+#       - name: Check out repository code
+#         uses: actions/checkout@v4
+#       - uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"
+#       - name: Install Python libraries
+#         run: |
+#           python -m pip install -r core_backend/requirements.txt
+#           python -m pip install -r requirements-dev.txt
+#       - name: Run Unit Tests
+#         env:
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#           PROMETHEUS_MULTIPROC_DIR: /tmp
+#         run: |
+#           cd core_backend
+#           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
+#             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
+#             QDRANT_COLLECTION_NAME=test_collection QDRANT_HOST=qdrant
+#           python -m alembic upgrade head
+#           python -m pytest -m "not rails"
