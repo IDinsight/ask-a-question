@@ -42,8 +42,25 @@ An example content data will look like
     You van also copy the existing `aaq-core` environment.
 2. Install requirements. This assumes you are in project root `aaq-core`.
     ```shell
+    conda activate aaq-validate
     pip install -r core_backend/requirements.txt
     pip install -r core_backend/validation/requirements.txt
+    ```
+3. Set environment variables.
+   The following is required:
+    ```
+    conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
+    ```
+    For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
+    and modify as per your own requirements:
+    ```
+    conda env config vars set EMBEDDING_MODEL=<...>
+    ```
+5. Check the environment variables defined in `core_backend/validation/validation.env`.
+   These should all be exported. You can do it one-by-one via `conda env config vars
+   set` command or by running
+    ```shell
+    set -a && source core_backend/validation/validation.env && set +a
     ```
 3. In project root `aaq-core` run the following command. (Perform any necessary
    authentication steps you need to do, e.g. for AWS login).
