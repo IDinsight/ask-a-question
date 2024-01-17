@@ -47,11 +47,13 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
     effect = "Allow"
 
     actions = [
-      "ecr:CompleteLayerUpload",
-      "ecr:UploadLayerPart",
-      "ecr:InitiateLayerUpload",
+      "ecr:BatchGetImage",
       "ecr:BatchCheckLayerAvailability",
-    "ecr:PutImage"]
+      "ecr:CompleteLayerUpload",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:InitiateLayerUpload",
+      "ecr:PutImage",
+    "ecr:UploadLayerPart"]
     resources = [aws_ecr_repository.web_ecr_repo.arn]
   }
 

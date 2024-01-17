@@ -55,10 +55,13 @@ jobs:
                 context: admin_app
                 platforms: linux/arm64
                 file: admin_app/Dockerfile
+                cache-from: type=gha
+                cache-to: type=gha
                 push: true
                 tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
                 build-args: |
                   NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}
+                
 
             - name: Install the ECS CLI
               run: |
@@ -71,7 +74,7 @@ jobs:
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
                 --config-name aaq-demo-frontend
-                ecs-cli compose --project-name aaq-demo-frontend --file admin_app/docker-compose.yml create
+                ecs-cli compose --project-name aaq-demo-frontend --file admin_app/deployment/docker-compose.yml create
                 echo "taskdef=aaq-demo-frontend" >> $GITHUB_OUTPUT
               env:
                 NEXT_PUBLIC_BACKEND_URL: ${{env.NEXT_PUBLIC_BACKEND_URL}}
