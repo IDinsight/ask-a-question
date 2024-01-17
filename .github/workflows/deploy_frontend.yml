@@ -45,18 +45,20 @@ jobs:
                 registry: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
 
-            - name: Build, tag, and push image to Amazon ECR
-              id: build-image
+            - name: Build and push
+              uses: docker/build-push-action@v5
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                 ECR_REPOSITORY: aaq-demo-ecr-repository
                 IMAGE_TAG: Frontend
-
-              run: |
-                docker buildx build --rm --build-arg NAME=${{env.NEXT_PUBLIC_BACKEND_URL}} -t aaq-demo-frontend:latest -f admin_app/Dockerfile admin_app
-                docker tag aaq-demo-frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-                echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+              with:
+                context: admin_app
+                platform: linux/arm64
+                file: admin_app/Dockerfile
+                push: true
+                tags: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                build-args: |
+                  NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}
 
             - name: Install the ECS CLI
               run: |
