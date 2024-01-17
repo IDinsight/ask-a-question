@@ -3,6 +3,7 @@ SHELL = /bin/sh
 $(eval DEMO_ACCOUNT=039685995141)
 $(eval DOMAIN=aaq-demo.idinsight.io)
 $(eval EMAIL=dsem@idinsight.org)
+$(eval NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api)
 
 login:
 	@export AWS_PROFILE=aaq_demo
@@ -41,8 +42,7 @@ create-backend-demo:
 	create 
 
 image-frontend-demo:
-	@NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api \
-	docker build --platform linux/arm64 --rm -t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
+	@docker build --platform linux/arm64 --rm --rm --build-arg NAME=$(NEXT_PUBLIC_BACKEND_URL)-t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
 
 	# Tag 
 	@docker tag aaq-demo-frontend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend

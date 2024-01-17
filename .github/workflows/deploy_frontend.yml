@@ -1,0 +1,93 @@
+name: Deploying Frontend
+
+on:
+  push:
+    branches:
+      - AAQ-277-Create-Frontend-Pipeline
+    paths:
+        - "admin_app/**"
+
+jobs:
+    DeployFrontend:
+        name: Deploying Frontend ${{github.ref_name}}
+        runs-on: ubuntu-latest
+        environment:
+            name: ${{github.ref_name}}
+    
+        permissions:
+          id-token: write
+          contents: read
+        
+        steps:
+            - uses: actions/checkout@v3
+
+            
+            - name: Load .env file
+              uses: xom9ikk/dotenv@v1.0.2
+              with:
+                path: ./.github/workflows
+                mode: demo
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{vars.ROLE}}"
+                role-session-name: testingrolesession
+                aws-region: ${{ env.AWS_REGION }}
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
+              with:
+                registry: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+
+            - name: Build, tag, and push image to Amazon ECR
+              id: build-image
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: aaq-demo-ecr-repository
+                IMAGE_TAG: Frontend
+
+              run: |
+                docker build --platform linux/arm64 --rm --build-arg NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}-t aaq-${{github.ref_name}}-frontend:latest -f admin_app/Dockerfile admin_app
+                docker tag aaq-${{github.ref_name}}-frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+            - name: Install the ECS CLI
+              run: |
+                sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
+                sudo chmod +x /usr/local/bin/ecs-cli
+            - name: Create Task Definition
+              id: task-def
+              run: |
+                ecs-cli configure --cluster ${{ vars.CLUSTER_NAME }} \
+                --region ${{ vars.AWS_REGION }} \
+                --default-launch-type EC2 \
+                --config-name aaq-${{github.ref_name}}-frontend
+                ecs-cli compose --project-name aaq-${{github.ref_name}}-frontend --file admin_app/docker-compose.yml create
+                echo "taskdef=aaq-${{github.ref_name}}-frontend" >> $GITHUB_OUTPUT
+              env:
+                NEXT_PUBLIC_BACKEND_URL: ${{vars.NEXT_PUBLIC_BACKEND_URL}}
+                AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+            - name: Deploy Amazon ECS task definition
+              id: ecs-deploy
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                task-definition: ${{ steps.task-def.outputs.task-definition }}
+                service: frontend-service
+                cluster: ${{ vars.CLUSTER_NAME }} 
+                wait-for-service-stability: true
+            - name: Check if deployment was successful
+              id: check-deployment
+              run: |
+                  CURRENT_TASK_DEF_ARN=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services frontend-service --query services[0].deployments[0].taskDefinition | jq -r ".")
+                  NEW_TASK_DEF_ARN=${{ steps.ecs-deploy.outputs.task-definition-arn }}
+                  echo "Current task arn: $CURRENT_TASK_DEF_ARN"
+                  echo "New task arn: $NEW_TASK_DEF_ARN"
+                  if [ "$CURRENT_TASK_DEF_ARN" != "$NEW_TASK_DEF_ARN" ]; then
+                    echo "Deployment failed."
+                    exit 1
+                  fi
+                
+                
