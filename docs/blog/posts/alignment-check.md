@@ -34,15 +34,17 @@ are consitent with the content it is meant to use to generate it.
 
 ## Using AlignScore
 
-We can use a foundational LLM and it does remarakably well on our test data. But there
+We can use GPT4-turbo and it does remarkably well on our test data. But there
 may be reasons from data governance and privacy rules to costs for not sending the data
-outside of your data center or across borders.
+to OpenAI. You could use your own
+[locally hosted LLM]("../../other-components/self_hosted_llms/index.md").
 
-We also rolled out [AlignScore](../../other-components/align-score/index.md). You can deploy it
+Or use [AlignScore](../../other-components/align-score/index.md). You can deploy it
 as another container that exposes an endpoint that AAQ can call for check consistency.
 See docs for how to do this.
 
 ## Doc references
 
+- [Locally hosted LLMs]("../../other-components/self_hosted_llms/index.md")
 - [LLM Response](../../components/qa-service/llm-response.md)
-- [AlignScore](../../other-components/align-score.md)
+- [AlignScore](../../other-components/align-score/index.md)
