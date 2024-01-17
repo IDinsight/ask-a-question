@@ -83,7 +83,7 @@ jobs:
               id: ecs-deploy
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
-                task-definition: ${{ steps.task-def.outputs.task-definition }}
+                task-definition: ${{ steps.task-def.outputs.taskdef }}
                 service: frontend-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true

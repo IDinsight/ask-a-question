@@ -226,3 +226,10 @@ variable "aws_region" {
   default     = "af-south-1"
 
 }
+
+variable "account_id" {
+  description = "AWS account id"
+  type        = string
+  default     = ""
+
+}

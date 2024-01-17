@@ -71,7 +71,16 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
     actions = [
       "ecs:DescribeTaskDefinition",
     "ecs:RegisterTaskDefinition"]
-    resources = [aws_ecs_task_definition.admin_app_task.arn, aws_ecs_task_definition.backend_task.arn, aws_ecs_task_definition.nginx_task.arn]
+    resources = ["arn:aws:ecs:${var.region}:${var.account_id}:task-definition/${aws_ecs_task_definition.admin_app_task.family}:*", "arn:aws:ecs:${var.region}:${var.account_id}:task-definition/${aws_ecs_task_definition.backend_task.family}:*", "arn:aws:ecs:${var.region}:${var.account_id}:task-definition/${aws_ecs_task_definition.nginx_task.family}:*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+
+    "ecs:RegisterTaskDefinition"]
+    resources = ["*"]
   }
 
   statement {
