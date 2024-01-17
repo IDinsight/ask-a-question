@@ -10,10 +10,10 @@ on:
 
 jobs:
     DeployFrontend:
-        name: Deploying Frontend ${{github.ref_name}}
+        name: Deploying Frontend demo
         runs-on: ubuntu-latest
         environment:
-            name: ${{github.ref_name}}
+            name: demo
     
         permissions:
           id-token: write
@@ -32,7 +32,7 @@ jobs:
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{vars.ROLE}}"
+                role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{env.ROLE}}"
                 role-session-name: testingrolesession
                 aws-region: ${{ env.AWS_REGION }}
             - name: Login to Amazon ECR
@@ -50,8 +50,8 @@ jobs:
                 IMAGE_TAG: Frontend
 
               run: |
-                docker build --platform linux/arm64 --rm --build-arg NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}-t aaq-${{github.ref_name}}-frontend:latest -f admin_app/Dockerfile admin_app
-                docker tag aaq-${{github.ref_name}}-frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker build --platform linux/arm64 --rm --build-arg NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}-t aaq-demo-frontend:latest -f admin_app/Dockerfile admin_app
+                docker tag aaq-demo-frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
@@ -62,14 +62,14 @@ jobs:
             - name: Create Task Definition
               id: task-def
               run: |
-                ecs-cli configure --cluster ${{ vars.CLUSTER_NAME }} \
-                --region ${{ vars.AWS_REGION }} \
+                ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
+                --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
-                --config-name aaq-${{github.ref_name}}-frontend
-                ecs-cli compose --project-name aaq-${{github.ref_name}}-frontend --file admin_app/docker-compose.yml create
-                echo "taskdef=aaq-${{github.ref_name}}-frontend" >> $GITHUB_OUTPUT
+                --config-name aaq-demo-frontend
+                ecs-cli compose --project-name aaq-demo-frontend --file admin_app/docker-compose.yml create
+                echo "taskdef=aaq-demo-frontend" >> $GITHUB_OUTPUT
               env:
-                NEXT_PUBLIC_BACKEND_URL: ${{vars.NEXT_PUBLIC_BACKEND_URL}}
+                NEXT_PUBLIC_BACKEND_URL: ${{env.NEXT_PUBLIC_BACKEND_URL}}
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
@@ -77,7 +77,7 @@ jobs:
               with:
                 task-definition: ${{ steps.task-def.outputs.task-definition }}
                 service: frontend-service
-                cluster: ${{ vars.CLUSTER_NAME }} 
+                cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Check if deployment was successful
               id: check-deployment
