@@ -8,7 +8,7 @@ data-db-tunnel-demo:
 	# Open a connection to the remote db via the bastion host
 	# the target is the instance id of the bastion host
 	@aws ssm start-session \
-	--target i-0ddd10471f2a098be \
+	--target i-XXXXXXXXXXXX \
 	--profile aaq_demo \
 	--region af-south-1 \
 	--document-name AWS-StartPortForwardingSession \
