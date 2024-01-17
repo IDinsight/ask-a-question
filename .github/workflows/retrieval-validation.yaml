@@ -3,11 +3,10 @@ name: Retrieval validation
 on:
   push:
     on:
-      branches:
-        - main
+      branches: [main]
+      paths:
+        - "core_backend/**"
   workflow_dispatch:
-  release:
-    types: [published]
 
 permissions:
   id-token: write # This is required for requesting the JWT
