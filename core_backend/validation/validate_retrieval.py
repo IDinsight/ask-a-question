@@ -107,6 +107,7 @@ class TestRetrievalPerformance:
         vectordb_client: QdrantClient,
     ) -> None:
         """Load content to qdrant collection"""
+        # TODO: Update to use a batch upsert API once created
         n_content = content_dataframe.shape[0]
         logger.info(f"Loading {n_content} content item to vector DB...")
         if QDRANT_COLLECTION_NAME not in {
@@ -115,13 +116,11 @@ class TestRetrievalPerformance:
         }:
             create_qdrant_collection(QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE)
 
-        # get embeddings
         embedding_results = embedding(
             EMBEDDING_MODEL, input=content_dataframe["content_text"].tolist()
         )
         content_embeddings = [x["embedding"] for x in embedding_results.data]
 
-        # upsert to qdrant collection
         points = [
             PointStruct(
                 id=str(content_id),
