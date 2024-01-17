@@ -11,7 +11,7 @@ on:
 jobs:
     DeployFrontend:
         name: Deploying Frontend demo
-        runs-on: ubuntu-latest
+        runs-on: macos-latest-large
         environment:
             name: demo
     
