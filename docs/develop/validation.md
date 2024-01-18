@@ -6,8 +6,6 @@
 To evaluate the performance of your model (along with your own configurations and
 guardrails), run the validation test(s) in `core_backend/validation`.
 
-The validation is written in pytest so that we can call the endpoint.
-
 ## Retrieval (`/embeddings-search`) validation
 
 We evaluate the "performance" of retrieval by computing "Top K Accuracy", which is
