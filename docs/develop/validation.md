@@ -3,7 +3,7 @@
 
 !!! note "Currently, there is validation only for retrieval, i.e. `POST /embeddings-search` endpoint."
 
-To evaluate the performance your model (along with your own configurations and
+To evaluate the performance of your model (along with your own configurations and
 guardrails), run the validation test(s) in `core_backend/validation`.
 
 The validation is written in pytest so that we can call the endpoint.
