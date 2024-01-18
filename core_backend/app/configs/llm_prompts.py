@@ -65,9 +65,9 @@ class IdentifiedLanguage(str, Enum):
     """
 
     ENGLISH = "ENGLISH"
-    XHOSA = "XHOSA"
-    ZULU = "ZULU"
-    AFRIKAANS = "AFRIKAANS"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+    # AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
     UNKNOWN = "UNKNOWN"
 
@@ -127,8 +127,8 @@ ANSWER_QUESTION_PROMPT = """
     You are a high-performing question answering bot.
     You support a maternal and child health chatbot.
 
-    Answer the user query in natural language by rewording the
-    following FAQ found below. Address the question directly and do not
+    Answer the user query in {response_language} using the information provided in the
+    FAQ found below. Address the question directly and do not
     respond with anything that is outside of the context of the given FAQ.
 
     If the FAQ doesn't seem to answer the question, respond with
