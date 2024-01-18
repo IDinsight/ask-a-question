@@ -126,7 +126,6 @@ PARAPHRASE_INPUT = (
 
 ANSWER_QUESTION_PROMPT = """
     You are a high-performing question answering bot.
-    You support a maternal and child health chatbot.
 
     Answer the user query in {response_language} using the information provided in the
     FAQ found below. Address the question directly and do not

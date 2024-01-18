@@ -218,15 +218,9 @@ async def _paraphrase_question(
     if response.state == ResultState.ERROR:
         return question, response
 
-    orig_lang = question.original_language
-    if orig_lang is None:
-        lang = "ENGLISH"
-    else:
-        lang = orig_lang.value
-
     paraphrase_response = await _ask_llm_async(
         question.query_text,
-        PARAPHRASE_INPUT.format(query_language=lang),
+        PARAPHRASE_INPUT.format(query_language=question.original_language.value),
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response
