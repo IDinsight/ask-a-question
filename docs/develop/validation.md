@@ -1,7 +1,7 @@
 # Running validation
 
 
-!!! note "Currenlty, there is validation only for retrieval, i.e. `POST /embeddings-search` endpoint."
+!!! note "Currently, there is validation only for retrieval, i.e. `POST /embeddings-search` endpoint."
 
 To evaluate the performance your model (along with your own configurations and
 guardrails), run the validation test(s) in `core_backend/validation`.
