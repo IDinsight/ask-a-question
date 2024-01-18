@@ -4,7 +4,7 @@ from typing import Annotated, Dict, Literal, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints
 
-from .configs.llm_prompts import IdentifiedLanguage
+from .configs.llm_prompts import Language
 
 AccessLevel = Literal["fullaccess", "readonly"]
 
@@ -36,7 +36,7 @@ class UserQueryRefined(UserQueryBase):
     """
 
     query_text_original: str
-    original_language: IdentifiedLanguage = IdentifiedLanguage.UNKNOWN
+    original_language: Language = Language.UNKNOWN
 
 
 class UserQuerySearchResult(BaseModel):

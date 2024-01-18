@@ -80,18 +80,10 @@ async def get_llm_answer(
     )
     response.content_response = content_response
 
-    # If we directly pass userquery_refined.original_language.value
-    # Mypy somehow thinks it is of type IdentifiedLanguage | None and complains.
-    orig_lang = user_query_refined.original_language
-    if orig_lang is None:
-        lang = "ENGLISH"
-    else:
-        lang = orig_lang.value
-        
     response.llm_response = await get_llm_rag_answer(
         user_query_refined.query_text,
         content_response[0].retrieved_text,
-        response_language=lang,
+        response_language=user_query_refined.original_language,
     )
 
     return response

@@ -4,7 +4,7 @@ from typing import List, Tuple
 import pytest
 import yaml
 
-from core_backend.app.configs.llm_prompts import IdentifiedLanguage
+from core_backend.app.configs.llm_prompts import Language
 from core_backend.app.llm_call.parse_input import _identify_language
 from core_backend.app.schemas import UserQueryRefined, UserQueryResponse
 
@@ -18,7 +18,7 @@ LANGUAGE_FILE = "data/language_identification.yaml"
 def available_languages() -> list[str]:
     """Returns a list of available languages"""
 
-    return [lang.value for lang in IdentifiedLanguage]
+    return [lang.value for lang in Language]
 
 
 def read_test_data(file: str) -> List[Tuple[str, str]]:
@@ -32,7 +32,7 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
 
 
 @pytest.mark.parametrize("language, content", read_test_data(LANGUAGE_FILE))
-def test_language_identification(
+async def test_language_identification(
     available_languages: list[str], language: str, content: str
 ) -> None:
     """Test language identification"""
@@ -45,5 +45,5 @@ def test_language_identification(
     )
     if language not in available_languages:
         language = "UNKNOWN"
-    _, response = _identify_language(question, response)
+    _, response = await _identify_language(question, response)
     assert response.debug_info["original_language"] == language

@@ -59,7 +59,7 @@ class SafetyClassification(str, Enum):
 # ----  Language identification bot
 
 
-class IdentifiedLanguage(str, Enum):
+class Language(str, Enum):
     """
     Identified language of the user's input.
     """
@@ -72,7 +72,7 @@ class IdentifiedLanguage(str, Enum):
     UNKNOWN = "UNKNOWN"
 
     @classmethod
-    def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
+    def _missing_(cls, value: str) -> Language:  # type: ignore[override]
         """
         If language identified is not one of the above, it is classified as UNKNOWN.
         """

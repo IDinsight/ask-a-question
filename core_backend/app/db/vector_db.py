@@ -11,8 +11,6 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from core_backend.app.configs.llm_prompts import IdentifiedLanguage
-
 from ..configs.app_config import (
     EMBEDDING_MODEL,
     QDRANT_API_KEY,
@@ -21,6 +19,7 @@ from ..configs.app_config import (
     QDRANT_PORT,
     QDRANT_URL,
 )
+from ..configs.llm_prompts import Language
 from ..schemas import UserQueryBase, UserQuerySearchResult
 
 _qdrant_client: QdrantClient | None = None
@@ -67,10 +66,14 @@ def get_similar_content(
     """
     response = embedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
-    question_language = question.original_language.value
+    question_language = question.original_language
 
     return get_search_results(
-        question_embedding, question_language, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding,
+        question_language,
+        qdrant_client,
+        n_similar,
+        qdrant_collection_name,
     )
 
 
@@ -85,16 +88,20 @@ async def get_similar_content_async(
     """
     response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
-    question_language = question.original_language.value
+    question_language = question.original_language
 
     return get_search_results(
-        question_embedding, question_language, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding,
+        question_language,
+        qdrant_client,
+        n_similar,
+        qdrant_collection_name,
     )
 
 
 def get_search_results(
     question_embedding: List[float],
-    question_language: IdentifiedLanguage,
+    question_language: Language,
     qdrant_client: QdrantClient,
     n_similar: int,
     qdrant_collection_name: str = QDRANT_COLLECTION_NAME,

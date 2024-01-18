@@ -1,9 +1,9 @@
-from ..configs.llm_prompts import ANSWER_QUESTION_PROMPT, IdentifiedLanguage
+from ..configs.llm_prompts import ANSWER_QUESTION_PROMPT, Language
 from .utils import _ask_llm_async
 
 
 async def get_llm_rag_answer(
-    question: str, faq_data: str, response_language: IdentifiedLanguage
+    question: str, faq_data: str, response_language: Language
 ) -> str:
     """
     This function is used to get an answer from the LLM model.
