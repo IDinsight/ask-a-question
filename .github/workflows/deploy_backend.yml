@@ -42,7 +42,7 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
               with:
-                registry: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+                registries: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
 
             - name: Build and push
@@ -62,14 +62,35 @@ jobs:
                 tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
                 build-args: |
                   BOOTSTRAP_FILE=${{env.BOOTSTRAP_FILE}}
-
+          
+            - name: Calculate Docker Compose hash
+              id: hash
+              run: echo "::set-output name=compose_hash::$(sha256sum core_backend/deployment/docker-compose.yml | awk '{print $1}')"
+        
+            - name: Cache Docker Compose hash
+              uses: actions/cache@v2
+              with:
+                path: |
+                  ./.compose_hash
+                key: ${{ steps.hash.outputs.compose_hash }}
                 
-
+            - name: Check for changes in Docker Compose
+              id: check_changes
+              run: |
+                if [ -f ./.compose_hash ] && [ "$(< ./.compose_hash)" == "${{ steps.hash.outputs.compose_hash }}" ]; then
+                  echo "::set-output name=changed::false"
+                else
+                  echo "${{ steps.hash.outputs.compose_hash }}" > ./.compose_hash
+                  echo "::set-output name=changed::true"
+                fi
             - name: Install the ECS CLI
+              if: steps.check_changes.outputs.changed == 'true'
               run: |
                 sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
                 sudo chmod +x /usr/local/bin/ecs-cli
+            
             - name: Create Task Definition
+              if: steps.check_changes.outputs.changed == 'true'
               id: create-task-def
               run: |
                 ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
@@ -85,26 +106,29 @@ jobs:
                 NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
                 DOMAIN: ${{ env.DOMAIN }}
             # We need this since deploy task definition action needs the task definition in json format
+            
             - name: Task definition download
               id: download-task-def
               env:
                 ecs_task_def_name: backend-task
               run: |
                 aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
-            
-            - name: Fill in the new image ID in the Amazon ECS task definition
-              id: task-def
-              uses: aws-actions/amazon-ecs-render-task-definition@v1
-              with:
-                task-definition: task-definition.json
-                container-name: backend-container
-                image: ${{ fromJson(steps.build-image.outputs.metadata)['image.name'] }}
+                echo $(cat task-definition.json | jq 'del(
+                  .taskDefinitionArn,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .revision,
+                  .status,
+                  .registeredAt,
+                  .registeredBy
+                )') > task-definition.json
+                echo "task-def=task-definition.json" >> $GITHUB_OUTPUT
             
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
-                task-definition: ${{ steps.task-def.outputs.task-definition }}
+                task-definition: ${{ steps.download-task-def.outputs.task-def }}
                 service: backend-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
