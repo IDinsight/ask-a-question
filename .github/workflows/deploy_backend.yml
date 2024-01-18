@@ -51,7 +51,7 @@ jobs:
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                 ECR_REPOSITORY: aaq-demo-ecr-repository
-                IMAGE_TAG: Backend
+                IMAGE_TAG: backend
               with:
                 context: core_backend
                 platforms: linux/arm64
@@ -123,6 +123,14 @@ jobs:
                   .registeredBy
                 )') > task-definition.json
                 echo "task-def=task-definition.json" >> $GITHUB_OUTPUT
+
+            - name: Fill in the new image ID in the Amazon ECS task definition
+              id: task-def
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                task-definition: task-definition.json
+                container-name: backend-container
+                image: ${{ fromJson(steps.build-image.outputs.metadata)['image.name'] }}
             
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
