@@ -44,8 +44,8 @@ class UserQuerySearchResult(BaseModel):
     Pydantic model for each individual search result
     """
 
-    response_title: Optional[str] = ""  # TODO: optional or not?
-    response_text: str
+    retrieved_title: str
+    retrieved_text: str
     score: float
 
     model_config = ConfigDict(from_attributes=True)

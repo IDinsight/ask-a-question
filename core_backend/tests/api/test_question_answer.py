@@ -141,11 +141,13 @@ class TestAlignScore:
             query_id=124,
             content_response={
                 1: UserQuerySearchResult(
-                    response_text="hello world",
+                    retrieved_title="World",
+                    retrieved_text="hello world",
                     score=0.2,
                 ),
                 2: UserQuerySearchResult(
-                    response_text="goodbye universe",
+                    retrieved_title="Universe",
+                    retrieved_text="goodbye universe",
                     score=0.2,
                 ),
             },

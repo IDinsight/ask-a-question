@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import namedtuple
-from typing import Any, Generator, Tuple, Union
+from typing import Any, Generator, Tuple
 
 import httpx
 import numpy as np
@@ -21,8 +21,6 @@ from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
 from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
-
-Fixture = Union
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
