@@ -1,8 +1,8 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Literal, Optional
+from typing import Annotated, Dict, Literal, Optional
 
-from pydantic import UUID4, BaseModel, ConfigDict
+from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -83,8 +83,9 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation
     """
 
-    content_title: str
-    content_text: str
+    # Ensure len("*{title}*\n\n{text}") <= 1600
+    content_title: Annotated[str, StringConstraints(max_length=150)]
+    content_text: Annotated[str, StringConstraints(max_length=1446)]
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
