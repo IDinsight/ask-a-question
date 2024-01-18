@@ -1,16 +1,16 @@
-name: Deploying Backend
+name: Deploying Nginx
 
 on:
   push:
     branches:
-      - AAQ-278-Create-Backend-Pipeline
+      - AAQ-279-Create-Nginx-Pipeline
     paths:
-        - "core_backend/**"
+        - "nginx/**"
         - ".github/workflows/**"
 
 jobs:
     DeployFrontend:
-        name: Deploying Backend demo
+        name: Deploying Nginx demo
         runs-on: ubuntu-latest
         environment:
             name: demo
@@ -44,29 +44,43 @@ jobs:
               
 
 
-            - name: Build and push
-              id: build-image
+            - name: Build and push Nginx image
+              id: build-image-nginx
               uses: docker/build-push-action@v5
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                 ECR_REPOSITORY: aaq-demo-ecr-repository
-                IMAGE_TAG: backend
+                IMAGE_TAG: nginx
               with:
-                context: core_backend
+                context: nginx
                 platforms: linux/arm64
-                file: core_backend/Dockerfile.demo
+                file: nginx/Dockerfile.nginx
                 cache-from: type=gha
                 cache-to: type=gha
                 push: true
                 tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
-                build-args: |
-                  BOOTSTRAP_FILE=${{env.BOOTSTRAP_FILE}}
+            
+            - name: Build and push Certbot image
+              id: build-image-certbot
+              uses: docker/build-push-action@v5
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: aaq-demo-ecr-repository
+                IMAGE_TAG: certbot
+              with:
+                context: nginx
+                platforms: linux/arm64
+                file: nginx/Dockerfile.certbot
+                cache-from: type=gha
+                cache-to: type=gha
+                push: true
+                tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}  
           # This makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
           # This will reduce the number of task definitions created and will speed up the deployment process
           # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
             - name: Calculate Docker Compose hash
               id: hash
-              run: echo "compose_hash=$(sha256sum core_backend/deployment/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
+              run: echo "compose_hash=$(sha256sum nginx/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
         
             - name: Cache Docker Compose hash
               uses: actions/cache@v3
@@ -97,21 +111,19 @@ jobs:
                 ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
-                --config-name aaq-demo-backend-config
-                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
-                echo "taskdef=backend-task" >> $GITHUB_OUTPUT
+                --config-name aaq-demo-nhinx-config
+                ecs-cli compose --project-name nginx-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
+                echo "taskdef=nginx-task" >> $GITHUB_OUTPUT
               env:
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-                AWS_REGION: ${{ env.AWS_REGION }}
-                QDRANT_HOST: ${{ env.QDRANT_HOST }}
-                NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
                 DOMAIN: ${{ env.DOMAIN }}
+                EMAIL: ${{ env.EMAIL }}
             # We need this since deploy task definition action needs the task definition in json format
             
             - name: Task definition download
               id: download-task-def
               env:
-                ecs_task_def_name: backend-task
+                ecs_task_def_name: nginx-task
               run: |
                 aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
                 echo $(cat task-definition.json | jq 'del(
@@ -130,13 +142,13 @@ jobs:
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.download-task-def.outputs.task-def }}
-                service: backend-service
+                service: nginx-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
+                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services nginx-service --query services[0].deployments[0].runningCount | jq -r ".")
                   
                   if [ "$RUNNING_TASKS" -eq "0" ]; then
                     echo "Deployment failed."
