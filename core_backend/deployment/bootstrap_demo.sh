@@ -28,15 +28,17 @@ SECRET_JWT="aaq-demo-jwt-secret"
 SECRET_CONTENT="aaq-demo-content-access"
 SECRET_WHATSAPP="aaq-demo-whatsapp-token"
 SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
+SECRET_WHATSAPP="aaq-demo-whatsapp-token"
 
-export NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_API_URL}
+export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 
 # Set password for user for `fullaccess` and `readonly` account to access content
 export CONTENT_FULLACCESS_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "full_access_password" "json")
 export CONTENT_READONLY_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "read_only_password" "json")
 
-export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "" "text")
+export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "token" "json")
+export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "verify_token" "json")
 
 # if using a nginx reverse proxy, set path here
 BACKEND_ROOT_PATH="/api"
@@ -49,12 +51,11 @@ export POSTGRES_PASSWORD=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "passwor
 export POSTGRES_DB=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "dbname" "json")
 
 
-# TODO Verify if its a token or a password
-export WHATSAPP_VERIFY_TOKEN="TEST"
+
 
 export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
-DOMAIN="aaq-demo.idinsight.io"
+DOMAIN="${DOMAIN}"
 
 # Resolve Qdrant host
 SERVICE_RECORD=$(dig +short SRV ${QDRANT_HOST})

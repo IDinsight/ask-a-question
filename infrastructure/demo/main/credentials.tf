@@ -10,7 +10,7 @@ resource "random_password" "secrets" {
   # This password is then stored in AWS Secrets Manager.
   length  = 16
   special = true
-  count   = 3 # 3 passwords are generated
+  count   = 5 # 3 passwords are generated
 }
 
 
@@ -88,10 +88,11 @@ resource "aws_secretsmanager_secret" "whatsapp_token_secret" {
 resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
   # The secret version is created for the whatsapp token secret.
   # The value will be added manually to the secret version.
-  secret_id     = aws_secretsmanager_secret.whatsapp_token_secret.id
-  secret_string = "whatsapp_token_secret"
+  secret_id = aws_secretsmanager_secret.whatsapp_token_secret.id
+  secret_string = jsonencode({
+    verify_token = random_password.secrets[3].result,
+    token        = random_password.secrets[4].result,
+  })
 
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
+
 }
