@@ -111,8 +111,8 @@ jobs:
                 ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
-                --config-name aaq-demo-nhinx-config
-                ecs-cli compose --project-name nginx-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
+                --config-name aaq-demo-nginx-config
+                ecs-cli compose --project-name nginx-task --file nginx/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
                 echo "taskdef=nginx-task" >> $GITHUB_OUTPUT
               env:
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
