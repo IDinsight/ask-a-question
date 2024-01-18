@@ -36,7 +36,7 @@ class UserQueryRefined(UserQueryBase):
     """
 
     query_text_original: str
-    original_language: IdentifiedLanguage | None = None
+    original_language: IdentifiedLanguage = IdentifiedLanguage.UNKNOWN
 
 
 class UserQuerySearchResult(BaseModel):
@@ -86,6 +86,7 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
+    content_language: str = "ENGLISH"
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)

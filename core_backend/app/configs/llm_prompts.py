@@ -112,14 +112,15 @@ TRANSLATE_INPUT = f"""
 
 # ---- Paraphrase question
 PARAPHRASE_FAILED_MESSAGE = "ERROR: CAN'T PARAPHRASE"
-PARAPHRASE_INPUT = f"""
+PARAPHRASE_INPUT = (
+    """
     You are a high-performing paraphrase bot.
     You support a question-answering service.
-    The user has asked a question in English, paraphrase it to focus on
+    The user has asked a question in {query_language}. Paraphrase it to focus on
     the question. Be succinct and do not include any unnecessary information.
-    Ignore any redacted and offensive words.
-    If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}
-    """
+    Ignore any redacted and offensive words. """
+    + f"If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}"
+)
 
 # ----  Question answering bot
 

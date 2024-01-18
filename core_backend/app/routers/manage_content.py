@@ -48,7 +48,10 @@ async def create_content(
     """
 
     payload = _create_payload_for_qdrant_upsert(
-        content.content_title, content.content_text, content.content_metadata
+        content.content_title,
+        content.content_text,
+        content.content_metadata,
+        content_language=content.content_language,
     )
 
     content_id = uuid.uuid4()
@@ -84,6 +87,7 @@ async def edit_content(
         content_title=content.content_title,
         content_text=content.content_text,
         metadata=old_content[0].payload or {},
+        content_language=content.content_language,
     )
     payload = payload.model_copy(update=content.content_metadata)
 
@@ -166,7 +170,10 @@ async def retrieve_content_by_id(
 
 
 def _create_payload_for_qdrant_upsert(
-    content_title: str, content_text: str, metadata: dict
+    content_title: str,
+    content_text: str,
+    metadata: dict,
+    content_language: str,
 ) -> QdrantPayload:
     """
     Create payload for qdrant upsert
@@ -174,6 +181,7 @@ def _create_payload_for_qdrant_upsert(
     payload_dict = metadata.copy()
     payload_dict["content_title"] = content_title
     payload_dict["content_text"] = content_text
+    payload_dict["content_language"] = content_language
     payload = QdrantPayload(**payload_dict)
     payload.updated_datetime_utc = datetime.utcnow()
 
@@ -219,10 +227,12 @@ def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     updated_datetime = content_metadata.pop("updated_datetime_utc")
     content_title = content_metadata.pop("content_title")
     content_text = content_metadata.pop("content_text")
+    content_language = content_metadata.pop("content_language")
 
     return ContentRetrieve(
         content_title=content_title,
         content_text=content_text,
+        content_language=content_language,
         content_metadata=content_metadata,
         content_id=UUID(str(record.id)),
         created_datetime_utc=created_datetime,

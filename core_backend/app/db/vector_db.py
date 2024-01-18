@@ -4,9 +4,14 @@ from litellm import aembedding, embedding
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
     PayloadSelectorInclude,
     VectorParams,
 )
+
+from core_backend.app.configs.llm_prompts import IdentifiedLanguage
 
 from ..configs.app_config import (
     EMBEDDING_MODEL,
@@ -62,9 +67,10 @@ def get_similar_content(
     """
     response = embedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
+    question_language = question.original_language.value
 
     return get_search_results(
-        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding, question_language, qdrant_client, n_similar, qdrant_collection_name
     )
 
 
@@ -79,14 +85,16 @@ async def get_similar_content_async(
     """
     response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
+    question_language = question.original_language.value
 
     return get_search_results(
-        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding, question_language, qdrant_client, n_similar, qdrant_collection_name
     )
 
 
 def get_search_results(
     question_embedding: List[float],
+    question_language: IdentifiedLanguage,
     qdrant_client: QdrantClient,
     n_similar: int,
     qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
@@ -97,6 +105,14 @@ def get_search_results(
         query_vector=question_embedding,
         limit=n_similar,
         with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
+        query_filter=Filter(
+            must=[
+                FieldCondition(
+                    key="content_language",
+                    match=MatchValue(value=question_language.value),
+                ),
+            ]
+        ),
     )
 
     results_dict = {}

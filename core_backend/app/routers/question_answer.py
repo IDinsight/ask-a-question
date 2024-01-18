@@ -27,7 +27,6 @@ from ..llm_call.parse_input import (
     classify_safety,
     identify_language,
     paraphrase_question,
-    translate_question,
 )
 from ..schemas import (
     FeedbackBase,
@@ -64,7 +63,6 @@ async def llm_response(
 
 @check_align_score
 @identify_language
-@translate_question
 @paraphrase_question
 @classify_safety
 async def get_llm_answer(
@@ -148,7 +146,6 @@ async def embeddings_search(
 
 
 @identify_language
-@translate_question
 @paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
