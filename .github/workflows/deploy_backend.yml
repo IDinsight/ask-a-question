@@ -76,7 +76,7 @@ jobs:
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
                 --config-name aaq-demo-backend-config
-                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml create
+                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
                 echo "taskdef=backend-task" >> $GITHUB_OUTPUT
               env:
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -111,13 +111,11 @@ jobs:
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                  CURRENT_TASK_DEF_ARN=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].taskDefinition | jq -r ".")
-                  NEW_TASK_DEF_ARN=${{ steps.ecs-deploy.outputs.task-definition-arn }}
-                  echo "Current task arn: $CURRENT_TASK_DEF_ARN"
-                  echo "New task arn: $NEW_TASK_DEF_ARN"
-                  if [ "$CURRENT_TASK_DEF_ARN" != "$NEW_TASK_DEF_ARN" ]; then
+                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
+                  
+                  if [ "$RUNNING_TASKS" -eq "0" ]; then
                     echo "Deployment failed."
                     exit 1
                   fi
-                
+                  
                 
