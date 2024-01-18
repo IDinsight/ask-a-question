@@ -3,14 +3,14 @@ name: Deploying Frontend
 on:
   push:
     branches:
-      - AAQ-277-Create-Frontend-Pipeline
+      - AAQ-278-Create-Backend-Pipeline
     paths:
-        - "admin_app/**"
+        - "core_backend/**"
         - ".github/workflows/**"
 
 jobs:
     DeployFrontend:
-        name: Deploying Frontend demo
+        name: Deploying Backend demo
         runs-on: ubuntu-latest
         environment:
             name: demo
@@ -51,17 +51,18 @@ jobs:
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                 ECR_REPOSITORY: aaq-demo-ecr-repository
-                IMAGE_TAG: Frontend
+                IMAGE_TAG: Backend
               with:
-                context: admin_app
+                context: core_backend
                 platforms: linux/arm64
-                file: admin_app/Dockerfile
+                file: core_backend/Dockerfile.demo
                 cache-from: type=gha
                 cache-to: type=gha
                 push: true
                 tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
                 build-args: |
-                  NAME=${{env.NEXT_PUBLIC_BACKEND_URL}}
+                  BOOTSTRAP_FILE=${{env.BOOTSTRAP_FILE}}
+
                 
 
             - name: Install the ECS CLI
@@ -71,20 +72,24 @@ jobs:
             - name: Create Task Definition
               id: create-task-def
               run: |
+                ACCOUNT=${{env.AWS_ACCOUNT_ID}} \
+                QDRANT_HOST=${{env.QDRANT_HOST}} \
+                AWS_REGION=${{env.AWS_REGION}} \
+                NEXT_PUBLIC_API_URL=${{env.NEXT_PUBLIC_API_URL}} \
+                DOMAIN=${DOMAIN} \
                 ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
-                --config-name aaq-demo-frontend
-                ecs-cli compose --project-name aaq-demo-frontend --file admin_app/deployment/docker-compose.yml create
-                echo "taskdef=aaq-demo-frontend" >> $GITHUB_OUTPUT
+                --config-name aaq-demo-backend-config
+                ecs-cli compose --project-name aaq-demo-backend --file core_backend/deployment/docker-compose.yml create
+                echo "taskdef=backend-task" >> $GITHUB_OUTPUT
               env:
-                NEXT_PUBLIC_BACKEND_URL: ${{env.NEXT_PUBLIC_BACKEND_URL}}
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
             # We need this since deploy task definition action needs the task definition in json format
             - name: Task definition download
               id: download-task-def
               env:
-                ecs_task_def_name: admin-app-task
+                ecs_task_def_name: backend-task
               run: |
                 aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
             
@@ -93,7 +98,7 @@ jobs:
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: task-definition.json
-                container-name: admin-app-container
+                container-name: backend-container
                 image: ${{ fromJson(steps.build-image.outputs.metadata)['image.name'] }}
             
             - name: Deploy Amazon ECS task definition
@@ -101,13 +106,13 @@ jobs:
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.task-def.outputs.task-definition }}
-                service: admin-app-service
+                service: backend-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                  CURRENT_TASK_DEF_ARN=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services admin-app-service --query services[0].deployments[0].taskDefinition | jq -r ".")
+                  CURRENT_TASK_DEF_ARN=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].taskDefinition | jq -r ".")
                   NEW_TASK_DEF_ARN=${{ steps.ecs-deploy.outputs.task-definition-arn }}
                   echo "Current task arn: $CURRENT_TASK_DEF_ARN"
                   echo "New task arn: $NEW_TASK_DEF_ARN"

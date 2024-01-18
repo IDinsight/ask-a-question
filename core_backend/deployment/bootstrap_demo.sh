@@ -10,7 +10,7 @@ trap cleanup EXIT
 # Function to get value from secrets manager using secret name, key name and output type
 function get_secret_value() {
 	local secret_name="$1" key="$2" form="$3"
-  	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region af-south-1 --output ${form} --query "SecretString")}"
+  	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region ${AWS_REGION} --output ${form} --query "SecretString")}"
   	# If key name is provided, parse json output for the key or return text output
   	if [ -z "$key" ]; 
   	then
@@ -29,7 +29,7 @@ SECRET_CONTENT="aaq-demo-content-access"
 SECRET_WHATSAPP="aaq-demo-whatsapp-token"
 SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
 
-export NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api
+export NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_API_URL}
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 
 # Set password for user for `fullaccess` and `readonly` account to access content
