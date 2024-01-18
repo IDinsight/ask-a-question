@@ -81,12 +81,18 @@ jobs:
                 NEXT_PUBLIC_BACKEND_URL: ${{env.NEXT_PUBLIC_BACKEND_URL}}
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
             # We need this since deploy task definition action needs the task definition in json format
+            - name: Task definition download
+              id: download-task-def
+              env:
+                ecs_task_def_name: admin-app-task
+              run: |
+                aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
             - name: Fill in the new image ID in the Amazon ECS task definition
               id: task-def
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: task-definition.json
-                container-name: my-container
+                container-name: admin-app-container
                 image: ${{ fromJson(steps.build-image.outputs.metadata)['image.name'] }}
             
             - name: Deploy Amazon ECS task definition
