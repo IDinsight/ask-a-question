@@ -45,14 +45,14 @@ An example content data will look like
     pip install -r core_backend/validation/requirements.txt
     ```
 3. Set environment variables.
-    1. You can find the required environment variables with default values in
-        `core_backend/validation/validation.env`. You can export this by running
+    1. You must export the required environment variables. They are defined with default values in
+        `core_backend/validation/validation.env`. To ensure that these env variables are
+        set every time you activate `aaq-validate`, you can run the
+        following command for each variable:
         ```
-        set -a
-        source core_backend/validation/validation.env
-        set +a
+        conda env config vars set <VARIABLE>=<VALUE>
         ```
-        or by using `conda env config vars set` command for each variable.
+
     2. For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
         and modify as per your own requirements. For example:
         ```
