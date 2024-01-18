@@ -45,21 +45,24 @@ An example content data will look like
     pip install -r core_backend/validation/requirements.txt
     ```
 3. Set environment variables.
-   The following is required:
-    ```
-    conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
-    ```
-    For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
-    and modify as per your own requirements. For example:
-    ```
-    conda env config vars set EMBEDDING_MODEL=<...>
-    ```
-5. Check the environment variables defined in `core_backend/validation/validation.env`.
-   These should all be exported. You can do it one-by-one via `conda env config vars
-   set` command or by running
-    ```shell
-    set -a && source core_backend/validation/validation.env && set +a
-    ```
+    1. You can find the required environment variables with default values in
+        `core_backend/validation/validation.env`. You can export this by running
+        ```
+        set -a
+        source core_backend/validation/validation.env
+        set +a
+        ```
+        or by using `conda env config vars set` command for each variable.
+    2. For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
+        and modify as per your own requirements. For example:
+        ```
+        conda env config vars set EMBEDDING_MODEL=<...>
+        ```
+    3. If you are using an external LLM endpoint, e.g. OpenAI, make sure to export the
+        API key variable as well.
+        ```
+        conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
+        ```
 3. In project root `aaq-core` run the following command. (Perform any necessary
    authentication steps you need to do, e.g. for AWS login).
     ```
