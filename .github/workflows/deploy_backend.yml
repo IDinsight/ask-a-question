@@ -107,39 +107,39 @@ jobs:
                 DOMAIN: ${{ env.DOMAIN }}
             # We need this since deploy task definition action needs the task definition in json format
             
-            # - name: Task definition download
-            #   id: download-task-def
-            #   env:
-            #     ecs_task_def_name: backend-task
-            #   run: |
-            #     aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
-            #     echo $(cat task-definition.json | jq 'del(
-            #       .taskDefinitionArn,
-            #       .requiresAttributes,
-            #       .compatibilities,
-            #       .revision,
-            #       .status,
-            #       .registeredAt,
-            #       .registeredBy
-            #     )') > task-definition.json
-            #     echo "task-def=task-definition.json" >> $GITHUB_OUTPUT
+            - name: Task definition download
+              id: download-task-def
+              env:
+                ecs_task_def_name: backend-task
+              run: |
+                aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
+                echo $(cat task-definition.json | jq 'del(
+                  .taskDefinitionArn,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .revision,
+                  .status,
+                  .registeredAt,
+                  .registeredBy
+                )') > task-definition.json
+                echo "task-def=task-definition.json" >> $GITHUB_OUTPUT
             
-            # - name: Deploy Amazon ECS task definition
-            #   id: ecs-deploy
-            #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-            #   with:
-            #     task-definition: ${{ steps.download-task-def.outputs.task-def }}
-            #     service: backend-service
-            #     cluster: ${{ env.CLUSTER_NAME }} 
-            #     wait-for-service-stability: true
-            # - name: Check if deployment was successful
-            #   id: check-deployment
-            #   run: |
-            #       RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
+            - name: Deploy Amazon ECS task definition
+              id: ecs-deploy
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                task-definition: ${{ steps.download-task-def.outputs.task-def }}
+                service: backend-service
+                cluster: ${{ env.CLUSTER_NAME }} 
+                wait-for-service-stability: true
+            - name: Check if deployment was successful
+              id: check-deployment
+              run: |
+                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
                   
-            #       if [ "$RUNNING_TASKS" -eq "0" ]; then
-            #         echo "Deployment failed."
-            #         exit 1
-            #       fi
+                  if [ "$RUNNING_TASKS" -eq "0" ]; then
+                    echo "Deployment failed."
+                    exit 1
+                  fi
                   
                 
