@@ -136,7 +136,10 @@ jobs:
                   .registeredBy
                 )') > task-definition.json
                 echo "task-def=task-definition.json" >> $GITHUB_OUTPUT
-            
+            # This will update the service with the new task definition and wait for the deployment to finish
+            # It waits for the service to become stable, which means that all tasks are running and there are no pending tasks
+            # The drawback of this approach is that if none of the tasks starts, the deployment will be stuck in progress
+            # This job will remain in progress until the deployment is finished
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
