@@ -72,19 +72,18 @@ jobs:
             - name: Create Task Definition
               id: create-task-def
               run: |
-                ACCOUNT=${{env.AWS_ACCOUNT_ID}} \
-                QDRANT_HOST=${{env.QDRANT_HOST}} \
-                AWS_REGION=${{env.AWS_REGION}} \
-                NEXT_PUBLIC_API_URL=${{env.NEXT_PUBLIC_API_URL}} \
-                DOMAIN=${DOMAIN} \
                 ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
                 --region ${{ env.AWS_REGION }} \
                 --default-launch-type EC2 \
                 --config-name aaq-demo-backend-config
-                ecs-cli compose --project-name aaq-demo-backend --file core_backend/deployment/docker-compose.yml create
+                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml create
                 echo "taskdef=backend-task" >> $GITHUB_OUTPUT
               env:
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+                AWS_REGION: ${{ env.AWS_REGION }}
+                QDRANT_HOST: ${{ env.QDRANT_HOST }}
+                NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+                DOMAIN: ${{ env.DOMAIN }}
             # We need this since deploy task definition action needs the task definition in json format
             - name: Task definition download
               id: download-task-def
