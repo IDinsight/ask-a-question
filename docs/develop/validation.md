@@ -10,8 +10,8 @@ The validation is written in pytest so that we can call the endpoint.
 
 ## Retrieval (`/embeddings-search`) validation
 
-We evaluate the "performance" of retrieval by computing "Top K Accuracy", which we
-define as proportion of times the best matching answer was present in top K retrieved content.
+We evaluate the "performance" of retrieval by computing "Top K Accuracy", which is
+defined as proportion of times the best matching answer was present in top K retrieved contents.
 
 ### Preparing the data
 The test assumes the validation data contains a single label representing the best
