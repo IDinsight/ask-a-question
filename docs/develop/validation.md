@@ -39,7 +39,7 @@ An example content data will look like
     ```shell
     conda create -n "aaq-validate" python=3.10
     ```
-    You van also copy the existing `aaq-core` environment.
+    You can also copy the existing `aaq-core` environment.
 2. Install requirements. This assumes you are in project root `aaq-core`.
     ```shell
     conda activate aaq-validate
