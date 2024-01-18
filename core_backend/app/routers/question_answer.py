@@ -136,10 +136,9 @@ async def embeddings_search(
     return response
 
 
-# TODO: Uncomment!!!
-# @identify_language
-# @translate_question
-# @paraphrase_question
+@identify_language
+@translate_question
+@paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
