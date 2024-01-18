@@ -1,7 +1,7 @@
 # Deployment
-.env*	
-**/data/certbot/	
-**/data/nginx/app.conf	
+.env*
+**/data/certbot/
+**/data/nginx/app.conf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

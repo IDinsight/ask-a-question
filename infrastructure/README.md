@@ -2,19 +2,22 @@
 The infrastructure as code (IaC) is done using Terraform. The Module is organized into environments. Each environment will have its own code.
 
 ## Login to AWS
+
 - [First time setup] Set up your AWS config file (`~/.aws/config`) to work with the different environments and AWS SSO. Make sure your config file contains the following entries:
 
 ```
-[profile aaq_demo]
+[profile aaq]
 sso_start_url = https://idinsight.awsapps.com/start
 sso_region = ap-south-1
 sso_account_id = 039685995141
 sso_role_name = AdministratorAccess
-region = ap-south-1
+region = af-south-1
 
 ```
 
-## Running in a new AWC Account
+- Run `export AWS_PROFILE=aaq`
+- Run `make login`
+## Running in a new AWS Account
 To be able to run the code in a new AWS Account, first you will need to initialize the code and create an S3 bucket where you will store the terraform state.
 Steps:
  - Login to AWS using `make login`
