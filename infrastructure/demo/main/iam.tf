@@ -129,6 +129,14 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     "ecs:UpdateService"]
     resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
   }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+    "ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "web_ec2_role_policy" {
