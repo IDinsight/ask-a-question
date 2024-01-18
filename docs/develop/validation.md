@@ -52,7 +52,7 @@ An example content data will look like
     conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
     ```
     For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
-    and modify as per your own requirements:
+    and modify as per your own requirements. For example:
     ```
     conda env config vars set EMBEDDING_MODEL=<...>
     ```
