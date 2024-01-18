@@ -10,7 +10,7 @@ services:
     logging:
       driver: awslogs
       options:
-        awslogs-group: /ecs/frontend-task-demo
+        awslogs-group: /ecs/admin-app-task-demo
         awslogs-region: ${AWS_REGION}
         awslogs-stream-prefix: frontend
 
