@@ -27,7 +27,7 @@ services:
           awslogs-stream-prefix: nginx
       
     certbot:
-      image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
+      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
       depends_on:
         - nginx
       environment:
