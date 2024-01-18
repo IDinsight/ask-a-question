@@ -120,6 +120,15 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     effect    = "Allow"
     resources = [aws_ecr_repository.web_ecr_repo.arn]
   }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ecs:DescribeServices",
+    "ecs:UpdateService"]
+    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
+  }
 }
 
 resource "aws_iam_role_policy" "web_ec2_role_policy" {

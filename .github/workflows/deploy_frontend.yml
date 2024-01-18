@@ -101,7 +101,7 @@ jobs:
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.task-def.outputs.task-definition }}
-                service: frontend-service
+                service: admin-app-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Check if deployment was successful
