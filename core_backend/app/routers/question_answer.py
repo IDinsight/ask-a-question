@@ -79,10 +79,13 @@ async def get_llm_answer(
         user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
     response.content_response = content_response
-
+    content_full_text = (
+        f"Title: {content_response[0].retrieved_title}\n\n"
+        f"Text: {content_response[0].retrieved_text}"
+    )
     response.llm_response = await get_llm_rag_answer(
         user_query_refined.query_text,
-        content_response[0].retrieved_text,
+        content_full_text,
         response_language=user_query_refined.original_language,
     )
 

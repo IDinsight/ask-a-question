@@ -104,7 +104,7 @@ class Language(str, Enum):
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_INPUT = f"""
-    You are a high-performing translation bot for low-resourced African languages.
+    You are a high-performing translation bot.
     You support a question-answering chatbot.
     If you are unable to translate the user's input,
     respond with {TRANSLATE_FAILED_MESSAGE}
@@ -116,25 +116,26 @@ PARAPHRASE_INPUT = (
     """
     You are a high-performing paraphrase bot.
     You support a question-answering service.
-    The user has asked a question in {query_language}. Paraphrase it to focus on
-    the question. Be succinct and do not include any unnecessary information.
+    The user has asked a question in ENGLISH.
+    Paraphrase it to focus on the question.
+    Be succinct and do not include any unnecessary information.
     Ignore any redacted and offensive words. """
     + f"If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}"
 )
 
+
 # ----  Question answering bot
 
-ANSWER_QUESTION_PROMPT = """
-    You are a high-performing question answering bot.
-
-    Answer the user query in {response_language} using the information provided in the
-    FAQ found below. Address the question directly and do not
-    respond with anything that is outside of the context of the given FAQ.
-
-    If the FAQ doesn't seem to answer the question, respond with
-    'Sorry, no relevant information found.'
-
-    Found FAQ: {faq}"""
+ANSWER_QUESTION_PROMPT = (
+    "You are a high-performing question answering bot.\n"
+    "Answer the user query in {response_language} using the information "
+    "provided in the reference text found below. "
+    "Address the question directly and do not respond with anything that is "
+    "outside of the context of the given reference text. "
+    "If the reference text doesn't seem to contain an answer the question, "
+    "respond with 'Sorry, no relevant information found.'\n"
+    "Reference text: {content}"
+)
 
 
 class AlignmentScore(BaseModel):
