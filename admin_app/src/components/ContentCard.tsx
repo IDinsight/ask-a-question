@@ -6,6 +6,7 @@ export type Content = {
   content_id: string;
   content_title: string;
   content_text: string;
+  content_language: string;
 };
 
 interface ContentCardProps {
@@ -65,6 +66,13 @@ export const ContentCard: React.FC<ContentCardProps> = ({
         }`}
       >
         {content.content_text}
+      </p>
+      <p
+        className={`mb-3 font-light overflow-auto whitespace-pre-line text-sm text-gray-500 dark:text-gray-600 absolute bottom-0 float-left ${
+          isExpanded ? "line-clamp-[12] py-3" : "line-clamp-4"
+        }`}
+      >
+        {content.content_language}
       </p>
       {isExpanded ? (
         <p className="mb-3 text-xs font-light text-gray-800 dark:text-gray-600 absolute p-3 bottom-0 right-2 float-right">

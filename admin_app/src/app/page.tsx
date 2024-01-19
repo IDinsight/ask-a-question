@@ -149,6 +149,18 @@ export default function Home() {
         });
   };
 
+  const onContentLanguageChange = (content_language: string) => {
+    cardToEdit
+      ? setCardToEdit(() => {
+          cardToEdit.content_language = content_language;
+          return cardToEdit;
+        })
+      : setNewCardData({
+          content_title: newCardData.content_title,
+          content_text: content_language,
+        });
+  };
+
   const onChangeSubmit = () => {
     if (cardToEdit) {
       if (!cardToEdit.content_title.trim() || !cardToEdit.content_text.trim()) {
@@ -284,6 +296,7 @@ export default function Home() {
             cardToEdit={cardToEdit}
             onTitleChange={onContentTitleChange}
             onContentChange={onContentTextChange}
+            onLanguageChange={onContentLanguageChange}
             onSubmit={onChangeSubmit}
             onClose={() => setShowEditModal(false)}
           />
