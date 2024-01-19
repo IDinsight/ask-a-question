@@ -33,16 +33,22 @@ variable "demo_profile" {
   default     = "aaq_demo"
 }
 
-variable "demo_ec2_instance_type" {
-  description = "value for the demo ec2 instance type"
+variable "ec2_instance_type" {
+  description = "value for the ec2 instance type"
   type        = string
-  default     = "t3.medium"
+  default     = "t4g.medium"
 }
 
 variable "bastion_ec2_instance_type" {
   description = "value for the bastion host ec2 instance type"
   type        = string
   default     = "t3.nano"
+}
+
+variable "rds_db_instance_class" {
+  description = "value for the rds db instance class"
+  type        = string
+  default     = "db.t4g.small"
 }
 
 

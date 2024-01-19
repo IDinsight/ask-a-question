@@ -60,6 +60,9 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       aws_secretsmanager_secret.jwt_secret.arn,
       aws_secretsmanager_secret.content_access_secret.arn,
       aws_secretsmanager_secret.whatsapp_token_secret.arn,
+      aws_secretsmanager_secret.open_ai_key_secret.arn,
+      aws_secretsmanager_secret.question_answer_secret.arn,
+      aws_secretsmanager_secret.whatsapp_verify_token_secret.arn,
     ]
 
   }
@@ -119,6 +122,23 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
 
     effect    = "Allow"
     resources = [aws_ecr_repository.web_ecr_repo.arn]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ecs:DescribeServices",
+    "ecs:UpdateService"]
+    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+    "ecr:GetAuthorizationToken"]
+    resources = ["*"]
   }
 }
 

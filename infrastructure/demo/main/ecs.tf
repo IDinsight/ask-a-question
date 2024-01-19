@@ -9,7 +9,7 @@ resource "aws_ecs_cluster" "web_cluster" {
 # The service discovery service is attached to the ECS service.
 # This is how the services communicate with each other.
 resource "aws_service_discovery_private_dns_namespace" "web" {
-  name = "aaqdemo.local"
+  name = var.private_dns_namespace_name
   vpc  = var.vpc_id
 }
 
@@ -31,7 +31,7 @@ resource "aws_service_discovery_service" "backend" {
 }
 
 # frontend service discovery service
-resource "aws_service_discovery_service" "frontend" {
+resource "aws_service_discovery_service" "admin_app" {
   name = "frontend"
   dns_config {
     namespace_id   = aws_service_discovery_private_dns_namespace.web.id
@@ -169,7 +169,7 @@ resource "aws_ecs_task_definition" "vectordb_task" {
 
     mountPoints = [
       {
-        "sourceVolume" : "quadrand-volume",
+        "sourceVolume" : "qdrant-volume",
         "readOnly" : false
         "containerPath" : "/qdrant/storage"
       }
@@ -199,20 +199,20 @@ resource "aws_ecs_task_definition" "vectordb_task" {
   }])
 
   volume {
-    name = "quadrand-volume"
+    name = "qdrant-volume"
   }
 
 }
 
 # Frontend Service with EC2 Launch Type
-resource "aws_ecs_service" "frontend_service" {
+resource "aws_ecs_service" "admin_app_service" {
   # This is a resource, which means it will create a resource in AWS
   # This resource will create an ECS service with EC2 launch type for the Frontend container
   # The ECS service will be used to route traffic to the Frontend container
   # The ECS service will be attached to the ECS cluster
-  name                               = "frontend-service"
+  name                               = "admin-app-service"
   cluster                            = aws_ecs_cluster.web_cluster.id
-  task_definition                    = aws_ecs_task_definition.frontend_task.arn
+  task_definition                    = aws_ecs_task_definition.admin_app_task.arn
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
   launch_type                        = "EC2"
@@ -220,8 +220,8 @@ resource "aws_ecs_service" "frontend_service" {
   desired_count                      = 1
 
   service_registries {
-    registry_arn   = aws_service_discovery_service.frontend.arn
-    container_name = "frontend-container"
+    registry_arn   = aws_service_discovery_service.admin_app.arn
+    container_name = "admin-app-container"
     container_port = 3000
   }
 
@@ -232,14 +232,14 @@ resource "aws_ecs_service" "frontend_service" {
 
 }
 
-resource "aws_ecs_task_definition" "frontend_task" {
+resource "aws_ecs_task_definition" "admin_app_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   # The CPU and Memory may need to be adjusted based on the application usage
-  family             = "frontend-task"
+  family             = "admin-app-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
-    name   = "frontend-container",
-    image  = "frontend:latest",
+    name   = "admin-app-container",
+    image  = "admin-app:latest",
     memory = 512,
     cpu    = 256,
 
@@ -256,7 +256,7 @@ resource "aws_ecs_task_definition" "frontend_task" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.frontend.name
+        awslogs-group         = aws_cloudwatch_log_group.admin_app.name
         awslogs-stream-prefix = "ecs"
         awslogs-region        = var.aws_region
       }
@@ -325,38 +325,26 @@ resource "aws_ecs_task_definition" "backend_task" {
 
 }
 
-resource "aws_cloudwatch_log_group" "frontend" {
-  name = "/ecs/frontend-task-demo"
+resource "aws_cloudwatch_log_group" "admin_app" {
+  name = "/ecs/admin-app-task-${var.environment}"
 
-  tags = {
-    Name        = "frontend-task-deno"
-    Environment = "demo"
-  }
+  tags = merge({ Name = "admin-app-task-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "backend" {
-  name = "/ecs/backend-task-demo"
+  name = "/ecs/backend-task-${var.environment}"
 
-  tags = {
-    Name        = "backend-task-demo"
-    Environment = "demo"
-  }
+  tags = merge({ Name = "backend-task-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "vectordb" {
-  name = "/ecs/vectordb-task-demo"
+  name = "/ecs/vectordb-task-${var.environment}"
 
-  tags = {
-    Name        = "vectordb-task-demo"
-    Environment = "demo"
-  }
+  tags = merge({ Name = "vectordb-task-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "nginx" {
-  name = "/ecs/nginx-task-demo"
+  name = "/ecs/nginx-task-${var.environment}"
 
-  tags = {
-    Name        = "nginx-task-demo"
-    Environment = "demo"
-  }
+  tags = merge({ Name = "nginx-task-${var.environment}", Module = "Web" }, var.tags)
 }
