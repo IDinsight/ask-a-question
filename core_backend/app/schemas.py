@@ -46,6 +46,7 @@ class UserQuerySearchResult(BaseModel):
 
     retrieved_title: str
     retrieved_text: str
+    retrieved_language: str
     score: float
 
     model_config = ConfigDict(from_attributes=True)

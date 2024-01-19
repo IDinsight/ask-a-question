@@ -17,7 +17,7 @@ QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
 
 QDRANT_COLLECTION_NAME = os.environ.get("QDRANT_COLLECTION_NAME", "default_collection")
 QDRANT_VECTOR_SIZE = os.environ.get("QDRANT_VECTOR_SIZE", "1536")
-QDRANT_N_TOP_SIMILAR = os.environ.get("QDRANT_N_TOP_SIMILAR", "4")
+QDRANT_N_TOP_SIMILAR = os.environ.get("QDRANT_N_TOP_SIMILAR", "3")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")  # Will be none if not set
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-ada-002")
 
@@ -47,3 +47,8 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 ALIGN_SCORE_API = os.environ.get(
     "ALIGN_SCORE_API", "http://localhost:5001/alignscore_base"
 )
+
+# Minimum number of content to use as context for LLM response.
+# If it is greater than QDRANT_N_TOP_SIMILAR, only QDRANT_N_TOP_SIMILAR top content will
+# be used.
+MIN_LLM_CONTEXT_CONTENT = os.environ.get("MIN_CONTENT", "3")

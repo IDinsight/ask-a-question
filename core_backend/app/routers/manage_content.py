@@ -26,6 +26,7 @@ class QdrantPayload(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
+    content_language: str = "ENGLISH"
 
     content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
@@ -222,12 +223,13 @@ def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     """
     Convert qdrant_client.models.Record to ContentRetrieve schema
     """
-    content_metadata = record.payload or {}
-    created_datetime = content_metadata.pop("created_datetime_utc")
-    updated_datetime = content_metadata.pop("updated_datetime_utc")
-    content_title = content_metadata.pop("content_title")
-    content_text = content_metadata.pop("content_text")
-    content_language = content_metadata.pop("content_language")
+    payload = record.payload or {}
+    created_datetime = payload.pop("created_datetime_utc")
+    updated_datetime = payload.pop("updated_datetime_utc")
+    content_title = payload.pop("content_title")
+    content_text = payload.pop("content_text")
+    content_language = payload.pop("content_language")
+    content_metadata = payload.pop("content_metadata", {})
 
     return ContentRetrieve(
         content_title=content_title,

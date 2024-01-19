@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends
@@ -7,7 +7,7 @@ from qdrant_client import QdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import auth_bearer_token
-from ..configs.app_config import QDRANT_N_TOP_SIMILAR
+from ..configs.app_config import MIN_LLM_CONTEXT_CONTENT, QDRANT_N_TOP_SIMILAR
 from ..db.db_models import (
     UserQueryDB,
     check_secret_key_match,
@@ -34,6 +34,7 @@ from ..schemas import (
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
+    UserQuerySearchResult,
 )
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
@@ -79,13 +80,11 @@ async def get_llm_answer(
         user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
     response.content_response = content_response
-    content_full_text = (
-        f"Title: {content_response[0].retrieved_title}\n\n"
-        f"Text: {content_response[0].retrieved_text}"
-    )
+
+    context = get_context_string_from_retrieved_contents(content_response)
     response.llm_response = await get_llm_rag_answer(
         user_query_refined.query_text,
-        content_full_text,
+        context,
         response_language=user_query_refined.original_language,
     )
 
@@ -114,6 +113,23 @@ async def get_user_query_and_response(
     )
 
     return user_query_db, user_query_refined, response
+
+
+def get_context_string_from_retrieved_contents(
+    content_response: Dict[int, UserQuerySearchResult]
+) -> str:
+    """
+    Get the context string from the retrieved content
+    """
+    num_context_content = min(int(MIN_LLM_CONTEXT_CONTENT), len(content_response))
+    context_list = []
+    for i in range(num_context_content):
+        context_list.append(
+            f"{i+1}. {content_response[0].retrieved_title}\n"
+            f"{content_response[0].retrieved_text}"
+        )
+    context_string = "\n\n".join(context_list)
+    return context_string
 
 
 @router.post("/embeddings-search")

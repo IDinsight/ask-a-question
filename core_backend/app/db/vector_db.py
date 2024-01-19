@@ -20,7 +20,7 @@ from ..configs.app_config import (
     QDRANT_URL,
 )
 from ..configs.llm_prompts import Language
-from ..schemas import UserQueryBase, UserQuerySearchResult
+from ..schemas import UserQueryRefined, UserQuerySearchResult
 
 _qdrant_client: QdrantClient | None = None
 
@@ -56,10 +56,9 @@ def create_qdrant_collection(collection_name: str, embeddings_dim: str) -> None:
 
 
 def get_similar_content(
-    question: UserQueryBase,
+    question: UserQueryRefined,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
@@ -73,15 +72,14 @@ def get_similar_content(
         question_language,
         qdrant_client,
         n_similar,
-        qdrant_collection_name,
     )
 
 
 async def get_similar_content_async(
-    question: UserQueryBase,
+    question: UserQueryRefined,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
+    question_language: Language = Language.ENGLISH,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
@@ -95,7 +93,6 @@ async def get_similar_content_async(
         question_language,
         qdrant_client,
         n_similar,
-        qdrant_collection_name,
     )
 
 
@@ -104,11 +101,10 @@ def get_search_results(
     question_language: Language,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
     search_result = qdrant_client.search(
-        collection_name=qdrant_collection_name,
+        collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
         with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
@@ -130,6 +126,7 @@ def get_search_results(
             results_dict[i] = UserQuerySearchResult(
                 retrieved_title=r.payload.get("content_title", ""),
                 retrieved_text=r.payload.get("content_text", ""),
+                retrieved_language=r.payload.get("content_language", ""),
                 score=r.score,
             )
 

@@ -116,7 +116,7 @@ PARAPHRASE_INPUT = (
     """
     You are a high-performing paraphrase bot.
     You support a question-answering service.
-    The user has asked a question in ENGLISH.
+    The user has asked a question in {query_language}.
     Paraphrase it to focus on the question.
     Be succinct and do not include any unnecessary information.
     Ignore any redacted and offensive words. """
@@ -134,7 +134,7 @@ ANSWER_QUESTION_PROMPT = (
     "outside of the context of the given reference text. "
     "If the reference text doesn't seem to contain an answer the question, "
     "respond with 'Sorry, no relevant information found.'\n"
-    "Reference text: {content}"
+    "Reference text: {context}"
 )
 
 
