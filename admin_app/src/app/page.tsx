@@ -15,6 +15,7 @@ export default function Home() {
   const [newCardData, setNewCardData] = useState({
     content_title: "",
     content_text: "",
+    content_language: "",
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -63,7 +64,11 @@ export default function Home() {
         }
       })
       .finally(() => setIsLoading(false));
-    setNewCardData({ content_title: "", content_text: "" });
+    setNewCardData({
+      content_title: "",
+      content_text: "",
+      content_language: "",
+    });
   };
 
   const saveNewCardInBackend = (content_data: {
@@ -91,7 +96,11 @@ export default function Home() {
         setFilteredCards([...cards, data]);
       })
       .finally(() => setIsLoading(false));
-    setNewCardData({ content_title: "", content_text: "" });
+    setNewCardData({
+      content_title: "",
+      content_text: "",
+      content_language: "",
+    });
   };
 
   const deleteCardInBackend = (id: string) => {
@@ -134,6 +143,7 @@ export default function Home() {
       : setNewCardData({
           content_title: content_title,
           content_text: newCardData.content_text,
+          content_language: newCardData.content_language,
         });
   };
 
@@ -146,6 +156,7 @@ export default function Home() {
       : setNewCardData({
           content_title: newCardData.content_title,
           content_text: content_text,
+          content_language: newCardData.content_language,
         });
   };
 
@@ -157,7 +168,8 @@ export default function Home() {
         })
       : setNewCardData({
           content_title: newCardData.content_title,
-          content_text: content_language,
+          content_text: newCardData.content_text,
+          content_language: content_language,
         });
   };
 
