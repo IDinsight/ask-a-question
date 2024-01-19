@@ -52,7 +52,7 @@ export POSTGRES_DB=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "dbname" "json
 
 
 
-
+export OPENAI_API_KEY="Test_Key"
 export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
 DOMAIN="${DOMAIN}"
