@@ -12,6 +12,7 @@ from qdrant_client.models import PointIdsList, PointStruct, Record
 
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..configs.app_config import EMBEDDING_MODEL, QDRANT_COLLECTION_NAME
+from ..configs.llm_prompts import Language
 from ..db.vector_db import get_qdrant_client
 from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
 from ..utils import setup_logger
@@ -26,9 +27,8 @@ class QdrantPayload(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
-    content_language: str = "ENGLISH"
+    content_language: str = Language.ENGLISH.value
 
-    content_metadata: dict = Field(default_factory=dict)
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
     updated_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
 
@@ -174,7 +174,7 @@ def _create_payload_for_qdrant_upsert(
     content_title: str,
     content_text: str,
     metadata: dict,
-    content_language: str,
+    content_language: str | None = None,
 ) -> QdrantPayload:
     """
     Create payload for qdrant upsert
@@ -182,7 +182,10 @@ def _create_payload_for_qdrant_upsert(
     payload_dict = metadata.copy()
     payload_dict["content_title"] = content_title
     payload_dict["content_text"] = content_text
-    payload_dict["content_language"] = content_language
+
+    if content_language is not None:
+        payload_dict["content_language"] = content_language
+
     payload = QdrantPayload(**payload_dict)
     payload.updated_datetime_utc = datetime.utcnow()
 
@@ -229,7 +232,7 @@ def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     content_title = payload.pop("content_title")
     content_text = payload.pop("content_text")
     content_language = payload.pop("content_language")
-    content_metadata = payload.pop("content_metadata", {})
+    content_metadata = payload
 
     return ContentRetrieve(
         content_title=content_title,

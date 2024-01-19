@@ -103,19 +103,26 @@ def get_search_results(
     n_similar: int,
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
+    if question_language != question_language.UNKNOWN:
+        query_filter = (
+            Filter(
+                must=[
+                    FieldCondition(
+                        key="content_language",
+                        match=MatchValue(value=question_language.value),
+                    ),
+                ]
+            ),
+        )
+    else:
+        query_filter = None
+
     search_result = qdrant_client.search(
         collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
         with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
-        query_filter=Filter(
-            must=[
-                FieldCondition(
-                    key="content_language",
-                    match=MatchValue(value=question_language.value),
-                ),
-            ]
-        ),
+        query_filter=query_filter,
     )
 
     results_dict = {}

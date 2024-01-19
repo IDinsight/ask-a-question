@@ -303,6 +303,7 @@ class TestUpsertContentToQdrant:
         [
             ("title1", "content text 1", {}),
             ("title 1", "content text 2", {"meta_key": "meta_value"}),
+            ("title 1", "content text 2", {"meta_key": "meta_value"}),
         ],
     )
     def test_upsert_content_to_qdrant_return_value(
