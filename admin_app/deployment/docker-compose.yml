@@ -1,7 +1,7 @@
 # Docker Compose file development
 version: "3"
 services:
-  frontend-container:
+  admin-app-container:
     image: ${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:frontend
     command: >
       npm start
