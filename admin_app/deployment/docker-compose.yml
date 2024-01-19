@@ -2,7 +2,7 @@
 version: "3"
 services:
   admin-app-container:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:frontend
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:Frontend
     command: >
       npm start
     restart: always
