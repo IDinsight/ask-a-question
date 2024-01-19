@@ -231,7 +231,7 @@ def _convert_record_to_schema(record: Record) -> ContentRetrieve:
     updated_datetime = payload.pop("updated_datetime_utc")
     content_title = payload.pop("content_title")
     content_text = payload.pop("content_text")
-    content_language = payload.pop("content_language")
+    content_language = payload.pop("content_language", Language.UNKNOWN.value)
     content_metadata = payload
 
     return ContentRetrieve(

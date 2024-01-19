@@ -104,15 +104,13 @@ def get_search_results(
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
     if question_language != question_language.UNKNOWN:
-        query_filter = (
-            Filter(
-                must=[
-                    FieldCondition(
-                        key="content_language",
-                        match=MatchValue(value=question_language.value),
-                    ),
-                ]
-            ),
+        query_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="content_language",
+                    match=MatchValue(value=question_language.value),
+                ),
+            ]
         )
     else:
         query_filter = None
