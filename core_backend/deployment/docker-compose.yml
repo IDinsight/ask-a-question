@@ -1,7 +1,7 @@
 version: "3"
 services:
   backend-container:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:backend
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:backend
     restart: always
     environment:
       - QDRANT_HOST=${QDRANT_HOST}
