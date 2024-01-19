@@ -1,7 +1,7 @@
 ## AAQ Demo Environment Infrastructure
 The code into 3 main module:
 
-### 1. Bastion
+#### 1. Bastion
 This is what will be used to access db locally. To open the tunnel, run `make data-db-tunnel-demo` from the infrastructure folder.
 If you have pgAdmin installed, you can create a connection with the host as localhost. You can find the DB credentials in AWS Secrets Manager
 If you do not have pgAdmin installed, you can run it in docker using the following:
@@ -16,11 +16,11 @@ docker run -p 80:80 \
 
 When using pgAdmin or docker, the host will be `host.docker.internal` if localhost does not work.
 
-### 2. Main
+#### 2. Main
 This is where all the infrastructure for the Application be stored. The application is running on ECS with EC2 launch type. The loadbalancing is done using Nginx and certificate generation and maintainance will be handled by Certbot.
 The docker images will be stored in ECR.
 
-## 3. Network
+#### 3. Network
 This module will have the code of the VPC and its components. The other modules will only have Security Groups resources. The rest will be placed here.
 
 
@@ -31,5 +31,5 @@ This module will have the code of the VPC and its components. The other modules 
 3. Run `terraform plan` to view the plan.
 4. Run `terraform apply` to deploy the terraform configuration.
 
-## Attaching IP to the Domain
+### Attaching IP to the Domain
 When the infrastructure is created, a new Elastic IP is created. If you have your own domain, make sure to associate it with this IP address
