@@ -104,6 +104,7 @@ jobs:
               env:
                 NEXT_PUBLIC_BACKEND_URL: ${{env.NEXT_PUBLIC_BACKEND_URL}}
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+                AWS_REGION: ${{ env.AWS_REGION }}
             # We need this since deploy task definition action needs the task definition in json format
             - name: Task definition download
               id: download-task-def
