@@ -128,6 +128,7 @@ jobs:
             
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
+              timeout-minutes: 2
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.download-task-def.outputs.task-def }}

@@ -29,7 +29,7 @@ SECRET_CONTENT="aaq-demo-content-access"
 SECRET_WHATSAPP_VERIFY="aaq-demo-whatsapp-verify-token"
 SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
 SECRET_WHATSAPP="aaq-demo-whatsapp-token"
-SECRET_OPENAI="aaq-demo-openai-key"
+SECRET_OPENAI="aaq-demo-open-ai-key"
 SECRET_QUESTION_ANSWER="aaq-demo-question-answer"
 
 export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
