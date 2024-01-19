@@ -26,9 +26,11 @@ echo "Fetching variables from aws store.."
 # This is the name of the secret in aws secrets manager
 SECRET_JWT="aaq-demo-jwt-secret"
 SECRET_CONTENT="aaq-demo-content-access"
-SECRET_WHATSAPP="aaq-demo-whatsapp-token"
+SECRET_WHATSAPP_VERIFY="aaq-demo-whatsapp-verify-token"
 SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
 SECRET_WHATSAPP="aaq-demo-whatsapp-token"
+SECRET_OPENAI="aaq-demo-openai-key"
+SECRET_QUESTION_ANSWER="aaq-demo-question-answer"
 
 export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
@@ -37,8 +39,10 @@ export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 export CONTENT_FULLACCESS_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "full_access_password" "json")
 export CONTENT_READONLY_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "read_only_password" "json")
 
-export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "token" "json")
-export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "verify_token" "json")
+export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "" "text")
+export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP_VERIFY} "" "text")
+export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
+export QUESTION_ANSWER_SECRET=$(get_secret_value ${SECRET_QUESTION_ANSWER} "" "text")
 
 # if using a nginx reverse proxy, set path here
 BACKEND_ROOT_PATH="/api"
@@ -52,7 +56,7 @@ export POSTGRES_DB=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "dbname" "json
 
 
 
-export OPENAI_API_KEY="Test_Key"
+
 export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
 DOMAIN="${DOMAIN}"

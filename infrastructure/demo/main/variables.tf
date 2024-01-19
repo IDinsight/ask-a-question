@@ -233,3 +233,18 @@ variable "account_id" {
   default     = ""
 
 }
+
+variable "open_ai_key_secret_name" {
+  type        = string
+  description = "value for the open ai key secret name"
+}
+
+variable "question_answer_secret_name" {
+  type        = string
+  description = "value for the question answer secret name"
+}
+
+variable "whatsapp_verify_token_secret_name" {
+  type        = string
+  description = "value for the whatsapp verify token secret name"
+}

@@ -88,11 +88,76 @@ resource "aws_secretsmanager_secret" "whatsapp_token_secret" {
 resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
   # The secret version is created for the whatsapp token secret.
   # The value will be added manually to the secret version.
-  secret_id = aws_secretsmanager_secret.whatsapp_token_secret.id
+  secret_id     = aws_secretsmanager_secret.whatsapp_token_secret.id
+  secret_string = ""
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
+# Whatsapp verify token secret
+resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
+  # AWS Secrets Manager is used to store the whatsapp token secret.
+
+  name                    = var.whatsapp_verify_token_secret_name
+  tags                    = merge({ Name = var.whatsapp_verify_token_secret_name, Module = "Web" }, var.tags)
+  recovery_window_in_days = 0
+
+}
+
+resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
+  # The secret version is created for the whatsapp token secret.
+  # The value will be added manually to the secret version.
+  secret_id     = aws_secretsmanager_secret.whatsapp_verify_token_secret.id
+  secret_string = random_password.secrets[3].result
+
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
+resource "aws_secretsmanager_secret" "open_ai_key_secret" {
+  # AWS Secrets Manager is used to store the open ai key secret.
+
+  name                    = var.open_ai_key_secret_name
+  tags                    = merge({ Name = var.open_ai_key_secret_name, Module = "Web" }, var.tags)
+  recovery_window_in_days = 0
+
+}
+
+resource "aws_secretsmanager_secret_version" "open_ai_key_secret" {
+  # The secret version is created for the open ai key secret.
+  # The value will be added manually to the secret version.
+  secret_id = aws_secretsmanager_secret.open_ai_key_secret.id
   secret_string = jsonencode({
-    verify_token = random_password.secrets[3].result,
-    token        = random_password.secrets[4].result,
+    key = ""
   })
 
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
 
+resource "aws_secretsmanager_secret" "question_answer_secret" {
+  # AWS Secrets Manager is used to store the question answer secret.
+
+  name                    = var.question_answer_secret_name
+  tags                    = merge({ Name = var.question_answer_secret_name, Module = "Web" }, var.tags)
+  recovery_window_in_days = 0
+
+}
+
+resource "aws_secretsmanager_secret_version" "question_answer_secret" {
+  # The secret version is created for the question answer secret.
+  # The value will be added manually to the secret version.
+  secret_id = aws_secretsmanager_secret.question_answer_secret.id
+  secret_string = jsonencode({
+    key = ""
+  })
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
