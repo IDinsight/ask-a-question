@@ -4,7 +4,7 @@ version: '3'
 services:
 
     nginx:
-      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:nginx
+      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:nginx
       ports:
         - "80:80"
         - "443:443"
@@ -27,7 +27,7 @@ services:
           awslogs-stream-prefix: nginx
       
     certbot:
-      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
+      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:certbot
       depends_on:
         - nginx
       environment:

@@ -118,6 +118,7 @@ jobs:
                 AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
                 DOMAIN: ${{ env.DOMAIN }}
                 EMAIL: ${{ env.EMAIL }}
+                REPO: ${{ env.REPO }}
             # We need this since deploy task definition action needs the task definition in json format
             
             - name: Task definition download
