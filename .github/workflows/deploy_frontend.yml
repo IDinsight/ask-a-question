@@ -135,7 +135,7 @@ jobs:
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services nginx-service --query services[0].deployments[0].runningCount | jq -r ".")
+                RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services admin-app-service --query services[0].deployments[0].runningCount | jq -r ".")
                     
                 if [ "$RUNNING_TASKS" -eq "0" ]; then
                   echo "Deployment failed."
