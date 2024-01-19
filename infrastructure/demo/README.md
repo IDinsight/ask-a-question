@@ -6,11 +6,13 @@ This is what will be used to access db locally. To open the tunnel, run `make da
 If you have pgAdmin installed, you can create a connection with the host as localhost. You can find the DB credentials in AWS Secrets Manager
 If you do not have pgAdmin installed, you can run it in docker using the following:
 
-``` docker pull dpage/pgadmin4
+```
+ docker pull dpage/pgadmin4
 docker run -p 80:80 \
     -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' \
     -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' \
-    -d dpage/pgadmin4 ```
+    -d dpage/pgadmin4
+ ```
 
 When using pgAdmin or docker, the host will be `host.docker.internal` if localhost does not work.
 
