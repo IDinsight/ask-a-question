@@ -45,7 +45,7 @@ export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
 export QUESTION_ANSWER_SECRET=$(get_secret_value ${SECRET_QUESTION_ANSWER} "" "text")
 
 # if using a nginx reverse proxy, set path here
-BACKEND_ROOT_PATH="/api"
+export BACKEND_ROOT_PATH="/api"
 
 # Postgres instance endpoint
 export POSTGRES_HOST=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "host" "json")
