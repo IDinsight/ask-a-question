@@ -6,7 +6,7 @@ on:
       - AAQ-277-Create-Frontend-Pipeline
     paths:
         - "admin_app/**"
-        - ".github/workflows/deploy-frontend.yml"
+        - ".github/workflows/deploy_frontend.yml"
 
 jobs:
     DeployFrontend:
