@@ -1,4 +1,4 @@
-# Docker Compose file development
+# Docker Compose file
 version: "3"
 services:
   admin-app-container:
