@@ -30,6 +30,18 @@ class ResultState(str, Enum):
     ERROR = "error"
 
 
+class ErrorType(str, Enum):
+    """
+    Enum for Error Type
+    """
+
+    QUERY_UNSAFE = "query_unsafe"
+    UNKNOWN_LANGUAGE = "unknown_language"
+    UNABLE_TO_TRANSLATE = "unable_to_translate"
+    UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
+    ALIGNMENT_TOO_LOW = "alignment_too_low"
+
+
 class UserQueryRefined(UserQueryBase):
     """
     Pydantic model for refined query
@@ -62,6 +74,19 @@ class UserQueryResponse(BaseModel):
     feedback_secret_key: str
     debug_info: dict = {}
     state: ResultState = ResultState.IN_PROGRESS
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserQueryResponseError(BaseModel):
+    """
+    Pydantic model when there is an error
+    """
+
+    query_id: int
+    error_message: Optional[str] = None
+    error_type: ErrorType
+    debug_info: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
 

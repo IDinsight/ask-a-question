@@ -12,7 +12,12 @@ from ..configs.app_config import (
     ALIGN_SCORE_THRESHOLD,
 )
 from ..configs.llm_prompts import AlignmentScore
-from ..schemas import ResultState, UserQueryRefined, UserQueryResponse
+from ..schemas import (
+    ResultState,
+    UserQueryRefined,
+    UserQueryResponse,
+    UserQueryResponseError,
+)
 from ..utils import get_http_client, setup_logger
 from .utils import _ask_llm_async
 
@@ -41,21 +46,22 @@ def check_align_score(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(
         question: UserQueryRefined,
-        response: UserQueryResponse,
+        response: UserQueryResponse | UserQueryResponseError,
         *args: Any,
         **kwargs: Any,
-    ) -> UserQueryResponse:
+    ) -> UserQueryResponse | UserQueryResponseError:
         """
         Check the alignment score
         """
 
         llm_response = await func(question, response, *args, **kwargs)
         if (
-            llm_response.state != ResultState.ERROR
-            and llm_response.llm_response is not None
+            isinstance(llm_response, UserQueryResponseError)
+            or llm_response.llm_response is None
         ):
-            llm_response = await _check_align_score(llm_response)
-        return llm_response
+            return llm_response
+        else:
+            return llm_response
 
     return wrapper
 

@@ -12,6 +12,7 @@ from ..db.db_models import (
     UserQueryDB,
     check_secret_key_match,
     save_feedback_to_db,
+    save_query_response_error_to_db,
     save_query_response_to_db,
     save_user_query_to_db,
 )
@@ -30,22 +31,28 @@ from ..llm_call.parse_input import (
     translate_question,
 )
 from ..schemas import (
+    ErrorType,
     FeedbackBase,
     ResultState,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
+    UserQueryResponseError,
 )
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 
-@router.post("/llm-response")
+@router.post(
+    "/llm-response",
+    response_model=UserQueryResponse,
+    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+)
 async def llm_response(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> UserQueryResponse:
+) -> UserQueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
@@ -57,9 +64,12 @@ async def llm_response(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_llm_answer(user_query_refined, response, qdrant_client)
-    await save_query_response_to_db(asession, user_query_db, response)
-
-    return response
+    if isinstance(response, UserQueryResponseError):
+        await save_query_response_error_to_db(asession, user_query_db, response)
+        return JSONResponse(status_code=400, content=response.model_dump())
+    else:
+        await save_query_response_to_db(asession, user_query_db, response)
+        return response
 
 
 @check_align_score
@@ -71,21 +81,27 @@ async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
     qdrant_client: QdrantClient,
-) -> UserQueryResponse:
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Get similar content and construct the LLM answer for the user query
     """
     if response.state == ResultState.ERROR:
-        return response
-    content_response = get_similar_content(
-        user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
-    )
-    response.content_response = content_response
-    response.llm_response = await get_llm_rag_answer(
-        user_query_refined.query_text, content_response[0].retrieved_text
-    )
+        error_response = UserQueryResponseError(
+            error_message=response.llm_response,
+            query_id=response.query_id,
+            error_type=ErrorType.UNKNOWN_LANGUAGE,
+        )
 
-    return response
+        return error_response
+    else:
+        content_response = get_similar_content(
+            user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+        )
+        response.content_response = content_response
+        response.llm_response = await get_llm_rag_answer(
+            user_query_refined.query_text, content_response[0].retrieved_text
+        )
+        return response
 
 
 async def get_user_query_and_response(
