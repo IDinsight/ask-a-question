@@ -13,7 +13,7 @@ from ..configs.app_config import (
 )
 from ..configs.llm_prompts import AlignmentScore
 from ..schemas import (
-    ResultState,
+    ErrorType,
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
@@ -55,55 +55,61 @@ def check_align_score(func: Callable) -> Callable:
         """
 
         llm_response = await func(question, response, *args, **kwargs)
-        if (
-            isinstance(llm_response, UserQueryResponseError)
-            or llm_response.llm_response is None
-        ):
+        if llm_response.llm_response is None:
+            logger.warning(
+                (
+                    "No LLM response found in the LLM response but "
+                    "`check_align_score` was called"
+                )
+            )
             return llm_response
         else:
-            return llm_response
+            return await _check_align_score(llm_response)
 
     return wrapper
 
 
-async def _check_align_score(llm_response: UserQueryResponse) -> UserQueryResponse:
+async def _check_align_score(
+    llm_response: UserQueryResponse | UserQueryResponseError,
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Check the alignment score
     """
+
+    if isinstance(llm_response, UserQueryResponseError):
+        return llm_response
+
     evidence = _build_evidence(llm_response)
     claim = llm_response.llm_response
-    if claim is not None:
-        payload = Payload(evidence=evidence, claim=claim)
+    assert claim is not None, "LLM response is None"
+    payload = Payload(evidence=evidence, claim=claim)
 
-        if ALIGN_SCORE_METHOD is None:
-            logger.warning(
-                "No alignment score method specified but `check_align_score` was called"
-            )
-            return llm_response
-
-        elif ALIGN_SCORE_METHOD == "AlignScore":
-            align_score = await _get_alignScore_score(ALIGN_SCORE_API, payload)
-        elif ALIGN_SCORE_METHOD == "LLM":
-            align_score = await _get_llm_align_score(payload)
-        else:
-            raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
-
-        if align_score.score < float(ALIGN_SCORE_THRESHOLD):
-            llm_response.llm_response = STANDARD_FAILURE_MESSAGE
-            llm_response.state = ResultState.ERROR
-
-        llm_response.debug_info["factual_consistency"] = {
-            "method": ALIGN_SCORE_METHOD,
-            "score": align_score.score,
-            "reason": align_score.reason,
-        }
-    else:
+    if ALIGN_SCORE_METHOD is None:
         logger.warning(
-            (
-                "No LLM response found in the LLM response but "
-                "`check_align_score` was called"
-            )
+            "No alignment score method specified but `check_align_score` was called"
         )
+        return llm_response
+
+    elif ALIGN_SCORE_METHOD == "AlignScore":
+        align_score = await _get_alignScore_score(ALIGN_SCORE_API, payload)
+    elif ALIGN_SCORE_METHOD == "LLM":
+        align_score = await _get_llm_align_score(payload)
+    else:
+        raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
+
+    if align_score.score < float(ALIGN_SCORE_THRESHOLD):
+        llm_response = UserQueryResponseError(
+            query_id=llm_response.query_id,
+            error_message=STANDARD_FAILURE_MESSAGE,
+            error_type=ErrorType.ALIGNMENT_TOO_LOW,
+            debug_info=llm_response.debug_info.copy(),
+        )
+
+    llm_response.debug_info["factual_consistency"] = {
+        "method": ALIGN_SCORE_METHOD,
+        "score": align_score.score,
+        "reason": align_score.reason,
+    }
     return llm_response
 
 

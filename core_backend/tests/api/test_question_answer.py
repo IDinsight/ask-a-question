@@ -10,8 +10,10 @@ from core_backend.app.configs.app_config import (
 from core_backend.app.configs.llm_prompts import AlignmentScore
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.schemas import (
+    ErrorType,
     ResultState,
     UserQueryResponse,
+    UserQueryResponseError,
     UserQuerySearchResult,
 )
 
@@ -177,7 +179,8 @@ class TestAlignScore:
             0.7,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert update_query_response.state == ResultState.ERROR
+        assert isinstance(update_query_response, UserQueryResponseError)
+        assert update_query_response.error_type == ErrorType.ALIGNMENT_TOO_LOW
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
 
     @pytest.mark.asyncio
@@ -200,7 +203,7 @@ class TestAlignScore:
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert update_query_response.state == ResultState.IN_PROGRESS
+        assert isinstance(update_query_response, UserQueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
     def test_build_evidence(

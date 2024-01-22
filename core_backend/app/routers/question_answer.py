@@ -19,7 +19,6 @@ from ..db.db_models import (
 from ..db.engine import get_async_session
 from ..db.vector_db import (
     get_qdrant_client,
-    get_similar_content,
     get_similar_content_async,
 )
 from ..llm_call.check_output import check_align_score
@@ -31,9 +30,7 @@ from ..llm_call.parse_input import (
     translate_question,
 )
 from ..schemas import (
-    ErrorType,
     FeedbackBase,
-    ResultState,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
@@ -85,23 +82,15 @@ async def get_llm_answer(
     """
     Get similar content and construct the LLM answer for the user query
     """
-    if response.state == ResultState.ERROR:
-        error_response = UserQueryResponseError(
-            error_message=response.llm_response,
-            query_id=response.query_id,
-            error_type=ErrorType.UNKNOWN_LANGUAGE,
-        )
-
-        return error_response
-    else:
-        content_response = get_similar_content(
+    if not isinstance(response, UserQueryResponseError):
+        content_response = await get_similar_content_async(
             user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
         )
         response.content_response = content_response
         response.llm_response = await get_llm_rag_answer(
             user_query_refined.query_text, content_response[0].retrieved_text
         )
-        return response
+    return response
 
 
 async def get_user_query_and_response(
@@ -157,19 +146,18 @@ async def embeddings_search(
 @paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
-    response: UserQueryResponse,
+    response: UserQueryResponse | UserQueryResponseError,
     qdrant_client: QdrantClient,
     n_top_similar: int,
-) -> UserQueryResponse:
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Get similar contents from vector db
     """
-    if response.state == ResultState.ERROR:
-        return response
-    content_response = await get_similar_content_async(
-        user_query_refined, qdrant_client, n_top_similar
-    )
-    response.content_response = content_response
+    if not isinstance(response, UserQueryResponseError):
+        content_response = await get_similar_content_async(
+            user_query_refined, qdrant_client, n_top_similar
+        )
+        response.content_response = content_response
     return response
 
 
