@@ -6,7 +6,7 @@ on:
       - AAQ-278-Create-Backend-Pipeline
     paths:
         - "core_backend/**"
-        - ".github/workflows/deploy-backend.yml"
+        - ".github/workflows/**"
 
 jobs:
     DeployFrontend:
