@@ -149,6 +149,12 @@ jobs:
                 service: nginx-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
+            - name: Wait for Application to start
+              id: wait-for-app
+              run: sleep 1m
+              shell: bash
+                
+              
             - name: Check if deployment was successful
               id: check-deployment
               run: |
