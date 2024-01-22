@@ -6,7 +6,7 @@ on:
       - AAQ-278-Create-Backend-Pipeline
     paths:
         - "core_backend/**"
-        - ".github/workflows/**"
+        - ".github/workflows/deploy-backend.yml"
 
 jobs:
     DeployFrontend:
@@ -135,6 +135,17 @@ jobs:
                 service: backend-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
+            - name: Wait for Application to start
+              id: wait-for-app
+              run: |
+                sleep 1m
+                curl -s ${{ env.NEXT_PUBLIC_API_URL }}/healthcheck | grep "OK"
+                if [ $? -eq 0 ]; then
+                  echo "Application is running"
+                else
+                  echo "Application is not running"
+                  exit 1
+                fi
             - name: Check if deployment was successful
               id: check-deployment
               run: |
