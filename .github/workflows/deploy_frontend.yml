@@ -6,14 +6,14 @@ on:
       - AAQ-277-Create-Frontend-Pipeline
     paths:
         - "admin_app/**"
-        - ".github/workflows/**"
+        - ".github/workflows/deploy-frontend.yml"
 
 jobs:
     DeployFrontend:
-        name: Deploying Frontend demo
+        name: Deploying Frontend demo # Change this to be dynamic
         runs-on: ubuntu-latest
         environment:
-            name: demo
+            name: demo # Change this to be dynamic
     
         permissions:
           id-token: write
@@ -41,8 +41,7 @@ jobs:
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
-              with:
-                registry: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+             
 
 
             - name: Build and push
@@ -127,12 +126,20 @@ jobs:
             
             - name: Deploy Amazon ECS task definition
               id: ecs-deploy
+              timeout-minutes: 3
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.download-task-def.outputs.task-def }}
                 service: admin-app-service
                 cluster: ${{ env.CLUSTER_NAME }} 
                 wait-for-service-stability: true
+            
+            # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
+            - name: Wait for Application to start
+              id: deployment-complete
+              run: sleep 1m
+              shell: bash
+
             - name: Check if deployment was successful
               id: check-deployment
               run: |
