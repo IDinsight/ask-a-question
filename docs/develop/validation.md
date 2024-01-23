@@ -31,7 +31,7 @@ An example content data will look like
 |"Yes"|2|
 
 
-### How to run
+### Setting up
 
 1. Create a new python environment:
     ```shell
@@ -63,9 +63,16 @@ An example content data will look like
         ```
         conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
         ```
-3. In project root `aaq-core` run the following command. (Perform any necessary
+
+### Running retrieval validation
+1. Make sure your Qdrant server is running and that the env variables are set appropriately.
+   For example, you can start a Qdrant container locally by calling `make setup-vector-db`
+   in `core_backend` directory.
+4. In project root `aaq-core` run the following command. (Perform any necessary
    authentication steps you need to do, e.g. for AWS login).
     ```
+    cd aaq-core
+    
     python -m pytest core_backend/validation/validate_retrieval.py \
         --validation_data_path <path> \
         --content_data_path <path> \
@@ -85,3 +92,5 @@ An example content data will look like
     ```shell
     python -m pytest core_backend/validation/validate_retrieval.py --help
     ```
+3.  If you used `make setup-vector-db` in step 1, stop and remove the Qdrant server by going to
+    `core backend` directory and running `make stop-vector-db`

@@ -119,7 +119,9 @@ def get_search_results(
         collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
-        with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
+        with_payload=PayloadSelectorInclude(
+            include=["content_title", "content_text", "content_language"]
+        ),
         query_filter=query_filter,
     )
 
