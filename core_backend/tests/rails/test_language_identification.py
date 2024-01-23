@@ -32,7 +32,7 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
 
 
 @pytest.mark.parametrize("language, content", read_test_data(LANGUAGE_FILE))
-def test_language_identification(
+async def test_language_identification(
     available_languages: list[str], language: str, content: str
 ) -> None:
     """Test language identification"""
@@ -45,5 +45,5 @@ def test_language_identification(
     )
     if language not in available_languages:
         language = "UNKNOWN"
-    _, response = _identify_language(question, response)
+    _, response = await _identify_language(question, response)
     assert response.debug_info["original_language"] == language

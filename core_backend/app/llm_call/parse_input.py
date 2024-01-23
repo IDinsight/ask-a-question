@@ -78,8 +78,10 @@ async def _classify_safety(
             ] = safety_classification.value
             error_response.debug_info["query_text"] = question.query_text
             logger.info("SAFETY CHECK failed on query id: " + str(response.query_id))
-
             return question, error_response
+        else:
+            response.debug_info["safety_classification"] = safety_classification.value
+
     return question, response
 
 
