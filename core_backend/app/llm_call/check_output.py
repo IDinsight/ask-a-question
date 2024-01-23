@@ -24,8 +24,8 @@ from .utils import _ask_llm_async
 logger = setup_logger("OUTPUT RAILS")
 
 STANDARD_FAILURE_MESSAGE = (
-    "Sorry, I am unable to find an answer to your question in my knowledge base."
-    "Please rephrase your question and ask a different one."
+    "Sorry, I am unable to find an answer to your question in my knowledge base. "
+    "Please rephrase your question or ask a different one."
 )
 
 
@@ -55,6 +55,10 @@ def check_align_score(func: Callable) -> Callable:
         """
 
         llm_response = await func(question, response, *args, **kwargs)
+
+        if isinstance(llm_response, UserQueryResponseError):
+            return llm_response
+
         if llm_response.llm_response is None:
             logger.warning(
                 (
@@ -70,14 +74,11 @@ def check_align_score(func: Callable) -> Callable:
 
 
 async def _check_align_score(
-    llm_response: UserQueryResponse | UserQueryResponseError,
+    llm_response: UserQueryResponse,
 ) -> UserQueryResponse | UserQueryResponseError:
     """
     Check the alignment score
     """
-
-    if isinstance(llm_response, UserQueryResponseError):
-        return llm_response
 
     evidence = _build_evidence(llm_response)
     claim = llm_response.llm_response
@@ -97,19 +98,24 @@ async def _check_align_score(
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
+    factual_consistency = {
+        "method": ALIGN_SCORE_METHOD,
+        "score": align_score.score,
+        "reason": align_score.reason,
+    }
+
     if align_score.score < float(ALIGN_SCORE_THRESHOLD):
-        llm_response = UserQueryResponseError(
+        error_response = UserQueryResponseError(
             query_id=llm_response.query_id,
             error_message=STANDARD_FAILURE_MESSAGE,
             error_type=ErrorType.ALIGNMENT_TOO_LOW,
             debug_info=llm_response.debug_info.copy(),
         )
+        error_response.debug_info["factual_consistency"] = factual_consistency.copy()
+        return error_response
 
-    llm_response.debug_info["factual_consistency"] = {
-        "method": ALIGN_SCORE_METHOD,
-        "score": align_score.score,
-        "reason": align_score.reason,
-    }
+    llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+
     return llm_response
 
 

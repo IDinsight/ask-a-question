@@ -117,12 +117,16 @@ async def get_user_query_and_response(
     return user_query_db, user_query_refined, response
 
 
-@router.post("/embeddings-search")
+@router.post(
+    "/embeddings-search",
+    response_model=UserQueryResponse,
+    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+)
 async def embeddings_search(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> UserQueryResponse:
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
@@ -136,7 +140,10 @@ async def embeddings_search(
     response = await get_semantic_matches(
         user_query_refined, response, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
-    await save_query_response_to_db(asession, user_query_db, response)
+    if isinstance(response, UserQueryResponseError):
+        await save_query_response_error_to_db(asession, user_query_db, response)
+    else:
+        await save_query_response_to_db(asession, user_query_db, response)
 
     return response
 
