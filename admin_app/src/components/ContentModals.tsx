@@ -157,7 +157,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               <select
                 id="content_language"
                 className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-32 dark:bg-gray-800 py-2 px-3 text-gray-800 dark:text-gray-400 overflow-auto required mt-2"
-                defaultValue={cardToEdit?.content_language || "ENGLISH"}
+                defaultValue={cardToEdit?.content_language || Language.ENGLISH}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   onLanguageChange(e.target.value as Language);
                 }}
