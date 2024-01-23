@@ -29,7 +29,7 @@ STANDARD_FAILURE_MESSAGE = (
 )
 
 
-class Payload(TypedDict):
+class AlignScoreData(TypedDict):
     """
     Payload for the AlignScore API
     """
@@ -83,7 +83,7 @@ async def _check_align_score(
     evidence = _build_evidence(llm_response)
     claim = llm_response.llm_response
     assert claim is not None, "LLM response is None"
-    payload = Payload(evidence=evidence, claim=claim)
+    align_score_date = AlignScoreData(evidence=evidence, claim=claim)
 
     if ALIGN_SCORE_METHOD is None:
         logger.warning(
@@ -92,9 +92,9 @@ async def _check_align_score(
         return llm_response
 
     elif ALIGN_SCORE_METHOD == "AlignScore":
-        align_score = await _get_alignScore_score(ALIGN_SCORE_API, payload)
+        align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_date)
     elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(payload)
+        align_score = await _get_llm_align_score(align_score_date)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
@@ -113,17 +113,18 @@ async def _check_align_score(
         )
         error_response.debug_info["factual_consistency"] = factual_consistency.copy()
         return error_response
+    else:
+        llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+        return llm_response
 
-    llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
 
-    return llm_response
-
-
-async def _get_alignScore_score(api_url: str, payload: Payload) -> AlignmentScore:
+async def _get_alignScore_score(
+    api_url: str, align_score_date: AlignScoreData
+) -> AlignmentScore:
     """
     Get the alignment score from the AlignScore API
     """
-    async with get_http_client().post(api_url, json=payload) as resp:
+    async with get_http_client().post(api_url, json=align_score_date) as resp:
         if resp.status != 200:
             logger.error(f"AlignScore API request failed with status {resp.status}")
             raise RuntimeError(
@@ -137,12 +138,12 @@ async def _get_alignScore_score(api_url: str, payload: Payload) -> AlignmentScor
     return alignment_score
 
 
-async def _get_llm_align_score(payload: Payload) -> AlignmentScore:
+async def _get_llm_align_score(align_score_date: AlignScoreData) -> AlignmentScore:
     """
     Get the alignment score from the LLM
     """
-    prompt = AlignmentScore.prompt.format(context=payload["evidence"])
-    result = await _ask_llm_async(prompt, payload["claim"])
+    prompt = AlignmentScore.prompt.format(context=align_score_date["evidence"])
+    result = await _ask_llm_async(prompt, align_score_date["claim"])
 
     try:
         alignment_score = AlignmentScore.model_validate_json(result)

@@ -245,6 +245,7 @@ async def _paraphrase_question(
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response
         response.debug_info["paraphrased_question"] = paraphrase_response
+        return question, response
     else:
         error_response = UserQueryResponseError(
             error_message=STANDARD_FAILURE_MESSAGE,
@@ -254,5 +255,3 @@ async def _paraphrase_question(
         response.state = ResultState.ERROR
         logger.info("PARAPHRASE FAILED on query id: " + str(response.query_id))
         return question, error_response
-
-    return question, response
