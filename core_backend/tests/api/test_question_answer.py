@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Dict
 
 import pytest
@@ -7,11 +8,15 @@ from core_backend.app.configs.app_config import (
     QDRANT_N_TOP_SIMILAR,
     QUESTION_ANSWER_SECRET,
 )
-from core_backend.app.configs.llm_prompts import AlignmentScore
+from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
+from core_backend.app.llm_call.parse_input import _classify_safety, _translate_question
 from core_backend.app.schemas import (
+    ErrorType,
     ResultState,
+    UserQueryRefined,
     UserQueryResponse,
+    UserQueryResponseError,
     UserQuerySearchResult,
 )
 
@@ -134,6 +139,96 @@ class TestLLMSearch:
             assert len(content_response) != 0
 
 
+class TestErrorResponses:
+    VALID_LANGUAGE = IdentifiedLanguage.get_supported_languages()[-1]
+
+    @pytest.fixture
+    def user_query_response(
+        self,
+    ) -> UserQueryResponse:
+        return UserQueryResponse(
+            query_id=124,
+            content_response={},
+            llm_response=None,
+            feedback_secret_key="abc123",
+            debug_info={},
+            state=ResultState.IN_PROGRESS,
+        )
+
+    @pytest.fixture
+    def user_query_refined(self, request: pytest.FixtureRequest) -> UserQueryRefined:
+        if hasattr(request, "param"):
+            language = request.param
+        else:
+            language = None
+        return UserQueryRefined(
+            query_text="This is a basic query",
+            original_language=language,
+            query_text_original="This is a query original",
+        )
+
+    @pytest.mark.parametrize(
+        "user_query_refined,should_error",
+        [("ENGLISH", False), ("MADE_UP_LANGUAGE", True), (VALID_LANGUAGE, False)],
+        indirect=["user_query_refined"],
+    )
+    async def test_translate_error(
+        self,
+        user_query_refined: UserQueryRefined,
+        user_query_response: UserQueryResponse,
+        should_error: bool,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+            return "This is a translated LLM response"
+
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+        )
+        query, response = await _translate_question(
+            user_query_refined, user_query_response
+        )
+        if should_error:
+            assert isinstance(response, UserQueryResponseError)
+            assert response.error_type == ErrorType.UNKNOWN_LANGUAGE
+        else:
+            assert isinstance(response, UserQueryResponse)
+            if query.original_language == "ENGLISH":
+                assert query.query_text == "This is a basic query"
+            else:
+                assert query.query_text == "This is a translated LLM response"
+
+    @pytest.mark.parametrize(
+        "classification, should_error",
+        [("SAFE", False), ("INAPPROPRIATE_LANGUAGE", True), ("PROMPT_INJECTION", True)],
+    )
+    async def test_unsafe_query_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        user_query_refined: UserQueryRefined,
+        user_query_response: UserQueryResponse,
+        classification: str,
+        should_error: bool,
+    ) -> None:
+        async def mock_ask_llm(llm_response: str, *args: Any, **kwargs: Any) -> str:
+            return llm_response
+
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.parse_input._ask_llm_async",
+            partial(mock_ask_llm, classification),
+        )
+        query, response = await _classify_safety(
+            user_query_refined, user_query_response
+        )
+
+        if should_error:
+            assert isinstance(response, UserQueryResponseError)
+            assert response.error_type == ErrorType.QUERY_UNSAFE
+        else:
+            assert isinstance(response, UserQueryResponse)
+            assert query.query_text == "This is a basic query"
+
+
 class TestAlignScore:
     @pytest.fixture
     def user_query_response(self) -> UserQueryResponse:
@@ -177,7 +272,8 @@ class TestAlignScore:
             0.7,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert update_query_response.state == ResultState.ERROR
+        assert isinstance(update_query_response, UserQueryResponseError)
+        assert update_query_response.error_type == ErrorType.ALIGNMENT_TOO_LOW
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
 
     @pytest.mark.asyncio
@@ -200,7 +296,7 @@ class TestAlignScore:
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert update_query_response.state == ResultState.IN_PROGRESS
+        assert isinstance(update_query_response, UserQueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
     def test_build_evidence(

@@ -12,13 +12,13 @@ from ..db.db_models import (
     UserQueryDB,
     check_secret_key_match,
     save_feedback_to_db,
+    save_query_response_error_to_db,
     save_query_response_to_db,
     save_user_query_to_db,
 )
 from ..db.engine import get_async_session
 from ..db.vector_db import (
     get_qdrant_client,
-    get_similar_content,
     get_similar_content_async,
 )
 from ..llm_call.check_output import check_align_score
@@ -31,21 +31,25 @@ from ..llm_call.parse_input import (
 )
 from ..schemas import (
     FeedbackBase,
-    ResultState,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
+    UserQueryResponseError,
 )
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 
-@router.post("/llm-response")
+@router.post(
+    "/llm-response",
+    response_model=UserQueryResponse,
+    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+)
 async def llm_response(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> UserQueryResponse:
+) -> UserQueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
@@ -57,9 +61,12 @@ async def llm_response(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_llm_answer(user_query_refined, response, qdrant_client)
-    await save_query_response_to_db(asession, user_query_db, response)
-
-    return response
+    if isinstance(response, UserQueryResponseError):
+        await save_query_response_error_to_db(asession, user_query_db, response)
+        return JSONResponse(status_code=400, content=response.model_dump())
+    else:
+        await save_query_response_to_db(asession, user_query_db, response)
+        return response
 
 
 @check_align_score
@@ -71,20 +78,18 @@ async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
     qdrant_client: QdrantClient,
-) -> UserQueryResponse:
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Get similar content and construct the LLM answer for the user query
     """
-    if response.state == ResultState.ERROR:
-        return response
-    content_response = get_similar_content(
-        user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
-    )
-    response.content_response = content_response
-    response.llm_response = await get_llm_rag_answer(
-        user_query_refined.query_text, content_response[0].retrieved_text
-    )
-
+    if not isinstance(response, UserQueryResponseError):
+        content_response = await get_similar_content_async(
+            user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
+        )
+        response.content_response = content_response
+        response.llm_response = await get_llm_rag_answer(
+            user_query_refined.query_text, content_response[0].retrieved_text
+        )
     return response
 
 
@@ -112,12 +117,16 @@ async def get_user_query_and_response(
     return user_query_db, user_query_refined, response
 
 
-@router.post("/embeddings-search")
+@router.post(
+    "/embeddings-search",
+    response_model=UserQueryResponse,
+    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+)
 async def embeddings_search(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> UserQueryResponse:
+) -> UserQueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
@@ -131,9 +140,12 @@ async def embeddings_search(
     response = await get_semantic_matches(
         user_query_refined, response, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
     )
-    await save_query_response_to_db(asession, user_query_db, response)
-
-    return response
+    if isinstance(response, UserQueryResponseError):
+        await save_query_response_error_to_db(asession, user_query_db, response)
+        return JSONResponse(status_code=400, content=response.model_dump())
+    else:
+        await save_query_response_to_db(asession, user_query_db, response)
+        return response
 
 
 @identify_language
@@ -141,19 +153,18 @@ async def embeddings_search(
 @paraphrase_question
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
-    response: UserQueryResponse,
+    response: UserQueryResponse | UserQueryResponseError,
     qdrant_client: QdrantClient,
     n_top_similar: int,
-) -> UserQueryResponse:
+) -> UserQueryResponse | UserQueryResponseError:
     """
     Get similar contents from vector db
     """
-    if response.state == ResultState.ERROR:
-        return response
-    content_response = await get_similar_content_async(
-        user_query_refined, qdrant_client, n_top_similar
-    )
-    response.content_response = content_response
+    if not isinstance(response, UserQueryResponseError):
+        content_response = await get_similar_content_async(
+            user_query_refined, qdrant_client, n_top_similar
+        )
+        response.content_response = content_response
     return response
 
 

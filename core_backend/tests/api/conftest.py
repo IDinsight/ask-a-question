@@ -85,6 +85,9 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
         "core_backend.app.routers.manage_content.embedding", fake_embedding
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
+    monkeysession.setattr(
+        "core_backend.app.db.vector_db.aembedding", async_fake_embedding
+    )
     monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(parse_input, "_paraphrase_question", mock_return_args)
@@ -144,6 +147,18 @@ async def mock_translate_question(
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     """
     Replicates `litellm.embedding` function but just generates a random
+    list of floats
+    """
+
+    embedding_list = np.random.rand(int(QDRANT_VECTOR_SIZE)).astype(np.float32).tolist()
+    data_obj = EmbeddingData([{"embedding": embedding_list}])
+
+    return data_obj
+
+
+async def async_fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
+    """
+    Replicates `litellm.aembedding` function but just generates a random
     list of floats
     """
 
