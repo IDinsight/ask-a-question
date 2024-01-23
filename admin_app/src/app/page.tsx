@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ContentCard, Content } from "../components/ContentCard";
+import {
+  ContentCard,
+  ContentInEdit,
+  ContentDataInEdit,
+  Content,
+  ContentData,
+  Language,
+} from "../components/ContentCard";
 import { ConfirmDelete, EditModal } from "../components/ContentModals";
 import { SearchBar } from "../components/SearchBar";
 import { backendUrl } from "../components/Config";
@@ -12,10 +19,10 @@ export default function Home() {
   const [cards, setCards] = useState<Content[]>([]);
   const [filteredCards, setFilteredCards] = useState<Content[]>([]);
   const [cardToEdit, setCardToEdit] = useState<Content | null>(null);
-  const [newCardData, setNewCardData] = useState({
-    content_title: "",
-    content_text: "",
-    content_language: "",
+  const [newCardData, setNewCardData] = useState<ContentDataInEdit>({
+    content_title: null,
+    content_text: null,
+    content_language: "ENGLISH",
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -65,16 +72,13 @@ export default function Home() {
       })
       .finally(() => setIsLoading(false));
     setNewCardData({
-      content_title: "",
-      content_text: "",
-      content_language: "",
+      content_title: null,
+      content_text: null,
+      content_language: "ENGLISH",
     });
   };
 
-  const saveNewCardInBackend = (content_data: {
-    content_title: string;
-    content_text: string;
-  }) => {
+  const saveNewCardInBackend = (content_data: ContentData) => {
     setIsLoading(true);
     fetch(`${backendUrl}/content/create`, {
       method: "POST",
@@ -82,6 +86,7 @@ export default function Home() {
       body: JSON.stringify({
         content_title: content_data.content_title,
         content_text: content_data.content_text,
+        content_language: content_data.content_language,
       }),
     })
       .then((response) => {
@@ -97,9 +102,9 @@ export default function Home() {
       })
       .finally(() => setIsLoading(false));
     setNewCardData({
-      content_title: "",
-      content_text: "",
-      content_language: "",
+      content_title: null,
+      content_text: null,
+      content_language: "ENGLISH",
     });
   };
 
@@ -160,7 +165,7 @@ export default function Home() {
         });
   };
 
-  const onContentLanguageChange = (content_language: string) => {
+  const onContentLanguageChange = (content_language: Language) => {
     cardToEdit
       ? setCardToEdit(() => {
           cardToEdit.content_language = content_language;
@@ -173,6 +178,14 @@ export default function Home() {
         });
   };
 
+  function canSaveContentData(data: ContentDataInEdit): data is ContentData {
+    return (
+      data.content_title !== null &&
+      data.content_text !== null &&
+      data.content_language !== null
+    );
+  }
+
   const onChangeSubmit = () => {
     if (cardToEdit) {
       if (!cardToEdit.content_title.trim() || !cardToEdit.content_text.trim()) {
@@ -181,14 +194,19 @@ export default function Home() {
       }
       saveEditedCardInBackend(cardToEdit!);
     } else {
+      if (!canSaveContentData(newCardData)) {
+        alert("All fields are required");
+        return;
+      }
+      var newCardDataToSave = newCardData as ContentData;
       if (
-        !newCardData.content_title.trim() ||
-        !newCardData.content_text.trim()
+        !newCardDataToSave.content_title.trim() ||
+        !newCardDataToSave.content_text.trim()
       ) {
         alert("Both title and text are required");
         return;
       }
-      saveNewCardInBackend(newCardData);
+      saveNewCardInBackend(newCardDataToSave);
     }
     setShowEditModal(false);
   };

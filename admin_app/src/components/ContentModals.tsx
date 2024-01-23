@@ -1,6 +1,6 @@
 // ConfirmDelete.jsx
-import React from "react";
-import { Content } from "./ContentCard";
+import React, { useEffect } from "react";
+import { Content, ContentInEdit, Language } from "./ContentCard";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -78,10 +78,10 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
 };
 
 interface EditModalProps {
-  cardToEdit: Content | null;
+  cardToEdit: ContentInEdit | null;
   onTitleChange: (content_title: string) => void;
   onContentChange: (content_text: string) => void;
-  onLanguageChange: (content_language: string) => void;
+  onLanguageChange: (content_language: Language) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
@@ -123,7 +123,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               id="content_title"
               type="text"
               className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-3 px-3 text-gray-800 dark:text-gray-400 overflow-auto required"
-              defaultValue={cardToEdit?.content_title}
+              defaultValue={cardToEdit?.content_title || ""}
               placeholder="Enter content title"
               maxLength={150}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,7 +138,7 @@ export const EditModal: React.FC<EditModalProps> = ({
               maxRows={6}
               maxLength={1446} // Ensure len("*{title}*\n\n{text}") <= 1600
               className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-full dark:bg-gray-800 py-3 px-3 text-gray-800 dark:text-gray-400 overflow-auto required min-h-[10rem]"
-              defaultValue={cardToEdit?.content_text}
+              defaultValue={cardToEdit?.content_text || ""}
               placeholder="Enter content text"
               onChange={(e: React.FormEvent<HTMLTextAreaElement>) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -159,7 +159,7 @@ export const EditModal: React.FC<EditModalProps> = ({
                 className="shadow appearance-none border active:outline-none border-neutral-400 text-sm rounded w-32 dark:bg-gray-800 py-2 px-3 text-gray-800 dark:text-gray-400 overflow-auto required mt-2"
                 defaultValue={cardToEdit?.content_language || "ENGLISH"}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  onLanguageChange(e.target.value);
+                  onLanguageChange(e.target.value as Language);
                 }}
               >
                 <option value="ENGLISH">ENGLISH</option>

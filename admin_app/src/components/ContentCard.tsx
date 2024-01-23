@@ -2,11 +2,26 @@
 import React, { useState } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
 
-export type Content = {
-  content_id: string;
+export type Language = "ENGLISH" | "HINDI";
+
+export type ContentDataInEdit = {
+  content_title: string | null;
+  content_text: string | null;
+  content_language: Language | null;
+};
+
+export type ContentData = {
   content_title: string;
   content_text: string;
-  content_language: string;
+  content_language: Language;
+};
+
+export type ContentInEdit = ContentDataInEdit & {
+  content_id: string;
+};
+
+export type Content = ContentData & {
+  content_id: string;
 };
 
 interface ContentCardProps {
