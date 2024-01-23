@@ -126,7 +126,7 @@ async def embeddings_search(
     user_query: UserQueryBase,
     asession: AsyncSession = Depends(get_async_session),
     qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> UserQueryResponse | UserQueryResponseError:
+) -> UserQueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
@@ -142,10 +142,10 @@ async def embeddings_search(
     )
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(asession, user_query_db, response)
+        return JSONResponse(status_code=400, content=response.model_dump())
     else:
         await save_query_response_to_db(asession, user_query_db, response)
-
-    return response
+        return response
 
 
 @identify_language
