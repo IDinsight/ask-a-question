@@ -1,5 +1,5 @@
 // ConfirmDelete.jsx
-import React, { useEffect } from "react";
+import React from "react";
 import { Content, ContentInEdit, Language } from "./ContentCard";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import TextareaAutosize from "react-textarea-autosize";
