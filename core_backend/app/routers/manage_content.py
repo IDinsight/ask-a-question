@@ -27,7 +27,7 @@ class QdrantPayload(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
-    content_language: str = Language.ENGLISH.value
+    content_language: str = Language.UNKNOWN.value
 
     created_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
     updated_datetime_utc: datetime = Field(default_factory=datetime.utcnow)
@@ -49,9 +49,9 @@ async def create_content(
     """
 
     payload = _create_payload_for_qdrant_upsert(
-        content.content_title,
-        content.content_text,
-        content.content_metadata,
+        content_title=content.content_title,
+        content_text=content.content_text,
+        metadata=content.content_metadata,
         content_language=content.content_language,
     )
 

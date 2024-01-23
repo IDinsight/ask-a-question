@@ -79,7 +79,7 @@ async def get_similar_content_async(
     question: UserQueryRefined,
     qdrant_client: QdrantClient,
     n_similar: int,
-    question_language: Language = Language.ENGLISH,
+    question_language: Language = Language.UNKNOWN,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
@@ -103,7 +103,9 @@ def get_search_results(
     n_similar: int,
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
-    if question_language != question_language.UNKNOWN:
+    if question_language == question_language.UNKNOWN:
+        query_filter = None
+    else:
         query_filter = Filter(
             must=[
                 FieldCondition(
@@ -112,14 +114,14 @@ def get_search_results(
                 ),
             ]
         )
-    else:
-        query_filter = None
 
     search_result = qdrant_client.search(
         collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
-        with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
+        with_payload=PayloadSelectorInclude(
+            include=["content_title", "content_text", "content_language"]
+        ),
         query_filter=query_filter,
     )
 

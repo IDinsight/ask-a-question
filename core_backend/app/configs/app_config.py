@@ -51,4 +51,4 @@ ALIGN_SCORE_API = os.environ.get(
 # Minimum number of content to use as context for LLM response.
 # If it is greater than QDRANT_N_TOP_SIMILAR, only QDRANT_N_TOP_SIMILAR top content will
 # be used.
-MIN_LLM_CONTEXT_CONTENT = os.environ.get("MIN_CONTENT", "3")
+MIN_LLM_CONTEXT_CONTENT = os.environ.get("MIN_CONTENT", "1")

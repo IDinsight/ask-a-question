@@ -49,6 +49,7 @@ def faq_contents(client: TestClient) -> None:
             content["content_title"],
             content["content_text"],
             metadata,
+            Language.ENGLISH.value,
         )
         points.append(
             PointStruct(
