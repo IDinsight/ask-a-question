@@ -4,7 +4,7 @@ from typing import Annotated, Dict, Literal, Optional
 
 from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints
 
-from .configs.llm_prompts import IdentifiedLanguage
+from .configs.llm_prompts import Language
 
 AccessLevel = Literal["fullaccess", "readonly"]
 
@@ -36,7 +36,7 @@ class UserQueryRefined(UserQueryBase):
     """
 
     query_text_original: str
-    original_language: IdentifiedLanguage | None = None
+    original_language: Language = Language.UNKNOWN
 
 
 class UserQuerySearchResult(BaseModel):
@@ -46,6 +46,7 @@ class UserQuerySearchResult(BaseModel):
 
     retrieved_title: str
     retrieved_text: str
+    retrieved_language: str
     score: float
 
     model_config = ConfigDict(from_attributes=True)
@@ -86,6 +87,7 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
+    content_language: str = Language.UNKNOWN.value
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)

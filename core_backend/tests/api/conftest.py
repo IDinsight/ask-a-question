@@ -16,7 +16,7 @@ from core_backend.app.configs.app_config import (
     QDRANT_COLLECTION_NAME,
     QDRANT_VECTOR_SIZE,
 )
-from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
+from core_backend.app.configs.llm_prompts import AlignmentScore, Language
 from core_backend.app.db.vector_db import get_qdrant_client
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
@@ -46,7 +46,10 @@ def faq_contents(client: TestClient) -> None:
         ]
         metadata = content.get("content_metadata", {})
         payload = _create_payload_for_qdrant_upsert(
-            content["content_title"], content["content_text"], metadata
+            content["content_title"],
+            content["content_text"],
+            metadata,
+            Language.ENGLISH.value,
         )
         points.append(
             PointStruct(
@@ -116,7 +119,7 @@ async def mock_identify_language(
     """
     Monkeypatch call to LLM language identification service
     """
-    question.original_language = IdentifiedLanguage.ENGLISH
+    question.original_language = Language.ENGLISH
     response.debug_info["original_language"] = "ENGLISH"
 
     return question, response

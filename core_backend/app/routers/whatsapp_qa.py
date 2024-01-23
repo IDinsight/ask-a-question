@@ -10,7 +10,11 @@ from ..configs.app_config import WHATSAPP_TOKEN, WHATSAPP_VERIFY_TOKEN
 from ..db.db_models import save_wamessage_to_db, save_waresponse_to_db
 from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client, get_similar_content
-from ..schemas import UserQueryBase, WhatsAppIncoming, WhatsAppResponse
+from ..schemas import (
+    UserQueryRefined,
+    WhatsAppIncoming,
+    WhatsAppResponse,
+)
 
 router = APIRouter()
 
@@ -58,7 +62,11 @@ async def process_whatsapp_message(
                     asession=asession, incoming=incoming_to_process
                 )
 
-                message = UserQueryBase(query_text=msg_body, query_metadata={})
+                message = UserQueryRefined(
+                    query_text=msg_body,
+                    query_metadata={},
+                    query_text_original=msg_body,
+                )
                 content_response = get_similar_content(message, qdrant_client, 1)
                 top_faq = content_response[0].retrieved_text
                 data_obj = {

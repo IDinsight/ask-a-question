@@ -59,20 +59,20 @@ class SafetyClassification(str, Enum):
 # ----  Language identification bot
 
 
-class IdentifiedLanguage(str, Enum):
+class Language(str, Enum):
     """
     Identified language of the user's input.
     """
 
     ENGLISH = "ENGLISH"
-    XHOSA = "XHOSA"
-    ZULU = "ZULU"
-    AFRIKAANS = "AFRIKAANS"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+    # AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
-    def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
+    def _missing_(cls, value: str) -> Language:  # type: ignore[override]
         """
         If language identified is not one of the above, it is classified as UNKNOWN.
         """
@@ -104,7 +104,7 @@ class IdentifiedLanguage(str, Enum):
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_INPUT = f"""
-    You are a high-performing translation bot for low-resourced African languages.
+    You are a high-performing translation bot.
     You support a question-answering chatbot.
     If you are unable to translate the user's input,
     respond with {TRANSLATE_FAILED_MESSAGE}
@@ -112,29 +112,30 @@ TRANSLATE_INPUT = f"""
 
 # ---- Paraphrase question
 PARAPHRASE_FAILED_MESSAGE = "ERROR: CAN'T PARAPHRASE"
-PARAPHRASE_INPUT = f"""
+PARAPHRASE_INPUT = (
+    """
     You are a high-performing paraphrase bot.
     You support a question-answering service.
-    The user has asked a question in English, paraphrase it to focus on
-    the question. Be succinct and do not include any unnecessary information.
-    Ignore any redacted and offensive words.
-    If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}
-    """
+    The user has asked a question in {query_language}.
+    Paraphrase it to focus on the question.
+    Be succinct and do not include any unnecessary information.
+    Ignore any redacted and offensive words. """
+    + f"If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}"
+)
+
 
 # ----  Question answering bot
 
-ANSWER_QUESTION_PROMPT = """
-    You are a high-performing question answering bot.
-    You support a maternal and child health chatbot.
-
-    Answer the user query in natural language by rewording the
-    following FAQ found below. Address the question directly and do not
-    respond with anything that is outside of the context of the given FAQ.
-
-    If the FAQ doesn't seem to answer the question, respond with
-    'Sorry, no relevant information found.'
-
-    Found FAQ: {faq}"""
+ANSWER_QUESTION_PROMPT = (
+    "You are a high-performing question answering bot.\n"
+    "Answer the user query in {response_language} using the information "
+    "provided in the reference text found below. "
+    "Address the question directly and do not respond with anything that is "
+    "outside of the context of the given reference text. "
+    "If the reference text doesn't seem to contain an answer the question, "
+    "respond with 'Sorry, no relevant information found.'\n"
+    "Reference text: {context}"
+)
 
 
 class AlignmentScore(BaseModel):

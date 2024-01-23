@@ -10,7 +10,7 @@ from ..configs.llm_prompts import (
     PARAPHRASE_INPUT,
     TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_INPUT,
-    IdentifiedLanguage,
+    Language,
     SafetyClassification,
 )
 from ..schemas import ResultState, UserQueryRefined, UserQueryResponse
@@ -98,12 +98,12 @@ async def _identify_language(
     """
     if response.state != ResultState.ERROR:
         identified_lang = await _ask_llm_async(
-            question.query_text, IdentifiedLanguage.get_prompt()
+            question.query_text, Language.get_prompt()
         )
-        if identified_lang in IdentifiedLanguage.get_supported_languages():
-            question.original_language = getattr(IdentifiedLanguage, identified_lang)
+        if identified_lang in Language.get_supported_languages():
+            question.original_language = getattr(Language, identified_lang)
         else:
-            question.original_language = IdentifiedLanguage.UNKNOWN
+            question.original_language = Language.UNKNOWN
 
         if question.original_language is not None:
             response.debug_info["original_language"] = question.original_language.value
@@ -142,7 +142,7 @@ async def _translate_question(
     """
 
     if (
-        question.original_language == IdentifiedLanguage.ENGLISH
+        question.original_language == Language.ENGLISH
         or response.state == ResultState.ERROR
     ):
         return question, response
@@ -156,8 +156,8 @@ async def _translate_question(
             )
         )
 
-    if question.original_language == IdentifiedLanguage.UNKNOWN:
-        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+    if question.original_language == Language.UNKNOWN:
+        supported_languages = ", ".join(Language.get_supported_languages())
 
         response.llm_response = (
             STANDARD_FAILURE_MESSAGE
@@ -218,7 +218,10 @@ async def _paraphrase_question(
     if response.state == ResultState.ERROR:
         return question, response
 
-    paraphrase_response = await _ask_llm_async(question.query_text, PARAPHRASE_INPUT)
+    paraphrase_response = await _ask_llm_async(
+        question.query_text,
+        PARAPHRASE_INPUT.format(query_language=question.original_language.value),
+    )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response
         response.debug_info["paraphrased_question"] = paraphrase_response

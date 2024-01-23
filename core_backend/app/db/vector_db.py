@@ -4,6 +4,9 @@ from litellm import aembedding, embedding
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
     PayloadSelectorInclude,
     VectorParams,
 )
@@ -16,7 +19,8 @@ from ..configs.app_config import (
     QDRANT_PORT,
     QDRANT_URL,
 )
-from ..schemas import UserQueryBase, UserQuerySearchResult
+from ..configs.llm_prompts import Language
+from ..schemas import UserQueryRefined, UserQuerySearchResult
 
 _qdrant_client: QdrantClient | None = None
 
@@ -52,51 +56,73 @@ def create_qdrant_collection(collection_name: str, embeddings_dim: str) -> None:
 
 
 def get_similar_content(
-    question: UserQueryBase,
+    question: UserQueryRefined,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
     """
     response = embedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
+    question_language = question.original_language
 
     return get_search_results(
-        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding,
+        question_language,
+        qdrant_client,
+        n_similar,
     )
 
 
 async def get_similar_content_async(
-    question: UserQueryBase,
+    question: UserQueryRefined,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
+    question_language: Language = Language.UNKNOWN,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
     """
     response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
+    question_language = question.original_language
 
     return get_search_results(
-        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+        question_embedding,
+        question_language,
+        qdrant_client,
+        n_similar,
     )
 
 
 def get_search_results(
     question_embedding: List[float],
+    question_language: Language,
     qdrant_client: QdrantClient,
     n_similar: int,
-    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
+    if question_language == question_language.UNKNOWN:
+        query_filter = None
+    else:
+        query_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="content_language",
+                    match=MatchValue(value=question_language.value),
+                ),
+            ]
+        )
+
     search_result = qdrant_client.search(
-        collection_name=qdrant_collection_name,
+        collection_name=QDRANT_COLLECTION_NAME,
         query_vector=question_embedding,
         limit=n_similar,
-        with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
+        with_payload=PayloadSelectorInclude(
+            include=["content_title", "content_text", "content_language"]
+        ),
+        query_filter=query_filter,
     )
 
     results_dict = {}
@@ -107,6 +133,7 @@ def get_search_results(
             results_dict[i] = UserQuerySearchResult(
                 retrieved_title=r.payload.get("content_title", ""),
                 retrieved_text=r.payload.get("content_text", ""),
+                retrieved_language=r.payload.get("content_language", ""),
                 score=r.score,
             )
 
