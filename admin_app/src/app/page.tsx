@@ -22,7 +22,7 @@ export default function Home() {
   const [newCardData, setNewCardData] = useState<ContentDataInEdit>({
     content_title: null,
     content_text: null,
-    content_language: "ENGLISH",
+    content_language: Language.ENGLISH,
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -74,7 +74,7 @@ export default function Home() {
     setNewCardData({
       content_title: null,
       content_text: null,
-      content_language: "ENGLISH",
+      content_language: Language.ENGLISH,
     });
   };
 
@@ -104,7 +104,7 @@ export default function Home() {
     setNewCardData({
       content_title: null,
       content_text: null,
-      content_language: "ENGLISH",
+      content_language: Language.ENGLISH,
     });
   };
 

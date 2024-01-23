@@ -2,7 +2,10 @@
 import React, { useState } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
 
-export type Language = "ENGLISH" | "HINDI";
+export enum Language {
+  ENGLISH = "ENGLISH",
+  HINDI = "HINDI",
+}
 
 export type ContentDataInEdit = {
   content_title: string | null;

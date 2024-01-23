@@ -162,8 +162,11 @@ export const EditModal: React.FC<EditModalProps> = ({
                   onLanguageChange(e.target.value as Language);
                 }}
               >
-                <option value="ENGLISH">ENGLISH</option>
-                <option value="HINDI">HINDI</option>
+                {Object.values(Language).map((language) => (
+                  <option key={language} value={language}>
+                    {language}
+                  </option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
                 <svg
