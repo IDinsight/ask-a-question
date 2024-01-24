@@ -31,7 +31,7 @@ STANDARD_FAILURE_MESSAGE = (
 )
 
 
-def classify_safety(func: Callable) -> Callable:
+def classify_safety__before(func: Callable) -> Callable:
     """
     Decorator to classify the safety of the question.
     """
@@ -85,7 +85,7 @@ async def _classify_safety(
     return question, response
 
 
-def identify_language(func: Callable) -> Callable:
+def identify_language__before(func: Callable) -> Callable:
     """
     Decorator to identify the language of the question.
     """
@@ -128,7 +128,7 @@ async def _identify_language(
     return question, response
 
 
-def translate_question(func: Callable) -> Callable:
+def translate_question__before(func: Callable) -> Callable:
     """
     Decorator to translate the question.
     """
@@ -207,7 +207,7 @@ async def _translate_question(
     return question, response
 
 
-def paraphrase_question(func: Callable) -> Callable:
+def paraphrase_question__before(func: Callable) -> Callable:
     """
     Decorator to paraphrase the question.
     """

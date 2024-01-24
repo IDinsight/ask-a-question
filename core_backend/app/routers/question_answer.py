@@ -24,10 +24,10 @@ from ..db.vector_db import (
 from ..llm_call.check_output import check_align_score__after
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
-    classify_safety,
-    identify_language,
-    paraphrase_question,
-    translate_question,
+    classify_safety__before,
+    identify_language__before,
+    paraphrase_question__before,
+    translate_question__before,
 )
 from ..schemas import (
     FeedbackBase,
@@ -70,10 +70,10 @@ async def llm_response(
 
 
 @check_align_score__after
-@identify_language
-@translate_question
-@paraphrase_question
-@classify_safety
+@identify_language__before
+@translate_question__before
+@paraphrase_question__before
+@classify_safety__before
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
@@ -148,9 +148,9 @@ async def embeddings_search(
         return response
 
 
-@identify_language
-@translate_question
-@paraphrase_question
+@identify_language__before
+@translate_question__before
+@paraphrase_question__before
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse | UserQueryResponseError,
