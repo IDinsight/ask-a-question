@@ -77,7 +77,12 @@ async def _classify_safety(
                 "safety_classification"
             ] = safety_classification.value
             error_response.debug_info["query_text"] = question.query_text
-            logger.info("SAFETY CHECK failed on query id: " + str(response.query_id))
+            logger.info(
+                (
+                    f"SAFETY CHECK failed on query id: {str(response.query_id)} "
+                    f"for query text: {question.query_text}"
+                )
+            )
             return question, error_response
         else:
             response.debug_info["safety_classification"] = safety_classification.value
@@ -253,5 +258,10 @@ async def _paraphrase_question(
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
         response.state = ResultState.ERROR
-        logger.info("PARAPHRASE FAILED on query id: " + str(response.query_id))
+        logger.info(
+            (
+                f"PARAPHRASE FAILED on query id:  {str(response.query_id)} "
+                f"for query text: {question.query_text}"
+            )
+        )
         return question, error_response
