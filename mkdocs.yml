@@ -35,7 +35,8 @@ repo_url: https://github.com/IDinsight/aaq-core
 nav:
   - 🏠 Welcome to AAQ:
       - What is AAQ?: index.md
-      - Usage: usage.md
+      - 👉 Usage: usage.md
+      - 🛣️ Roadmap: roadmap.md
   - 📢 Latest Updates:
       - blog/index.md
   - ⚙️ Core Components:
