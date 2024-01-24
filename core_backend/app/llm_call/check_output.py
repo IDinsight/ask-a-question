@@ -104,9 +104,12 @@ async def _check_align_score(
     }
 
     if align_score.score < float(ALIGN_SCORE_THRESHOLD):
-        llm_response.llm_response = ""
-
+        llm_response.llm_response = (
+            "We are unable to asnwer your question but found some content "
+            "that may be helpful"
+        )
     llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+
     return llm_response
 
 
