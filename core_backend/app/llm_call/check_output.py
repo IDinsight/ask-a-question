@@ -38,7 +38,7 @@ class AlignScoreData(TypedDict):
     claim: str
 
 
-def check_align_score(func: Callable) -> Callable:
+def check_align_score__after(func: Callable) -> Callable:
     """
     Check the alignment score
     """
@@ -102,6 +102,7 @@ async def _check_align_score(
         "method": ALIGN_SCORE_METHOD,
         "score": align_score.score,
         "reason": align_score.reason,
+        "claim": claim,
     }
 
     if align_score.score < float(ALIGN_SCORE_THRESHOLD):
