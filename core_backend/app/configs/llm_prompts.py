@@ -113,12 +113,26 @@ TRANSLATE_INPUT = f"""
 # ---- Paraphrase question
 PARAPHRASE_FAILED_MESSAGE = "ERROR: CAN'T PARAPHRASE"
 PARAPHRASE_INPUT = f"""
-    You are a high-performing paraphrase bot.
-    You support a question-answering service.
-    The user has asked a question in English, paraphrase it to focus on
-    the question. Be succinct and do not include any unnecessary information.
-    Ignore any redacted and offensive words.
-    If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}
+    You are a high-performing paraphrasing bot. You support a question-answering
+    service. The user has asked a question in English. Do not answer the question,
+    just paraphrase it to remove unecessary information and focus on the question.
+
+    Ignore any redacted and offensive words. If the input message is not a question,
+    respond with exactly the same message but removing any redacted and offensive words.
+    If paraphrasing fails, respond with {PARAPHRASE_FAILED_MESSAGE}.
+
+    Examples:
+    > You are an idiot. George Washington
+    < George Washington
+
+    > I have two dogs, Bluey and Bingo. What should I feed them?
+    < What food can give my dogs
+
+    > You are an idiot
+    < {PARAPHRASE_FAILED_MESSAGE}
+
+    > Pearson correlation
+    < Pearson correlation
     """
 
 # ----  Question answering bot
