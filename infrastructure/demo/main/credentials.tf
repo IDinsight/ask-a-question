@@ -150,12 +150,7 @@ resource "aws_secretsmanager_secret" "question_answer_secret" {
 resource "aws_secretsmanager_secret_version" "question_answer_secret" {
   # The secret version is created for the question answer secret.
   # The value will be added manually to the secret version.
-  secret_id = aws_secretsmanager_secret.question_answer_secret.id
-  secret_string = jsonencode({
-    key = ""
-  })
+  secret_id     = aws_secretsmanager_secret.question_answer_secret.id
+  secret_string = random_password.secrets[4].result
 
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
 }
