@@ -6,14 +6,14 @@ on:
       - AAQ-279-Create-Nginx-Pipeline
     paths:
         - "nginx/**"
-        - ".github/workflows/**"
+        - ".github/workflows/deploy_nginx.yml"
 
 jobs:
     DeployFrontend:
-        name: Deploying Nginx demo
+        name: Deploying Nginx ${{github.ref_name}}
         runs-on: ubuntu-latest
         environment:
-            name: demo
+            name: ${{github.ref_name}}
     
         permissions:
           id-token: write
@@ -25,19 +25,13 @@ jobs:
               uses: docker/setup-buildx-action@v3
             - uses: actions/checkout@v4
 
-            
-            - name: Load .env file
-              uses: xom9ikk/dotenv@v2
-              with:
-                path: ./.github/workflows
-                mode: demo
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{env.ROLE}}"
+                role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{secrets.ROLE}}"
                 role-session-name: deployrolesession
-                aws-region: ${{ env.AWS_REGION }}
+                aws-region: ${{ secrets.AWS_REGION }}
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
@@ -108,17 +102,17 @@ jobs:
               if: steps.check_changes.outputs.changed == 'true'
               id: create-task-def
               run: |
-                ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
-                --region ${{ env.AWS_REGION }} \
+                ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
+                --region ${{ secrets.AWS_REGION }} \
                 --default-launch-type EC2 \
                 --config-name aaq-demo-nginx-config
-                ecs-cli compose --project-name nginx-task --file nginx/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
+                ecs-cli compose --project-name nginx-task --file nginx/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
                 echo "taskdef=nginx-task" >> $GITHUB_OUTPUT
               env:
-                AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-                DOMAIN: ${{ env.DOMAIN }}
-                EMAIL: ${{ env.EMAIL }}
-                REPO: ${{ env.REPO }}
+                AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                DOMAIN: ${{ secrets.DOMAIN }}
+                EMAIL: ${{ secrets.EMAIL }}
+                REPO: ${{ secrets.REPO }}
             # We need this since deploy task definition action needs the task definition in json format
             
             - name: Task definition download
@@ -147,7 +141,7 @@ jobs:
               with:
                 task-definition: ${{ steps.download-task-def.outputs.task-def }}
                 service: nginx-service
-                cluster: ${{ env.CLUSTER_NAME }} 
+                cluster: ${{ secrets.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Wait for Application to start
               id: wait-for-app
@@ -158,7 +152,7 @@ jobs:
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services nginx-service --query services[0].deployments[0].runningCount | jq -r ".")
+                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services nginx-service --query services[0].deployments[0].runningCount | jq -r ".")
                   
                   if [ "$RUNNING_TASKS" -eq "0" ]; then
                     echo "Deployment failed."
