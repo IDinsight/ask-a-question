@@ -3,17 +3,17 @@ name: Deploying Backend
 on:
   push:
     branches:
-      - AAQ-278-Create-Backend-Pipeline
+      - demo
     paths:
         - "core_backend/**"
         - ".github/workflows/deploy_backend.yml"
 
 jobs:
     DeployFrontend:
-        name: Deploying Backend demo
+        name: Deploying Backend ${{github.ref_name}}
         runs-on: ubuntu-latest
         environment:
-            name: demo
+            name: ${{github.ref_name}}
     
         permissions:
           id-token: write
@@ -25,19 +25,12 @@ jobs:
               uses: docker/setup-buildx-action@v3
             - uses: actions/checkout@v4
 
-            
-            - name: Load .env file
-              uses: xom9ikk/dotenv@v2
-              with:
-                path: ./.github/workflows
-                mode: demo
-
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{env.ROLE}}"
+                role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{secrets.ROLE}}"
                 role-session-name: deployrolesession
-                aws-region: ${{ env.AWS_REGION }}
+                aws-region: ${{ secrets.AWS_REGION }}
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
@@ -49,7 +42,7 @@ jobs:
               uses: docker/build-push-action@v5
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                ECR_REPOSITORY: ${{env.REPO}}
+                ECR_REPOSITORY: ${{secrets.REPO}}
                 IMAGE_TAG: backend
               with:
                 context: core_backend
@@ -58,9 +51,9 @@ jobs:
                 cache-from: type=gha
                 cache-to: type=gha
                 push: true
-                tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
+                tags: ${{secrets.ECR_REGISTRY}}/${{secrets.ECR_REPOSITORY}}:${{secrets.IMAGE_TAG}}
                 build-args: |
-                  BOOTSTRAP_FILE=${{env.BOOTSTRAP_FILE}}
+                  BOOTSTRAP_FILE=${{secrets.BOOTSTRAP_FILE}}
           # This makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
           # This will reduce the number of task definitions created and will speed up the deployment process
           # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
@@ -94,19 +87,19 @@ jobs:
               if: steps.check_changes.outputs.changed == 'true'
               id: create-task-def
               run: |
-                ecs-cli configure --cluster ${{ env.CLUSTER_NAME }} \
-                --region ${{ env.AWS_REGION }} \
+                ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
+                --region ${{ secrets.AWS_REGION }} \
                 --default-launch-type EC2 \
                 --config-name aaq-demo-backend-config
-                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{env.TASK_ROLE_ARN}} create
+                ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
                 echo "taskdef=backend-task" >> $GITHUB_OUTPUT
               env:
-                AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-                AWS_REGION: ${{ env.AWS_REGION }}
-                QDRANT_HOST: ${{ env.QDRANT_HOST }}
-                NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
-                DOMAIN: ${{ env.DOMAIN }}
-                REPO: ${{ env.REPO }}
+                AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                AWS_REGION: ${{ secrets.AWS_REGION }}
+                QDRANT_HOST: ${{ secrets.QDRANT_HOST }}
+                NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+                DOMAIN: ${{ secrets.DOMAIN }}
+                REPO: ${{ secrets.REPO }}
             # We need this since deploy task definition action needs the task definition in json format
             
             - name: Task definition download
@@ -133,7 +126,7 @@ jobs:
               with:
                 task-definition: ${{ steps.download-task-def.outputs.task-def }}
                 service: backend-service
-                cluster: ${{ env.CLUSTER_NAME }} 
+                cluster: ${{ secrets.CLUSTER_NAME }} 
                 wait-for-service-stability: true
             - name: Wait for Application to start
               id: wait-for-app
@@ -143,7 +136,7 @@ jobs:
             - name: Check if deployment was successful
               id: check-deployment
               run: |
-                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
+                  RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
                   
                   if [ "$RUNNING_TASKS" -eq "0" ]; then
                     echo "Deployment failed."
