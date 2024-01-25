@@ -131,6 +131,12 @@ PARAPHRASE_INPUT = f"""
     > You are an idiot
     < {PARAPHRASE_FAILED_MESSAGE}
 
+    > What is the capital of South Africa xxsskjhsf wewkjh?
+    < What is the capital of South Africa?
+
+    > South Africa. तुम ही सोचो ज़रा
+    > South Africa. तुम ही सोचो ज़रा
+
     > Pearson correlation
     < Pearson correlation
     """
