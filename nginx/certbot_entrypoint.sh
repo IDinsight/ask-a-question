@@ -62,7 +62,7 @@ while true; do
 if [[ -f "$FULLCERT_PATH" ]]; then
     echo "Certificates already exist for $DOMAIN, checking if they need to be renewed..."
     start_date=$(openssl x509 -startdate -noout -in "$CERT_PATH" | cut -d= -f2)
-    start_date_epoch=$(date -j -f '%b %d %T %Y %Z' "$start_date" +%s)
+    start_date_epoch=$(date -d "$start_date" -D "%b %d %T %Y %Z"  +%s)
     current_epoch=$(date +%s)
 
     # Calculate the difference in seconds
