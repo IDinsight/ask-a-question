@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import auth_bearer_token
 from ..configs.app_config import QDRANT_N_TOP_SIMILAR
+from ..configs.llm_prompts import ANSWER_QUESTION_ERROR_MESSAGE
 from ..db.db_models import (
     UserQueryDB,
     check_secret_key_match,
@@ -30,6 +31,7 @@ from ..llm_call.parse_input import (
     translate_question__before,
 )
 from ..schemas import (
+    ErrorType,
     FeedbackBase,
     UserQueryBase,
     UserQueryRefined,
@@ -87,9 +89,17 @@ async def get_llm_answer(
             user_query_refined, qdrant_client, int(QDRANT_N_TOP_SIMILAR)
         )
         response.content_response = content_response
-        response.llm_response = await get_llm_rag_answer(
+        llm_response = await get_llm_rag_answer(
             user_query_refined.query_text, content_response[0].retrieved_text
         )
+
+        if llm_response == ANSWER_QUESTION_ERROR_MESSAGE:
+            error_response = UserQueryResponseError(
+                query_id=response.query_id,
+                error_message=ANSWER_QUESTION_ERROR_MESSAGE,
+                error_type=ErrorType.LLM_RESPONSE_FAILED,
+            )
+            return error_response
     return response
 
 

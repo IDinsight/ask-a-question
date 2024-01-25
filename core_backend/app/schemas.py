@@ -40,6 +40,7 @@ class ErrorType(str, Enum):
     UNABLE_TO_TRANSLATE = "unable_to_translate"
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
     ALIGNMENT_TOO_LOW = "alignment_too_low"
+    LLM_RESPONSE_FAILED = "llm_response_failed"
 
 
 class UserQueryRefined(UserQueryBase):

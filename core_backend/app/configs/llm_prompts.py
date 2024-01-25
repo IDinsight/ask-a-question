@@ -122,19 +122,17 @@ PARAPHRASE_INPUT = f"""
     """
 
 # ----  Question answering bot
-
-ANSWER_QUESTION_PROMPT = """
-    You are a high-performing question answering bot.
-    You support a maternal and child health chatbot.
-
-    Answer the user query in natural language by rewording the
-    following FAQ found below. Address the question directly and do not
-    respond with anything that is outside of the context of the given FAQ.
-
-    If the FAQ doesn't seem to answer the question, respond with
-    'Sorry, no relevant information found.'
-
-    Found FAQ: {faq}"""
+ANSWER_QUESTION_ERROR_MESSAGE = "Sorry, no relevant information found."
+ANSWER_QUESTION_PROMPT = (
+    "You are a high-performing question answering bot.\n"
+    "Answer the user query in English using the information "
+    "provided in the reference text found below. "
+    "Address the question directly and do not respond with anything that is "
+    "outside of the context of the given reference text. "
+    "If the reference text doesn't seem to contain an answer the question, "
+    f"respond with '{ANSWER_QUESTION_ERROR_MESSAGE}'\n"
+    "FAQ found: {faq}"
+)
 
 
 class AlignmentScore(BaseModel):
