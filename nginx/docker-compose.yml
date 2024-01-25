@@ -26,25 +26,25 @@ services:
           awslogs-region: af-south-1
           awslogs-stream-prefix: nginx
       
-    certbot:
-      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:certbot
-      depends_on:
-        - nginx
-      environment:
-        - DOMAIN=${DOMAIN}
-        - EMAIL=${EMAIL}
-      volumes:
-        - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
-        - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
+    # certbot:
+    #   image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:certbot
+    #   depends_on:
+    #     - nginx
+    #   environment:
+    #     - DOMAIN=${DOMAIN}
+    #     - EMAIL=${EMAIL}
+    #   volumes:
+    #     - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
+    #     - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
 
-      deploy:
-        resources:
-          limits:
-            cpus: '0.5'
-            memory: 512M
-      logging:
-        driver: awslogs
-        options:
-          awslogs-group: /ecs/nginx-task-demo
-          awslogs-region: af-south-1
-          awslogs-stream-prefix: certbot
+    #   deploy:
+    #     resources:
+    #       limits:
+    #         cpus: '0.5'
+    #         memory: 512M
+    #   logging:
+    #     driver: awslogs
+    #     options:
+    #       awslogs-group: /ecs/nginx-task-demo
+    #       awslogs-region: af-south-1
+    #       awslogs-stream-prefix: certbot
