@@ -3,7 +3,7 @@ name: Deploying Nginx
 on:
   push:
     branches:
-      - AAQ-279-Create-Nginx-Pipeline
+      - demo
     paths:
         - "nginx/**"
         - ".github/workflows/deploy_nginx.yml"
