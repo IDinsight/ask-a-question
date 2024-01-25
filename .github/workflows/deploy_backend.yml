@@ -51,7 +51,7 @@ jobs:
                 cache-from: type=gha
                 cache-to: type=gha
                 push: true
-                tags: ${{secrets.ECR_REGISTRY}}/${{secrets.ECR_REPOSITORY}}:${{secrets.IMAGE_TAG}}
+                tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
                 build-args: |
                   BOOTSTRAP_FILE=${{secrets.BOOTSTRAP_FILE}}
           # This makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
