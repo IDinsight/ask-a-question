@@ -135,7 +135,7 @@ PARAPHRASE_INPUT = f"""
     < What is the capital of South Africa?
 
     > South Africa. तुम ही सोचो ज़रा
-    > South Africa. तुम ही सोचो ज़रा
+    < South Africa. तुम ही सोचो ज़रा
 
     > Pearson correlation
     < Pearson correlation
