@@ -4,7 +4,6 @@ from typing import Dict, List
 import pytest
 import yaml
 
-from core_backend.app.configs.llm_prompts import IdentifiedLanguage
 from core_backend.app.llm_call.parse_input import _paraphrase_question
 from core_backend.app.schemas import (
     UserQueryRefined,
@@ -15,14 +14,7 @@ from core_backend.app.schemas import (
 pytestmark = pytest.mark.rails
 
 
-LANGUAGE_FILE = "data/paraphrasing_data.txt"
-
-
-@pytest.fixture(scope="module")
-def available_languages() -> list[str]:
-    """Returns a list of available languages"""
-
-    return [lang.value for lang in IdentifiedLanguage]
+PARAPHRASE_FILE = "data/paraphrasing_data.txt"
 
 
 def read_test_data(file: str) -> List[Dict]:
@@ -35,7 +27,7 @@ def read_test_data(file: str) -> List[Dict]:
         return content
 
 
-@pytest.mark.parametrize("test_data", read_test_data(LANGUAGE_FILE))
+@pytest.mark.parametrize("test_data", read_test_data(PARAPHRASE_FILE))
 async def test_paraphrasing(test_data: Dict) -> None:
     """Test paraphrasing texts"""
     message = test_data["message"]
