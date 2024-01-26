@@ -274,7 +274,7 @@ class TestAlignScore:
         update_query_response = await _check_align_score(user_query_response)
         assert isinstance(update_query_response, UserQueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
-        assert update_query_response.llm_response == ""
+        assert update_query_response.llm_response is None
 
     @pytest.mark.asyncio
     async def test_score_greater_than_threshold(

@@ -5,6 +5,7 @@ These are functions that can be used to parse the input questions.
 from functools import wraps
 from typing import Any, Callable, Tuple
 
+from ..configs.app_config import STANDARD_FAILURE_MESSAGE
 from ..configs.llm_prompts import (
     PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_INPUT,
@@ -24,11 +25,6 @@ from ..utils import setup_logger
 from .utils import _ask_llm_async
 
 logger = setup_logger("INPUT RAILS")
-
-STANDARD_FAILURE_MESSAGE = (
-    "Sorry, I am unable to understand your question. "
-    "Please rephrase your question and try again."
-)
 
 
 def classify_safety(func: Callable) -> Callable:

@@ -47,3 +47,8 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 ALIGN_SCORE_API = os.environ.get(
     "ALIGN_SCORE_API", "http://localhost:5001/alignscore_base"
 )
+
+STANDARD_FAILURE_MESSAGE = os.environ.get(
+    "STANDARD_FAILURE_MESSAGE",
+    "Sorry, I am unable to find an answer to your question in the knowledge base. ",
+)
