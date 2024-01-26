@@ -13,7 +13,6 @@ from ..configs.app_config import (
 )
 from ..configs.llm_prompts import AlignmentScore
 from ..schemas import (
-    ErrorType,
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
@@ -22,11 +21,6 @@ from ..utils import get_http_client, setup_logger
 from .utils import _ask_llm_async
 
 logger = setup_logger("OUTPUT RAILS")
-
-STANDARD_FAILURE_MESSAGE = (
-    "Sorry, I am unable to find an answer to your question in my knowledge base. "
-    "Please rephrase your question or ask a different one."
-)
 
 
 class AlignScoreData(TypedDict):
@@ -75,7 +69,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
 async def _check_align_score(
     llm_response: UserQueryResponse,
-) -> UserQueryResponse | UserQueryResponseError:
+) -> UserQueryResponse:
     """
     Check the alignment score
     """
@@ -106,17 +100,11 @@ async def _check_align_score(
     }
 
     if align_score.score < float(ALIGN_SCORE_THRESHOLD):
-        error_response = UserQueryResponseError(
-            query_id=llm_response.query_id,
-            error_message=STANDARD_FAILURE_MESSAGE,
-            error_type=ErrorType.ALIGNMENT_TOO_LOW,
-            debug_info=llm_response.debug_info.copy(),
-        )
-        error_response.debug_info["factual_consistency"] = factual_consistency.copy()
-        return error_response
-    else:
-        llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
-        return llm_response
+        llm_response.llm_response = None
+
+    llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+
+    return llm_response
 
 
 async def _get_alignScore_score(
