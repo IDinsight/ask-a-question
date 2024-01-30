@@ -6,11 +6,11 @@ resource "random_password" "web_db" {
 }
 
 resource "random_password" "secrets" {
-  # A random password is generated for the JWT secret.
+  # Random secrets are generated.
   # This password is then stored in AWS Secrets Manager.
   length  = 16
   special = true
-  count   = 5 # 3 passwords are generated
+  count   = 5 # 5 passwords are generated
 }
 
 
