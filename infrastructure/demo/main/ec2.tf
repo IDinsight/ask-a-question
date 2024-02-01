@@ -57,6 +57,12 @@ resource "aws_instance" "web_instance" {
   )
   subnet_id = var.public_subnets[0].id
   tags      = merge({ Name = var.web_instance_profile_name, Module = "Web" }, var.tags)
+
+  lifecycle {
+    ignore_changes = [
+      ami
+    ]
+  }
 }
 
 resource "aws_iam_instance_profile" "web_instance_profile" {

@@ -64,3 +64,8 @@ variable "bastion_instance_role_name" {
 
 }
 
+variable "s3_vpc_endpoint_prefix_list_ids" {
+  description = "value for the s3 vpc endpoint prefix list"
+  type        = string
+
+}

@@ -18,8 +18,8 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-yum install -y socat
+sudo yum install -y socat
 
-socat TCP-LISTEN:5432,reuseaddr,fork, TCP4:${web_db_endpoint} &
+setsid nohup socat TCP-LISTEN:5432,reuseaddr,fork, TCP4:${web_db_endpoint} &
 
 --//--
