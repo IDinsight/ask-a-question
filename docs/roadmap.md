@@ -8,7 +8,7 @@
 
 !!! info "Key <br> :white_check_mark: - Completed <br> :tools: - In active development <br> :construction: - Queued <br>:pencil: - Yet to be scoped"
 
-On The Horizon
+Beyond 2024
 
 - Privately hosted LLM modules
 - Multi-tenant architecture

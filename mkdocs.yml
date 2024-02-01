@@ -1,10 +1,11 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: AAQ
+site_name: ""
 site_url: https://idinsight.github.io/aaq-core/
 
 theme:
   name: material
+  logo: images/AAQlogo.png
   palette:
     # Palette toggle for dark mode
     - scheme: slate
@@ -33,8 +34,8 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - 🏠 Welcome to AAQ:
-      - What is AAQ?: index.md
+  - 🏠 Home:
+      - "": index.md
       - 👉 Usage: usage.md
       - 🛣️ Roadmap: roadmap.md
   - 📢 Latest Updates:
