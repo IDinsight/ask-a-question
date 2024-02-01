@@ -1,12 +1,7 @@
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-    __            __        ______
-    /""\          /""\      /    " \
-    /    \        /    \    // ____  \
-    /' /\  \      /' /\  \  /  /    )  )
-  //  __'  \    //  __'  \(: (____/ //
- /   /  \\  \  /   /  \\  \\         \
- (___/    \___)(___/    \___)\"____/\__\
-ASK-A-QUESTION
+<br>
+<img src="docs/images/AAQLogo.png" alt="logo" width=600/>
+<br>
 </pre>
 
 <p align="center" style="text-align:center">
@@ -17,7 +12,7 @@ ASK-A-QUESTION
 <a href="#funders-and-partners">Funders and Partners</a>
 </p>
 
-**[Ask-a-question](https://idinsight.github.io/aaq-core/) lets your users ask questions and receive answers from your content repository in their preferred language**
+**[Ask A Question](https://idinsight.github.io/aaq-core/)** is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 
 ## :woman_cartwheeling: Features
 
