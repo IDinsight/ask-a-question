@@ -1,6 +1,6 @@
-<pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-<img src="docs/images/AAQLogo.png" alt="logo" width=600/>
-</pre>
+<p align="center">
+  <img src="docs/images/AAQLogo.png" alt="logo" width=600/>
+</p>
 
 <p align="center" style="text-align:center">
 <a href="https://idinsight.github.io/aaq-core/">Developer Docs</a> |
