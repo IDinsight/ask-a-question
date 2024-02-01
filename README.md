@@ -1,7 +1,5 @@
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-<br>
 <img src="docs/images/AAQLogo.png" alt="logo" width=600/>
-<br>
 </pre>
 
 <p align="center" style="text-align:center">
