@@ -10,7 +10,7 @@ resource "random_password" "secrets" {
   # This password is then stored in AWS Secrets Manager.
   length  = 16
   special = true
-  count   = 5 # 3 passwords are generated
+  count   = 5 # n passwords are generated
 }
 
 
@@ -98,7 +98,7 @@ resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
 
 # Whatsapp verify token secret
 resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
-  # AWS Secrets Manager is used to store the whatsapp token secret.
+  # AWS Secrets Manager is used to store the whatsapp verify token secret.
 
   name                    = var.whatsapp_verify_token_secret_name
   tags                    = merge({ Name = var.whatsapp_verify_token_secret_name, Module = "Web" }, var.tags)
@@ -107,7 +107,7 @@ resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
 }
 
 resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
-  # The secret version is created for the whatsapp token secret.
+  # The secret version is created for the whatsapp verify token secret.
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.whatsapp_verify_token_secret.id
   secret_string = random_password.secrets[3].result
