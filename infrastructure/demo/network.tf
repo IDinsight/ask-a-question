@@ -15,4 +15,5 @@ module "vpc" {
   interface_endpoints_sg_name   = "${var.project_name}-${var.environment}-interface-endpoints-sg"
   bastion_sg_id                 = module.bastion_host.bastion_sg_id
   web_ec2_sg_id                 = module.main.web_ec2_sg_id
+  session_manager_prefs_name    = "${var.project_name}-${var.environment}-SessionManagerRunShell"
 }

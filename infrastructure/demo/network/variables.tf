@@ -97,3 +97,10 @@ variable "web_ec2_sg_id" {
   default     = ""
 
 }
+
+variable "session_manager_prefs_name" {
+  description = "value for the session manager preferences name"
+  type        = string
+  default     = ""
+
+}

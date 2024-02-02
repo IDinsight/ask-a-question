@@ -36,7 +36,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 }
 
 resource "aws_ssm_document" "session_manager_prefs" {
-  name            = "SSM-SessionManagerRunShell"
+  name            = var.session_manager_prefs_name
   document_type   = "Session"
   document_format = "JSON"
 
