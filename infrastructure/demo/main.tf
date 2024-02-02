@@ -36,4 +36,6 @@ module "main" {
   private_dns_namespace_name        = "${var.project_name}-${var.environment}.local"
   environment                       = var.environment
   project_name                      = var.project_name
+  gh_action_name                    = "github-actions-${var.project_name}-${var.environment}"
+  gh_role_name                      = "${var.project_name}-${var.environment}-github-actions-role"
 }

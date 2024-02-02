@@ -263,3 +263,13 @@ variable "project_name" {
   type        = string
   description = "value for the project name"
 }
+
+variable "gh_action_name" {
+  type        = string
+  description = "value for the github action name"
+}
+
+variable "gh_role_name" {
+  type        = string
+  description = "value for the github role name"
+}
