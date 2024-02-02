@@ -1,0 +1,50 @@
+
+version: '3'
+
+services:
+
+    nginx:
+      image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:nginx
+      ports:
+        - "80:80"
+        - "443:443"
+      environment:
+        - DOMAIN=${DOMAIN}
+      deploy:
+        resources:
+          limits:
+            cpus: '0.5'
+            memory: 512M
+      volumes:
+        - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
+        - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
+
+      logging:
+        driver: awslogs
+        options:
+          awslogs-group: /ecs/nginx-task-demo
+          awslogs-region: af-south-1
+          awslogs-stream-prefix: nginx
+      
+    certbot:
+      image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
+      depends_on:
+        - nginx
+      environment:
+        - DOMAIN=${DOMAIN}
+        - EMAIL=${EMAIL}
+      volumes:
+        - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
+        - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
+
+      deploy:
+        resources:
+          limits:
+            cpus: '0.5'
+            memory: 512M
+      logging:
+        driver: awslogs
+        options:
+          awslogs-group: /ecs/nginx-task-demo
+          awslogs-region: af-south-1
+          awslogs-stream-prefix: certbot
