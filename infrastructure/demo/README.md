@@ -1,5 +1,5 @@
 ## AAQ Demo Environment Infrastructure
-The code into 3 main module:
+The codebase is organized into three main modules:
 
 #### 1. Bastion
 This is what will be used to access db locally. To open the tunnel, run `make data-db-tunnel-demo` from the infrastructure folder.
@@ -7,7 +7,7 @@ If you have pgAdmin installed, you can create a connection with the host as loca
 If you do not have pgAdmin installed, you can run it in docker using the following:
 
 ```
- docker pull dpage/pgadmin4
+docker pull dpage/pgadmin4
 docker run -p 80:80 \
     -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' \
     -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' \
@@ -28,8 +28,9 @@ This module will have the code of the VPC and its components. The other modules 
 
 1. Follow the setup and authentication steps outlined in the README in `infrastructure/README.md`.
 2. Run `terraform init -backend-config=backend.conf` to initialize the Terraform backend and install the providers.
-3. Run `terraform plan` to view the plan.
-4. Run `terraform apply` to deploy the terraform configuration.
+3. To ensure your infrastructure is set up correctly, you should review the contents of the `{env}.auto.tfvars` file thoroughly. This file contains environment-specific variable values which Terraform automatically loads during operations
+4. Run `terraform plan` to view the plan.
+5. Run `terraform apply` to deploy the terraform configuration.
 
 ### Attaching IP to the Domain
 When the infrastructure is created, a new Elastic IP is created. If you have your own domain, make sure to associate it with this IP address
