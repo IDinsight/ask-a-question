@@ -2,8 +2,10 @@
 The codebase is organized into three main modules:
 
 #### 1. Bastion
-This is what will be used to access db locally. To open the tunnel, run `make data-db-tunnel-demo` from the infrastructure folder.
-If you have pgAdmin installed, you can create a connection with the host as localhost. You can find the DB credentials in AWS Secrets Manager
+- This is what will be used to access db locally. To open the tunnel, run `make data-db-tunnel-demo` from the infrastructure folder.
+If the command hangs at `Starting session with SessionId:... `, make sure port 5432 is available.
+
+- If you have pgAdmin installed, you can create a connection with the host as localhost. You can find the DB credentials in AWS Secrets Manager.
 If you do not have pgAdmin installed, you can run it in docker using the following:
 
 ```
