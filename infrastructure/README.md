@@ -3,7 +3,7 @@ The infrastructure as code (IaC) is done using Terraform. The Module is organize
 
 ## Login to AWS
 
-- [First time setup] Set up your AWS config file (`~/.aws/config`) to work with the different environments and AWS SSO. Make sure your config file contains the following entries:
+- (First time setup) Set up your AWS config file (`~/.aws/config`) to work with the different environments and AWS SSO. Make sure your config file contains the following entries:
 
 ```
 [profile aaq]
