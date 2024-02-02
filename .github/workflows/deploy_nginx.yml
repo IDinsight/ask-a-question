@@ -9,7 +9,7 @@ on:
         - ".github/workflows/deploy_nginx.yml"
 
 jobs:
-    DeployFrontend:
+    DeployNginx:
         name: Deploying Nginx ${{github.ref_name}}
         runs-on: ubuntu-latest
         environment:
@@ -69,7 +69,7 @@ jobs:
                 cache-to: type=gha
                 push: true
                 tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}  
-          # This makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
+          # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
           # This will reduce the number of task definitions created and will speed up the deployment process
           # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
             - name: Calculate Docker Compose hash
