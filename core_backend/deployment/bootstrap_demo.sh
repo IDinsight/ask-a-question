@@ -23,7 +23,9 @@ function get_secret_value() {
 
 echo "Fetching variables from aws store.."
 
-# This is the name of the secret in aws secrets manager
+# This is the name of the secrets in aws secrets manager.
+# The secrets are created by the infrastructure module
+# The values should be the same as the ones in the infrastructure module
 SECRET_JWT="aaq-demo-jwt-secret"
 SECRET_CONTENT="aaq-demo-content-access"
 SECRET_WHATSAPP_VERIFY="aaq-demo-whatsapp-verify-token"

@@ -9,8 +9,8 @@ on:
         - ".github/workflows/deploy_backend.yml"
 
 jobs:
-    DeployFrontend:
-        name: Deploying Backend ${{github.ref_name}}
+    DeployCoreBrontend:
+        name: Deploying core_backend ${{github.ref_name}}
         runs-on: ubuntu-latest
         environment:
             name: ${{github.ref_name}}
