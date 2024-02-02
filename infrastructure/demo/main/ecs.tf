@@ -326,25 +326,25 @@ resource "aws_ecs_task_definition" "backend_task" {
 }
 
 resource "aws_cloudwatch_log_group" "admin_app" {
-  name = "/ecs/admin-app-task-${var.environment}"
+  name = "/ecs/admin-app-task-${var.project_name}-${var.environment}"
 
   tags = merge({ Name = "admin-app-task-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "backend" {
-  name = "/ecs/backend-task-${var.environment}"
+  name = "/ecs/backend-task-${var.project_name}-${var.environment}"
 
-  tags = merge({ Name = "backend-task-${var.environment}", Module = "Web" }, var.tags)
+  tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "vectordb" {
-  name = "/ecs/vectordb-task-${var.environment}"
+  name = "/ecs/vectordb-task-${var.project_name}-${var.environment}"
 
-  tags = merge({ Name = "vectordb-task-${var.environment}", Module = "Web" }, var.tags)
+  tags = merge({ Name = "vectordb-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
 
 resource "aws_cloudwatch_log_group" "nginx" {
   name = "/ecs/nginx-task-${var.environment}"
 
-  tags = merge({ Name = "nginx-task-${var.environment}", Module = "Web" }, var.tags)
+  tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }

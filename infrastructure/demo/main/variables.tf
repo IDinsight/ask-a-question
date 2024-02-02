@@ -258,3 +258,8 @@ variable "environment" {
   type        = string
   description = "value for the environment"
 }
+
+variable "project_name" {
+  type        = string
+  description = "value for the project name"
+}

@@ -35,4 +35,5 @@ module "main" {
   account_id                        = local.aws_account_id
   private_dns_namespace_name        = "${var.project_name}-${var.environment}.local"
   environment                       = var.environment
+  project_name                      = var.project_name
 }
