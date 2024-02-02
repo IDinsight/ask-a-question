@@ -7,11 +7,11 @@ The infrastructure as code (IaC) is done using Terraform. The Module is organize
 
 ```
 [profile aaq]
-sso_start_url = https://idinsight.awsapps.com/start
-sso_region = ap-south-1
-sso_account_id = 039685995141
-sso_role_name = AdministratorAccess
-region = af-south-1
+sso_start_url = <your AWS SSO start URL>
+sso_region = <your AWS SSO region>
+sso_account_id = <your AWS account ID>
+sso_role_name = <your AWS SSO role name, e.g. AdministratorAccess>
+region = <your AWS infratructure region>
 
 ```
 
@@ -20,10 +20,11 @@ region = af-south-1
 ## Running in a new AWS Account
 To be able to run the code in a new AWS Account, first you will need to initialize the code and create an S3 bucket where you will store the terraform state.
 Steps:
- - Login to AWS using `make login`
- - `cd tf_backend`
- - `terraform init`
- - `terraform plan`
- - `terraform apply`
+ 1. Login to AWS using `make login`
+ 2. `cd tf_backend`
+ 3. Review and edit the values in `tf_backend/tf_backend.auto.tfvars`.
+ 4. `terraform init`
+ 5. `terraform plan`
+ 6. `terraform apply`
 
  This will create the S3 bucket that will store the states of terraform.
