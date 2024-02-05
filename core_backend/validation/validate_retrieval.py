@@ -63,7 +63,9 @@ class TestRetrievalPerformance:
         )
 
         accuracies = self.get_top_k_accuracies(val_df)
+        retrieval_failure_rate = val_df["rank"].isna().mean()
 
+        logger.info(f"\nRetrieval failed on {retrieval_failure_rate:.1%} of queries.")
         logger.info("\n" + self.format_accuracies(accuracies))
 
         if notification_topic is not None:
@@ -182,10 +184,15 @@ class TestRetrievalPerformance:
         request_json = UserQueryBase(query_text=query_text).model_dump()
         headers = {"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"}
         response = client.post("/embeddings-search", json=request_json, headers=headers)
-        retrieved = response.json()["content_response"]
-        content_titles = [
-            retrieved[str(i)]["retrieved_title"] for i in range(len(retrieved))
-        ]
+
+        if response.status_code != 200:
+            logger.warning("Failed to retrieve content")
+            content_titles = []
+        else:
+            retrieved = response.json()["content_response"]
+            content_titles = [
+                retrieved[str(i)]["retrieved_title"] for i in range(len(retrieved))
+            ]
         return content_titles
 
     async def retrieve_results(
