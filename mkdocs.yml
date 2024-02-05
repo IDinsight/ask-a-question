@@ -5,7 +5,7 @@ site_url: https://idinsight.github.io/aaq-core/
 
 theme:
   name: material
-  logo: images/AAQlogo.png
+  logo: images/logo.png
   palette:
     # Palette toggle for dark mode
     - scheme: slate

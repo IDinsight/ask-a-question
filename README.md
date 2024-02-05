@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/AAQLogo.png" alt="logo" width=600/>
+  <img src="docs/images/logo.png" alt="logo" width=600/>
 </p>
 
 <p align="center" style="text-align:center">

@@ -5,7 +5,7 @@
 </style>
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
 <br>
-<img src="./images/AAQLogo.png" alt="logo" width=600/>
+<img src="./images/logo.png" alt="logo" width=600/>
 <br>
 </pre>
 
@@ -50,9 +50,9 @@
 ---
 
 !!! question "Looking for other features?"
-    If you are a developing country government, NGO or a social sector
-    organisation, we'd love to hear what features you'd like to see. Raise an
-    issue with `[FEATURE REQUEST]` before the title to start the conversation.
+If you are a developing country government, NGO or a social sector
+organisation, we'd love to hear what features you'd like to see. Raise an
+issue with `[FEATURE REQUEST]` before the title to start the conversation.
 
 ---
 
