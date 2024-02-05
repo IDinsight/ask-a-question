@@ -4,8 +4,7 @@
 }
 </style>
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-<br>
-<img src="./images/logo.png" alt="logo" width=600/>
+<img src="./images/logo-light.png#only-dark" alt="logo-light" width="600"/><img src="./images/logo-dark.png#only-light" alt="logo-dark" width="600"/>
 <br>
 </pre>
 
