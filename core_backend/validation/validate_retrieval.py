@@ -71,6 +71,7 @@ class TestRetrievalPerformance:
         if notification_topic is not None:
             message_dict = self._generate_message(
                 accuracies,
+                retrieval_failure_rate,
                 validation_data_path=validation_data_path,
                 validation_data_label_col=validation_data_label_col,
                 validation_data_question_col=validation_data_question_col,
@@ -234,6 +235,7 @@ class TestRetrievalPerformance:
     def _generate_message(
         self,
         accuracies: List[float],
+        retrieval_failure_rate: float,
         validation_data_path: str,
         validation_data_question_col: str,
         validation_data_label_col: str,
@@ -258,6 +260,7 @@ class TestRetrievalPerformance:
             f"      • Text column: {content_data_text_col}\n"
             f"      • Label column: {content_data_label_col}\n"
             f"• Embedding model: {EMBEDDING_MODEL}\n"
+            f"• Retrieval failure rate: {retrieval_failure_rate:.1%}\n"
             f"• Top N accuracies:\n" + self.format_accuracies(accuracies)
         )
 
