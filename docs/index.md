@@ -20,7 +20,7 @@
 <div class="grid cards" style="text-align:center" markdown>
 
 - <span style="font-size: 30px" class="primary-color">:material-shield:</span><br>
-  **Resposible & Safe AI** <br>
+  **Responsible & Safe AI** <br>
   Implements guardrailed AI that is ethical, transparent, and secure
 
 - <span style="font-size: 30px" class="primary-color">:material-translate:</span><br>
@@ -33,7 +33,7 @@
 
 - <span style="font-size: 30px;" class="primary-color">:material-microphone:</span><br>
   **Voice support** <br>
-  Voicenote based question-answering support
+  Ask questions and receive answers using voice memos.
 
 </div>
 <br>
@@ -50,8 +50,9 @@
 ---
 
 !!! question "Looking for other features?"
-If you are a developing country government, NGO or a social sector organisation, we'd love to hear what features you'd
-like to see. Raise an issue with `[FEATURE REQUEST]` before the title to start the conversation.
+    If you are a developing country government, NGO or a social sector
+    organisation, we'd love to hear what features you'd like to see. Raise an
+    issue with `[FEATURE REQUEST]` before the title to start the conversation.
 
 ---
 
