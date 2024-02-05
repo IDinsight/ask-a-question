@@ -1,54 +1,58 @@
-
+<style>
+.primary-color {
+    color: #1F8CED;
+}
+</style>
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-    __            __        ______
-    /""\          /""\      /    " \
-    /    \        /    \    // ____  \
-    /' /\  \      /' /\  \  /  /    )  )
-  //  __'  \    //  __'  \(: (____/ //
- /   /  \\  \  /   /  \\  \\         \
- (___/    \___)(___/    \___)\"____/\__\
-ASK-A-QUESTION
-
+<br>
+<img src="./images/AAQLogo.png" alt="logo" width=600/>
+<br>
 </pre>
 
-**[Ask-a-question](https://idinsight.github.io/aaq-core/) is an open-source product designed to support NGOs,
-governments of developing countries, and social sector orgs to use Large Language Models to answer questions from
-citizens.**
+**[Ask A Question](https://idinsight.github.io/aaq-core/)** is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 
 ---
 
-## :woman_cartwheeling: Features
+<div style=" text-align:center; font-size: 36px;"  markdown>
+ :material-star: Features :material-star:
+</div>
 
-**:question: LLM-powered search** : Match your questions to content in the database using embeddings from LLMs.
+<div class="grid cards" style="text-align:center" markdown>
 
-**:robot: LLM responses** : Craft a custom reponse to the question using LLM chat and the content in your database
+- <span style="font-size: 30px" class="primary-color">:material-shield:</span><br>
+  **Responsible & Safe AI** <br>
+  Implements guardrailed AI that is ethical, transparent, and secure
 
-**:speech_balloon: Deploy on WhatsApp** : Easily deploy using WhatsApp Business API
+- <span style="font-size: 30px" class="primary-color">:material-translate:</span><br>
+  **Local Language Support** <br>
+  Multilingual model support to enhance accessibility and experience
 
-**:books: Manage content** : Use the Admin App to add, edit, and delete content in the database
+- <span style="font-size: 36px;" class="primary-color">:material-docker:</span><br>
+  **Scalable & Easy to Deploy** <br>
+  Containerized app that can integrate with outreach systems like WhatsApp
 
-## :construction: Upcoming
+- <span style="font-size: 30px;" class="primary-color">:material-microphone:</span><br>
+  **Voice support** <br>
+  Ask questions and receive answers using voice memos.
 
-**:earth_africa: Support for low resourced language**: Ask questions in local languages. Languages currently on the roadmap
+</div>
+<br>
+**:material-check: LLM-powered search** : Answers questions to database content using LLM embeddings.
 
-- [ ] Xhosa
-- [ ] Zulu
-- [ ] Hindi
-- [ ] Igbo
+**:material-check: LLM responses** : Craft a custom reponse to users using LLM chat
 
-**:speech_balloon: Conversation capability**: Refine or clarify your question through conversation
+**:material-check: Deploy on WhatsApp** : Easily deploy using WhatsApp Business API
 
-**:video_camera: Multimedia content**: Respond with not just text but images and videos as well.
+**:material-check: Manage content** : Use the Admin App to add, edit, and delete content in the database
 
-**:rotating_light: Message Triaging**: Identify and handle urgent messages.
+[:octicons-arrow-right-24: See Full Roadmap](./roadmap.md)
 
-**:woman_technologist: Engineering dashboard**: Monitor uptime, response rates, throughput HTTP reponse codes and more
-
-**:woman_office_worker: Content manager dashboard**: See which content is the most sought after, the kinds of questions that receive poor feedback, identify missing content, and more
+---
 
 !!! question "Looking for other features?"
-    If you are a developing country government, NGO or a social sector organisation, we'd love to hear what features you'd
-    like to see. Raise an issue with `[FEATURE REQUEST]` before the title to start the conversation.
+    If you are a developing country government, NGO or a social sector
+    organisation, we'd love to hear what features you'd like to see. Raise an
+    issue with `[FEATURE REQUEST]` before the title to start the conversation.
 
 ---
 
