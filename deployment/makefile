@@ -64,7 +64,7 @@ create-frontend-demo:
 	--region af-south-1 \
 	--config-name aaq-demo-frontend-config
 
-	@NEXT_PUBLIC_BACKEND_URL=https://aaq-dev.idinsight.io/api \
+	@NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} \
 	DEMO_ACCOUNT=${DEMO_ACCOUNT} \
 	ecs-cli compose -f ../admin_app/deployment/docker-compose.yml \
 	--aws-profile aaq_demo \
