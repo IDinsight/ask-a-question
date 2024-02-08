@@ -10,11 +10,7 @@ trap cleanup EXIT
 # Function to get value from secrets manager using secret name, key name and output type
 function get_secret_value() {
 	local secret_name="$1" key="$2" form="$3"
-<<<<<<< HEAD
   	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region ${AWS_REGION} --output ${form} --query "SecretString")}"
-=======
-  	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region af-south-1 --output ${form} --query "SecretString")}"
->>>>>>> main
   	# If key name is provided, parse json output for the key or return text output
   	if [ -z "$key" ]; 
   	then
