@@ -1,10 +1,6 @@
 module "vpc" {
   source                        = "./network"
-<<<<<<< HEAD
-  vpc_name                      = "demo-vpc"
-=======
   vpc_name                      = "${var.environment}-vpc"
->>>>>>> main
   vpc_flow_log_name_prefix      = "${var.project_name}-${var.environment}-vpc"
   public_subnet_name            = "${var.project_name}-${var.environment}-public-subnet"
   private_subnet_name           = "${var.project_name}-${var.environment}-private-subnet"
@@ -19,8 +15,5 @@ module "vpc" {
   interface_endpoints_sg_name   = "${var.project_name}-${var.environment}-interface-endpoints-sg"
   bastion_sg_id                 = module.bastion_host.bastion_sg_id
   web_ec2_sg_id                 = module.main.web_ec2_sg_id
-<<<<<<< HEAD
-=======
   session_manager_prefs_name    = "${var.project_name}-${var.environment}-SessionManagerRunShell"
->>>>>>> main
 }
