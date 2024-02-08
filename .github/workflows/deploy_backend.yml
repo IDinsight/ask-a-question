@@ -1,4 +1,4 @@
-name: Deploying Backend
+name: Deploying core_backend
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
         - ".github/workflows/deploy_backend.yml"
 
 jobs:
-    DeployCoreBrontend:
+    DeployCoreBackend:
         name: Deploying core_backend ${{github.ref_name}}
         runs-on: ubuntu-latest
         environment:
