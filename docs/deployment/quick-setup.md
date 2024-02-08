@@ -33,7 +33,8 @@ variables.
 
 **Step 6:** Run docker-compose
 
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up -d --build
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+        -p aaq-stack up -d --build
 
 You can now access the admin app at `https://[DOMAIN]/` and the apis at `https://[DOMAIN]/api`
 

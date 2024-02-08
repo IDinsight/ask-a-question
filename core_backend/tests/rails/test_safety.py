@@ -1,20 +1,30 @@
+from pathlib import Path
+
 import pytest
 
 from core_backend.app.configs.llm_prompts import SafetyClassification
 from core_backend.app.llm_call.parse_input import _classify_safety
-from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
+from core_backend.app.schemas import (
+    ErrorType,
+    UserQueryRefined,
+    UserQueryResponse,
+    UserQueryResponseError,
+)
 
 pytestmark = pytest.mark.rails
 
 
-PROMPT_INJECTION_FILE = "tests/rails/data/prompt_injection_data.txt"
-SAFE_MESSAGES_FILE = "tests/rails/data/safe_data.txt"
-INAPPROPRIATE_LANGUAGE_FILE = "tests/rails/data/inappropriate_lang.txt"
+PROMPT_INJECTION_FILE = "data/prompt_injection_data.txt"
+SAFE_MESSAGES_FILE = "data/safe_data.txt"
+INAPPROPRIATE_LANGUAGE_FILE = "data/inappropriate_lang.txt"
 
 
 def read_test_data(file: str) -> list[str]:
     """Reads test data from file and returns a list of strings"""
-    with open(file) as f:
+
+    file_path = Path(__file__).parent / file
+
+    with open(file_path) as f:
         return f.read().splitlines()
 
 
@@ -30,15 +40,16 @@ def response() -> UserQueryResponse:
 
 
 @pytest.mark.parametrize("prompt_injection", read_test_data(PROMPT_INJECTION_FILE))
-def test_prompt_injection_found(
+async def test_prompt_injection_found(
     prompt_injection: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that prompt injection is found"""
     question = UserQueryRefined(
         query_text=prompt_injection, query_text_original=prompt_injection
     )
-    _, response = _classify_safety(question, response)
-    assert response.state == ResultState.ERROR
+    _, response = await _classify_safety(question, response)
+    assert isinstance(response, UserQueryResponseError)
+    assert response.error_type == ErrorType.QUERY_UNSAFE
     assert (
         response.debug_info["safety_classification"]
         == SafetyClassification.PROMPT_INJECTION.value
@@ -46,13 +57,14 @@ def test_prompt_injection_found(
 
 
 @pytest.mark.parametrize("safe_text", read_test_data(SAFE_MESSAGES_FILE))
-def test_safe_message(
+async def test_safe_message(
     safe_text: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that safe messages are classified as safe"""
     question = UserQueryRefined(query_text=safe_text, query_text_original=safe_text)
-    _, response = _classify_safety(question, response)
-    assert response.state != ResultState.ERROR
+    _, response = await _classify_safety(question, response)
+
+    assert isinstance(response, UserQueryResponse)
     assert (
         response.debug_info["safety_classification"] == SafetyClassification.SAFE.value
     )
@@ -61,15 +73,17 @@ def test_safe_message(
 @pytest.mark.parametrize(
     "inappropriate_text", read_test_data(INAPPROPRIATE_LANGUAGE_FILE)
 )
-def test_inappropriate_language(
+async def test_inappropriate_language(
     inappropriate_text: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that inappropriate language is found"""
     question = UserQueryRefined(
         query_text=inappropriate_text, query_text_original=inappropriate_text
     )
-    _, response = _classify_safety(question, response)
-    assert response.state == ResultState.ERROR
+    _, response = await _classify_safety(question, response)
+
+    assert isinstance(response, UserQueryResponseError)
+    assert response.error_type == ErrorType.QUERY_UNSAFE
     assert (
         response.debug_info["safety_classification"]
         == SafetyClassification.INAPPROPRIATE_LANGUAGE.value

@@ -233,3 +233,43 @@ variable "account_id" {
   default     = ""
 
 }
+
+variable "open_ai_key_secret_name" {
+  type        = string
+  description = "value for the open ai key secret name"
+}
+
+variable "question_answer_secret_name" {
+  type        = string
+  description = "value for the question answer secret name"
+}
+
+variable "whatsapp_verify_token_secret_name" {
+  type        = string
+  description = "value for the whatsapp verify token secret name"
+}
+
+variable "private_dns_namespace_name" {
+  type        = string
+  description = "value for the private dns namespace name"
+}
+
+variable "environment" {
+  type        = string
+  description = "value for the environment"
+}
+
+variable "project_name" {
+  type        = string
+  description = "value for the project name"
+}
+
+variable "gh_action_name" {
+  type        = string
+  description = "value for the github action name"
+}
+
+variable "gh_role_name" {
+  type        = string
+  description = "value for the github role name"
+}

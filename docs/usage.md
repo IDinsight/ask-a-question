@@ -1,4 +1,9 @@
-## Usage
+There are two ways to interact with the service:
+
+1. Accessing the **API endpoints**
+2. The **Admin App**
+
+## API endpoints
 
 There are two major endpoints for Question-Answering:
 
@@ -35,7 +40,7 @@ curl -X 'POST' \
 }'
 ```
 
-### :books: Manage content
+## Admin app
 
 You can access the admin console at
 
@@ -43,4 +48,8 @@ You can access the admin console at
 https://[DOMAIN]/
 ```
 
-See ["Managing content"]("./content/admin-app.md") for more details
+On the [Admin app]("./content/admin-app.md"), you can:
+
+- :books: Manage content for more details
+- :test_tube: Use the playground to test the Question-Answering service
+- :bar_chart: View dashboards

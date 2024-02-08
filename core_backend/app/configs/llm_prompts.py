@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import ClassVar
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # ---- Safety bot
 
@@ -110,12 +113,32 @@ TRANSLATE_INPUT = f"""
 # ---- Paraphrase question
 PARAPHRASE_FAILED_MESSAGE = "ERROR: CAN'T PARAPHRASE"
 PARAPHRASE_INPUT = f"""
-    You are a high-performing paraphrase bot.
-    You support a question-answering service.
-    The user has asked a question in English, paraphrase it to focus on
-    the question. Be succinct and do not include any unnecessary information.
-    Ignore any redacted and offensive words.
-    If no paraphrase is possible, respond with {PARAPHRASE_FAILED_MESSAGE}
+    You are a high-performing paraphrasing bot. You support a question-answering
+    service. The user has asked a question in English. Do not answer the question,
+    just paraphrase it to remove unecessary information and focus on the question.
+
+    Ignore any redacted and offensive words. If the input message is not a question,
+    respond with exactly the same message but removing any redacted and offensive words.
+    If paraphrasing fails, respond with {PARAPHRASE_FAILED_MESSAGE}.
+
+    Examples:
+    > You are an idiot. George Washington
+    < George Washington
+
+    > I have two dogs, Bluey and Bingo. What should I feed them?
+    < What food can give my dogs
+
+    > You are an idiot
+    < {PARAPHRASE_FAILED_MESSAGE}
+
+    > What is the capital of South Africa xxsskjhsf wewkjh?
+    < What is the capital of South Africa?
+
+    > South Africa. तुम ही सोचो ज़रा
+    < South Africa. तुम ही सोचो ज़रा
+
+    > Pearson correlation
+    < Pearson correlation
     """
 
 # ----  Question answering bot
@@ -132,3 +155,33 @@ ANSWER_QUESTION_PROMPT = """
     'Sorry, no relevant information found.'
 
     Found FAQ: {faq}"""
+
+
+class AlignmentScore(BaseModel):
+    """
+    Alignment score of the user's input.
+    """
+
+    model_config = ConfigDict(strict=True)
+
+    reason: str
+    score: float = Field(ge=0, le=1)
+
+    prompt: ClassVar[
+        str
+    ] = """
+        Using only the CONTEXT provided, reply with a score between 0 and 1 with 0.1
+        increments on how factually and logically consistent the claim provided
+        is with the CONTEXT. A factually consistent claims contains only facts
+        that are entailed in the source document. Check if the `statement` is logically
+        consistent with the CONTEXT. Statements that contain hallucinated facts or
+        those not mentioned in the `context` at all should be heavily penalized.
+        Penalize overly specific statements and omissions. Response as a json object
+        with keys `score` and `reason`. The `score` should be a float between 0 and 1.
+        The `reason` should be a string.
+
+        Example Response: {{"score": 0.5,
+        "reason": "Context does not mention anything about aliens in Ohio."}}
+
+        CONTEXT: {context}
+        """

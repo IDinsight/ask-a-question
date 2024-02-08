@@ -1,2 +1,2 @@
-project_name = "aaq-demo"
+project_name = "aaq"
 billing_code = "aaq"

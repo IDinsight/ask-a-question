@@ -2,7 +2,7 @@
 version: "3"
 services:
   admin-app-container:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:Frontend
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:Frontend
     command: >
       npm start
     restart: always
@@ -11,7 +11,7 @@ services:
     logging:
       driver: awslogs
       options:
-        awslogs-group: /ecs/admin-app-task-demo
+        awslogs-group: /ecs/admin-app-task-${PROJECT_NAME}-${ENV}
         awslogs-region: ${AWS_REGION}
         awslogs-stream-prefix: frontend
 

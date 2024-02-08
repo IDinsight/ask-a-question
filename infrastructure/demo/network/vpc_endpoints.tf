@@ -36,7 +36,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 }
 
 resource "aws_ssm_document" "session_manager_prefs" {
-  name            = "SSM-SessionManagerRunShell"
+  name            = var.session_manager_prefs_name
   document_type   = "Session"
   document_format = "JSON"
 
@@ -51,4 +51,35 @@ resource "aws_ssm_document" "session_manager_prefs" {
 
     }
   })
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = aws_vpc.vpc.id
+  service_name = "com.amazonaws.${var.region}.s3"
+  tags         = merge({ Module = "Network" }, var.tags)
+  route_table_ids = [
+    aws_route_table.private.id,
+    aws_route_table.public.id
+  ]
+}
+
+resource "aws_vpc_endpoint_policy" "vpc_endpoint_s3_access" {
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = "*",
+        Action = [
+          "*"
+        ],
+        Resource = [
+          "arn:aws:s3:::amazonlinux.${var.region}.amazonaws.com",
+          "arn:aws:s3:::amazonlinux.${var.region}.amazonaws.com/*",
+          "arn:aws:s3:::amazonlinux-2-repos-${var.region}",
+          "arn:aws:s3:::amazonlinux-2-repos-${var.region}/*"
+        ]
+      },
+  ] })
 }
