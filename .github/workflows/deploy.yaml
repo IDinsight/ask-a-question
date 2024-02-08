@@ -1,9 +1,9 @@
-name: Deploy on push to main
+name: Deploy on push to eg-demo
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - eg-demo
 
 permissions:
   id-token: write # This is required for requesting the JWT

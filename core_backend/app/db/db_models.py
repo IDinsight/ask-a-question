@@ -9,6 +9,7 @@ from ..schemas import (
     FeedbackBase,
     UserQueryBase,
     UserQueryResponse,
+    UserQueryResponseError,
     WhatsAppIncoming,
     WhatsAppResponse,
 )
@@ -42,6 +43,9 @@ class UserQueryDB(Base):
     )
     response: Mapped[List["UserQueryResponseDB"]] = relationship(
         "UserQueryResponseDB", back_populates="query", lazy=True
+    )
+    response_error: Mapped[List["UserQueryResponseErrorDB"]] = relationship(
+        "UserQueryResponseErrorDB", back_populates="query", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -123,6 +127,53 @@ async def save_query_response_to_db(
     await asession.commit()
     await asession.refresh(user_query_responses_db)
     return user_query_responses_db
+
+
+class UserQueryResponseErrorDB(Base):
+    """
+    SQLAlchemy data model for errors sent to user
+    """
+
+    __tablename__ = "user-query-response-errors"
+
+    error_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    error_message: Mapped[str] = mapped_column(String, nullable=False)
+    error_type: Mapped[str] = mapped_column(String, nullable=False)
+    error_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+
+    query: Mapped[UserQueryDB] = relationship(
+        "UserQueryDB", back_populates="response_error", lazy=True
+    )
+
+    def __repr__(self) -> str:
+        """Pretty Print"""
+        return (
+            f"<Error for query #{self.query_id}: "
+            f"{self.error_type} | {self.error_message}>"
+        )
+
+
+async def save_query_response_error_to_db(
+    asession: AsyncSession,
+    user_query_db: UserQueryDB,
+    error: UserQueryResponseError,
+) -> UserQueryResponseErrorDB:
+    """
+    Saves the user query response error to the database.
+    """
+    user_query_response_error_db = UserQueryResponseErrorDB(
+        query_id=user_query_db.query_id,
+        error_message=error.error_message,
+        error_type=error.error_type,
+        error_datetime_utc=datetime.utcnow(),
+        debug_info=error.debug_info,
+    )
+    asession.add(user_query_response_error_db)
+    await asession.commit()
+    await asession.refresh(user_query_response_error_db)
+    return user_query_response_error_db
 
 
 class FeedbackDB(Base):

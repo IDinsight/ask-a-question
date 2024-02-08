@@ -1,8 +1,12 @@
-from typing import Dict
+from typing import Dict, List
 
-from litellm import embedding
+from litellm import aembedding, embedding
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PayloadSelectorInclude, VectorParams
+from qdrant_client.models import (
+    Distance,
+    PayloadSelectorInclude,
+    VectorParams,
+)
 
 from ..configs.app_config import (
     EMBEDDING_MODEL,
@@ -51,17 +55,45 @@ def get_similar_content(
     question: UserQueryBase,
     qdrant_client: QdrantClient,
     n_similar: int,
+    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector db
     """
+    response = embedding(EMBEDDING_MODEL, question.query_text)
+    question_embedding = response.data[0]["embedding"]
 
-    question_embedding = embedding(EMBEDDING_MODEL, question.query_text).data[0][
-        "embedding"
-    ]
+    return get_search_results(
+        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+    )
 
+
+async def get_similar_content_async(
+    question: UserQueryBase,
+    qdrant_client: QdrantClient,
+    n_similar: int,
+    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
+) -> Dict[int, UserQuerySearchResult]:
+    """
+    Get the most similar points in the vector db
+    """
+    response = await aembedding(EMBEDDING_MODEL, question.query_text)
+    question_embedding = response.data[0]["embedding"]
+
+    return get_search_results(
+        question_embedding, qdrant_client, n_similar, qdrant_collection_name
+    )
+
+
+def get_search_results(
+    question_embedding: List[float],
+    qdrant_client: QdrantClient,
+    n_similar: int,
+    qdrant_collection_name: str = QDRANT_COLLECTION_NAME,
+) -> Dict[int, UserQuerySearchResult]:
+    """Get similar content to given embedding and return search results"""
     search_result = qdrant_client.search(
-        collection_name=QDRANT_COLLECTION_NAME,
+        collection_name=qdrant_collection_name,
         query_vector=question_embedding,
         limit=n_similar,
         with_payload=PayloadSelectorInclude(include=["content_title", "content_text"]),
@@ -73,8 +105,8 @@ def get_similar_content(
             raise ValueError("Payload is empty. No content text found.")
         else:
             results_dict[i] = UserQuerySearchResult(
-                response_title=r.payload.get("content_title", ""),
-                response_text=r.payload.get("content_text", ""),
+                retrieved_title=r.payload.get("content_title", ""),
+                retrieved_text=r.payload.get("content_text", ""),
                 score=r.score,
             )
 

@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import namedtuple
-from typing import Union
+from typing import Any, Generator, Tuple
 
 import httpx
 import numpy as np
@@ -16,11 +16,11 @@ from core_backend.app.configs.app_config import (
     QDRANT_COLLECTION_NAME,
     QDRANT_VECTOR_SIZE,
 )
+from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.db.vector_db import get_qdrant_client
-from core_backend.app.llm_call import parse_input
+from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
-
-Fixture = Union
+from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -59,14 +59,16 @@ def faq_contents(client: TestClient) -> None:
 
 
 @pytest.fixture(scope="session")
-def client(patch_llm_call: pytest.FixtureRequest) -> TestClient:
+def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
     with TestClient(app) as c:
         yield c
 
 
 @pytest.fixture(scope="session")
-def monkeysession(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
+def monkeysession(
+    request: pytest.FixtureRequest,
+) -> Generator[pytest.MonkeyPatch, None, None]:
     from _pytest.monkeypatch import MonkeyPatch
 
     mpatch = MonkeyPatch()
@@ -75,7 +77,7 @@ def monkeysession(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
+def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
@@ -83,20 +85,80 @@ def patch_llm_call(monkeysession: pytest.FixtureRequest) -> None:
         "core_backend.app.routers.manage_content.embedding", fake_embedding
     )
     monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
-    monkeysession.setattr(parse_input, "_classify_safety", lambda a, b: (a, b))
-    monkeysession.setattr(parse_input, "_identify_language", lambda a, b: (a, b))
-    monkeysession.setattr(parse_input, "_paraphrase_question", lambda a, b: (a, b))
-    monkeysession.setattr(parse_input, "_translate_question", lambda a, b: (a, b))
-
+    monkeysession.setattr(
+        "core_backend.app.db.vector_db.aembedding", async_fake_embedding
+    )
+    monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
+    monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
+    monkeysession.setattr(parse_input, "_paraphrase_question", mock_return_args)
+    monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
+    monkeysession.setattr(check_output, "_get_llm_align_score", mock_get_align_score)
     monkeysession.setattr(
         "core_backend.app.routers.question_answer.get_llm_rag_answer",
-        lambda *args, **kwargs: "monkeypatched_llm_response",
+        patched_llm_rag_answer,
     )
+
+
+async def patched_llm_rag_answer(*args: Any, **kwargs: Any) -> str:
+    return "monkeypatched_llm_response"
+
+
+async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+    return AlignmentScore(score=0.9, reason="test - high score")
+
+
+async def mock_return_args(
+    question: UserQueryRefined, response: UserQueryResponse
+) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    return question, response
+
+
+async def mock_identify_language(
+    question: UserQueryRefined, response: UserQueryResponse
+) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    """
+    Monkeypatch call to LLM language identification service
+    """
+    question.original_language = IdentifiedLanguage.ENGLISH
+    response.debug_info["original_language"] = "ENGLISH"
+
+    return question, response
+
+
+async def mock_translate_question(
+    question: UserQueryRefined, response: UserQueryResponse
+) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    """
+    Monkeypatch call to LLM translation service
+    """
+    if question.original_language is None:
+        response.state = ResultState.ERROR
+        raise ValueError(
+            (
+                "Language hasn't been identified. "
+                "Identify language before running translation"
+            )
+        )
+    response.debug_info["translated_question"] = question.query_text
+
+    return question, response
 
 
 def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     """
     Replicates `litellm.embedding` function but just generates a random
+    list of floats
+    """
+
+    embedding_list = np.random.rand(int(QDRANT_VECTOR_SIZE)).astype(np.float32).tolist()
+    data_obj = EmbeddingData([{"embedding": embedding_list}])
+
+    return data_obj
+
+
+async def async_fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
+    """
+    Replicates `litellm.aembedding` function but just generates a random
     list of floats
     """
 
@@ -123,7 +185,7 @@ def readonly_token() -> str:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def patch_httpx_call(monkeysession: pytest.FixtureRequest) -> None:
+def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch call to httpx service
     """

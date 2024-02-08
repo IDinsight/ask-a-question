@@ -3,36 +3,63 @@ These tests check LLM response content validation functions.
 LLM response content validation functions are rails that check if the responses
 are based on the given context or not.
 """
-from typing import Dict, List, Literal
+from pathlib import Path
+from typing import List, Literal, Tuple
 
 import pytest
 import yaml
 
+from core_backend.app.configs.app_config import ALIGN_SCORE_API, ALIGN_SCORE_THRESHOLD
+from core_backend.app.llm_call.check_output import (
+    _get_alignScore_score,
+    _get_llm_align_score,
+)
+
 pytestmark = pytest.mark.rails
 
-CONTEXT_RESPONSE_FILE = "tests/rails/data/llm_response_in_context.yaml"
+CONTEXT_RESPONSE_FILE = "data/llm_response_in_context.yaml"
 TestDataKeys = Literal["context", "statement", "expected", "reason"]
 
 
-def read_test_data(file: str) -> List[Dict[TestDataKeys, str]]:
+def read_test_data(file: str) -> List[Tuple]:
     """Reads test data from file and returns a list of strings"""
 
-    with open(file, "r") as f:
+    file_path = Path(__file__).parent / file
+
+    with open(file_path, "r") as f:
         content = yaml.safe_load(f)
-        return [dict(context=c["context"], **t) for c in content for t in c["tests"]]
+        return [(c["context"], *t.values()) for c in content for t in c["tests"]]
 
 
-def test_alignScore(llm_sentence: str, context: str, expected_answer: bool) -> None:
+@pytest.mark.asyncio(scope="module")
+@pytest.mark.parametrize(
+    "context, statement, expected, reason", read_test_data(CONTEXT_RESPONSE_FILE)
+)
+async def test_alignScore(
+    context: str, statement: str, expected: bool, reason: str
+) -> None:
     """
     This checks if alignScore returns the correct answer
     """
-    pass
+    align_score = await _get_alignScore_score(
+        ALIGN_SCORE_API, {"evidence": context, "claim": statement}
+    )
+    assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
+        reason + f" {align_score.score}"
+    )
 
 
-def test_llm_rag_validation(
-    llm_sentence: str, context: str, expected_answer: bool
+@pytest.mark.asyncio(scope="module")
+@pytest.mark.parametrize(
+    "context, statement, expected, reason", read_test_data(CONTEXT_RESPONSE_FILE)
+)
+async def test_llm_alignment_score(
+    context: str, statement: str, expected: bool, reason: str
 ) -> None:
     """
-    This checks if base LLM validation returns the correct answer
+    This checks if LLM based alignment score returns the correct answer
     """
-    pass
+    align_score = await _get_llm_align_score({"evidence": context, "claim": statement})
+    assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
+        reason + f" {align_score.score}"
+    )

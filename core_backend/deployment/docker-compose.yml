@@ -1,6 +1,7 @@
 version: "3"
 services:
   backend-container:
+<<<<<<< HEAD
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:backend
     restart: always
     environment:
@@ -9,6 +10,14 @@ services:
       - AWS_REGION=${AWS_REGION}
       - DOMAIN=${DOMAIN}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+=======
+    image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:backend
+    restart: always
+    environment:
+      - QDRANT_HOST=vectordb.aaqdemo.local
+      - AWS_ACCOUNT_ID=${DEMO_ACCOUNT}
+      - AWS_REGION=af-south-1
+>>>>>>> main
     volumes:
       - local_dynamic_storage:/home/storage
     ports:
@@ -17,14 +26,22 @@ services:
       resources:
         limits:
           cpus: '0.5'
+<<<<<<< HEAD
           memory: 2g
+=======
+          memory: 512M
+>>>>>>> main
         
 
     logging:
       driver: awslogs
       options:
         awslogs-group: /ecs/backend-task-demo
+<<<<<<< HEAD
         awslogs-region: ${AWS_REGION}
+=======
+        awslogs-region: af-south-1
+>>>>>>> main
         awslogs-stream-prefix: backend
 
 volumes:

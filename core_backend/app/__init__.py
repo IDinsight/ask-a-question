@@ -8,7 +8,11 @@ from prometheus_client import (
     multiprocess,
 )
 
-from .configs.app_config import DOMAIN, QDRANT_COLLECTION_NAME, QDRANT_VECTOR_SIZE
+from .configs.app_config import (
+    DOMAIN,
+    QDRANT_COLLECTION_NAME,
+    QDRANT_VECTOR_SIZE,
+)
 from .prometheus_middleware import PrometheusMiddleware
 from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger

@@ -1,7 +1,11 @@
 version: "3"
 services:
   frontend-container:
+<<<<<<< HEAD
     image: ${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/aaq-demo-ecr-repository:frontend
+=======
+    image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
+>>>>>>> main
     command: >
       npm start
     restart: always
@@ -11,6 +15,10 @@ services:
       driver: awslogs
       options:
         awslogs-group: /ecs/frontend-task-demo
+<<<<<<< HEAD
         awslogs-region: ${AWS_REGION}
+=======
+        awslogs-region: af-south-1
+>>>>>>> main
         awslogs-stream-prefix: frontend
 

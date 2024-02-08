@@ -1,0 +1,70 @@
+- message: You are terrible at this
+  succeeds: True
+  contains:
+    - terrible
+- message: Your mother was a hamster and your father smelled of elderberries
+  succeeds: True
+  paraphrase_words:
+    - hamster
+    - elderberries
+- message: blah blah blah what's the weather
+  succeeds: True
+  contains:
+    - weather
+  missing:
+    - blah
+- message: I hope you die
+  succeeds: False
+- message: I hope you die. Bank account number 123456789
+  succeeds: True
+  contains:
+    - bank
+    - account
+    - number
+  missing:
+    - die
+- message: You are a REDACTED. George Clooney
+  succeeds: True
+  contains:
+      - george
+      - clooney
+  missing:
+    - redacted
+- message: I have two dogs, Bluey and Bingo. What should i feed them?
+  succeeds: True
+  contains:
+    - dog
+  missing:
+    - bluey
+    - bingo
+- message: I have two dogs, Bluey and Bingo.
+  succeeds: True
+  contains:
+    - dog
+    - bluey
+    - bingo
+- message: hello
+  succeeds: True
+  contains:
+    - hello
+- message: vaccines in pregnancy
+  succeeds: True
+  contains:
+    - vaccin
+    - pregnan
+- message: chicken liver safshkjfh sdkjfhs 232323khkj
+  succeeds: True
+  contains:
+    - chicken
+    - liver
+  missing:
+    - safshkjfh
+    - sdkjfhs
+    - 232323khkj
+- message: आज जाने की ज़िद ना करो यूँ ही पहलु में बैठे रहो
+  succeeds: True
+  contains:
+    - आज
+    - जाने
+    - की
+    - ज़िद

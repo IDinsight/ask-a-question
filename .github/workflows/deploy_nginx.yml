@@ -59,7 +59,7 @@ jobs:
               uses: docker/build-push-action@v5
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                ECR_REPOSITORY: aaq-demo-ecr-repository
+                ECR_REPOSITORY: ${{secrets.REPO}}
                 IMAGE_TAG: certbot
               with:
                 context: nginx
@@ -105,7 +105,7 @@ jobs:
                 ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
                 --region ${{ secrets.AWS_REGION }} \
                 --default-launch-type EC2 \
-                --config-name aaq-demo-nginx-config
+                --config-name ${{secrets.PROJECT_NAME}}-${{github.ref_name}}-nginx-config
                 ecs-cli compose --project-name nginx-task --file nginx/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
                 echo "taskdef=nginx-task" >> $GITHUB_OUTPUT
               env:
@@ -113,6 +113,9 @@ jobs:
                 DOMAIN: ${{ secrets.DOMAIN }}
                 EMAIL: ${{ secrets.EMAIL }}
                 REPO: ${{ secrets.REPO }}
+                PROJECT_NAME: ${{secrets.PROJECT_NAME}}
+                ENV: ${{github.ref_name}}
+                REGION: ${{secrets.REGION}}
             # We need this since deploy task definition action needs the task definition in json format
             
             - name: Task definition download

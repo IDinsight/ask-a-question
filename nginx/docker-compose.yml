@@ -4,7 +4,7 @@ version: '3'
 services:
 
     nginx:
-      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:nginx
+      image: ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:nginx
       ports:
         - "80:80"
         - "443:443"
@@ -22,12 +22,12 @@ services:
       logging:
         driver: awslogs
         options:
-          awslogs-group: /ecs/nginx-task-demo
-          awslogs-region: af-south-1
+          awslogs-group: /ecs/nginx-task-${PROJECT_NAME}-${ENV}
+          awslogs-region: ${REGION}
           awslogs-stream-prefix: nginx
       
     certbot:
-      image: ${AWS_ACCOUNT_ID}.dkr.ecr.af-south-1.amazonaws.com/${REPO}:certbot
+      image: ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:certbot
       depends_on:
         - nginx
       environment:
@@ -45,6 +45,6 @@ services:
       logging:
         driver: awslogs
         options:
-          awslogs-group: /ecs/nginx-task-demo
-          awslogs-region: af-south-1
+          awslogs-group: /ecs/nginx-task-${PROJECT_NAME}-${ENV}
+          awslogs-region: ${REGION}
           awslogs-stream-prefix: certbot

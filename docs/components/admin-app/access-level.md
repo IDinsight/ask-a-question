@@ -1,17 +1,5 @@
-# Using the admin app
-
-You can use the admin app to create new content, edit or delete an existing one.
-If you have the [application running](../deployment/quick-setup.md), you can access the admin app at:
-
-    https://[DOMAIN]/
-
-or if you are using the [dev](../develop/setup.md) setup:
-
-    http://localhost:3000/
-
-You will need to login to continue.
-
-## Access levels
+# Access levels
+![Login screen](./login-screenshot.png)
 
 There are two accounts available with different levels of access:
 
@@ -20,8 +8,17 @@ There are two accounts available with different levels of access:
 | `readonly`   | :white_check_mark: | :x:                | :x:                | :x:                | :white_check_mark: |
 | `fullaccess` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-## Content Cards
+Both account have access to the __Playground__, __Content Manager's Dashboard__, and the
+__Engineer's Dashboard__
 
-Once logged in, you should see the following screen
 
-![Admin screen](./admin-app-screenshot.png){ align=left }
+## Setting the password
+
+You can set the password in the
+[backend config files](http://localhost:8001/aaq-core/deployment/config-options/).
+
+## Upcoming features
+
+- [ ] Finer access controls
+- [ ] Individual user logins
+- [ ] Google OAuth
