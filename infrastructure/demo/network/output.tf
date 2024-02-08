@@ -42,10 +42,7 @@ output "cidr_block" {
   value       = aws_vpc.vpc.cidr_block
   description = "value for the vpc cidr block"
 }
-<<<<<<< HEAD
-=======
 
 output "s3_vpc_endpoint_prefix_list" {
   value = aws_vpc_endpoint.s3.prefix_list_id
 }
->>>>>>> main
