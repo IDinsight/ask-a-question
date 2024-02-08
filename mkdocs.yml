@@ -2,6 +2,8 @@
 
 site_name: ""
 site_url: https://idinsight.github.io/aaq-core/
+extra_css:
+  - stylesheets/extra.css
 
 theme:
   name: material
@@ -9,16 +11,17 @@ theme:
   palette:
     # Palette toggle for dark mode
     - scheme: slate
-      primary: indigo
+      primary: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
     # Palette toggle for light mode
     - scheme: default
-      primary: blue
+      primary: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -34,13 +37,13 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - 🏠 Home:
+  - Home:
       - "": index.md
-      - 👉 Usage: usage.md
-      - 🛣️ Roadmap: roadmap.md
-  - 📢 Latest Updates:
+      - Usage: usage.md
+      - Roadmap: roadmap.md
+  - Latest Updates:
       - blog/index.md
-  - ⚙️ Core Components:
+  - Core Components:
       - components/index.md
       - Admin App:
           - components/admin-app/index.md
@@ -53,7 +56,7 @@ nav:
           - LLM Response: components/qa-service/llm-response.md
       - Triaging Service:
           - components/triaging/index.md
-  - ➕ Other Components:
+  - Other Components:
       - other-components/index.md
       - WhatsApp Connector:
           - other-components/whatsapp/index.md
@@ -67,15 +70,16 @@ nav:
           - other-components/align-score/index.md
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
-  - 🌀 Deploying:
+  - Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-  - 💝 Contributing:
+  - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
       - Validation: develop/validation.md
+
 markdown_extensions:
   - tables
   - admonition
