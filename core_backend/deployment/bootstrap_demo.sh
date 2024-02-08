@@ -26,13 +26,13 @@ echo "Fetching variables from aws store.."
 # This is the name of the secrets in aws secrets manager.
 # The secrets are created by the infrastructure module
 # The values should be the same as the ones in the infrastructure module
-SECRET_JWT="aaq-demo-jwt-secret"
-SECRET_CONTENT="aaq-demo-content-access"
-SECRET_WHATSAPP_VERIFY="aaq-demo-whatsapp-verify-token"
-SECRET_WEB_DB_CONNECTION="aaq-demo-web-db-connection-details"
-SECRET_WHATSAPP="aaq-demo-whatsapp-token"
-SECRET_OPENAI="aaq-demo-open-ai-key"
-SECRET_QUESTION_ANSWER="aaq-demo-question-answer"
+SECRET_JWT="${PROJECT_NAME}-${ENV}-jwt-secret"
+SECRET_CONTENT="${PROJECT_NAME}-${ENV}-content-access"
+SECRET_WHATSAPP_VERIFY="${PROJECT_NAME}-${ENV}-whatsapp-verify-token"
+SECRET_WEB_DB_CONNECTION="${PROJECT_NAME}-${ENV}-web-db-connection-details"
+SECRET_WHATSAPP="${PROJECT_NAME}-${ENV}-whatsapp-token"
+SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
+SECRET_QUESTION_ANSWER="${PROJECT_NAME}-${ENV}-question-answer"
 
 export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")

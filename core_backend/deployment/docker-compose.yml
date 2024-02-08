@@ -10,6 +10,8 @@ services:
       - AWS_REGION=${AWS_REGION}
       - DOMAIN=${DOMAIN}
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+      - PROJECT_NAME=${PROJECT_NAME}
+      - ENV=${ENV}
     volumes:
       - local_dynamic_storage:/home/storage
     ports:
