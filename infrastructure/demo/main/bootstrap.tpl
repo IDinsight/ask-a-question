@@ -19,8 +19,4 @@ mkdir /home/ssm-user/certs
 
 
 sudo chmod 755 -R /home/ssm-user/nginx
-<<<<<<< HEAD
 sudo chmod 755 -R /home/ssm-user/certs
-=======
-sudo chmod 755 -R /home/ssm-user/certs
->>>>>>> main

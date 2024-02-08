@@ -27,11 +27,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
 }
 
 resource "aws_iam_role" "github_actions" {
-<<<<<<< HEAD
-  name               = "github-actions"
-=======
   name               = var.gh_role_name
->>>>>>> main
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
 }
 
@@ -98,11 +94,7 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
 
 
 resource "aws_iam_policy" "github_actions_resource_policies" {
-<<<<<<< HEAD
-  name        = "github-actions-demo-role-policy"
-=======
   name        = var.gh_action_name
->>>>>>> main
   description = "Grant Github Actions access to assume the web-task-role"
   policy      = data.aws_iam_policy_document.gh_actions_policy_document.json
 }

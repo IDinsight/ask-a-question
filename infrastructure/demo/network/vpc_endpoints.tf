@@ -36,11 +36,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 }
 
 resource "aws_ssm_document" "session_manager_prefs" {
-<<<<<<< HEAD
-  name            = "SSM-SessionManagerRunShell"
-=======
   name            = var.session_manager_prefs_name
->>>>>>> main
   document_type   = "Session"
   document_format = "JSON"
 
@@ -56,8 +52,6 @@ resource "aws_ssm_document" "session_manager_prefs" {
     }
   })
 }
-<<<<<<< HEAD
-=======
 
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.vpc.id
@@ -89,4 +83,3 @@ resource "aws_vpc_endpoint_policy" "vpc_endpoint_s3_access" {
       },
   ] })
 }
->>>>>>> main

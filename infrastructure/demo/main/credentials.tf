@@ -6,19 +6,11 @@ resource "random_password" "web_db" {
 }
 
 resource "random_password" "secrets" {
-<<<<<<< HEAD
-  # Random secrets are generated.
-  # This password is then stored in AWS Secrets Manager.
-  length  = 16
-  special = true
-  count   = 5 # 5 passwords are generated
-=======
   # A random password is generated for the JWT secret.
   # This password is then stored in AWS Secrets Manager.
   length  = 16
   special = true
   count   = 5 # n passwords are generated
->>>>>>> main
 }
 
 
@@ -97,11 +89,7 @@ resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
   # The secret version is created for the whatsapp token secret.
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.whatsapp_token_secret.id
-<<<<<<< HEAD
-  secret_string = ""
-=======
   secret_string = "Test"
->>>>>>> main
 
   lifecycle {
     ignore_changes = [secret_string]
@@ -110,11 +98,7 @@ resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
 
 # Whatsapp verify token secret
 resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
-<<<<<<< HEAD
-  # AWS Secrets Manager is used to store the whatsapp token secret.
-=======
   # AWS Secrets Manager is used to store the whatsapp verify token secret.
->>>>>>> main
 
   name                    = var.whatsapp_verify_token_secret_name
   tags                    = merge({ Name = var.whatsapp_verify_token_secret_name, Module = "Web" }, var.tags)
@@ -123,23 +107,12 @@ resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
 }
 
 resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
-<<<<<<< HEAD
-  # The secret version is created for the whatsapp token secret.
-=======
   # The secret version is created for the whatsapp verify token secret.
->>>>>>> main
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.whatsapp_verify_token_secret.id
   secret_string = random_password.secrets[3].result
 
 
-<<<<<<< HEAD
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
-=======
-
->>>>>>> main
 }
 
 resource "aws_secretsmanager_secret" "open_ai_key_secret" {
@@ -154,15 +127,8 @@ resource "aws_secretsmanager_secret" "open_ai_key_secret" {
 resource "aws_secretsmanager_secret_version" "open_ai_key_secret" {
   # The secret version is created for the open ai key secret.
   # The value will be added manually to the secret version.
-<<<<<<< HEAD
-  secret_id = aws_secretsmanager_secret.open_ai_key_secret.id
-  secret_string = jsonencode({
-    key = ""
-  })
-=======
   secret_id     = aws_secretsmanager_secret.open_ai_key_secret.id
   secret_string = "Test"
->>>>>>> main
 
   lifecycle {
     ignore_changes = [secret_string]
@@ -181,18 +147,7 @@ resource "aws_secretsmanager_secret" "question_answer_secret" {
 resource "aws_secretsmanager_secret_version" "question_answer_secret" {
   # The secret version is created for the question answer secret.
   # The value will be added manually to the secret version.
-<<<<<<< HEAD
-  secret_id = aws_secretsmanager_secret.question_answer_secret.id
-  secret_string = jsonencode({
-    key = ""
-  })
-
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
-=======
   secret_id     = aws_secretsmanager_secret.question_answer_secret.id
   secret_string = random_password.secrets[4].result
 
->>>>>>> main
 }

@@ -9,11 +9,7 @@ resource "aws_ecs_cluster" "web_cluster" {
 # The service discovery service is attached to the ECS service.
 # This is how the services communicate with each other.
 resource "aws_service_discovery_private_dns_namespace" "web" {
-<<<<<<< HEAD
-  name = "aaqdemo.local"
-=======
   name = var.private_dns_namespace_name
->>>>>>> main
   vpc  = var.vpc_id
 }
 
@@ -330,29 +326,6 @@ resource "aws_ecs_task_definition" "backend_task" {
 }
 
 resource "aws_cloudwatch_log_group" "admin_app" {
-<<<<<<< HEAD
-  name = "/ecs/admin-app-task-demo"
-
-  tags = merge({ Name = "admin-app-task-demo", Module = "Web" }, var.tags)
-}
-
-resource "aws_cloudwatch_log_group" "backend" {
-  name = "/ecs/backend-task-demo"
-
-  tags = merge({ Name = "backend-task-demo", Module = "Web" }, var.tags)
-}
-
-resource "aws_cloudwatch_log_group" "vectordb" {
-  name = "/ecs/vectordb-task-demo"
-
-  tags = merge({ Name = "vectordb-task-demo", Module = "Web" }, var.tags)
-}
-
-resource "aws_cloudwatch_log_group" "nginx" {
-  name = "/ecs/nginx-task-demo"
-
-  tags = merge({ Name = "nginx-task-demo", Module = "Web" }, var.tags)
-=======
   name = "/ecs/admin-app-task-${var.project_name}-${var.environment}"
 
   tags = merge({ Name = "admin-app-task-${var.environment}", Module = "Web" }, var.tags)
@@ -374,5 +347,4 @@ resource "aws_cloudwatch_log_group" "nginx" {
   name = "/ecs/nginx-task-${var.environment}"
 
   tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
->>>>>>> main
 }
