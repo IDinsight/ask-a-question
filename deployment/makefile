@@ -1,15 +1,11 @@
 SHELL = /bin/sh
 
-$(eval DEMO_ACCOUNT=039685995141)
-$(eval DOMAIN=aaq-demo.idinsight.io)
-$(eval EMAIL=dsem@idinsight.org)
-<<<<<<< HEAD
-$(eval NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api)
-=======
->>>>>>> main
+$(eval DEMO_ACCOUNT=XXXXXXXXXXX)
+$(eval DOMAIN=XXXXXXXXXXX)
+$(eval EMAIL=XXXXXXXXXXX)
+$(eval NEXT_PUBLIC_BACKEND_URL=XXXXXXXXXXX/api)
 
 login:
-	@export AWS_PROFILE=aaq_demo
 	@aws sso login --profile aaq_demo
 image-backend-demo:
 	@DEMO_ACCOUNT=${DEMO_ACCOUNT} \
@@ -45,12 +41,8 @@ create-backend-demo:
 	create 
 
 image-frontend-demo:
-<<<<<<< HEAD
-	@docker build --platform linux/arm64 --rm --rm --build-arg NAME=$(NEXT_PUBLIC_BACKEND_URL)-t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
-=======
-	@NEXT_PUBLIC_BACKEND_URL=https://aaq-demo.idinsight.io/api \
+	@NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} \
 	docker build --platform linux/arm64 --rm -t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
->>>>>>> main
 
 	# Tag 
 	@docker tag aaq-demo-frontend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
@@ -73,7 +65,7 @@ create-frontend-demo:
 	--region af-south-1 \
 	--config-name aaq-demo-frontend-config
 
-	@NEXT_PUBLIC_BACKEND_URL=https://aaq-dev.idinsight.io/api \
+	@NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} \
 	DEMO_ACCOUNT=${DEMO_ACCOUNT} \
 	ecs-cli compose -f ../admin_app/deployment/docker-compose.yml \
 	--aws-profile aaq_demo \

@@ -30,15 +30,6 @@ variable "aws_region" {
 variable "demo_profile" {
   description = "AWS profile to use for development"
   type        = string
-<<<<<<< HEAD
-  default     = "aaq_demo"
-}
-
-variable "demo_ec2_instance_type" {
-  description = "value for the demo ec2 instance type"
-  type        = string
-  default     = "t3.medium"
-=======
   default     = "aaq"
 }
 
@@ -46,7 +37,6 @@ variable "ec2_instance_type" {
   description = "value for the ec2 instance type"
   type        = string
   default     = "t4g.medium"
->>>>>>> main
 }
 
 variable "bastion_ec2_instance_type" {
@@ -55,12 +45,8 @@ variable "bastion_ec2_instance_type" {
   default     = "t3.nano"
 }
 
-<<<<<<< HEAD
-
-=======
 variable "rds_db_instance_class" {
   description = "value for the rds db instance class"
   type        = string
   default     = "db.t4g.small"
 }
->>>>>>> main
