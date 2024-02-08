@@ -1,4 +1,4 @@
-from litellm import completion
+from litellm import acompletion
 
 from ..configs.app_config import LLM_ENDPOINT, LLM_MODEL
 from ..utils import setup_logger
@@ -6,7 +6,7 @@ from ..utils import setup_logger
 logger = setup_logger("LLM_call")
 
 
-def _ask_llm(question: str, prompt: str) -> str:
+async def _ask_llm_async(question: str, prompt: str) -> str:
     """
     This is a generic function to ask the LLM model a question.
     """
@@ -22,7 +22,7 @@ def _ask_llm(question: str, prompt: str) -> str:
         },
     ]
     logger.info(f"LLM input: 'model': {LLM_MODEL}, 'endpoint': {LLM_ENDPOINT}")
-    llm_response_raw = completion(
+    llm_response_raw = await acompletion(
         model=LLM_MODEL, messages=messages, temperature=0, api_base=LLM_ENDPOINT
     )
     logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")

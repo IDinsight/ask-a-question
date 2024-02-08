@@ -1,4 +1,4 @@
-version: "1"
+version: "3"
 services:
   botpress:
     image: botpress/server:v12_31_3
@@ -36,7 +36,7 @@ services:
       - .env.nginx
 
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:v2.8.0
     restart: always
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt

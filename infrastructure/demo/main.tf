@@ -1,7 +1,11 @@
 module "main" {
   source                            = "./main"
   rds_db_instance_identifier        = "${var.project_name}-${var.environment}-db"
+<<<<<<< HEAD
   rds_db_instance_class             = "db.t4g.small"
+=======
+  rds_db_instance_class             = var.rds_db_instance_class
+>>>>>>> main
   rds_db_name                       = "postgres"
   tags                              = local.required_tags
   db_sg_name                        = "${var.project_name}-${var.environment}-web-db-sg"
@@ -31,7 +35,17 @@ module "main" {
   question_answer_secret_name       = "${var.project_name}-${var.environment}-question-answer"
   whatsapp_verify_token_secret_name = "${var.project_name}-${var.environment}-whatsapp-verify-token"
   aws_region                        = var.aws_region
+<<<<<<< HEAD
   web_ec2_instance_type             = "t4g.medium" # t4g.large is the only instance type that supports ARM. If this changes, the ANI should also change
   account_id                        = local.aws_account_id
 
+=======
+  web_ec2_instance_type             = var.ec2_instance_type # t4g.large is the only instance type that supports ARM. If this changes, the AMI should also change
+  account_id                        = local.aws_account_id
+  private_dns_namespace_name        = "${var.project_name}-${var.environment}.local"
+  environment                       = var.environment
+  project_name                      = var.project_name
+  gh_action_name                    = "github-actions-${var.project_name}-${var.environment}"
+  gh_role_name                      = "${var.project_name}-${var.environment}-github-actions-role"
+>>>>>>> main
 }

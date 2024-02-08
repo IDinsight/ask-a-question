@@ -60,7 +60,7 @@ async def process_whatsapp_message(
 
                 message = UserQueryBase(query_text=msg_body, query_metadata={})
                 content_response = get_similar_content(message, qdrant_client, 1)
-                top_faq = content_response[0].response_text
+                top_faq = content_response[0].retrieved_text
                 data_obj = {
                     "messaging_product": "whatsapp",
                     "to": from_phone,

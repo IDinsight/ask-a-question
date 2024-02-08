@@ -248,3 +248,31 @@ variable "whatsapp_verify_token_secret_name" {
   type        = string
   description = "value for the whatsapp verify token secret name"
 }
+<<<<<<< HEAD
+=======
+
+variable "private_dns_namespace_name" {
+  type        = string
+  description = "value for the private dns namespace name"
+}
+
+variable "environment" {
+  type        = string
+  description = "value for the environment"
+}
+
+variable "project_name" {
+  type        = string
+  description = "value for the project name"
+}
+
+variable "gh_action_name" {
+  type        = string
+  description = "value for the github action name"
+}
+
+variable "gh_role_name" {
+  type        = string
+  description = "value for the github role name"
+}
+>>>>>>> main
