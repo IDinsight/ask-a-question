@@ -1,6 +1,6 @@
 <p align="center">
-<img src="docs/images/logo-light.png" alt="logo" width=600/>
-
+<img src="docs/images/logo-light.png#gh-dark-mode-only" alt="logo" width=600/>
+<img src="docs/images/logo-dark.png#gh-light-mode-only" alt="logo" width=600/>
 </p>
 
 <p align="center" style="text-align:center">
