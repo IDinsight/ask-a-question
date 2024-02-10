@@ -39,31 +39,20 @@ services:
     restart: always
     env_file:
       - .env
-  nginx:
-    image: nginx:1.25-alpine
-    restart: always
-    depends_on:
-      - core_backend
-      - admin_app
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
     volumes:
-      - ./data/nginx:/etc/nginx/conf.d
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    command: >
-      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf
-      && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
     env_file:
-      - .env.nginx
-  certbot:
-    image: certbot/certbot:v2.8.0
-    restart: always
-    volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+      - .env
   alignScore:
     image: idinsight/alignscore-base:latest
     profiles:
@@ -75,7 +64,8 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
-
 volumes:
   local_dynamic_storage:
   qdrant_volume:
+  caddy_data:
+  caddy_config:
