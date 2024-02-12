@@ -146,7 +146,7 @@ PARAPHRASE_INPUT = f"""
     respond with exactly the same message but removing any redacted and offensive words.
     If paraphrasing fails, respond with \"{PARAPHRASE_FAILED_MESSAGE}\".
 
-    Examples:
+    Examples:\n
     """ + "\n".join(
     [
         f"\"{example['input']}\" -> \"{example['output']}\""
