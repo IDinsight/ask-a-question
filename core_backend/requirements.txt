@@ -7,7 +7,7 @@ asyncpg==0.28.0
 qdrant-client==1.5.4
 litellm==1.16.3
 sqlalchemy[asyncio]==2.0.20
-python-multipart==0.0.6
+python-multipart==0.0.7
 types-python-jose==3.3.4.8
 python-jose[cryptography]==3.3.0
 prometheus_client==0.19.0
