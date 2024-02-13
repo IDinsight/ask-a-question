@@ -16,6 +16,7 @@ The test assumes the validation data contains a single label representing the be
 matching content, rather than a ranked list of all relevant content.
 
 An example validation data will look like
+
 |query|label|
 |--|--|
 |"How?"|0|
@@ -24,6 +25,7 @@ An example validation data will look like
 |"May I?"|2|
 
 An example content data will look like
+
 |content_text|label|
 |--|--|
 |"Here's how."|0|
