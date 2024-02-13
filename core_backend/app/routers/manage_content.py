@@ -9,9 +9,11 @@ from litellm import embedding
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList, PointStruct, Record
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..configs.app_config import EMBEDDING_MODEL, QDRANT_COLLECTION_NAME
+from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client
 from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
 from ..utils import setup_logger
@@ -40,25 +42,20 @@ async def create_content(
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
-) -> ContentRetrieve:
+    asession: AsyncSession = Depends(get_async_session),
+) -> ContentRetrieve | None:
     """
     Create content endpoint. Calls embedding model to get content embedding and
     upserts it to Qdrant collection.
     """
 
-    payload = _create_payload_for_qdrant_upsert(
+    _create_payload_for_qdrant_upsert(
         content.content_title, content.content_text, content.content_metadata
     )
 
-    content_id = uuid.uuid4()
+    uuid.uuid4()
 
-    return _upsert_content_to_qdrant(
-        content_id=content_id,
-        content=content,
-        payload=payload,
-        qdrant_client=qdrant_client,
-    )
+    return None
 
 
 @router.put("/{content_id}/edit", response_model=ContentRetrieve)
