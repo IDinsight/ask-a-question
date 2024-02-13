@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      # Add a setup buildx step
+      # As per https://github.com/orgs/community/discussions/25678
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up QEMU
