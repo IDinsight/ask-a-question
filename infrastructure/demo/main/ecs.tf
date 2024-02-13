@@ -253,7 +253,7 @@ resource "aws_cloudwatch_log_group" "backend" {
 }
 
 resource "aws_cloudwatch_log_group" "nginx" {
-  name = "/ecs/nginx-task-${var.environment}"
+  name = "/ecs/nginx-task-${var.project_name}-${var.environment}"
 
   tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
