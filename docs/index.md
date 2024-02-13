@@ -55,7 +55,7 @@
 The project is funded by Google.org through the
 <a href="https://globalgoals.withgoogle.com/globalgoals/" class="link-home">AI for Global Goals</a> grant.
 <br><br>
-<img src="./images/idinsight_org.png" alt="idi_org" width=200 style="margin-left:-25px" /><br>
+<img src="./images/idi_dark.png#only-light" alt="idi_org" width=200 style="margin-left:-25px" /><img src="./images/idi_light.png#only-dark" alt="idi_org" width=200 style="margin-left:-25px" /><br>
 Built and powered by IDinsight.
 <p class="footer" markdown>IDinsight uses data and evidence to help leaders combat poverty worldwide. Our collaborations deploy a large analytical toolkit to help clients design better policies, rigorously test what works, and use evidence to implement effectively at scale. We place special emphasis on using the right tool for the right question, and tailor our rigorous methods to the real-world constraints of decision-makers. IDinsight works with governments, foundations, NGOs, multilaterals and businesses across Africa and Asia. We work in all major sectors including health, education, agriculture, governance, digital ID, financial access, and sanitation. We have offices in Dakar, Lusaka, Manila, Nairobi, New Delhi, Rabat, and Remote.
 <br>
