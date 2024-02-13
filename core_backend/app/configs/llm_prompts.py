@@ -183,25 +183,24 @@ class AlignmentScore(BaseModel):
     prompt: ClassVar[
         str
     ] = """
-        Using only the context provided delimited by triple backticks, reply with a
-        score between 0 and 1 with 0.1 increments on how factually and logically
-        consistent the claim provided is with the given context.
-        A factually consistent claims contains only facts
-        that are entailed in the source document. Check if the `statement` is logically
-        consistent with the CONTEXT. Statements that contain hallucinated facts or
-        those not mentioned in the `context` at all should be heavily penalized.
-        Penalize overly specific statements and omissions. Response as a json object
-        with keys `score` and `reason`. The `score` should be a float between 0 and 1.
-        The `reason` should be a string.
+        Respond with a json string with keys `score` and `reason`.
 
-        Example Response:
-        {
-            {
-                "score": 0.5,
-                "reason": "Context does not mention anything about aliens in Ohio."
-            }
-        }
+        The `score` should be a float between 0 and 1 with 0.1 increments on how
+        factually and logically consistent the Claim is with the Context provided
+        below. A factually consistent claim contains only facts that are entailed
+        in the context. Check if the claim is logically consistent with the context.
+        Statements that contain hallucinated facts or those not mentioned in the
+        context at all should be heavily penalized. Penalize overly specific statements
+        and omissions.
+
+        The `reason` should be a string explaining the score.
+
+        Example JSON response:
+        {{
+            "score": 0.5,
+            "reason": "Context does not mention anything about aliens in Ohio."
+        }}
 
         Context:
-        ```{context}```
+        {context}
         """

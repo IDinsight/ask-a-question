@@ -127,12 +127,12 @@ async def _get_alignScore_score(
     return alignment_score
 
 
-async def _get_llm_align_score(align_score_date: AlignScoreData) -> AlignmentScore:
+async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentScore:
     """
     Get the alignment score from the LLM
     """
-    prompt = AlignmentScore.prompt.format(context=align_score_date["evidence"])
-    result = await _ask_llm_async(prompt, align_score_date["claim"])
+    prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
+    result = await _ask_llm_async(prompt, align_score_data["claim"])
 
     try:
         alignment_score = AlignmentScore.model_validate_json(result)
