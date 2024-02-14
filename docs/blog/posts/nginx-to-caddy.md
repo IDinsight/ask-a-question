@@ -14,7 +14,7 @@ and the architecture - which means fewer docker containers to run and manage.
 
 <!-- more -->
 
-Previously, we were using Nginx and then manually running a script to issue certificates
+Previously, we were using NGINX and then manually running a script to issue certificates
 from Let's Encrypt. We were also running a [container](https://hub.docker.com/r/certbot/certbot/)
 to refresh Let’s Encrypt certificates. And then sharing volumes between this container and
 the nginx container. [This article](https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71) from
