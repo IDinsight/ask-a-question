@@ -31,7 +31,7 @@ Oscar, our Google.org AI advisor's first advice when he saw our architecture was
 to Caddy. Here are the benefits:
 
 1. It requests and refresh certs from Let's Encrypt.
-2. If your domain is localhost, it knows to issue it's own certificate.
+2. If your domain is localhost, it knows to issue its own certificate.
 3. A much smaller and simpler config file.
 4. You can use environment variables.
 
