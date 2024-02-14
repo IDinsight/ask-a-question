@@ -1,6 +1,10 @@
 :root {
   --md-primary-fg-color: #263568;
 }
+.md-header__button.md-logo img {
+  height: 35px; /* Replace with the height you want */
+  width: 210px; /* Replace with the width you want */
+}
 .component-title {
   color: #5480cb;
   font-size: 32px;
@@ -9,26 +13,27 @@
 .big-font {
   font-size: 30px;
 }
-
 .secondary-color {
   color: #9dc1e0;
 }
 strong {
   color: #5480cb;
 }
-.strong-extra {
-  color: #5480cb;
-}
+
 .md-ellipsis:hover {
   color: #c99300;
 }
-
 .link-home {
   color: #c99300 !important;
 }
-
+.link-home:hover {
+  color: #5480cb !important;
+}
 .md-typeset a {
   color: #5480cb;
+}
+.md-typeset a:hover {
+  color: #c99300;
 }
 .md-typeset .md-button {
   background-color: #9dc1e0;
@@ -54,4 +59,7 @@ strong {
 }
 .md-tabs__item--active {
   color: #c99300;
+}
+.footer {
+  font-size: small;
 }
