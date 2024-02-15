@@ -2,8 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, List, Literal, Optional
 
-from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints
-from pydantic.functional_validators import AfterValidator
+from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints, validator
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -104,20 +103,6 @@ class FeedbackBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-def validate_language(language: str) -> str:
-    """
-    Validator for language
-    """
-
-    if language not in IdentifiedLanguage.get_supported_languages():
-        raise ValueError(f"Language {language} is not supported")
-
-    return language
-
-
-AvailableLanguages = Annotated[str, AfterValidator("validate_language")]
-
-
 class ContentCreate(BaseModel):
     """
     Pydantic model for content creation
@@ -126,10 +111,21 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
-    content_language: AvailableLanguages
+    content_language: str
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
+
+    @validator("content_language")
+    def validate_language(cls, v: str) -> str:
+        """
+        Validator for language
+        """
+
+        if v not in IdentifiedLanguage.get_supported_languages():
+            raise ValueError(f"Language {v} is not supported")
+
+        return v
 
 
 class ContentRetrieve(ContentCreate):
@@ -138,7 +134,7 @@ class ContentRetrieve(ContentCreate):
     """
 
     content_id: UUID4
-    content_embedding: List[int]
+    content_embedding: List[float]
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 

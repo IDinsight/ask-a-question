@@ -12,6 +12,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
 PGVECTOR_VECTOR_SIZE = os.environ.get("PGVECTOR_VECTOR_SIZE", "1536")
 
+
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY")  # Will be none if not set
 QDRANT_URL = os.environ.get("QDRANT_URL")  # Will be none if not set
 QDRANT_PORT = os.environ.get("QDRANT_PORT", "6333")

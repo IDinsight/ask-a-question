@@ -3,11 +3,23 @@ from typing import Dict, List, Optional
 
 from litellm import embedding
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, delete, select
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    delete,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from ..configs.app_config import EMBEDDING_MODEL, PGVECTOR_VECTOR_SIZE
+from ..configs.app_config import (
+    EMBEDDING_MODEL,
+    PGVECTOR_VECTOR_SIZE,
+)
 from ..configs.llm_prompts import IdentifiedLanguage
 from ..schemas import (
     ContentCreate,
@@ -16,6 +28,7 @@ from ..schemas import (
     UserQueryBase,
     UserQueryResponse,
     UserQueryResponseError,
+    UserQuerySearchResult,
     WhatsAppIncoming,
     WhatsAppResponse,
 )
@@ -311,7 +324,7 @@ class ContentDB(Base):
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     content_embedding: Mapped[Vector] = mapped_column(
-        Vector(PGVECTOR_VECTOR_SIZE), nullable=False
+        Vector(float(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
     content_title: Mapped[str] = mapped_column(String, nullable=False)
     content_text: Mapped[str] = mapped_column(String, nullable=False)
@@ -336,7 +349,8 @@ async def save_content_to_db(
     Vectorizes and saves a content in the database
     """
 
-    content_embedding = _get_content_embeddings(content)
+    content_embedding = await _get_content_embeddings(content)
+
     content_db = ContentDB(
         content_embedding=content_embedding,
         content_title=content.content_title,
@@ -348,8 +362,10 @@ async def save_content_to_db(
     )
 
     asession.add(content_db)
+
     await asession.commit()
     await asession.refresh(content_db)
+
     return content_db
 
 
@@ -360,7 +376,7 @@ async def update_content_in_db(
     Updates a content and vector in the database
     """
 
-    content_embedding = _get_content_embeddings(content)
+    content_embedding = await _get_content_embeddings(content)
     content_db = ContentDB(
         content_id=content.content_id,
         content_embedding=content_embedding,
@@ -424,3 +440,46 @@ async def _get_content_embeddings(
     text_to_embed = content.content_title + "\n" + content.content_text
     content_embedding = embedding(EMBEDDING_MODEL, text_to_embed).data[0]["embedding"]
     return content_embedding
+
+
+async def get_similar_content(
+    asession: AsyncSession,
+    question: UserQueryBase,
+    n_similar: int,
+) -> Dict[int, UserQuerySearchResult]:
+    """
+    Get the most similar points in the vector db
+    """
+    response = embedding(EMBEDDING_MODEL, question.query_text)
+    question_embedding = response.data[0]["embedding"]
+
+    return await get_search_results(asession, question_embedding, n_similar)
+
+
+async def get_search_results(
+    asession: AsyncSession, question_embedding: List[float], n_similar: int
+) -> Dict[int, UserQuerySearchResult]:
+    """Get similar content to given embedding and return search results"""
+    query = (
+        select(
+            [
+                ContentDB,
+                ContentDB.content_embedding.l2_distance(question_embedding).label(
+                    "distance"
+                ),
+            ]
+        )
+        .order_by(ContentDB.content_embedding.l2_distance(question_embedding))
+        .limit(n_similar)
+    )
+    search_result = asession.execute(query).fetchall()
+
+    results_dict = {}
+    for i, r in enumerate(search_result):
+        results_dict[i] = UserQuerySearchResult(
+            retrieved_title=r[0].content_title,
+            retrieved_text=r[0].content_text,
+            score=r[1],
+        )
+
+    return results_dict

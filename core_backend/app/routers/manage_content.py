@@ -8,11 +8,18 @@ from fastapi.exceptions import HTTPException
 from litellm import embedding
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointIdsList, PointStruct, Record
+from qdrant_client.models import PointStruct
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..configs.app_config import EMBEDDING_MODEL, QDRANT_COLLECTION_NAME
+from ..db.db_models import (
+    ContentDB,
+    delete_content_from_db,
+    get_content_from_db,
+    get_list_of_content_from_db,
+    save_content_to_db,
+)
 from ..db.engine import get_async_session
 from ..db.vector_db import get_qdrant_client
 from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
@@ -49,13 +56,9 @@ async def create_content(
     upserts it to Qdrant collection.
     """
 
-    _create_payload_for_qdrant_upsert(
-        content.content_title, content.content_text, content.content_metadata
-    )
+    content_db = await save_content_to_db(asession, content)
 
-    uuid.uuid4()
-
-    return None
+    return _convert_record_to_schema(content_db)
 
 
 @router.put("/{content_id}/edit", response_model=ContentRetrieve)
@@ -99,45 +102,35 @@ async def retrieve_content(
     ],
     skip: int = 0,
     limit: int = 50,
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+    asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
     """
     Retrieve all content endpoint
     """
-    records, _ = qdrant_client.scroll(
-        collection_name=QDRANT_COLLECTION_NAME,
-        limit=limit,
-        offset=skip,
-        with_payload=True,
-        with_vectors=False,
-    )
-
+    records = await get_list_of_content_from_db(asession, skip, limit)
+    print([val.content_id for val in records])
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
 
 
 @router.delete("/{content_id}/delete")
 async def delete_content(
-    content_id: str,
+    content_id: int,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+    asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
     Delete content endpoint
     """
-    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+    record = await get_content_from_db(asession, content_id)
 
-    if len(record) == 0:
+    if not record:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
-
-    qdrant_client.delete(
-        collection_name=QDRANT_COLLECTION_NAME,
-        points_selector=PointIdsList(points=[content_id]),
-    )
+    await delete_content_from_db(asession, content_id)
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
@@ -207,21 +200,19 @@ def _upsert_content_to_qdrant(
     )
 
 
-def _convert_record_to_schema(record: Record) -> ContentRetrieve:
+def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     """
     Convert qdrant_client.models.Record to ContentRetrieve schema
     """
-    content_metadata = record.payload or {}
-    created_datetime = content_metadata.pop("created_datetime_utc")
-    updated_datetime = content_metadata.pop("updated_datetime_utc")
-    content_title = content_metadata.pop("content_title")
-    content_text = content_metadata.pop("content_text")
-
-    return ContentRetrieve(
-        content_title=content_title,
-        content_text=content_text,
-        content_metadata=content_metadata,
-        content_id=UUID(str(record.id)),
-        created_datetime_utc=created_datetime,
-        updated_datetime_utc=updated_datetime,
+    content_retrieve = ContentRetrieve(
+        content_id=uuid.uuid4(),
+        content_title=record.content_title,
+        content_text=record.content_text,
+        content_embedding=record.content_embedding,
+        content_language=record.content_language,
+        content_metadata=record.content_metadata,
+        created_datetime_utc=record.created_datetime_utc,
+        updated_datetime_utc=record.updated_datetime_utc,
     )
+
+    return content_retrieve
