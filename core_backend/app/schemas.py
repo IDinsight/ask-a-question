@@ -2,7 +2,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, Literal, Optional
 
+<<<<<<< HEAD
 from pydantic import BaseModel, ConfigDict, StringConstraints, validator
+=======
+from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints, validator
+>>>>>>> 90002fb (Create pgvector table and Connect to backend)
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -111,7 +115,11 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
+<<<<<<< HEAD
     content_language: str = "ENGLISH"
+=======
+    content_language: str
+>>>>>>> 90002fb (Create pgvector table and Connect to backend)
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
@@ -133,7 +141,12 @@ class ContentRetrieve(ContentCreate):
     Pydantic model for content retrieval
     """
 
+<<<<<<< HEAD
     content_id: int
+=======
+    content_id: UUID4
+    content_embedding: List[float]
+>>>>>>> 90002fb (Create pgvector table and Connect to backend)
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 

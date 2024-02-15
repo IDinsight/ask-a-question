@@ -50,7 +50,11 @@ setup-test-db:
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
+<<<<<<< HEAD
 		-d pgvector/pgvector:pg16
+=======
+		-d pgvector/pgvector:16.1-alpine
+>>>>>>> 90002fb (Create pgvector table and Connect to backend)
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 
