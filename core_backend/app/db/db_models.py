@@ -470,7 +470,7 @@ async def get_search_results(
         .order_by(ContentDB.content_embedding.l2_distance(question_embedding))
         .limit(n_similar)
     )
-    search_result = await asession.execute(query).fetchall()
+    search_result = await asession.execute(query).all()
 
     results_dict = {}
     for i, r in enumerate(search_result):

@@ -2,7 +2,7 @@
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ['litellm', "alignscore","pgvector"]
+module = ['litellm', "nltk", "alignscore","pgvector-sqlalchemy"]
 ignore_missing_imports = true
 
 [tool.ruff]
