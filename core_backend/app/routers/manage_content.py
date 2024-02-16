@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import Annotated, List
-from uuid import UUID
+from typing import Annotated, Any, List
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
@@ -175,7 +174,7 @@ def _create_payload_for_qdrant_upsert(
 
 
 def _upsert_content_to_qdrant(
-    content_id: UUID,
+    content_id: Any,
     content: ContentCreate,
     payload: QdrantPayload,
     qdrant_client: QdrantClient,
