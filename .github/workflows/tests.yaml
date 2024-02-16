@@ -17,7 +17,7 @@ jobs:
     container: node:20.7-bullseye
     services:
       postgres:
-        image: postgres:16.1-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}

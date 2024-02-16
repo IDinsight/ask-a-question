@@ -1,6 +1,9 @@
 [tool.mypy]
 disallow_untyped_defs = true
 
+[mypy-pgvector]
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = ['litellm', "nltk", "alignscore"]
 ignore_missing_imports = true

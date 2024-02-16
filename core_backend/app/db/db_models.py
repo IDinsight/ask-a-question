@@ -462,12 +462,10 @@ async def get_search_results(
     """Get similar content to given embedding and return search results"""
     query = (
         select(
-            [
-                ContentDB,
-                ContentDB.content_embedding.l2_distance(question_embedding).label(
-                    "distance"
-                ),
-            ]
+            ContentDB,
+            ContentDB.content_embedding.l2_distance(question_embedding).label(
+                "distance"
+            ),
         )
         .order_by(ContentDB.content_embedding.l2_distance(question_embedding))
         .limit(n_similar)
