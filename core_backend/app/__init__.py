@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
         f"https://{DOMAIN}",
         f"https://{DOMAIN}:3000",
     ]
-
+    # type: ignore[arg-type]
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
