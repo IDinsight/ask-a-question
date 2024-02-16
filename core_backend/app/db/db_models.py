@@ -370,7 +370,7 @@ async def save_content_to_db(
 
 
 async def update_content_in_db(
-    asession: AsyncSession, content: ContentUpdate
+    asession: AsyncSession, content_id: int, content: ContentCreate
 ) -> ContentDB:
     """
     Updates a content and vector in the database
@@ -378,7 +378,7 @@ async def update_content_in_db(
 
     content_embedding = await _get_content_embeddings(content)
     content_db = ContentDB(
-        content_id=content.content_id,
+        content_id=content_id,
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
@@ -448,7 +448,7 @@ async def get_similar_content(
     n_similar: int,
 ) -> Dict[int, UserQuerySearchResult]:
     """
-    Get the most similar points in the vector db
+    Get the most similar points in the vector table
     """
     response = embedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]

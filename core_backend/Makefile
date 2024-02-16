@@ -50,7 +50,7 @@ setup-test-relational-db:
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
-		-d pgvector/pgvector:16.1-alpine
+		-d pgvector/pgvector:pg16
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 

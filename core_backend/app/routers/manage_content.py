@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Annotated, List
 from uuid import UUID
@@ -19,9 +18,9 @@ from ..db.db_models import (
     get_content_from_db,
     get_list_of_content_from_db,
     save_content_to_db,
+    update_content_in_db,
 )
 from ..db.engine import get_async_session
-from ..db.vector_db import get_qdrant_client
 from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
 from ..utils import setup_logger
 
@@ -53,46 +52,34 @@ async def create_content(
 ) -> ContentRetrieve | None:
     """
     Create content endpoint. Calls embedding model to get content embedding and
-    upserts it to Qdrant collection.
+    upserts it to PG database
     """
 
     content_db = await save_content_to_db(asession, content)
-
     return _convert_record_to_schema(content_db)
 
 
 @router.put("/{content_id}/edit", response_model=ContentRetrieve)
 async def edit_content(
-    content_id: str,
+    content_id: int,
     content: ContentCreate,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+    asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
     Edit content endpoint
     """
-    old_content = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+    old_content = await get_content_from_db(asession, content_id)
 
-    if len(old_content) == 0:
+    if not old_content:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
+    updated_content = await update_content_in_db(asession, content_id, content)
 
-    payload = _create_payload_for_qdrant_upsert(
-        content_title=content.content_title,
-        content_text=content.content_text,
-        metadata=old_content[0].payload or {},
-    )
-    payload = payload.model_copy(update=content.content_metadata)
-
-    return _upsert_content_to_qdrant(
-        content_id=UUID(content_id),
-        content=content,
-        payload=payload,
-        qdrant_client=qdrant_client,
-    )
+    return _convert_record_to_schema(updated_content)
 
 
 @router.get("/list", response_model=list[ContentRetrieve])
@@ -108,7 +95,6 @@ async def retrieve_content(
     Retrieve all content endpoint
     """
     records = await get_list_of_content_from_db(asession, skip, limit)
-    print([val.content_id for val in records])
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
 
@@ -135,24 +121,42 @@ async def delete_content(
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
-    content_id: str,
+    content_id: int,
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
     ],
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+    asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
     Retrieve content by id endpoint
     """
 
-    record = qdrant_client.retrieve(QDRANT_COLLECTION_NAME, ids=[content_id])
+    record = await get_content_from_db(asession, content_id)
 
-    if len(record) == 0:
+    if not record:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    return _convert_record_to_schema(record[0])
+    return _convert_record_to_schema(record)
+
+
+def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
+    """
+    Convert db_models.ContentDB models to ContentRetrieve schema
+    """
+    content_retrieve = ContentRetrieve(
+        content_id=record.content_id,
+        content_title=record.content_title,
+        content_text=record.content_text,
+        content_embedding=record.content_embedding,
+        content_language=record.content_language,
+        content_metadata=record.content_metadata,
+        created_datetime_utc=record.created_datetime_utc,
+        updated_datetime_utc=record.updated_datetime_utc,
+    )
+
+    return content_retrieve
 
 
 def _create_payload_for_qdrant_upsert(
@@ -198,21 +202,3 @@ def _upsert_content_to_qdrant(
         created_datetime_utc=payload.created_datetime_utc,
         updated_datetime_utc=payload.updated_datetime_utc,
     )
-
-
-def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
-    """
-    Convert qdrant_client.models.Record to ContentRetrieve schema
-    """
-    content_retrieve = ContentRetrieve(
-        content_id=uuid.uuid4(),
-        content_title=record.content_title,
-        content_text=record.content_text,
-        content_embedding=record.content_embedding,
-        content_language=record.content_language,
-        content_metadata=record.content_metadata,
-        created_datetime_utc=record.created_datetime_utc,
-        updated_datetime_utc=record.updated_datetime_utc,
-    )
-
-    return content_retrieve

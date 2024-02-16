@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, List, Literal, Optional
 
-from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints, validator
+from pydantic import BaseModel, ConfigDict, StringConstraints, validator
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -133,7 +133,7 @@ class ContentRetrieve(ContentCreate):
     Pydantic model for content retrieval
     """
 
-    content_id: UUID4
+    content_id: int
     content_embedding: List[float]
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
