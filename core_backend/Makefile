@@ -35,9 +35,9 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-relational-db setup-test-vector-db setup-alignscore-container
+setup-test-containers: setup-test-relational-db setup-test-vector-db #setup-alignscore-container
 
-teardown-test-containers: stop-test-relational-db stop-test-vector-db stop-alignscore-container
+teardown-test-containers: stop-test-relational-db stop-test-vector-db #stop-alignscore-container
 
 setup-test-relational-db:
 	-@docker stop testdb
@@ -50,7 +50,7 @@ setup-test-relational-db:
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
-		-d postgres:16.1-alpine
+		-d pgvector/pgvector:pg16
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 
@@ -107,7 +107,7 @@ setup-relational-db:
 	@docker run --name postgres-local \
      -e POSTGRES_PASSWORD=postgres \
      -p 5432:5432 \
-     -d postgres:16.1-alpine
+     -d pgvector/pgvector:pg16
 	python -m alembic upgrade head
 
 setup-vector-db:
