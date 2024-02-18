@@ -1,8 +1,8 @@
-"""Add content table
+"""add content table
 
-Revision ID: a5b29bc66bb5
+Revision ID: f269c75dbf69
 Revises: 9eaf63e424ea
-Create Date: 2024-02-15 17:45:26.803356
+Create Date: 2024-02-18 19:38:36.817510
 
 """
 
@@ -11,9 +11,14 @@ from typing import Sequence, Union
 import pgvector
 import sqlalchemy as sa
 from alembic import op
+from app.configs.app_config import (
+    PGVECTOR_DISTANCE,
+    PGVECTOR_EF_CONSTRUCTION,
+    PGVECTOR_M,
+)
 
 # revision identifiers, used by Alembic.
-revision: str = "a5b29bc66bb5"
+revision: str = "f269c75dbf69"
 down_revision: Union[str, None] = "9eaf63e424ea"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,34 +31,21 @@ def upgrade() -> None:
         "content",
         sa.Column("content_id", sa.Integer(), nullable=False),
         sa.Column(
-            "content_embedding", pgvector.sqlalchemy.Vector(dim=1536.0), nullable=False
+            "content_embedding", pgvector.sqlalchemy.Vector(dim=1536), nullable=False
         ),
         sa.Column("content_title", sa.String(), nullable=False),
         sa.Column("content_text", sa.String(), nullable=False),
-        sa.Column(
-            "content_language",
-            sa.Enum(
-                "ENGLISH",
-                "XHOSA",
-                "ZULU",
-                "AFRIKAANS",
-                "HINDI",
-                "UNKNOWN",
-                name="identifiedlanguage",
-            ),
-            nullable=False,
-        ),
+        sa.Column("content_language", sa.String(), nullable=False),
         sa.Column("content_metadata", sa.JSON(), nullable=False),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),
         sa.Column("updated_datetime_utc", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("content_id"),
     )
     op.execute(
-        "CREATE INDEX content_idx ON content"
-        " USING hnsw (content_embedding vector_l2_ops)"
-        "WITH (m = 16, ef_construction = 64)"
+        f"""CREATE INDEX content_idx ON content
+        USING hnsw (content_embedding {PGVECTOR_DISTANCE})
+        WITH (m = {PGVECTOR_M}, ef_construction = {PGVECTOR_EF_CONSTRUCTION})"""
     )
-
     # ### end Alembic commands ###
 
 
@@ -63,8 +55,11 @@ def downgrade() -> None:
         "content_idx",
         table_name="content",
         postgresql_using="hnsw",
-        postgresql_with={"M": "16", "ef_construction": "64"},
-        postgresql_ops={"embedding": "vector_l2_ops"},
+        postgresql_with={
+            "M": {PGVECTOR_M},
+            "ef_construction": {PGVECTOR_EF_CONSTRUCTION},
+        },
+        postgresql_ops={"embedding": {PGVECTOR_DISTANCE}},
     )
     op.drop_table("content")
     op.execute("DROP TYPE IF EXISTS identifiedlanguage;")

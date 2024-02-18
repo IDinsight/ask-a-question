@@ -6,7 +6,6 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
     String,
@@ -16,11 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from ..configs.app_config import (
-    EMBEDDING_MODEL,
-    PGVECTOR_VECTOR_SIZE,
-)
-from ..configs.llm_prompts import IdentifiedLanguage
+from ..configs.app_config import EMBEDDING_MODEL, PGVECTOR_VECTOR_SIZE
 from ..schemas import (
     ContentCreate,
     ContentUpdate,
@@ -324,13 +319,11 @@ class ContentDB(Base):
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     content_embedding: Mapped[Vector] = mapped_column(
-        Vector(float(PGVECTOR_VECTOR_SIZE)), nullable=False
+        Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
     content_title: Mapped[str] = mapped_column(String, nullable=False)
     content_text: Mapped[str] = mapped_column(String, nullable=False)
-    content_language: Mapped[str] = mapped_column(
-        Enum(IdentifiedLanguage), nullable=False
-    )
+    content_language: Mapped[str] = mapped_column(String, nullable=False)
 
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
@@ -463,11 +456,11 @@ async def get_search_results(
     query = (
         select(
             ContentDB,
-            ContentDB.content_embedding.l2_distance(question_embedding).label(
+            ContentDB.content_embedding.cosine_distance(question_embedding).label(
                 "distance"
             ),
         )
-        .order_by(ContentDB.content_embedding.l2_distance(question_embedding))
+        .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
         .limit(n_similar)
     )
     search_result = (await asession.execute(query)).all()

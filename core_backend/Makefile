@@ -35,9 +35,9 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-relational-db setup-test-vector-db setup-alignscore-container
+setup-test-containers: setup-test-relational-db setup-test-vector-db #setup-alignscore-container
 
-teardown-test-containers: stop-test-relational-db stop-test-vector-db stop-alignscore-container
+teardown-test-containers: stop-test-relational-db stop-test-vector-db #stop-alignscore-container
 
 setup-test-relational-db:
 	-@docker stop testdb
