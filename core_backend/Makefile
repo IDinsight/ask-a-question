@@ -35,9 +35,9 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-relational-db  #setup-alignscore-container
+setup-test-containers: setup-test-relational-db  setup-alignscore-container
 
-teardown-test-containers: stop-test-relational-db  #stop-alignscore-container
+teardown-test-containers: stop-test-relational-db  stop-alignscore-container
 
 setup-test-relational-db:
 	-@docker stop testdb
@@ -70,13 +70,13 @@ stop-test-relational-db:
 	@docker stop testdb
 	@docker rm testdb
 
-# Development DBs
+# Development DB
 
 setup-dbs: setup-relational-db
 
 teardown-dbs: stop-relational-db
 
-# load some dummy FAQs into the conten table
+# load some dummy FAQs into the content table
 add-dummy-faqs:
 	curl -X POST -d '{"content_title": "Come camping", "content_text":"Embrace the call of the wild with camping, an age-old tradition that reconnects us with nature. Whether youre pitching a tent under a canopy of stars or sharing stories around a crackling campfire, camping offers a unique escape from the hustle and bustle of daily life. Experience the tranquility of the great outdoors and create lasting memories with loved ones."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 	curl -X POST -d '{"content_title": "On Music", "content_text":"Music is the universal language of the soul, transcending borders and resonating with hearts across the globe. From the rhythmic beats of a drum to the melodic strains of a violin, music has the power to evoke emotions, memories, and even change moods. Whether youre a creator or a listener, music is a journey of self-expression and discovery."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)
