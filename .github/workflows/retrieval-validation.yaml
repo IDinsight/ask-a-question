@@ -15,11 +15,6 @@ jobs:
   validate:
     runs-on: ubuntu-20.04
     container: node:20.7-bullseye
-    services:
-      qdrant:
-        image: qdrant/qdrant
-        ports:
-          - 6333:6333
     environment: validation-mc
     steps:
       - name: Install dependencies
@@ -46,12 +41,9 @@ jobs:
 
       - name: Run validation script
         env:
-          QDRANT_COLLECTION_NAME: validation_collection
-          QDRANT_N_TOP_SIMILAR: 10
-          QDRANT_PORT: 6333
+          N_TOP_SIMILAR: 10
           PROMETHEUS_MULTIPROC_DIR: /tmp
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          QDRANT_HOST: qdrant
           REPO: ${{ github.repository }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           HASH: ${{ github.sha }}

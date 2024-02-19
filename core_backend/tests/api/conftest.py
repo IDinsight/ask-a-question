@@ -1,25 +1,23 @@
 import json
-import uuid
 from collections import namedtuple
+from datetime import datetime
 from typing import Any, Generator, Tuple
 
 import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from qdrant_client.models import PointStruct
 
 from core_backend.app import create_app
 from core_backend.app.auth import create_access_token
 from core_backend.app.configs.app_config import (
     EMBEDDING_MODEL,
-    QDRANT_COLLECTION_NAME,
-    QDRANT_VECTOR_SIZE,
+    PGVECTOR_VECTOR_SIZE,
 )
 from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
-from core_backend.app.db.vector_db import get_qdrant_client
+from core_backend.app.db.db_models import ContentDB
+from core_backend.app.db.engine import get_session
 from core_backend.app.llm_call import check_output, parse_input
-from core_backend.app.routers.manage_content import _create_payload_for_qdrant_upsert
 from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
 
 # Define namedtuples for the embedding endpoint
@@ -33,29 +31,44 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
 @pytest.fixture(scope="session")
-def faq_contents(client: TestClient) -> None:
+def db_session() -> pytest.FixtureRequest:
+    """Create a test database session."""
+    session_gen = get_session()
+    session = next(session_gen)
+
+    try:
+        yield session
+    finally:
+        session.rollback()
+        next(session_gen, None)
+
+
+@pytest.fixture(scope="session")
+def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
+    contents = []
 
-    points = []
-    for content in json_data:
-        point_id = str(uuid.uuid4())
+    for i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0][
             "embedding"
         ]
-        metadata = content.get("content_metadata", {})
-        payload = _create_payload_for_qdrant_upsert(
-            content["content_title"], content["content_text"], metadata
-        )
-        points.append(
-            PointStruct(
-                id=point_id, vector=content_embedding, payload=payload.model_dump()
-            )
-        )
 
-    qdrant_client = get_qdrant_client()
-    qdrant_client.upsert(collection_name=QDRANT_COLLECTION_NAME, points=points)
+        contend_db = ContentDB(
+            content_id=i,
+            content_embedding=content_embedding,
+            content_title=content["content_title"],
+            content_text=content["content_text"],
+            content_language="ENGLISH",
+            content_metadata=content.get("content_metadata", {}),
+            created_datetime_utc=datetime.utcnow(),
+            updated_datetime_utc=datetime.utcnow(),
+        )
+        contents.append(contend_db)
+
+    db_session.add_all(contents)
+    db_session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -81,12 +94,9 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
+    monkeysession.setattr("core_backend.app.db.db_models.embedding", fake_embedding)
     monkeysession.setattr(
-        "core_backend.app.routers.manage_content.embedding", fake_embedding
-    )
-    monkeysession.setattr("core_backend.app.db.vector_db.embedding", fake_embedding)
-    monkeysession.setattr(
-        "core_backend.app.db.vector_db.aembedding", async_fake_embedding
+        "core_backend.app.db.db_models.aembedding", async_fake_embedding
     )
     monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
@@ -150,7 +160,9 @@ def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     list of floats
     """
 
-    embedding_list = np.random.rand(int(QDRANT_VECTOR_SIZE)).astype(np.float32).tolist()
+    embedding_list = (
+        np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
+    )
     data_obj = EmbeddingData([{"embedding": embedding_list}])
 
     return data_obj
@@ -162,7 +174,9 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     list of floats
     """
 
-    embedding_list = np.random.rand(int(QDRANT_VECTOR_SIZE)).astype(np.float32).tolist()
+    embedding_list = (
+        np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
+    )
     data_obj = EmbeddingData([{"embedding": embedding_list}])
 
     return data_obj

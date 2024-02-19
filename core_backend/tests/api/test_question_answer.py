@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core_backend.app.configs.app_config import (
-    QDRANT_N_TOP_SIMILAR,
+    N_TOP_SIMILAR,
     QUESTION_ANSWER_SECRET,
 )
 from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
@@ -42,7 +42,7 @@ class TestEmbeddingsSearch:
 
         if expected_status_code == 200:
             json_content_response = response.json()["content_response"]
-            assert len(json_content_response.keys()) == int(QDRANT_N_TOP_SIMILAR)
+            assert len(json_content_response.keys()) == int(N_TOP_SIMILAR)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> UserQueryResponse:

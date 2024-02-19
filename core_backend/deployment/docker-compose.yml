@@ -4,7 +4,6 @@ services:
     image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:backend
     restart: always
     environment:
-      - QDRANT_HOST=vectordb.aaqdemo.local
       - AWS_ACCOUNT_ID=${DEMO_ACCOUNT}
       - AWS_REGION=af-south-1
     volumes:
@@ -14,9 +13,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
-        
 
     logging:
       driver: awslogs
