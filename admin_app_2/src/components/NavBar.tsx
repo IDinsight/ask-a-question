@@ -5,9 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import { Box } from "@mui/material";
@@ -16,14 +14,22 @@ import { usePathname } from "next/navigation";
 import logowhite from "../../../docs/images/logo-light.png";
 import { sizes, appColors, appStyles } from "@/utils";
 import { Spacers } from "./Spacers";
+import { getAccessLevel, useAuth } from "@/utils/auth";
+import { useRouter } from "next/navigation";
 const pages = [
   { title: "Playground", path: "/playground" },
-  { title: "Manage Content", path: "/" },
+  { title: "Manage Content", path: "/content" },
   { title: "Dashboard", path: "/dashboard" },
 ];
 const settings = ["Logout"];
 
 const NavBar = () => {
+  const auth = useAuth();
+
+  if (!auth.user) {
+    return null;
+  }
+
   return (
     <AppBar
       position="static"
@@ -162,6 +168,8 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
+  const auth = useAuth();
+  const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null
   );
@@ -172,6 +180,8 @@ const UserDropdown = () => {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+    auth.signout();
+    router.push("/");
   };
   return (
     <Box>
