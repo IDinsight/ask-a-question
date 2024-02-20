@@ -321,8 +321,8 @@ class ContentDB(Base):
     content_embedding: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
-    content_title: Mapped[str] = mapped_column(String, nullable=False)
-    content_text: Mapped[str] = mapped_column(String, nullable=False)
+    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
+    content_text: Mapped[str] = mapped_column(String(length=1446), nullable=False)
     content_language: Mapped[str] = mapped_column(String, nullable=False)
 
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)

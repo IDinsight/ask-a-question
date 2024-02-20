@@ -15,6 +15,7 @@ from app.configs.app_config import (
     PGVECTOR_DISTANCE,
     PGVECTOR_EF_CONSTRUCTION,
     PGVECTOR_M,
+    PGVECTOR_VECTOR_SIZE,
 )
 
 # revision identifiers, used by Alembic.
@@ -31,10 +32,12 @@ def upgrade() -> None:
         "content",
         sa.Column("content_id", sa.Integer(), nullable=False),
         sa.Column(
-            "content_embedding", pgvector.sqlalchemy.Vector(dim=1536), nullable=False
+            "content_embedding",
+            pgvector.sqlalchemy.Vector(dim=int(PGVECTOR_VECTOR_SIZE)),
+            nullable=False,
         ),
-        sa.Column("content_title", sa.String(), nullable=False),
-        sa.Column("content_text", sa.String(), nullable=False),
+        sa.Column("content_title", sa.String(length=150), nullable=False),
+        sa.Column("content_text", sa.String(length=1446), nullable=False),
         sa.Column("content_language", sa.String(), nullable=False),
         sa.Column("content_metadata", sa.JSON(), nullable=False),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),
