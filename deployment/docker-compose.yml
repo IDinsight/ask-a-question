@@ -7,24 +7,11 @@ services:
       dockerfile: Dockerfile
     command: >
       /bin/sh startup.sh
-    depends_on:
-      - vector_db
     restart: always
     env_file:
       - .env
-    environment:
-      - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
-  vector_db:
-    image: qdrant/qdrant:v1.5.1
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - QDRANT__TELEMETRY_DISABLED=true
-    volumes:
-      - qdrant_volume:/qdrant/storage
   admin_app:
     image: idinsight/aaq-admin-app:latest
     build:
@@ -53,8 +40,7 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     command: >
-      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf
-      && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
     env_file:
       - .env.nginx
   certbot:
@@ -78,4 +64,3 @@ services:
 
 volumes:
   local_dynamic_storage:
-  qdrant_volume:

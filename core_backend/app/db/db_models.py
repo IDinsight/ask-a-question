@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from litellm import embedding
+from litellm import aembedding, embedding
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
@@ -444,6 +444,20 @@ async def get_similar_content(
     Get the most similar points in the vector table
     """
     response = embedding(EMBEDDING_MODEL, question.query_text)
+    question_embedding = response.data[0]["embedding"]
+
+    return await get_search_results(asession, question_embedding, n_similar)
+
+
+async def get_similar_content_async(
+    asession: AsyncSession,
+    question: UserQueryBase,
+    n_similar: int,
+) -> Dict[int, UserQuerySearchResult]:
+    """
+    Get the most similar points in the vector table
+    """
+    response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(asession, question_embedding, n_similar)

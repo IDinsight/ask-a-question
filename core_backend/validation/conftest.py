@@ -5,9 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core_backend.app import create_app
-from core_backend.app.configs.app_config import QDRANT_COLLECTION_NAME
 from core_backend.app.db.db_models import UserQueryDB, UserQueryResponseDB
-from core_backend.app.db.vector_db import get_qdrant_client
+from core_backend.app.db.engine import get_session
 from core_backend.app.schemas import UserQueryResponse
 
 
@@ -19,10 +18,16 @@ def client() -> TestClient:
 
 
 @pytest.fixture(scope="session")
-def vectordb_client() -> TestClient:
-    client = get_qdrant_client()
-    yield client
-    client.delete_collection(collection_name=QDRANT_COLLECTION_NAME)
+def db_session() -> pytest.FixtureRequest:
+    """Create a test database session."""
+    session_gen = get_session()
+    session = next(session_gen)
+
+    try:
+        yield session
+    finally:
+        session.rollback()
+        next(session_gen, None)
 
 
 @pytest.fixture(scope="session")
