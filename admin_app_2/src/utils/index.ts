@@ -23,7 +23,7 @@ export const appColors = {
   grey: "#C0C6DC",
   lightGrey: "#E2E2E9",
   darkGrey: "#6B6B6B",
-  disabled: "#8F9099", //"#A0A0A0",
+  outline: "#8F9099", //"#A0A0A0",
 };
 
 export const appStyles = {

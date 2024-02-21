@@ -26,13 +26,13 @@ const settings = ["Logout"];
 const NavBar = () => {
   const auth = useAuth();
 
-  if (!auth.user) {
+  if (!auth.isAuthenticated) {
     return null;
   }
 
   return (
     <AppBar
-      position="static"
+      position="fixed"
       sx={[
         {
           flexDirection: "row",
@@ -40,7 +40,6 @@ const NavBar = () => {
           paddingRight: sizes.baseGap,
         },
         appStyles.alignItemsCenter,
-        appStyles.justifyContentSpaceBetween,
       ]}
     >
       <Logo />
@@ -116,7 +115,7 @@ const SmallScreenNavMenu = () => {
               sx={{
                 color:
                   pathname === page.path
-                    ? appColors.disabled
+                    ? appColors.outline
                     : appColors.primary,
               }}
             >
@@ -153,7 +152,7 @@ const LargeScreenNavMenu = () => {
             sx={{
               m: sizes.baseGap,
               color:
-                pathname === page.path ? appColors.white : appColors.disabled,
+                pathname === page.path ? appColors.white : appColors.outline,
             }}
           >
             {page.title}

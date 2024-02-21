@@ -14,15 +14,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (auth.user) {
+    if (auth.isAuthenticated) {
       router.push("/content");
     }
   }, [auth]);
 
   return (
-    <div>
+    <div align="center">
       <h1>Login page</h1>
-      {!auth.user && (
+      {!auth.isAuthenticated && (
         <Button onClick={handleLogin} variant="contained">
           Login
         </Button>
