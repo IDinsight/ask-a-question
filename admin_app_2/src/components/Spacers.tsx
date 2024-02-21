@@ -1,7 +1,6 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { sizes } from "../utils";
-import { Box } from "@mui/material";
 interface SpacerProps {
   width?: string;
   height?: string;
@@ -60,6 +59,7 @@ const DoubleBase = ({ horizontal }: BaseProps) => {
 };
 
 export const Spacers = {
+  Spacer,
   Base,
   Tiny,
   Small,
