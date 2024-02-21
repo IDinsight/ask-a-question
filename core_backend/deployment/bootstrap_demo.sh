@@ -56,8 +56,7 @@ export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
 DOMAIN="aaq-demo.idinsight.io"
 
-# Resolve Qdrant host
-SERVICE_RECORD=$(dig +short SRV ${QDRANT_HOST})
+
 
 read -r PRIORITY WEIGHT PORT HOST <<< "$(echo $SERVICE_RECORD | cut -d' ' -f 1-4)"
 
