@@ -5,6 +5,7 @@ export type AccessToken = string | null;
 //create auth context with token and access level
 
 const AuthContext = React.createContext({
+  isAuthenticated: false,
   user: null,
   signin: (email: string, password: string) => {},
   signout: () => {},
@@ -18,6 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={
         auth as {
+          isAuthenticated: false;
           user: null;
           signin: (email: string, password: string) => void;
           signout: () => void;
@@ -31,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAuth = () => React.useContext(AuthContext);
 
 function useProvideAuth() {
+  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
   const [user, setUser] = React.useState<{
     email: string;
     password: string;
@@ -42,23 +45,27 @@ function useProvideAuth() {
     const user = { email, password };
     localStorage.setItem("token", JSON.stringify(user));
     setUser(user);
+    setIsAuthenticated(true);
   };
 
   const signout = () => {
     console.log("signing out");
     localStorage.removeItem("token");
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   React.useEffect(() => {
     const user = JSON.parse(localStorage.getItem("token") as string);
     if (user) {
       setUser({ email: user.email, password: user.password });
+      setIsAuthenticated(true);
     }
   }, []);
 
   // Return the user object and auth methods
   return {
+    isAuthenticated,
     user,
     signin,
     signout,
