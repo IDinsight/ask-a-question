@@ -53,11 +53,15 @@ async def process_whatsapp_message(
                     msg_id_from_whatsapp=msg_id,
                 )
                 incoming_db = await save_wamessage_to_db(
-                    asession=asession, incoming=incoming_to_process
+                    incoming=incoming_to_process, asession=asession
                 )
 
                 message = UserQueryBase(query_text=msg_body, query_metadata={})
-                content_response = await get_similar_content_async(asession, message, 1)
+                content_response = await get_similar_content_async(
+                    message,
+                    1,
+                    asession,
+                )
                 top_faq = content_response[0].retrieved_text
                 data_obj = {
                     "messaging_product": "whatsapp",
@@ -79,7 +83,10 @@ async def process_whatsapp_message(
                         response_status=int(httpx_request.status_code),
                         response_datetime_utc=datetime.utcnow(),
                     )
-                    await save_waresponse_to_db(asession=asession, response=response)
+                    await save_waresponse_to_db(
+                        response=response,
+                        asession=asession,
+                    )
 
                     return httpx_request.json()
         return {"status": "No Message to Process"}

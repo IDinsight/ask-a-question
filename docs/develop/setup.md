@@ -8,23 +8,23 @@ develop your new feature.
 
 ## Databases
 
-### Running databases on docker
+### Running the database on docker
 
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
-You can create both postgres and vector databases (without a persistent data volume) and run the necessary migrations using:
+You can create a postgres  and run the necessary migrations using:
 
-    make setup-dbs
+    make setup-db
 
 !!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
 
 You can stop and remove them using:
 
-    make teardown-dbs
+    make teardown-db
 
 Otherwise, you can run them manually as below.
 
-??? note "Setting up databases manually"
+??? note "Setting up database manually"
 
     ### Run a local postgres server
 
@@ -42,19 +42,6 @@ Otherwise, you can run them manually as below.
         -p 5432:5432 \
         -v postgres_local_vol:/var/lib/postrges/data \
         -d postgres
-
-    ### Run a local qdrant server
-
-        docker run --name qdrant-local \
-        -p 6333:6333 \
-        -d qdrant/qdrant
-
-    As with above, if you wish to persist the data in your vector db, you should run
-
-        docker run --name qdrant-local \
-        -p 6333:6333 \
-        -v qdrant_local_vol:/qdrant/storage \
-        -d qdrant/qdrant
 
     ### Run migrations
 
@@ -75,14 +62,7 @@ POSTGRES_DB=
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 ```
-
-To connect to a remote qdrant instance:
-```
-QDRANT_API_KEY=
-QDRANT_URL=
-QDRANT_HOST=
-QDRANT_PORT=
-```
+ ss
 
 See `core_backend/app/configs/app_config.py` for the default values for these variables.
 

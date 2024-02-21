@@ -34,7 +34,7 @@ async def create_content(
     upserts it to PG database
     """
 
-    content_db = await save_content_to_db(asession, content)
+    content_db = await save_content_to_db(content, asession)
     return _convert_record_to_schema(content_db)
 
 
@@ -50,13 +50,20 @@ async def edit_content(
     """
     Edit content endpoint
     """
-    old_content = await get_content_from_db(asession, content_id)
+    old_content = await get_content_from_db(
+        content_id,
+        asession,
+    )
 
     if not old_content:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
-    updated_content = await update_content_in_db(asession, content_id, content)
+    updated_content = await update_content_in_db(
+        content_id,
+        content,
+        asession,
+    )
 
     return _convert_record_to_schema(updated_content)
 
@@ -73,7 +80,9 @@ async def retrieve_content(
     """
     Retrieve all content endpoint
     """
-    records = await get_list_of_content_from_db(asession, skip, limit)
+    records = await get_list_of_content_from_db(
+        offset=skip, limit=limit, asession=asession
+    )
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
 
@@ -89,13 +98,16 @@ async def delete_content(
     """
     Delete content endpoint
     """
-    record = await get_content_from_db(asession, content_id)
+    record = await get_content_from_db(
+        content_id,
+        asession,
+    )
 
     if not record:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
-    await delete_content_from_db(asession, content_id)
+    await delete_content_from_db(content_id, asession)
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
@@ -110,7 +122,7 @@ async def retrieve_content_by_id(
     Retrieve content by id endpoint
     """
 
-    record = await get_content_from_db(asession, content_id)
+    record = await get_content_from_db(content_id, asession)
 
     if not record:
         raise HTTPException(
@@ -128,7 +140,6 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_id=record.content_id,
         content_title=record.content_title,
         content_text=record.content_text,
-        content_embedding=record.content_embedding,
         content_language=record.content_language,
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
