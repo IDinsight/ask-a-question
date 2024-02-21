@@ -459,6 +459,7 @@ async def get_similar_content(
         n_similar,
         asession,
     )
+<<<<<<< HEAD
 
 
 async def get_similar_content_async(
@@ -475,12 +476,12 @@ async def get_similar_content_async(
         n_similar,
         asession,
     )
+=======
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
 
 
 async def get_similar_content_async(
-    asession: AsyncSession,
-    question: UserQueryBase,
-    n_similar: int,
+    question: UserQueryBase, n_similar: int, asession: AsyncSession
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector table
@@ -488,7 +489,11 @@ async def get_similar_content_async(
     response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
 
-    return await get_search_results(asession, question_embedding, n_similar)
+    return await get_search_results(
+        question_embedding,
+        n_similar,
+        asession,
+    )
 
 
 async def get_search_results(

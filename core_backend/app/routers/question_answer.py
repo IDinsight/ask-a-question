@@ -79,10 +79,14 @@ async def get_llm_answer(
     if not isinstance(response, UserQueryResponseError):
         content_response = await get_similar_content_async(
 <<<<<<< HEAD
+<<<<<<< HEAD
             user_query_refined, int(N_TOP_SIMILAR), asession
 =======
             asession, user_query_refined, int(N_TOP_SIMILAR)
 >>>>>>> b53e1bb (Update question answering and delete quadrandt from code)
+=======
+            user_query_refined, int(N_TOP_SIMILAR), asession
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
         )
         response.content_response = content_response
         response.llm_response = await get_llm_rag_answer(
@@ -159,10 +163,14 @@ async def get_semantic_matches(
     if not isinstance(response, UserQueryResponseError):
         content_response = await get_similar_content_async(
 <<<<<<< HEAD
+<<<<<<< HEAD
             user_query_refined, n_top_similar, asession
 =======
             asession, user_query_refined, n_top_similar
 >>>>>>> b53e1bb (Update question answering and delete quadrandt from code)
+=======
+            user_query_refined, n_top_similar, asession
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
         )
         response.content_response = content_response
     return response

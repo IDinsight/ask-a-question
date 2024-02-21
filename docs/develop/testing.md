@@ -20,7 +20,12 @@ correct environment variables, runs `pytest`, and then destroys the containers.
 
 ### Debugging unit tests
 
+<<<<<<< HEAD
 Before debugging, run `make setup-test-db` within `core_backend` to launch new postgres container for testing and set the correct environment variables.
+=======
+Before debugging, run `make setup-test-db` within `core_backend` to launch new postgres and
+qdrant containers for testing and set the correct environment variables.
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
 
 After debugging, clean up the testing resources by calling `make teardown-test-db`.
 

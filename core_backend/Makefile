@@ -85,9 +85,9 @@ stop-test-db:
 =======
 # Development DBs
 
-setup-dbs: setup-relational-db
+setup-db: setup-relational-db
 
-teardown-dbs: stop-relational-db
+teardown-db: stop-relational-db
 
 # load some dummy FAQs into the conten table
 >>>>>>> b53e1bb (Update question answering and delete quadrandt from code)

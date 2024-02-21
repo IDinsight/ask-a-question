@@ -118,7 +118,11 @@ We use docker-compose to orchestrate containers.
   <img src="docs/images/architecture-docker.png" alt="Architecture"/>
 </p>
 
+<<<<<<< HEAD
 A reverse proxy manages all incoming traffic to the service. The database is only accessed by the core app.
+=======
+A reverse proxy manages all incoming traffic to the service.The database is only accessed by the core app.
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
 
 <p align="center">
   <img src="docs/images/architecture-traffic.png" alt="Flow"/>

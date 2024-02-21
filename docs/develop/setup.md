@@ -62,6 +62,10 @@ POSTGRES_DB=
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 ```
+<<<<<<< HEAD
+=======
+ ss
+>>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
 
 See `core_backend/app/configs/app_config.py` for the default values for these variables.
 
