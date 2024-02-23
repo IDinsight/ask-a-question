@@ -1,28 +1,41 @@
 import React from "react";
 import { Modal, Typography, Box, Fade } from "@mui/material";
+import { appColors, sizes } from "@/utils";
+import { Layout } from "./Layout";
+import { Close } from "@mui/icons-material";
 
-const ContentViewModal = ({ open, onClose }) => {
+const ContentViewModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   return (
-    <Modal open={open} onClose={onClose}>
-      <Fade in={open}>
+    <Modal
+      open={open as boolean}
+      onClose={onClose}
+      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      <Fade in={!!open}>
         <Box
           sx={{
-            position: "absolute" as "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            border: "2px solid #000",
-            boxShadow: 24,
-            p: 4,
+            width: "70%",
+            height: "70%",
+            backgroundColor: appColors.background,
+            p: sizes.baseGap,
+            pl: sizes.doubleBaseGap,
           }}
         >
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Text in a modal
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+          <Layout.FlexBox
+            flexDirection={"row"}
+            justifyContent={"space-between"}
+          >
+            <Layout.Spacer horizontal />
+            <Close onClick={onClose} />
+          </Layout.FlexBox>
+          <Typography variant="h5" color={"primary"}>
+            Content #142{" "}
           </Typography>
         </Box>
       </Fade>
