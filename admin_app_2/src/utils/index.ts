@@ -1,5 +1,13 @@
 import theme from "@/theme";
 
+export const LANGUAGE_OPTIONS = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "Hindi" },
+  { code: "zu", label: "Zulu" },
+  { code: "xh", label: "Xhosa" },
+  { code: "af", label: "Afrikaans" },
+];
+
 export const sizes = {
   tinyGap: theme.spacing(0.5),
   smallGap: theme.spacing(1),
@@ -23,7 +31,8 @@ export const appColors = {
   grey: "#C0C6DC",
   lightGrey: "#E2E2E9",
   darkGrey: "#6B6B6B",
-  outline: "#8F9099", //"#A0A0A0",
+  outline: "#8F9099",
+  inverseSurface: "#F1F0F7",
 };
 
 export const appStyles = {
@@ -38,5 +47,21 @@ export const appStyles = {
   },
   justifyContentFlexEnd: {
     justifyContent: "flex-end",
+  },
+  fullWidth: {
+    width: "100%",
+  },
+  fullHeight: {
+    height: "100%",
+  },
+  fullSize: {
+    width: "100%",
+    height: "100%",
+  },
+  shadow: {
+    boxShadow: `0px 4px 4px ${appColors.grey}`,
+  },
+  noShadow: {
+    boxShadow: "none",
   },
 };

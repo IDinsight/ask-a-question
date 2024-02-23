@@ -1,21 +1,21 @@
 "use client";
 import {
+  InputAdornment,
   TextField,
   Typography,
   Box,
   ToggleButton,
   ToggleButtonGroup,
-  Card,
-  Container,
   Chip,
   Button,
-  Alert,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   SelectChangeEvent,
   Grid,
+  useMediaQuery,
+  Container,
 } from "@mui/material";
 import {
   Edit,
@@ -25,22 +25,32 @@ import {
   Add,
   Upload,
   DocumentScanner,
+  Filter,
+  FilterVintage,
+  FilterList,
+  ContentCopy,
+  FileCopy,
+  Sort,
+  Download,
+  ChevronLeft,
+  ChevronRight,
 } from "@mui/icons-material";
 import React from "react";
-import { Spacers } from "@/components/Spacers";
-import { appColors, appStyles, sizes } from "@/utils";
+import { Layout } from "@/components/Layout";
+import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
 import ContentCard from "@/components/ContentCard";
+import { LayoutRouter } from "next/dist/server/app-render/entry-base";
+import theme from "@/theme";
 
 function ContentScreen() {
   const [mode, setMode] = React.useState<"cards" | "docs">("cards");
   return (
-    <div align="center">
-      <Spacers.DoubleBase />
-      <Spacers.DoubleBase />
-      <Spacers.Base />
+    <Layout.FlexBox alignItems="center" flexDirection={"column"}>
+      <Layout.Spacer multiplier={3} />
       <ToggleButtonGroup
         exclusive
         value={mode}
+        size="medium"
         onChange={(
           event: React.MouseEvent<HTMLElement>,
           newMode: "cards" | "docs"
@@ -50,121 +60,248 @@ function ContentScreen() {
         }}
       >
         <ToggleButton value="cards">
-          <CopyAll />
+          <ContentCopy fontSize="small" sx={{ mx: sizes.smallGap }} />
           <Typography>Cards</Typography>
         </ToggleButton>
 
         <ToggleButton value="docs">
-          <DocumentScanner />
+          <FileCopy fontSize="small" sx={{ mx: sizes.smallGap }} />
           <Typography>Docs</Typography>
         </ToggleButton>
       </ToggleButtonGroup>
-      <Spacers.DoubleBase />
+      <Layout.Spacer multiplier={3} />
       {mode == "cards" ? <CardsView /> : <DocsView />}
-    </div>
+    </Layout.FlexBox>
   );
 }
 
 const DocsView = () => {
-  return <h1>Docs Component goes here</h1>;
-};
-
-const CardsView = () => {
-  const [displayLanguage, setDisplayLanguage] =
-    React.useState<string>("ENGLISH");
-
   return (
-    <>
-      <CardsSearchAndFilter />
-      <Spacers.DoubleBase />
-      <Spacers.DoubleBase />
-      <CardsUtilityStrip
-        displayLanguage={displayLanguage}
-        onChangeDisplayLanguage={(e) => setDisplayLanguage(e)}
-      />
-      <Spacers.Base />
-      <CardsGrid displayLanguage={displayLanguage} />
-      <Spacers.Base />
-      <CardsBottomStrip />
-      <Spacers.DoubleBase />
-      <Spacers.DoubleBase />
-    </>
-  );
-};
-
-const CardsSearchAndFilter = () => {
-  return (
-    <Container>
-      <Box>
-        <Search />
-        <TextField
-          sx={{ alignContent: "center", width: "40%" }}
-          label="Search cards"
-          variant="outlined"
-        />
-      </Box>
-      <Spacers.Small />
-      <Chip
-        label="Chip Filled"
-        clickable
-        onSelect={() => console.log("Click")}
-      />
-      <Chip label="Chip Outlined" variant="outlined" />
-      <Chip label="Deletable" onDelete={() => {}} />
-      <Chip label="Deletable" variant="outlined" onDelete={() => {}} />
-    </Container>
-  );
-};
-
-const CardsUtilityStrip = ({ displayLanguage, onChangeDisplayLanguage }) => {
-  return (
-    <Box flex={1}>
-      <SortByAlphaRounded />
-      <FormControl sx={{ width: "10%" }}>
-        <InputLabel>Language</InputLabel>
-        <Select
-          value={displayLanguage}
-          label="Language"
-          onChange={(event: SelectChangeEvent) => {
-            onChangeDisplayLanguage(event.target.value as string);
-          }}
-        >
-          {["ENGLISH", "HINDI", "SWAHILI"].map((item, index) => (
-            <MenuItem value={item}>{item.toLocaleUpperCase()}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <Button variant="contained">Export</Button>
+    <Box
+      display={"flex"}
+      alignItems={"center"}
+      justifyContent={"center"}
+      sx={{
+        backgroundColor: appColors.background,
+        height: "720px",
+        width: "100%",
+      }}
+    >
+      <h1>Docs Component goes here</h1>
     </Box>
   );
 };
 
-const CardsGrid = ({ displayLanguage }) => {
+const CardsView = () => {
+  const [displayLanguage, setDisplayLanguage] = React.useState<string>(
+    LANGUAGE_OPTIONS[0].label
+  );
+
   return (
-    <Box sx={{ backgroundColor: appColors.white + "80", mx: sizes.baseGap }}>
-      <Typography>{displayLanguage}</Typography>
-      <Grid sx={{ flexDirection: "row" }}>
-        {[1, 2, 3, 4, 5, 6, 7].map((item, index) => (
-          <ContentCard />
+    <Layout.FlexBox width={"100%"}>
+      <CardsSearchAndFilter />
+      <Layout.Spacer multiplier={4} />
+      <CardsUtilityStrip
+        displayLanguage={displayLanguage}
+        onChangeDisplayLanguage={(e) => setDisplayLanguage(e)}
+      />
+      <Layout.Spacer multiplier={1} />
+      <CardsGrid displayLanguage={displayLanguage} />
+      <Layout.Spacer multiplier={1} />
+      <CardsBottomStrip />
+      <Layout.Spacer multiplier={4} />
+    </Layout.FlexBox>
+  );
+};
+
+const CardsSearchAndFilter = () => {
+  const chipData = [
+    { key: 0, label: "Recently Added" },
+    { key: 1, label: "Recently Modified" },
+    { key: 2, label: "Most Used" },
+    { key: 3, label: "Most Downvoted" },
+  ];
+  const [selectedChip, setSelectedChip] = React.useState<number | null>(null);
+
+  return (
+    <Layout.FlexBox alignItems="center">
+      <TextField
+        sx={{
+          width: {
+            md: "50%",
+            lg: "30%",
+          },
+          backgroundColor: appColors.white,
+        }}
+        variant="outlined"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search color="primary" />
+            </InputAdornment>
+          ),
+        }}
+      />
+      <Layout.Spacer />
+      <Layout.FlexBox
+        flexDirection={"row"}
+        gap={sizes.tinyGap}
+        alignItems="center"
+        sx={{
+          display: { xs: "none", md: "flex" },
+          width: {
+            md: "50%",
+            lg: "30%",
+          },
+        }}
+      >
+        <FilterList />
+        {chipData.map((data) => {
+          return (
+            <Chip
+              key={data.key}
+              label={data.label}
+              clickable={true}
+              variant={selectedChip === data.key ? "filled" : "outlined"}
+              onClick={() => {
+                if (selectedChip === data.key) {
+                  setSelectedChip(null);
+                } else {
+                  setSelectedChip(data.key);
+                }
+              }}
+            />
+          );
+        })}
+      </Layout.FlexBox>
+    </Layout.FlexBox>
+  );
+};
+
+const CardsUtilityStrip = ({
+  displayLanguage,
+  onChangeDisplayLanguage,
+}: {
+  displayLanguage: string;
+  onChangeDisplayLanguage: (language: string) => void;
+}) => {
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+  return (
+    <Layout.FlexBox
+      flexDirection={"row"}
+      justifyContent={isSmallScreen ? "flex-start" : "space-between"}
+      sx={{ px: sizes.baseGap }}
+    >
+      <Layout.FlexBox
+        sx={{ width: { xs: "30%", md: "15%" } }}
+        flexDirection={"row"}
+        alignItems={"center"}
+      >
+        <Sort sx={{ display: { xs: "none", md: "flex" } }} />
+        <Layout.Spacer horizontal multiplier={1} />
+        <FormControl sx={{ width: "100%" }}>
+          <InputLabel>Language</InputLabel>
+          <Select
+            value={displayLanguage}
+            label="Language"
+            onChange={({ target: { value } }) => onChangeDisplayLanguage(value)}
+            sx={{
+              backgroundColor: appColors.white,
+            }}
+          >
+            {LANGUAGE_OPTIONS.map((item, index) => (
+              <MenuItem value={item.label}>{item.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Layout.FlexBox>
+      <Button
+        variant="contained"
+        sx={{
+          display: { xs: "none", md: "flex" },
+          alignSelf: "flex-end",
+        }}
+      >
+        <Download />
+        <Layout.Spacer horizontal multiplier={0.5} />
+        Export
+      </Button>
+    </Layout.FlexBox>
+  );
+};
+
+const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
+  const [page, setPage] = React.useState<number>(1);
+  const MAX_PAGES = 8;
+  return (
+    <Box
+      sx={[
+        {
+          border: 1,
+          borderColor: appColors.secondary,
+          mx: sizes.baseGap,
+          py: sizes.tinyGap,
+        },
+      ]}
+    >
+      <Grid container>
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((item, index) => (
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <ContentCard
+              title={displayLanguage + ": Title " + index}
+              contentID={index.toString()}
+            />
+          </Grid>
         ))}
       </Grid>
+      <Layout.FlexBox
+        flexDirection={"row"}
+        alignItems={"center"}
+        justifyContent={"center"}
+      >
+        <Button
+          onClick={() => {
+            page > 1 && setPage(page - 1);
+          }}
+          disabled={page === 1}
+        >
+          <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
+        </Button>
+
+        <Typography variant="subtitle2">
+          {page} of {MAX_PAGES}
+        </Typography>
+
+        <Button
+          onClick={() => {
+            page < MAX_PAGES && setPage(page + 1);
+          }}
+          disabled={page === MAX_PAGES}
+        >
+          <ChevronRight color={page < MAX_PAGES ? "primary" : "disabled"} />
+        </Button>
+      </Layout.FlexBox>
     </Box>
   );
 };
 
 const CardsBottomStrip = () => {
   return (
-    <>
+    <Layout.FlexBox
+      flexDirection={"row"}
+      sx={{ px: sizes.baseGap }}
+      gap={sizes.baseGap}
+    >
       <Button variant="contained">
-        {" "}
         <Add />
         Add New FAQ
       </Button>
-      <Button>
+      <Button variant="outlined" sx={{ backgroundColor: appColors.white }}>
         <Upload />
+        <Layout.Spacer horizontal multiplier={0.5} />
         Import
       </Button>
-    </>
+    </Layout.FlexBox>
   );
 };
 

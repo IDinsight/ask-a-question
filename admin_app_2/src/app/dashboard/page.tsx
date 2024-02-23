@@ -17,7 +17,7 @@ import {
   Card,
   Container,
 } from "@mui/material";
-import { Spacers } from "@/components/Spacers";
+import { Layout } from "@/components/Layout";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material";
 import { CopyAll, Edit, Translate } from "@mui/icons-material";
@@ -143,7 +143,7 @@ export default function Dashboard() {
       <Chip label="Chip Outlined" variant="outlined" />
       <Chip label="Deletable" onDelete={() => {}} />
       <Chip label="Deletable" variant="outlined" onDelete={() => {}} />
-      <Spacers.DoubleBase />
+
       <Card
         sx={{
           width: theme.spacing(30),
