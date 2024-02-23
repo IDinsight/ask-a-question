@@ -13,7 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import logowhite from "../../../docs/images/logo-light.png";
 import { sizes, appColors, appStyles } from "@/utils";
-import { Spacers } from "./Spacers";
+import { Layout } from "./Layout";
 import { getAccessLevel, useAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 const pages = [
@@ -32,7 +32,7 @@ const NavBar = () => {
 
   return (
     <AppBar
-      position="fixed"
+      position="static"
       sx={[
         {
           flexDirection: "row",
@@ -160,8 +160,7 @@ const LargeScreenNavMenu = () => {
         </Link>
       ))}
 
-      <Spacers.DoubleBase horizontal />
-      <Spacers.DoubleBase horizontal />
+      <Layout.Spacer horizontal multiplier={4} />
     </Box>
   );
 };
