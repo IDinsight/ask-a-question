@@ -459,25 +459,6 @@ async def get_similar_content(
         n_similar,
         asession,
     )
-<<<<<<< HEAD
-
-
-async def get_similar_content_async(
-    question: UserQueryBase, n_similar: int, asession: AsyncSession
-) -> Dict[int, UserQuerySearchResult]:
-    """
-    Get the most similar points in the vector table
-    """
-    response = await aembedding(EMBEDDING_MODEL, question.query_text)
-    question_embedding = response.data[0]["embedding"]
-
-    return await get_search_results(
-        question_embedding,
-        n_similar,
-        asession,
-    )
-=======
->>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
 
 
 async def get_similar_content_async(

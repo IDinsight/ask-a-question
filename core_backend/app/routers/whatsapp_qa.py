@@ -57,21 +57,11 @@ async def process_whatsapp_message(
                 )
 
                 message = UserQueryBase(query_text=msg_body, query_metadata={})
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
                 content_response = await get_similar_content_async(
                     message,
                     1,
                     asession,
                 )
-<<<<<<< HEAD
-=======
-                content_response = await get_similar_content_async(asession, message, 1)
->>>>>>> b53e1bb (Update question answering and delete quadrandt from code)
-=======
->>>>>>> 0de7920 (Update documentation, deployment scripts and add additional tests)
                 top_faq = content_response[0].retrieved_text
                 data_obj = {
                     "messaging_product": "whatsapp",
