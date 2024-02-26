@@ -39,7 +39,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -63,7 +62,9 @@ jobs:
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
           python -m alembic upgrade head
-
+      - name: Check PostgreSQL connection
+        run: |
+          psql -h postgres -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c 'SELECT 1'
       - name: Run validation script
         env:
           N_TOP_SIMILAR: 10
