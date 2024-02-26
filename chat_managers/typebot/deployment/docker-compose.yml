@@ -1,0 +1,41 @@
+version: "3.3"
+
+services:
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file: .env
+    depends_on:
+      - typebot-viewer
+      - typebot-builder
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:2.22.2
+    restart: always
+    env_file: .env
+
+  typebot-builder:
+    image: baptistearno/typebot-builder:2.22.2
+    restart: always
+    env_file: .env
+    depends_on:
+      - typebot-db
+
+  typebot-db:
+    image: postgres:14-alpine
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file: .env
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db-data:
