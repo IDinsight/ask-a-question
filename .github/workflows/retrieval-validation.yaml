@@ -20,6 +20,11 @@ jobs:
         image: pgvector/pgvector:pg16
         ports:
           - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST: localhost
     environment: validation-mc
     steps:
       - name: Install dependencies
@@ -39,6 +44,11 @@ jobs:
           role-session-name: github-actions
           role-duration-seconds: 7200
           aws-region: ${{ secrets.AWS_REGION }}
+      - name: Wait for PostgreSQL to become ready
+        run: until pg_isready -h localhost -p 5432; do echo waiting for database; sleep 2; done
+      - name: Setup PostgreSQL
+        run: |
+          PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -c 'CREATE SCHEMA IF NOT EXISTS validation;'
 
       - name: Install Python dependencies
         run: |
