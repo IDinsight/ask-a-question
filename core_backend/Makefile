@@ -35,11 +35,11 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-relational-db setup-alignscore-container
+setup-test-containers: setup-test-db setup-alignscore-container
 
-teardown-test-containers: stop-test-relational-db stop-alignscore-container
+teardown-test-containers: stop-test-db stop-alignscore-container
 
-setup-test-relational-db:
+setup-test-db:
 	-@docker stop testdb
 	-@docker rm testdb
 	@docker system prune -f
@@ -66,15 +66,9 @@ stop-alignscore-container:
 	@docker stop testalignscore
 	@docker rm testalignscore
 
-stop-test-relational-db:
+stop-test-db:
 	@docker stop testdb
 	@docker rm testdb
-
-# Development DB
-
-setup-db: setup-relational-db
-
-teardown-db: stop-relational-db
 
 # load some dummy FAQs into the content table
 add-dummy-faqs:
@@ -88,7 +82,8 @@ add-dummy-faqs:
 	curl -X POST -d '{"content_title": "Yoga", "content_text":"Yoga, an ancient practice rooted in Indian philosophy, harmonizes the body, mind, and spirit. Through a combination of postures, breathing exercises, and meditation, yoga offers a holistic approach to wellness. Whether youre seeking physical flexibility, mental clarity, or spiritual growth, yoga provides a path to self-discovery and inner peace."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 	curl -X POST -d '{"content_title": "Digital art", "content_text":"In the intersection of technology and creativity lies digital art, a modern medium that pushes the boundaries of traditional artistry. With tools like graphic tablets and software, artists can create mesmerizing visuals, intricate designs, and immersive animations. Digital art not only showcases the evolution of art but also the limitless potential of human imagination when paired with technology."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 
-setup-relational-db:
+# Development DB
+setup-db:
 	-@docker stop postgres-local
 	-@docker rm postgres-local
 	@docker system prune -f
@@ -99,6 +94,6 @@ setup-relational-db:
      -d pgvector/pgvector:pg16
 	python -m alembic upgrade head
 
-stop-relational-db:
+teardown-db:
 	@docker stop postgres-local
 	@docker rm postgres-local
