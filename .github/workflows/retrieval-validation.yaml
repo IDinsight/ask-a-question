@@ -14,7 +14,6 @@ env:
   POSTGRES_USER: postgres-test-user
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_DB: postgres-test-db
-  POSTGRES_HOST: localhost
 jobs:
   validate:
     runs-on: ubuntu-20.04
@@ -57,7 +56,6 @@ jobs:
         run: |
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r core_backend/validation/requirements.txt
-          cd core_backend && python -m alembic upgrade head
 
       - name: Run migration scripts
         run: |
