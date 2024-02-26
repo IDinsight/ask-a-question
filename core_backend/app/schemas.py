@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Dict, List, Literal, Optional
+from typing import Annotated, Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, validator
 
@@ -111,7 +111,7 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=1446)]
-    content_language: str
+    content_language: str = "ENGLISH"
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
@@ -134,7 +134,6 @@ class ContentRetrieve(ContentCreate):
     """
 
     content_id: int
-    content_embedding: List[float]
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 

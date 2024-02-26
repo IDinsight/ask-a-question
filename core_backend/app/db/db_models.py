@@ -68,7 +68,7 @@ class UserQueryDB(Base):
 
 
 async def save_user_query_to_db(
-    asession: AsyncSession, feedback_secret_key: str, user_query: UserQueryBase
+    feedback_secret_key: str, user_query: UserQueryBase, asession: AsyncSession
 ) -> UserQueryDB:
     """
     Saves a user query to the database.
@@ -124,9 +124,9 @@ class UserQueryResponseDB(Base):
 
 
 async def save_query_response_to_db(
-    asession: AsyncSession,
     user_query_db: UserQueryDB,
     response: UserQueryResponse,
+    asession: AsyncSession,
 ) -> UserQueryResponseDB:
     """
     Saves the user query response to the database.
@@ -170,9 +170,9 @@ class UserQueryResponseErrorDB(Base):
 
 
 async def save_query_response_error_to_db(
-    asession: AsyncSession,
     user_query_db: UserQueryDB,
     error: UserQueryResponseError,
+    asession: AsyncSession,
 ) -> UserQueryResponseErrorDB:
     """
     Saves the user query response error to the database.
@@ -217,7 +217,8 @@ class FeedbackDB(Base):
 
 
 async def save_feedback_to_db(
-    asession: AsyncSession, feedback: FeedbackBase
+    feedback: FeedbackBase,
+    asession: AsyncSession,
 ) -> FeedbackDB:
     """
     Saves feedback to the database.
@@ -272,8 +273,8 @@ class WhatsAppResponseDB(Base):
 
 
 async def save_wamessage_to_db(
-    asession: AsyncSession,
     incoming: WhatsAppIncoming,
+    asession: AsyncSession,
 ) -> WhatsAppMessageDB:
     """
     Saves WhatsApp incoming messages to the database.
@@ -292,8 +293,8 @@ async def save_wamessage_to_db(
 
 
 async def save_waresponse_to_db(
-    asession: AsyncSession,
     response: WhatsAppResponse,
+    asession: AsyncSession,
 ) -> WhatsAppResponseDB:
     """
     Saves WhatsApp responses to the database.
@@ -336,7 +337,8 @@ class ContentDB(Base):
 
 
 async def save_content_to_db(
-    asession: AsyncSession, content: ContentCreate
+    content: ContentCreate,
+    asession: AsyncSession,
 ) -> ContentDB:
     """
     Vectorizes and saves a content in the database
@@ -363,7 +365,9 @@ async def save_content_to_db(
 
 
 async def update_content_in_db(
-    asession: AsyncSession, content_id: int, content: ContentCreate
+    content_id: int,
+    content: ContentCreate,
+    asession: AsyncSession,
 ) -> ContentDB:
     """
     Updates a content and vector in the database
@@ -385,7 +389,10 @@ async def update_content_in_db(
     return content_db
 
 
-async def delete_content_from_db(asession: AsyncSession, content_id: int) -> None:
+async def delete_content_from_db(
+    content_id: int,
+    asession: AsyncSession,
+) -> None:
     """
     Deletes a content from the database
     """
@@ -395,7 +402,8 @@ async def delete_content_from_db(asession: AsyncSession, content_id: int) -> Non
 
 
 async def get_content_from_db(
-    asession: AsyncSession, content_id: int
+    content_id: int,
+    asession: AsyncSession,
 ) -> Optional[ContentDB]:
     """
     Retrieves a content from the database
@@ -436,9 +444,9 @@ async def _get_content_embeddings(
 
 
 async def get_similar_content(
-    asession: AsyncSession,
     question: UserQueryBase,
     n_similar: int,
+    asession: AsyncSession,
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector table
@@ -446,13 +454,15 @@ async def get_similar_content(
     response = embedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
 
-    return await get_search_results(asession, question_embedding, n_similar)
+    return await get_search_results(
+        question_embedding,
+        n_similar,
+        asession,
+    )
 
 
 async def get_similar_content_async(
-    asession: AsyncSession,
-    question: UserQueryBase,
-    n_similar: int,
+    question: UserQueryBase, n_similar: int, asession: AsyncSession
 ) -> Dict[int, UserQuerySearchResult]:
     """
     Get the most similar points in the vector table
@@ -460,11 +470,15 @@ async def get_similar_content_async(
     response = await aembedding(EMBEDDING_MODEL, question.query_text)
     question_embedding = response.data[0]["embedding"]
 
-    return await get_search_results(asession, question_embedding, n_similar)
+    return await get_search_results(
+        question_embedding,
+        n_similar,
+        asession,
+    )
 
 
 async def get_search_results(
-    asession: AsyncSession, question_embedding: List[float], n_similar: int
+    question_embedding: List[float], n_similar: int, asession: AsyncSession
 ) -> Dict[int, UserQuerySearchResult]:
     """Get similar content to given embedding and return search results"""
     query = (

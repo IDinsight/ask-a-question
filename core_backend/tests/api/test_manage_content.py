@@ -1,7 +1,13 @@
+import datetime
 from typing import Any, Dict, Generator
 
 import pytest
 from fastapi.testclient import TestClient
+
+from core_backend.app.db.db_models import ContentDB
+from core_backend.app.routers.manage_content import _convert_record_to_schema
+
+from .conftest import fake_embedding
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
@@ -257,3 +263,21 @@ class TestAuthManageContent:
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
+
+
+def test_convert_record_to_schema() -> None:
+    content_id = 1
+    record = ContentDB(
+        content_id=content_id,
+        content_title="sample title for content",
+        content_text="sample text",
+        content_embedding=fake_embedding(),
+        content_language="ENGLISH",
+        content_metadata={"extra_field": "extra value"},
+        created_datetime_utc=datetime.datetime.utcnow(),
+        updated_datetime_utc=datetime.datetime.utcnow(),
+    )
+    result = _convert_record_to_schema(record)
+    assert result.content_id == content_id
+    assert result.content_text == "sample text"
+    assert result.content_metadata["extra_field"] == "extra value"

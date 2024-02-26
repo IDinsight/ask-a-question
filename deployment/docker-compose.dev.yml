@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_HOST=relational_db
   relational_db:
-    image: postgres:16.1-alpine
+    image: pgvector/pgvector:pg16
     restart: always
     env_file:
       - .env

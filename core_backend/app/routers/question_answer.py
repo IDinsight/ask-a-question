@@ -56,10 +56,10 @@ async def llm_response(
 
     response = await get_llm_answer(user_query_refined, response, asession)
     if isinstance(response, UserQueryResponseError):
-        await save_query_response_error_to_db(asession, user_query_db, response)
+        await save_query_response_error_to_db(user_query_db, response, asession)
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
-        await save_query_response_to_db(asession, user_query_db, response)
+        await save_query_response_to_db(user_query_db, response, asession)
         return response
 
 
@@ -78,7 +78,7 @@ async def get_llm_answer(
     """
     if not isinstance(response, UserQueryResponseError):
         content_response = await get_similar_content_async(
-            asession, user_query_refined, int(N_TOP_SIMILAR)
+            user_query_refined, int(N_TOP_SIMILAR), asession
         )
         response.content_response = content_response
         response.llm_response = await get_llm_rag_answer(
@@ -96,7 +96,7 @@ async def get_user_query_and_response(
     """
     feedback_secret_key = generate_secret_key()
     user_query_db = await save_user_query_to_db(
-        asession, feedback_secret_key, user_query
+        feedback_secret_key, user_query, asession
     )
     user_query_refined = UserQueryRefined(
         **user_query.model_dump(), query_text_original=user_query.query_text
@@ -133,10 +133,10 @@ async def embeddings_search(
         user_query_refined, response, int(N_TOP_SIMILAR), asession
     )
     if isinstance(response, UserQueryResponseError):
-        await save_query_response_error_to_db(asession, user_query_db, response)
+        await save_query_response_error_to_db(user_query_db, response, asession)
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
-        await save_query_response_to_db(asession, user_query_db, response)
+        await save_query_response_to_db(user_query_db, response, asession)
         return response
 
 
@@ -154,7 +154,7 @@ async def get_semantic_matches(
     """
     if not isinstance(response, UserQueryResponseError):
         content_response = await get_similar_content_async(
-            asession, user_query_refined, n_top_similar
+            user_query_refined, n_top_similar, asession
         )
         response.content_response = content_response
     return response
@@ -180,7 +180,7 @@ async def feedback(
             },
         )
     else:
-        feedback_db = await save_feedback_to_db(asession, feedback)
+        feedback_db = await save_feedback_to_db(feedback, asession)
         return JSONResponse(
             status_code=200,
             content={
