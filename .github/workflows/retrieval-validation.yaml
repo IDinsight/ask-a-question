@@ -10,11 +10,29 @@ on:
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
-
+env:
+  POSTGRES_USER: postgres-test-user
+  POSTGRES_PASSWORD: postgres-test-pw
+  POSTGRES_DB: postgres-test-db
+  POSTGRES_HOST: localhost
 jobs:
   validate:
     runs-on: ubuntu-20.04
     container: node:20.7-bullseye
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     environment: validation-mc
     steps:
       - name: Install dependencies
@@ -40,6 +58,13 @@ jobs:
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r core_backend/validation/requirements.txt
           cd core_backend && python -m alembic upgrade head
+
+      - name: Run migration scripts
+        run: |
+          cd core_backend
+          export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
+          python -m alembic upgrade head
 
       - name: Run validation script
         env:
