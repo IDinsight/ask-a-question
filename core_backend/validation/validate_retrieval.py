@@ -89,11 +89,7 @@ class TestRetrievalPerformance:
             content_data_path,
             storage_options=dict(profile=aws_profile),
         )
-<<<<<<< HEAD
         df["content_id"] = list(range(len(df)))
-=======
-        df["content_id"] = [i for i in range(len(df))]
->>>>>>> b53e1bb (Update question answering and delete quadrandt from code)
         df = df.rename(
             columns={
                 content_data_label_col: "content_title",
