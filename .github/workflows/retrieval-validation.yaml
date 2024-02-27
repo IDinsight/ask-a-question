@@ -62,9 +62,6 @@ jobs:
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
           python -m alembic upgrade head
-      - name: Check PostgreSQL connection
-        run: |
-          psql -h postgres -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c 'SELECT 1'
       - name: Run validation script
         env:
           N_TOP_SIMILAR: 10
@@ -74,6 +71,10 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           HASH: ${{ github.sha }}
           REF: ${{ github.ref }}
+          POSTGRES_HOST: postgres
+          POSTGRES_USER: $POSTGRES_USER
+          POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+          POSTGRES_DB: $POSTGRES_DB
         run: |
           python -m pytest core_backend/validation/validate_retrieval.py \
             --validation_data_path \
