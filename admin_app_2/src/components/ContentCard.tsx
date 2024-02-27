@@ -60,10 +60,13 @@ const ContentCard = ({
           <Button variant="contained" onClick={() => setOpen(true)}>
             Read
           </Button>
-          <Button>
-            <Edit fontSize="small" />
-            Edit
-          </Button>
+          <Layout.Spacer horizontal multiplier={0.2} />
+          <Link href={`/add-faq?contentID=${contentID}`}>
+            <Button>
+              <Edit fontSize="small" />
+              Edit
+            </Button>
+          </Link>
         </Layout.FlexBox>
       </Card>
       <ContentViewModal open={open} onClose={() => setOpen(false)} />

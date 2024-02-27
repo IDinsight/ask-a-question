@@ -1,3 +1,5 @@
+import { PlayArrow } from "@mui/icons-material";
+import { Typography } from "@mui/material";
 import React from "react";
 const chats = [
   {
@@ -19,14 +21,9 @@ const chats = [
 ];
 const ChatBox = () => {
   return (
-    <div className="chat-box">
-      {chats.map((chat, index) => (
-        <div key={index} className="chat">
-          <div className="chat-sender">{chat.sender}</div>
-          <div className="chat-message">{chat.message}</div>
-        </div>
-      ))}
-    </div>
+    <Typography variant="h3">
+      <PlayArrow /> Chat with us
+    </Typography>
   );
 };
 
