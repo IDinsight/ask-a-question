@@ -10,10 +10,7 @@ on:
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
-env:
-  POSTGRES_USER: postgres-test-user
-  POSTGRES_PASSWORD: postgres-test-pw
-  POSTGRES_DB: postgres-test-db
+
 jobs:
   validate:
     runs-on: ubuntu-20.04
@@ -23,9 +20,9 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -59,7 +56,8 @@ jobs:
       - name: Run migration scripts
         run: |
           cd core_backend
-          export POSTGRES_HOST=postgres
+          export POSTGRES_HOST=postgres POSTGRES_USER=${{ vars.POSTGRES_USER }} \
+            POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }} POSTGRES_DB=${{ vars.POSTGRES_DB }}
           python -m alembic upgrade head
       - name: Run validation script
         env:
@@ -71,6 +69,9 @@ jobs:
           HASH: ${{ github.sha }}
           REF: ${{ github.ref }}
           POSTGRES_HOST: postgres
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
         run: |
           python -m pytest core_backend/validation/validate_retrieval.py \
             --validation_data_path \
