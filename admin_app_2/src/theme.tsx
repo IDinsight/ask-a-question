@@ -23,6 +23,14 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: inter.style.fontFamily,
+    h5: {
+      fontWeight: 400,
+      color: "#001945",
+    },
+    subtitle1: {
+      fontWeight: 600,
+      color: "#001945",
+    },
   },
   components: {
     MuiToggleButton: {
