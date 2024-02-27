@@ -41,6 +41,7 @@ import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
 import ContentCard from "@/components/ContentCard";
 import { LayoutRouter } from "next/dist/server/app-render/entry-base";
 import theme from "@/theme";
+import Link from "next/link";
 
 function ContentScreen() {
   const [mode, setMode] = React.useState<"cards" | "docs">("cards");
@@ -292,10 +293,12 @@ const CardsBottomStrip = () => {
       sx={{ px: sizes.baseGap }}
       gap={sizes.baseGap}
     >
-      <Button variant="contained">
-        <Add />
-        Add New FAQ
-      </Button>
+      <Link href="/add-faq">
+        <Button variant="contained">
+          <Add />
+          Add New FAQ
+        </Button>
+      </Link>
       <Button variant="outlined" sx={{ backgroundColor: appColors.white }}>
         <Upload />
         <Layout.Spacer horizontal multiplier={0.5} />
