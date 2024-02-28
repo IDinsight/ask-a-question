@@ -18,7 +18,7 @@ You can launch a container running PostgreSQL database and run the necessary mig
 
 !!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
 
-You can stop and remove them using:
+You can stop and remove the PostgreSQL container using:
 
     make teardown-db
 
