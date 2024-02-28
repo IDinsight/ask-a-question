@@ -24,7 +24,7 @@ You can stop and remove the PostgreSQL container using:
 
 Otherwise, you can run them manually as below.
 
-??? note "Setting up database manually"
+??? note "Setting up the database manually"
 
     ### Run a local postgres server
 
