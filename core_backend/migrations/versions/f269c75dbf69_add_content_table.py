@@ -37,7 +37,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("content_title", sa.String(length=150), nullable=False),
-        sa.Column("content_text", sa.String(length=14460), nullable=False),
+        sa.Column("content_text", sa.String(length=2000), nullable=False),
         sa.Column("content_language", sa.String(), nullable=False),
         sa.Column("content_metadata", sa.JSON(), nullable=False),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),

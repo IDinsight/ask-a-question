@@ -110,7 +110,7 @@ class ContentCreate(BaseModel):
 
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
-    content_text: Annotated[str, StringConstraints(max_length=1446)]
+    content_text: Annotated[str, StringConstraints(max_length=2000)]
     content_language: str = "ENGLISH"
     content_metadata: dict = {}
 
