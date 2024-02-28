@@ -31,7 +31,7 @@ Otherwise, you can run them manually as below.
         docker run --name postgres-local \
             -e POSTGRES_PASSWORD=<your password> \
             -p 5432:5432 \
-            -d postgres
+            -d pgvector/pgvector:pg16
 
     Note that data will not be persisted when the container is destroyed. It might be
     preferable to create your database from scratch each time. But if you wish to persist data
@@ -41,7 +41,7 @@ Otherwise, you can run them manually as below.
         -e POSTGRES_PASSWORD=<your password> \
         -p 5432:5432 \
         -v postgres_local_vol:/var/lib/postrges/data \
-        -d postgres
+        -d pgvector/pgvector:pg16
 
     ### Run migrations
 
