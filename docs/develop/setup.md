@@ -12,7 +12,7 @@ develop your new feature.
 
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
-You can create a postgres  and run the necessary migrations using:
+You can launch a container running PostgreSQL database and run the necessary migrations using:
 
     make setup-db
 
