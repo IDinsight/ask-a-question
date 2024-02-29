@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Typography, Box, Fade, Button } from "@mui/material";
+import { Modal, Typography, Box, Fade, Button, Chip } from "@mui/material";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Layout } from "./Layout";
 import {
@@ -37,28 +37,37 @@ const ContentViewModal = ({
             width: "70%",
             height: "70%",
             backgroundColor: appColors.white,
-            p: sizes.baseGap,
-            px: sizes.doubleBaseGap,
+            p: sizes.doubleBaseGap,
           }}
         >
           <Layout.FlexBox
             flexDirection={"row"}
-            {...appStyles.justifyContentFlexEnd}
+            {...appStyles.justifyContentSpaceBetween}
           >
+            <Typography variant="h5">Content #142 </Typography>
             <Close onClick={onClose} />
           </Layout.FlexBox>
-          <Typography variant="h5">Content #142 </Typography>
+
+          <Layout.Spacer multiplier={1} />
+          {["Pollution", "COVID-19", "Masks"].map((topic, index) => (
+            <Chip
+              key={index}
+              label={topic}
+              sx={{ mx: sizes.tinyGap }}
+              disabled
+            />
+          ))}
+          <Layout.Spacer multiplier={1} />
 
           <Layout.FlexBox
             flex={1}
             flexDirection={"row"}
-            {...appStyles.justifyContentFlexEnd}
             sx={{
-              height: "90%",
+              height: "85%",
             }}
           >
             <Layout.FlexBox
-              flex={2}
+              flex={0.7}
               flexDirection={"column"}
               sx={{ backgroundColor: appColors.white }}
             >
@@ -112,36 +121,14 @@ const ContentViewModal = ({
                   {...appStyles.justifyContentCenter}
                   sx={{ pr: sizes.baseGap }}
                 >
-                  <RemoveRedEye fontSize="small" />
-                  <Typography variant="body2">20</Typography>
-                  <ThumbUp fontSize="small" />
-                  <Typography variant="body2">12</Typography>
-                  <ThumbDown fontSize="small" />
-                  <Typography variant="body2">2</Typography>
+                  <RemoveRedEye fontSize="small" color="disabled" />
+                  <Typography variant="body2">_</Typography>
+                  <ThumbUp fontSize="small" color="disabled" />
+                  <Typography variant="body2">_</Typography>
+                  <ThumbDown fontSize="small" color="disabled" />
+                  <Typography variant="body2">_</Typography>
                 </Layout.FlexBox>
               </Layout.FlexBox>
-            </Layout.FlexBox>
-
-            <Layout.FlexBox
-              flex={1}
-              flexDirection={"column"}
-              sx={{ height: "100%" }}
-            >
-              <Typography variant="h5">Attachments</Typography>
-              <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">Image</Typography>
-              <Box
-                width={"100%"}
-                height={"30%"}
-                sx={{ backgroundColor: appColors.lightGrey }}
-              />
-              <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">Audio</Typography>
-              <Box
-                width={"100%"}
-                height={"10%"}
-                sx={{ backgroundColor: appColors.lightGrey }}
-              />
             </Layout.FlexBox>
           </Layout.FlexBox>
         </Box>

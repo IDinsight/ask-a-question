@@ -38,7 +38,7 @@ const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
               },
               selectedLang === lang?.code && {
                 borderBottomColor: appColors.primary,
-                borderBottomWidth: 2,
+                borderBottomWidth: 3,
                 color: appColors.primary,
               },
             ]}

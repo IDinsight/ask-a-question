@@ -43,7 +43,6 @@ const AddFAQPage = () => {
         <ContentBox />
 
         <Layout.Spacer multiplier={2} />
-        <MediaOptions />
 
         <Layout.Spacer multiplier={2} />
         <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
@@ -97,64 +96,13 @@ const ContentBox = () => {
           sx={{ p: sizes.smallGap }}
         >
           <Button
+            disabled
             variant="text"
             sx={{ border: 1, borderColor: appColors.lightGrey }}
           >
             Translate from English
           </Button>
-          <Layout.FlexBox flexDirection={"row"} gap={sizes.smallGap}>
-            <Typography variant="body2" color={appColors.darkGrey}>
-              Readability Check
-            </Typography>
-            <Tooltip title="Consider adding more emojis">
-              <InfoOutlined color="error" fontSize="small" />
-            </Tooltip>
-            <Typography variant="body2" color={appColors.darkGrey}>
-              Grammar & Spelling Check
-            </Typography>
-            <CheckBox color="success" fontSize="small" />
-          </Layout.FlexBox>
         </Layout.FlexBox>
-      </Layout.FlexBox>
-    </Layout.FlexBox>
-  );
-};
-
-const MediaOptions = () => {
-  const [autoGenerate, setAutoGenerate] = React.useState<boolean>(false);
-  return (
-    <Layout.FlexBox
-      flexDirection={"row"}
-      sx={{ width: "45%" }}
-      {...appStyles.alignItemsCenter}
-      {...appStyles.justifyContentSpaceBetween}
-    >
-      <Layout.FlexBox flexDirection={"column"}>
-        <FormControlLabel
-          value={autoGenerate}
-          control={<Switch color="primary" />}
-          label="Auto generate text-to-speech"
-          labelPlacement="end"
-          onChange={() => setAutoGenerate(!autoGenerate)}
-        />
-        <Layout.Spacer multiplier={0.5} />
-        <Button
-          variant="text"
-          sx={{ border: 1, borderColor: appColors.outline, width: "50%" }}
-          disabled={autoGenerate}
-        >
-          Upload Audio
-        </Button>
-      </Layout.FlexBox>
-
-      <Layout.Spacer multiplier={0.5} />
-      <Layout.FlexBox flexDirection={"row"} gap={sizes.tinyGap}>
-        <Button
-          variant="text"
-          sx={{ border: 1, borderColor: appColors.outline }}
-        >
-          <Add /> Add Image
-        </Button>
       </Layout.FlexBox>
     </Layout.FlexBox>
   );
@@ -177,7 +125,8 @@ const TopicRow = () => {
       ))}
       {!showInputField && topics.length < 3 && (
         <AddCircle
-          onClick={() => setShowInputField(true)}
+          color="disabled"
+          //onClick={() => setShowInputField(true)}
           sx={{ cursor: "pointer", m: sizes.tinyGap }}
         />
       )}
