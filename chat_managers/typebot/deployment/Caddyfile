@@ -1,0 +1,9 @@
+{$DOMAIN:localhost} {
+    handle_path /viewer/* {
+        reverse_proxy typebot-viewer:3000
+    }
+
+    handle {
+        reverse_proxy typebot-builder:3000
+    }
+}
