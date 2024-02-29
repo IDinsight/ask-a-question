@@ -39,59 +39,17 @@ import React from "react";
 import { Layout } from "@/components/Layout";
 import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
 import ContentCard from "@/components/ContentCard";
-import { LayoutRouter } from "next/dist/server/app-render/entry-base";
 import theme from "@/theme";
 import Link from "next/link";
 
 function ContentScreen() {
-  const [mode, setMode] = React.useState<"cards" | "docs">("cards");
   return (
     <Layout.FlexBox alignItems="center" flexDirection={"column"}>
-      <Layout.Spacer multiplier={3} />
-      <ToggleButtonGroup
-        exclusive
-        value={mode}
-        size="medium"
-        onChange={(
-          event: React.MouseEvent<HTMLElement>,
-          newMode: "cards" | "docs"
-        ) => {
-          console.log(event, newMode);
-          newMode && setMode(newMode);
-        }}
-      >
-        <ToggleButton value="cards">
-          <ContentCopy fontSize="small" sx={{ mx: sizes.smallGap }} />
-          <Typography>Cards</Typography>
-        </ToggleButton>
-
-        <ToggleButton value="docs">
-          <FileCopy fontSize="small" sx={{ mx: sizes.smallGap }} />
-          <Typography>Docs</Typography>
-        </ToggleButton>
-      </ToggleButtonGroup>
-      <Layout.Spacer multiplier={3} />
-      {mode == "cards" ? <CardsView /> : <DocsView />}
+      <Layout.Spacer multiplier={6} />
+      <CardsView />
     </Layout.FlexBox>
   );
 }
-
-const DocsView = () => {
-  return (
-    <Box
-      display={"flex"}
-      alignItems={"center"}
-      justifyContent={"center"}
-      sx={{
-        backgroundColor: appColors.background,
-        height: "720px",
-        width: "100%",
-      }}
-    >
-      <h1>Docs Component goes here</h1>
-    </Box>
-  );
-};
 
 const CardsView = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
@@ -127,6 +85,7 @@ const CardsSearchAndFilter = () => {
   return (
     <Layout.FlexBox alignItems="center">
       <TextField
+        disabled={true}
         sx={{
           width: {
             md: "50%",
@@ -138,7 +97,7 @@ const CardsSearchAndFilter = () => {
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Search color="primary" />
+              <Search color="disabled" />
             </InputAdornment>
           ),
         }}
@@ -160,6 +119,7 @@ const CardsSearchAndFilter = () => {
         {chipData.map((data) => {
           return (
             <Chip
+              disabled={true}
               key={data.key}
               label={data.label}
               clickable={true}
@@ -217,6 +177,7 @@ const CardsUtilityStrip = ({
         </FormControl>
       </Layout.FlexBox>
       <Button
+        disabled={true}
         variant="contained"
         sx={{
           display: { xs: "none", md: "flex" },
@@ -299,7 +260,11 @@ const CardsBottomStrip = () => {
           Add New FAQ
         </Button>
       </Link>
-      <Button variant="outlined" sx={{ backgroundColor: appColors.white }}>
+      <Button
+        disabled={true}
+        variant="outlined"
+        sx={{ backgroundColor: appColors.white }}
+      >
         <Upload />
         <Layout.Spacer horizontal multiplier={0.5} />
         Import
