@@ -107,7 +107,11 @@ const SmallScreenNavMenu = () => {
             href={page.path}
             key={page.title}
             passHref
-            style={{ textDecoration: "none" }}
+            style={{
+              textDecoration: "none",
+              //disable pointer events to prevent the link from being clicked
+              pointerEvents: "none",
+            }}
           >
             <MenuItem
               key={page.title}
@@ -145,7 +149,11 @@ const LargeScreenNavMenu = () => {
           href={page.path}
           key={page.title}
           passHref
-          style={{ textDecoration: "none" }}
+          style={{
+            textDecoration: "none",
+            //disable pointer events to prevent the link from being clicked
+            pointerEvents: "none",
+          }}
         >
           <Typography
             key={page.title}
@@ -202,7 +210,7 @@ const UserDropdown = () => {
           horizontal: "right",
         }}
         open={Boolean(anchorElUser)}
-        onClose={handleCloseUserMenu}
+        onClose={() => setAnchorElUser(null)}
       >
         {settings.map((setting) => (
           <MenuItem key={setting} onClick={handleCloseUserMenu}>
