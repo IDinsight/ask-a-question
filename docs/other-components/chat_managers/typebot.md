@@ -8,6 +8,10 @@ Below is an example of how to get Typebot running and connected to AAQ endpoints
 
 **Step 2:** Copy `template.env` to `.env` and edit it to set the variables
 
+??? note "You must configure at least one login option while setting the environment variables."
+    We recommend either Github or Google authentication. See Typebot's
+    [docs](https://docs.typebot.io/self-hosting/configuration) for details.
+
 **Step 3:** Run docker compose
 
     docker compose -p typebot-stack up -d --build
