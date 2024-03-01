@@ -2,23 +2,39 @@
 
 site_name: ""
 site_url: https://idinsight.github.io/aaq-core/
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+  social:
+    - icon: material/shield-lock
+      link: https://www.idinsight.org/about/privacy-policy/
+      name: Privacy Policy
+
+copyright: "© 2024 IDinsight"
 
 theme:
   name: material
-  logo: images/AAQLogo.png
+  logo: images/logo-light.png
+  favicon: images/favicon.png
+  font:
+    text: "Inter"
+    code: "Roboto Mono"
   palette:
     # Palette toggle for dark mode
     - scheme: slate
-      primary: indigo
+      primary: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
     # Palette toggle for light mode
     - scheme: default
-      primary: blue
+      primary: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -34,13 +50,13 @@ theme:
 repo_url: https://github.com/IDinsight/aaq-core
 
 nav:
-  - 🏠 Home:
+  - Home:
       - "": index.md
-      - 👉 Usage: usage.md
-      - 🛣️ Roadmap: roadmap.md
-  - 📢 Latest Updates:
+      - Usage: usage.md
+      - Roadmap: roadmap.md
+  - Latest Updates:
       - blog/index.md
-  - ⚙️ Core Components:
+  - Core Components:
       - components/index.md
       - Admin App:
           - components/admin-app/index.md
@@ -53,7 +69,7 @@ nav:
           - LLM Response: components/qa-service/llm-response.md
       - Triaging Service:
           - components/triaging/index.md
-  - ➕ Other Components:
+  - Other Components:
       - other-components/index.md
       - WhatsApp Connector:
           - other-components/whatsapp/index.md
@@ -61,21 +77,23 @@ nav:
       - Chat Managers:
           - other-components/chat_managers/index.md
           - Botpress: other-components/chat_managers/botpress_v12.md
+          - Typebot: other-components/chat_managers/typebot.md
       - Offline LLMs:
           - other-components/self_hosted_llms/index.md
       - Align Score:
           - other-components/align-score/index.md
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
-  - 🌀 Deploying:
+  - Deploying:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-  - 💝 Contributing:
+  - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md
       - Validation: develop/validation.md
+
 markdown_extensions:
   - tables
   - admonition
