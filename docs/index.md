@@ -1,51 +1,44 @@
-<style>
-.primary-color {
-    color: #1F8CED;
-}
-</style>
 <pre align="center" style="text-align:center; font-size: 1vw; background:none;">
-<br>
-<img src="./images/AAQLogo.png" alt="logo" width=600/>
+<img src="./images/logo-light.png#only-dark" alt="logo-light" width="600"/><img src="./images/logo-dark.png#only-light" alt="logo-dark" width="600"/>
 <br>
 </pre>
 
-**[Ask A Question](https://idinsight.github.io/aaq-core/)** is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
+<h3 align="center" >On-demand answers to questions from your knowledge base</h3>
+<strong > Ask A Question</strong> is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 
 ---
 
-<div style=" text-align:center; font-size: 36px;"  markdown>
- :material-star: Features :material-star:
-</div>
+<div  class="component-title" >Features </div>
 
-<div class="grid cards" style="text-align:center" markdown>
+<div class="grid cards"  markdown>
 
-- <span style="font-size: 30px" class="primary-color">:material-shield:</span><br>
-  **Responsible & Safe AI** <br>
+- <span  class="secondary-color big-font">:material-shield:</span><br>
+  <strong >Responsible & Safe AI</strong> <br>
   Implements guardrailed AI that is ethical, transparent, and secure
 
-- <span style="font-size: 30px" class="primary-color">:material-translate:</span><br>
-  **Local Language Support** <br>
-  Multilingual model support to enhance accessibility and experience
+- <span  class="secondary-color big-font">:material-translate:</span><br>
+  <strong>Local Language Support</strong> <br>
+  Multilingual model support to enhance accessibility and experience (coming soon...)
 
-- <span style="font-size: 36px;" class="primary-color">:material-docker:</span><br>
-  **Scalable & Easy to Deploy** <br>
+- <span class="secondary-color big-font">:material-docker:</span><br>
+  <strong >Scalable & Easy to Deploy</strong><br>
   Containerized app that can integrate with outreach systems like WhatsApp
 
-- <span style="font-size: 30px;" class="primary-color">:material-microphone:</span><br>
-  **Voice support** <br>
-  Ask questions and receive answers using voice memos.
+- <span class="secondary-color big-font">:material-microphone:</span><br>
+  <strong >Voice support</strong> <br>
+  Ask questions and receive answers using voice memos. (coming soon...)
 
 </div>
 <br>
-**:material-check: LLM-powered search** : Answers questions to database content using LLM embeddings.
+<strong >:octicons-check-16: LLM-powered search</strong>: Answers questions to database content using LLM embeddings.
 
-**:material-check: LLM responses** : Craft a custom reponse to users using LLM chat
+<strong >:octicons-check-16: LLM responses</strong> : Craft a custom reponse to users using LLM chat
 
-**:material-check: Deploy on WhatsApp** : Easily deploy using WhatsApp Business API
+<strong >:octicons-check-16: Deploy on WhatsApp</strong> : Easily deploy using WhatsApp Business API (coming soon...)
 
-**:material-check: Manage content** : Use the Admin App to add, edit, and delete content in the database
-
-[:octicons-arrow-right-24: See Full Roadmap](./roadmap.md)
+<strong >:octicons-check-16: Manage content</strong> : Use the Admin App to add, edit, and delete content in the database
+<br><br>
+[See Full Roadmap :octicons-arrow-right-24:](./roadmap.md){ .md-button}
 
 ---
 
@@ -58,7 +51,14 @@
 
 ## Acknowledgements
 
-<img src="./images/google_org.png" alt="google_dot_org" width=200/>
-
+<img src="./images/google_org.png" alt="google_dot_org" width=200/><br>
 The project is funded by Google.org through the
-[AI for Global Goals](https://globalgoals.withgoogle.com/globalgoals/) grant.
+<a href="https://globalgoals.withgoogle.com/globalgoals/" class="link-home">AI for Global Goals</a> grant.
+<br><br>
+<img src="./images/idi_dark.png#only-light" alt="idi_org" width=200 style="margin-left:-25px" /><img src="./images/idi_light.png#only-dark" alt="idi_org" width=200 style="margin-left:-25px" /><br>
+Built and powered by IDinsight.
+<p class="footer" markdown>IDinsight uses data and evidence to help leaders combat poverty worldwide. Our collaborations deploy a large analytical toolkit to help clients design better policies, rigorously test what works, and use evidence to implement effectively at scale. We place special emphasis on using the right tool for the right question and tailor our rigorous methods to the real-world constraints of decision-makers. IDinsight works with governments, foundations, NGOs, multilaterals and businesses across Africa and Asia. We work in all major sectors, including health, education, agriculture, governance, digital ID, financial access, and sanitation. We have offices in Dakar, Lusaka, Manila, Nairobi, New Delhi, Rabat, and Remote.
+<br>
+<br>
+:globe_with_meridians: <a href="https://www.idinsight.org" class="link-home">www.idinsight.org</a>
+</p>
