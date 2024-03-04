@@ -108,7 +108,7 @@ TRANSLATE_INPUT = textwrap.dedent(
     f"""You are a high-performing translation bot for low-resourced African languages.
     You support a question-answering chatbot.
     If you are unable to translate the user's input,
-    respond with \"{TRANSLATE_FAILED_MESSAGE}\"
+    respond with "{TRANSLATE_FAILED_MESSAGE}"
     Translate the user's input to English from"""
 )
 
@@ -145,7 +145,7 @@ PARAPHRASE_INPUT = (
 
     Ignore any redacted and offensive words. If the input message is not a question,
     respond with exactly the same message but removing any redacted and offensive words.
-    If paraphrasing fails, respond with \"{PARAPHRASE_FAILED_MESSAGE}\".
+    If paraphrasing fails, respond with "{PARAPHRASE_FAILED_MESSAGE}".
 
     Examples:\n
     """
