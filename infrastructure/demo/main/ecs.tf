@@ -158,7 +158,6 @@ resource "aws_ecs_service" "vectordb_service" {
 }
 
 resource "aws_ecs_task_definition" "vectordb_task" {
-
   family             = "vectordb-task"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
@@ -317,11 +316,6 @@ resource "aws_ecs_task_definition" "backend_task" {
       }
     }
   }])
-
-
-
-
-
 }
 
 resource "aws_cloudwatch_log_group" "admin_app" {

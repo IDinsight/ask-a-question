@@ -77,6 +77,7 @@ nav:
       - Chat Managers:
           - other-components/chat_managers/index.md
           - Botpress: other-components/chat_managers/botpress_v12.md
+          - Typebot: other-components/chat_managers/typebot.md
       - Offline LLMs:
           - other-components/self_hosted_llms/index.md
       - Align Score:

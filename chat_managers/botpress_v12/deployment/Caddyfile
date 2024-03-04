@@ -1,0 +1,5 @@
+{$DOMAIN:localhost} {
+    handle {
+        reverse_proxy botpress:3000
+    }
+}

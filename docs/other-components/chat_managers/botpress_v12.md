@@ -6,36 +6,21 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 
 ## Deployment
 
-### Option 1 - Via Docker Compose (behind NGINX with HTTPS)
+### Option 1 - Via Docker Compose (behind Caddy with HTTPS)
 
 **Step 1:** Navigate to `chat_managers/botpress_v12/deployment/`
 
 **Step 2:** Copy `template.env` to `.env` and edit it to set the variables
 
-    PGPORT=
-    POSTGRES_DB=
-    POSTGRES_PASSWORD=
-    POSTGRES_USER=
-    ...
+**Step 3:** Run docker compose
 
-**Step 3:** Copy `template.env.nginx` to `.env.nginx` and edit it to set the variables
-
-    DOMAIN=
-
-**Step 4:** Run `init-letsencrypt.sh` to get an SSL certificate from LetsEncrypt
-
-    chmod a+x ./init-letsencrypt.sh
-    ./init-letsencrypt.sh
-
-**Step 5:** Run docker compose
-
-    docker compose -f docker-compose.yml -p botpress-stack up -d --build
+    docker compose -p botpress-stack up -d --build
 
 You can now access Botpress at `https://[DOMAIN]/`
 
-**Step 6:** Shutdown containers
+**Step 4:** Shutdown containers
 
-    docker compose -f docker-compose.yml -p botpress-stack down
+    docker compose -p botpress-stack down
 
 ### Option 2 - Via Docker
 

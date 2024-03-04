@@ -1,4 +1,4 @@
-ARG NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
+ARG NEXT_PUBLIC_BACKEND_URL
 FROM node:19-alpine AS base
 
 FROM base AS deps
