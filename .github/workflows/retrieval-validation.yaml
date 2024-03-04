@@ -6,7 +6,10 @@ on:
     paths:
       - "core_backend/**"
   workflow_dispatch:
-
+env:
+  POSTGRES_PASSWORD: postgres-test-pw
+  POSTGRES_USER: postgres-test-user
+  POSTGRES_DB: postgres-test-db
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -15,14 +18,14 @@ jobs:
   validate:
     runs-on: ubuntu-20.04
     container: node:20.7-bullseye
-    environment: validation-mc
+
     services:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
-          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -30,6 +33,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+    environment: validation-mc
     steps:
       - name: Install dependencies
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
@@ -56,8 +60,8 @@ jobs:
       - name: Run migration scripts
         run: |
           cd core_backend
-          export POSTGRES_HOST=postgres POSTGRES_USER=${{ vars.POSTGRES_USER }} \
-            POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }} POSTGRES_DB=${{ vars.POSTGRES_DB }}
+          export POSTGRES_HOST=postgres POSTGRES_USER=${{ env.POSTGRES_USER }} \
+            POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }} POSTGRES_DB=${{ env.POSTGRES_DB }}
           python -m alembic upgrade head
       - name: Run validation script
         env:
@@ -69,9 +73,9 @@ jobs:
           HASH: ${{ github.sha }}
           REF: ${{ github.ref }}
           POSTGRES_HOST: postgres
-          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
         run: |
           python -m pytest core_backend/validation/validate_retrieval.py \
             --validation_data_path \
