@@ -31,9 +31,12 @@ jobs:
           role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{secrets.ROLE}}"
           role-session-name: deployrolesession
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: "true"
 
       - name: Build and push Nginx image
         id: build-image-nginx
@@ -74,7 +77,7 @@ jobs:
         run: echo "compose_hash=$(sha256sum nginx/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Compose hash
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ./.compose_hash
