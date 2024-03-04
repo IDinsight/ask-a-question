@@ -113,7 +113,6 @@ resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
   secret_string = random_password.secrets[3].result
 
 
-
 }
 
 resource "aws_secretsmanager_secret" "open_ai_key_secret" {
