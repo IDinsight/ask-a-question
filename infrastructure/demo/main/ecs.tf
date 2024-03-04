@@ -330,7 +330,6 @@ resource "aws_cloudwatch_log_group" "backend" {
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
 
-
 resource "aws_cloudwatch_log_group" "vectordb" {
   name = "/ecs/vectordb-task-${var.project_name}-${var.environment}"
 
