@@ -1,16 +1,16 @@
-name: Deploying core_backend
+name: Deploying Frontend
 
 on:
   push:
     branches:
       - demo
     paths:
-      - "core_backend/**"
-      - ".github/workflows/deploy_backend.yml"
+      - "admin_app/**"
+      - ".github/workflows/deploy_frontend.yml"
 
 jobs:
-  DeployCoreBackend:
-    name: Deploying core_backend ${{github.ref_name}}
+  DeployFrontend:
+    name: Deploying Frontend ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
       name: ${{github.ref_name}}
@@ -31,7 +31,6 @@ jobs:
           role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{secrets.ROLE}}"
           role-session-name: deployrolesession
           aws-region: ${{ secrets.AWS_REGION }}
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -43,24 +42,24 @@ jobs:
         uses: docker/build-push-action@v5
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{secrets.REPO}}
-          IMAGE_TAG: backend
+          ECR_REPOSITORY: ${{ secrets.REPO }}
+          IMAGE_TAG: admin-app
         with:
-          context: core_backend
+          context: admin_app
           platforms: linux/arm64
-          file: core_backend/Dockerfile.${{github.ref_name}}
+          file: admin_app/Dockerfile
           cache-from: type=gha
           cache-to: type=gha
           push: true
           tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
           build-args: |
-            BOOTSTRAP_FILE=${{secrets.BOOTSTRAP_FILE}}
-      # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
+            NEXT_PUBLIC_BACKEND_URL=${{secrets.NEXT_PUBLIC_BACKEND_URL}}
+      # This makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
       # This will reduce the number of task definitions created and will speed up the deployment process
       # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
       - name: Calculate Docker Compose hash
         id: hash
-        run: echo "compose_hash=$(sha256sum core_backend/deployment/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
+        run: echo "compose_hash=$(sha256sum admin_app/deployment/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Compose hash
         uses: actions/cache@v4
@@ -78,12 +77,12 @@ jobs:
             echo "${{ steps.hash.outputs.compose_hash }}" > ./.compose_hash
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
       - name: Install the ECS CLI
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
           sudo chmod +x /usr/local/bin/ecs-cli
-
       - name: Create Task Definition
         if: steps.check_changes.outputs.changed == 'true'
         id: create-task-def
@@ -91,24 +90,21 @@ jobs:
           ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
           --default-launch-type EC2 \
-          --config-name ${{ secrets.PROJECT_NAME }}-${{github.ref_name}}-backend-config
-          ecs-cli compose --project-name backend-task --file core_backend/deployment/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
-          echo "taskdef=backend-task" >> $GITHUB_OUTPUT
+          --config-name ${{ secrets.PROJECT_NAME }}-${{github.ref_name}}-admin-app-config
+          ecs-cli compose --project-name admin-app-task --file admin_app/deployment/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
+          echo "taskdef=admin-app-task" >> $GITHUB_OUTPUT
         env:
+          NEXT_PUBLIC_BACKEND_URL: ${{secrets.NEXT_PUBLIC_BACKEND_URL}}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          QDRANT_HOST: ${{ secrets.QDRANT_HOST }}
-          NEXT_PUBLIC_BACKEND_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
-          DOMAIN: ${{ secrets.DOMAIN }}
           REPO: ${{ secrets.REPO }}
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
           ENV: ${{ github.ref_name }}
       # We need this since deploy task definition action needs the task definition in json format
-
       - name: Task definition download
         id: download-task-def
         env:
-          ecs_task_def_name: backend-task
+          ecs_task_def_name: admin-app-task
         run: |
           aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
           echo $(cat task-definition.json | jq 'del(
@@ -128,19 +124,21 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.download-task-def.outputs.task-def }}
-          service: backend-service
+          service: admin-app-service
           cluster: ${{ secrets.CLUSTER_NAME }}
           wait-for-service-stability: true
 
+      # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
       - name: Wait for Application to start
-        id: wait-for-app
+        id: deployment-complete
         run: sleep 1m
         shell: bash
 
       - name: Check if deployment was successful
         id: check-deployment
         run: |
-          RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
+          RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services admin-app-service --query services[0].deployments[0].runningCount | jq -r ".")
+
           if [ "$RUNNING_TASKS" -eq "0" ]; then
             echo "Deployment failed."
             exit 1
