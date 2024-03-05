@@ -1,9 +1,9 @@
 SHELL = /bin/sh
 
-$(eval DEMO_ACCOUNT=XXXXXXXXX)
-$(eval DOMAIN=XXXXXXXXXX)
-$(eval EMAIL=XXXXXXXXXXXX)
-$(eval NEXT_PUBLIC_BACKEND_URL=XXXXXXXXXXXXX)
+$(eval DEMO_ACCOUNT=XXXXXXXXXXX)
+$(eval DOMAIN=XXXXXXXXXXX)
+$(eval EMAIL=XXXXXXXXXXX)
+$(eval NEXT_PUBLIC_BACKEND_URL=XXXXXXXXXXX/api)
 
 login:
 	@aws sso login --profile aaq_demo
@@ -41,7 +41,8 @@ create-backend-demo:
 	create
 
 image-frontend-demo:
-	@docker build --platform linux/arm64 --rm --rm --build-arg NAME=$(NEXT_PUBLIC_BACKEND_URL)-t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
+	@NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} \
+	docker build --platform linux/arm64 --rm -t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
 
 	# Tag
 	@docker tag aaq-demo-frontend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
