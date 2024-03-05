@@ -9,7 +9,7 @@ If you are writing new features, you should also add unit tests. Tests are under
 
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
-    of postrges and qdrant, the tests will end up writing to your dev environment :weary_cat:
+    of postrges, the tests will end up writing to your dev environment :weary_cat:
 
 Run tests using:
 
@@ -20,10 +20,9 @@ correct environment variables, runs `pytest`, and then destroys the containers.
 
 ### Debugging unit tests
 
-Before debugging, run `make setup-test-dbs` within `core_backend` to launch new postgres and
-qdrant containers for testing and set the correct environment variables.
+Before debugging, run `make setup-test-db` within `core_backend` to launch new postgres container for testing and set the correct environment variables.
 
-After debugging, clean up the testing resources by calling `make teardown-test-dbs`.
+After debugging, clean up the testing resources by calling `make teardown-test-db`.
 
 #### Configs for Visual Studio Code
 

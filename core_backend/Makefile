@@ -35,11 +35,11 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-relational-db setup-test-vector-db setup-alignscore-container
+setup-test-containers: setup-test-db setup-alignscore-container
 
-teardown-test-containers: stop-test-relational-db stop-test-vector-db stop-alignscore-container
+teardown-test-containers: stop-test-db stop-alignscore-container
 
-setup-test-relational-db:
+setup-test-db:
 	-@docker stop testdb
 	-@docker rm testdb
 	@docker system prune -f
@@ -50,16 +50,9 @@ setup-test-relational-db:
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
-		-d postgres:16.1-alpine
+		-d pgvector/pgvector:pg16
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
-
-setup-test-vector-db:
-	-@docker stop testvectordb
-	-@docker rm testvectordb
-	docker run --name testvectordb \
-		-p 6334:6333 \
-		-d qdrant/qdrant:v1.5.1
 
 setup-alignscore-container:
 	-@docker stop testalignscore
@@ -73,21 +66,11 @@ stop-alignscore-container:
 	@docker stop testalignscore
 	@docker rm testalignscore
 
-stop-test-relational-db:
+stop-test-db:
 	@docker stop testdb
 	@docker rm testdb
 
-stop-test-vector-db:
-	@docker stop testvectordb
-	@docker rm testvectordb
-
-# Development DBs
-
-setup-dbs: setup-relational-db setup-vector-db
-
-teardown-dbs: stop-relational-db stop-vector-db
-
-# load some dummy FAQs into the qdrant db
+# load some dummy FAQs into the content table
 add-dummy-faqs:
 	curl -X POST -d '{"content_title": "Come camping", "content_text":"Embrace the call of the wild with camping, an age-old tradition that reconnects us with nature. Whether youre pitching a tent under a canopy of stars or sharing stories around a crackling campfire, camping offers a unique escape from the hustle and bustle of daily life. Experience the tranquility of the great outdoors and create lasting memories with loved ones."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 	curl -X POST -d '{"content_title": "On Music", "content_text":"Music is the universal language of the soul, transcending borders and resonating with hearts across the globe. From the rhythmic beats of a drum to the melodic strains of a violin, music has the power to evoke emotions, memories, and even change moods. Whether youre a creator or a listener, music is a journey of self-expression and discovery."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)
@@ -99,7 +82,8 @@ add-dummy-faqs:
 	curl -X POST -d '{"content_title": "Yoga", "content_text":"Yoga, an ancient practice rooted in Indian philosophy, harmonizes the body, mind, and spirit. Through a combination of postures, breathing exercises, and meditation, yoga offers a holistic approach to wellness. Whether youre seeking physical flexibility, mental clarity, or spiritual growth, yoga provides a path to self-discovery and inner peace."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 	curl -X POST -d '{"content_title": "Digital art", "content_text":"In the intersection of technology and creativity lies digital art, a modern medium that pushes the boundaries of traditional artistry. With tools like graphic tablets and software, artists can create mesmerizing visuals, intricate designs, and immersive animations. Digital art not only showcases the evolution of art but also the limitless potential of human imagination when paired with technology."}' -H 'Content-Type: application/json' $(ENDPOINT_URL)/content/create
 
-setup-relational-db:
+# Development DB
+setup-db:
 	-@docker stop postgres-local
 	-@docker rm postgres-local
 	@docker system prune -f
@@ -107,20 +91,9 @@ setup-relational-db:
 	@docker run --name postgres-local \
      -e POSTGRES_PASSWORD=postgres \
      -p 5432:5432 \
-     -d postgres:16.1-alpine
+     -d pgvector/pgvector:pg16
 	python -m alembic upgrade head
 
-setup-vector-db:
-	-@docker stop qdrant-local
-	-@docker rm qdrant-local
-	docker run --name qdrant-local \
-     -p 6333:6333 \
-	 -d qdrant/qdrant:v1.5.1
-
-stop-relational-db:
+teardown-db:
 	@docker stop postgres-local
 	@docker rm postgres-local
-
-stop-vector-db:
-	@docker stop qdrant-local
-	@docker rm qdrant-local
