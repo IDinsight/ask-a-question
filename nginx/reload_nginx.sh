@@ -27,7 +27,7 @@ done
 }
 
 if [ -d "$CERT_PATH_FOLDER" ]; then
-    echo "Certificates already exist for $DOMAIN, skipping creation."
+    echo "Certificates folder already exist for $DOMAIN, skipping creation."
     watch_certificate_changes
 else
     echo "No certificates folder found for $DOMAIN, Creating the folder..."

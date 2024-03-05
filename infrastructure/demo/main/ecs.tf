@@ -202,7 +202,6 @@ resource "aws_ecs_task_definition" "vectordb_task" {
   }
 
 }
-
 # Frontend Service with EC2 Launch Type
 resource "aws_ecs_service" "admin_app_service" {
   # This is a resource, which means it will create a resource in AWS

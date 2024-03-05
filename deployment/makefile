@@ -1,9 +1,9 @@
 SHELL = /bin/sh
 
-$(eval DEMO_ACCOUNT=XXXXXXXXXXXX)
-$(eval DOMAIN=XXXXXXXXXXXX)
-$(eval EMAIL=XXXXXXXXXXXX)
-$(eval NEXT_PUBLIC_BACKEND_URL=XXXXXXXXXXXX/api)
+$(eval DEMO_ACCOUNT=XXXXXXXXXXX)
+$(eval DOMAIN=XXXXXXXXXXX)
+$(eval EMAIL=XXXXXXXXXXX)
+$(eval NEXT_PUBLIC_BACKEND_URL=XXXXXXXXXXX/api)
 
 login:
 	@aws sso login --profile aaq_demo
@@ -93,7 +93,7 @@ image-nginx-demo:
 	# Push image to ECS repository
 	@docker push $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:nginx
 
-cretae-nginx-demo:
+create-nginx-demo:
 	# Configure ecs-cli options
 	@ecs-cli configure --cluster aaq-demo-cluster \
 	--default-launch-type EC2 \

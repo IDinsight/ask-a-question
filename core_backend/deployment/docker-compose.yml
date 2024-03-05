@@ -5,7 +5,6 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:backend # The repo name has to match with what we have in Terraform
     restart: always
     environment:
-      - QDRANT_HOST=${QDRANT_HOST}
       - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
       - AWS_REGION=${AWS_REGION}
       - DOMAIN=${DOMAIN}

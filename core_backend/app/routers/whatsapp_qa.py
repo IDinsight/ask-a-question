@@ -3,13 +3,15 @@ from typing import Union
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from qdrant_client import QdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..configs.app_config import WHATSAPP_TOKEN, WHATSAPP_VERIFY_TOKEN
-from ..db.db_models import save_wamessage_to_db, save_waresponse_to_db
+from ..db.db_models import (
+    get_similar_content_async,
+    save_wamessage_to_db,
+    save_waresponse_to_db,
+)
 from ..db.engine import get_async_session
-from ..db.vector_db import get_qdrant_client, get_similar_content
 from ..schemas import UserQueryBase, WhatsAppIncoming, WhatsAppResponse
 
 router = APIRouter()
@@ -17,9 +19,7 @@ router = APIRouter()
 
 @router.post("/webhook")
 async def process_whatsapp_message(
-    request: Request,
-    asession: AsyncSession = Depends(get_async_session),
-    qdrant_client: QdrantClient = Depends(get_qdrant_client),
+    request: Request, asession: AsyncSession = Depends(get_async_session)
 ) -> dict:
     """
     Processes incoming WhatsApp messages, saves them to
@@ -29,8 +29,6 @@ async def process_whatsapp_message(
         request (Request): The incoming request object.
         asession (AsyncSession, optional): The asynchronous database session.
             Defaults to Depends(get_async_session).
-        qdrant_client (QdrantClient, optional): The Qdrant client for
-            similarity search. Defaults to Depends(get_qdrant_client).
 
     Returns:
         dict: A dictionary containing the status of the request.
@@ -55,11 +53,15 @@ async def process_whatsapp_message(
                     msg_id_from_whatsapp=msg_id,
                 )
                 incoming_db = await save_wamessage_to_db(
-                    asession=asession, incoming=incoming_to_process
+                    incoming=incoming_to_process, asession=asession
                 )
 
                 message = UserQueryBase(query_text=msg_body, query_metadata={})
-                content_response = get_similar_content(message, qdrant_client, 1)
+                content_response = await get_similar_content_async(
+                    message,
+                    1,
+                    asession,
+                )
                 top_faq = content_response[0].retrieved_text
                 data_obj = {
                     "messaging_product": "whatsapp",
@@ -81,7 +83,10 @@ async def process_whatsapp_message(
                         response_status=int(httpx_request.status_code),
                         response_datetime_utc=datetime.utcnow(),
                     )
-                    await save_waresponse_to_db(asession=asession, response=response)
+                    await save_waresponse_to_db(
+                        response=response,
+                        asession=asession,
+                    )
 
                     return httpx_request.json()
         return {"status": "No Message to Process"}

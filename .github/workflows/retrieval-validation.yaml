@@ -6,7 +6,10 @@ on:
     paths:
       - "core_backend/**"
   workflow_dispatch:
-
+env:
+  POSTGRES_PASSWORD: postgres-test-pw
+  POSTGRES_USER: postgres-test-user
+  POSTGRES_DB: postgres-test-db
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -15,11 +18,21 @@ jobs:
   validate:
     runs-on: ubuntu-20.04
     container: node:20.7-bullseye
+
     services:
-      qdrant:
-        image: qdrant/qdrant
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
-          - 6333:6333
+          - 5432:5432
     environment: validation-mc
     steps:
       - name: Install dependencies
@@ -27,7 +40,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -45,18 +57,25 @@ jobs:
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r core_backend/validation/requirements.txt
 
+      - name: Run migration scripts
+        run: |
+          cd core_backend
+          export POSTGRES_HOST=postgres POSTGRES_USER=${{ env.POSTGRES_USER }} \
+            POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }} POSTGRES_DB=${{ env.POSTGRES_DB }}
+          python -m alembic upgrade head
       - name: Run validation script
         env:
-          QDRANT_COLLECTION_NAME: validation_collection
-          QDRANT_N_TOP_SIMILAR: 10
-          QDRANT_PORT: 6333
+          N_TOP_SIMILAR: 10
           PROMETHEUS_MULTIPROC_DIR: /tmp
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          QDRANT_HOST: qdrant
           REPO: ${{ github.repository }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           HASH: ${{ github.sha }}
           REF: ${{ github.ref }}
+          POSTGRES_HOST: postgres
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
         run: |
           python -m pytest core_backend/validation/validate_retrieval.py \
             --validation_data_path \

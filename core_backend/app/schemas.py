@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, Literal, Optional
 
-from pydantic import UUID4, BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, StringConstraints, validator
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -110,10 +110,22 @@ class ContentCreate(BaseModel):
 
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
-    content_text: Annotated[str, StringConstraints(max_length=1446)]
+    content_text: Annotated[str, StringConstraints(max_length=2000)]
+    content_language: str = "ENGLISH"
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
+
+    @validator("content_language")
+    def validate_language(cls, v: str) -> str:
+        """
+        Validator for language
+        """
+
+        if v not in IdentifiedLanguage.get_supported_languages():
+            raise ValueError(f"Language {v} is not supported")
+
+        return v
 
 
 class ContentRetrieve(ContentCreate):
@@ -121,7 +133,7 @@ class ContentRetrieve(ContentCreate):
     Pydantic model for content retrieval
     """
 
-    content_id: UUID4
+    content_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
