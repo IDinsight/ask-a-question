@@ -17,7 +17,7 @@ jobs:
     container: node:20.7-bullseye
     services:
       postgres:
-        image: postgres:16.1-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
@@ -29,10 +29,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      qdrant:
-        image: qdrant/qdrant:v1.5.1
-        ports:
-          - 6333:6333
       alignscore:
         image: public.ecr.aws/j3r7b4k0/alignscore-base:latest
         ports:
@@ -62,7 +58,6 @@ jobs:
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
-            QDRANT_COLLECTION_NAME=test_collection QDRANT_HOST=qdrant \
             ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
           python -m pytest -m "not rails"

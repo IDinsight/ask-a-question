@@ -12,7 +12,7 @@ function get_secret_value() {
 	local secret_name="$1" key="$2" form="$3"
   	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region ${AWS_REGION} --output ${form} --query "SecretString")}"
   	# If key name is provided, parse json output for the key or return text output
-  	if [ -z "$key" ]; 
+  	if [ -z "$key" ];
   	then
   		echo $json_secret
   	else
@@ -63,8 +63,7 @@ export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
 DOMAIN="${DOMAIN}"
 
-# Resolve Qdrant host
-SERVICE_RECORD=$(dig +short SRV ${QDRANT_HOST})
+
 
 read -r PRIORITY WEIGHT PORT HOST <<< "$(echo $SERVICE_RECORD | cut -d' ' -f 1-4)"
 
@@ -73,6 +72,5 @@ HOST=${HOST%.}
 
 # Get the IP address of the host (assuming the hostname resolves to an IP address)
 IP=$(dig +short A $HOST)
-export QDRANT_HOST="${IP}"
 
 exec "$@"
