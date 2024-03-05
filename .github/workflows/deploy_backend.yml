@@ -46,7 +46,7 @@ jobs:
         with:
           context: core_backend
           platforms: linux/arm64
-          file: core_backend/Dockerfile.${{githug.ref_name}}
+          file: core_backend/Dockerfile.${{github.ref_name}}
           cache-from: type=gha
           cache-to: type=gha
           push: true
