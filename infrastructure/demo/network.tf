@@ -1,6 +1,6 @@
 module "vpc" {
   source                        = "./network"
-  vpc_name                      = "${var.environment}-vpc"
+  vpc_name                      = "${var.project_name}-${var.environment}-vpc"
   vpc_flow_log_name_prefix      = "${var.project_name}-${var.environment}-vpc"
   public_subnet_name            = "${var.project_name}-${var.environment}-public-subnet"
   private_subnet_name           = "${var.project_name}-${var.environment}-private-subnet"
