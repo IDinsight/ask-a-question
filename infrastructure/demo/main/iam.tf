@@ -85,7 +85,6 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     resources = [
       aws_service_discovery_service.backend.arn,
       aws_service_discovery_service.vectordb.arn,
-      aws_service_discovery_service.backend.arn
     ]
   }
 
