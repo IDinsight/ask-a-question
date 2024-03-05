@@ -1,4 +1,4 @@
-name: Deploying Frontend
+name: Deploying Admin App
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
       - demo
     paths:
       - "admin_app/**"
-      - ".github/workflows/deploy_frontend.yml"
+      - ".github/workflows/deploy_admin_app.yml"
 
 jobs:
-  DeployFrontend:
-    name: Deploying Frontend ${{github.ref_name}}
+  DeployAdminApp:
+    name: Deploying Admin App ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
       name: ${{github.ref_name}}
