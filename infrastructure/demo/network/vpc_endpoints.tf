@@ -81,5 +81,15 @@ resource "aws_vpc_endpoint_policy" "vpc_endpoint_s3_access" {
           "arn:aws:s3:::amazonlinux-2-repos-${var.region}/*"
         ]
       },
+      {
+        Effect    = "Allow",
+        Principal = "*",
+        Action = [
+          "s3:getObject",
+        ],
+        Resource = [
+          "arn:aws:s3:::prod-${var.region}-starport-layer-bucket/*"
+        ]
+      },
   ] })
 }

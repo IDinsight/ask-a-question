@@ -22,7 +22,7 @@
     - statement: being overweight can cause diabetes
       expected: False
       reason: |
-        It hints at diabetes and obesity being related and
+        It hints at diabetes and obesity being related
     - statement: taking insulin can help treat diabetes
       expected: True
       reason: |

@@ -11,10 +11,10 @@ image-backend-demo:
 	@DEMO_ACCOUNT=${DEMO_ACCOUNT} \
 	docker build --platform linux/arm64 --rm --build-arg BOOTSTRAP_FILE="bootstrap_demo.sh" -t aaq-demo-backend:latest -f ../core_backend/Dockerfile.demo ../core_backend
 
-	# Tag 
+	# Tag
 	@docker tag aaq-demo-backend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:backend
 
-	# Login to aws 
+	# Login to aws
 	@aws ecr get-login-password \
     --region af-south-1 \
 	--profile aaq_demo | \
@@ -38,15 +38,15 @@ create-backend-demo:
 	--project-name backend-task \
 	--cluster-config aaq-demo-backend-config \
 	--task-role-arn arn:aws:iam::$(DEMO_ACCOUNT):role/aaq-demo-web-task-role \
-	create 
+	create
 
 image-frontend-demo:
 	@docker build --platform linux/arm64 --rm --build-arg NAME=$(NEXT_PUBLIC_BACKEND_URL)-t aaq-demo-frontend:latest -f ../admin_app/Dockerfile ../admin_app
 
-	# Tag 
+	# Tag
 	@docker tag aaq-demo-frontend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:frontend
 
-	# Login to aws 
+	# Login to aws
 	@aws ecr get-login-password \
     --region af-south-1 \
 	--profile aaq_demo | \
@@ -71,7 +71,7 @@ create-frontend-demo:
 	--project-name frontend-task \
 	--cluster-config aaq-demo-frontend-config \
 	--task-role-arn arn:aws:iam::$(DEMO_ACCOUNT):role/aaq-demo-web-task-role \
-	create 
+	create
 
 image-nginx-demo:
 	@DEMO_ACCOUNT=${DEMO_ACCOUNT} \
@@ -79,10 +79,10 @@ image-nginx-demo:
 	EMAIL=${EMAIL} \
 	docker build --platform linux/arm64 --rm -t aaq-demo-nginx:latest -f ../nginx/Dockerfile.nginx nginx
 
-	# Tag 
+	# Tag
 	@docker tag aaq-demo-nginx:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:nginx
 
-	# Login to aws 
+	# Login to aws
 	@aws ecr get-login-password \
 	--region af-south-1 \
 	--profile aaq_demo | \
@@ -116,10 +116,10 @@ image-certbot-demo:
 	EMAIL=${EMAIL} \
 	docker build --platform linux/arm64 --rm -t aaq-demo-certbot:latest -f ../nginx/Dockerfile.certbot nginx
 
-	# Tag 
+	# Tag
 	@docker tag aaq-demo-certbot:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
 
-	# Login to aws 
+	# Login to aws
 	@aws ecr get-login-password \
 	--region af-south-1 \
 	--profile aaq_demo | \
@@ -129,4 +129,3 @@ image-certbot-demo:
 
 	# Push image to ECS repository
 	@docker push $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:certbot
-
