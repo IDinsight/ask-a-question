@@ -46,11 +46,11 @@ jobs:
         with:
           context: core_backend
           platforms: linux/arm64
-          file: core_backend/Dockerfile.${{githug.ref_name}}
+          file: core_backend/Dockerfile.${{github.ref_name}}
           cache-from: type=gha
           cache-to: type=gha
           push: true
-          tags: ${{secrets.ECR_REGISTRY}}/${{secrets.ECR_REPOSITORY}}:${{secrets.IMAGE_TAG}}
+          tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
           build-args: |
             BOOTSTRAP_FILE=${{secrets.BOOTSTRAP_FILE}}
       # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
@@ -139,7 +139,6 @@ jobs:
         id: check-deployment
         run: |
           RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services backend-service --query services[0].deployments[0].runningCount | jq -r ".")
-
           if [ "$RUNNING_TASKS" -eq "0" ]; then
             echo "Deployment failed."
             exit 1
