@@ -1,7 +1,7 @@
 data "aws_rds_engine_version" "postgres" {
   # The latest version of Postgres is used for the RDS instance.
   engine             = "postgres"
-  preferred_versions = ["15.3"]
+  preferred_versions = ["15.6"]
 }
 
 resource "aws_db_instance" "web_db" {
