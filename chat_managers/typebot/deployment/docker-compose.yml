@@ -17,12 +17,12 @@ services:
       - typebot-builder
 
   typebot-viewer:
-    image: baptistearno/typebot-viewer:2.22.2
+    image: baptistearno/typebot-viewer:2.23.0
     restart: always
     env_file: .env
 
   typebot-builder:
-    image: baptistearno/typebot-builder:2.22.2
+    image: baptistearno/typebot-builder:2.23.0
     restart: always
     env_file: .env
     depends_on:
