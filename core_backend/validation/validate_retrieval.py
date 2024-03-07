@@ -15,7 +15,7 @@ from core_backend.app.configs.app_config import (
     N_TOP_SIMILAR,
     QUESTION_ANSWER_SECRET,
 )
-from core_backend.app.db.db_models import ContentDB
+from core_backend.app.db.db_models import ContentDB, ContentTextDB
 from core_backend.app.schemas import UserQueryBase
 from core_backend.app.utils import setup_logger
 
@@ -110,23 +110,33 @@ class TestRetrievalPerformance:
             EMBEDDING_MODEL, input=content_dataframe["content_text"].tolist()
         )
         content_embeddings = [x["embedding"] for x in embedding_results.data]
+        content_dbs = [ContentDB(content_id=i) for i in range(len(content_dataframe))]
+        db_session.add_all(content_dbs)
 
         contents = [
-            ContentDB(
-                content_id=int(content_id),
+            ContentTextDB(
+                content_text_id=content_text_id,
                 content_embedding=content_embedding,
                 content_title=content_title,
                 content_text=content_text,
-                content_language="ENGLISH",
+                content_id=content.content_id,
+                language_id=1,
                 content_metadata={},
                 created_datetime_utc=datetime.utcnow(),
                 updated_datetime_utc=datetime.utcnow(),
             )
-            for content_id, content_embedding, content_title, content_text in zip(
+            for (
+                content_text_id,
+                content_embedding,
+                content_title,
+                content_text,
+                content,
+            ) in zip(
                 content_dataframe["content_id"],
                 content_embeddings,
                 content_dataframe["content_title"],
                 content_dataframe["content_text"],
+                content_dbs,
             )
         ]
         db_session.add_all(contents)

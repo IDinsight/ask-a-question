@@ -12,7 +12,14 @@ from .configs.app_config import (
     DOMAIN,
 )
 from .prometheus_middleware import PrometheusMiddleware
-from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
+from .routers import (
+    admin,
+    auth,
+    manage_content,
+    manage_language,
+    question_answer,
+    whatsapp_qa,
+)
 from .utils import setup_logger
 
 logger = setup_logger()
@@ -33,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(manage_content.router)
     app.include_router(auth.router)
     app.include_router(whatsapp_qa.router)
+    app.include_router(manage_language.router)
 
     origins = [
         f"http://{DOMAIN}",

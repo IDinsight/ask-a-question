@@ -1,8 +1,14 @@
+import re
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    StringConstraints,
+    validator,
+)
 
 from .configs.llm_prompts import IdentifiedLanguage
 
@@ -103,7 +109,36 @@ class FeedbackBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ContentCreate(BaseModel):
+class LanguageBase(BaseModel):
+    """
+    Pydantic model for language
+    """
+
+    language_name: str
+    is_default: bool
+    model_config = ConfigDict(from_attributes=True)
+
+    @validator("language_name")
+    def language_name_must_be_valid(cls, value: str) -> str:
+        # Regex pattern allows letters, spaces, hyphens, and apostrophes
+        if not re.match(r"^[A-Za-zÀ-ÖØ-öø-ÿ\-' ]+$", value):
+            raise ValueError("Invalid characters in language name.")
+        return value
+
+
+class LanguageRetrieve(LanguageBase):
+    """
+    Pydantic model for language retrieval
+    """
+
+    language_id: int
+    created_datetime_utc: datetime
+    updated_datetime_utc: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContentTextCreate(BaseModel):
     """
     Pydantic model for content creation
     """
@@ -111,34 +146,25 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
-    content_language: str = "ENGLISH"
+    language_id: int
+    content_id: int
+
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
 
-    @validator("content_language")
-    def validate_language(cls, v: str) -> str:
-        """
-        Validator for language
-        """
 
-        if v not in IdentifiedLanguage.get_supported_languages():
-            raise ValueError(f"Language {v} is not supported")
-
-        return v
-
-
-class ContentRetrieve(ContentCreate):
+class ContentRetrieve(ContentTextCreate):
     """
     Pydantic model for content retrieval
     """
 
-    content_id: int
+    content_text_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
 
-class ContentUpdate(ContentCreate):
+class ContentUpdate(ContentTextCreate):
     """
     Pydantic model for content edit
     """
@@ -148,7 +174,7 @@ class ContentUpdate(ContentCreate):
 
 class ContentDelete(BaseModel):
     """
-    Pydantic model for content deletiom
+    Pydantic model for content deletion
     """
 
     content_id: int

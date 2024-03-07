@@ -25,7 +25,7 @@ fresh-env :
 		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 		pip uninstall -y psycopg2==2.9.9; \
 		pip install psycopg2-binary==2.9.9; \
-	fi
+fi\
 
 # Running Tests
 tests: setup-test-containers run-tests teardown-test-containers
@@ -35,9 +35,9 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-db setup-alignscore-container
+setup-test-containers: setup-test-db #setup-alignscore-container
 
-teardown-test-containers: stop-test-db stop-alignscore-container
+teardown-test-containers: stop-test-db #stop-alignscore-container
 
 setup-test-db:
 	-@docker stop testdb
