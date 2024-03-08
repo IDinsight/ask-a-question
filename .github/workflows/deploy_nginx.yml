@@ -38,10 +38,6 @@ jobs:
         with:
           mask-password: "true"
 
-      - name: Copy AWS deployment files
-        run: |
-          cp --recursive deployment/aws/nginx/* nginx/
-
       - name: Build and push Nginx image
         id: build-image-nginx
         uses: docker/build-push-action@v5
@@ -50,7 +46,7 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.REPO }}
           IMAGE_TAG: nginx
         with:
-          context: nginx
+          context: deployment/aws/nginx
           platforms: linux/arm64
           file: deployment/aws/nginx/Dockerfile.nginx
           cache-from: type=gha
@@ -66,7 +62,7 @@ jobs:
           ECR_REPOSITORY: ${{secrets.REPO}}
           IMAGE_TAG: certbot
         with:
-          context: nginx
+          context: deployment/aws/nginx
           platforms: linux/arm64
           file: deployment/aws/nginx/Dockerfile.certbot
           cache-from: type=gha
