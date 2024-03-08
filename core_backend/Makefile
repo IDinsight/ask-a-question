@@ -25,7 +25,7 @@ fresh-env :
 		$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 		pip uninstall -y psycopg2==2.9.9; \
 		pip install psycopg2-binary==2.9.9; \
-fi\
+	fi
 
 # Running Tests
 tests: setup-test-containers run-tests teardown-test-containers
