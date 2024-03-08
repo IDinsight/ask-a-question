@@ -3,8 +3,6 @@
 FROM python:3.10-slim-buster
 LABEL maintainer="IDinsight"
 
-
-
 ARG BOOTSTRAP_FILE
 ENV BOOTSTRAP_FILE=$BOOTSTRAP_FILE
 
@@ -22,16 +20,13 @@ RUN pip install -r /requirements.txt
 RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user
 RUN chown -R container_user: ${HOME_DIR}
 
-
-
 RUN mkdir /tmp/prometheus
 RUN chown -R container_user: /tmp/prometheus
-
 
 WORKDIR ${HOME_DIR}
 
 COPY . ${HOME_DIR}
-COPY deployment/${BOOTSTRAP_FILE} /bootstrap.sh
+COPY ${BOOTSTRAP_FILE} /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh
 RUN ["chmod", "+x", "startup.sh"]
