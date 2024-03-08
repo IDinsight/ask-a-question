@@ -1,0 +1,49 @@
+# Nginx Certbot .
+version: "3"
+
+services:
+  nginx:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    volumes:
+      - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
+      - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
+
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/nginx-task-${PROJECT_NAME}-${ENV}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: nginx
+
+  certbot:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:certbot
+    depends_on:
+      - nginx
+    environment:
+      - DOMAIN=${DOMAIN}
+      - EMAIL=${EMAIL}
+    volumes:
+      - /home/ssm-user/certs/nginx/certbot/conf:/etc/letsencrypt
+      - /home/ssm-user/certs/nginx/certbot/www:/var/www/certbot
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/nginx-task-${PROJECT_NAME}-${ENV}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: certbot
