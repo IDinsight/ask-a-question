@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..db.db_models import (
-    ContentDB,
     ContentTextDB,
     delete_content_from_db,
     get_all_languages_version_of_content,
@@ -187,7 +186,8 @@ async def retrieve_content_by_id(
         if not record:
             raise HTTPException(
                 status_code=404,
-                detail=f"Content `{content_text_id}` with language id `{language}` not found",
+                detail=f"""Content `{content_text_id}`
+                with language id `{language}` not found""",
             )
         return _convert_record_to_schema(record)
     else:

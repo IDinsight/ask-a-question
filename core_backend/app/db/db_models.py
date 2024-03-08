@@ -7,11 +7,11 @@ from sqlalchemy import (
     JSON,
     Boolean,
     DateTime,
-    func,
     ForeignKey,
     Integer,
     String,
     delete,
+    func,
     select,
 )
 from sqlalchemy.engine import Row
@@ -431,7 +431,8 @@ async def get_default_language_from_db(
     """
     Retrieves a content from the database
     """
-    stmt = select(LanguageDB).where(LanguageDB.is_default == True)
+    truth_bool = True
+    stmt = select(LanguageDB).where(LanguageDB.is_default == truth_bool)
     language_row = (await asession.execute(stmt)).scalar_one_or_none()
     return language_row
 
