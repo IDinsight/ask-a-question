@@ -88,6 +88,7 @@ nav:
       - Quick setup: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
+      - Deploying on AWS: deployment/aws/aws.md
   - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
