@@ -1,0 +1,18 @@
+FROM certbot/certbot
+
+ARG HOME_DIR=/usr/src/aaq_certbot
+
+# Install bash
+RUN apk add --no-cache bash
+
+RUN mkdir -p /etc/letsencrypt
+RUN mkdir -p /var/www/certbot
+RUN mkdir -p /usr/share/nginx/html/
+# Copy your custom entrypoint script into the container
+COPY certbot_entrypoint.sh /certbot_entrypoint.sh
+
+# Make sure the script is executable
+RUN chmod +x /certbot_entrypoint.sh
+
+# Run the entrypoint script
+ENTRYPOINT [ "/certbot_entrypoint.sh" ]
