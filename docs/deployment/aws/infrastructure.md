@@ -26,6 +26,7 @@
     ```bash
     export AWS_PROFILE=<Profile Name>
     ```
+
 ## 3. Create Terraform backend infrastructure
 
 To be able to run the code in a new AWS Account, first you will need to initialize the
