@@ -125,7 +125,7 @@ class TestManageContent:
         assert response.status_code == 200
 
         response = client.get(
-            f"/content/{content_text_id}",
+            f"/content/{content_text_id}/?language={existing_language_id[0]}",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
         assert response.status_code == 200
@@ -178,6 +178,116 @@ class TestManageContent:
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
+
+    def test_add_content_text_to_content(
+        self,
+        client: TestClient,
+        existing_content_ids: tuple[int, int],
+        existing_language_id: tuple,
+        fullaccess_token: str,
+    ) -> None:
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_id": existing_content_ids[1],
+                "language_id": existing_language_id[0],
+                "content_metadata": {},
+            },
+        )
+
+        assert response.status_code == 400
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_id": existing_content_ids[1],
+                "language_id": existing_language_id[1],
+                "content_metadata": {},
+            },
+        )
+
+        assert response.status_code == 200
+
+    def test_adding_text_with_non_existing_language(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_id": 0,
+                "language_id": 4000,
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 400
+
+    def test_retrieve_language_version_of_content(
+        self,
+        client: TestClient,
+        existing_content_ids: tuple[int, int],
+        existing_language_id: tuple[int, int],
+        fullaccess_token: str,
+        readonly_token: str,
+    ) -> None:
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_id": existing_content_ids[1],
+                "language_id": existing_language_id[1],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 200
+        response = client.get(
+            f"/content/{existing_content_ids[0]}",
+            headers={"Authorization": f"Bearer {readonly_token}"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) > 0
+        assert response.json()[0]["content_id"] == response.json()[1]["content_id"]
+        assert response.json()[0]["content_id"] == existing_content_ids[1]
+
+    def test_retrieve_summary(
+        self,
+        client: TestClient,
+        existing_content_ids: tuple[int, int],
+        existing_language_id: tuple[int, int],
+        readonly_token: str,
+        fullaccess_token: str,
+    ) -> None:
+        response = client.post(
+            "/content/create",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": "sample title",
+                "content_text": "sample text",
+                "content_id": existing_content_ids[1],
+                "language_id": existing_language_id[1],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/content/summary/?language=1",
+            headers={"Authorization": f"Bearer {readonly_token}"},
+        )
+        assert response.status_code == 200
+
+        response_json = response.json()
+        assert len(response_json) > 0
+        assert len(response_json[0]["languages"]) == 2
 
 
 class TestAuthManageContent:
@@ -289,85 +399,6 @@ class TestAuthManageContent:
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
-
-
-def test_add_content_text_to_content(
-    client: TestClient,
-    existing_content_ids: tuple[int, int],
-    existing_language_id: tuple,
-    fullaccess_token: str,
-) -> None:
-    response = client.post(
-        "/content/create",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={
-            "content_title": "sample title",
-            "content_text": "sample text",
-            "content_id": existing_content_ids[1],
-            "language_id": existing_language_id[0],
-            "content_metadata": {},
-        },
-    )
-
-    assert response.status_code == 400
-    response = client.post(
-        "/content/create",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={
-            "content_title": "sample title",
-            "content_text": "sample text",
-            "content_id": existing_content_ids[1],
-            "language_id": existing_language_id[1],
-            "content_metadata": {},
-        },
-    )
-    assert response.status_code == 200
-
-
-def test_adding_text_with_non_existing_language(
-    client: TestClient, fullaccess_token: str
-) -> None:
-    response = client.post(
-        "/content/create",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={
-            "content_title": "sample title",
-            "content_text": "sample text",
-            "content_id": 0,
-            "language_id": 4000,
-            "content_metadata": {},
-        },
-    )
-    assert response.status_code == 400
-
-
-def test_retrieve_language_version_of_content(
-    client: TestClient,
-    existing_content_ids: tuple[int, int],
-    existing_language_id: tuple[int, int],
-    fullaccess_token: str,
-    readonly_token: str,
-) -> None:
-    response = client.post(
-        "/content/create",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={
-            "content_title": "sample title",
-            "content_text": "sample text",
-            "content_id": existing_content_ids[1],
-            "language_id": existing_language_id[1],
-            "content_metadata": {},
-        },
-    )
-    assert response.status_code == 200
-    response = client.get(
-        f"/content/{existing_content_ids[0]}/list",
-        headers={"Authorization": f"Bearer {readonly_token}"},
-    )
-    assert response.status_code == 200
-    assert len(response.json()) > 0
-    assert response.json()[0]["content_id"] == response.json()[1]["content_id"]
-    assert response.json()[0]["content_id"] == existing_content_ids[1]
 
 
 def test_convert_record_to_schema() -> None:

@@ -164,6 +164,21 @@ class ContentRetrieve(ContentTextCreate):
     updated_datetime_utc: datetime
 
 
+class ContentSummary(BaseModel):
+    """
+    Pydantic model for content summary
+    """
+
+    content_text_id: int
+    content_id: int
+    content_title: str
+    languages: list[str]
+    created_datetime_utc: datetime
+    updated_datetime_utc: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ContentUpdate(ContentTextCreate):
     """
     Pydantic model for content edit

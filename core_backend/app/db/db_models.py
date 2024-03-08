@@ -7,14 +7,16 @@ from sqlalchemy import (
     JSON,
     Boolean,
     DateTime,
+    func,
     ForeignKey,
     Integer,
+    join,
     String,
     delete,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import aliased, DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.schema import Index
 
 from ..configs.app_config import EMBEDDING_MODEL, PGVECTOR_VECTOR_SIZE
@@ -429,7 +431,7 @@ async def get_default_language_from_db(
     """
     Retrieves a content from the database
     """
-    stmt = select(LanguageDB).where(LanguageDB.is_default is True)
+    stmt = select(LanguageDB).where(LanguageDB.is_default == True)
     language_row = (await asession.execute(stmt)).scalar_one_or_none()
     return language_row
 
@@ -626,6 +628,51 @@ async def get_list_of_content_from_db(
     return [c[0] for c in content_rows] if content_rows else []
 
 
+async def get_summary_of_content_from_db(
+    asession: AsyncSession,
+    language_id: int,
+    offset: int = 0,
+    limit: Optional[int] = None,
+) -> List[ContentTextDB]:
+    """
+    Get summary of all content from the database in a specific language
+    """
+
+    language_subquery = (
+        select(
+            ContentTextDB.content_id.label("content_id"),
+            func.array_agg(LanguageDB.language_name).label("available_languages"),
+        )
+        .select_from(ContentTextDB)
+        .join(LanguageDB, ContentTextDB.language_id == LanguageDB.language_id)
+        .group_by(ContentTextDB.content_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(
+            ContentTextDB.content_text_id,
+            ContentTextDB.content_id,
+            ContentTextDB.content_title,
+            ContentTextDB.created_datetime_utc,
+            ContentTextDB.updated_datetime_utc,
+            language_subquery.c.available_languages,
+        )
+        .join(
+            language_subquery,
+            ContentTextDB.content_id == language_subquery.c.content_id,
+        )
+        .where(ContentTextDB.language_id == language_id)
+    )
+
+    if offset > 0:
+        stmt = stmt.offset(offset)
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    content_rows = (await asession.execute(stmt)).all()
+    return content_rows if content_rows else []
+
+
 async def get_all_content_from_one_language(
     asession: AsyncSession,
     language_id: int,
@@ -642,6 +689,18 @@ async def get_all_content_from_one_language(
         stmt = stmt.limit(limit)
     content_rows = (await asession.execute(stmt)).all()
     return [c[0] for c in content_rows] if content_rows else []
+
+
+async def get_content_from_content_id_and_language(content_id, language_id, asession):
+    """ "
+    Retrieves a content from the database using content_id and language_id
+    """
+    stmt = select(ContentTextDB).where(
+        (ContentTextDB.content_id == content_id)
+        & (ContentTextDB.language_id == language_id)
+    )
+    content_row = (await asession.execute(stmt)).scalar_one_or_none()
+    return content_row
 
 
 async def get_all_languages_version_of_content(

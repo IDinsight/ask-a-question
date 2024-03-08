@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated, List, Optional, Union
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
@@ -9,9 +9,11 @@ from ..db.db_models import (
     ContentDB,
     delete_content_from_db,
     get_all_languages_version_of_content,
+    get_content_from_content_id_and_language,
     get_content_from_db,
     get_language_from_db,
     get_list_of_content_from_db,
+    get_summary_of_content_from_db,
     is_content_language_combination_unique,
     save_content_to_db,
     update_content_in_db,
@@ -20,6 +22,7 @@ from ..db.engine import get_async_session
 from ..schemas import (
     AuthenticatedUser,
     ContentRetrieve,
+    ContentSummary,
     ContentTextCreate,
 )
 from ..utils import setup_logger
@@ -109,6 +112,27 @@ async def retrieve_content(
     return contents
 
 
+@router.get("/summary", response_model=list[ContentSummary])
+async def retrieve_content_summary(
+    readonly_access_user: Annotated[
+        AuthenticatedUser, Depends(get_current_readonly_user)
+    ],
+    language: int,
+    skip: int = 0,
+    limit: int = 50,
+    asession: AsyncSession = Depends(get_async_session),
+) -> List[ContentSummary]:
+    """
+    Retrieve all content endpoint
+    """
+    records = await get_summary_of_content_from_db(
+        language_id=language, offset=skip, limit=limit, asession=asession
+    )
+    print(records)
+    contents = [_convert_summary_to_schema(c) for c in records]
+    return contents
+
+
 @router.delete("/{content_text_id}/delete")
 async def delete_content(
     content_text_id: int,
@@ -132,26 +156,43 @@ async def delete_content(
     await delete_content_from_db(content_text_id, record.content_id, asession)
 
 
-@router.get("/{content_text_id}", response_model=ContentRetrieve)
+@router.get(
+    "/{content_text_id}", response_model=Union[ContentRetrieve, List[ContentRetrieve]]
+)
 async def retrieve_content_by_id(
     content_text_id: int,
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
     ],
     asession: AsyncSession = Depends(get_async_session),
-) -> ContentRetrieve:
+    language: Optional[str] = None,
+) -> Union[ContentRetrieve, List[ContentRetrieve]]:
     """
     Retrieve content by id endpoint
     """
 
-    record = await get_content_from_db(content_text_id, asession)
+    content = await get_content_from_db(content_text_id, asession)
 
-    if not record:
+    if not content:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_text_id}` not found"
         )
 
-    return _convert_record_to_schema(record)
+    if language:
+        record = await get_content_from_content_id_and_language(
+            content.content_id, int(language), asession
+        )
+        if not record:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Content `{content_text_id}` with language id `{language}` not found",
+            )
+        return _convert_record_to_schema(record)
+    else:
+        records = await get_all_languages_version_of_content(
+            content.content_id, asession
+        )
+        return [_convert_record_to_schema(record) for record in records]
 
 
 @router.get("/{content_text_id}/list", response_model=list[ContentRetrieve])
@@ -223,6 +264,22 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
+    )
+
+    return content_retrieve
+
+
+def _convert_summary_to_schema(record: tuple) -> ContentSummary:
+    """
+    Convert db_models.ContentDB models to ContentRetrieve schema
+    """
+    content_retrieve = ContentSummary(
+        content_text_id=record[0],
+        content_id=record[1],
+        content_title=record[2],
+        created_datetime_utc=record[3],
+        updated_datetime_utc=record[4],
+        languages=record[5],
     )
 
     return content_retrieve
