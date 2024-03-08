@@ -97,7 +97,6 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          QDRANT_HOST: ${{ secrets.QDRANT_HOST }}
           NEXT_PUBLIC_BACKEND_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
           DOMAIN: ${{ secrets.DOMAIN }}
           REPO: ${{ secrets.REPO }}
