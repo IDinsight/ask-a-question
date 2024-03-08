@@ -197,27 +197,6 @@ async def retrieve_content_by_id(
         return [_convert_record_to_schema(record) for record in records]
 
 
-@router.get("/{content_text_id}/list", response_model=list[ContentRetrieve])
-async def retrieve_all_languages_versions(
-    content_text_id: int,
-    readonly_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_readonly_user)
-    ],
-    asession: AsyncSession = Depends(get_async_session),
-) -> List[ContentRetrieve]:
-    """
-    Retrieve content by id endpoint
-    """
-    content = await get_content_from_db(content_text_id, asession)
-    if not content:
-        raise HTTPException(
-            status_code=404, detail=f"Content id `{content_text_id}` not found"
-        )
-    records = await get_all_languages_version_of_content(content.content_id, asession)
-
-    return [_convert_record_to_schema(record) for record in records]
-
-
 async def is_content_and_language_valid(
     content: ContentTextCreate,
     asession: AsyncSession,
