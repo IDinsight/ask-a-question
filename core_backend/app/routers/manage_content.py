@@ -129,7 +129,6 @@ async def retrieve_content_summary(
     records = await get_summary_of_content_from_db(
         language_id=language, offset=skip, limit=limit, asession=asession
     )
-    print(records)
     contents = [_convert_summary_to_schema(c) for c in records]
     return contents
 
