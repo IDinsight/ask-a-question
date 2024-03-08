@@ -78,7 +78,7 @@ async def _check_align_score(
     evidence = _build_evidence(llm_response)
     claim = llm_response.llm_response
     assert claim is not None, "LLM response is None"
-    align_score_data = AlignScoreData(evidence=evidence, claim=claim)
+    align_score_date = AlignScoreData(evidence=evidence, claim=claim)
 
     if ALIGN_SCORE_METHOD is None:
         logger.warning(
@@ -87,9 +87,9 @@ async def _check_align_score(
         return llm_response
 
     elif ALIGN_SCORE_METHOD == "AlignScore":
-        align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
+        align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_date)
     elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(align_score_data)
+        align_score = await _get_llm_align_score(align_score_date)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
@@ -109,12 +109,12 @@ async def _check_align_score(
 
 
 async def _get_alignScore_score(
-    api_url: str, align_score_data: AlignScoreData
+    api_url: str, align_score_date: AlignScoreData
 ) -> AlignmentScore:
     """
     Get the alignment score from the AlignScore API
     """
-    async with get_http_client().post(api_url, json=align_score_data) as resp:
+    async with get_http_client().post(api_url, json=align_score_date) as resp:
         if resp.status != 200:
             logger.error(f"AlignScore API request failed with status {resp.status}")
             raise RuntimeError(
