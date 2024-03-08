@@ -1,5 +1,6 @@
-# The is the Dockerfile for the core_backend demo enviroment. It is used to build the Docker image for the demo environment.
-# It gets secrets from aws secrets manager and sets them as environment variables.
+# The is the Dockerfile for the core_backend for AWS. It is used to build the Docker
+# image for any deployment environment on AWS.
+# It gets secrets from AWS secrets manager and sets them as environment variables.
 FROM python:3.10-slim-buster
 LABEL maintainer="IDinsight"
 

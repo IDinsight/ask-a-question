@@ -53,7 +53,7 @@ jobs:
         with:
           context: core_backend
           platforms: linux/arm64
-          file: deployment/aws/core_backend/Dockerfile.${{github.ref_name}}
+          file: deployment/aws/core_backend/Dockerfile
           cache-from: type=gha
           cache-to: type=gha
           push: true
