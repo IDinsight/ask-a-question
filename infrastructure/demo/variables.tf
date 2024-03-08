@@ -27,7 +27,7 @@ variable "aws_region" {
 
 }
 
-variable "demo_profile" {
+variable "aws_profile" {
   description = "AWS profile to use for development"
   type        = string
   default     = "aaq"

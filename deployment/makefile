@@ -9,7 +9,7 @@ login:
 	@aws sso login --profile aaq_demo
 image-backend-demo:
 	@DEMO_ACCOUNT=${DEMO_ACCOUNT} \
-	docker build --platform linux/arm64 --rm --build-arg BOOTSTRAP_FILE="bootstrap_demo.sh" -t aaq-demo-backend:latest -f ../core_backend/Dockerfile.demo ../core_backend
+	docker build --platform linux/arm64 --rm --build-arg BOOTSTRAP_FILE="bootstrap.sh" -t aaq-demo-backend:latest -f ../core_backend/Dockerfile ../core_backend
 
 	# Tag
 	@docker tag aaq-demo-backend:latest $(DEMO_ACCOUNT).dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:backend
