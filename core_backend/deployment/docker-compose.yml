@@ -1,11 +1,16 @@
+# Docker Compose file
 version: "3"
 services:
   backend-container:
-    image: ${DEMO_ACCOUNT}.dkr.ecr.af-south-1.amazonaws.com/aaq-demo-ecr-repository:backend
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:backend # The repo name has to match with what we have in Terraform
     restart: always
     environment:
-      - AWS_ACCOUNT_ID=${DEMO_ACCOUNT}
-      - AWS_REGION=af-south-1
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+      - AWS_REGION=${AWS_REGION}
+      - DOMAIN=${DOMAIN}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+      - PROJECT_NAME=${PROJECT_NAME}
+      - ENV=${ENV}
     volumes:
       - local_dynamic_storage:/home/storage
     ports:
@@ -14,13 +19,13 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
+          memory: 2g
 
     logging:
       driver: awslogs
       options:
-        awslogs-group: /ecs/backend-task-demo
-        awslogs-region: af-south-1
+        awslogs-group: /ecs/backend-task-${PROJECT_NAME}-${ENV} # this has to match with what is in Terraform
+        awslogs-region: ${AWS_REGION}
         awslogs-stream-prefix: backend
 
 volumes:
