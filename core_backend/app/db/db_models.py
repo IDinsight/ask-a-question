@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from litellm import aembedding, embedding
 from pgvector.sqlalchemy import Vector
@@ -10,13 +10,13 @@ from sqlalchemy import (
     func,
     ForeignKey,
     Integer,
-    join,
     String,
     delete,
     select,
 )
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased, DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.schema import Index
 
 from ..configs.app_config import EMBEDDING_MODEL, PGVECTOR_VECTOR_SIZE
@@ -522,21 +522,20 @@ async def is_content_language_combination_unique(
 async def save_content_to_db(
     content: ContentTextCreate,
     asession: AsyncSession,
-) -> ContentDB:
+) -> ContentTextDB:
     """
     Vectorizes and saves a content in the database
     """
 
     content_embedding = await _get_content_embeddings(content)
-    if content.content_id == 0:
+    stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
+    content_db = (await asession.execute(stmt)).scalar_one_or_none()
+    if not content_db:
         content_db = ContentDB()
         asession.add(content_db)
-    else:
-        stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
-        content_db = (await asession.execute(stmt)).scalar_one_or_none()
 
     content_language = await get_language_from_db(content.language_id, asession)
-    content_db = ContentTextDB(
+    content_text_db = ContentTextDB(
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
@@ -547,12 +546,12 @@ async def save_content_to_db(
         updated_datetime_utc=datetime.utcnow(),
     )
 
-    asession.add(content_db)
+    asession.add(content_text_db)
 
     await asession.commit()
-    await asession.refresh(content_db)
+    await asession.refresh(content_text_db)
 
-    return content_db
+    return content_text_db
 
 
 async def update_content_in_db(
@@ -592,8 +591,8 @@ async def delete_content_from_db(
     stmt = delete(ContentTextDB).where(ContentTextDB.content_text_id == content_text_id)
     await asession.execute(stmt)
 
-    stmt = select(ContentTextDB).where(ContentTextDB.content_id == content_id)
-    content_row = (await asession.execute(stmt)).first()
+    content_stmt = select(ContentTextDB).where(ContentTextDB.content_id == content_id)
+    content_row = (await asession.execute(content_stmt)).first()
     if not content_row:
         stmt = delete(ContentDB).where(ContentDB.content_id == content_id)
         await asession.execute(stmt)
@@ -633,7 +632,7 @@ async def get_summary_of_content_from_db(
     language_id: int,
     offset: int = 0,
     limit: Optional[int] = None,
-) -> List[ContentTextDB]:
+) -> Sequence[Row]:
     """
     Get summary of all content from the database in a specific language
     """
@@ -691,7 +690,9 @@ async def get_all_content_from_one_language(
     return [c[0] for c in content_rows] if content_rows else []
 
 
-async def get_content_from_content_id_and_language(content_id, language_id, asession):
+async def get_content_from_content_id_and_language(
+    content_id: int, language_id: int, asession: AsyncSession
+) -> ContentTextDB | None:
     """ "
     Retrieves a content from the database using content_id and language_id
     """

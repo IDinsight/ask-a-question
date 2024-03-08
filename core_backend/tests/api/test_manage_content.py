@@ -5,7 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core_backend.app.db.db_models import ContentTextDB
-from core_backend.app.routers.manage_content import _convert_record_to_schema
+from core_backend.app.routers.manage_content import (
+    _convert_record_to_schema,
+    _convert_summary_to_schema,
+)
 
 from .conftest import fake_embedding
 
@@ -418,3 +421,19 @@ def test_convert_record_to_schema() -> None:
     assert result.content_text_id == content_text_id
     assert result.content_text == "sample text"
     assert result.content_metadata["extra_field"] == "extra value"
+
+
+def test_convert_summary_to_schema() -> None:
+    content_text_id = 1
+    record = (
+        content_text_id,
+        1,
+        "Sample title",
+        datetime.datetime.now(),
+        datetime.datetime.now(),
+        ["ENGLISH", "HINDI"],
+    )
+    result = _convert_summary_to_schema(record)
+    assert result.content_text_id == content_text_id
+    assert result.content_title == "Sample title"
+    assert len(result.languages) == 2

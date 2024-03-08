@@ -2,11 +2,13 @@ from typing import Annotated, List, Optional, Union
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..db.db_models import (
     ContentDB,
+    ContentTextDB,
     delete_content_from_db,
     get_all_languages_version_of_content,
     get_content_from_content_id_and_language,
@@ -251,7 +253,7 @@ async def is_content_and_language_valid(
     return True
 
 
-def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
+def _convert_record_to_schema(record: ContentTextDB) -> ContentRetrieve:
     """
     Convert db_models.ContentDB models to ContentRetrieve schema
     """
@@ -269,7 +271,7 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     return content_retrieve
 
 
-def _convert_summary_to_schema(record: tuple) -> ContentSummary:
+def _convert_summary_to_schema(record: Row) -> ContentSummary:
     """
     Convert db_models.ContentDB models to ContentRetrieve schema
     """
