@@ -1,4 +1,4 @@
-# Deploying AAQ on AWS
+# Deploying on AWS
 
 The AAQ project comes with code for managing AWS infrastructure and deployment. The
 overall steps to deploy AAQ on AWS are
