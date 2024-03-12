@@ -23,7 +23,7 @@ resource "aws_flow_log" "vpc" {
   # logs:DescribeLogGroups
   # logs:DescribeLogStreams
 
-  # VPC Flow Logs is a network traffic monitoring feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC (Virtual Private Cloud). 
+  # VPC Flow Logs is a network traffic monitoring feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC (Virtual Private Cloud).
   iam_role_arn             = aws_iam_role.vpc_flow_logs.arn
   log_destination          = aws_cloudwatch_log_group.vpc_flow_logs.arn
   traffic_type             = "ALL"

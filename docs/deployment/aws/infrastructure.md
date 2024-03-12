@@ -36,11 +36,11 @@ Create your own fork or a copy of the [AAQ repository](https://github.com/IDinsi
 
 To be able to run the code in a new AWS Account, first you will need to initialize the
 code and create an S3 bucket where you will store the terraform state. This code is
-housed in `infrastructure/tf_backend`.
+housed in `deployment/aws/infrastructure/tf_backend`.
 
 1. Make sure you've performed the [login steps](#2-login-to-aws) above.
-1. Review and edit the values in `infrastructure/tf_backend/tf_backend.auto.tfvars`.
-1. Navigate to `infrastructure/tf_backend`. Run the following in order:
+1. Review and edit the values in `deployment/aws/infrastructure/tf_backend/tf_backend.auto.tfvars`.
+1. Navigate to `deployment/aws/infrastructure/tf_backend`. Run the following in order:
 
     ```bash
     terraform init
@@ -58,11 +58,12 @@ housed in `infrastructure/tf_backend`.
 ## 4. Create AAQ infrastructure
 
 The infractructure code for an example environment `demo` is housed in
-`infrastructure/demo`.
+`deployment/aws/infrastructure/demo`.
 
 !!! note "Create infrastructure for new deployment environments"
     If you wish to have multiple deployment environments, you can copy the `demo`
-    folder as `infrastructure/<environment>/`, for example, `infrastructure/production/`.
+    folder as `deployment/aws/infrastructure/<environment>/`, for example,
+    `deployment/aws/infrastructure/production/`.
     Rename `demo.auto.tfvars` file to `<environment>.auto.tfvars`. Then, follow the steps
     below but replace `demo` with your own environment name.
 
@@ -81,7 +82,7 @@ There are three main modules.
 
 ### Creating AAQ infrastructure
 
-1. Navigate to `infrastructure/demo` folder.
+1. Navigate to `deployment/aws/infrastructure/demo` folder.
 
     ```bash
     cd infrastructure/demo
@@ -157,7 +158,7 @@ Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
 ### Adding a new secret
 
 All secrets stored in AWS Secrets Manager are created and managed using Terraform. The
-secrets are defined under `infrastructure/<environment>/main/credentials.tf`.
+secrets are defined under `deployment/aws/infrastructure/<environment>/main/credentials.tf`.
 
 To add a new secret,
 
@@ -172,6 +173,6 @@ To add a new secret,
         changes to the string. This is because when you manually change the string, terraform
         will detect the change and without ignoring the change it will overwrite the secret
        with the place holder
-1. Add the secret to the `infrastructure/<environment>/main/iam.tf` permissions to allow the `ecs_task_role` to get the value.
+1. Add the secret to the `deployment/aws/infrastructure/<environment>/main/iam.tf` permissions to allow the `ecs_task_role` to get the value.
 1. If the secret is needed at backend startup, it also needs to be added to the
    `deployment/aws/core_backend/bootstrap.sh` file.

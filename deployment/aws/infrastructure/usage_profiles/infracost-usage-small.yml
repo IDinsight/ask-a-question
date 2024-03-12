@@ -1,0 +1,241 @@
+# You can use this file to define resource usage estimates for Infracost to use when calculating
+# the cost of usage-based resource, such as AWS S3 or Lambda.
+# `infracost breakdown --usage-file infracost-usage.yml [other flags]`
+# See https://infracost.io/usage-file/ for docs
+version: 0.1
+resource_type_default_usage:
+  #
+  # The following usage values apply to each resource of the given type, which is useful when you want to define defaults.
+  # All values are commented-out, you can uncomment resource types and customize as needed.
+  #
+  aws_cloudwatch_log_group:
+    storage_gb: 1 # Total data stored by CloudWatch logs in GB.
+    monthly_data_ingested_gb: 0.2 # Monthly data ingested by CloudWatch logs in GB.
+    monthly_data_scanned_gb: 0.2 # Monthly data scanned by CloudWatch logs insights in GB.
+  aws_db_instance:
+    additional_backup_storage_gb: 0.0 # Amount of backup storage used that is in excess of 100% of the storage size for all databases in GB.
+    monthly_standard_io_requests: 100000 # Monthly number of input/output requests for database.
+    monthly_additional_performance_insights_requests: 0 # Monthly Performance Insights API requests above the 1000000 requests included in the free tier.
+    reserved_instance_term: "" # Term for Reserved Instances, can be: 1_year, 3_year.
+    reserved_instance_payment_option: "" # Payment option for Reserved Instances, can be: no_upfront (only for 1_year term), partial_upfront, all_upfront.
+  aws_dynamodb_table:
+    monthly_write_request_units: 2 # Monthly write request units in (used for on-demand DynamoDB).
+    monthly_read_request_units: 2 # Monthly read request units in (used for on-demand DynamoDB).
+    storage_gb: 0.01 # Total storage for tables in GB.
+    pitr_backup_storage_gb: 0 # Total storage for Point-In-Time Recovery (PITR) backups in GB.
+    on_demand_backup_storage_gb: 0 # Total storage for on-demand backups in GB.
+    monthly_data_restored_gb: 0 # Monthly size of restored data in GB.
+    monthly_streams_read_request_units: 0 # Monthly streams read request units.
+  aws_ecr_repository:
+    storage_gb: 0.625 # Total size of ECR repository in GB.
+  aws_instance:
+    operating_system: linux # Override the operating system of the instance, can be: linux, windows, suse, rhel.
+    reserved_instance_type: "" # Offering class for Reserved Instances, can be: convertible, standard.
+    reserved_instance_term: "" # Term for Reserved Instances, can be: 1_year, 3_year.
+    reserved_instance_payment_option: "" # Payment option for Reserved Instances, can be: no_upfront, partial_upfront, all_upfront.
+    monthly_cpu_credit_hrs: 0 # Number of hours in the month where the instance is expected to burst. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    vcpu_count: 0 # Number of the vCPUs for the instance type. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    monthly_hrs: 730.0 # Monthly number of hours the instance ran for.
+  aws_s3_bucket:
+    object_tags: 0 # Total object tags. Only for AWS provider V3.
+    standard:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    intelligent_tiering:
+      frequent_access_storage_gb: 0.0 # Total storage for Frequent Access Tier in GB.
+      infrequent_access_storage_gb: 0.0 # Total storage for Infrequent Access Tier in GB.
+      monitored_objects: 0 # Total objects monitored by the Intelligent Tiering.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+      early_delete_gb: 0.0 # If an archive is deleted within 1 months of being uploaded, you will be charged an early deletion fee per GB.
+      archive_access_storage_gb: 0.0
+      deep_archive_access_storage_gb: 0.0
+    standard_infrequent_access:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_data_retrieval_gb: 0.0 # Monthly data retrievals in GB
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    one_zone_infrequent_access:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_data_retrieval_gb: 0.0 # Monthly data retrievals in GB
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    glacier_flexible_retrieval:
+      storage_gb: 0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_standard_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for standard level of S3 Glacier).
+      monthly_standard_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for standard level of S3 Glacier).
+      monthly_bulk_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for bulk level of S3 Glacier)
+      monthly_bulk_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for bulk level of S3 Glacier)
+      monthly_expedited_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for expedited level of S3 Glacier)
+      monthly_expedited_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for expedited level of S3 Glacier)
+      monthly_standard_data_retrieval_requests: 0 # Monthly data Retrieval requests (for standard level of S3 Glacier).
+      monthly_expedited_data_retrieval_requests: 0 # Monthly data Retrieval requests (for expedited level of S3 Glacier).
+      monthly_standard_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for standard level of S3 Glacier).
+      monthly_expedited_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for expedited level of S3 Glacier).
+      early_delete_gb: 0.0 # If an archive is deleted within 3 months of being uploaded, you will be charged an early deletion fee per GB.
+    glacier_deep_archive:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_standard_data_retrieval_requests: 0 # Monthly data Retrieval requests (for standard level of S3 Glacier).
+      monthly_bulk_data_retrieval_requests: 0 # Monthly data Retrieval requests (for bulk level of S3 Glacier).
+      monthly_standard_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for standard level of S3 Glacier).
+      monthly_bulk_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for bulk level of S3 Glacier).
+      early_delete_gb: 0.0 # If an archive is deleted within 6 months of being uploaded, you will be charged an early deletion fee per GB.
+  aws_secretsmanager_secret:
+    monthly_requests: 100 # Monthly API requests to Secrets Manager.
+  aws_vpc_endpoint:
+    monthly_data_processed_gb: 1.0 # Monthly data processed by the VPC endpoint(s) in GB.
+resource_usage:
+  #
+  # The following usage values apply to individual resources and override any value defined in the resource_type_default_usage section.
+  # All values are commented-out, you can uncomment resources and customize as needed.
+  #
+  aws_dynamodb_table.terraform_locks:
+    monthly_write_request_units: 2 # Monthly write request units in (used for on-demand DynamoDB).
+    monthly_read_request_units: 2 # Monthly read request units in (used for on-demand DynamoDB).
+    storage_gb: 0.01 # Total storage for tables in GB.
+    pitr_backup_storage_gb: 0 # Total storage for Point-In-Time Recovery (PITR) backups in GB.
+    on_demand_backup_storage_gb: 0 # Total storage for on-demand backups in GB.
+    monthly_data_restored_gb: 0 # Monthly size of restored data in GB.
+    monthly_streams_read_request_units: 0 # Monthly streams read request units.
+  aws_s3_bucket.terraform_state:
+    object_tags: 0 # Total object tags. Only for AWS provider V3.
+    standard:
+      storage_gb: 0.05 # Total storage in GB.
+      monthly_tier_1_requests: 1 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 2 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    intelligent_tiering:
+      frequent_access_storage_gb: 0.0 # Total storage for Frequent Access Tier in GB.
+      infrequent_access_storage_gb: 0.0 # Total storage for Infrequent Access Tier in GB.
+      monitored_objects: 0 # Total objects monitored by the Intelligent Tiering.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+      early_delete_gb: 0.0 # If an archive is deleted within 1 months of being uploaded, you will be charged an early deletion fee per GB.
+      archive_access_storage_gb: 0.0
+      deep_archive_access_storage_gb: 0.0
+    standard_infrequent_access:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_data_retrieval_gb: 0.0 # Monthly data retrievals in GB
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    one_zone_infrequent_access:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_data_retrieval_gb: 0.0 # Monthly data retrievals in GB
+      monthly_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB.
+      monthly_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB.
+    glacier_flexible_retrieval:
+      storage_gb: 0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_standard_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for standard level of S3 Glacier).
+      monthly_standard_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for standard level of S3 Glacier).
+      monthly_bulk_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for bulk level of S3 Glacier)
+      monthly_bulk_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for bulk level of S3 Glacier)
+      monthly_expedited_select_data_scanned_gb: 0.0 # Monthly data scanned by S3 Select in GB (for expedited level of S3 Glacier)
+      monthly_expedited_select_data_returned_gb: 0.0 # Monthly data returned by S3 Select in GB (for expedited level of S3 Glacier)
+      monthly_standard_data_retrieval_requests: 0 # Monthly data Retrieval requests (for standard level of S3 Glacier).
+      monthly_expedited_data_retrieval_requests: 0 # Monthly data Retrieval requests (for expedited level of S3 Glacier).
+      monthly_standard_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for standard level of S3 Glacier).
+      monthly_expedited_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for expedited level of S3 Glacier).
+      early_delete_gb: 0.0 # If an archive is deleted within 3 months of being uploaded, you will be charged an early deletion fee per GB.
+    glacier_deep_archive:
+      storage_gb: 0.0 # Total storage in GB.
+      monthly_tier_1_requests: 0 # Monthly PUT, COPY, POST, LIST requests (Tier 1).
+      monthly_tier_2_requests: 0 # Monthly GET, SELECT, and all other requests (Tier 2).
+      monthly_lifecycle_transition_requests: 0 # Monthly Lifecycle Transition requests.
+      monthly_standard_data_retrieval_requests: 0 # Monthly data Retrieval requests (for standard level of S3 Glacier).
+      monthly_bulk_data_retrieval_requests: 0 # Monthly data Retrieval requests (for bulk level of S3 Glacier).
+      monthly_standard_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for standard level of S3 Glacier).
+      monthly_bulk_data_retrieval_gb: 0.0 # Monthly data retrievals in GB (for bulk level of S3 Glacier).
+      early_delete_gb: 0.0 # If an archive is deleted within 6 months of being uploaded, you will be charged an early deletion fee per GB.
+  module.bastion_host.aws_instance.bastion:
+    operating_system: linux # Override the operating system of the instance, can be: linux, windows, suse, rhel.
+    reserved_instance_type: "" # Offering class for Reserved Instances, can be: convertible, standard.
+    reserved_instance_term: "" # Term for Reserved Instances, can be: 1_year, 3_year.
+    reserved_instance_payment_option: "" # Payment option for Reserved Instances, can be: no_upfront, partial_upfront, all_upfront.
+    monthly_cpu_credit_hrs: 0 # Number of hours in the month where the instance is expected to burst. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    vcpu_count: 1 # Number of the vCPUs for the instance type. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    monthly_hrs: 730.0 # Monthly number of hours the instance ran for.
+  module.main.aws_cloudwatch_log_group.admin_app:
+    storage_gb: 0.00018 # Total data stored by CloudWatch logs in GB.
+    monthly_data_ingested_gb: 0.00006 # Monthly data ingested by CloudWatch logs in GB.
+    monthly_data_scanned_gb: 0.0006 # Monthly data scanned by CloudWatch logs insights in GB.
+  module.main.aws_cloudwatch_log_group.backend:
+    storage_gb: 0.225 # Total data stored by CloudWatch logs in GB.
+    monthly_data_ingested_gb: 0.075 # Monthly data ingested by CloudWatch logs in GB.
+    monthly_data_scanned_gb: 2.25 # Monthly data scanned by CloudWatch logs insights in GB.
+  module.main.aws_cloudwatch_log_group.nginx:
+    storage_gb: 0.5 # Total data stored by CloudWatch logs in GB.
+    monthly_data_ingested_gb: 0.1 # Monthly data ingested by CloudWatch logs in GB.
+    monthly_data_scanned_gb: 0.1 # Monthly data scanned by CloudWatch logs insights in GB.
+  module.main.aws_db_instance.web_db:
+    additional_backup_storage_gb: 0.0 # Amount of backup storage used that is in excess of 100% of the storage size for all databases in GB.
+    monthly_standard_io_requests: 100000 # Monthly number of input/output requests for database.
+    monthly_additional_performance_insights_requests: 0 # Monthly Performance Insights API requests above the 1000000 requests included in the free tier.
+    reserved_instance_term: "" # Term for Reserved Instances, can be: 1_year, 3_year.
+    reserved_instance_payment_option: "" # Payment option for Reserved Instances, can be: no_upfront (only for 1_year term), partial_upfront, all_upfront.
+  module.main.aws_ecr_repository.web_ecr_repo:
+    storage_gb: 2.0 # Total size of ECR repository in GB.
+  module.main.aws_instance.web_instance:
+    operating_system: linux # Override the operating system of the instance, can be: linux, windows, suse, rhel.
+    reserved_instance_type: "" # Offering class for Reserved Instances, can be: convertible, standard.
+    reserved_instance_term: "" # Term for Reserved Instances, can be: 1_year, 3_year.
+    reserved_instance_payment_option: "" # Payment option for Reserved Instances, can be: no_upfront, partial_upfront, all_upfront.
+    monthly_cpu_credit_hrs: 0 # Number of hours in the month where the instance is expected to burst. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    vcpu_count: 4 # Number of the vCPUs for the instance type. Only applicable with t2, t3 & t4 Instance types. T2 requires credit_specification to be unlimited.
+    monthly_hrs: 730.0 # Monthly number of hours the instance ran for.
+  module.main.aws_secretsmanager_secret.content_access_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.jwt_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.open_ai_key_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.question_answer_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.rds_credentials:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.whatsapp_token_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.main.aws_secretsmanager_secret.whatsapp_verify_token_secret:
+    monthly_requests: 10 # Monthly API requests to Secrets Manager.
+  module.vpc.aws_cloudwatch_log_group.vpc_flow_logs:
+    storage_gb: 2.0 # Total data stored by CloudWatch logs in GB.
+    monthly_data_ingested_gb: 0.5 # Monthly data ingested by CloudWatch logs in GB.
+    monthly_data_scanned_gb: 0.5 # Monthly data scanned by CloudWatch logs insights in GB.
+  module.vpc.aws_vpc_endpoint.ec2messages:
+    monthly_data_processed_gb: 0.0 # Monthly data processed by the VPC endpoint(s) in GB.
+  module.vpc.aws_vpc_endpoint.s3:
+    monthly_data_processed_gb: 0.0 # Monthly data processed by the VPC endpoint(s) in GB.
+  module.vpc.aws_vpc_endpoint.ssm:
+    monthly_data_processed_gb: 0.0 # Monthly data processed by the VPC endpoint(s) in GB.
+  module.vpc.aws_vpc_endpoint.ssmmessages:
+    monthly_data_processed_gb: 0.0 # Monthly data processed by the VPC endpoint(s) in GB.
