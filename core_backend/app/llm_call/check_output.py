@@ -1,6 +1,7 @@
 """
 These are functions to check the LLM response
 """
+
 from functools import wraps
 from typing import Any, Callable, TypedDict
 
@@ -86,7 +87,10 @@ async def _check_align_score(
         return llm_response
 
     elif ALIGN_SCORE_METHOD == "AlignScore":
-        align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_date)
+        if ALIGN_SCORE_API is not None:
+            align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_date)
+        else:
+            raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
         align_score = await _get_llm_align_score(align_score_date)
     else:
