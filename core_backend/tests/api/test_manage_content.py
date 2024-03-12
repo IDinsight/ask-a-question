@@ -34,7 +34,7 @@ def existing_content_ids(
         json={
             "content_title": request.param[0],
             "content_text": request.param[1],
-            "content_id": 0,
+            "content_id": None,
             "language_id": existing_language_id[0],
             "content_metadata": request.param[2],
         },
@@ -73,7 +73,7 @@ class TestManageContent:
             json={
                 "content_title": content_title,
                 "content_text": content_text,
-                "content_id": 0,
+                "content_id": None,
                 "language_id": existing_language_id[0],
                 "content_metadata": content_metadata,
             },
@@ -225,7 +225,7 @@ class TestManageContent:
             json={
                 "content_title": "sample title",
                 "content_text": "sample text",
-                "content_id": 0,
+                "content_id": None,
                 "language_id": 4000,
                 "content_metadata": {},
             },
@@ -332,7 +332,7 @@ class TestAuthManageContent:
             json={
                 "content_title": "sample title",
                 "content_text": "sample text",
-                "content_id": 0,
+                "content_id": None,
                 "language_id": existing_language_id[0],
                 "content_metadata": {},
             },

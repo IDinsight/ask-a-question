@@ -504,11 +504,13 @@ class ContentTextDB(Base):
 
 
 async def is_content_language_combination_unique(
-    content_id: int, language_id: int, asession: AsyncSession
+    content_id: int | None, language_id: int, asession: AsyncSession
 ) -> bool:
     """
     Check if the content and language combination is unique
     """
+    if not content_id:
+        return True
     stmt = select(ContentTextDB).where(
         (ContentTextDB.content_id == content_id)
         & (ContentTextDB.language_id == language_id)

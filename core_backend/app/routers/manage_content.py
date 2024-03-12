@@ -44,13 +44,17 @@ async def create_content(
     Create content endpoint. Calls embedding model to get content embedding and
     upserts it to PG database
     """
-    if await is_content_and_language_valid(content, asession):
+    is_valid, reason = await validate_create_content(
+        content=content,
+        asession=asession,
+    )
+    if is_valid:
         content_db = await save_content_to_db(content, asession)
         return _convert_record_to_schema(content_db)
     else:
         raise HTTPException(
             status_code=400,
-            detail="Content could not be added",
+            detail=reason,
         )
 
 
@@ -73,16 +77,15 @@ async def edit_content(
 
     if not old_content:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_text_id}` not found"
+            status_code=404, detail=f"Content text id `{content_text_id}` not found"
         )
-    is_updated_language = old_content.language_id != content.language_id
 
-    if await is_content_and_language_valid(
+    is_valid, reason = await validate_edit_content(
         content=content,
         asession=asession,
-        is_edit=True,
-        is_updated_language=is_updated_language,
-    ):
+        old_content=old_content,
+    )
+    if is_valid:
         updated_content = await update_content_in_db(
             content_text_id,
             content,
@@ -93,7 +96,7 @@ async def edit_content(
     else:
         raise HTTPException(
             status_code=400,
-            detail="Content could not be updated",
+            detail=reason,
         )
 
 
@@ -154,7 +157,7 @@ async def delete_content(
 
     if not record:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_text_id}` not found"
+            status_code=404, detail=f"Content text id `{content_text_id}` not found"
         )
     await delete_content_from_db(content_text_id, record.content_id, asession)
 
@@ -178,7 +181,7 @@ async def retrieve_content_by_id(
 
     if not content:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_text_id}` not found"
+            status_code=404, detail=f"Content text id `{content_text_id}` not found"
         )
 
     if language:
@@ -199,52 +202,63 @@ async def retrieve_content_by_id(
         return [_convert_record_to_schema(record) for record in records]
 
 
-async def is_content_and_language_valid(
+async def validate_create_content(
     content: ContentTextCreate,
     asession: AsyncSession,
-    is_edit: bool = False,
-    is_updated_language: bool = True,
-) -> bool:
+) -> tuple[bool, Optional[str]]:
     """
     Make sure the content and language is valid before saving content_text to db.
-
-    Parameters:
-        content (ContentTextCreate):The content_text to be saved.
-        asession (AsyncSession):The async session to be used for db operations.
-        is_edit (bool):If the content is being edited.
-        is_updated_language (bool):If the language is being updated.
-
-
-    Returns:
-        bool:True if the content and language is valid, False otherwise.
     """
-    contents = await get_all_languages_version_of_content(
-        content.content_id, asession=asession
-    )
-    if len(contents) < 1:
-        if is_edit or content.content_id != 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Content id `{content.content_id}` does not exist",
-            )
+    if content.content_id:
+        contents = await get_all_languages_version_of_content(
+            content.content_id, asession=asession
+        )
+        if len(contents) < 1:
+            return (False, f"Content id `{content.content_id}` does not exist")
 
     language = await get_language_from_db(content.language_id, asession)
     if not language:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Language id `{content.language_id}` does not exist",
-        )
-    if is_updated_language and not (
+        return (False, f"Language id `{content.language_id}` does not exist")
+
+    if not (
         await is_content_language_combination_unique(
             content.content_id, content.language_id, asession
         )
     ):
-        raise HTTPException(
-            status_code=400,
-            detail="Content and language combination already exists",
-        )
+        return (False, "Content and language combination already exists")
 
-    return True
+    return (True, None)
+
+
+async def validate_edit_content(
+    content: ContentTextCreate, old_content: ContentTextDB, asession: AsyncSession
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate content and language before editing content text.
+    """
+    if not content.content_id:
+        content.content_id = old_content.content_id
+    else:
+        contents = await get_all_languages_version_of_content(
+            content.content_id, asession=asession
+        )
+        if len(contents) < 1:
+            return (False, f"Content id `{content.content_id}` does not exist")
+
+    language = await get_language_from_db(content.language_id, asession)
+    if not language:
+        return (False, f"Language id `{content.language_id}` does not exist")
+
+    is_language_updated = old_content.language_id != content.language_id
+
+    if is_language_updated and not (
+        await is_content_language_combination_unique(
+            content.content_id, content.language_id, asession
+        )
+    ):
+        return (False, "Content and language combination already exists")
+
+    return (True, None)
 
 
 def _convert_record_to_schema(record: ContentTextDB) -> ContentRetrieve:

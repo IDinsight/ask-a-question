@@ -147,7 +147,7 @@ class ContentTextCreate(BaseModel):
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     language_id: int
-    content_id: int
+    content_id: Optional[int] = None
 
     content_metadata: dict = {}
 
@@ -166,7 +166,8 @@ class ContentRetrieve(ContentTextCreate):
 
 class ContentSummary(BaseModel):
     """
-    Pydantic model for content summary
+    Pydantic model
+    for content summary
     """
 
     content_text_id: int
