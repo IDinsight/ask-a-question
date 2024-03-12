@@ -102,6 +102,11 @@ domain, make sure to associate it with this IP address.
 #### Store API keys in AWS Secrets Manager
 For example, if you rely on OpenAI models, you must update the OpenAI API key in AWS AWS Secrets Manager.
 
+## 5. Deploy on the infrastructure
+Your infrastructure is now ready for deployment!
+
+Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
+
 ## Additional guides
 
 ### Connecting to your DB locally
