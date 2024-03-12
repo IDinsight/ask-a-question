@@ -1,7 +1,4 @@
-
-
 login:
-	
 	@aws sso login --profile <Profile>
 
 data-db-tunnel-demo:
