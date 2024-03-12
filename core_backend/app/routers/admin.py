@@ -30,7 +30,7 @@ async def healthcheck(
 
     if ALIGN_SCORE_METHOD == "AlignScore":
         url = urlparse(ALIGN_SCORE_API)
-        healthcheck_url = f"{url.scheme}://{url.netloc}/healthcheck"
+        healthcheck_url = f"{url.scheme!r}://{url.netloc!r}/healthcheck"
         http_client = get_http_client()
         try:
             resp = await http_client.get(healthcheck_url)
