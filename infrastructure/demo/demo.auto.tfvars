@@ -1,6 +1,6 @@
 bastion_ec2_instance_type = "t3.nano"
 ec2_instance_type         = "t4g.medium"
-aws_region                = "af-south-1"
+aws_region                = "ap-south-1"
 demo_profile              = "aaq"
 project_name              = "aaq"
 billing_code              = "aaq"
