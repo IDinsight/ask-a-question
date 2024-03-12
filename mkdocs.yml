@@ -85,7 +85,7 @@ nav:
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
   - Deploying:
-      - Quick setup: deployment/quick-setup.md
+      - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
       - Deploying on AWS:
