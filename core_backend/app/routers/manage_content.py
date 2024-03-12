@@ -78,7 +78,10 @@ async def edit_content(
     is_updated_language = old_content.language_id != content.language_id
 
     if await is_content_and_language_valid(
-        content, asession, True, is_updated_language
+        content=content,
+        asession=asession,
+        is_edit=True,
+        is_updated_language=is_updated_language,
     ):
         updated_content = await update_content_in_db(
             content_text_id,
@@ -202,6 +205,19 @@ async def is_content_and_language_valid(
     is_edit: bool = False,
     is_updated_language: bool = True,
 ) -> bool:
+    """
+    Make sure the content and language is valid before saving content_text to db.
+
+    Parameters:
+        content (ContentTextCreate):The content_text to be saved.
+        asession (AsyncSession):The async session to be used for db operations.
+        is_edit (bool):If the content is being edited.
+        is_updated_language (bool):If the language is being updated.
+
+
+    Returns:
+        bool:True if the content and language is valid, False otherwise.
+    """
     contents = await get_all_languages_version_of_content(
         content.content_id, asession=asession
     )
