@@ -18,7 +18,7 @@
 
 - <span  class="secondary-color big-font">:material-translate:</span><br>
   <strong>Local Language Support</strong> <br>
-  Multilingual model support to enhance accessibility and experience
+  Multilingual model support to enhance accessibility and experience (coming soon...)
 
 - <span class="secondary-color big-font">:material-docker:</span><br>
   <strong >Scalable & Easy to Deploy</strong><br>
@@ -26,7 +26,7 @@
 
 - <span class="secondary-color big-font">:material-microphone:</span><br>
   <strong >Voice support</strong> <br>
-  Ask questions and receive answers using voice memos.
+  Ask questions and receive answers using voice memos (coming soon...)
 
 </div>
 <br>
