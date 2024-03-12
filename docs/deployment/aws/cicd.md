@@ -24,7 +24,6 @@ each deployment branch if any changes to the following files get merged:
 - your AAQ applicaiton code (under `core_backend` or `admin_app`), or
 - deployment code (`deployment/aws/...`)
 
-
 ## Setting up CI/CD workflows on Github Actions
 
 1. To deploy AAQ via Github Actions, first [create a deployment
@@ -33,7 +32,6 @@ in your copy/fork of the
 AAQ repository, [aaq-core](https://github.com/IDinsight/aaq-core). The environment name
 should be the same as the environment name used in your infrastructure configuration
 (`infrastructure/<environment>/<environment>.auto.tfvars`).
-
 
 2. In the new environment, create the following secrets that are specific to this
 deployment environment:
@@ -51,7 +49,6 @@ deployment environment:
 | REPO              | `aaq-demo-ecr-repository`                       | Name of the ECR repository created using Terraform                          |
 | ROLE              | `aaq-demo-github-actions-role`                  | Name of the GitHub Actions role for this environment created using Terraform |
 | TASK_ROLE_ARN     | `arn:aws:iam::000000000000:role/aaq-demo-web-task-role` | ARN of the ECS task role created using Terraform                            |
-
 
 !!! note
     See Github Actions' [Using environments for

@@ -1,6 +1,5 @@
 # Creating infrastructure for AAQ on AWS
 
-
 Create your own fork or a copy of the [AAQ repository](https://github.com/IDinsight/aaq-core) to follow along.
 
 ## 1. Install requirements
@@ -20,11 +19,15 @@ Create your own fork or a copy of the [AAQ repository](https://github.com/IDinsi
     sso_role_name = <your AWS SSO role name, e.g. AdministratorAccess>
     region = <your AWS infratructure region>
     ```
+
 2. Log in to AWS
+
     ```bash
     aws sso login --profile <Profile Name>
     ```
+
 3. Run the following (Terraform relies on `AWS_PROFILE` environment variable)
+
     ```bash
     export AWS_PROFILE=<Profile Name>
     ```
@@ -35,20 +38,22 @@ To be able to run the code in a new AWS Account, first you will need to initiali
 code and create an S3 bucket where you will store the terraform state. This code is
 housed in `infrastructure/tf_backend`.
 
- 1. Make sure you've performed the [login steps](#2-login-to-aws) above.
- 3. Review and edit the values in `infrastructure/tf_backend/tf_backend.auto.tfvars`.
- 4. Navigate to `infrastructure/tf_backend`. Run the following in order:
+1. Make sure you've performed the [login steps](#2-login-to-aws) above.
+1. Review and edit the values in `infrastructure/tf_backend/tf_backend.auto.tfvars`.
+1. Navigate to `infrastructure/tf_backend`. Run the following in order:
+
     ```bash
     terraform init
     terraform plan
     ```
- 5. Review the plan, and apply the changes by running the following.
+
+1. Review the plan, and apply the changes by running the following.
+
     ```
     terraform apply
     ```
 
  This will create the S3 bucket that will store the states of terraform.
-
 
 ## 4. Create AAQ infrastructure
 
@@ -77,32 +82,39 @@ There are three main modules.
 ### Creating AAQ infrastructure
 
 1. Navigate to `infrastructure/demo` folder.
+
     ```bash
     cd infrastructure/demo
     ```
+
 1. Configure your deployment environment.
     1. Update the contents of `backend.conf` to match the resource names created in
        [step 3](#3-create-terraform-backend-infrastructure).
     1. Review and update the contents of the `demo.auto.tfvars` file. This file contains environment-specific variable
         values which Terraform automatically loads during resource creation.
 1. Make sure you've performed the [login steps](#2-login-to-aws) above.
-2. Initialize the Terraform backend and install the providers.
+1. Initialize the Terraform backend and install the providers.
+
     ```bash
     terraform init -backend-config=backend.conf
     ```
-4. Run `terraform plan` to view the plan.
-5. Run `terraform apply` to deploy the terraform configuration.
+
+1. Run `terraform plan` to view the plan.
+1. Run `terraform apply` to deploy the terraform configuration.
 
 ### Preparing your infrastructure for deployment
 
 #### Attach Elastic IP to your domain
+
 When the infrastructure is created, a new Elastic IP is created. If you have your own
 domain, make sure to associate it with this IP address.
 
 #### Store API keys in AWS Secrets Manager
+
 For example, if you rely on OpenAI models, you must update the OpenAI API key in AWS AWS Secrets Manager.
 
 ## 5. Deploy on the infrastructure
+
 Your infrastructure is now ready for deployment!
 
 Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
@@ -110,7 +122,9 @@ Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
 ## Additional guides
 
 ### Connecting to your DB locally
+
 1. Open a connection to the AAQ database
+
     ```bash
     aws ssm start-session \
         --target <Instance ID> \
@@ -119,15 +133,17 @@ Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
         --document-name AWS-StartPortForwardingSession \
         --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}'
     ```
+
     `<Instance ID>` is the EC2 instance ID of the Bastion Host.
 
-    If the command hangs at `Starting session with SessionId:... `, make sure port
+    If the command hangs at `Starting session with SessionId:...`, make sure port
     5432 is available.
 
 2. Retrieve the DB connection credentials from AWS Secrets Manager.
 3. Connect to the DB via the tunnel created above:
     1. With pgAdmin: create a connection with the host as `localhost` and enter the credentials
     2. With docker:
+
         ```
         docker pull dpage/pgadmin4
         docker run -p 80:80 \
@@ -135,6 +151,7 @@ Next, [set up CI/CD and deploy AAQ on the infrastructure you created](cicd.md).
             -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' \
             -d dpage/pgadmin4
         ```
+
     When using pgAdmin or docker, the host will be `host.docker.internal` if localhost does not work.
 
 ### Adding a new secret
