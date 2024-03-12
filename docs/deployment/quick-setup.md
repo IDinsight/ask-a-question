@@ -8,7 +8,7 @@
 
 **Step 2:** Navigate to the `deployment/docker-compose/` subfolder.
 
-**Step 3:** Copy `template.env` to `.env`, `template.env.nginx` to `.env.nginx` and edit it to set the
+**Step 3:** Copy `template.env` to `.env` and edit it to set the
 variables. Keep the `DOMAIN` variable as `localhost` for local testing.
 
 **Step 4:** Run docker-compose
