@@ -6,6 +6,7 @@ from typing import Annotated, Dict, Literal, Optional
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Field,
     StringConstraints,
     validator,
 )
@@ -147,7 +148,11 @@ class ContentTextCreate(BaseModel):
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     language_id: int
-    content_id: Optional[int] = None
+    content_id: Optional[int] = Field(
+        default=None,
+        description="If adding or editing content text to an existing content"
+        ", provide its ID",
+    )
 
     content_metadata: dict = {}
 

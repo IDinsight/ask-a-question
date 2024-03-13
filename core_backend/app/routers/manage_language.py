@@ -73,7 +73,7 @@ async def edit_language(
     ):
         raise HTTPException(status_code=400, detail="Language name already exists")
 
-    if language.is_default is True:
+    if language.is_default:
         await unset_default_language(asession)
 
     updated_language = await update_language_in_db(

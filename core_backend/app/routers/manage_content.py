@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth import get_current_fullaccess_user, get_current_readonly_user
 from ..db.db_models import (
     ContentTextDB,
-    delete_content_from_db,
+    delete_content_text_from_db,
     get_all_languages_version_of_content,
     get_content_from_content_id_and_language,
     get_content_from_db,
@@ -88,6 +88,7 @@ async def edit_content(
     if is_valid:
         updated_content = await update_content_in_db(
             content_text_id,
+            old_content,
             content,
             asession,
         )
@@ -159,7 +160,8 @@ async def delete_content(
         raise HTTPException(
             status_code=404, detail=f"Content text id `{content_text_id}` not found"
         )
-    await delete_content_from_db(content_text_id, record.content_id, asession)
+
+    await delete_content_text_from_db(content_text_id, record.content_id, asession)
 
 
 @router.get(
@@ -209,7 +211,7 @@ async def validate_create_content(
     """
     Make sure the content and language is valid before saving content_text to db.
     """
-    if content.content_id:
+    if content.content_id is not None:
         contents = await get_all_languages_version_of_content(
             content.content_id, asession=asession
         )

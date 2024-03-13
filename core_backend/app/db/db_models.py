@@ -559,6 +559,7 @@ async def save_content_to_db(
 
 async def update_content_in_db(
     content_text_id: int,
+    old_content: ContentTextDB,
     content_text: ContentTextCreate,
     asession: AsyncSession,
 ) -> ContentTextDB:
@@ -579,17 +580,27 @@ async def update_content_in_db(
     )
 
     content_db = await asession.merge(content_db)
+    if content_db.content_id != old_content.content_id:
+        old_contents = await get_all_languages_version_of_content(
+            old_content.content_id, asession
+        )
+        if len(old_contents) < 1:
+            stmt = delete(ContentDB).where(
+                ContentDB.content_id == old_content.content_id
+            )
+            await asession.execute(stmt)
+
     await asession.commit()
     return content_db
 
 
-async def delete_content_from_db(
+async def delete_content_text_from_db(
     content_text_id: int,
     content_id: int,
     asession: AsyncSession,
 ) -> None:
     """
-    Deletes a content from the database
+    Deletes a content text from the database
     """
     stmt = delete(ContentTextDB).where(ContentTextDB.content_text_id == content_text_id)
     await asession.execute(stmt)
