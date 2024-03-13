@@ -112,7 +112,7 @@ python -m pytest -m rail
 You can use FastAPI's Swagger UI to test out the desired endpoints
 
 ``` yaml
-https://[DOMAIN]/api/docs # (1)!
+https://$DOMAIN/api/docs # (1)!
 ```
 
 1.  if you are using the [dev setup](setup.md), you can access it at `http://localhost:8000/docs`

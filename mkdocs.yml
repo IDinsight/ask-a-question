@@ -71,23 +71,27 @@ nav:
           - components/triaging/index.md
   - Other Components:
       - other-components/index.md
+      - Chat Managers:
+          - other-components/chat_managers/index.md
+          - Typebot: other-components/chat_managers/typebot.md
+          - Botpress: other-components/chat_managers/botpress_v12.md
+      - Offline LLMs:
+          - other-components/self_hosted_llms/index.md
       - WhatsApp Connector:
           - other-components/whatsapp/index.md
           - Testing: other-components/whatsapp/testing.md
-      - Chat Managers:
-          - other-components/chat_managers/index.md
-          - Botpress: other-components/chat_managers/botpress_v12.md
-          - Typebot: other-components/chat_managers/typebot.md
-      - Offline LLMs:
-          - other-components/self_hosted_llms/index.md
       - Align Score:
           - other-components/align-score/index.md
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
   - Deploying:
-      - Quick setup: deployment/quick-setup.md
+      - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
+      - Deploying on AWS:
+          - deployment/aws/aws.md
+          - Infrastructure: deployment/aws/infrastructure.md
+          - CI/CD: deployment/aws/cicd.md
   - Contributing:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
