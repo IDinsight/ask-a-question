@@ -3,7 +3,7 @@ services:
   core_backend:
     image: idinsight/aaq-backend:latest
     build:
-      context: ../core_backend
+      context: ../../core_backend
       dockerfile: Dockerfile
     command: >
       /bin/sh startup.sh
@@ -15,7 +15,7 @@ services:
   admin_app:
     image: idinsight/aaq-admin-app:latest
     build:
-      context: ../admin_app
+      context: ../../admin_app
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
@@ -45,7 +45,7 @@ services:
       - alignScore
       - optional-components
     build:
-      context: ../optional_components/alignScore
+      context: ../../optional_components/alignScore
       dockerfile: Dockerfile
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
