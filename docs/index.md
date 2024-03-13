@@ -4,6 +4,7 @@
 </pre>
 
 <h3 align="center" >On-demand answers to questions from your knowledge base</h3>
+
 <strong > Ask A Question</strong> is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 
 ---
@@ -22,7 +23,7 @@
 
 - <span class="secondary-color big-font">:material-docker:</span><br>
   <strong >Scalable & Easy to Deploy</strong><br>
-  Containerized app that can integrate with outreach systems like WhatsApp
+  Containerized app that can be deployed anywhere with minimal setup
 
 - <span class="secondary-color big-font">:material-microphone:</span><br>
   <strong >Voice support</strong> <br>

@@ -5,16 +5,8 @@ deployment of AAQ and support some extended features.
 
 <div class="grid cards" markdown>
 
--   :material-database:{ .lg .middle .red} __WhatsApp Connector__
 
-    ---
-
-    The WhatsApp connector allows you to send and receive messages using
-    the WhatsApp Business API.
-
-    [:octicons-arrow-right-24: More info](./whatsapp/index.md)
-
--   :material-chat-question:{ .lg .middle } __Chat Manager__
+-   :material-chat-question:{ .lg .middle } __Chat Managers__
 
     ---
 
@@ -29,6 +21,15 @@ deployment of AAQ and support some extended features.
     AAQ allows you to connect to self-hosted LLMs instead of using OpenAI APIs.
 
     [:octicons-arrow-right-24: More info](./self_hosted_llms/index.md)
+
+-   :material-database:{ .lg .middle .red} __Direct WhatsApp Connector__
+
+    ---
+
+    The direct WhatsApp connector allows you to send and receive messages
+    using the WhatsApp Business API without a chat manager.
+
+    [:octicons-arrow-right-24: More info](./whatsapp/index.md)
 
 -   :material-format-align-middle:{ .lg .middle } __Align Score__
 

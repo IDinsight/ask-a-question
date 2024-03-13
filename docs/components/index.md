@@ -26,7 +26,7 @@ There are 3 main components in Ask-A-Question.
 
     ---
 
-    Triage incoming messages as either urgent.
+    Triage incoming messages.
 
     [:octicons-arrow-right-24: More info](#)
 

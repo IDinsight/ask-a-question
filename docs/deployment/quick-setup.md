@@ -9,17 +9,15 @@
 **Step 2:** Navigate to the `deployment/docker-compose/` subfolder.
 
 **Step 3:** Copy `template.env` to `.env` and edit it to set the
-variables. Keep the `DOMAIN` variable as `localhost` for local testing.
+variables. If `DOMAIN` is commented out, it defaults to `localhost`.
 
 **Step 4:** Run docker-compose
 
     docker compose -f docker-compose.yml -f docker-compose.dev.yml \
         -p aaq-stack up -d --build
 
-You can now view the AAQ admin app at `https://$DOMAIN/` and the API documentation at
-`https://$DOMAIN/api/docs`! If you are using the default value `localhost` as your `DOMAIN`, you can now view them
-at  `https://localhost/` and
-`https://localhost/api/docs`.
+You can now view the AAQ admin app at `https://$DOMAIN/` (e.g. `https://localhost/`) and the API documentation at
+`https://$DOMAIN/api/docs`
 
 !!! note "To test the endpoints, see [Calling the endpoints](../develop/testing.md#call-the-endpoints)."
 
