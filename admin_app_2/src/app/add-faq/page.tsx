@@ -1,11 +1,10 @@
 "use client";
-import React from "react";
-import { useSearchParams } from "next/navigation";
-import { Typography, Button, TextField } from "@mui/material";
-import { Layout } from "@/components/Layout";
-import { ChevronLeft } from "@mui/icons-material";
-import { appColors, appStyles, sizes } from "@/utils";
 import LanguageButtonBar from "@/components/LanguageButtonBar";
+import { Layout } from "@/components/Layout";
+import { appColors, appStyles, sizes } from "@/utils";
+import { ChevronLeft } from "@mui/icons-material";
+import { Button, TextField, Typography } from "@mui/material";
+import { useSearchParams } from "next/navigation";
 
 const AddFAQPage = () => {
   const searchParams = useSearchParams();

@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
 import { Button } from "@mui/material";
+import { useEffect } from "react";
 
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/utils/auth";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const auth = useAuth();

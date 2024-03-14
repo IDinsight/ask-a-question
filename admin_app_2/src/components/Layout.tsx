@@ -1,7 +1,7 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-import { sizes } from "../utils";
 import { Box, BoxProps } from "@mui/material";
+import { sizes } from "../utils";
 
 interface SpacerProps {
   width?: string;
