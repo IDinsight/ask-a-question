@@ -4,7 +4,6 @@ const backendURL = json.backendURL;
 const accessToken = json.accessToken;
 
 const getContentList = async () => {
-  console.log("listContent");
   return fetch(`${backendURL}/content/list`, {
     method: "GET",
     headers: {

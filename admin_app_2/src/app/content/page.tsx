@@ -209,7 +209,8 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
               <ContentCard
                 title={item.content_title}
                 text={item.content_text}
-                contentID={item.content_id}
+                content_id={item.content_id}
+                last_modified={item.updated_datetime_utc}
               />
             </Grid>
           ))}

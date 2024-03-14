@@ -15,11 +15,15 @@ import { Layout } from "./Layout";
 const ContentViewModal = ({
   title,
   text,
+  content_id,
+  last_modified,
   open,
   onClose,
 }: {
   title: string;
   text: string;
+  content_id: string;
+  last_modified: string;
   open: boolean;
   onClose: () => void;
 }) => {
@@ -47,7 +51,7 @@ const ContentViewModal = ({
             flexDirection={"row"}
             {...appStyles.justifyContentSpaceBetween}
           >
-            <Typography variant="h5">Content #142</Typography>
+            <Typography variant="h5">Content #{content_id}</Typography>
             <Close onClick={onClose} />
           </Layout.FlexBox>
 
@@ -88,7 +92,7 @@ const ContentViewModal = ({
                 {...appStyles.alignItemsCenter}
                 flexDirection={"row"}
               >
-                <Link href={`/add-faq?contentID=142`}>
+                <Link href={`/add-faq?content_id=142`}>
                   <Button variant="contained" color="primary">
                     <Edit />
                     <Layout.Spacer horizontal multiplier={0.4} />
@@ -103,7 +107,15 @@ const ContentViewModal = ({
                 flexDirection={"row"}
               >
                 <Typography variant="body2" color={appColors.darkGrey}>
-                  Last edited 1 June 12:30 PM
+                  Last modified on{" "}
+                  {new Date(last_modified).toLocaleString("en-UK", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: false,
+                  })}
                 </Typography>
               </Layout.FlexBox>
               <Layout.FlexBox
