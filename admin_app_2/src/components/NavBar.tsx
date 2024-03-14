@@ -55,8 +55,8 @@ const Logo = () => {
     <Box
       component="img"
       sx={{
-        height: 50,
-        width: 300,
+        height: 40,
+        width: 240,
         display: { xs: "none", md: "block" },
       }}
       src={logowhite.src}
@@ -193,7 +193,11 @@ const UserDropdown = () => {
     <Box>
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-          <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+          <Avatar
+            alt="Full access"
+            src="/static/images/avatar/2.jpg"
+            sx={{ width: sizes.icons.medium, height: sizes.icons.medium }}
+          />
         </IconButton>
       </Tooltip>
       <Menu

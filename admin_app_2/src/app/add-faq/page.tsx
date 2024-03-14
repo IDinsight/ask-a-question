@@ -37,14 +37,10 @@ const AddFAQPage = () => {
         sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
       >
         <Layout.Spacer multiplier={2} />
-        <TopicRow />
-
-        <Layout.Spacer multiplier={2} />
         <ContentBox />
 
-        <Layout.Spacer multiplier={2} />
+        <Layout.Spacer multiplier={1} />
 
-        <Layout.Spacer multiplier={2} />
         <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
           Save
         </Button>
@@ -88,69 +84,7 @@ const ContentBox = () => {
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
         />
-
-        <Layout.FlexBox
-          flexDirection={"row"}
-          {...appStyles.justifyContentSpaceBetween}
-          {...appStyles.alignItemsCenter}
-          sx={{ p: sizes.smallGap }}
-        >
-          <Button
-            disabled
-            variant="text"
-            sx={{ border: 1, borderColor: appColors.lightGrey }}
-          >
-            Translate from English
-          </Button>
-        </Layout.FlexBox>
       </Layout.FlexBox>
-    </Layout.FlexBox>
-  );
-};
-
-const TopicRow = () => {
-  const [topics, setTopics] = React.useState<string[]>([]);
-  const [showInputField, setShowInputField] = React.useState<boolean>(false);
-  return (
-    <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
-      <Typography variant="subtitle1">Assign Topics</Typography>
-      <Layout.Spacer multiplier={2} horizontal />
-      {topics.map((topic, index) => (
-        <Chip
-          key={index}
-          label={topic}
-          onDelete={() => setTopics(topics.filter((t) => t !== topic))}
-          sx={{ mx: sizes.tinyGap }}
-        />
-      ))}
-      {!showInputField && topics.length < 3 && (
-        <AddCircle
-          color="disabled"
-          //onClick={() => setShowInputField(true)}
-          sx={{ cursor: "pointer", m: sizes.tinyGap }}
-        />
-      )}
-      <Layout.Spacer multiplier={0.5} horizontal />
-      {showInputField && (
-        <Layout.FlexBox flexDirection={"row"}>
-          <Input
-            type="text"
-            placeholder="Add a topic"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const value = e.currentTarget.value.trim();
-                if (value && isNaN(Number(value)) && !topics.includes(value)) {
-                  // topic should not be empty, should not be a number and should not be already present in the list
-                  setTopics([...topics, value]);
-                  setShowInputField(false);
-                }
-              } else if (e.key === "Escape") {
-                setShowInputField(false);
-              }
-            }}
-          />
-        </Layout.FlexBox>
-      )}
     </Layout.FlexBox>
   );
 };

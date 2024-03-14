@@ -36,7 +36,6 @@ const ContentCard = ({
       >
         <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
           <Typography variant="body2">#{contentID}</Typography>
-          <Chip label="Pollution" variant="outlined" size="small" />
         </Layout.FlexBox>
 
         <Typography variant="h6">{title}</Typography>

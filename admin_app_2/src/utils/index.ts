@@ -4,10 +4,10 @@ export const DEFAULT_LANGUAGE = "en";
 
 export const LANGUAGE_OPTIONS = [
   { code: "en", label: "English" },
-  { code: "hi", label: "Hindi" },
-  { code: "zu", label: "Zulu" },
-  { code: "xh", label: "Xhosa" },
-  { code: "af", label: "Afrikaans" },
+  // { code: "hi", label: "Hindi" },
+  // { code: "zu", label: "Zulu" },
+  // { code: "xh", label: "Xhosa" },
+  // { code: "af", label: "Afrikaans" },
 ];
 
 export const sizes = {
@@ -16,6 +16,11 @@ export const sizes = {
   baseGap: theme.spacing(2),
   doubleBaseGap: theme.spacing(4),
   tripleBaseGap: theme.spacing(6),
+  icons: {
+    small: theme.spacing(3),
+    medium: theme.spacing(5),
+    large: theme.spacing(6),
+  },
 };
 
 export const appColors = {
