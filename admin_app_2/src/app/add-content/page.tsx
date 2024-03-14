@@ -21,7 +21,15 @@ interface Content {
 const AddContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = searchParams.get("content_id") ?? "";
-  const [content, setContent] = React.useState({});
+  const [content, setContent] = React.useState<Content>({
+    content_title: "",
+    content_text: "",
+    content_language: "",
+    content_metadata: {},
+    content_id: 0,
+    created_datetime_utc: "",
+    updated_datetime_utc: "",
+  });
 
   React.useEffect(() => {
     apiCalls.getContent(content_id).then((data) => {
