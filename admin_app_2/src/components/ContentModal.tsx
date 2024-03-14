@@ -34,8 +34,9 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            width: "80%",
             height: "80%",
+            width: "80%",
+            minWidth: "500px",
             backgroundColor: appColors.white,
             p: sizes.doubleBaseGap,
           }}
@@ -44,7 +45,7 @@ const ContentViewModal = ({
             flexDirection={"row"}
             {...appStyles.justifyContentSpaceBetween}
           >
-            <Typography variant="h5">Content #142 </Typography>
+            <Typography variant="h5">Content #142</Typography>
             <Close onClick={onClose} />
           </Layout.FlexBox>
 
