@@ -73,12 +73,9 @@ const ContentViewModal = ({
               }}
             >
               <Layout.Spacer multiplier={1} />
-              <Typography variant="subtitle1">Question or Title</Typography>
+              <Typography variant="subtitle1">{title}</Typography>
               <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">
-                This is the full text of the content. It can be edited by
-                clicking "Edit".
-              </Typography>
+              <Typography variant="body2">{text}</Typography>
             </Layout.FlexBox>
             <Layout.Spacer multiplier={1} />
 

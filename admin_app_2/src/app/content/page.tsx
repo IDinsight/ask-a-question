@@ -3,6 +3,7 @@ import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
 import theme from "@/theme";
 import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { apiCalls } from "../../utils/api";
 import {
   Add,
   ChevronLeft,
@@ -46,7 +47,7 @@ const CardsView = () => {
   return (
     <Layout.FlexBox width={"100%"}>
       <CardsSearchAndFilter />
-      <Layout.Spacer multiplier={4} />
+      <Layout.Spacer multiplier={2} />
       <CardsUtilityStrip
         displayLanguage={displayLanguage}
         onChangeDisplayLanguage={(e) => setDisplayLanguage(e)}
@@ -62,7 +63,6 @@ const CardsView = () => {
 
 const CardsSearchAndFilter = () => {
   const chipData = [
-    { key: 0, label: "Recently Added" },
     { key: 1, label: "Recently Modified" },
     { key: 2, label: "Most Used" },
     { key: 3, label: "Most Downvoted" },
@@ -176,7 +176,17 @@ const CardsUtilityStrip = ({
 
 const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const [page, setPage] = React.useState<number>(1);
-  const MAX_PAGES = 8;
+  const [max_pages, setMaxPages] = React.useState<number>(1);
+  const [cards, setCards] = React.useState<any[]>([]);
+  const MAX_CARDS_PER_PAGE = 12;
+
+  React.useEffect(() => {
+    apiCalls.getContentList().then((data) => {
+      setCards(data);
+      setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+    });
+  }, []);
+
   return (
     <Box
       sx={[
@@ -189,14 +199,20 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
       ]}
     >
       <Grid container>
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((item, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3}>
-            <ContentCard
-              title={displayLanguage + ": Title " + index}
-              contentID={index.toString()}
-            />
-          </Grid>
-        ))}
+        {cards
+          .slice(
+            MAX_CARDS_PER_PAGE * (page - 1),
+            MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
+          )
+          .map((item, index) => (
+            <Grid item xs={12} sm={6} md={4} lg={3}>
+              <ContentCard
+                title={item.content_title}
+                text={item.content_text}
+                contentID={item.content_id}
+              />
+            </Grid>
+          ))}
       </Grid>
       <Layout.FlexBox
         flexDirection={"row"}
@@ -213,16 +229,16 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         </Button>
 
         <Typography variant="subtitle2">
-          {page} of {MAX_PAGES}
+          {page} of {max_pages}
         </Typography>
 
         <Button
           onClick={() => {
-            page < MAX_PAGES && setPage(page + 1);
+            page < max_pages && setPage(page + 1);
           }}
-          disabled={page === MAX_PAGES}
+          disabled={page === max_pages}
         >
-          <ChevronRight color={page < MAX_PAGES ? "primary" : "disabled"} />
+          <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
         </Button>
       </Layout.FlexBox>
     </Box>
