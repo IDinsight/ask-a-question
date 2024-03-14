@@ -54,7 +54,8 @@ const ContentBox = () => {
     <Layout.FlexBox
       flexDirection={"column"}
       sx={{
-        width: "45%",
+        maxWidth: "800px",
+        minWidth: "300px",
         border: 1,
         borderColor: appColors.darkGrey,
         borderRadius: 4,
@@ -80,7 +81,7 @@ const ContentBox = () => {
       >
         <TextField
           multiline
-          rows={10}
+          rows={20}
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
         />
