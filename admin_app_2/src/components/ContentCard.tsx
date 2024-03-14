@@ -57,7 +57,7 @@ const ContentCard = ({
             Read
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
-          <Link href={`/add-faq?content_id=${content_id}`}>
+          <Link href={`/add-content?content_id=${content_id}`}>
             <Button>
               <Edit fontSize="small" />
               Edit

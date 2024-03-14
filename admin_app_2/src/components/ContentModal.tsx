@@ -92,7 +92,7 @@ const ContentViewModal = ({
                 {...appStyles.alignItemsCenter}
                 flexDirection={"row"}
               >
-                <Link href={`/add-faq?content_id=${content_id}`}>
+                <Link href={`/add-content?content_id=${content_id}`}>
                   <Button variant="contained" color="primary">
                     <Edit />
                     <Layout.Spacer horizontal multiplier={0.4} />
