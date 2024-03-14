@@ -74,8 +74,8 @@ const ContentViewModal = ({
               </Typography>
               <Layout.Spacer multiplier={1} />
               <Typography variant="body2">
-                This is the content of the page. It can be edited here. This is
-                the content of the page.
+                This is the full text of the content. It can be edited by
+                clicking "Edit".
               </Typography>
             </Layout.FlexBox>
             <Layout.Spacer multiplier={1} />
