@@ -16,13 +16,14 @@ import Link from "next/link";
 
 const ContentCard = ({
   title,
+  text,
   contentID,
 }: {
   title: string;
+  text: string;
   contentID: string;
 }) => {
   const [open, setOpen] = React.useState<boolean>(false);
-  console.log("open", title, contentID);
   return (
     <>
       <Card
@@ -34,10 +35,6 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
-          <Typography variant="body2">#{contentID}</Typography>
-        </Layout.FlexBox>
-
         <Typography variant="h6">{title}</Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography variant="subtitle2" color={appColors.darkGrey}>
@@ -66,9 +63,20 @@ const ContentCard = ({
               Edit
             </Button>
           </Link>
+          <Typography
+            variant="body2"
+            style={{ marginLeft: "auto", marginTop: "auto" }}
+          >
+            #{contentID}
+          </Typography>
         </Layout.FlexBox>
       </Card>
-      <ContentViewModal open={open} onClose={() => setOpen(false)} />
+      <ContentViewModal
+        title={title}
+        text={text}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 };
