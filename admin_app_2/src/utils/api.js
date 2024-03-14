@@ -20,4 +20,21 @@ const getContentList = async () => {
   });
 };
 
-export const apiCalls = { getContentList };
+const getContent = async (content_id) => {
+  return fetch(`${backendURL}/content/${content_id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching content");
+    }
+  });
+};
+
+export const apiCalls = { getContentList, getContent };

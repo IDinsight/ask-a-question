@@ -5,10 +5,29 @@ import { appColors, appStyles, sizes } from "@/utils";
 import { ChevronLeft } from "@mui/icons-material";
 import { Button, TextField, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
+import React from "react";
+import { apiCalls } from "../../utils/api";
+
+interface Content {
+  content_title: string;
+  content_text: string;
+  content_language: string;
+  content_metadata: Record<string, unknown>;
+  content_id: number;
+  created_datetime_utc: string;
+  updated_datetime_utc: string;
+}
 
 const AddFAQPage = () => {
   const searchParams = useSearchParams();
   const content_id = searchParams.get("content_id") ?? "";
+  const [content, setContent] = React.useState({});
+
+  React.useEffect(() => {
+    apiCalls.getContent(content_id).then((data) => {
+      setContent(data);
+    });
+  }, []);
 
   return (
     <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
@@ -18,7 +37,7 @@ const AddFAQPage = () => {
         sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
       >
         <Layout.Spacer multiplier={2} />
-        <ContentBox />
+        <ContentBox content={content} />
         <Layout.Spacer multiplier={1} />
         <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
           Save
@@ -28,7 +47,7 @@ const AddFAQPage = () => {
   );
 };
 
-const ContentBox = () => {
+const ContentBox = ({ content }: { content: Content }) => {
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -48,6 +67,7 @@ const ContentBox = () => {
       <TextField
         placeholder="Add a title"
         sx={{ backgroundColor: appColors.white }}
+        value={content.content_title}
       />
       <Layout.Spacer multiplier={2} />
       <Typography variant="body2">Content (max 2000 characters)</Typography>
@@ -61,6 +81,7 @@ const ContentBox = () => {
           rows={20}
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
+          value={content.content_text}
         />
       </Layout.FlexBox>
     </Layout.FlexBox>
@@ -70,14 +91,18 @@ const ContentBox = () => {
 const Header = ({ content_id }: { content_id: string }) => {
   return (
     <Layout.FlexBox flexDirection={"row"} {...appStyles.alignItemsCenter}>
-      <ChevronLeft onClick={() => window.history.back()} />
+      <ChevronLeft
+        style={{ cursor: "pointer" }}
+        onClick={() => window.history.back()}
+      />
       <Layout.Spacer multiplier={1} horizontal />
       <Typography variant="h5">{content_id ? "Edit" : "Add"} FAQ</Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">{`\u2022`}</Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">
-        #{content_id ? content_id : Math.floor(Math.random() * 300)}
+        #{content_id ? content_id : Math.floor(Math.random() * 300)}{" "}
+        {/* need call to get latest ID number */}
       </Typography>
     </Layout.FlexBox>
   );
