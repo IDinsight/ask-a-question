@@ -44,28 +44,9 @@ const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
             ]}
             onClick={() => setSelectedLang(lang?.code)}
           >
-            {expandable && lang?.code !== DEFAULT_LANGUAGE && (
-              <Delete
-                fontSize="inherit"
-                color="disabled"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Are you sure you want to delete this language?"
-                    )
-                  ) {
-                    setLangList(langList.filter((l) => l !== lang));
-                  }
-                }}
-              />
-            )}
             <Layout.Spacer horizontal multiplier={0.5} />
             {lang?.label}
-            <InfoOutlined
-              fontSize="small"
-              color="error"
-              sx={{ ml: sizes.smallGap }}
-            />
+            <Layout.Spacer horizontal multiplier={0.5} />
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
