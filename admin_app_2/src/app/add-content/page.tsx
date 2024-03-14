@@ -18,7 +18,7 @@ interface Content {
   updated_datetime_utc: string;
 }
 
-const AddFAQPage = () => {
+const AddContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = searchParams.get("content_id") ?? "";
   const [content, setContent] = React.useState({});
@@ -96,7 +96,9 @@ const Header = ({ content_id }: { content_id: string }) => {
         onClick={() => window.history.back()}
       />
       <Layout.Spacer multiplier={1} horizontal />
-      <Typography variant="h5">{content_id ? "Edit" : "Add"} FAQ</Typography>
+      <Typography variant="h5">
+        {content_id ? "Edit" : "Add"} Content
+      </Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">{`\u2022`}</Typography>
       <Layout.Spacer multiplier={2} horizontal />
@@ -108,4 +110,4 @@ const Header = ({ content_id }: { content_id: string }) => {
   );
 };
 
-export default AddFAQPage;
+export default AddContentPage;
