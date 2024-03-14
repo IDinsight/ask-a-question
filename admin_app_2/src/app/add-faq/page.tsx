@@ -19,9 +19,7 @@ const AddFAQPage = () => {
       >
         <Layout.Spacer multiplier={2} />
         <ContentBox />
-
         <Layout.Spacer multiplier={1} />
-
         <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
           Save
         </Button>
@@ -52,9 +50,7 @@ const ContentBox = () => {
         sx={{ backgroundColor: appColors.white }}
       />
       <Layout.Spacer multiplier={2} />
-
       <Typography variant="body2">Content (max 2000 characters)</Typography>
-
       <Layout.Spacer multiplier={0.5} />
       <Layout.FlexBox
         flexDirection={"column"}

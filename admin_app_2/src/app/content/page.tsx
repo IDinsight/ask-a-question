@@ -43,7 +43,6 @@ const CardsView = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
-
   return (
     <Layout.FlexBox width={"100%"}>
       <CardsSearchAndFilter />
@@ -69,7 +68,6 @@ const CardsSearchAndFilter = () => {
     { key: 3, label: "Most Downvoted" },
   ];
   const [selectedChip, setSelectedChip] = React.useState<number | null>(null);
-
   return (
     <Layout.FlexBox alignItems="center">
       <TextField

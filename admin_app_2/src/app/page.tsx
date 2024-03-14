@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const auth = useAuth();
   const router = useRouter();
-
   const handleLogin = () => {
     auth.signin("admin", "admin");
   };
@@ -18,7 +17,6 @@ export default function Home() {
       router.push("/content");
     }
   }, [auth]);
-
   return (
     <div align="center">
       <h1>Login page</h1>
