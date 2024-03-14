@@ -1,21 +1,20 @@
 "use client";
-import * as React from "react";
-import AppBar from "@mui/material/AppBar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
+import { appColors, appStyles, sizes } from "@/utils";
+import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
-import Avatar from "@mui/material/Avatar";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
 import { Box } from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 import logowhite from "../../../docs/images/logo-light.png";
-import { sizes, appColors, appStyles } from "@/utils";
 import { Layout } from "./Layout";
-import { getAccessLevel, useAuth } from "@/utils/auth";
-import { useRouter } from "next/navigation";
 const pages = [
   { title: "Playground", path: "/playground" },
   { title: "Manage Content", path: "/content" },
@@ -67,7 +66,7 @@ const Logo = () => {
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
+    null,
   );
 
   return (
@@ -177,7 +176,7 @@ const UserDropdown = () => {
   const auth = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
+    null,
   );
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {

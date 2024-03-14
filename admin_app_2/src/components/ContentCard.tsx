@@ -1,18 +1,10 @@
-import React from "react";
-import {
-  Card,
-  Typography,
-  Modal,
-  Toolbar,
-  Button,
-  Box,
-  Chip,
-} from "@mui/material";
-import { Edit, Translate } from "@mui/icons-material";
-import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
-import { Layout } from "./Layout";
 import ContentViewModal from "@/components/ContentModal";
+import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
+import { Edit, Translate } from "@mui/icons-material";
+import { Button, Card, Typography } from "@mui/material";
 import Link from "next/link";
+import React from "react";
+import { Layout } from "./Layout";
 
 const ContentCard = ({
   title,
