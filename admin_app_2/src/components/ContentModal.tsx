@@ -13,9 +13,13 @@ import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
 
 const ContentViewModal = ({
+  title,
+  text,
   open,
   onClose,
 }: {
+  title: string;
+  text: string;
   open: boolean;
   onClose: () => void;
 }) => {
@@ -69,9 +73,7 @@ const ContentViewModal = ({
               }}
             >
               <Layout.Spacer multiplier={1} />
-              <Typography variant="subtitle1">
-                Question or Title goes here
-              </Typography>
+              <Typography variant="subtitle1">Question or Title</Typography>
               <Layout.Spacer multiplier={1} />
               <Typography variant="body2">
                 This is the full text of the content. It can be edited by
