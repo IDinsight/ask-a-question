@@ -1,27 +1,9 @@
 "use client";
 import React from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  Typography,
-  Button,
-  Chip,
-  Input,
-  TextField,
-  Switch,
-  FormControlLabel,
-  Tooltip,
-} from "@mui/material";
+import { Typography, Button, TextField } from "@mui/material";
 import { Layout } from "@/components/Layout";
-import {
-  Add,
-  AddCircle,
-  Check,
-  CheckBox,
-  ChevronLeft,
-  Info,
-  InfoOutlined,
-  Label,
-} from "@mui/icons-material";
+import { ChevronLeft } from "@mui/icons-material";
 import { appColors, appStyles, sizes } from "@/utils";
 import LanguageButtonBar from "@/components/LanguageButtonBar";
 
