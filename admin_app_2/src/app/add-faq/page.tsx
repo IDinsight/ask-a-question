@@ -8,11 +8,11 @@ import { useSearchParams } from "next/navigation";
 
 const AddFAQPage = () => {
   const searchParams = useSearchParams();
-  const contentID = searchParams.get("contentID") ?? "";
+  const content_id = searchParams.get("content_id") ?? "";
 
   return (
     <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-      <Header contentID={contentID} />
+      <Header content_id={content_id} />
       <Layout.FlexBox
         flexDirection={"column"}
         sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
@@ -67,17 +67,17 @@ const ContentBox = () => {
   );
 };
 
-const Header = ({ contentID }: { contentID: string }) => {
+const Header = ({ content_id }: { content_id: string }) => {
   return (
     <Layout.FlexBox flexDirection={"row"} {...appStyles.alignItemsCenter}>
       <ChevronLeft onClick={() => window.history.back()} />
       <Layout.Spacer multiplier={1} horizontal />
-      <Typography variant="h5">{contentID ? "Edit" : "Add"} FAQ</Typography>
+      <Typography variant="h5">{content_id ? "Edit" : "Add"} FAQ</Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">{`\u2022`}</Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">
-        #{contentID ? contentID : Math.floor(Math.random() * 300)}
+        #{content_id ? content_id : Math.floor(Math.random() * 300)}
       </Typography>
     </Layout.FlexBox>
   );
