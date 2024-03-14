@@ -45,7 +45,7 @@ import Link from "next/link";
 function ContentScreen() {
   return (
     <Layout.FlexBox alignItems="center" flexDirection={"column"}>
-      <Layout.Spacer multiplier={6} />
+      <Layout.Spacer multiplier={3} />
       <CardsView />
     </Layout.FlexBox>
   );
@@ -87,10 +87,8 @@ const CardsSearchAndFilter = () => {
       <TextField
         disabled={true}
         sx={{
-          width: {
-            md: "50%",
-            lg: "30%",
-          },
+          width: "50%",
+          maxWidth: "500px",
           backgroundColor: appColors.white,
         }}
         variant="outlined"
@@ -108,11 +106,9 @@ const CardsSearchAndFilter = () => {
         gap={sizes.tinyGap}
         alignItems="center"
         sx={{
-          display: { xs: "none", md: "flex" },
-          width: {
-            md: "50%",
-            lg: "30%",
-          },
+          display: { xs: "block", md: "flex" },
+          width: "50%",
+          maxWidth: "500px",
         }}
       >
         <FilterList />
