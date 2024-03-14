@@ -230,7 +230,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         </Button>
 
         <Typography variant="subtitle2">
-          {page} of {max_pages}
+          {max_pages === 0 ? 0 : page} of {max_pages}
         </Typography>
 
         <Button

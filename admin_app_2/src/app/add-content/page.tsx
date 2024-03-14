@@ -45,7 +45,7 @@ const AddContentPage = () => {
         sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
       >
         <Layout.Spacer multiplier={2} />
-        <ContentBox content={content} />
+        <ContentBox content={content} setContent={setContent} />
         <Layout.Spacer multiplier={1} />
         <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
           Save
@@ -55,7 +55,13 @@ const AddContentPage = () => {
   );
 };
 
-const ContentBox = ({ content }: { content: Content }) => {
+const ContentBox = ({
+  content,
+  setContent,
+}: {
+  content: Content;
+  setContent: React.Dispatch<React.SetStateAction<Content>>;
+}) => {
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -76,6 +82,9 @@ const ContentBox = ({ content }: { content: Content }) => {
         placeholder="Add a title"
         sx={{ backgroundColor: appColors.white }}
         value={content.content_title}
+        onChange={(e) =>
+          setContent({ ...content, content_title: e.target.value })
+        }
       />
       <Layout.Spacer multiplier={2} />
       <Typography variant="body2">Content (max 2000 characters)</Typography>
@@ -90,6 +99,9 @@ const ContentBox = ({ content }: { content: Content }) => {
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
           value={content.content_text}
+          onChange={(e) =>
+            setContent({ ...content, content_text: e.target.value })
+          }
         />
       </Layout.FlexBox>
     </Layout.FlexBox>
