@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 //import "./globals.css";
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "@/theme";
 import NavBar from "@/components/NavBar";
-import React from "react";
+import theme from "@/theme";
 import { AuthProvider } from "@/utils/auth";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 

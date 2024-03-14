@@ -1,7 +1,4 @@
-import React from "react";
-import { Modal, Typography, Box, Fade, Button, Chip } from "@mui/material";
 import { appColors, appStyles, sizes } from "@/utils";
-import { Layout } from "./Layout";
 import {
   Close,
   Delete,
@@ -10,9 +7,10 @@ import {
   ThumbDown,
   ThumbUp,
 } from "@mui/icons-material";
-import LanguageButtonBar from "./LanguageButtonBar";
+import { Box, Button, Fade, Modal, Typography } from "@mui/material";
 import Link from "next/link";
-import Image from "next/image";
+import LanguageButtonBar from "./LanguageButtonBar";
+import { Layout } from "./Layout";
 
 const ContentViewModal = ({
   open,

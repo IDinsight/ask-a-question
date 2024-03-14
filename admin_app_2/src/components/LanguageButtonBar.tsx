@@ -1,4 +1,3 @@
-import React from "react";
 import { Layout } from "@/components/Layout";
 import {
   DEFAULT_LANGUAGE,
@@ -7,14 +6,15 @@ import {
   appStyles,
   sizes,
 } from "@/utils";
+import { AddCircle } from "@mui/icons-material";
 import { Menu, MenuItem, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { AddCircle, Delete, InfoOutlined } from "@mui/icons-material";
+import React from "react";
 
 const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
   const [langList, setLangList] = React.useState(
     expandable
       ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)]
-      : LANGUAGE_OPTIONS
+      : LANGUAGE_OPTIONS,
   );
   const [selectedLang, setSelectedLang] = React.useState<string>("en");
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -76,7 +76,7 @@ const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
             >
               {language.label}
             </MenuItem>
-          )
+          ),
         )}
       </Menu>
     </Layout.FlexBox>
