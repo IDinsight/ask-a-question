@@ -1,46 +1,34 @@
 "use client";
+import ContentCard from "@/components/ContentCard";
+import { Layout } from "@/components/Layout";
+import theme from "@/theme";
+import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
 import {
-  InputAdornment,
-  TextField,
-  Typography,
-  Box,
-  ToggleButton,
-  ToggleButtonGroup,
-  Chip,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-  Grid,
-  useMediaQuery,
-  Container,
-} from "@mui/material";
-import {
-  Edit,
-  CopyAll,
-  Search,
-  SortByAlphaRounded,
   Add,
-  Upload,
-  DocumentScanner,
-  Filter,
-  FilterVintage,
-  FilterList,
-  ContentCopy,
-  FileCopy,
-  Sort,
-  Download,
   ChevronLeft,
   ChevronRight,
+  Download,
+  FilterList,
+  Search,
+  Sort,
+  Upload,
 } from "@mui/icons-material";
-import React from "react";
-import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
-import ContentCard from "@/components/ContentCard";
-import theme from "@/theme";
+import {
+  Box,
+  Button,
+  Chip,
+  FormControl,
+  Grid,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
 import Link from "next/link";
+import React from "react";
 
 function ContentScreen() {
   return (
@@ -53,7 +41,7 @@ function ContentScreen() {
 
 const CardsView = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
 
   return (
