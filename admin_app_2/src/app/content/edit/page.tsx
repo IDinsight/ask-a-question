@@ -6,7 +6,7 @@ import { ChevronLeft } from "@mui/icons-material";
 import { Button, TextField, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { apiCalls } from "../../utils/api";
+import { apiCalls } from "../../../utils/api";
 
 interface Content {
   content_title: string;
