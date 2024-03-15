@@ -72,9 +72,28 @@ const createContent = async (content) => {
   });
 };
 
+const editContent = async (content_id, content) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/edit`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify(content),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error editing content");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
   deleteContent,
   createContent,
+  editContent,
 };
