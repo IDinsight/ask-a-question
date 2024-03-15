@@ -54,4 +54,27 @@ const deleteContent = async (content_id) => {
   });
 };
 
-export const apiCalls = { getContentList, getContent, deleteContent };
+const createContent = async (content) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify(content),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error creating content");
+    }
+  });
+};
+
+export const apiCalls = {
+  getContentList,
+  getContent,
+  deleteContent,
+  createContent,
+};

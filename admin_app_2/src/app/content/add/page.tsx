@@ -4,54 +4,47 @@ import { Layout } from "@/components/Layout";
 import { appColors, appStyles, sizes } from "@/utils";
 import { ChevronLeft } from "@mui/icons-material";
 import { Button, TextField, Typography } from "@mui/material";
-import { useSearchParams } from "next/navigation";
 import React from "react";
 import { apiCalls } from "../../../utils/api";
 
-interface Content {
+interface ContentBody {
   content_title: string;
   content_text: string;
   content_language: string;
   content_metadata: Record<string, unknown>;
-  content_id: number;
-  created_datetime_utc: string;
-  updated_datetime_utc: string;
 }
 
-// set content_id to fixed value for now
-const content_id = "1234";
-
 const AddContentPage = () => {
-  const [content, setContent] = React.useState<Content>({
+  const [content_body, setContentBody] = React.useState<ContentBody>({
     content_title: "",
     content_text: "",
-    content_language: "",
+    content_language: "ENGLISH",
     content_metadata: {},
-    content_id: 0,
-    created_datetime_utc: "",
-    updated_datetime_utc: "",
   });
 
   return (
     <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-      <Header content_id={content_id} />
+      <Header />
       <Layout.FlexBox
         flexDirection={"column"}
         sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
       >
         <Layout.Spacer multiplier={2} />
-        <ContentBox content={content} setContent={setContent} />
+        <ContentBox
+          content_body={content_body}
+          setContentBody={setContentBody}
+        />
       </Layout.FlexBox>
     </Layout.FlexBox>
   );
 };
 
 const ContentBox = ({
-  content,
-  setContent,
+  content_body,
+  setContentBody,
 }: {
-  content: Content;
-  setContent: React.Dispatch<React.SetStateAction<Content>>;
+  content_body: ContentBody;
+  setContentBody: React.Dispatch<React.SetStateAction<ContentBody>>;
 }) => {
   return (
     <Layout.FlexBox
@@ -72,9 +65,9 @@ const ContentBox = ({
       <TextField
         placeholder="Add a title"
         sx={{ backgroundColor: appColors.white }}
-        value={content.content_title}
+        value={content_body.content_title}
         onChange={(e) =>
-          setContent({ ...content, content_title: e.target.value })
+          setContentBody({ ...content_body, content_title: e.target.value })
         }
       />
       <Layout.Spacer multiplier={2} />
@@ -89,21 +82,30 @@ const ContentBox = ({
           rows={15}
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
-          value={content.content_text}
+          value={content_body.content_text}
           onChange={(e) =>
-            setContent({ ...content, content_text: e.target.value })
+            setContentBody({ ...content_body, content_text: e.target.value })
           }
         />
       </Layout.FlexBox>
       <Layout.Spacer multiplier={1} />
-      <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
+      <Button
+        variant="contained"
+        color="primary"
+        sx={[{ width: "5%" }]}
+        onClick={() =>
+          apiCalls.createContent(content_body).then(() => {
+            window.history.back();
+          })
+        }
+      >
         Save
       </Button>
     </Layout.FlexBox>
   );
 };
 
-const Header = ({ content_id }: { content_id: string }) => {
+const Header = () => {
   return (
     <Layout.FlexBox flexDirection={"row"} {...appStyles.alignItemsCenter}>
       <ChevronLeft
@@ -112,10 +114,6 @@ const Header = ({ content_id }: { content_id: string }) => {
       />
       <Layout.Spacer multiplier={1} horizontal />
       <Typography variant="h5">Add Content</Typography>
-      <Layout.Spacer multiplier={2} horizontal />
-      <Typography variant="h5">{`\u2022`}</Typography>
-      <Layout.Spacer multiplier={2} horizontal />
-      <Typography variant="h5">#{content_id}</Typography>
     </Layout.FlexBox>
   );
 };
