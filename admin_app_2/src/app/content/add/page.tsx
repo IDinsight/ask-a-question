@@ -41,10 +41,6 @@ const AddContentPage = () => {
       >
         <Layout.Spacer multiplier={2} />
         <ContentBox content={content} setContent={setContent} />
-        <Layout.Spacer multiplier={1} />
-        <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
-          Save
-        </Button>
       </Layout.FlexBox>
     </Layout.FlexBox>
   );
@@ -99,6 +95,10 @@ const ContentBox = ({
           }
         />
       </Layout.FlexBox>
+      <Layout.Spacer multiplier={1} />
+      <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
+        Save
+      </Button>
     </Layout.FlexBox>
   );
 };
