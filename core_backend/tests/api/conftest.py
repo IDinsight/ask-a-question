@@ -12,8 +12,8 @@ from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.config import EMBEDDING_MODEL
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
-from core_backend.app.database import get_session
 from core_backend.app.contents.models import ContentDB
+from core_backend.app.database import get_session
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.question_answer.schemas import (
