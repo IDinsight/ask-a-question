@@ -180,12 +180,17 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const [cards, setCards] = React.useState<any[]>([]);
   const MAX_CARDS_PER_PAGE = 12;
 
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const triggerRefresh = () => {
+    setRefreshKey((oldKey) => oldKey + 1);
+  };
+
   React.useEffect(() => {
     apiCalls.getContentList().then((data) => {
       setCards(data);
       setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
     });
-  }, []);
+  }, [refreshKey]);
 
   return (
     <Box
@@ -211,6 +216,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
                 text={item.content_text}
                 content_id={item.content_id}
                 last_modified={item.updated_datetime_utc}
+                onDelete={triggerRefresh}
               />
             </Grid>
           ))}
