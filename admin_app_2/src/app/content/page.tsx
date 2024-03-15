@@ -253,10 +253,10 @@ const CardsBottomStrip = () => {
       sx={{ px: sizes.baseGap }}
       gap={sizes.baseGap}
     >
-      <Link href="/content/edit">
+      <Link href="/content/add">
         <Button variant="contained">
           <Add />
-          Add New Content
+          Add Content
         </Button>
       </Link>
       <Button
