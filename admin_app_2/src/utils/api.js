@@ -37,4 +37,21 @@ const getContent = async (content_id) => {
   });
 };
 
-export const apiCalls = { getContentList, getContent };
+const deleteContent = async (content_id) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ACCESS_TOKEN}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error deleting content");
+    }
+  });
+};
+
+export const apiCalls = { getContentList, getContent, deleteContent };

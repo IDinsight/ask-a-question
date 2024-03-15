@@ -11,6 +11,8 @@ import { Box, Button, Fade, Modal, Typography } from "@mui/material";
 import Link from "next/link";
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
+import { apiCalls } from "../utils/api";
+import React from "react";
 
 const ContentViewModal = ({
   title,
@@ -100,7 +102,22 @@ const ContentViewModal = ({
                   </Button>
                 </Link>
                 <Layout.Spacer horizontal multiplier={1} />
-                <Delete color="disabled" fontSize="small" />
+                <Delete
+                  style={{ cursor: "pointer" }}
+                  color="primary"
+                  fontSize="small"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Are you sure you want to delete this content?",
+                      )
+                    ) {
+                      apiCalls.deleteContent(content_id).then(() => {
+                        window.location.reload();
+                      });
+                    }
+                  }}
+                />
               </Layout.FlexBox>
               <Layout.FlexBox
                 {...appStyles.alignItemsCenter}
