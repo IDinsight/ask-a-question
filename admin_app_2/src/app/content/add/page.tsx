@@ -94,8 +94,8 @@ const ContentBox = ({
         color="primary"
         sx={[{ width: "5%" }]}
         onClick={() =>
-          apiCalls.createContent(content_body).then(() => {
-            window.history.back();
+          apiCalls.createContent(content_body).then((data) => {
+            window.location.href = `/content/edit?content_id=${data.content_id}`;
           })
         }
       >
