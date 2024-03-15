@@ -18,6 +18,13 @@ interface Content {
   updated_datetime_utc: string;
 }
 
+interface EditContentBody {
+  content_title: string;
+  content_text: string;
+  content_language: string;
+  content_metadata: Record<string, unknown>;
+}
+
 const AddContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = searchParams.get("content_id") ?? "";
@@ -59,6 +66,28 @@ const ContentBox = ({
   content: Content;
   setContent: React.Dispatch<React.SetStateAction<Content>>;
 }) => {
+  const [isSaved, setIsSaved] = React.useState(true);
+
+  const saveContent = () => {
+    const body: EditContentBody = {
+      content_title: content.content_title,
+      content_text: content.content_text,
+      content_language: content.content_language,
+      content_metadata: content.content_metadata,
+    };
+    apiCalls.editContent(content.content_id, body).then((data) => {
+      setIsSaved(true);
+    });
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    key: keyof Content,
+  ) => {
+    setContent({ ...content, [key]: e.target.value });
+    setIsSaved(false);
+  };
+
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -79,9 +108,7 @@ const ContentBox = ({
         placeholder="Add a title"
         sx={{ backgroundColor: appColors.white }}
         value={content.content_title}
-        onChange={(e) =>
-          setContent({ ...content, content_title: e.target.value })
-        }
+        onChange={(e) => handleChange(e, "content_title")}
       />
       <Layout.Spacer multiplier={2} />
       <Typography variant="body2">Content (max 2000 characters)</Typography>
@@ -96,13 +123,17 @@ const ContentBox = ({
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
           value={content.content_text}
-          onChange={(e) =>
-            setContent({ ...content, content_text: e.target.value })
-          }
+          onChange={(e) => handleChange(e, "content_text")}
         />
       </Layout.FlexBox>
       <Layout.Spacer multiplier={1} />
-      <Button variant="contained" color="primary" sx={[{ width: "5%" }]}>
+      <Button
+        variant="contained"
+        disabled={isSaved}
+        color="primary"
+        sx={[{ width: "5%" }]}
+        onClick={saveContent}
+      >
         Save
       </Button>
     </Layout.FlexBox>
