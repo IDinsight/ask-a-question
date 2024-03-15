@@ -21,6 +21,7 @@ const ContentViewModal = ({
   last_modified,
   open,
   onClose,
+  onDelete,
 }: {
   title: string;
   text: string;
@@ -28,6 +29,7 @@ const ContentViewModal = ({
   last_modified: string;
   open: boolean;
   onClose: () => void;
+  onDelete: () => void;
 }) => {
   return (
     <Modal
@@ -112,9 +114,14 @@ const ContentViewModal = ({
                         "Are you sure you want to delete this content?",
                       )
                     ) {
-                      apiCalls.deleteContent(content_id).then(() => {
-                        window.location.reload();
-                      });
+                      apiCalls
+                        .deleteContent(content_id)
+                        .then(() => {
+                          onClose();
+                        })
+                        .then(() => {
+                          onDelete();
+                        });
                     }
                   }}
                 />

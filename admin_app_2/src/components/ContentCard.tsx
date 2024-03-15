@@ -11,11 +11,13 @@ const ContentCard = ({
   text,
   content_id,
   last_modified,
+  onDelete,
 }: {
   title: string;
   text: string;
   content_id: string;
   last_modified: string;
+  onDelete: () => void;
 }) => {
   const [open, setOpen] = React.useState<boolean>(false);
   return (
@@ -78,6 +80,7 @@ const ContentCard = ({
         last_modified={last_modified}
         open={open}
         onClose={() => setOpen(false)}
+        onDelete={onDelete}
       />
     </>
   );
