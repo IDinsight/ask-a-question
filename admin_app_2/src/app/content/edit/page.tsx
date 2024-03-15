@@ -86,7 +86,7 @@ const ContentBox = ({
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
 
-  const saveContent = () => {
+  const saveContent = (content: Content) => {
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
@@ -150,7 +150,13 @@ const ContentBox = ({
         disabled={isSaved}
         color="primary"
         sx={[{ width: "5%" }]}
-        onClick={saveContent}
+        onClick={() => {
+          if (content.content_title === "" || content.content_text === "") {
+            alert("Please fill in both fields.");
+          } else {
+            saveContent(content);
+          }
+        }}
       >
         Save
       </Button>
