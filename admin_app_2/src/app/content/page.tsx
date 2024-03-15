@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import React from "react";
+import Tooltip from "@mui/material/Tooltip";
 
 function ContentScreen() {
   return (
@@ -54,9 +55,6 @@ const CardsView = () => {
       />
       <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} />
-      <Layout.Spacer multiplier={1} />
-      <CardsBottomStrip />
-      <Layout.Spacer multiplier={4} />
     </Layout.FlexBox>
   );
 };
@@ -158,18 +156,37 @@ const CardsUtilityStrip = ({
           </Select>
         </FormControl>
       </Layout.FlexBox>
-      <Button
-        disabled={true}
-        variant="contained"
+
+      <Layout.FlexBox
+        flexDirection={"row"}
         sx={{
           display: { xs: "none", md: "flex" },
           alignSelf: "flex-end",
+          px: sizes.baseGap,
         }}
+        gap={sizes.baseGap}
       >
-        <Download />
-        <Layout.Spacer horizontal multiplier={0.5} />
-        Export
-      </Button>
+        <Tooltip title="Import Contents">
+          <span>
+            <Button disabled={true} variant="contained">
+              <Download />
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title="Export Contents">
+          <span>
+            <Button disabled={true} variant="contained">
+              <Upload />
+            </Button>
+          </span>
+        </Tooltip>
+        <Link href="/content/add">
+          <Button variant="contained">
+            <Add />
+            New
+          </Button>
+        </Link>
+      </Layout.FlexBox>
     </Layout.FlexBox>
   );
 };
@@ -224,7 +241,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
             ))}
         </Grid>
       </Box>
-
+      <Layout.Spacer multiplier={1} />
       <Layout.FlexBox
         flexDirection={"row"}
         alignItems={"center"}
@@ -238,11 +255,9 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         >
           <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
         </Button>
-
         <Typography variant="subtitle2">
           {max_pages === 0 ? 0 : page} of {max_pages}
         </Typography>
-
         <Button
           onClick={() => {
             page < max_pages && setPage(page + 1);
@@ -253,32 +268,6 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         </Button>
       </Layout.FlexBox>
     </div>
-  );
-};
-
-const CardsBottomStrip = () => {
-  return (
-    <Layout.FlexBox
-      flexDirection={"row"}
-      sx={{ px: sizes.baseGap }}
-      gap={sizes.baseGap}
-    >
-      <Link href="/content/add">
-        <Button variant="contained">
-          <Add />
-          Add Content
-        </Button>
-      </Link>
-      <Button
-        disabled={true}
-        variant="outlined"
-        sx={{ backgroundColor: appColors.white }}
-      >
-        <Upload />
-        <Layout.Spacer horizontal multiplier={0.5} />
-        Import
-      </Button>
-    </Layout.FlexBox>
   );
 };
 
