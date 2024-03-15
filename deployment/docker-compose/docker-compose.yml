@@ -10,6 +10,10 @@ services:
     restart: always
     env_file:
       - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../core_backend
     volumes:
       - local_dynamic_storage:/home/storage
   admin_app:
@@ -26,6 +30,10 @@ services:
     restart: always
     env_file:
       - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../admin_app
   caddy:
     image: caddy:2.7.6
     restart: unless-stopped
