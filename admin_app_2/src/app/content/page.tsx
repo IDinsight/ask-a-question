@@ -193,34 +193,38 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   }, [refreshKey]);
 
   return (
-    <Box
-      sx={[
-        {
-          border: 1,
-          borderColor: appColors.secondary,
-          mx: sizes.baseGap,
-          py: sizes.tinyGap,
-        },
-      ]}
-    >
-      <Grid container>
-        {cards
-          .slice(
-            MAX_CARDS_PER_PAGE * (page - 1),
-            MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
-          )
-          .map((item, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-              <ContentCard
-                title={item.content_title}
-                text={item.content_text}
-                content_id={item.content_id}
-                last_modified={item.updated_datetime_utc}
-                onDelete={triggerRefresh}
-              />
-            </Grid>
-          ))}
-      </Grid>
+    <div>
+      <Box
+        sx={[
+          {
+            border: 1,
+            borderColor: appColors.secondary,
+            mx: sizes.baseGap,
+            py: sizes.tinyGap,
+            minHeight: "200px",
+          },
+        ]}
+      >
+        <Grid container>
+          {cards
+            .slice(
+              MAX_CARDS_PER_PAGE * (page - 1),
+              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
+            )
+            .map((item, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <ContentCard
+                  title={item.content_title}
+                  text={item.content_text}
+                  content_id={item.content_id}
+                  last_modified={item.updated_datetime_utc}
+                  onDelete={triggerRefresh}
+                />
+              </Grid>
+            ))}
+        </Grid>
+      </Box>
+
       <Layout.FlexBox
         flexDirection={"row"}
         alignItems={"center"}
@@ -248,7 +252,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
           <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
         </Button>
       </Layout.FlexBox>
-    </Box>
+    </div>
   );
 };
 
