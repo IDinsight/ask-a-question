@@ -145,7 +145,7 @@ const Header = ({ content_id }: { content_id: string }) => {
     <Layout.FlexBox flexDirection={"row"} {...appStyles.alignItemsCenter}>
       <ChevronLeft
         style={{ cursor: "pointer" }}
-        onClick={() => window.history.back()}
+        onClick={() => (window.location.href = "/content/")}
       />
       <Layout.Spacer multiplier={1} horizontal />
       <Typography variant="h5">Edit Content</Typography>
