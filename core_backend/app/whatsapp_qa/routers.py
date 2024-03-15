@@ -5,14 +5,14 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..configs.app_config import WHATSAPP_TOKEN, WHATSAPP_VERIFY_TOKEN
-from ..db.db_models import (
-    get_similar_content_async,
+from ..contents.models import get_similar_content_async
+from ..database import get_async_session
+from .config import WHATSAPP_TOKEN, WHATSAPP_VERIFY_TOKEN
+from .models import (
     save_wamessage_to_db,
     save_waresponse_to_db,
 )
-from ..db.engine import get_async_session
-from ..schemas import UserQueryBase, WhatsAppIncoming, WhatsAppResponse
+from .schemas import WhatsAppIncoming, WhatsAppResponse
 
 router = APIRouter()
 
@@ -56,13 +56,12 @@ async def process_whatsapp_message(
                     incoming=incoming_to_process, asession=asession
                 )
 
-                message = UserQueryBase(query_text=msg_body, query_metadata={})
                 content_response = await get_similar_content_async(
-                    message,
+                    msg_body,
                     1,
                     asession,
                 )
-                top_faq = content_response[0].retrieved_text
+                top_faq = content_response[0][1]
                 data_obj = {
                     "messaging_product": "whatsapp",
                     "to": from_phone,

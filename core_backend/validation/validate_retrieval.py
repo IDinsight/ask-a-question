@@ -10,13 +10,11 @@ from dateutil import tz
 from fastapi.testclient import TestClient
 from litellm import embedding
 
-from core_backend.app.configs.app_config import (
-    EMBEDDING_MODEL,
-    N_TOP_SIMILAR,
-    QUESTION_ANSWER_SECRET,
-)
-from core_backend.app.db.db_models import ContentDB
-from core_backend.app.schemas import UserQueryBase
+from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
+from core_backend.app.config import EMBEDDING_MODEL
+from core_backend.app.contents.models import ContentDB
+from core_backend.app.question_answer.config import N_TOP_SIMILAR
+from core_backend.app.question_answer.schemas import UserQueryBase
 from core_backend.app.utils import setup_logger
 
 logger = setup_logger()

@@ -4,8 +4,8 @@ from typing import Any, Dict, Generator
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.db.db_models import ContentDB
-from core_backend.app.routers.manage_content import _convert_record_to_schema
+from core_backend.app.contents.models import ContentDB
+from core_backend.app.contents.routers import _convert_record_to_schema
 
 from .conftest import fake_embedding
 

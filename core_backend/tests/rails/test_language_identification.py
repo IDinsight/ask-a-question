@@ -4,9 +4,9 @@ from typing import List, Tuple
 import pytest
 import yaml
 
-from core_backend.app.configs.llm_prompts import IdentifiedLanguage
+from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
 from core_backend.app.llm_call.parse_input import _identify_language
-from core_backend.app.schemas import UserQueryRefined, UserQueryResponse
+from core_backend.app.question_answer.schemas import UserQueryRefined, UserQueryResponse
 
 pytestmark = pytest.mark.rails
 

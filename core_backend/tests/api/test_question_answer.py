@@ -4,14 +4,13 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.configs.app_config import (
-    N_TOP_SIMILAR,
-    QUESTION_ANSWER_SECRET,
-)
-from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
+from core_backend.app.question_answer.config import N_TOP_SIMILAR
+
+from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
+from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.parse_input import _classify_safety, _translate_question
-from core_backend.app.schemas import (
+from core_backend.app.question_answer.schemas import (
     ErrorType,
     ResultState,
     UserQueryRefined,

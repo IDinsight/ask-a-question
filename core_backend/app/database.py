@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import NullPool
 
-from ..configs.app_config import (
+from .config import (
     POSTGRES_DB,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,

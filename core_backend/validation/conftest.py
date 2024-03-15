@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core_backend.app import create_app
-from core_backend.app.db.engine import get_session
+from core_backend.app.database import get_session
 
 
 @pytest.fixture(scope="session")

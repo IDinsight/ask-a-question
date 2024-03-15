@@ -7,18 +7,18 @@ from typing import Any, Callable, TypedDict
 
 from pydantic import ValidationError
 
-from ..configs.app_config import (
+from ..config import (
     ALIGN_SCORE_API,
     ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
 )
-from ..configs.llm_prompts import AlignmentScore
-from ..schemas import (
+from ..question_answer.schemas import (
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
 )
 from ..utils import get_http_client, setup_logger
+from .llm_prompts import AlignmentScore
 from .utils import _ask_llm_async
 
 logger = setup_logger("OUTPUT RAILS")

@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.configs.app_config import (
+from core_backend.app.whatsapp_qa.config import (
     WHATSAPP_VERIFY_TOKEN,
 )
 
