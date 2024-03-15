@@ -18,9 +18,10 @@ interface Content {
   updated_datetime_utc: string;
 }
 
+// set content_id to fixed value for now
+const content_id = "1234";
+
 const AddContentPage = () => {
-  const searchParams = useSearchParams();
-  const content_id = searchParams.get("content_id") ?? "";
   const [content, setContent] = React.useState<Content>({
     content_title: "",
     content_text: "",
@@ -30,12 +31,6 @@ const AddContentPage = () => {
     created_datetime_utc: "",
     updated_datetime_utc: "",
   });
-
-  React.useEffect(() => {
-    apiCalls.getContent(content_id).then((data) => {
-      setContent(data);
-    });
-  }, []);
 
   return (
     <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
@@ -116,7 +111,7 @@ const Header = ({ content_id }: { content_id: string }) => {
         onClick={() => window.history.back()}
       />
       <Layout.Spacer multiplier={1} horizontal />
-      <Typography variant="h5">Edit Content</Typography>
+      <Typography variant="h5">Add Content</Typography>
       <Layout.Spacer multiplier={2} horizontal />
       <Typography variant="h5">{`\u2022`}</Typography>
       <Layout.Spacer multiplier={2} horizontal />
