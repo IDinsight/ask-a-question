@@ -3,7 +3,7 @@ import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
 import { appColors, appStyles, sizes } from "@/utils";
 import { ChevronLeft } from "@mui/icons-material";
-import { Button, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import { apiCalls } from "../../../utils/api";
@@ -38,12 +38,30 @@ const AddContentPage = () => {
     updated_datetime_utc: "",
   });
 
+  const [isLoading, setIsLoading] = React.useState(true);
+
   React.useEffect(() => {
     apiCalls.getContent(content_id).then((data) => {
       setContent(data);
+      setIsLoading(false);
     });
   }, []);
 
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </div>
+    );
+  }
   return (
     <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
       <Header content_id={content_id} />
