@@ -60,10 +60,11 @@ const ContentBox = ({
     >
       <LanguageButtonBar expandable={true} />
       <Layout.Spacer multiplier={1} />
-      <Typography variant="body2">Title</Typography>
+      <Typography variant="body2">Title (max 200 characters)</Typography>
       <Layout.Spacer multiplier={0.5} />
       <TextField
         placeholder="Add a title"
+        inputProps={{ maxLength: 200 }}
         sx={{ backgroundColor: appColors.white }}
         value={content_body.content_title}
         onChange={(e) =>
@@ -71,7 +72,7 @@ const ContentBox = ({
         }
       />
       <Layout.Spacer multiplier={2} />
-      <Typography variant="body2">Content (max 2000 characters)</Typography>
+      <Typography variant="body2">Content (max 1800 characters)</Typography>
       <Layout.Spacer multiplier={0.5} />
       <Layout.FlexBox
         flexDirection={"column"}
@@ -81,7 +82,7 @@ const ContentBox = ({
           multiline
           rows={15}
           placeholder="Add content"
-          inputProps={{ maxLength: 2000 }}
+          inputProps={{ maxLength: 1800 }}
           value={content_body.content_text}
           onChange={(e) =>
             setContentBody({ ...content_body, content_text: e.target.value })
@@ -93,11 +94,18 @@ const ContentBox = ({
         variant="contained"
         color="primary"
         sx={[{ width: "5%" }]}
-        onClick={() =>
-          apiCalls.createContent(content_body).then((data) => {
-            window.location.href = `/content/edit?content_id=${data.content_id}`;
-          })
-        }
+        onClick={() => {
+          if (
+            content_body.content_title === "" ||
+            content_body.content_text === ""
+          ) {
+            alert("Please fill in both fields.");
+          } else {
+            apiCalls.createContent(content_body).then((data) => {
+              window.location.href = `/content/edit?content_id=${data.content_id}`;
+            });
+          }
+        }}
       >
         Save
       </Button>
