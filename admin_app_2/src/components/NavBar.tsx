@@ -1,6 +1,5 @@
 "use client";
 import { appColors, appStyles, sizes } from "@/utils";
-import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -23,12 +22,6 @@ const pages = [
 const settings = ["Logout"];
 
 const NavBar = () => {
-  const auth = useAuth();
-
-  if (!auth.isAuthenticated) {
-    return null;
-  }
-
   return (
     <AppBar
       position="static"
@@ -173,7 +166,6 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
-  const auth = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null,
@@ -185,8 +177,6 @@ const UserDropdown = () => {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
-    auth.signout();
-    router.push("/");
   };
   return (
     <Box>
@@ -194,7 +184,6 @@ const UserDropdown = () => {
         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
           <Avatar
             alt="Full access"
-            src="/static/images/avatar/2.jpg"
             sx={{ width: sizes.icons.medium, height: sizes.icons.medium }}
           />
         </IconButton>

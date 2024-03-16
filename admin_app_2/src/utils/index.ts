@@ -71,4 +71,12 @@ export const appStyles = {
   noShadow: {
     boxShadow: "none",
   },
+  threeLineEllipsis: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp: 3,
+    flexGrow: 1,
+  },
 };

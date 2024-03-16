@@ -47,146 +47,8 @@ const CardsView = () => {
   );
   return (
     <Layout.FlexBox width={"100%"}>
-      <CardsSearchAndFilter />
-      <Layout.Spacer multiplier={2} />
-      <CardsUtilityStrip
-        displayLanguage={displayLanguage}
-        onChangeDisplayLanguage={(e) => setDisplayLanguage(e)}
-      />
       <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} />
-    </Layout.FlexBox>
-  );
-};
-
-const CardsSearchAndFilter = () => {
-  const chipData = [
-    { key: 1, label: "Recently Modified" },
-    { key: 2, label: "Most Used" },
-    { key: 3, label: "Most Downvoted" },
-  ];
-  const [selectedChip, setSelectedChip] = React.useState<number | null>(null);
-  return (
-    <Layout.FlexBox alignItems="center">
-      <TextField
-        disabled={true}
-        sx={{
-          width: "50%",
-          maxWidth: "500px",
-          backgroundColor: appColors.white,
-        }}
-        variant="outlined"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search color="disabled" />
-            </InputAdornment>
-          ),
-        }}
-      />
-      <Layout.Spacer />
-      <Layout.FlexBox
-        flexDirection={"row"}
-        gap={sizes.tinyGap}
-        alignItems="center"
-        sx={{
-          display: { xs: "block", md: "flex" },
-          width: "50%",
-          maxWidth: "500px",
-        }}
-      >
-        <FilterList />
-        {chipData.map((data) => {
-          return (
-            <Chip
-              disabled={true}
-              key={data.key}
-              label={data.label}
-              clickable={true}
-              variant={selectedChip === data.key ? "filled" : "outlined"}
-              onClick={() => {
-                if (selectedChip === data.key) {
-                  setSelectedChip(null);
-                } else {
-                  setSelectedChip(data.key);
-                }
-              }}
-            />
-          );
-        })}
-      </Layout.FlexBox>
-    </Layout.FlexBox>
-  );
-};
-
-const CardsUtilityStrip = ({
-  displayLanguage,
-  onChangeDisplayLanguage,
-}: {
-  displayLanguage: string;
-  onChangeDisplayLanguage: (language: string) => void;
-}) => {
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
-  return (
-    <Layout.FlexBox
-      flexDirection={"row"}
-      justifyContent={isSmallScreen ? "flex-start" : "space-between"}
-      sx={{ px: sizes.baseGap }}
-    >
-      <Layout.FlexBox
-        sx={{ width: { xs: "30%", md: "15%" } }}
-        flexDirection={"row"}
-        alignItems={"center"}
-      >
-        <Sort sx={{ display: { xs: "none", md: "flex" } }} />
-        <Layout.Spacer horizontal multiplier={1} />
-        <FormControl sx={{ width: "100%" }}>
-          <InputLabel>Language</InputLabel>
-          <Select
-            value={displayLanguage}
-            label="Language"
-            onChange={({ target: { value } }) => onChangeDisplayLanguage(value)}
-            sx={{
-              backgroundColor: appColors.white,
-            }}
-          >
-            {LANGUAGE_OPTIONS.map((item, index) => (
-              <MenuItem value={item.label}>{item.label}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Layout.FlexBox>
-
-      <Layout.FlexBox
-        flexDirection={"row"}
-        sx={{
-          display: { xs: "none", md: "flex" },
-          alignSelf: "flex-end",
-          px: sizes.baseGap,
-        }}
-        gap={sizes.baseGap}
-      >
-        <Tooltip title="Import Contents">
-          <span>
-            <Button disabled={true} variant="contained">
-              <Download />
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Export Contents">
-          <span>
-            <Button disabled={true} variant="contained">
-              <Upload />
-            </Button>
-          </span>
-        </Tooltip>
-        <Link href="/content/add">
-          <Button variant="contained">
-            <Add />
-            New
-          </Button>
-        </Link>
-      </Layout.FlexBox>
     </Layout.FlexBox>
   );
 };
@@ -229,7 +91,15 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
               MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
             )
             .map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                key={index}
+                sx={{ display: "grid", alignItems: "stretch" }}
+              >
                 <ContentCard
                   title={item.content_title}
                   text={item.content_text}

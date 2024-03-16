@@ -27,32 +27,25 @@ const ContentCard = ({
           {
             m: sizes.smallGap,
             p: sizes.baseGap,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           },
           appStyles.shadow,
         ]}
       >
-        <Typography variant="h6">{title}</Typography>
-        <Layout.Spacer multiplier={0.5} />
-        <Typography variant="subtitle2" color={appColors.darkGrey}>
-          {new Date(last_modified).toLocaleString("en-UK", {
-            day: "numeric",
-            month: "short",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: false,
-          })}
+        <Typography variant="h6" noWrap={true}>
+          {title}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
-        <Layout.FlexBox
-          flexDirection={"row"}
-          alignItems={"center"}
-          gap={sizes.smallGap}
+        <Typography
+          variant="body1"
+          paragraph={true}
+          color={appColors.darkGrey}
+          sx={appStyles.threeLineEllipsis}
         >
-          <Translate sx={{ color: appColors.outline }} fontSize="small" />
-          <Typography color={appColors.outline}>
-            {LANGUAGE_OPTIONS.map((lang) => lang.code).join(", ")}
-          </Typography>
-        </Layout.FlexBox>
+          {text}
+        </Typography>
         <Layout.Spacer multiplier={1} />
         <Layout.FlexBox flexDirection={"row"} gap={sizes.tinyGap}>
           <Button variant="contained" onClick={() => setOpen(true)}>
@@ -67,7 +60,12 @@ const ContentCard = ({
           </Link>
           <Typography
             variant="body2"
-            style={{ marginLeft: "auto", marginTop: "auto" }}
+            align="center"
+            style={{
+              marginLeft: "auto",
+              marginBottom: "auto",
+              marginTop: "auto",
+            }}
           >
             #{content_id}
           </Typography>

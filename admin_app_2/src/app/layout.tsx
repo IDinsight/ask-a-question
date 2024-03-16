@@ -25,13 +25,11 @@ export default function RootLayout({
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <NavBar />
-            {children}
-          </ThemeProvider>
-        </AuthProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <NavBar />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
