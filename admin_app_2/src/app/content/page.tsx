@@ -1,40 +1,15 @@
 "use client";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import theme from "@/theme";
 import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
-import { useSearchParams } from "next/navigation";
 import { apiCalls } from "@/utils/api";
+import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
-import {
-  Add,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  FilterList,
-  Search,
-  Sort,
-  Upload,
-} from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
-  FormControl,
-  Grid,
-  InputAdornment,
-  CircularProgress,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
-import Link from "next/link";
-import React from "react";
-import Tooltip from "@mui/material/Tooltip";
 import Snackbar from "@mui/material/Snackbar";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import React from "react";
 
 export default ContentScreen;
 

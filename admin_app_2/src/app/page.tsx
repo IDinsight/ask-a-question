@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@mui/material";
-import { useEffect } from "react";
 
 import { useRouter } from "next/navigation";
 

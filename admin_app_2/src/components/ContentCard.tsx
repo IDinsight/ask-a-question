@@ -1,6 +1,6 @@
 import ContentViewModal from "@/components/ContentModal";
-import { LANGUAGE_OPTIONS, appColors, appStyles, sizes } from "@/utils";
-import { Edit, Translate } from "@mui/icons-material";
+import { appColors, appStyles, sizes } from "@/utils";
+import { Edit } from "@mui/icons-material";
 import { Button, Card, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";

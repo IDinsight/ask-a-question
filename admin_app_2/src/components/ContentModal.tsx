@@ -9,10 +9,9 @@ import {
 } from "@mui/icons-material";
 import { Box, Button, Fade, Modal, Typography } from "@mui/material";
 import Link from "next/link";
+import { apiCalls } from "../utils/api";
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
-import { apiCalls } from "../utils/api";
-import React from "react";
 
 const ContentViewModal = ({
   title,

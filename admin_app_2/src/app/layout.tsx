@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-//import "./globals.css";
 import NavBar from "@/components/NavBar";
 import theme from "@/theme";
-import { AuthProvider } from "@/utils/auth";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import React from "react";
 
