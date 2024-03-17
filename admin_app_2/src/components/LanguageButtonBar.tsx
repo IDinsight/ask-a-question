@@ -10,10 +10,17 @@ import { AddCircle } from "@mui/icons-material";
 import { Menu, MenuItem, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
 
+interface Language {
+  code: string;
+  label: string;
+}
+
 const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
-  const [langList, setLangList] = React.useState(
+  const [langList, setLangList] = React.useState<(Language | undefined)[]>(
     expandable
-      ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)]
+      ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)].filter(
+          Boolean,
+        )
       : LANGUAGE_OPTIONS,
   );
   const [selectedLang, setSelectedLang] = React.useState<string>("en");
@@ -25,30 +32,33 @@ const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
       {...appStyles.alignItemsCenter}
     >
       <ToggleButtonGroup>
-        {langList.map((lang, index) => (
-          <ToggleButton
-            key={lang?.code}
-            value={lang?.code}
-            size="medium"
-            sx={[
-              {
-                border: 0,
-                borderBottomColor: appColors.outline,
-                borderBottomWidth: 1,
-              },
-              selectedLang === lang?.code && {
-                borderBottomColor: appColors.primary,
-                borderBottomWidth: 3,
-                color: appColors.primary,
-              },
-            ]}
-            onClick={() => setSelectedLang(lang?.code)}
-          >
-            <Layout.Spacer horizontal multiplier={0.5} />
-            {lang?.label}
-            <Layout.Spacer horizontal multiplier={0.5} />
-          </ToggleButton>
-        ))}
+        {langList.map(
+          (lang, index) =>
+            lang && (
+              <ToggleButton
+                key={lang.code}
+                value={lang.code}
+                size="medium"
+                sx={[
+                  {
+                    border: 0,
+                    borderBottomColor: appColors.outline,
+                    borderBottomWidth: 1,
+                  },
+                  selectedLang === lang?.code && {
+                    borderBottomColor: appColors.primary,
+                    borderBottomWidth: 3,
+                    color: appColors.primary,
+                  },
+                ]}
+                onClick={() => setSelectedLang(lang.code)}
+              >
+                <Layout.Spacer horizontal multiplier={0.5} />
+                {lang?.label}
+                <Layout.Spacer horizontal multiplier={0.5} />
+              </ToggleButton>
+            ),
+        )}
       </ToggleButtonGroup>
       {expandable && LANGUAGE_OPTIONS.length > langList.length && (
         <AddCircle
