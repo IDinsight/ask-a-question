@@ -117,7 +117,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   }
 
   return (
-    <div>
+    <>
       <Snackbar
         open={snackMessage !== null}
         autoHideDuration={6000}
@@ -200,6 +200,6 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
           <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
         </Button>
       </Layout.FlexBox>
-    </div>
+    </>
   );
 };
