@@ -4,18 +4,16 @@ import { Layout } from "@/components/Layout";
 import { appColors, appStyles, sizes } from "@/utils";
 import { ChevronLeft } from "@mui/icons-material";
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
+import Alert from "@mui/material/Alert";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { apiCalls } from "../../../utils/api";
+import { useRouter } from "next/navigation";
+import { apiCalls } from "@/utils/api";
 
-interface Content {
-  content_title: string;
-  content_text: string;
-  content_language: string;
-  content_metadata: Record<string, unknown>;
-  content_id: number;
-  created_datetime_utc: string;
-  updated_datetime_utc: string;
+interface Content extends EditContentBody {
+  content_id: number | null;
+  created_datetime_utc: string | null;
+  updated_datetime_utc: string | null;
 }
 
 interface EditContentBody {
@@ -25,37 +23,35 @@ interface EditContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const AddContentPage = () => {
+const AddEditContentPage = () => {
   const searchParams = useSearchParams();
-  const content_id = searchParams.get("content_id") ?? "";
-  const [content, setContent] = React.useState<Content>({
-    content_title: "",
-    content_text: "",
-    content_language: "",
-    content_metadata: {},
-    content_id: 0,
-    created_datetime_utc: "",
-    updated_datetime_utc: "",
-  });
+  const content_id = Number(searchParams.get("content_id")) || null;
 
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [content, setContent] = React.useState<Content | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   React.useEffect(() => {
-    apiCalls.getContent(content_id).then((data) => {
-      setContent(data);
+    if (!content_id) {
       setIsLoading(false);
-    });
-  }, []);
+      return;
+    } else {
+      apiCalls.getContent(content_id).then((data) => {
+        setContent(data);
+        setIsLoading(false);
+      });
+    }
+  }, [content_id]);
 
   if (isLoading) {
     return (
       <div
         style={{
           display: "flex",
+          flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
-          width: "100vh",
+          width: "100%",
         }}
       >
         <CircularProgress />
@@ -81,28 +77,57 @@ const ContentBox = ({
   content,
   setContent,
 }: {
-  content: Content;
-  setContent: React.Dispatch<React.SetStateAction<Content>>;
+  content: Content | null;
+  setContent: React.Dispatch<React.SetStateAction<Content | null>>;
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
-
-  const saveContent = (content: Content) => {
+  const [saveError, setSaveError] = React.useState(false);
+  const router = useRouter();
+  const saveContent = async (content: Content) => {
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
       content_language: content.content_language,
       content_metadata: content.content_metadata,
     };
-    apiCalls.editContent(content.content_id, body).then((data) => {
-      setIsSaved(true);
-    });
+
+    const promise =
+      content.content_id === null
+        ? apiCalls.addContent(body)
+        : apiCalls.editContent(content.content_id, body);
+
+    const result = promise
+      .then((data) => {
+        setIsSaved(true);
+        setSaveError(false);
+        return data.content_id;
+      })
+      .catch((error: Error) => {
+        console.error("Error processing content:", error);
+        setSaveError(true);
+        return null;
+      });
+
+    return await result;
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     key: keyof Content,
   ) => {
-    setContent({ ...content, [key]: e.target.value });
+    const emptyContent: Content = {
+      content_id: null,
+      created_datetime_utc: null,
+      updated_datetime_utc: null,
+      content_title: "",
+      content_text: "",
+      content_language: "ENGLISH",
+      content_metadata: {},
+    };
+
+    content
+      ? setContent({ ...content, [key]: e.target.value })
+      : setContent({ ...emptyContent, [key]: e.target.value });
     setIsSaved(false);
   };
 
@@ -125,7 +150,7 @@ const ContentBox = ({
       <TextField
         placeholder="Add a title"
         sx={{ backgroundColor: appColors.white }}
-        value={content.content_title}
+        value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
       <Layout.Spacer multiplier={2} />
@@ -140,45 +165,74 @@ const ContentBox = ({
           rows={15}
           placeholder="Add content"
           inputProps={{ maxLength: 2000 }}
-          value={content.content_text}
+          value={content ? content.content_text : ""}
           onChange={(e) => handleChange(e, "content_text")}
         />
       </Layout.FlexBox>
       <Layout.Spacer multiplier={1} />
-      <Button
-        variant="contained"
-        disabled={isSaved}
-        color="primary"
-        sx={[{ width: "5%" }]}
-        onClick={() => {
-          if (content.content_title === "" || content.content_text === "") {
-            alert("Please fill in both fields.");
-          } else {
-            saveContent(content);
-          }
-        }}
+      <Layout.FlexBox
+        flexDirection="row"
+        sx={{ justifyContent: "space-between" }}
       >
-        Save
-      </Button>
+        <Button
+          variant="contained"
+          disabled={isSaved}
+          color="primary"
+          sx={[{ width: "5%" }]}
+          onClick={() => {
+            if (
+              !content ||
+              content.content_title === "" ||
+              content.content_text === ""
+            ) {
+              alert("Please fill in both fields.");
+            } else {
+              const handleSaveContent = async (content: Content) => {
+                const content_id = await saveContent(content);
+                if (content_id) {
+                  const actionType = content.content_id ? "edit" : "add";
+                  router.push(
+                    `/content/?content_id=${content_id}&action=${actionType}`,
+                  );
+                }
+              };
+              handleSaveContent(content);
+            }
+          }}
+        >
+          Save
+        </Button>
+        {saveError ? (
+          <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
+            Failed to save content.
+          </Alert>
+        ) : null}
+      </Layout.FlexBox>
     </Layout.FlexBox>
   );
 };
 
-const Header = ({ content_id }: { content_id: string }) => {
+const Header = ({ content_id }: { content_id: number | null }) => {
   return (
-    <Layout.FlexBox flexDirection={"row"} {...appStyles.alignItemsCenter}>
+    <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft
         style={{ cursor: "pointer" }}
         onClick={() => (window.location.href = "/content/")}
       />
       <Layout.Spacer multiplier={1} horizontal />
-      <Typography variant="h5">Edit Content</Typography>
-      <Layout.Spacer multiplier={2} horizontal />
-      <Typography variant="h5">{`\u2022`}</Typography>
-      <Layout.Spacer multiplier={2} horizontal />
-      <Typography variant="h5">#{content_id}</Typography>
+      {content_id ? (
+        <>
+          <Typography variant="h5">Edit Content</Typography>
+          <Layout.Spacer multiplier={2} horizontal />
+          <Typography variant="h5">{`\u2022`}</Typography>
+          <Layout.Spacer multiplier={2} horizontal />
+          <Typography variant="h5">#{content_id}</Typography>
+        </>
+      ) : (
+        <Typography variant="h5">Add Content</Typography>
+      )}
     </Layout.FlexBox>
   );
 };
 
-export default AddContentPage;
+export default AddEditContentPage;

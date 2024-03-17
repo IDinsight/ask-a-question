@@ -3,7 +3,9 @@ import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
 import theme from "@/theme";
 import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
-import { apiCalls } from "../../utils/api";
+import { useSearchParams } from "next/navigation";
+import { apiCalls } from "@/utils/api";
+import Alert from "@mui/material/Alert";
 import {
   Add,
   ChevronLeft,
@@ -21,6 +23,7 @@ import {
   FormControl,
   Grid,
   InputAdornment,
+  CircularProgress,
   InputLabel,
   MenuItem,
   Select,
@@ -31,6 +34,9 @@ import {
 import Link from "next/link";
 import React from "react";
 import Tooltip from "@mui/material/Tooltip";
+import Snackbar from "@mui/material/Snackbar";
+
+export default ContentScreen;
 
 function ContentScreen() {
   return (
@@ -48,15 +54,62 @@ const CardsView = () => {
   return (
     <Layout.FlexBox width={"100%"}>
       <Layout.Spacer multiplier={1} />
+      <CardsUtilityStrip />
+      <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} />
     </Layout.FlexBox>
   );
 };
 
+const CardsUtilityStrip = () => {
+  return (
+    <Layout.FlexBox
+      key={"utility-strip"}
+      flexDirection={"row"}
+      justifyContent={"flex-right"}
+      alignItems={"right"}
+      sx={{
+        display: "flex",
+        alignSelf: "flex-end",
+        px: sizes.baseGap,
+      }}
+      gap={sizes.baseGap}
+    >
+      <Link href="/content/edit">
+        <Button variant="contained">
+          <Add />
+          New
+        </Button>
+      </Link>
+    </Layout.FlexBox>
+  );
+};
 const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
   const [cards, setCards] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
+  const searchParams = useSearchParams();
+  const action = searchParams.get("action") || null;
+  const content_id = Number(searchParams.get("content_id")) || null;
+
+  const getSnackMessage = (
+    action: string | null,
+    content_id: number | null,
+  ): string | null => {
+    if (action === "edit") {
+      return `Content id ${content_id} updated`;
+    } else if (action === "add") {
+      return `Content id ${content_id} created`;
+    }
+    return null;
+  };
+
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(
+    getSnackMessage(action, content_id),
+  );
+
   const MAX_CARDS_PER_PAGE = 12;
 
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -68,11 +121,47 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
     apiCalls.getContentList().then((data) => {
       setCards(data);
       setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+      setIsLoading(false);
     });
   }, [refreshKey]);
 
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100%",
+        }}
+      >
+        <CircularProgress />
+      </div>
+    );
+  }
+
   return (
     <div>
+      <Snackbar
+        open={snackMessage !== null}
+        autoHideDuration={6000}
+        onClose={() => {
+          setSnackMessage(null);
+        }}
+      >
+        <Alert
+          onClose={() => {
+            setSnackMessage(null);
+          }}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackMessage}
+        </Alert>
+      </Snackbar>
       <Box
         sx={[
           {
@@ -140,5 +229,3 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
     </div>
   );
 };
-
-export default ContentScreen;

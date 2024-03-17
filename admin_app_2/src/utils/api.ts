@@ -3,6 +3,13 @@ const json = require("../../temp_secrets.json");
 const ACCESS_TOKEN = json.ACCESS_TOKEN;
 const BACKEND_ROOT_PATH = "http://localhost:8000";
 
+interface ContentBody {
+  content_title: string;
+  content_text: string;
+  content_language: string;
+  content_metadata: Record<string, unknown>;
+}
+
 const getContentList = async () => {
   return fetch(`${BACKEND_ROOT_PATH}/content/list`, {
     method: "GET",
@@ -20,7 +27,7 @@ const getContentList = async () => {
   });
 };
 
-const getContent = async (content_id) => {
+const getContent = async (content_id: number) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "GET",
     headers: {
@@ -37,7 +44,7 @@ const getContent = async (content_id) => {
   });
 };
 
-const deleteContent = async (content_id) => {
+const deleteContent = async (content_id: number) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
     method: "DELETE",
     headers: {
@@ -54,7 +61,7 @@ const deleteContent = async (content_id) => {
   });
 };
 
-const createContent = async (content) => {
+const createContent = async (content: number) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
     method: "POST",
     headers: {
@@ -72,7 +79,7 @@ const createContent = async (content) => {
   });
 };
 
-const editContent = async (content_id, content) => {
+const editContent = async (content_id: number, content: ContentBody) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/edit`, {
     method: "PUT",
     headers: {
@@ -90,10 +97,30 @@ const editContent = async (content_id, content) => {
   });
 };
 
+const addContent = async (content: ContentBody) => {
+  console.log(JSON.stringify(content));
+  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify(content),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error adding content");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
   deleteContent,
   createContent,
   editContent,
+  addContent,
 };
