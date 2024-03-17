@@ -75,9 +75,9 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
     content_id: number | null,
   ): string | null => {
     if (action === "edit") {
-      return `Content id ${content_id} updated`;
+      return `Content #${content_id} updated`;
     } else if (action === "add") {
-      return `Content id ${content_id} created`;
+      return `Content #${content_id} created`;
     }
     return null;
   };
