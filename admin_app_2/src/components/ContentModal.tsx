@@ -85,7 +85,6 @@ const ContentViewModal = ({
               <Typography variant="body2">{text}</Typography>
             </Layout.FlexBox>
             <Layout.Spacer multiplier={1} />
-
             <Layout.FlexBox
               flexDirection={"row"}
               gap={sizes.smallGap}

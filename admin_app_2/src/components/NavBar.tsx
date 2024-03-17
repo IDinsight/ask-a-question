@@ -14,11 +14,13 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import logowhite from "../../../docs/images/logo-light.png";
 import { Layout } from "./Layout";
+
 const pages = [
   { title: "Playground", path: "/playground" },
   { title: "Manage Content", path: "/content" },
   { title: "Dashboard", path: "/dashboard" },
 ];
+
 const settings = ["Logout"];
 
 const NavBar = () => {
@@ -61,7 +63,6 @@ const SmallScreenNavMenu = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null,
   );
-
   return (
     <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
       <IconButton
@@ -159,7 +160,6 @@ const LargeScreenNavMenu = () => {
           </Typography>
         </Link>
       ))}
-
       <Layout.Spacer horizontal multiplier={4} />
     </Box>
   );
@@ -213,4 +213,5 @@ const UserDropdown = () => {
     </Box>
   );
 };
+
 export default NavBar;

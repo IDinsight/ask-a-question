@@ -34,6 +34,7 @@ const Spacer = ({ horizontal, multiplier = 1 }: BaseProps) => {
     />
   );
 };
+
 const FlexBox: React.FC<BoxProps> = ({ children, ...props }) => {
   return (
     <Box display="flex" flexDirection="column" {...props}>

@@ -83,4 +83,5 @@ const ContentCard = ({
     </>
   );
 };
+
 export default ContentCard;

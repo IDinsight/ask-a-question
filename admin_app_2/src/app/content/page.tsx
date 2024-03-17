@@ -60,6 +60,7 @@ const CardsUtilityStrip = () => {
   );
 };
 const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
+  const MAX_CARDS_PER_PAGE = 12;
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
   const [cards, setCards] = React.useState<any[]>([]);
@@ -84,8 +85,6 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const [snackMessage, setSnackMessage] = React.useState<string | null>(
     getSnackMessage(action, content_id),
   );
-
-  const MAX_CARDS_PER_PAGE = 12;
 
   const [refreshKey, setRefreshKey] = React.useState(0);
   const triggerRefresh = () => {

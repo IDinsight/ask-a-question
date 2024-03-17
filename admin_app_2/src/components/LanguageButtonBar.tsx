@@ -68,7 +68,6 @@ const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
           }}
         />
       )}
-
       <Menu
         anchorEl={anchorEl}
         keepMounted
