@@ -1,11 +1,10 @@
-import { appColors, appStyles, sizes } from "@/utils";
-import { Edit, Delete } from "@mui/icons-material";
 import {
   ContentViewModal,
   DeleteContentModal,
 } from "@/components/ContentModal";
-import { apiCalls } from "@/utils/api";
-import { Button, IconButton, Card, Typography } from "@mui/material";
+import { appColors, appStyles, sizes } from "@/utils";
+import { Delete, Edit } from "@mui/icons-material";
+import { Button, Card, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
