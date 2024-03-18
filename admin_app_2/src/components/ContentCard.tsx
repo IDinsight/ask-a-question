@@ -42,17 +42,12 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox
-          flexDirection="row"
-          gap={sizes.tinyGap}
-          sx={{ justifyContent: "start", letterSpacing: 2 }}
-        >
-          <Typography variant="overline">#{content_id}</Typography>
-        </Layout.FlexBox>
+        <Typography variant="overline" sx={{ fontFamily: "monospace" }}>
+          #{content_id}
+        </Typography>
         <Typography variant="h6" noWrap={true}>
           {title}
         </Typography>
-        <Layout.Spacer multiplier={0.5} />
         <Typography
           variant="body2"
           paragraph={true}
@@ -61,7 +56,6 @@ const ContentCard = ({
         >
           {text}
         </Typography>
-        <Layout.Spacer multiplier={1} />
         <Layout.FlexBox
           flexDirection={"row"}
           gap={sizes.tinyGap}
