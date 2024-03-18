@@ -153,16 +153,17 @@ const ContentBox = ({
       <Layout.Spacer multiplier={1} />
       <TextField
         required
+        label="Title"
+        inputProps={{ maxLength: 150 }}
         error={isTitleEmpty}
         helperText={isTitleEmpty ? "Should not be empty." : " "}
         variant="outlined"
-        label="Title"
         sx={{
           backgroundColor: appColors.white,
           "& .MuiFormHelperText-root": {
             backgroundColor: appColors.lightGrey,
             mx: 0,
-            my: 0, // Set your desired background color here
+            my: 0,
           },
         }}
         value={content ? content.content_title : ""}
@@ -170,22 +171,22 @@ const ContentBox = ({
       />
       <Layout.Spacer multiplier={1} />
       <TextField
+        required
+        label="Content"
+        inputProps={{ maxLength: 2000 }}
         multiline
+        rows={15}
         error={isContentEmpty}
         helperText={isContentEmpty ? "Should not be empty." : " "}
-        required
         variant="outlined"
         sx={{
           backgroundColor: appColors.white,
           "& .MuiFormHelperText-root": {
             backgroundColor: appColors.lightGrey,
             mx: 0,
-            my: 0, // Set your desired background color here
+            my: 0,
           },
         }}
-        label="Content"
-        rows={15}
-        inputProps={{ maxLength: 2000 }}
         value={content ? content.content_text : ""}
         onChange={(e) => handleChange(e, "content_text")}
       />
