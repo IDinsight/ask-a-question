@@ -151,9 +151,10 @@ const ContentBox = ({
     >
       <LanguageButtonBar expandable={true} />
       <Layout.Spacer multiplier={1} />
+      <Typography variant="body2">Title</Typography>
+      <Layout.Spacer multiplier={0.5} />
       <TextField
         required
-        label="Title"
         inputProps={{ maxLength: 150 }}
         error={isTitleEmpty}
         helperText={isTitleEmpty ? "Should not be empty." : " "}
@@ -169,10 +170,10 @@ const ContentBox = ({
         value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
-      <Layout.Spacer multiplier={1} />
+      <Typography variant="body2">Content</Typography>
+      <Layout.Spacer multiplier={0.5} />
       <TextField
         required
-        label="Content"
         inputProps={{ maxLength: 2000 }}
         multiline
         rows={15}
