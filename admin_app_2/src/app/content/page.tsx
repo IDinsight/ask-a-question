@@ -2,29 +2,17 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { Add, ChevronLeft, ChevronRight, Search } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  IconButton,
-  InputAdornment,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Add } from "@mui/icons-material";
+import { Box, Button, CircularProgress, Grid } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-
-interface SearchBarProps {
-  searchTerm: string;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-}
+import { SearchBar } from "../../components/SearchBar";
+import { PageNavigation } from "../../components/PageNavigation";
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
@@ -43,41 +31,13 @@ const CardsPage = () => {
   );
 };
 
-const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm }) => {
-  return (
-    <Layout.FlexBox alignItems="center">
-      <TextField
-        sx={{
-          width: "50%",
-          maxWidth: "500px",
-          backgroundColor: appColors.white,
-        }}
-        variant="outlined"
-        placeholder="Search"
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          console.log(e.target.value);
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search color="secondary" />
-            </InputAdornment>
-          ),
-        }}
-      />
-    </Layout.FlexBox>
-  );
-};
-
 const CardsUtilityStrip = () => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
       flexDirection={"row"}
-      justifyContent={"center"} // Modified line
-      alignItems={"center"} // Modified line
+      justifyContent={"flex-right"}
+      alignItems={"right"}
       sx={{
         display: "flex",
         alignSelf: "flex-end",
@@ -171,7 +131,6 @@ const CardsGrid = ({
       </div>
     );
   }
-
   return (
     <>
       <Snackbar
@@ -233,35 +192,7 @@ const CardsGrid = ({
         </Grid>
       </Box>
       <Layout.Spacer multiplier={1} />
-      <Layout.FlexBox
-        flexDirection={"row"}
-        alignItems={"center"}
-        justifyContent={"center"}
-      >
-        <IconButton
-          onClick={() => {
-            page > 1 && setPage(page - 1);
-          }}
-          disabled={page <= 1}
-          sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
-        >
-          <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
-        </IconButton>
-        <Layout.Spacer horizontal multiplier={0.5} />
-        <Typography variant="subtitle2">
-          {max_pages === 0 ? 0 : page} of {max_pages}
-        </Typography>
-        <Layout.Spacer horizontal multiplier={0.5} />
-        <IconButton
-          onClick={() => {
-            page < max_pages && setPage(page + 1);
-          }}
-          disabled={page >= max_pages}
-          sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
-        >
-          <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
-        </IconButton>
-      </Layout.FlexBox>
+      <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
       <Layout.Spacer multiplier={1} />
     </>
   );
