@@ -1,14 +1,40 @@
 # Setting up your development environment
 
-Now that you have your local environment setup (1), you can setup the components needed to
+## Option 1 - Using Docker Compose Watch
+
+This option uses the same Docker Compose script as deployment and so is *environment-agnostic*. It's good for
+quick startup and end-to-end testing but the downside is that changes take 5-10s to be reflected in the app (1).
+{ .annotate }
+
+1. This is because the backend and admin app images are rebuilt every time there is a change to their respective code folders.
+
+Steps:
+
+1. go to `deployment/docker-compose`
+2. copy `template.env` to a new file `.env` and set the necessary variables (for localhost deployment, you just
+need to set the `OPENAI_API_KEY` and leave everything else as default)
+3. run
+
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+
+The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
+
+The admin app will be available on `http://localhost` and the backend API testing UI on `http://localhost/api/docs`.
+
+## Option 2 - Manual
+
+Go with this option if you have set your environment up correctly and want instant feedback from your changes.
+Takes a little more configuration before each run.
+
+Once you have your local environment setup (1), you can setup the components needed to
 develop your new feature.
 { .annotate }
 
-1.  if you haven't see [Contributing to AAQ]("./contributing.md")
+1. if you haven't see [Contributing to AAQ]("./contributing.md")
 
-## Databases
+### Database
 
-### Running the database on docker
+#### Running the database on docker
 
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
@@ -49,7 +75,7 @@ Otherwise, you can run them manually as below.
 
         python -m alembic upgrade head
 
-### Connecting to remote databases
+#### Connecting to remote databases
 
 In your `.env` file, define the following variables.
 
@@ -65,9 +91,9 @@ POSTGRES_PASSWORD=
 
 See `core_backend/app/configs/app_config.py` for the default values for these variables.
 
-## Run the backend app
+### Run the backend app
 
-### Step 1: Set environment variables
+#### Step 1: Set environment variables
 
 Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY`, before running the app.
 
@@ -80,7 +106,7 @@ Or by loading the variables stored in the deployment or test folders' `.env` fil
 
     set -a && source ./deployment/.env && set +a
 
-### Step 2: Run the backend app
+#### Step 2: Run the backend app
 
 With the Docker databases running, from `aaq-core/core_backend` run:
 
@@ -89,7 +115,7 @@ With the Docker databases running, from `aaq-core/core_backend` run:
 This will launch the application in "reload" mode i.e. the app with automatically
 refresh everytime you make a change to one of the files
 
-## Run the Admin app
+### Run the Admin app
 
 ??? warning "You need to have nodejs v19 installed locally"
 
