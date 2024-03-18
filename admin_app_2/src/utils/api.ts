@@ -44,7 +44,7 @@ const getContent = async (content_id: number) => {
   });
 };
 
-const deleteContent = async (content_id: string) => {
+const deleteContent = async (content_id: number) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
     method: "DELETE",
     headers: {

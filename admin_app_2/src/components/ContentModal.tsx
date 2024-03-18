@@ -27,7 +27,7 @@ const ContentViewModal = ({
 }: {
   title: string;
   text: string;
-  content_id: string;
+  content_id: number;
   last_modified: string;
   open: boolean;
   onClose: () => void;
@@ -150,7 +150,7 @@ const DeleteContentModal = ({
   onSuccessfulDelete,
   onFailedDelete,
 }: {
-  content_id: string;
+  content_id: number;
   open: boolean;
   onClose: () => void;
   onSuccessfulDelete: (content_id: number) => void;

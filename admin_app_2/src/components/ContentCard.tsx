@@ -19,7 +19,7 @@ const ContentCard = ({
 }: {
   title: string;
   text: string;
-  content_id: string;
+  content_id: number;
   last_modified: string;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
