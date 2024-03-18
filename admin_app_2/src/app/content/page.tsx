@@ -222,6 +222,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
           <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
         </IconButton>
       </Layout.FlexBox>
+      <Layout.Spacer multiplier={1} />
     </>
   );
 };
