@@ -113,7 +113,7 @@ const ContentViewModal = ({
               >
                 <Typography variant="body2" color={appColors.darkGrey}>
                   Last modified on{" "}
-                  {new Date(last_modified).toLocaleString("en-UK", {
+                  {new Date(last_modified).toLocaleString(undefined, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
