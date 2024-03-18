@@ -2,15 +2,17 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { Add, ChevronLeft, ChevronRight, Search } from "@mui/icons-material";
 import {
   Box,
   Button,
   CircularProgress,
   Grid,
   IconButton,
+  InputAdornment,
+  TextField,
   Typography,
 } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -35,9 +37,33 @@ const CardsView = () => {
   return (
     <Layout.FlexBox width={"100%"}>
       <Layout.Spacer multiplier={1} />
+      <SearchBar />
       <CardsUtilityStrip />
       <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} />
+    </Layout.FlexBox>
+  );
+};
+
+const SearchBar = () => {
+  return (
+    <Layout.FlexBox alignItems="center">
+      <TextField
+        sx={{
+          width: "50%",
+          maxWidth: "500px",
+          backgroundColor: appColors.white,
+        }}
+        variant="outlined"
+        placeholder="Search"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search color="secondary" />
+            </InputAdornment>
+          ),
+        }}
+      />
     </Layout.FlexBox>
   );
 };
@@ -65,6 +91,7 @@ const CardsUtilityStrip = () => {
     </Layout.FlexBox>
   );
 };
+
 const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const MAX_CARDS_PER_PAGE = 9;
   const [page, setPage] = React.useState<number>(1);
