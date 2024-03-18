@@ -1,4 +1,5 @@
 "use client";
+import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
 import { LANGUAGE_OPTIONS, sizes } from "@/utils";
@@ -17,8 +18,6 @@ import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-
-export default ContentScreen;
 
 function ContentScreen() {
   return (
@@ -70,7 +69,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const MAX_CARDS_PER_PAGE = 9;
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
-  const [cards, setCards] = React.useState<any[]>([]);
+  const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const searchParams = useSearchParams();
@@ -226,3 +225,5 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
     </>
   );
 };
+
+export default ContentScreen;

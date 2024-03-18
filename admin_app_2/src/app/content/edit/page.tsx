@@ -9,7 +9,7 @@ import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-interface Content extends EditContentBody {
+export interface Content extends EditContentBody {
   content_id: number | null;
   created_datetime_utc: string | null;
   updated_datetime_utc: string | null;
