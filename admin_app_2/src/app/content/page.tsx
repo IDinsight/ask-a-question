@@ -21,6 +21,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 
+interface SearchBarProps {
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+}
+
 function ContentScreen() {
   return (
     <Layout.FlexBox alignItems="center" flexDirection={"column"}>
@@ -34,18 +39,19 @@ const CardsView = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
+  const [searchTerm, setSearchTerm] = React.useState<string>("");
   return (
     <Layout.FlexBox width={"100%"}>
+      <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       <Layout.Spacer multiplier={1} />
-      <SearchBar />
       <CardsUtilityStrip />
       <Layout.Spacer multiplier={1} />
-      <CardsGrid displayLanguage={displayLanguage} />
+      <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
     </Layout.FlexBox>
   );
 };
 
-const SearchBar = () => {
+const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm }) => {
   return (
     <Layout.FlexBox alignItems="center">
       <TextField
@@ -56,6 +62,11 @@ const SearchBar = () => {
         }}
         variant="outlined"
         placeholder="Search"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          console.log(e.target.value);
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -73,8 +84,8 @@ const CardsUtilityStrip = () => {
     <Layout.FlexBox
       key={"utility-strip"}
       flexDirection={"row"}
-      justifyContent={"flex-right"}
-      alignItems={"right"}
+      justifyContent={"center"} // Modified line
+      alignItems={"center"} // Modified line
       sx={{
         display: "flex",
         alignSelf: "flex-end",
@@ -92,7 +103,13 @@ const CardsUtilityStrip = () => {
   );
 };
 
-const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
+const CardsGrid = ({
+  displayLanguage,
+  searchTerm,
+}: {
+  displayLanguage: string;
+  searchTerm: string;
+}) => {
   const MAX_CARDS_PER_PAGE = 9;
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
@@ -131,15 +148,20 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
     apiCalls
       .getContentList()
       .then((data) => {
-        setCards(data);
-        setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+        const filteredData = data.filter(
+          (card: Content) =>
+            card.content_title.includes(searchTerm) ||
+            card.content_text.includes(searchTerm),
+        );
+        setCards(filteredData);
+        setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
         setIsLoading(false);
       })
       .catch((error) => {
         console.error("Failed to fetch content:", error);
         setIsLoading(false);
       });
-  }, [refreshKey]);
+  }, [refreshKey, searchTerm]);
 
   if (isLoading) {
     return (
