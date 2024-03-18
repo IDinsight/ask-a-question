@@ -67,7 +67,7 @@ const CardsUtilityStrip = () => {
   );
 };
 const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
-  const MAX_CARDS_PER_PAGE = 12;
+  const MAX_CARDS_PER_PAGE = 9;
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
   const [cards, setCards] = React.useState<any[]>([]);
@@ -174,7 +174,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
                 xs={12}
                 sm={6}
                 md={4}
-                lg={3}
+                lg={4}
                 key={index}
                 sx={{ display: "grid", alignItems: "stretch" }}
               >
