@@ -49,12 +49,27 @@ const ContentCard = ({
         </Typography>
         <Typography
           variant="body2"
-          paragraph={true}
           color={appColors.darkGrey}
           sx={appStyles.threeLineEllipsis}
         >
           {text}
         </Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <Typography
+          variant="overline"
+          color={appColors.darkGrey}
+          sx={{ fontStyle: "italic" }}
+        >
+          {new Date(last_modified).toLocaleString(undefined, {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          })}
+        </Typography>
+        <Layout.Spacer multiplier={0.5} />
         <Layout.FlexBox
           flexDirection={"row"}
           gap={sizes.tinyGap}
