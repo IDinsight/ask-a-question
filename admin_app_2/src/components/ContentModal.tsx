@@ -117,7 +117,7 @@ const ContentViewModal = ({
                     year: "numeric",
                     hour: "numeric",
                     minute: "numeric",
-                    hour12: false,
+                    hour12: true,
                   })}
                 </Typography>
               </Layout.FlexBox>
