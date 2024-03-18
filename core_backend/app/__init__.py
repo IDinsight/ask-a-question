@@ -8,7 +8,7 @@ from prometheus_client import (
     multiprocess,
 )
 
-from . import admin, auth, contents, question_answer, whatsapp_qa
+from . import admin, auth, contents, languages, question_answer, whatsapp_qa
 from .config import (
     DOMAIN,
 )
@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
     app.include_router(contents.router)
     app.include_router(auth.router)
     app.include_router(whatsapp_qa.router)
+    app.include_router(languages.router)
 
     origins = [
         f"http://{DOMAIN}",

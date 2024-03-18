@@ -73,6 +73,36 @@ def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
     db_session.commit()
 
 
+@pytest.fixture(scope="module")
+def existing_language_id(
+    client: TestClient,
+    fullaccess_token: str,
+) -> Generator[tuple[int, int], None, None]:
+    response_1 = client.post(
+        "/languages",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        json={"language_name": "ENGLISH", "is_default": True},
+    )
+
+    response_2 = client.post(
+        "/languages",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        json={"language_name": "HINDI", "is_default": False},
+    )
+
+    language_id_1 = response_1.json()["language_id"]
+    language_id_2 = response_2.json()["language_id"]
+    yield (language_id_1, language_id_2)
+    client.delete(
+        f"/languages/{language_id_1}/",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
+    client.delete(
+        f"/languages/{language_id_2}/",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
+
+
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
