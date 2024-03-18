@@ -1,10 +1,17 @@
 "use client";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
@@ -191,25 +198,29 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         alignItems={"center"}
         justifyContent={"center"}
       >
-        <Button
+        <IconButton
           onClick={() => {
             page > 1 && setPage(page - 1);
           }}
-          disabled={page === 1}
+          disabled={page <= 1}
+          sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
         >
           <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
-        </Button>
+        </IconButton>
+        <Layout.Spacer horizontal multiplier={0.5} />
         <Typography variant="subtitle2">
           {max_pages === 0 ? 0 : page} of {max_pages}
         </Typography>
-        <Button
+        <Layout.Spacer horizontal multiplier={0.5} />
+        <IconButton
           onClick={() => {
             page < max_pages && setPage(page + 1);
           }}
-          disabled={page === max_pages}
+          disabled={page >= max_pages}
+          sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
         >
           <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
-        </Button>
+        </IconButton>
       </Layout.FlexBox>
     </>
   );
