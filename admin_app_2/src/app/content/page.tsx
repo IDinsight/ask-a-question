@@ -20,12 +20,19 @@ const CardsPage = () => {
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   return (
-    <Layout.FlexBox width={"100%"}>
+    <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
-      <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      <Layout.Spacer multiplier={1} />
+      <Layout.FlexBox
+        gap={sizes.smallGap}
+        sx={{
+          width: "70%",
+          maxWidth: "500px",
+          minWidth: "200px",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      </Layout.FlexBox>
       <CardsUtilityStrip />
-      <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
     </Layout.FlexBox>
   );

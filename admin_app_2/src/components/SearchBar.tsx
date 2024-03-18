@@ -15,11 +15,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   setSearchTerm,
 }) => {
   return (
-    <Layout.FlexBox alignItems="center">
+    <Layout.FlexBox alignItems="center" sx={{ width: "100%" }}>
       <TextField
         sx={{
-          width: "50%",
-          maxWidth: "500px",
+          width: "100%",
           backgroundColor: appColors.white,
         }}
         variant="outlined"
