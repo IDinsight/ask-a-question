@@ -155,38 +155,31 @@ const ContentBox = ({
       <Layout.Spacer multiplier={0.5} />
       <TextField
         required
+        placeholder="Add a title (required)"
         inputProps={{ maxLength: 150 }}
-        error={isTitleEmpty}
-        helperText={isTitleEmpty ? "Should not be empty." : " "}
         variant="outlined"
+        error={isTitleEmpty}
+        helperText={isTitleEmpty ? "Should not be empty" : " "}
         sx={{
-          backgroundColor: appColors.white,
-          "& .MuiFormHelperText-root": {
-            backgroundColor: appColors.lightGrey,
-            mx: 0,
-            my: 0,
-          },
+          "& .MuiInputBase-root": { backgroundColor: appColors.white },
         }}
         value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
+      <Layout.Spacer multiplier={0.25} />
       <Typography variant="body2">Content</Typography>
       <Layout.Spacer multiplier={0.5} />
       <TextField
         required
+        placeholder="Add content (required)"
         inputProps={{ maxLength: 2000 }}
         multiline
         rows={15}
-        error={isContentEmpty}
-        helperText={isContentEmpty ? "Should not be empty." : " "}
         variant="outlined"
+        error={isContentEmpty}
+        helperText={isContentEmpty ? "Should not be empty" : " "}
         sx={{
-          backgroundColor: appColors.white,
-          "& .MuiFormHelperText-root": {
-            backgroundColor: appColors.lightGrey,
-            mx: 0,
-            my: 0,
-          },
+          "& .MuiInputBase-root": { backgroundColor: appColors.white },
         }}
         value={content ? content.content_text : ""}
         onChange={(e) => handleChange(e, "content_text")}
