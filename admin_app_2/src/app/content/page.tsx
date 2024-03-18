@@ -26,22 +26,14 @@ interface SearchBarProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
-function ContentScreen() {
-  return (
-    <Layout.FlexBox alignItems="center" flexDirection={"column"}>
-      <Layout.Spacer multiplier={3} />
-      <CardsView />
-    </Layout.FlexBox>
-  );
-}
-
-const CardsView = () => {
+const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   return (
     <Layout.FlexBox width={"100%"}>
+      <Layout.Spacer multiplier={3} />
       <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       <Layout.Spacer multiplier={1} />
       <CardsUtilityStrip />
@@ -275,4 +267,4 @@ const CardsGrid = ({
   );
 };
 
-export default ContentScreen;
+export default CardsPage;
