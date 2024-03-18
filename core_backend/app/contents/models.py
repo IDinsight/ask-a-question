@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from litellm import aembedding, embedding
 from pgvector.sqlalchemy import Vector
@@ -159,7 +159,7 @@ async def get_similar_content(
     question: str,
     n_similar: int,
     asession: AsyncSession,
-) -> Dict[int, tuple[Any, Any, Any]]:
+) -> Dict[int, tuple[str, str, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -175,7 +175,7 @@ async def get_similar_content(
 
 async def get_similar_content_async(
     question: str, n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[Any, Any, Any]]:
+) -> Dict[int, tuple[str, str, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -191,7 +191,7 @@ async def get_similar_content_async(
 
 async def get_search_results(
     question_embedding: List[float], n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[Any, Any, Any]]:
+) -> Dict[int, tuple[str, str, float]]:
     """Get similar content to given embedding and return search results"""
     query = (
         select(
