@@ -88,9 +88,10 @@ const ContentCard = ({
           <div style={{ marginLeft: "auto" }}></div>
           <IconButton
             aria-label="delete"
+            size="small"
             onClick={() => setOpenDeleteModal(true)}
           >
-            <Delete sx={{ color: appColors.lightGrey }} />
+            <Delete fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>

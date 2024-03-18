@@ -5,6 +5,7 @@ import {
   RemoveRedEye,
   ThumbDown,
   ThumbUp,
+  Delete,
 } from "@mui/icons-material";
 import { Box, Button, Fade, Modal, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
@@ -172,7 +173,7 @@ const DeleteContentModal = ({
           cannot be undone.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ margin: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {
@@ -191,6 +192,9 @@ const DeleteContentModal = ({
             onClose();
           }}
           autoFocus
+          variant="contained"
+          color="error"
+          startIcon={<Delete />}
         >
           Delete
         </Button>
