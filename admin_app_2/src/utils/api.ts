@@ -98,7 +98,6 @@ const editContent = async (content_id: number, content: ContentBody) => {
 };
 
 const addContent = async (content: ContentBody) => {
-  console.log(JSON.stringify(content));
   return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
     method: "POST",
     headers: {

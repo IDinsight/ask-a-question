@@ -81,6 +81,9 @@ const ContentBox = ({
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
   const [saveError, setSaveError] = React.useState(false);
+  const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
+  const [isContentEmpty, setIsContentEmpty] = React.useState(false);
+
   const router = useRouter();
   const saveContent = async (content: Content) => {
     const body: EditContentBody = {
@@ -124,6 +127,9 @@ const ContentBox = ({
       content_metadata: {},
     };
 
+    setIsTitleEmpty(false);
+    setIsContentEmpty(false);
+
     content
       ? setContent({ ...content, [key]: e.target.value })
       : setContent({ ...emptyContent, [key]: e.target.value });
@@ -138,36 +144,51 @@ const ContentBox = ({
         minWidth: "300px",
         border: 1,
         borderColor: appColors.darkGrey,
+        backgroundColor: appColors.lightGrey,
         borderRadius: 4,
         p: sizes.baseGap,
       }}
     >
       <LanguageButtonBar expandable={true} />
       <Layout.Spacer multiplier={1} />
-      <Typography variant="body2">Title</Typography>
-      <Layout.Spacer multiplier={0.5} />
       <TextField
-        placeholder="Add a title"
-        sx={{ backgroundColor: appColors.white }}
+        required
+        error={isTitleEmpty}
+        helperText={isTitleEmpty ? "Should not be empty." : " "}
+        variant="outlined"
+        label="Title"
+        sx={{
+          backgroundColor: appColors.white,
+          "& .MuiFormHelperText-root": {
+            backgroundColor: appColors.lightGrey,
+            mx: 0,
+            my: 0, // Set your desired background color here
+          },
+        }}
         value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
-      <Layout.Spacer multiplier={2} />
-      <Typography variant="body2">Content (max 2000 characters)</Typography>
-      <Layout.Spacer multiplier={0.5} />
-      <Layout.FlexBox
-        flexDirection={"column"}
-        sx={{ backgroundColor: appColors.white }}
-      >
-        <TextField
-          multiline
-          rows={15}
-          placeholder="Add content"
-          inputProps={{ maxLength: 2000 }}
-          value={content ? content.content_text : ""}
-          onChange={(e) => handleChange(e, "content_text")}
-        />
-      </Layout.FlexBox>
+      <Layout.Spacer multiplier={1} />
+      <TextField
+        multiline
+        error={isContentEmpty}
+        helperText={isContentEmpty ? "Should not be empty." : " "}
+        required
+        variant="outlined"
+        sx={{
+          backgroundColor: appColors.white,
+          "& .MuiFormHelperText-root": {
+            backgroundColor: appColors.lightGrey,
+            mx: 0,
+            my: 0, // Set your desired background color here
+          },
+        }}
+        label="Content"
+        rows={15}
+        inputProps={{ maxLength: 2000 }}
+        value={content ? content.content_text : ""}
+        onChange={(e) => handleChange(e, "content_text")}
+      />
       <Layout.Spacer multiplier={1} />
       <Layout.FlexBox
         flexDirection="row"
@@ -179,12 +200,13 @@ const ContentBox = ({
           color="primary"
           sx={[{ width: "5%" }]}
           onClick={() => {
-            if (
-              !content ||
-              content.content_title === "" ||
-              content.content_text === ""
-            ) {
-              alert("Please fill in both fields.");
+            if (!content) {
+              setIsTitleEmpty(true);
+              setIsContentEmpty(true);
+            } else if (content.content_title === "") {
+              setIsTitleEmpty(true);
+            } else if (content.content_text === "") {
+              setIsContentEmpty(true);
             } else {
               const handleSaveContent = async (content: Content) => {
                 const content_id = await saveContent(content);

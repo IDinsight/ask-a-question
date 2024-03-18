@@ -87,16 +87,25 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
-  const triggerRefresh = () => {
-    setRefreshKey((oldKey) => oldKey + 1);
+  const onSuccessfulDelete = (content_id: number) => {
+    setIsLoading(true);
+    setRefreshKey((prevKey) => prevKey + 1);
+    console.log("hello");
+    setSnackMessage(`Content #${content_id} deleted successfully`);
   };
 
   React.useEffect(() => {
-    apiCalls.getContentList().then((data) => {
-      setCards(data);
-      setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
-      setIsLoading(false);
-    });
+    apiCalls
+      .getContentList()
+      .then((data) => {
+        setCards(data);
+        setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch content:", error);
+        setIsLoading(false);
+      });
   }, [refreshKey]);
 
   if (isLoading) {
@@ -137,10 +146,9 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
         </Alert>
       </Snackbar>
       <Box
+        bgcolor="lightgray.main"
         sx={[
           {
-            border: 1,
-            borderColor: appColors.secondary,
             mx: sizes.baseGap,
             py: sizes.tinyGap,
             minHeight: "200px",
@@ -168,7 +176,10 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
                   text={item.content_text}
                   content_id={item.content_id}
                   last_modified={item.updated_datetime_utc}
-                  onDelete={triggerRefresh}
+                  onSuccessfulDelete={onSuccessfulDelete}
+                  onFailedDelete={(content_id: number) => {
+                    setSnackMessage(`Failed to delete content #${content_id}`);
+                  }}
                 />
               </Grid>
             ))}

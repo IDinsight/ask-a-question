@@ -12,6 +12,12 @@ import Link from "next/link";
 import { apiCalls } from "../utils/api";
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
+import React from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
 const ContentViewModal = ({
   title,
@@ -20,7 +26,6 @@ const ContentViewModal = ({
   last_modified,
   open,
   onClose,
-  onDelete,
 }: {
   title: string;
   text: string;
@@ -28,7 +33,6 @@ const ContentViewModal = ({
   last_modified: string;
   open: boolean;
   onClose: () => void;
-  onDelete: () => void;
 }) => {
   return (
     <Modal
@@ -102,27 +106,6 @@ const ContentViewModal = ({
                   </Button>
                 </Link>
                 <Layout.Spacer horizontal multiplier={1} />
-                <Delete
-                  style={{ cursor: "pointer" }}
-                  color="primary"
-                  fontSize="small"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Are you sure you want to delete this content?",
-                      )
-                    ) {
-                      apiCalls
-                        .deleteContent(content_id)
-                        .then(() => {
-                          onClose();
-                        })
-                        .then(() => {
-                          onDelete();
-                        });
-                    }
-                  }}
-                />
               </Layout.FlexBox>
               <Layout.FlexBox
                 {...appStyles.alignItemsCenter}
@@ -162,4 +145,60 @@ const ContentViewModal = ({
   );
 };
 
-export default ContentViewModal;
+const DeleteContentModal = ({
+  content_id,
+  open,
+  onClose,
+  onSuccessfulDelete,
+  onFailedDelete,
+}: {
+  content_id: string;
+  open: boolean;
+  onClose: () => void;
+  onSuccessfulDelete: (content_id: number) => void;
+  onFailedDelete: (content_id: number) => void;
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        {"Are you sure you want to delete this content?"}
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Deleting this content will remove it from the database. This action
+          cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={() => {
+            const handleDeleteContent = async (content_id: number) => {
+              const results = apiCalls
+                .deleteContent(content_id)
+                .then((res) => {
+                  onSuccessfulDelete(content_id);
+                })
+                .catch((err) => {
+                  console.log("error", err);
+                  onFailedDelete(content_id);
+                });
+            };
+            handleDeleteContent(Number(content_id));
+            onClose();
+          }}
+          autoFocus
+        >
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export { ContentViewModal, DeleteContentModal };

@@ -1,7 +1,11 @@
-import ContentViewModal from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
-import { Edit } from "@mui/icons-material";
-import { Button, Card, Typography } from "@mui/material";
+import { Edit, Delete } from "@mui/icons-material";
+import {
+  ContentViewModal,
+  DeleteContentModal,
+} from "@/components/ContentModal";
+import { apiCalls } from "@/utils/api";
+import { Button, IconButton, Card, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
@@ -11,15 +15,19 @@ const ContentCard = ({
   text,
   content_id,
   last_modified,
-  onDelete,
+  onSuccessfulDelete,
+  onFailedDelete,
 }: {
   title: string;
   text: string;
   content_id: string;
   last_modified: string;
-  onDelete: () => void;
+  onSuccessfulDelete: (content_id: number) => void;
+  onFailedDelete: (content_id: number) => void;
 }) => {
-  const [open, setOpen] = React.useState<boolean>(false);
+  const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+
   return (
     <>
       <Card
@@ -34,12 +42,19 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
+        <Layout.FlexBox
+          flexDirection="row"
+          gap={sizes.tinyGap}
+          sx={{ justifyContent: "start", letterSpacing: 2 }}
+        >
+          <Typography variant="overline">#{content_id}</Typography>
+        </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography
-          variant="body1"
+          variant="body2"
           paragraph={true}
           color={appColors.darkGrey}
           sx={appStyles.threeLineEllipsis}
@@ -47,8 +62,12 @@ const ContentCard = ({
           {text}
         </Typography>
         <Layout.Spacer multiplier={1} />
-        <Layout.FlexBox flexDirection={"row"} gap={sizes.tinyGap}>
-          <Button variant="contained" onClick={() => setOpen(true)}>
+        <Layout.FlexBox
+          flexDirection={"row"}
+          gap={sizes.tinyGap}
+          sx={{ alignItems: "center" }}
+        >
+          <Button variant="contained" onClick={() => setOpenReadModal(true)}>
             Read
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
@@ -58,17 +77,13 @@ const ContentCard = ({
               Edit
             </Button>
           </Link>
-          <Typography
-            variant="body2"
-            align="center"
-            style={{
-              marginLeft: "auto",
-              marginBottom: "auto",
-              marginTop: "auto",
-            }}
+          <div style={{ marginLeft: "auto" }}></div>
+          <IconButton
+            aria-label="delete"
+            onClick={() => setOpenDeleteModal(true)}
           >
-            #{content_id}
-          </Typography>
+            <Delete sx={{ color: appColors.lightGrey }} />
+          </IconButton>
         </Layout.FlexBox>
       </Card>
       <ContentViewModal
@@ -76,9 +91,15 @@ const ContentCard = ({
         text={text}
         content_id={content_id}
         last_modified={last_modified}
-        open={open}
-        onClose={() => setOpen(false)}
-        onDelete={onDelete}
+        open={openReadModal}
+        onClose={() => setOpenReadModal(false)}
+      />
+      <DeleteContentModal
+        content_id={content_id}
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        onSuccessfulDelete={onSuccessfulDelete}
+        onFailedDelete={onFailedDelete}
       />
     </>
   );

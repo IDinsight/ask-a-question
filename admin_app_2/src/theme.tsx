@@ -8,6 +8,21 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+declare module "@mui/material/styles" {
+  interface Palette {
+    lightgray: Palette["primary"];
+  }
+
+  interface PaletteOptions {
+    lightgray?: PaletteOptions["primary"];
+  }
+}
+
+declare module "@mui/material/Button" {
+  interface ButtonPropsColorOverrides {
+    custom: true;
+  }
+}
 const theme = createTheme({
   palette: {
     primary: {
@@ -19,6 +34,12 @@ const theme = createTheme({
     background: {
       default: "#E2E2E9",
       paper: "#FFFFFF",
+    },
+    lightgray: {
+      main: "#F5F5F5",
+      light: "#FAFAFA",
+      dark: "eeeeee",
+      contrastText: "#000000",
     },
   },
   typography: {
