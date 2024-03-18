@@ -5,16 +5,8 @@ These are functions that can be used to parse the input questions.
 from functools import wraps
 from typing import Any, Callable, Tuple
 
-from ..configs.app_config import STANDARD_FAILURE_MESSAGE
-from ..configs.llm_prompts import (
-    PARAPHRASE_FAILED_MESSAGE,
-    PARAPHRASE_INPUT,
-    TRANSLATE_FAILED_MESSAGE,
-    TRANSLATE_INPUT,
-    IdentifiedLanguage,
-    SafetyClassification,
-)
-from ..schemas import (
+from ..question_answer.config import STANDARD_FAILURE_MESSAGE
+from ..question_answer.schemas import (
     ErrorType,
     ResultState,
     UserQueryRefined,
@@ -22,6 +14,14 @@ from ..schemas import (
     UserQueryResponseError,
 )
 from ..utils import setup_logger
+from .llm_prompts import (
+    PARAPHRASE_FAILED_MESSAGE,
+    PARAPHRASE_INPUT,
+    TRANSLATE_FAILED_MESSAGE,
+    TRANSLATE_INPUT,
+    IdentifiedLanguage,
+    SafetyClassification,
+)
 from .utils import _ask_llm_async
 
 logger = setup_logger("INPUT RAILS")

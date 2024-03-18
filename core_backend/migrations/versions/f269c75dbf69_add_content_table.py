@@ -11,7 +11,7 @@ from typing import Sequence, Union
 import pgvector
 import sqlalchemy as sa
 from alembic import op
-from app.configs.app_config import (
+from app.contents.config import (
     PGVECTOR_DISTANCE,
     PGVECTOR_EF_CONSTRUCTION,
     PGVECTOR_M,

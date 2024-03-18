@@ -2,7 +2,7 @@ import logging
 
 import uvicorn
 from app import create_app
-from app.configs.app_config import BACKEND_ROOT_PATH
+from app.config import BACKEND_ROOT_PATH
 from fastapi.logger import logger
 from uvicorn.workers import UvicornWorker
 

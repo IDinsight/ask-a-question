@@ -4,8 +4,11 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth import get_current_fullaccess_user, get_current_readonly_user
-from ..db.db_models import (
+from ..auth.dependencies import get_current_fullaccess_user, get_current_readonly_user
+from ..auth.schemas import AuthenticatedUser
+from ..database import get_async_session
+from ..utils import setup_logger
+from .models import (
     ContentDB,
     delete_content_from_db,
     get_content_from_db,
@@ -13,9 +16,7 @@ from ..db.db_models import (
     save_content_to_db,
     update_content_in_db,
 )
-from ..db.engine import get_async_session
-from ..schemas import AuthenticatedUser, ContentCreate, ContentRetrieve
-from ..utils import setup_logger
+from .schemas import ContentCreate, ContentRetrieve
 
 router = APIRouter(prefix="/content")
 logger = setup_logger()

@@ -9,16 +9,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core_backend.app import create_app
-from core_backend.app.auth import create_access_token
-from core_backend.app.configs.app_config import (
-    EMBEDDING_MODEL,
-    PGVECTOR_VECTOR_SIZE,
-)
-from core_backend.app.configs.llm_prompts import AlignmentScore, IdentifiedLanguage
-from core_backend.app.db.db_models import ContentDB
-from core_backend.app.db.engine import get_session
+from core_backend.app.auth.dependencies import create_access_token
+from core_backend.app.config import EMBEDDING_MODEL
+from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
+from core_backend.app.contents.models import ContentDB
+from core_backend.app.database import get_session
 from core_backend.app.llm_call import check_output, parse_input
-from core_backend.app.schemas import ResultState, UserQueryRefined, UserQueryResponse
+from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
+from core_backend.app.question_answer.schemas import (
+    ResultState,
+    UserQueryRefined,
+    UserQueryResponse,
+)
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -94,9 +96,9 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
-    monkeysession.setattr("core_backend.app.db.db_models.embedding", fake_embedding)
+    monkeysession.setattr("core_backend.app.contents.models.embedding", fake_embedding)
     monkeysession.setattr(
-        "core_backend.app.db.db_models.aembedding", async_fake_embedding
+        "core_backend.app.contents.models.aembedding", async_fake_embedding
     )
     monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
@@ -104,7 +106,7 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
     monkeysession.setattr(check_output, "_get_llm_align_score", mock_get_align_score)
     monkeysession.setattr(
-        "core_backend.app.routers.question_answer.get_llm_rag_answer",
+        "core_backend.app.question_answer.routers.get_llm_rag_answer",
         patched_llm_rag_answer,
     )
 
