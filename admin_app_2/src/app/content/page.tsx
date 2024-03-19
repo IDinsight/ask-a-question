@@ -164,7 +164,8 @@ const CardsGrid = ({
           {
             mx: sizes.baseGap,
             py: sizes.tinyGap,
-            minHeight: "200px",
+            width: "98%",
+            minHeight: "660px",
           },
         ]}
       >
@@ -198,7 +199,6 @@ const CardsGrid = ({
             ))}
         </Grid>
       </Box>
-      <Layout.Spacer multiplier={1} />
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
       <Layout.Spacer multiplier={1} />
     </>
