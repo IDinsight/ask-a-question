@@ -119,7 +119,7 @@ async def retrieve_language_by_id(
     asession: AsyncSession = Depends(get_async_session),
 ) -> LanguageRetrieve:
     """
-    Rretrieve language by id endpoint
+    Retrieve language by id endpoint
     """
     language = await get_language_from_db(language_id, asession)
     if not language:
