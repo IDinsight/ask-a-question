@@ -6,6 +6,7 @@ Create Date: 2024-03-18 18:38:29.579259
 
 """
 
+from datetime import datetime
 from typing import Sequence, Union
 
 from alembic import op
@@ -36,6 +37,13 @@ def upgrade() -> None:
         ["is_default"],
         unique=True,
         postgresql_where=sa.text("is_default IS true"),
+    )
+    # add default language
+    date = str(datetime.now())
+    op.execute(
+        f"""INSERT INTO languages
+        (language_name, is_default, created_datetime_utc, updated_datetime_utc)
+       VALUES ('ENGLISH', true, '{date}', '{date}')"""
     )
     # ### end Alembic commands ###
 

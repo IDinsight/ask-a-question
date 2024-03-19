@@ -30,7 +30,7 @@ class TestManageLanguage:
         fullaccess_token: str,
         readonly_token: str,
     ) -> None:
-        new_language = "XHOSA"
+        new_language = "ZULU"
 
         response = client.put(
             f"/languages/{existing_language_id[0]}/",
@@ -137,7 +137,7 @@ class TestManageLanguage:
         response = client.put(
             f"/languages/{existing_language_id[0]}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"language_name": "ENGLISH", "is_default": True},
+            json={"language_name": "XHOSA", "is_default": True},
         )
         assert response.status_code == 200
         assert response.json()["is_default"] is True

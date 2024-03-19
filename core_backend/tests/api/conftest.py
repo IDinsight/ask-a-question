@@ -81,7 +81,7 @@ def existing_language_id(
     response_1 = client.post(
         "/languages",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={"language_name": "ENGLISH", "is_default": True},
+        json={"language_name": "XHOSA", "is_default": True},
     )
 
     response_2 = client.post(
