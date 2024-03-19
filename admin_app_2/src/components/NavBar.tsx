@@ -1,5 +1,6 @@
 "use client";
 import { appColors, appStyles, sizes } from "@/utils";
+import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -14,7 +15,6 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import logowhite from "../../../docs/images/logo-light.png";
 import { Layout } from "./Layout";
-
 const pages = [
   { title: "Playground", path: "/playground" },
   { title: "Manage Content", path: "/content" },
@@ -166,6 +166,7 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
+  const { logout } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null,
@@ -205,7 +206,7 @@ const UserDropdown = () => {
         onClose={() => setAnchorElUser(null)}
       >
         {settings.map((setting) => (
-          <MenuItem key={setting} onClick={handleCloseUserMenu}>
+          <MenuItem key={setting} onClick={logout}>
             <Typography textAlign="center">{setting}</Typography>
           </MenuItem>
         ))}
