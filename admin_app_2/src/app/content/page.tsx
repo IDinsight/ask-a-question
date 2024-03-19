@@ -5,14 +5,14 @@ import { Layout } from "@/components/Layout";
 import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { Add } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Grid } from "@mui/material";
+import { Button, CircularProgress, Grid } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { SearchBar } from "../../components/SearchBar";
 import { PageNavigation } from "../../components/PageNavigation";
+import { SearchBar } from "../../components/SearchBar";
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
@@ -158,7 +158,7 @@ const CardsGrid = ({
           {snackMessage}
         </Alert>
       </Snackbar>
-      <Box
+      <Layout.FlexBox
         bgcolor="lightgray.main"
         sx={[
           {
@@ -181,7 +181,7 @@ const CardsGrid = ({
                 xs={12}
                 sm={6}
                 md={4}
-                lg={4}
+                lg={3}
                 key={index}
                 sx={{ display: "grid", alignItems: "stretch" }}
               >
@@ -198,7 +198,7 @@ const CardsGrid = ({
               </Grid>
             ))}
         </Grid>
-      </Box>
+      </Layout.FlexBox>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
       <Layout.Spacer multiplier={1} />
     </>
