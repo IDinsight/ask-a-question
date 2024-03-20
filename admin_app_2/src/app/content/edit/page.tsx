@@ -11,7 +11,7 @@ import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-interface Content extends EditContentBody {
+export interface Content extends EditContentBody {
   content_id: number | null;
   created_datetime_utc: string | null;
   updated_datetime_utc: string | null;
@@ -158,41 +158,36 @@ const ContentBox = ({
     >
       <LanguageButtonBar expandable={true} />
       <Layout.Spacer multiplier={1} />
+      <Typography variant="body2">Title</Typography>
+      <Layout.Spacer multiplier={0.5} />
       <TextField
         required
-        error={isTitleEmpty}
-        helperText={isTitleEmpty ? "Should not be empty." : " "}
+        placeholder="Add a title (required)"
+        inputProps={{ maxLength: 150 }}
         variant="outlined"
-        label="Title"
+        error={isTitleEmpty}
+        helperText={isTitleEmpty ? "Should not be empty" : " "}
         sx={{
-          backgroundColor: appColors.white,
-          "& .MuiFormHelperText-root": {
-            backgroundColor: appColors.lightGrey,
-            mx: 0,
-            my: 0,
-          },
+          "& .MuiInputBase-root": { backgroundColor: appColors.white },
         }}
         value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
-      <Layout.Spacer multiplier={1} />
+      <Layout.Spacer multiplier={0.25} />
+      <Typography variant="body2">Content</Typography>
+      <Layout.Spacer multiplier={0.5} />
       <TextField
-        multiline
-        error={isContentEmpty}
-        helperText={isContentEmpty ? "Should not be empty." : " "}
         required
-        variant="outlined"
-        sx={{
-          backgroundColor: appColors.white,
-          "& .MuiFormHelperText-root": {
-            backgroundColor: appColors.lightGrey,
-            mx: 0,
-            my: 0,
-          },
-        }}
-        label="Content"
-        rows={15}
+        placeholder="Add content (required)"
         inputProps={{ maxLength: 2000 }}
+        multiline
+        rows={15}
+        variant="outlined"
+        error={isContentEmpty}
+        helperText={isContentEmpty ? "Should not be empty" : " "}
+        sx={{
+          "& .MuiInputBase-root": { backgroundColor: appColors.white },
+        }}
         value={content ? content.content_text : ""}
         onChange={(e) => handleChange(e, "content_text")}
       />

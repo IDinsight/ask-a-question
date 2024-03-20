@@ -1,6 +1,7 @@
 import { appColors, appStyles, sizes } from "@/utils";
 import {
   Close,
+  Delete,
   Edit,
   RemoveRedEye,
   ThumbDown,
@@ -27,7 +28,7 @@ const ContentViewModal = ({
 }: {
   title: string;
   text: string;
-  content_id: string;
+  content_id: number;
   last_modified: string;
   open: boolean;
   onClose: () => void;
@@ -100,7 +101,7 @@ const ContentViewModal = ({
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={editAccess ? false : true}
+                  disabled={!editAccess}
                   component={Link}
                   href={`/content/edit?content_id=${content_id}`}
                 >
@@ -116,13 +117,13 @@ const ContentViewModal = ({
               >
                 <Typography variant="body2" color={appColors.darkGrey}>
                   Last modified on{" "}
-                  {new Date(last_modified).toLocaleString("en-UK", {
+                  {new Date(last_modified).toLocaleString(undefined, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
                     hour: "numeric",
                     minute: "numeric",
-                    hour12: false,
+                    hour12: true,
                   })}
                 </Typography>
               </Layout.FlexBox>
@@ -156,7 +157,7 @@ const DeleteContentModal = ({
   onFailedDelete,
   deleteContent,
 }: {
-  content_id: string;
+  content_id: number;
   open: boolean;
   onClose: () => void;
   onSuccessfulDelete: (content_id: number) => void;
@@ -179,7 +180,7 @@ const DeleteContentModal = ({
           cannot be undone.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ margin: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {
@@ -197,6 +198,9 @@ const DeleteContentModal = ({
             onClose();
           }}
           autoFocus
+          variant="contained"
+          color="error"
+          startIcon={<Delete />}
         >
           Delete
         </Button>

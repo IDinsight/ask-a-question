@@ -21,7 +21,7 @@ const ContentCard = ({
 }: {
   title: string;
   text: string;
-  content_id: string;
+  content_id: number;
   last_modified: string;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
@@ -45,26 +45,34 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox
-          flexDirection="row"
-          gap={sizes.tinyGap}
-          sx={{ justifyContent: "start", letterSpacing: 2 }}
-        >
-          <Typography variant="overline">#{content_id}</Typography>
+        <Layout.FlexBox flexDirection="row">
+          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
+            #{content_id}
+          </Typography>
         </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
         </Typography>
-        <Layout.Spacer multiplier={0.5} />
         <Typography
           variant="body2"
-          paragraph={true}
           color={appColors.darkGrey}
           sx={appStyles.threeLineEllipsis}
         >
           {text}
         </Typography>
-        <Layout.Spacer multiplier={1} />
+        <Layout.Spacer multiplier={0.5} />
+        <Typography variant="body2" color={appColors.darkGrey}>
+          Last updated on{" "}
+          {new Date(last_modified).toLocaleString(undefined, {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          })}
+        </Typography>
+        <Layout.Spacer multiplier={0.75} />
         <Layout.FlexBox
           flexDirection={"row"}
           gap={sizes.tinyGap}
@@ -75,20 +83,22 @@ const ContentCard = ({
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
           <Button
-            disabled={editAccess ? false : true}
+            disabled={!editAccess}
             component={Link}
             href={`/content/edit?content_id=${content_id}`}
           >
             <Edit fontSize="small" />
+            <Layout.Spacer horizontal multiplier={0.3} />
             Edit
           </Button>
           <div style={{ marginLeft: "auto" }}></div>
           <IconButton
-            disabled={editAccess ? false : true}
+            disabled={!editAccess}
             aria-label="delete"
+            size="small"
             onClick={() => setOpenDeleteModal(true)}
           >
-            <Delete sx={{ color: appColors.lightGrey }} />
+            <Delete fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>
