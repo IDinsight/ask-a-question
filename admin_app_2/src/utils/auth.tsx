@@ -20,36 +20,44 @@ type AuthProviderProps = {
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<string | null>(null);
+
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("token");
     }
     return null;
   };
-
   const [token, setToken] = useState<string | null>(getInitialToken);
 
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  const getInitialAccessLevel = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accessLevel") as "readonly" | "fullaccess";
+    }
+    return "readonly";
+  };
   const [accessLevel, setAccessLevel] = useState<"readonly" | "fullaccess">(
-    "readonly",
+    getInitialAccessLevel,
   );
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const login = async (username: string, password: string) => {
-    const fromPage = searchParams.has("fromPage")
-      ? decodeURIComponent(searchParams.get("fromPage") as string)
+    const sourcePage = searchParams.has("sourcePage")
+      ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/";
 
     apiCalls
       .getLoginToken(username, password)
       .then(({ access_token, access_level }) => {
         localStorage.setItem("token", access_token);
-
+        localStorage.setItem("accessLevel", access_level);
         setUser(username);
         setToken(access_token);
         setAccessLevel(access_level);
-        router.push(fromPage);
+        router.push(sourcePage);
       })
       .catch((error) => {
         setLoginError("Invalid username or password");
@@ -59,6 +67,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("accessLevel");
     setUser(null);
     setToken(null);
     setAccessLevel("readonly");

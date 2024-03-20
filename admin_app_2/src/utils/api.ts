@@ -42,23 +42,6 @@ const getContent = async (content_id: number, token: string) => {
   });
 };
 
-const getLoginToken = async (username: string, password: string) => {
-  const formData = new FormData();
-  formData.append("username", username);
-  formData.append("password", password);
-  return fetch(`${BACKEND_ROOT_PATH}/login`, {
-    method: "POST",
-    body: formData,
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error fetching login token");
-    }
-  });
-};
-
 const deleteContent = async (content_id: number, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
     method: "DELETE",
@@ -130,6 +113,23 @@ const addContent = async (content: ContentBody, token: string) => {
       return resp;
     } else {
       throw new Error("Error adding content");
+    }
+  });
+};
+
+const getLoginToken = async (username: string, password: string) => {
+  const formData = new FormData();
+  formData.append("username", username);
+  formData.append("password", password);
+  return fetch(`${BACKEND_ROOT_PATH}/login`, {
+    method: "POST",
+    body: formData,
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching login token");
     }
   });
 };

@@ -97,17 +97,17 @@ const ContentViewModal = ({
                 {...appStyles.alignItemsCenter}
                 flexDirection={"row"}
               >
-                <Link href={`/content/edit?content_id=${content_id}`}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={editAccess ? false : true}
-                  >
-                    <Edit />
-                    <Layout.Spacer horizontal multiplier={0.4} />
-                    Edit
-                  </Button>
-                </Link>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={editAccess ? false : true}
+                  component={Link}
+                  href={`/content/edit?content_id=${content_id}`}
+                >
+                  <Edit />
+                  <Layout.Spacer horizontal multiplier={0.4} />
+                  Edit
+                </Button>
                 <Layout.Spacer horizontal multiplier={1} />
               </Layout.FlexBox>
               <Layout.FlexBox

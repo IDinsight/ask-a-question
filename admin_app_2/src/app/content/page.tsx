@@ -53,12 +53,15 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
       }}
       gap={sizes.baseGap}
     >
-      <Link href="/content/edit">
-        <Button variant="contained" disabled={editAccess ? false : true}>
-          <Add />
-          New
-        </Button>
-      </Link>
+      <Button
+        variant="contained"
+        disabled={editAccess ? false : true}
+        component={Link}
+        href="/content/edit"
+      >
+        <Add />
+        New
+      </Button>
     </Layout.FlexBox>
   );
 };

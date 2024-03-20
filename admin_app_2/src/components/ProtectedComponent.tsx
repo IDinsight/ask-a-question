@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from "@/utils/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import React, { useEffect } from "react";
 
 interface ProtectedComponentProps {
@@ -12,10 +12,11 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({
 }) => {
   const router = useRouter();
   const { token } = useAuth();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!token) {
-      router.push("/login");
+      router.push("/login?sourcePage=" + encodeURIComponent(pathname));
     }
   }, [token]);
 

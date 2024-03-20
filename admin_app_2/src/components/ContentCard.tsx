@@ -74,12 +74,14 @@ const ContentCard = ({
             Read
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
-          <Link href={`/content/edit?content_id=${content_id}`}>
-            <Button disabled={editAccess ? false : true}>
-              <Edit fontSize="small" />
-              Edit
-            </Button>
-          </Link>
+          <Button
+            disabled={editAccess ? false : true}
+            component={Link}
+            href={`/content/edit?content_id=${content_id}`}
+          >
+            <Edit fontSize="small" />
+            Edit
+          </Button>
           <div style={{ marginLeft: "auto" }}></div>
           <IconButton
             disabled={editAccess ? false : true}
