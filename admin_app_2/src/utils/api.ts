@@ -1,7 +1,5 @@
-// Temp read bearer token from file. Will be removed when auth is implemented.
-const json = require("../../temp_secrets.json");
-const ACCESS_TOKEN = json.ACCESS_TOKEN;
-const BACKEND_ROOT_PATH = "http://localhost:8000";
+const BACKEND_ROOT_PATH: string =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface ContentBody {
   content_title: string;
@@ -10,12 +8,12 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getContentList = async () => {
+const getContentList = async (token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/list`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
   }).then((response) => {
     if (response.ok) {
@@ -27,12 +25,12 @@ const getContentList = async () => {
   });
 };
 
-const getContent = async (content_id: number) => {
+const getContent = async (content_id: number, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
   }).then((response) => {
     if (response.ok) {
@@ -44,12 +42,12 @@ const getContent = async (content_id: number) => {
   });
 };
 
-const deleteContent = async (content_id: number) => {
+const deleteContent = async (content_id: number, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
   }).then((response) => {
     if (response.ok) {
@@ -61,12 +59,12 @@ const deleteContent = async (content_id: number) => {
   });
 };
 
-const createContent = async (content: number) => {
+const createContent = async (content: number, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(content),
   }).then((response) => {
@@ -79,12 +77,16 @@ const createContent = async (content: number) => {
   });
 };
 
-const editContent = async (content_id: number, content: ContentBody) => {
+const editContent = async (
+  content_id: number,
+  content: ContentBody,
+  token: string,
+) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/edit`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(content),
   }).then((response) => {
@@ -97,12 +99,12 @@ const editContent = async (content_id: number, content: ContentBody) => {
   });
 };
 
-const addContent = async (content: ContentBody) => {
+const addContent = async (content: ContentBody, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(content),
   }).then((response) => {
@@ -115,6 +117,23 @@ const addContent = async (content: ContentBody) => {
   });
 };
 
+const getLoginToken = async (username: string, password: string) => {
+  const formData = new FormData();
+  formData.append("username", username);
+  formData.append("password", password);
+  return fetch(`${BACKEND_ROOT_PATH}/login`, {
+    method: "POST",
+    body: formData,
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching login token");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
@@ -122,4 +141,5 @@ export const apiCalls = {
   createContent,
   editContent,
   addContent,
+  getLoginToken,
 };

@@ -1,8 +1,9 @@
 "use client";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
 import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -26,17 +27,19 @@ const CardsView = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
+  const { accessLevel } = useAuth();
+
   return (
     <Layout.FlexBox width={"100%"}>
       <Layout.Spacer multiplier={1} />
-      <CardsUtilityStrip />
+      <CardsUtilityStrip editAccess={accessLevel === "fullaccess"} />
       <Layout.Spacer multiplier={1} />
       <CardsGrid displayLanguage={displayLanguage} />
     </Layout.FlexBox>
   );
 };
 
-const CardsUtilityStrip = () => {
+const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
@@ -50,12 +53,15 @@ const CardsUtilityStrip = () => {
       }}
       gap={sizes.baseGap}
     >
-      <Link href="/content/edit">
-        <Button variant="contained">
-          <Add />
-          New
-        </Button>
-      </Link>
+      <Button
+        variant="contained"
+        disabled={editAccess ? false : true}
+        component={Link}
+        href="/content/edit"
+      >
+        <Add />
+        New
+      </Button>
     </Layout.FlexBox>
   );
 };
@@ -69,6 +75,8 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const searchParams = useSearchParams();
   const action = searchParams.get("action") || null;
   const content_id = Number(searchParams.get("content_id")) || null;
+
+  const { token, accessLevel } = useAuth();
 
   const getSnackMessage = (
     action: string | null,
@@ -90,23 +98,24 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const onSuccessfulDelete = (content_id: number) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
-    console.log("hello");
     setSnackMessage(`Content #${content_id} deleted successfully`);
   };
 
   React.useEffect(() => {
-    apiCalls
-      .getContentList()
-      .then((data) => {
-        setCards(data);
-        setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch content:", error);
-        setIsLoading(false);
-      });
-  }, [refreshKey]);
+    if (token) {
+      apiCalls
+        .getContentList(token!)
+        .then((data) => {
+          setCards(data);
+          setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch content:", error);
+          setIsLoading(false);
+        });
+    }
+  }, [refreshKey, token]);
 
   if (isLoading) {
     return (
@@ -180,6 +189,10 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
                   onFailedDelete={(content_id: number) => {
                     setSnackMessage(`Failed to delete content #${content_id}`);
                   }}
+                  deleteContent={(content_id: number) => {
+                    return apiCalls.deleteContent(content_id, token!);
+                  }}
+                  editAccess={accessLevel === "fullaccess"}
                 />
               </Grid>
             ))}
