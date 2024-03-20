@@ -1,23 +1,20 @@
 import { appColors, appStyles, sizes } from "@/utils";
 import {
   Close,
-  Delete,
   Edit,
   RemoveRedEye,
   ThumbDown,
   ThumbUp,
 } from "@mui/icons-material";
 import { Box, Button, Fade, Modal, Typography } from "@mui/material";
-import Link from "next/link";
-import { apiCalls } from "../utils/api";
-import LanguageButtonBar from "./LanguageButtonBar";
-import { Layout } from "./Layout";
-import React from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Link from "next/link";
+import LanguageButtonBar from "./LanguageButtonBar";
+import { Layout } from "./Layout";
 
 const ContentViewModal = ({
   title,
@@ -26,6 +23,7 @@ const ContentViewModal = ({
   last_modified,
   open,
   onClose,
+  editAccess,
 }: {
   title: string;
   text: string;
@@ -33,6 +31,7 @@ const ContentViewModal = ({
   last_modified: string;
   open: boolean;
   onClose: () => void;
+  editAccess: boolean;
 }) => {
   return (
     <Modal
@@ -98,13 +97,17 @@ const ContentViewModal = ({
                 {...appStyles.alignItemsCenter}
                 flexDirection={"row"}
               >
-                <Link href={`/content/edit?content_id=${content_id}`}>
-                  <Button variant="contained" color="primary">
-                    <Edit />
-                    <Layout.Spacer horizontal multiplier={0.4} />
-                    Edit
-                  </Button>
-                </Link>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={editAccess ? false : true}
+                  component={Link}
+                  href={`/content/edit?content_id=${content_id}`}
+                >
+                  <Edit />
+                  <Layout.Spacer horizontal multiplier={0.4} />
+                  Edit
+                </Button>
                 <Layout.Spacer horizontal multiplier={1} />
               </Layout.FlexBox>
               <Layout.FlexBox
@@ -151,12 +154,14 @@ const DeleteContentModal = ({
   onClose,
   onSuccessfulDelete,
   onFailedDelete,
+  deleteContent,
 }: {
   content_id: string;
   open: boolean;
   onClose: () => void;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
+  deleteContent: (content_id: number) => Promise<any>;
 }) => {
   return (
     <Dialog
@@ -179,8 +184,7 @@ const DeleteContentModal = ({
         <Button
           onClick={() => {
             const handleDeleteContent = async (content_id: number) => {
-              const results = apiCalls
-                .deleteContent(content_id)
+              const results = deleteContent(content_id)
                 .then((res) => {
                   onSuccessfulDelete(content_id);
                 })

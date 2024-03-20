@@ -1,11 +1,10 @@
-import { appColors, appStyles, sizes } from "@/utils";
-import { Edit, Delete } from "@mui/icons-material";
 import {
   ContentViewModal,
   DeleteContentModal,
 } from "@/components/ContentModal";
-import { apiCalls } from "@/utils/api";
-import { Button, IconButton, Card, Typography } from "@mui/material";
+import { appColors, appStyles, sizes } from "@/utils";
+import { Delete, Edit } from "@mui/icons-material";
+import { Button, Card, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
@@ -17,6 +16,8 @@ const ContentCard = ({
   last_modified,
   onSuccessfulDelete,
   onFailedDelete,
+  deleteContent,
+  editAccess,
 }: {
   title: string;
   text: string;
@@ -24,6 +25,8 @@ const ContentCard = ({
   last_modified: string;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
+  deleteContent: (content_id: number) => Promise<any>;
+  editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
@@ -71,14 +74,17 @@ const ContentCard = ({
             Read
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
-          <Link href={`/content/edit?content_id=${content_id}`}>
-            <Button>
-              <Edit fontSize="small" />
-              Edit
-            </Button>
-          </Link>
+          <Button
+            disabled={editAccess ? false : true}
+            component={Link}
+            href={`/content/edit?content_id=${content_id}`}
+          >
+            <Edit fontSize="small" />
+            Edit
+          </Button>
           <div style={{ marginLeft: "auto" }}></div>
           <IconButton
+            disabled={editAccess ? false : true}
             aria-label="delete"
             onClick={() => setOpenDeleteModal(true)}
           >
@@ -93,6 +99,7 @@ const ContentCard = ({
         last_modified={last_modified}
         open={openReadModal}
         onClose={() => setOpenReadModal(false)}
+        editAccess={editAccess}
       />
       <DeleteContentModal
         content_id={content_id}
@@ -100,6 +107,7 @@ const ContentCard = ({
         onClose={() => setOpenDeleteModal(false)}
         onSuccessfulDelete={onSuccessfulDelete}
         onFailedDelete={onFailedDelete}
+        deleteContent={deleteContent}
       />
     </>
   );
