@@ -1,11 +1,11 @@
 import { appColors, appStyles, sizes } from "@/utils";
 import {
   Close,
+  Delete,
   Edit,
   RemoveRedEye,
   ThumbDown,
   ThumbUp,
-  Delete,
 } from "@mui/icons-material";
 import { Box, Button, Fade, Modal, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
