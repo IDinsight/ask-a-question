@@ -46,15 +46,17 @@ const NavBar = () => {
 
 const Logo = () => {
   return (
-    <Box
-      component="img"
-      sx={{
-        height: 40,
-        width: 240,
-        display: { xs: "none", md: "block" },
-      }}
-      src={logowhite.src}
-    />
+    <Link href="/content">
+      <Box
+        component="img"
+        sx={{
+          height: 40,
+          width: 240,
+          display: { xs: "none", md: "block" },
+        }}
+        src={logowhite.src}
+      />
+    </Link>
   );
 };
 
