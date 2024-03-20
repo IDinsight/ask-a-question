@@ -1,4 +1,5 @@
 "use client";
+import logowhite from "@/logo-light.png";
 import { appColors, appStyles, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -13,7 +14,6 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import logowhite from "../../../docs/images/logo-light.png";
 import { Layout } from "./Layout";
 const pages = [
   { title: "Manage Content", path: "/content" },
