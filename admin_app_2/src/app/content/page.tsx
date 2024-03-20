@@ -14,6 +14,8 @@ import React from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
 
+const MAX_CARDS_PER_PAGE = 12;
+
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
@@ -69,7 +71,6 @@ const CardsGrid = ({
   displayLanguage: string;
   searchTerm: string;
 }) => {
-  const MAX_CARDS_PER_PAGE = 9;
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
   const [cards, setCards] = React.useState<Content[]>([]);
