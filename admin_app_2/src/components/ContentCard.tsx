@@ -72,7 +72,7 @@ const ContentCard = ({
             hour12: true,
           })}
         </Typography>
-        <Layout.Spacer multiplier={0.5} />
+        <Layout.Spacer multiplier={0.75} />
         <Layout.FlexBox
           flexDirection={"row"}
           gap={sizes.tinyGap}
