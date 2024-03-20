@@ -18,8 +18,8 @@ export const sizes = {
   tripleBaseGap: theme.spacing(6),
   icons: {
     small: theme.spacing(3),
-    medium: theme.spacing(5),
-    large: theme.spacing(6),
+    medium: theme.spacing(4),
+    large: theme.spacing(5),
   },
 };
 

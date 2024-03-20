@@ -49,12 +49,12 @@ const Logo = () => {
     <Link href="/content">
       <Box
         component="img"
+        src={logowhite.src}
         sx={{
-          height: 40,
-          width: 240,
+          height: 30,
+          width: 180,
           display: { xs: "none", md: "block" },
         }}
-        src={logowhite.src}
       />
     </Link>
   );
