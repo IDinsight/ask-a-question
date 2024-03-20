@@ -83,7 +83,7 @@ const ContentCard = ({
           </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
           <Button
-            disabled={editAccess ? false : true}
+            disabled={!editAccess}
             component={Link}
             href={`/content/edit?content_id=${content_id}`}
           >
@@ -93,7 +93,7 @@ const ContentCard = ({
           </Button>
           <div style={{ marginLeft: "auto" }}></div>
           <IconButton
-            disabled={editAccess ? false : true}
+            disabled={!editAccess}
             aria-label="delete"
             size="small"
             onClick={() => setOpenDeleteModal(true)}

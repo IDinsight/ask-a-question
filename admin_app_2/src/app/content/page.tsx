@@ -59,7 +59,7 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
     >
       <Button
         variant="contained"
-        disabled={editAccess ? false : true}
+        disabled={!editAccess}
         component={Link}
         href="/content/edit"
       >

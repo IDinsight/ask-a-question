@@ -101,7 +101,7 @@ const ContentViewModal = ({
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={editAccess ? false : true}
+                  disabled={!editAccess}
                   component={Link}
                   href={`/content/edit?content_id=${content_id}`}
                 >
