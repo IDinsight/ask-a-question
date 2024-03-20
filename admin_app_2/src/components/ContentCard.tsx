@@ -45,9 +45,11 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Typography variant="overline" sx={{ fontFamily: "monospace" }}>
-          #{content_id}
-        </Typography>
+        <Layout.FlexBox flexDirection="row">
+          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
+            #{content_id}
+          </Typography>
+        </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
         </Typography>
@@ -59,11 +61,8 @@ const ContentCard = ({
           {text}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
-        <Typography
-          variant="overline"
-          color={appColors.darkGrey}
-          sx={{ fontStyle: "italic" }}
-        >
+        <Typography variant="body2" color={appColors.darkGrey}>
+          Last updated on{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
             month: "numeric",
@@ -89,6 +88,7 @@ const ContentCard = ({
             href={`/content/edit?content_id=${content_id}`}
           >
             <Edit fontSize="small" />
+            <Layout.Spacer horizontal multiplier={0.3} />
             Edit
           </Button>
           <div style={{ marginLeft: "auto" }}></div>
