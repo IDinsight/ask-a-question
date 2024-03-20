@@ -16,9 +16,9 @@ import logowhite from "../../../docs/images/logo-light.png";
 import { Layout } from "./Layout";
 
 const pages = [
-  { title: "Playground", path: "/playground" },
   { title: "Manage Content", path: "/content" },
-  { title: "Dashboard", path: "/dashboard" },
+  // { title: "Playground", path: "/playground" },
+  // { title: "Dashboard", path: "/dashboard" },
 ];
 
 const settings = ["Logout"];
@@ -102,11 +102,7 @@ const SmallScreenNavMenu = () => {
             href={page.path}
             key={page.title}
             passHref
-            style={{
-              textDecoration: "none",
-              //disable pointer events to prevent the link from being clicked
-              pointerEvents: "none",
-            }}
+            style={{ textDecoration: "none" }}
           >
             <MenuItem
               key={page.title}
@@ -144,11 +140,7 @@ const LargeScreenNavMenu = () => {
           href={page.path}
           key={page.title}
           passHref
-          style={{
-            textDecoration: "none",
-            //disable pointer events to prevent the link from being clicked
-            pointerEvents: "none",
-          }}
+          style={{ textDecoration: "none" }}
         >
           <Typography
             key={page.title}
@@ -162,7 +154,7 @@ const LargeScreenNavMenu = () => {
           </Typography>
         </Link>
       ))}
-      <Layout.Spacer horizontal multiplier={4} />
+      <Layout.Spacer horizontal multiplier={2} />
     </Box>
   );
 };
