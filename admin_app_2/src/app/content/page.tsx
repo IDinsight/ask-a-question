@@ -4,6 +4,7 @@ import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
 import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
 import { Button, CircularProgress, Grid } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -21,6 +22,8 @@ const CardsPage = () => {
     LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
+  const { accessLevel } = useAuth();
+
   return (
     <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
@@ -34,13 +37,13 @@ const CardsPage = () => {
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </Layout.FlexBox>
-      <CardsUtilityStrip />
+      <CardsUtilityStrip editAccess={accessLevel === "fullaccess"} />
       <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
     </Layout.FlexBox>
   );
 };
 
-const CardsUtilityStrip = () => {
+const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
@@ -54,12 +57,15 @@ const CardsUtilityStrip = () => {
       }}
       gap={sizes.baseGap}
     >
-      <Link href="/content/edit">
-        <Button variant="contained">
-          <Add />
-          New
-        </Button>
-      </Link>
+      <Button
+        variant="contained"
+        disabled={editAccess ? false : true}
+        component={Link}
+        href="/content/edit"
+      >
+        <Add />
+        New
+      </Button>
     </Layout.FlexBox>
   );
 };
@@ -79,6 +85,8 @@ const CardsGrid = ({
   const searchParams = useSearchParams();
   const action = searchParams.get("action") || null;
   const content_id = Number(searchParams.get("content_id")) || null;
+
+  const { token, accessLevel } = useAuth();
 
   const getSnackMessage = (
     action: string | null,
@@ -100,13 +108,12 @@ const CardsGrid = ({
   const onSuccessfulDelete = (content_id: number) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
-    console.log("hello");
     setSnackMessage(`Content #${content_id} deleted successfully`);
   };
 
   React.useEffect(() => {
     apiCalls
-      .getContentList()
+      .getContentList(token!)
       .then((data) => {
         const filteredData = data.filter(
           (card: Content) =>
@@ -121,7 +128,7 @@ const CardsGrid = ({
         console.error("Failed to fetch content:", error);
         setIsLoading(false);
       });
-  }, [refreshKey, searchTerm]);
+  }, [refreshKey, searchTerm, token]);
 
   if (isLoading) {
     return (
@@ -195,6 +202,10 @@ const CardsGrid = ({
                   onFailedDelete={(content_id: number) => {
                     setSnackMessage(`Failed to delete content #${content_id}`);
                   }}
+                  deleteContent={(content_id: number) => {
+                    return apiCalls.deleteContent(content_id, token!);
+                  }}
+                  editAccess={accessLevel === "fullaccess"}
                 />
               </Grid>
             ))}

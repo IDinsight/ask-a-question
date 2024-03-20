@@ -1,8 +1,10 @@
 "use client";
 import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
+import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -29,12 +31,13 @@ const AddEditContentPage = () => {
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
+  const { token } = useAuth();
   React.useEffect(() => {
     if (!content_id) {
       setIsLoading(false);
       return;
     } else {
-      apiCalls.getContent(content_id).then((data) => {
+      apiCalls.getContent(content_id, token!).then((data) => {
         setContent(data);
         setIsLoading(false);
       });
@@ -58,17 +61,19 @@ const AddEditContentPage = () => {
     );
   }
   return (
-    <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-      <Header content_id={content_id} />
-      <Layout.FlexBox
-        flexDirection={"column"}
-        sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
-      >
-        <Layout.Spacer multiplier={2} />
-        <ContentBox content={content} setContent={setContent} />
-        <Layout.Spacer multiplier={1} />
+    <FullAccessComponent>
+      <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
+        <Header content_id={content_id} />
+        <Layout.FlexBox
+          flexDirection={"column"}
+          sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
+        >
+          <Layout.Spacer multiplier={2} />
+          <ContentBox content={content} setContent={setContent} />
+          <Layout.Spacer multiplier={1} />
+        </Layout.FlexBox>
       </Layout.FlexBox>
-    </Layout.FlexBox>
+    </FullAccessComponent>
   );
 };
 
@@ -84,6 +89,8 @@ const ContentBox = ({
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
 
+  const { token } = useAuth();
+
   const router = useRouter();
   const saveContent = async (content: Content) => {
     const body: EditContentBody = {
@@ -95,8 +102,8 @@ const ContentBox = ({
 
     const promise =
       content.content_id === null
-        ? apiCalls.addContent(body)
-        : apiCalls.editContent(content.content_id, body);
+        ? apiCalls.addContent(body, token!)
+        : apiCalls.editContent(content.content_id, body, token!);
 
     const result = promise
       .then((data) => {
@@ -229,11 +236,13 @@ const ContentBox = ({
 };
 
 const Header = ({ content_id }: { content_id: number | null }) => {
+  const router = useRouter();
+
   return (
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft
         style={{ cursor: "pointer" }}
-        onClick={() => (window.location.href = "/content/")}
+        onClick={() => (content_id ? router.back() : router.push("/content"))}
       />
       <Layout.Spacer multiplier={1} horizontal />
       {content_id ? (
