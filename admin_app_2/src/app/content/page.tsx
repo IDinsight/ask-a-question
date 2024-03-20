@@ -176,14 +176,14 @@ const CardsGrid = ({
               MAX_CARDS_PER_PAGE * (page - 1),
               MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
             )
-            .map((item, index) => (
+            .map((item) => (
               <Grid
                 item
                 xs={12}
                 sm={6}
                 md={4}
                 lg={3}
-                key={index}
+                key={item.content_id}
                 sx={{ display: "grid", alignItems: "stretch" }}
               >
                 <ContentCard
