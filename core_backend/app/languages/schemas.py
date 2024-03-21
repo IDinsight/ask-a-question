@@ -33,5 +33,4 @@ class LanguageRetrieve(LanguageBase):
     language_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
-
     model_config = ConfigDict(from_attributes=True)
