@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
 
 export type Content = {
-  content_id: string;
+  content_id: number;
   content_title: string;
   content_text: string;
 };

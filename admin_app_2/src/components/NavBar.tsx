@@ -1,5 +1,6 @@
 "use client";
 import { appColors, appStyles, sizes } from "@/utils";
+import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -14,11 +15,10 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import logowhite from "../../../docs/images/logo-light.png";
 import { Layout } from "./Layout";
-
 const pages = [
-  { title: "Playground", path: "/playground" },
   { title: "Manage Content", path: "/content" },
-  { title: "Dashboard", path: "/dashboard" },
+  // { title: "Playground", path: "/playground" },
+  // { title: "Dashboard", path: "/dashboard" },
 ];
 
 const settings = ["Logout"];
@@ -46,15 +46,17 @@ const NavBar = () => {
 
 const Logo = () => {
   return (
-    <Box
-      component="img"
-      sx={{
-        height: 40,
-        width: 240,
-        display: { xs: "none", md: "block" },
-      }}
-      src={logowhite.src}
-    />
+    <Link href="/content">
+      <Box
+        component="img"
+        src={logowhite.src}
+        sx={{
+          height: 30,
+          width: 180,
+          display: { xs: "none", md: "block" },
+        }}
+      />
+    </Link>
   );
 };
 
@@ -100,11 +102,7 @@ const SmallScreenNavMenu = () => {
             href={page.path}
             key={page.title}
             passHref
-            style={{
-              textDecoration: "none",
-              //disable pointer events to prevent the link from being clicked
-              pointerEvents: "none",
-            }}
+            style={{ textDecoration: "none" }}
           >
             <MenuItem
               key={page.title}
@@ -142,11 +140,7 @@ const LargeScreenNavMenu = () => {
           href={page.path}
           key={page.title}
           passHref
-          style={{
-            textDecoration: "none",
-            //disable pointer events to prevent the link from being clicked
-            pointerEvents: "none",
-          }}
+          style={{ textDecoration: "none" }}
         >
           <Typography
             key={page.title}
@@ -160,12 +154,13 @@ const LargeScreenNavMenu = () => {
           </Typography>
         </Link>
       ))}
-      <Layout.Spacer horizontal multiplier={4} />
+      <Layout.Spacer horizontal multiplier={2} />
     </Box>
   );
 };
 
 const UserDropdown = () => {
+  const { logout } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
     null,
@@ -205,7 +200,7 @@ const UserDropdown = () => {
         onClose={() => setAnchorElUser(null)}
       >
         {settings.map((setting) => (
-          <MenuItem key={setting} onClick={handleCloseUserMenu}>
+          <MenuItem key={setting} onClick={logout}>
             <Typography textAlign="center">{setting}</Typography>
           </MenuItem>
         ))}

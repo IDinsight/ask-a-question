@@ -1,42 +1,49 @@
 "use client";
+import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { useAuth } from "@/utils/auth";
+import { Add } from "@mui/icons-material";
+import { Button, CircularProgress, Grid } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
+import { PageNavigation } from "../../components/PageNavigation";
+import { SearchBar } from "../../components/SearchBar";
 
-export default ContentScreen;
+const MAX_CARDS_PER_PAGE = 12;
 
-function ContentScreen() {
-  return (
-    <Layout.FlexBox alignItems="center" flexDirection={"column"}>
-      <Layout.Spacer multiplier={3} />
-      <CardsView />
-    </Layout.FlexBox>
-  );
-}
-
-const CardsView = () => {
+const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
+  const [searchTerm, setSearchTerm] = React.useState<string>("");
+  const { accessLevel } = useAuth();
+
   return (
-    <Layout.FlexBox width={"100%"}>
-      <Layout.Spacer multiplier={1} />
-      <CardsUtilityStrip />
-      <Layout.Spacer multiplier={1} />
-      <CardsGrid displayLanguage={displayLanguage} />
+    <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
+      <Layout.Spacer multiplier={3} />
+      <Layout.FlexBox
+        gap={sizes.smallGap}
+        sx={{
+          width: "70%",
+          maxWidth: "500px",
+          minWidth: "200px",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      </Layout.FlexBox>
+      <CardsUtilityStrip editAccess={accessLevel === "fullaccess"} />
+      <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
     </Layout.FlexBox>
   );
 };
 
-const CardsUtilityStrip = () => {
+const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
@@ -50,25 +57,36 @@ const CardsUtilityStrip = () => {
       }}
       gap={sizes.baseGap}
     >
-      <Link href="/content/edit">
-        <Button variant="contained">
-          <Add />
-          New
-        </Button>
-      </Link>
+      <Button
+        variant="contained"
+        disabled={!editAccess}
+        component={Link}
+        href="/content/edit"
+      >
+        <Add />
+        New
+      </Button>
     </Layout.FlexBox>
   );
 };
-const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
-  const MAX_CARDS_PER_PAGE = 12;
+
+const CardsGrid = ({
+  displayLanguage,
+  searchTerm,
+}: {
+  displayLanguage: string;
+  searchTerm: string;
+}) => {
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
-  const [cards, setCards] = React.useState<any[]>([]);
+  const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const searchParams = useSearchParams();
   const action = searchParams.get("action") || null;
   const content_id = Number(searchParams.get("content_id")) || null;
+
+  const { token, accessLevel } = useAuth();
 
   const getSnackMessage = (
     action: string | null,
@@ -90,23 +108,27 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
   const onSuccessfulDelete = (content_id: number) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
-    console.log("hello");
     setSnackMessage(`Content #${content_id} deleted successfully`);
   };
 
   React.useEffect(() => {
     apiCalls
-      .getContentList()
+      .getContentList(token!)
       .then((data) => {
-        setCards(data);
-        setMaxPages(Math.ceil(data.length / MAX_CARDS_PER_PAGE));
+        const filteredData = data.filter(
+          (card: Content) =>
+            card.content_title.includes(searchTerm) ||
+            card.content_text.includes(searchTerm),
+        );
+        setCards(filteredData);
+        setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
         setIsLoading(false);
       })
       .catch((error) => {
         console.error("Failed to fetch content:", error);
         setIsLoading(false);
       });
-  }, [refreshKey]);
+  }, [refreshKey, searchTerm, token]);
 
   if (isLoading) {
     return (
@@ -116,7 +138,7 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "50vh",
           width: "100%",
         }}
       >
@@ -124,7 +146,6 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
       </div>
     );
   }
-
   return (
     <>
       <Snackbar
@@ -145,13 +166,14 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
           {snackMessage}
         </Alert>
       </Snackbar>
-      <Box
+      <Layout.FlexBox
         bgcolor="lightgray.main"
         sx={[
           {
             mx: sizes.baseGap,
             py: sizes.tinyGap,
-            minHeight: "200px",
+            width: "98%",
+            minHeight: "660px",
           },
         ]}
       >
@@ -161,14 +183,14 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
               MAX_CARDS_PER_PAGE * (page - 1),
               MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
             )
-            .map((item, index) => (
+            .map((item) => (
               <Grid
                 item
                 xs={12}
                 sm={6}
                 md={4}
                 lg={3}
-                key={index}
+                key={item.content_id}
                 sx={{ display: "grid", alignItems: "stretch" }}
               >
                 <ContentCard
@@ -180,37 +202,19 @@ const CardsGrid = ({ displayLanguage }: { displayLanguage: string }) => {
                   onFailedDelete={(content_id: number) => {
                     setSnackMessage(`Failed to delete content #${content_id}`);
                   }}
+                  deleteContent={(content_id: number) => {
+                    return apiCalls.deleteContent(content_id, token!);
+                  }}
+                  editAccess={accessLevel === "fullaccess"}
                 />
               </Grid>
             ))}
         </Grid>
-      </Box>
-      <Layout.Spacer multiplier={1} />
-      <Layout.FlexBox
-        flexDirection={"row"}
-        alignItems={"center"}
-        justifyContent={"center"}
-      >
-        <Button
-          onClick={() => {
-            page > 1 && setPage(page - 1);
-          }}
-          disabled={page === 1}
-        >
-          <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
-        </Button>
-        <Typography variant="subtitle2">
-          {max_pages === 0 ? 0 : page} of {max_pages}
-        </Typography>
-        <Button
-          onClick={() => {
-            page < max_pages && setPage(page + 1);
-          }}
-          disabled={page === max_pages}
-        >
-          <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
-        </Button>
       </Layout.FlexBox>
+      <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
+      <Layout.Spacer multiplier={1} />
     </>
   );
 };
+
+export default CardsPage;
