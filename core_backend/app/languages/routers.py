@@ -68,13 +68,20 @@ async def edit_language(
         raise HTTPException(
             status_code=404, detail=f"Language id `{language_id}` not found"
         )
+    if old_language.is_default and not language.is_default:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Default language cannot be unset."
+            f"Please either create a default language or set an existing language as default.",
+        )
+
     language.language_name = language.language_name.upper()
     if (old_language.language_name != language.language_name) and (
         not (await is_language_name_unique(language.language_name, asession))
     ):
         raise HTTPException(status_code=400, detail="Language name already exists")
 
-    if language.is_default:
+    if language.is_default and not old_language.is_default:
         await unset_default_language(asession)
 
     updated_language = await update_language_in_db(

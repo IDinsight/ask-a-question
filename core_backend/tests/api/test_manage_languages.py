@@ -141,3 +141,16 @@ class TestManageLanguage:
         )
         assert response.status_code == 200
         assert response.json()["is_default"] is True
+
+    def test_default_language_cannot_be_unset(
+        self,
+        client: TestClient,
+        existing_language_id: tuple,
+        fullaccess_token: str,
+    ) -> None:
+        response = client.put(
+            f"/languages/{existing_language_id[0]}/",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={"language_name": "XHOSA", "is_default": False},
+        )
+        assert response.status_code == 400
