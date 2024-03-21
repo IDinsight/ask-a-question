@@ -13,8 +13,8 @@ import React from "react";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
-  created_datetime_utc: string | null;
-  updated_datetime_utc: string | null;
+  created_datetime_utc: string;
+  updated_datetime_utc: string;
 }
 
 interface EditContentBody {
@@ -126,8 +126,8 @@ const ContentBox = ({
   ) => {
     const emptyContent: Content = {
       content_id: null,
-      created_datetime_utc: null,
-      updated_datetime_utc: null,
+      created_datetime_utc: "",
+      updated_datetime_utc: "",
       content_title: "",
       content_text: "",
       content_language: "ENGLISH",
