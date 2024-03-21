@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from core_backend.app.llm_call.parse_input import _paraphrase_question
-from core_backend.app.schemas import (
+from core_backend.app.question_answer.schemas import (
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,

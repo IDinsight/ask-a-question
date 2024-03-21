@@ -3,7 +3,7 @@ from logging import Logger
 
 import aiohttp
 
-from .configs.app_config import LOG_LEVEL
+from .config import LOG_LEVEL
 
 
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:

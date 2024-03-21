@@ -8,11 +8,11 @@ from prometheus_client import (
     multiprocess,
 )
 
-from .configs.app_config import (
+from . import admin, auth, contents, question_answer, whatsapp_qa
+from .config import (
     DOMAIN,
 )
 from .prometheus_middleware import PrometheusMiddleware
-from .routers import admin, auth, manage_content, question_answer, whatsapp_qa
 from .utils import setup_logger
 
 logger = setup_logger()
@@ -28,9 +28,9 @@ def create_metrics_app() -> Callable:
 def create_app() -> FastAPI:
     """Application Factory"""
     app = FastAPI(title="Question Answering Service", debug=True)
-    app.include_router(admin.router)
+    app.include_router(admin.routers.router)
     app.include_router(question_answer.router)
-    app.include_router(manage_content.router)
+    app.include_router(contents.router)
     app.include_router(auth.router)
     app.include_router(whatsapp_qa.router)
 

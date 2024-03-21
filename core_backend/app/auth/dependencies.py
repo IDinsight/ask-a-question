@@ -9,7 +9,7 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 
-from .configs.app_config import (
+from .config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     CONTENT_FULLACCESS_PASSWORD,
     CONTENT_READONLY_PASSWORD,

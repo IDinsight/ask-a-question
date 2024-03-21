@@ -1,6 +1,6 @@
 from litellm import acompletion
 
-from ..configs.app_config import LLM_ENDPOINT, LLM_MODEL
+from ..config import LLM_ENDPOINT, LLM_MODEL
 from ..utils import setup_logger
 
 logger = setup_logger("LLM_call")

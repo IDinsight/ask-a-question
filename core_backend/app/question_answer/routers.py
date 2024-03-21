@@ -1,22 +1,12 @@
 from typing import Tuple
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth import auth_bearer_token
-from ..configs.app_config import N_TOP_SIMILAR
-from ..db.db_models import (
-    UserQueryDB,
-    check_secret_key_match,
-    get_similar_content_async,
-    save_feedback_to_db,
-    save_query_response_error_to_db,
-    save_query_response_to_db,
-    save_user_query_to_db,
-)
-from ..db.engine import get_async_session
+from ..auth.dependencies import auth_bearer_token
+from ..contents.models import get_similar_content_async
+from ..database import get_async_session
 from ..llm_call.check_output import check_align_score__after
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
@@ -25,13 +15,23 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
-from ..schemas import (
+from .config import N_TOP_SIMILAR
+from .models import (
+    UserQueryDB,
+    check_secret_key_match,
+    save_feedback_to_db,
+    save_query_response_error_to_db,
+    save_query_response_to_db,
+    save_user_query_to_db,
+)
+from .schemas import (
     FeedbackBase,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
 )
+from .utils import convert_search_results_to_schema, generate_secret_key
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
@@ -77,8 +77,10 @@ async def get_llm_answer(
     Get similar content and construct the LLM answer for the user query
     """
     if not isinstance(response, UserQueryResponseError):
-        content_response = await get_similar_content_async(
-            user_query_refined, int(N_TOP_SIMILAR), asession
+        content_response = convert_search_results_to_schema(
+            await get_similar_content_async(
+                user_query_refined.query_text, int(N_TOP_SIMILAR), asession
+            )
         )
         response.content_response = content_response
         response.llm_response = await get_llm_rag_answer(
@@ -153,9 +155,12 @@ async def get_semantic_matches(
     Get similar contents from content table
     """
     if not isinstance(response, UserQueryResponseError):
-        content_response = await get_similar_content_async(
-            user_query_refined, n_top_similar, asession
+        content_response = convert_search_results_to_schema(
+            await get_similar_content_async(
+                user_query_refined.query_text, n_top_similar, asession
+            )
         )
+
         response.content_response = content_response
     return response
 
@@ -190,10 +195,3 @@ async def feedback(
                 )
             },
         )
-
-
-def generate_secret_key() -> str:
-    """
-    Generate a secret key for the user query
-    """
-    return uuid4().hex
