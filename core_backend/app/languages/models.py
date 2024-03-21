@@ -25,7 +25,6 @@ class LanguageDB(Base):
     __tablename__ = "languages"
 
     language_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-
     language_name: Mapped[str] = mapped_column(String, nullable=False)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
