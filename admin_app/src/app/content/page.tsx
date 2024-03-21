@@ -168,14 +168,12 @@ const CardsGrid = ({
       </Snackbar>
       <Layout.FlexBox
         bgcolor="lightgray.main"
-        sx={[
-          {
-            mx: sizes.baseGap,
-            py: sizes.tinyGap,
-            width: "98%",
-            minHeight: "660px",
-          },
-        ]}
+        sx={{
+          mx: sizes.baseGap,
+          py: sizes.tinyGap,
+          width: "98%",
+          minHeight: "660px",
+        }}
       >
         <Grid container>
           {cards
@@ -183,32 +181,38 @@ const CardsGrid = ({
               MAX_CARDS_PER_PAGE * (page - 1),
               MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
             )
-            .map((item) => (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                key={item.content_id}
-                sx={{ display: "grid", alignItems: "stretch" }}
-              >
-                <ContentCard
-                  title={item.content_title}
-                  text={item.content_text}
-                  content_id={item.content_id}
-                  last_modified={item.updated_datetime_utc}
-                  onSuccessfulDelete={onSuccessfulDelete}
-                  onFailedDelete={(content_id: number) => {
-                    setSnackMessage(`Failed to delete content #${content_id}`);
-                  }}
-                  deleteContent={(content_id: number) => {
-                    return apiCalls.deleteContent(content_id, token!);
-                  }}
-                  editAccess={accessLevel === "fullaccess"}
-                />
-              </Grid>
-            ))}
+            .map((item) => {
+              if (item.content_id !== null) {
+                return (
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    lg={3}
+                    key={item.content_id}
+                    sx={{ display: "grid", alignItems: "stretch" }}
+                  >
+                    <ContentCard
+                      title={item.content_title}
+                      text={item.content_text}
+                      content_id={item.content_id}
+                      last_modified={item.updated_datetime_utc}
+                      onSuccessfulDelete={onSuccessfulDelete}
+                      onFailedDelete={(content_id: number) => {
+                        setSnackMessage(
+                          `Failed to delete content #${content_id}`,
+                        );
+                      }}
+                      deleteContent={(content_id: number) => {
+                        return apiCalls.deleteContent(content_id, token!);
+                      }}
+                      editAccess={accessLevel === "fullaccess"}
+                    />
+                  </Grid>
+                );
+              }
+            })}
         </Grid>
       </Layout.FlexBox>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
