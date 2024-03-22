@@ -6,13 +6,25 @@ import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
-import { Button, CircularProgress, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography
+} from "@mui/material";
+import { } from "@mui/material";
+
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 export interface Content extends EditContentBody {
-  content_id: number | null;
+  content_text_id: number | null;
   created_datetime_utc: string;
   updated_datetime_utc: string;
 }
@@ -20,24 +32,26 @@ export interface Content extends EditContentBody {
 interface EditContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
+  language_id: number;
+  content_id: number | null
   content_metadata: Record<string, unknown>;
 }
 
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
+  const content_text_id = Number(searchParams.get("content_text_id")) || null;
 
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const { token } = useAuth();
   React.useEffect(() => {
-    if (!content_id) {
+    if (!content_text_id) {
       setIsLoading(false);
       return;
     } else {
-      apiCalls.getContent(content_id, token!).then((data) => {
+      apiCalls.getContent(content_text_id, token!).then((data) => {
         setContent(data);
         setIsLoading(false);
       });
@@ -63,13 +77,13 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-        <Header content_id={content_id} />
+        <Header content_id={content_text_id} />
         <Layout.FlexBox
           flexDirection={"column"}
           sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
         >
           <Layout.Spacer multiplier={2} />
-          <ContentBox content={content} setContent={setContent} />
+          <ContentBox content={content} setContent={setContent} content_id={content_id} />
           <Layout.Spacer multiplier={1} />
         </Layout.FlexBox>
       </Layout.FlexBox>
@@ -80,35 +94,43 @@ const AddEditContentPage = () => {
 const ContentBox = ({
   content,
   setContent,
+  content_id
+
 }: {
   content: Content | null;
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
+  content_id: number | null;
 }) => {
-  const [isSaved, setIsSaved] = React.useState(true);
+  const [isSaved, setIsSaved] = React.useState(false);
   const [saveError, setSaveError] = React.useState(false);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
+  const [showModal, setShowModal] = React.useState(false);
+  const [newContentId, setNewContentId] = React.useState<number | null>(null);
 
+
+  const [selectedLanguageId, setSelectedLanguageId] = React.useState<number>(content?.language_id || 1);
   const { token } = useAuth();
 
   const router = useRouter();
-  const saveContent = async (content: Content) => {
+  const saveContent = async (content: Content, content_id: number | null) => {
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
-      content_language: content.content_language,
+      language_id: content.language_id,
+      content_id: content_id,
       content_metadata: content.content_metadata,
     };
 
-    const promise =
-      content.content_id === null
-        ? apiCalls.addContent(body, token!)
-        : apiCalls.editContent(content.content_id, body, token!);
+    const promise = apiCalls.addContent(body, token!)
+
 
     const result = promise
       .then((data) => {
         setIsSaved(true);
         setSaveError(false);
+        setShowModal(true);
+        setNewContentId(data.content_id);
         return data.content_id;
       })
       .catch((error: Error) => {
@@ -125,14 +147,16 @@ const ContentBox = ({
     key: keyof Content,
   ) => {
     const emptyContent: Content = {
-      content_id: null,
+      content_text_id: null,
       created_datetime_utc: "",
       updated_datetime_utc: "",
       content_title: "",
       content_text: "",
-      content_language: "ENGLISH",
+      language_id: selectedLanguageId,
+      content_id: content_id,
       content_metadata: {},
     };
+
 
     setIsTitleEmpty(false);
     setIsContentEmpty(false);
@@ -143,6 +167,30 @@ const ContentBox = ({
     setIsSaved(false);
   };
 
+  const handleLanguageSelect = (language_id: number) => {
+    setContent((prevContent) => {
+      if (prevContent === null) {
+        // If prevContent is null, initialize it as needed
+        return {
+          content_text_id: null,
+          created_datetime_utc: "",
+          updated_datetime_utc: "",
+          content_title: "",
+          content_text: "",
+          language_id: language_id,
+          content_id: null,
+          content_metadata: {},
+        };
+      } else {
+        return {
+          ...prevContent,
+          content_text: "",
+          content_title: "",
+          language_id: language_id,
+        };
+      }
+    });
+  };
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -156,7 +204,10 @@ const ContentBox = ({
         p: sizes.baseGap,
       }}
     >
-      <LanguageButtonBar expandable={true} />
+      <LanguageButtonBar
+        expandable={true}
+        onLanguageSelect={handleLanguageSelect}
+      />
       <Layout.Spacer multiplier={1} />
       <Typography variant="body2">Title</Typography>
       <Layout.Spacer multiplier={0.5} />
@@ -210,28 +261,54 @@ const ContentBox = ({
             } else if (content.content_text === "") {
               setIsContentEmpty(true);
             } else {
-              const handleSaveContent = async (content: Content) => {
-                const content_id = await saveContent(content);
-                if (content_id) {
-                  const actionType = content.content_id ? "edit" : "add";
-                  router.push(
-                    `/content/?content_id=${content_id}&action=${actionType}`,
-                  );
-                }
+              const handleSaveContent = async (content: Content, content_id: number | null) => {
+
+                await saveContent(content, content_id);
+
               };
-              handleSaveContent(content);
+              handleSaveContent(content, content_id);
             }
-          }}
+          }
+          }
         >
           Save
         </Button>
+        <Dialog open={showModal} onClose={() => setShowModal(false)}>
+          <DialogTitle>New content successfully added</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Would you like to add a new language version for this content?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => {
+              setShowModal(false);
+              router.push(`/content/?content_id=${content_id}&action=view`);
+            }}>No</Button>
+            <Button onClick={() => {
+              setShowModal(false);
+
+              const targetContentId = newContentId || content_id;
+              router.push(`/content/edit?content_id=${targetContentId}&action=add`);
+            }} autoFocus>
+              Yes
+            </Button>
+          </DialogActions>
+        </Dialog>
         {saveError ? (
           <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
             Failed to save content.
           </Alert>
         ) : null}
+        {isSaved ? (
+          <Alert variant="outlined" severity="success" sx={{ px: 3, py: 0 }}>
+            Successfully added new content
+          </Alert>
+        ) : null}
       </Layout.FlexBox>
-    </Layout.FlexBox>
+    </Layout.FlexBox >
+
+
   );
 };
 

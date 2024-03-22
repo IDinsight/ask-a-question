@@ -1,10 +1,12 @@
+import { Content } from "@/app/content/edit/page";
+
 const BACKEND_ROOT_PATH: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface ContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
+  language_id: number;
   content_metadata: Record<string, unknown>;
 }
 
@@ -59,8 +61,8 @@ const deleteContent = async (content_id: number, token: string) => {
   });
 };
 
-const createContent = async (content: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
+const addContent = async (content: ContentBody, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -72,7 +74,7 @@ const createContent = async (content: number, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error creating content");
+      throw new Error("Error adding content");
     }
   });
 };
@@ -99,23 +101,7 @@ const editContent = async (
   });
 };
 
-const addContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error adding content");
-    }
-  });
-};
+
 
 const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
@@ -134,12 +120,47 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getLanguageList = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/languages/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching language list");
+    }
+  });
+};
+
+const getDefaultLanguage = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/languages/default`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching default language");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
   deleteContent,
-  createContent,
   editContent,
   addContent,
   getLoginToken,
+  getLanguageList,
+  getDefaultLanguage
 };
