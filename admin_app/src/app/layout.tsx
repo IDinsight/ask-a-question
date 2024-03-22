@@ -1,28 +1,31 @@
-import "./globals.css";
+import theme from "@/theme";
+import AuthProvider from "@/utils/auth";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { NavBar } from "../components/NavBar";
-
+import React from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AAQ Admin",
-  description:
-    "Application to manage content in the Ask-a-question application",
+  title: "Ask A Question",
+  description: "Admin application to manage content and glean insights",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.className} dark:bg-gradient-to-b dark:from-blue-950 flex flex-col h-screen`}
-      >
-        <NavBar />
-        <div className="flex-1 overflow-y-auto">{children}</div>
+      <head>
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      <body className={inter.className}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone as tz
 from typing import List, Optional
 
 from sqlalchemy import (
@@ -25,7 +26,6 @@ class LanguageDB(Base):
     __tablename__ = "languages"
 
     language_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-
     language_name: Mapped[str] = mapped_column(String, nullable=False)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -56,8 +56,8 @@ async def save_language_to_db(
     language_db = LanguageDB(
         language_name=language.language_name,
         is_default=language.is_default,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
+        updated_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
     )
     asession.add(language_db)
 
@@ -80,7 +80,7 @@ async def update_language_in_db(
         language_id=language_id,
         is_default=language.is_default,
         language_name=language.language_name,
-        updated_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
     )
 
     language_db = await asession.merge(language_db)
