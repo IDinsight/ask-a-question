@@ -71,8 +71,9 @@ async def edit_language(
     if old_language.is_default and not language.is_default:
         raise HTTPException(
             status_code=400,
-            detail=f"Default language cannot be unset."
-            f"Please either create a default language or set an existing language as default.",
+            detail="Default language cannot be unset."
+            "Please either create a default language"
+            "or set an existing language as default.",
         )
 
     language.language_name = language.language_name.upper()
