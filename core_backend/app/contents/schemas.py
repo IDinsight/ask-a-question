@@ -1,9 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, validator
-
-from ..llm_call.llm_prompts import IdentifiedLanguage
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 AccessLevel = Literal["fullaccess", "readonly"]
 

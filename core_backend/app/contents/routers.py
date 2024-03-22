@@ -1,32 +1,24 @@
-from typing import Annotated, List, Optional, Union
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
-from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_fullaccess_user, get_current_readonly_user
+from ..auth.dependencies import get_current_fullaccess_user
+from ..auth.schemas import AuthenticatedUser
+from ..database import get_async_session
+from ..utils import setup_logger
 from .models import (
     ContentTextDB,
-    delete_content_text_from_db,
     get_all_languages_version_of_content,
-    get_content_from_content_id_and_language,
-    get_content_from_db,
     get_language_from_db,
-    get_list_of_content_from_db,
-    get_summary_of_content_from_db,
     is_content_language_combination_unique,
     save_content_to_db,
-    update_content_in_db,
 )
-from ..database import get_async_session
-from ..auth.schemas import AuthenticatedUser
 from .schemas import (
-    ContentTextRetrieve,
-    ContentSummary,
     ContentTextCreate,
+    ContentTextRetrieve,
 )
-from ..utils import setup_logger
 
 router = APIRouter(prefix="/content")
 logger = setup_logger()

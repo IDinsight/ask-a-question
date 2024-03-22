@@ -1,14 +1,13 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Sequence
 
-from ..languages.models import LanguageDB, get_language_from_db
 from litellm import aembedding, embedding
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     DateTime,
-    Integer,
     ForeignKey,
+    Integer,
     Row,
     String,
     delete,
@@ -20,6 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..config import EMBEDDING_MODEL
 from ..contents.config import PGVECTOR_VECTOR_SIZE
+from ..languages.models import LanguageDB, get_language_from_db
 from ..models import Base, JSONDict
 from .schemas import (
     ContentTextCreate,
@@ -357,12 +357,12 @@ async def get_search_results(
     """Get similar content to given embedding and return search results"""
     query = (
         select(
-            ContentDB,
-            ContentDB.content_embedding.cosine_distance(question_embedding).label(
+            ContentTextDB,
+            ContentTextDB.content_embedding.cosine_distance(question_embedding).label(
                 "distance"
             ),
         )
-        .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
+        .order_by(ContentTextDB.content_embedding.cosine_distance(question_embedding))
         .limit(n_similar)
     )
     search_result = (await asession.execute(query)).all()
