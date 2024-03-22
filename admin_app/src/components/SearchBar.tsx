@@ -1,18 +1,40 @@
+"use client";
+import { Layout } from "@/components/Layout";
+import { appColors } from "@/utils";
+import { Search } from "@mui/icons-material";
+import { InputAdornment, TextField } from "@mui/material";
 import React from "react";
 
-interface SearchBarProps {
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+export interface SearchBarProps {
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onChange }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+  searchTerm,
+  setSearchTerm,
+}) => {
   return (
-    <div className="w-full max-w-xs px-3 py-3">
-      <input
-        type="text"
-        className="w-full text-inherit m-2 dark:text-gray-800 rounded p-2 placeholder-gray-500 border border-gray-600 dark:bg-gray-800 focus:border-blue-500 focus:outline-none"
-        placeholder="Filter cards"
-        onChange={onChange}
+    <Layout.FlexBox alignItems="center" sx={{ width: "100%" }}>
+      <TextField
+        sx={{
+          width: "100%",
+          backgroundColor: appColors.white,
+        }}
+        variant="outlined"
+        placeholder="Search"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search color="secondary" />
+            </InputAdornment>
+          ),
+        }}
       />
-    </div>
+    </Layout.FlexBox>
   );
 };

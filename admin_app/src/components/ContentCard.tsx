@@ -1,76 +1,126 @@
-// CardPage.tsx
-import React, { useState } from "react";
-import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
+import {
+  ContentViewModal,
+  DeleteContentModal,
+} from "@/components/ContentModal";
+import { appColors, appStyles, sizes } from "@/utils";
+import { Delete, Edit } from "@mui/icons-material";
+import { Button, Card, IconButton, Typography } from "@mui/material";
+import Link from "next/link";
+import React from "react";
+import { Layout } from "./Layout";
 
-export type Content = {
+const ContentCard = ({
+  title,
+  text,
+  content_id,
+  last_modified,
+  onSuccessfulDelete,
+  onFailedDelete,
+  deleteContent,
+  editAccess,
+}: {
+  title: string;
+  text: string;
   content_id: number;
-  content_title: string;
-  content_text: string;
-};
-
-interface ContentCardProps {
-  content: Content;
-  editMe: (content: Content) => void;
-  showEditButton: boolean;
-  deleteMe: (content: Content) => void;
-}
-
-export const ContentCard: React.FC<ContentCardProps> = ({
-  content,
-  editMe,
-  showEditButton,
-  deleteMe,
+  last_modified: string;
+  onSuccessfulDelete: (content_id: number) => void;
+  onFailedDelete: (content_id: number) => void;
+  deleteContent: (content_id: number) => Promise<any>;
+  editAccess: boolean;
 }) => {
-  const [isExpanded, setToggleExpand] = useState(false);
+  const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
 
   return (
-    <div
-      key={content.content_id}
-      className={`relative min-h-[10rem] p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 ${
-        isExpanded ? "row-span-2 col-span-2" : ""
-      }`}
-      onDoubleClick={() => setToggleExpand(!isExpanded)}
-    >
-      {/* Trash Icon Container */}
-      <div className="absolute top-2 right-2">
-        {showEditButton ? (
-          <TrashIcon
-            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-200"
-            onClick={() => deleteMe(content)}
-          />
-        ) : null}
-      </div>
-
-      {/* Pencil Icon Container */}
-      <div className="absolute bottom-2 right-2">
-        {showEditButton ? (
-          <PencilIcon
-            data-modal-target="edit-content-modal"
-            data-modal-toggle="edit-content-modal"
-            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-200"
-            onClick={() => editMe(content)}
-          />
-        ) : null}
-      </div>
-      <p
-        className={`mb-3 overflow-auto whitespace-pre-line text-sm text-gray-700 dark:text-gray-400 font-bold ${
-          isExpanded ? "line-clamp-[12]" : "line-clamp-4"
-        }`}
+    <>
+      <Card
+        sx={[
+          {
+            m: sizes.smallGap,
+            p: sizes.baseGap,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          },
+          appStyles.shadow,
+        ]}
       >
-        {content.content_title}
-      </p>
-      <p
-        className={`mb-3 overflow-auto whitespace-pre-line text-sm text-gray-700 dark:text-gray-400 ${
-          isExpanded ? "line-clamp-[12]" : "line-clamp-4"
-        }`}
-      >
-        {content.content_text}
-      </p>
-      {isExpanded ? (
-        <p className="mb-3 text-xs font-light text-gray-800 dark:text-gray-600 absolute p-3 bottom-0 right-2 float-right">
-          id: {content.content_id}
-        </p>
-      ) : null}
-    </div>
+        <Layout.FlexBox flexDirection="row">
+          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
+            #{content_id}
+          </Typography>
+        </Layout.FlexBox>
+        <Typography variant="h6" noWrap={true}>
+          {title}
+        </Typography>
+        <Typography
+          variant="body2"
+          color={appColors.darkGrey}
+          sx={appStyles.threeLineEllipsis}
+        >
+          {text}
+        </Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <Typography variant="body2" color={appColors.darkGrey}>
+          Last updated on{" "}
+          {new Date(last_modified).toLocaleString(undefined, {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          })}
+        </Typography>
+        <Layout.Spacer multiplier={0.75} />
+        <Layout.FlexBox
+          flexDirection={"row"}
+          gap={sizes.tinyGap}
+          sx={{ alignItems: "center" }}
+        >
+          <Button variant="contained" onClick={() => setOpenReadModal(true)}>
+            Read
+          </Button>
+          <Layout.Spacer horizontal multiplier={0.2} />
+          <Button
+            disabled={!editAccess}
+            component={Link}
+            href={`/content/edit?content_id=${content_id}`}
+          >
+            <Edit fontSize="small" />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            Edit
+          </Button>
+          <div style={{ marginLeft: "auto" }}></div>
+          <IconButton
+            disabled={!editAccess}
+            aria-label="delete"
+            size="small"
+            onClick={() => setOpenDeleteModal(true)}
+          >
+            <Delete fontSize="inherit" />
+          </IconButton>
+        </Layout.FlexBox>
+      </Card>
+      <ContentViewModal
+        title={title}
+        text={text}
+        content_id={content_id}
+        last_modified={last_modified}
+        open={openReadModal}
+        onClose={() => setOpenReadModal(false)}
+        editAccess={editAccess}
+      />
+      <DeleteContentModal
+        content_id={content_id}
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        onSuccessfulDelete={onSuccessfulDelete}
+        onFailedDelete={onFailedDelete}
+        deleteContent={deleteContent}
+      />
+    </>
   );
 };
+
+export default ContentCard;
