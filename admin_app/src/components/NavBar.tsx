@@ -1,95 +1,212 @@
 "use client";
+import logowhite from "@/logo-light.png";
+import { appColors, appStyles, sizes } from "@/utils";
+import { useAuth } from "@/utils/auth";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Box } from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
+import { Layout } from "./Layout";
+const pages = [
+  { title: "Manage Content", path: "/content" },
+  // { title: "Playground", path: "/playground" },
+  // { title: "Dashboard", path: "/dashboard" },
+];
 
-import { useState } from "react";
+const settings = ["Logout"];
 
-const logout = () => {
-  localStorage.removeItem("token");
-  window.location.href = "/login";
-};
-
-export const NavBar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
+const NavBar = () => {
   return (
-    <nav className="sticky z-10 top-0 bg-white border-gray-200 dark:bg-gray-900 shadow-lg">
-      <div className="flex flex-wrap items-center justify-between mx-auto p-4">
-        <a href="/" className="flex items-center">
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            Admin App
-          </span>
-        </a>
-        <button
-          type="button"
-          className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-          aria-controls="navbar-default"
-          aria-expanded={isMenuOpen}
-          onClick={toggleMenu}
-        >
-          <span className="sr-only">Open main menu</span>
-          <svg
-            className={`w-5 h-5 ${isMenuOpen ? "text-blue-500" : ""}`}
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 17 14"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M1 1h15M1 7h15M1 13h15"
-            />
-          </svg>
-        </button>
-        <div
-          className={`${
-            isMenuOpen ? "block" : "hidden"
-          } w-full md:block md:w-auto`}
-          id="navbar-default"
-        >
-          <ul className="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
-            <li>
-              <a
-                href="/"
-                className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                aria-current="page"
-              >
-                Manage Content
-              </a>
-            </li>
-            <li>
-              <a
-                href="/chat"
-                className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                Playground
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                Contact
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="block py-2 pl-3 pr-4 text-red-900 rounded hover:bg-red-100 md:hover:bg-transparent md:border-0 md:hover:text-red-700 md:p-0 dark:text-red-800 md:dark:hover:text-red-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                onClick={logout}
-              >
-                Logout
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <AppBar
+      position="static"
+      sx={[
+        {
+          flexDirection: "row",
+          paddingLeft: sizes.baseGap,
+          paddingRight: sizes.baseGap,
+        },
+        appStyles.alignItemsCenter,
+      ]}
+    >
+      <Logo />
+      <SmallScreenNavMenu />
+      <LargeScreenNavMenu />
+      <UserDropdown />
+    </AppBar>
   );
 };
+
+const Logo = () => {
+  return (
+    <Link href="/content">
+      <Box
+        component="img"
+        src={logowhite.src}
+        sx={{
+          height: 30,
+          width: 180,
+          display: { xs: "none", md: "block" },
+        }}
+      />
+    </Link>
+  );
+};
+
+const SmallScreenNavMenu = () => {
+  const pathname = usePathname();
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
+    null,
+  );
+  return (
+    <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+      <IconButton
+        size="large"
+        aria-label="account of current user"
+        aria-controls="menu-appbar"
+        aria-haspopup="true"
+        onClick={(event: React.MouseEvent<HTMLElement>) =>
+          setAnchorElNav(event.currentTarget)
+        }
+        color="inherit"
+      >
+        <MenuIcon />
+      </IconButton>
+      <Menu
+        id="menu-appbar"
+        anchorEl={anchorElNav}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        keepMounted
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        open={Boolean(anchorElNav)}
+        onClose={() => setAnchorElNav(null)}
+        sx={{
+          display: { xs: "block", md: "none" },
+        }}
+      >
+        {pages.map((page) => (
+          <Link
+            href={page.path}
+            key={page.title}
+            passHref
+            style={{ textDecoration: "none" }}
+          >
+            <MenuItem
+              key={page.title}
+              onClick={() => setAnchorElNav(null)}
+              sx={{
+                color:
+                  pathname === page.path
+                    ? appColors.outline
+                    : appColors.primary,
+              }}
+            >
+              {page.title}
+            </MenuItem>
+          </Link>
+        ))}
+      </Menu>
+    </Box>
+  );
+};
+
+const LargeScreenNavMenu = () => {
+  const pathname = usePathname();
+  return (
+    <Box
+      sx={[
+        {
+          flexGrow: 1,
+          display: { xs: "none", md: "flex" },
+        },
+        appStyles.justifyContentFlexEnd,
+      ]}
+    >
+      {pages.map((page) => (
+        <Link
+          href={page.path}
+          key={page.title}
+          passHref
+          style={{ textDecoration: "none" }}
+        >
+          <Typography
+            key={page.title}
+            sx={{
+              m: sizes.baseGap,
+              color:
+                pathname === page.path ? appColors.white : appColors.outline,
+            }}
+          >
+            {page.title}
+          </Typography>
+        </Link>
+      ))}
+      <Layout.Spacer horizontal multiplier={2} />
+    </Box>
+  );
+};
+
+const UserDropdown = () => {
+  const { logout } = useAuth();
+  const router = useRouter();
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
+    null,
+  );
+
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+  return (
+    <Box>
+      <Tooltip title="Open settings">
+        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+          <Avatar
+            alt="Full access"
+            sx={{ width: sizes.icons.medium, height: sizes.icons.medium }}
+          />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        sx={{ mt: "45px" }}
+        id="menu-appbar"
+        anchorEl={anchorElUser}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        keepMounted
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        open={Boolean(anchorElUser)}
+        onClose={() => setAnchorElUser(null)}
+      >
+        {settings.map((setting) => (
+          <MenuItem key={setting} onClick={logout}>
+            <Typography textAlign="center">{setting}</Typography>
+          </MenuItem>
+        ))}
+      </Menu>
+    </Box>
+  );
+};
+
+export default NavBar;

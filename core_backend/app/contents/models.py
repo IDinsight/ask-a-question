@@ -134,7 +134,7 @@ async def get_list_of_content_from_db(
     """
     Retrieves all content from the database
     """
-    stmt = select(ContentDB)
+    stmt = select(ContentDB).order_by(ContentDB.content_id)
     if offset > 0:
         stmt = stmt.offset(offset)
     if limit is not None:
