@@ -35,9 +35,9 @@ run-tests:
 	python -m pytest -rPQ -m "not rails"
 
 # Test DBs
-setup-test-containers: setup-test-db setup-alignscore-container
+setup-test-containers: setup-test-db #setup-alignscore-container
 
-teardown-test-containers: stop-test-db stop-alignscore-container
+teardown-test-containers: stop-test-db #stop-alignscore-container
 
 setup-test-db:
 	-@docker stop testdb
