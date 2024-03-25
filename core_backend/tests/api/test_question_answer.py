@@ -20,7 +20,6 @@ from core_backend.app.question_answer.schemas import (
 
 
 class TestEmbeddingsSearch:
-
     @pytest.mark.skip_faq_contents
     @pytest.mark.parametrize(
         "token, expected_status_code",
@@ -112,7 +111,6 @@ class TestEmbeddingsSearch:
 
 
 class TestLLMSearch:
-
     @pytest.mark.skip_faq_contents
     @pytest.mark.parametrize(
         "token, expected_status_code",
