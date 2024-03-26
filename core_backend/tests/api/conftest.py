@@ -79,13 +79,13 @@ def existing_language_id(
     fullaccess_token: str,
 ) -> Generator[tuple[int, int], None, None]:
     response_1 = client.post(
-        "/languages",
+        "/language",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
         json={"language_name": "XHOSA", "is_default": True},
     )
 
     response_2 = client.post(
-        "/languages",
+        "/language",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
         json={"language_name": "HINDI", "is_default": False},
     )
@@ -94,11 +94,11 @@ def existing_language_id(
     language_id_2 = response_2.json()["language_id"]
     yield (language_id_1, language_id_2)
     client.delete(
-        f"/languages/{language_id_1}/",
+        f"/language/{language_id_1}/",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
     client.delete(
-        f"/languages/{language_id_2}/",
+        f"/language/{language_id_2}/",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
 

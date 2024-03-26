@@ -93,7 +93,7 @@ async def delete_language_from_db(
     asession: AsyncSession,
 ) -> None:
     """
-    Deletes a content from the database
+    Deletes a language from the database
     """
     stmt = delete(LanguageDB).where(LanguageDB.language_id == language_id)
     await asession.execute(stmt)
@@ -105,9 +105,21 @@ async def get_language_from_db(
     asession: AsyncSession,
 ) -> Optional[LanguageDB]:
     """
-    Retrieves a content from the database
+    Retrieves a language from the database from the language_id
     """
     stmt = select(LanguageDB).where(LanguageDB.language_id == language_id)
+    language_row = (await asession.execute(stmt)).scalar_one_or_none()
+    return language_row
+
+
+async def get_language_from_language_name_db(
+    language_name: str,
+    asession: AsyncSession,
+) -> Optional[LanguageDB]:
+    """
+    Retrieves a language from the database from the language name
+    """
+    stmt = select(LanguageDB).where(LanguageDB.language_name == language_name)
     language_row = (await asession.execute(stmt)).scalar_one_or_none()
     return language_row
 
@@ -116,7 +128,7 @@ async def get_default_language_from_db(
     asession: AsyncSession,
 ) -> Optional[LanguageDB]:
     """
-    Retrieves a content from the database
+    Retrieves a language from the database
     """
     truth_bool = True
     stmt = select(LanguageDB).where(LanguageDB.is_default == truth_bool)
@@ -128,7 +140,7 @@ async def get_list_of_languages_from_db(
     asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
 ) -> List[LanguageDB]:
     """
-    Retrieves all content from the database
+    Retrieves all language from the database
     """
     stmt = select(LanguageDB)
     if offset > 0:

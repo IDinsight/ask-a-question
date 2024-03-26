@@ -10,7 +10,7 @@ class TestManageLanguage:
     ) -> None:
         language_name = "test-language"
         response = client.post(
-            "/languages/",
+            "/language/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": language_name, "is_default": False},
         )
@@ -18,7 +18,7 @@ class TestManageLanguage:
         json_response = response.json()
         assert json_response["language_name"] == language_name.upper()
         response = client.delete(
-            f"/languages/{json_response['language_id']}/",
+            f"/language/{json_response['language_id']}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
@@ -33,14 +33,14 @@ class TestManageLanguage:
         new_language = "ZULU"
 
         response = client.put(
-            f"/languages/{existing_language_id[0]}/",
+            f"/language/{existing_language_id[0]}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": new_language, "is_default": True},
         )
         assert response.status_code == 200
 
         response = client.get(
-            f"/languages/{existing_language_id[0]}",
+            f"/language/{existing_language_id[0]}",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
 
@@ -64,7 +64,7 @@ class TestManageLanguage:
         expected_status: int,
     ) -> None:
         response = client.post(
-            "/languages/",
+            "/language/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": language_name, "is_default": False},
         )
@@ -78,7 +78,7 @@ class TestManageLanguage:
     ) -> None:
         language_name = "HINDI"
         response = client.post(
-            "/languages/",
+            "/language/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": language_name, "is_default": False},
         )
@@ -92,13 +92,13 @@ class TestManageLanguage:
         readonly_token: str,
     ) -> None:
         response = client.get(
-            "/languages/default",
+            "/language/default",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
         assert response.status_code == 200
         default_id = response.json()["language_id"]
         response = client.delete(
-            f"/languages/{default_id}/",
+            f"/language/{default_id}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 400
@@ -119,7 +119,7 @@ class TestManageLanguage:
         readonly_token: str,
     ) -> None:
         response = client.post(
-            "/languages/",
+            "/language/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": language_name, "is_default": True},
         )
@@ -128,14 +128,14 @@ class TestManageLanguage:
         assert response.json()["is_default"] is True
 
         response = client.get(
-            "/languages/default",
+            "/language/default",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
         assert response.status_code == 200
         assert response.json()["language_id"] == new_default_id
 
         response = client.put(
-            f"/languages/{existing_language_id[0]}/",
+            f"/language/{existing_language_id[0]}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": "XHOSA", "is_default": True},
         )
@@ -149,7 +149,7 @@ class TestManageLanguage:
         fullaccess_token: str,
     ) -> None:
         response = client.put(
-            f"/languages/{existing_language_id[0]}/",
+            f"/language/{existing_language_id[0]}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": "XHOSA", "is_default": False},
         )
