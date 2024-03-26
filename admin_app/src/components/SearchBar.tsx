@@ -15,7 +15,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   setSearchTerm,
 }) => {
   return (
-    <Layout.FlexBox alignItems="center" sx={{ width: "100%" }}>
+    <Layout.FlexBox
+      flexDirection={"row"}
+      alignItems="center"
+      sx={{
+        width: "70%",
+        maxWidth: "600px",
+        minWidth: "200px",
+      }}
+    >
       <TextField
         sx={{
           width: "100%",
@@ -35,6 +43,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           ),
         }}
       />
-    </Layout.FlexBox>
+
+    </Layout.FlexBox >
   );
 };

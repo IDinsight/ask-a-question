@@ -7,7 +7,6 @@ from core_backend.app.whatsapp_qa.config import (
 
 
 class TestWhatsAppWebhook:
-
     @pytest.mark.skip_faq_contents
     def test_post_webhook_response(
         self, client: TestClient, patch_httpx_call: pytest.FixtureRequest

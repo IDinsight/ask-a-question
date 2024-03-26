@@ -5,6 +5,7 @@ import {
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
 import { Button, Card, IconButton, Typography } from "@mui/material";
+import TranslateIcon from '@mui/icons-material/Translate';
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
@@ -14,6 +15,7 @@ const ContentCard = ({
   text,
   content_id,
   last_modified,
+  languages,
   onSuccessfulDelete,
   onFailedDelete,
   deleteContent,
@@ -23,6 +25,7 @@ const ContentCard = ({
   text: string;
   content_id: number;
   last_modified: string;
+  languages: string[];
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
   deleteContent: (content_id: number) => Promise<any>;
@@ -72,6 +75,23 @@ const ContentCard = ({
             hour12: true,
           })}
         </Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <Layout.FlexBox
+          flexDirection="row"
+          alignItems="center"
+          gap={sizes.tinyGap}
+        >
+          <TranslateIcon fontSize="small" />
+          <Typography
+            variant="body2"
+            color={appColors.darkGrey}
+            sx={{
+              fontSize: '0.75rem',
+              textTransform: 'lowercase'
+            }}>
+            {languages.join(', ')}
+          </Typography>
+        </Layout.FlexBox>
         <Layout.Spacer multiplier={0.75} />
         <Layout.FlexBox
           flexDirection={"row"}
