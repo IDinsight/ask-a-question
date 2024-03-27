@@ -14,26 +14,63 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
+import React from "react";
+
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
+import { apiCalls } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
+import { Content } from "@/app/content/edit/page";
+
 
 const ContentViewModal = ({
-  title,
-  text,
   content_id,
-  last_modified,
+  defaultLanguageId,
   open,
   onClose,
   editAccess,
 }: {
-  title: string;
-  text: string;
   content_id: number;
-  last_modified: string;
+  defaultLanguageId: number;
   open: boolean;
   onClose: () => void;
   editAccess: boolean;
 }) => {
+  const [contentData, setContentData] = React.useState<{ [key: number]: any }>({});
+  const [contentTextData, setContentTextData] = React.useState<Content | null>(null);
+  const [enabledLanguages, setEnabledLanguages] = React.useState<number[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const handleLanguageSelect = (language_id: number) => {
+    setContentTextData(contentData[language_id]);
+  };
+  const { token } = useAuth();
+  React.useEffect(() => {
+    const fetchData = async () => {
+      if (open) {
+        setLoading(true);
+        setError(null);  // Reset error state on new fetch
+        try {
+          const dataList = await apiCalls.getContent(content_id, null, token!);
+          const transformedData: { [key: string]: any } = dataList.reduce((acc: { [key: number]: any }, item: any) => {
+            const { language_id, ...rest } = item;
+            acc[language_id] = rest;
+            return acc;
+          }, {});
+
+          setContentData(transformedData);
+          setEnabledLanguages(Object.keys(transformedData).map(Number))
+          setContentTextData(transformedData[defaultLanguageId]);
+          setLoading(false);
+        } catch (err) {
+          setError((err as Error).message || "Something went wrong");
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [open, content_id, token]);
   return (
     <Modal
       open={open as boolean}
@@ -70,7 +107,11 @@ const ContentViewModal = ({
               height: "80%",
             }}
           >
-            <LanguageButtonBar expandable={false} />
+            <LanguageButtonBar
+              expandable={false}
+              onLanguageSelect={handleLanguageSelect}
+              defaultLanguageId={defaultLanguageId}
+              enabledLanguages={enabledLanguages} />
             <Layout.FlexBox
               flex={1}
               flexDirection={"column"}
@@ -84,9 +125,9 @@ const ContentViewModal = ({
               }}
             >
               <Layout.Spacer multiplier={1} />
-              <Typography variant="subtitle1">{title}</Typography>
+              <Typography variant="subtitle1">{contentTextData?.content_title}</Typography>
               <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">{text}</Typography>
+              <Typography variant="body2">{contentTextData?.content_text}</Typography>
             </Layout.FlexBox>
             <Layout.Spacer multiplier={1} />
             <Layout.FlexBox
@@ -117,13 +158,13 @@ const ContentViewModal = ({
               >
                 <Typography variant="body2" color={appColors.darkGrey}>
                   Last modified on{" "}
-                  {new Date(last_modified).toLocaleString(undefined, {
+                  {new Date(contentTextData?.updated_datetime_utc!).toLocaleString(undefined, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
                     hour: "numeric",
                     minute: "numeric",
-                    hour12: true,
+                    hour12: false,
                   })}
                 </Typography>
               </Layout.FlexBox>

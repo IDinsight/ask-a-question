@@ -109,7 +109,6 @@ async def retrieve_content(
     skip: int = 0,
     limit: int = 50,
     asession: AsyncSession = Depends(get_async_session),
-    language: Optional[str] = None,
 ) -> List[ContentTextRetrieve]:
     """
     Retrieve all content endpoint
@@ -173,7 +172,7 @@ async def delete_content(
     response_model=Union[ContentTextRetrieve, List[ContentTextRetrieve]],
 )
 async def retrieve_content_by_id(
-    content_text_id: int,
+    content_id: int,
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
     ],
@@ -184,28 +183,27 @@ async def retrieve_content_by_id(
     Retrieve content by id endpoint
     """
 
-    content = await get_content_from_db(content_text_id, asession)
-
-    if not content:
-        raise HTTPException(
-            status_code=404, detail=f"Content text id `{content_text_id}` not found"
-        )
-
     if language:
+        language_db = await get_language_from_language_name_db(
+            language.upper(), asession
+        )
+        if not language_db:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Language `{language}` not found",
+            )
         record = await get_content_from_content_id_and_language(
-            content.content_id, int(language), asession
+            content_id, language_db.language_id, asession
         )
         if not record:
             raise HTTPException(
                 status_code=404,
-                detail=f"""Content `{content_text_id}`
-                with language id `{language}` not found""",
+                detail=f"""Content `{content_id}`
+                with language name `{language}` not found""",
             )
         return _convert_record_to_schema(record)
     else:
-        records = await get_all_languages_version_of_content(
-            content.content_id, asession
-        )
+        records = await get_all_languages_version_of_content(content_id, asession)
         return [_convert_record_to_schema(record) for record in records]
 
 

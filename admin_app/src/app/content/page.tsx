@@ -26,18 +26,16 @@ interface Language {
   language_name: string;
 }
 const CardsPage = () => {
-  const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    "",
-  );
+  const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { token, accessLevel } = useAuth();
   React.useEffect(() => {
 
-    if (!displayLanguage) {
+    if (!displayLanguage && token) {
       const fetchDefaultLanguage = async () => {
         try {
           const defaultLanguage = await apiCalls.getDefaultLanguage(token!);
-          setDisplayLanguage(defaultLanguage.language_name);
+          setDisplayLanguage(defaultLanguage);
         } catch (error) {
           console.error('Failed to fetch default language:', error);
         }
@@ -46,7 +44,7 @@ const CardsPage = () => {
       fetchDefaultLanguage();
     }
 
-  }, [displayLanguage, token]);
+  }, [token]);
   return (
     <Layout.FlexBox gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
@@ -62,9 +60,13 @@ const CardsPage = () => {
       </Layout.FlexBox>
       <CardsUtilityStrip
         token={token!}
-        displayLanguage={displayLanguage}
-        onChangeDisplayLanguage={(e) => setDisplayLanguage(e)} />
-      <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
+        displayLanguage={displayLanguage!}
+        onChangeDisplayLanguage={(language) => {
+          setDisplayLanguage(language);
+        }} />
+      <CardsGrid
+        displayLanguage={displayLanguage!}
+        searchTerm={searchTerm} />
       <CardsBottomStrip editAccess={accessLevel === "fullaccess"} />
       <Layout.Spacer multiplier={4} />
     </Layout.FlexBox>
@@ -77,8 +79,8 @@ const CardsUtilityStrip = ({
   onChangeDisplayLanguage,
 }: {
   token: string;
-  displayLanguage: string;
-  onChangeDisplayLanguage: (language: string) => void;
+  displayLanguage: Language;
+  onChangeDisplayLanguage: (language: Language) => void;
 }) => {
   const [languageOptions, setLanguageOptions] = React.useState<Language[]>([]);
   const [loadingLanguages, setLoadingLanguages] = React.useState(true);
@@ -100,7 +102,7 @@ const CardsUtilityStrip = ({
     fetchLanguages();
     onChangeDisplayLanguage(displayLanguage);
 
-  }, [token, displayLanguage, onChangeDisplayLanguage]);
+  }, [token]);
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -118,7 +120,13 @@ const CardsUtilityStrip = ({
           <Select
             value={displayLanguage}
             label="Language"
-            onChange={({ target: { value } }) => onChangeDisplayLanguage(value)}
+            onChange={({ target }) => {
+              const selectedLanguage = languageOptions
+                .find(lang => lang.language_name === target.value);
+              if (selectedLanguage) {
+                onChangeDisplayLanguage(selectedLanguage);
+              }
+            }}
             sx={{
               backgroundColor: appColors.white,
             }}
@@ -132,7 +140,7 @@ const CardsUtilityStrip = ({
           </Select>
         </FormControl>
       </Layout.FlexBox>
-    </Layout.FlexBox>
+    </Layout.FlexBox >
   );
 };
 
@@ -140,7 +148,7 @@ const CardsGrid = ({
   displayLanguage,
   searchTerm,
 }: {
-  displayLanguage: string;
+  displayLanguage: Language;
   searchTerm: string;
 }) => {
   const [page, setPage] = React.useState<number>(1);
@@ -179,7 +187,7 @@ const CardsGrid = ({
   React.useEffect(() => {
     setIsLoading(true);
     apiCalls
-      .getContentListLanding(displayLanguage, token!)
+      .getContentListLanding(displayLanguage ? displayLanguage.language_name : "", token!)
       .then((data) => {
         const filteredData = data.filter(
           (card: ContentLanding) =>
@@ -261,6 +269,7 @@ const CardsGrid = ({
                       title={item.content_title}
                       text={item.content_text}
                       content_id={item.content_id}
+                      language_id={displayLanguage.language_id}
                       last_modified={item.updated_datetime_utc}
                       languages={item.languages}
                       onSuccessfulDelete={onSuccessfulDelete}

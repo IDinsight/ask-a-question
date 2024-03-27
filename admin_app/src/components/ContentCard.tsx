@@ -14,6 +14,7 @@ const ContentCard = ({
   title,
   text,
   content_id,
+  language_id,
   last_modified,
   languages,
   onSuccessfulDelete,
@@ -24,6 +25,7 @@ const ContentCard = ({
   title: string;
   text: string;
   content_id: number;
+  language_id: number;
   last_modified: string;
   languages: string[];
   onSuccessfulDelete: (content_id: number) => void;
@@ -72,7 +74,7 @@ const ContentCard = ({
             year: "numeric",
             hour: "numeric",
             minute: "numeric",
-            hour12: true,
+            hour12: false,
           })}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
@@ -123,10 +125,8 @@ const ContentCard = ({
         </Layout.FlexBox>
       </Card>
       <ContentViewModal
-        title={title}
-        text={text}
         content_id={content_id}
-        last_modified={last_modified}
+        defaultLanguageId={language_id}
         open={openReadModal}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
