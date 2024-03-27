@@ -24,7 +24,23 @@ const getContentList = async (token: string) => {
     }
   });
 };
+const getContentListLanding = async (language: string, token: string) => {
 
+  return fetch(`${BACKEND_ROOT_PATH}/content/landing?language=${language}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching content list");
+    }
+  });
+};
 const getContent = async (content_id: number, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "GET",
@@ -134,12 +150,48 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getLanguageList = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/language/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching content list");
+    }
+  });
+};
+const getDefaultLanguage = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/language/default`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching content");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
+  getContentListLanding,
   getContent,
   deleteContent,
   createContent,
   editContent,
   addContent,
+  getLanguageList,
+  getDefaultLanguage,
   getLoginToken,
 };

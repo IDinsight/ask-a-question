@@ -1,14 +1,12 @@
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, validator
-
-from ..llm_call.llm_prompts import IdentifiedLanguage
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 AccessLevel = Literal["fullaccess", "readonly"]
 
 
-class ContentCreate(BaseModel):
+class ContentTextCreate(BaseModel):
     """
     Pydantic model for content creation
     """
@@ -16,34 +14,46 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
-    content_language: str = "ENGLISH"
+    language_id: int
+    content_id: Optional[int] = Field(
+        default=None,
+        description="If adding or editing content text to an existing content"
+        ", provide its ID",
+    )
+
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
 
-    @validator("content_language")
-    def validate_language(cls, v: str) -> str:
-        """
-        Validator for language
-        """
 
-        if v not in IdentifiedLanguage.get_supported_languages():
-            raise ValueError(f"Language {v} is not supported")
-
-        return v
-
-
-class ContentRetrieve(ContentCreate):
+class ContentTextRetrieve(ContentTextCreate):
     """
     Pydantic model for content retrieval
     """
 
-    content_id: int
+    content_text_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
 
-class ContentUpdate(ContentCreate):
+class ContentLanding(BaseModel):
+    """
+    Pydantic model
+    for content summary
+    """
+
+    content_text_id: int
+    content_id: int
+    content_title: str
+    content_text: str
+    languages: list[str]
+    created_datetime_utc: datetime
+    updated_datetime_utc: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContentUpdate(ContentTextCreate):
     """
     Pydantic model for content edit
     """
@@ -53,7 +63,7 @@ class ContentUpdate(ContentCreate):
 
 class ContentDelete(BaseModel):
     """
-    Pydantic model for content deletiom
+    Pydantic model for content deletion
     """
 
     content_id: int

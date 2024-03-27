@@ -20,7 +20,7 @@ from .models import (
 )
 from .schemas import LanguageBase, LanguageRetrieve
 
-router = APIRouter(prefix="/languages")
+router = APIRouter(prefix="/language")
 logger = setup_logger()
 
 

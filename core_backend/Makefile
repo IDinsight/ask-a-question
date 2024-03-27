@@ -32,12 +32,12 @@ tests: setup-test-containers run-tests teardown-test-containers
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head && \
-	python -m pytest -rPQ -m "not rails"
+	python -m pytest -rPQ -m "not rails and not skip_faq_contents"
 
 # Test DBs
-setup-test-containers: setup-test-db #setup-alignscore-container
+setup-test-containers: setup-test-db setup-alignscore-container
 
-teardown-test-containers: stop-test-db #stop-alignscore-container
+teardown-test-containers: stop-test-db stop-alignscore-container
 
 setup-test-db:
 	-@docker stop testdb
