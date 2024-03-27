@@ -19,7 +19,7 @@ LITELLM_EMBEDDING_MODEL = os.environ.get(
     "LITELLM_EMBEDDING_MODEL", "text-embedding-ada-002"
 )
 # default LLM endpoint + model
-LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "gpt-4-1106-preview")
+LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "gpt-4-0125-preview")
 LITELLM_ENDPOINT_DEFAULT = os.environ.get("LITELLM_ENDPOINT_DEFAULT", None)
 # summarization
 LITELLM_MODEL_SUMMARIZATION = os.environ.get(
