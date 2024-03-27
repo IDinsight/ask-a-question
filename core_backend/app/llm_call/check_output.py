@@ -11,6 +11,8 @@ from ..config import (
     ALIGN_SCORE_API,
     ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
+    LITELLM_ENDPOINT_ALIGNSCORE,
+    LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
     UserQueryRefined,
@@ -136,7 +138,12 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
     Get the alignment score from the LLM
     """
     prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
-    result = await _ask_llm_async(prompt, align_score_data["claim"])
+    result = await _ask_llm_async(
+        prompt,
+        align_score_data["claim"],
+        litellm_model=LITELLM_MODEL_ALIGNSCORE,
+        litellm_endpoint=LITELLM_ENDPOINT_ALIGNSCORE,
+    )
 
     try:
         alignment_score = AlignmentScore.model_validate_json(result)
