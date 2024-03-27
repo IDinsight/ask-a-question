@@ -10,6 +10,8 @@ In addition to these, you can modify a bunch of other parameters by either:
 - Setting environment variables in the `.env` file; or
 - Updating the config directly in `core_backend/app/config.py`.
 
+For example, you set a different LLM to be used for each guardrail step.
+
 ??? Note "Environment variables take precedence over the config file."
     You'll see in the config files that we get parameters from the environment and if
     not found, we fall back on defaults provided. So any environment variables set
