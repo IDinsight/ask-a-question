@@ -172,14 +172,14 @@ async def update_content_in_db(
     return content_db
 
 
-async def delete_content_text_from_db(
+async def delete_content_from_db(
     content_text_id: int,
     content_id: int,
     asession: AsyncSession,
     language_id: Optional[int] = None,
 ) -> None:
     """
-    Deletes a content text from the database
+    Deletes a content  from the database
     """
     if language_id:
         stmt = delete(ContentTextDB).where(
@@ -191,6 +191,7 @@ async def delete_content_text_from_db(
     await asession.execute(stmt)
 
     content_stmt = select(ContentDB).where(ContentDB.content_id == content_id)
+    content_row = (await asession.execute(content_stmt)).scalar_one_or_none()
     if not content_row:
         stmt = delete(ContentDB).where(ContentDB.content_id == content_id)
         await asession.execute(stmt)
