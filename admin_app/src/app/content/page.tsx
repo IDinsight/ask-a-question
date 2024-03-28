@@ -118,7 +118,7 @@ const CardsUtilityStrip = ({
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
-            value={displayLanguage}
+            value={displayLanguage ? displayLanguage.language_name : ""}
             label="Language"
             onChange={({ target }) => {
               const selectedLanguage = languageOptions
@@ -279,7 +279,7 @@ const CardsGrid = ({
                         );
                       }}
                       deleteContent={(content_id: number) => {
-                        return apiCalls.deleteContent(content_id, token!);
+                        return apiCalls.deleteContent(content_id, null, token!);
                       }}
                       editAccess={accessLevel === "fullaccess"}
                     />

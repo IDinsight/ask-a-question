@@ -61,8 +61,11 @@ const getContent = async (content_id: number, language: string | null, token: st
   });
 };
 
-const deleteContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
+const deleteContent = async (content_id: number, language: string | null, token: string) => {
+  const languageQuery = language ? `?language=${encodeURIComponent(language)}` : '';
+  const uri = `${BACKEND_ROOT_PATH}/content/${content_id}${languageQuery}`;
+
+  return fetch(uri, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

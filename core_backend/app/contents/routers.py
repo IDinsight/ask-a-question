@@ -12,7 +12,7 @@ from ..languages.models import get_language_from_db, get_language_from_language_
 from ..utils import setup_logger
 from .models import (
     ContentTextDB,
-    delete_content_text_from_db,
+    delete_content_from_db,
     get_all_languages_version_of_content,
     get_content_from_content_id_and_language,
     get_content_from_db,
@@ -143,28 +143,49 @@ async def retrieve_content_landing(
     return contents
 
 
-@router.delete("/{content_text_id}/")
+@router.delete("/{content_id}")
 async def delete_content(
-    content_text_id: int,
+    content_id: int,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
     asession: AsyncSession = Depends(get_async_session),
+    language: Optional[str] = None,
 ) -> None:
     """
     Delete content endpoint
     """
-    record = await get_content_from_db(
-        content_text_id,
-        asession,
-    )
-
-    if not record:
-        raise HTTPException(
-            status_code=404, detail=f"Content text id `{content_text_id}` not found"
+    if language:
+        language_db = await get_language_from_language_name_db(
+            language.upper(), asession
         )
-
-    await delete_content_text_from_db(content_text_id, record.content_id, asession)
+        if not language_db:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Language `{language}` not found",
+            )
+        record = await get_content_from_content_id_and_language(
+            content_id, language_db.language_id, asession
+        )
+        if not record:
+            raise HTTPException(
+                status_code=404,
+                detail=f"""Content `{content_id}`
+                with language name `{language}` not found""",
+            )
+        await delete_content_from_db(
+            content_id,
+            asession,
+            language_db.language_id,
+        )
+    else:
+        records = await get_all_languages_version_of_content(content_id, asession)
+        if len(records) < 1:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Content `{content_id}` not found",
+            )
+        await delete_content_from_db(content_id, asession)
 
 
 @router.get(
