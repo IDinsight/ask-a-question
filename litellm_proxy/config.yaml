@@ -35,3 +35,4 @@ litellm_settings:
   num_retries: 2 # retry call 3 times on each model_name (e.g. translate).
   request_timeout: 100 # raise Timeout error if call takes longer than 10s. Sets litellm.request_timeout
   # fallbacks: [{"paraphrase": ["default"]}] # fallback to default model if paraphrase model fails num_retries
+  telemetry: False
