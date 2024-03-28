@@ -30,7 +30,7 @@ Once you have your local environment setup (1), you can setup the components nee
 develop your new feature.
 { .annotate }
 
-1. if you haven't see [Contributing to AAQ]("./contributing.md")
+1. If you haven't, see [Contributing to AAQ](../contributing)
 
 ### Database
 
