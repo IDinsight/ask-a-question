@@ -173,7 +173,6 @@ async def update_content_in_db(
 
 
 async def delete_content_from_db(
-    content_text_id: int,
     content_id: int,
     asession: AsyncSession,
     language_id: Optional[int] = None,
