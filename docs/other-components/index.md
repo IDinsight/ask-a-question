@@ -5,8 +5,7 @@ deployment of AAQ and support some extended features.
 
 <div class="grid cards" markdown>
 
-
--   :material-chat-question:{ .lg .middle } __Chat Managers__
+- :material-chat-question:{ .lg .middle } __Chat Managers__
 
     ---
 
@@ -14,15 +13,16 @@ deployment of AAQ and support some extended features.
 
     [:octicons-arrow-right-24: More info](./chat_managers/index.md)
 
--   :material-view-dashboard:{ .lg .middle } __Offline LLMs__
+- :material-view-dashboard:{ .lg .middle } __LLM Proxy Server__
 
     ---
 
-    AAQ allows you to connect to self-hosted LLMs instead of using OpenAI APIs.
+    AAQ uses the [LiteLLM Proxy Server](https://litellm.vercel.app/docs/simple_proxy) for
+    managing LLM calls, allowing you to use any LiteLLM supported model (including self-hosted ones).
 
-    [:octicons-arrow-right-24: More info](./self_hosted_llms/index.md)
+    [:octicons-arrow-right-24: More info](./litellm-proxy/index.md)
 
--   :material-database:{ .lg .middle .red} __Direct WhatsApp Connector__
+- :material-database:{ .lg .middle .red} __Direct WhatsApp Connector__
 
     ---
 
@@ -31,7 +31,7 @@ deployment of AAQ and support some extended features.
 
     [:octicons-arrow-right-24: More info](./whatsapp/index.md)
 
--   :material-format-align-middle:{ .lg .middle } __Align Score__
+- :material-format-align-middle:{ .lg .middle } __Align Score__
 
     ---
 

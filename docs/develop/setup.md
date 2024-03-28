@@ -1,5 +1,7 @@
 # Setting up your development environment
 
+!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+
 ## Option 1 - Using Docker Compose Watch
 
 This option uses the same Docker Compose script as deployment and so is *environment-agnostic*. It's good for
@@ -35,8 +37,6 @@ develop your new feature.
 ### Database
 
 #### Running the database on docker
-
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
 You can launch a container running PostgreSQL database and run the necessary migrations using:
 
@@ -91,6 +91,25 @@ POSTGRES_PASSWORD=
 
 See `core_backend/app/configs/app_config.py` for the default values for these variables.
 
+### LiteLLM Proxy Server (Required)
+
+1. Pull the LiteLLM proxy image with
+
+        docker pull ghcr.io/berriai/litellm:main-v1.34.6
+
+2. Set models and parameters in a `config.yaml` (see `deployement/docker-compose/litellm-config.yaml` for an example)
+
+3. Run the Docker container
+
+        docker run \
+            --name litellm-proxy \
+            --rm \
+            -v <PATH_TO_CONFIG>:/app/config.yaml \
+            -e OPENAI_API_KEY="sk-..." \
+            -p 4000:4000 \
+            ghcr.io/berriai/litellm:main-v1.34.6 \
+            --config /app/config.yaml --detailed_debug
+
 ### Run the backend app
 
 #### Step 1: Set environment variables
@@ -99,7 +118,6 @@ Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY
 
 You can do this directly using
 
-    export OPENAI_API_KEY="sk-..."
     export PROMETHEUS_MULTIPROC_DIR=/tmp
 
 Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
