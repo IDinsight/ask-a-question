@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
-from core_backend.app.config import EMBEDDING_MODEL
+from core_backend.app.config import LITELLM_EMBEDDING_MODEL
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
@@ -53,9 +53,9 @@ def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
 
     for i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
-        content_embedding = fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0][
-            "embedding"
-        ]
+        content_embedding = fake_embedding(LITELLM_EMBEDDING_MODEL, text_to_embed).data[
+            0
+        ]["embedding"]
 
         contend_db = ContentDB(
             content_id=i,

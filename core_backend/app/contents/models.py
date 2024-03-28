@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..config import EMBEDDING_MODEL
+from ..config import LITELLM_EMBEDDING_MODEL
 from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from .schemas import (
@@ -151,7 +151,9 @@ async def _get_content_embeddings(
     Vectorizes the content
     """
     text_to_embed = content.content_title + "\n" + content.content_text
-    content_embedding = embedding(EMBEDDING_MODEL, text_to_embed).data[0]["embedding"]
+    content_embedding = embedding(LITELLM_EMBEDDING_MODEL, text_to_embed).data[0][
+        "embedding"
+    ]
     return content_embedding
 
 
@@ -163,7 +165,7 @@ async def get_similar_content(
     """
     Get the most similar points in the vector table
     """
-    response = embedding(EMBEDDING_MODEL, question)
+    response = embedding(LITELLM_EMBEDDING_MODEL, question)
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
@@ -179,7 +181,7 @@ async def get_similar_content_async(
     """
     Get the most similar points in the vector table
     """
-    response = await aembedding(EMBEDDING_MODEL, question)
+    response = await aembedding(LITELLM_EMBEDDING_MODEL, question)
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
