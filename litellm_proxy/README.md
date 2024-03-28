@@ -1,6 +1,6 @@
 # LiteLLM Proxy Docker
 
-All of our embeddings and LLM calls will now pass through this proxy. See [confluence page](https://idinsight.atlassian.net/wiki/spaces/PD/pages/2452488357/LiteLLM+Proxy+Server) for details.
+All of our embeddings and LLM calls will now pass through this proxy.
 
 ## How to run
 
@@ -13,6 +13,8 @@ All of our embeddings and LLM calls will now pass through this proxy. See [confl
 3.  Run the Docker container
 
         docker run \
+            --name litellm-proxy \
+            --rm \
             -v <PATH_TO_CONFIG>:/app/config.yaml \
             -e OPENAI_API_KEY="sk-..." \
             -p 4000:4000 \
