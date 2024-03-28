@@ -46,6 +46,7 @@ const getContent = async (content_id: number, language: string | null, token: st
   const uri = `${BACKEND_ROOT_PATH}/content/${content_id}${languageQuery}`;
 
   return fetch(uri, {
+
     method: "GET",
     headers: {
       "Content-Type": "application/json",

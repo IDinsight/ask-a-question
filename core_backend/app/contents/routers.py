@@ -145,7 +145,7 @@ async def retrieve_content_landing(
 
 @router.delete("/{content_id}")
 async def delete_content(
-    content_id: int,
+    content_text_id: int,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
@@ -193,7 +193,7 @@ async def delete_content(
     response_model=Union[ContentTextRetrieve, List[ContentTextRetrieve]],
 )
 async def retrieve_content_by_id(
-    content_id: int,
+    content_text_id: int,
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
     ],
@@ -262,6 +262,7 @@ async def validate_edit_content(
     """
     Validate content and language before editing content text.
     """
+    
     if not content.content_id:
         content.content_id = old_content.content_id
     else:

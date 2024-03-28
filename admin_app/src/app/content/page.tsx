@@ -103,6 +103,7 @@ const CardsUtilityStrip = ({
     onChangeDisplayLanguage(displayLanguage);
 
   }, [token]);
+
   return (
     <Layout.FlexBox
       flexDirection={"row"}

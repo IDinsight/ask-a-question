@@ -27,6 +27,7 @@ const LanguageButtonBar = ({
   enabledLanguages }: LanguageButtonBarProps) => {
   const [langList, setLangList] = React.useState<Language[]>([]);
   const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { token } = useAuth();
   const isLanguageEnabled = (languageId: number) => {
