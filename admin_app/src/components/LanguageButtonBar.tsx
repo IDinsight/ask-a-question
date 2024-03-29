@@ -16,17 +16,15 @@ interface Language {
 }
 interface LanguageButtonBarProps {
   expandable: boolean;
+  onLanguageSelect: (language_id: number) => void;
   defaultLanguageId: number;
   enabledLanguages?: number[];
-  onLanguageSelect: (language_id: number) => void;
-  onMenuItemSelect?: (language_id: number) => void;
 }
 const LanguageButtonBar = ({
   expandable,
-  defaultLanguageId,
-  enabledLanguages,
   onLanguageSelect,
-  onMenuItemSelect }: LanguageButtonBarProps) => {
+  defaultLanguageId,
+  enabledLanguages }: LanguageButtonBarProps) => {
   const [langList, setLangList] = React.useState<Language[]>([]);
   const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
 
@@ -69,11 +67,6 @@ const LanguageButtonBar = ({
     setSelectedLang(language.language_id);
     onLanguageSelect(language.language_id);
   };
-  const handleMenuItemSelect = (language: Language) => {
-    onMenuItemSelect && onMenuItemSelect(language.language_id);
-    setSelectedLang(language.language_id);
-    setAnchorEl(null);
-  };
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -107,8 +100,46 @@ const LanguageButtonBar = ({
               <Layout.Spacer horizontal multiplier={0.5} />
             </ToggleButton>
           ),
-        )}
+          {
+            langList.map((lang) =>
+              lang && (
+                <ToggleButton
+                  key={lang.language_id}
+                  value={lang.language_id}
+                  size="medium"
+                  onClick={() => handleToggleButtonSelect(lang)}
+                  disabled={!isLanguageEnabled(lang.language_id)}
+                  sx={[
+                    {
+                      border: 0,
+                      borderBottomColor: appColors.outline,
+                      borderBottomWidth: 1,
+                    },
+                    selectedLang === lang?.language_id && {
+                      borderBottomColor: appColors.primary,
+                      borderBottomWidth: 3,
+                      color: appColors.primary,
+                    },
+                  ]}
+                >
+                  <Layout.Spacer horizontal multiplier={0.5} />
+                  {lang?.language_name}
+                  <Layout.Spacer horizontal multiplier={0.5} />
+                </ToggleButton>
+              ),
+            )
+          }
       </ToggleButtonGroup>
+      {
+        expandable && (
+          <AddCircle
+            fontSize="small"
+            onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+              setAnchorEl(event.currentTarget as unknown as HTMLElement);
+            }}
+          />
+        )
+      }
       {
         expandable && (
           <AddCircle
@@ -125,15 +156,16 @@ const LanguageButtonBar = ({
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        {langList.filter((l) => !enabledLanguages?.includes(l.language_id)).map(
+        {langList.filter((l) => l.language_id !== selectedLang).map(
           (language, index) => (
             <MenuItem
               key={language.language_id}
               onClick={() =>
-                handleMenuItemSelect(language)
+                handleToggleButtonSelect(language)
               }
 
             >
+              {language.language_name}
               {language.language_name}
             </MenuItem>
           ),

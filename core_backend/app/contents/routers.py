@@ -156,7 +156,8 @@ async def delete_content(
     language: Optional[str] = None,
 ) -> None:
     """
-    Delete content endpoint
+    Delete content endpoint.
+    If no language is provided, all languages versions of the content will be deleted
     """
     if language:
         language_db = await get_language_from_language_name_db(
