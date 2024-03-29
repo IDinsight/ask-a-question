@@ -2,11 +2,19 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, appColors, sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add, Sort } from "@mui/icons-material";
-import { Button, CircularProgress, FormControl, Grid, InputLabel, MenuItem, Select, useMediaQuery } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
@@ -14,7 +22,6 @@ import { useSearchParams } from "next/navigation";
 import React from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import theme from "@/theme";
 
 const MAX_CARDS_PER_PAGE = 12;
 
@@ -26,27 +33,22 @@ interface Language {
   language_name: string;
 }
 const CardsPage = () => {
-  const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    "",
-  );
+  const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { token, accessLevel } = useAuth();
   React.useEffect(() => {
-
-    if (!displayLanguage) {
+    if (!displayLanguage && token) {
       const fetchDefaultLanguage = async () => {
         try {
           const defaultLanguage = await apiCalls.getDefaultLanguage(token!);
-          setDisplayLanguage(defaultLanguage.language_name);
+          setDisplayLanguage(defaultLanguage);
         } catch (error) {
-          console.error('Failed to fetch default language:', error);
+          console.error("Failed to fetch default language:", error);
         }
       };
-
       fetchDefaultLanguage();
     }
-
-  }, [displayLanguage, token]);
+  }, [token]);
   return (
     <Layout.FlexBox gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
@@ -58,13 +60,15 @@ const CardsPage = () => {
         width={"100%"}
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
       </Layout.FlexBox>
       <CardsUtilityStrip
         token={token!}
-        displayLanguage={displayLanguage}
-        onChangeDisplayLanguage={(e) => setDisplayLanguage(e)} />
-      <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
+        displayLanguage={displayLanguage!}
+        onChangeDisplayLanguage={(language) => {
+          setDisplayLanguage(language);
+        }}
+      />
+      <CardsGrid displayLanguage={displayLanguage!} searchTerm={searchTerm} />
       <CardsBottomStrip editAccess={accessLevel === "fullaccess"} />
       <Layout.Spacer multiplier={4} />
     </Layout.FlexBox>
@@ -77,8 +81,8 @@ const CardsUtilityStrip = ({
   onChangeDisplayLanguage,
 }: {
   token: string;
-  displayLanguage: string;
-  onChangeDisplayLanguage: (language: string) => void;
+  displayLanguage: Language;
+  onChangeDisplayLanguage: (language: Language) => void;
 }) => {
   const [languageOptions, setLanguageOptions] = React.useState<Language[]>([]);
   const [loadingLanguages, setLoadingLanguages] = React.useState(true);
@@ -88,19 +92,15 @@ const CardsUtilityStrip = ({
       try {
         const languages = await apiCalls.getLanguageList(token);
         setLanguageOptions(languages);
-
       } catch (error) {
-        console.error('Failed to fetch language list:', error);
-      }
-      finally {
+        console.error("Failed to fetch language list:", error);
+      } finally {
         setLoadingLanguages(false);
       }
     };
-
     fetchLanguages();
     onChangeDisplayLanguage(displayLanguage);
-
-  }, [token, displayLanguage, onChangeDisplayLanguage]);
+  }, [token]);
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -109,26 +109,41 @@ const CardsUtilityStrip = ({
       sx={{ px: sizes.baseGap }}
     >
       <Layout.FlexBox
-        sx={{ width: { xs: "100%", md: "auto" } }}
+        sx={{ width: "auto" }}
         flexDirection={"row"}
+        alignItems={"center"}
       >
-        <Sort sx={{ display: { xs: "none", md: "flex" } }} />
+        <Sort sx={{ display: "flex" }} />
+        <Layout.Spacer horizontal multiplier={1} />
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
-            value={displayLanguage}
+            value={displayLanguage ? displayLanguage.language_name : ""}
             label="Language"
-            onChange={({ target: { value } }) => onChangeDisplayLanguage(value)}
+            onChange={({ target }) => {
+              const selectedLanguage = languageOptions.find(
+                (lang) => lang.language_name === target.value,
+              );
+              if (selectedLanguage) {
+                onChangeDisplayLanguage(selectedLanguage);
+              }
+            }}
             sx={{
               backgroundColor: appColors.white,
             }}
           >
-            {loadingLanguages
-              ? <MenuItem value="">Loading...</MenuItem>
-              : languageOptions.map((language) => (
-                <MenuItem key={language.language_id} value={language.language_name}>{language.language_name}</MenuItem>
+            {loadingLanguages ? (
+              <MenuItem value="">Loading...</MenuItem>
+            ) : (
+              languageOptions.map((language) => (
+                <MenuItem
+                  key={language.language_id}
+                  value={language.language_name}
+                >
+                  {language.language_name}
+                </MenuItem>
               ))
-            }
+            )}
           </Select>
         </FormControl>
       </Layout.FlexBox>
@@ -140,7 +155,7 @@ const CardsGrid = ({
   displayLanguage,
   searchTerm,
 }: {
-  displayLanguage: string;
+  displayLanguage: Language;
   searchTerm: string;
 }) => {
   const [page, setPage] = React.useState<number>(1);
@@ -179,7 +194,10 @@ const CardsGrid = ({
   React.useEffect(() => {
     setIsLoading(true);
     apiCalls
-      .getContentListLanding(displayLanguage, token!)
+      .getContentListLanding(
+        displayLanguage ? displayLanguage.language_name : "",
+        token!,
+      )
       .then((data) => {
         const filteredData = data.filter(
           (card: ContentLanding) =>
@@ -261,6 +279,7 @@ const CardsGrid = ({
                       title={item.content_title}
                       text={item.content_text}
                       content_id={item.content_id}
+                      language_id={displayLanguage.language_id}
                       last_modified={item.updated_datetime_utc}
                       languages={item.languages}
                       onSuccessfulDelete={onSuccessfulDelete}
@@ -270,7 +289,7 @@ const CardsGrid = ({
                         );
                       }}
                       deleteContent={(content_id: number) => {
-                        return apiCalls.deleteContent(content_id, token!);
+                        return apiCalls.deleteContent(content_id, null, token!);
                       }}
                       editAccess={accessLevel === "fullaccess"}
                     />
@@ -281,16 +300,11 @@ const CardsGrid = ({
         </Grid>
       </Layout.FlexBox>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
-      <Layout.Spacer multiplier={1} />
     </>
   );
 };
-const CardsBottomStrip = ({
 
-  editAccess,
-}: {
-  editAccess: boolean;
-}) => {
+const CardsBottomStrip = ({ editAccess }: { editAccess: boolean }) => {
   return (
     <Layout.FlexBox
       flexDirection={"row"}
