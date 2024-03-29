@@ -109,10 +109,12 @@ const CardsUtilityStrip = ({
       sx={{ px: sizes.baseGap }}
     >
       <Layout.FlexBox
-        sx={{ width: { xs: "100%", md: "auto" } }}
+        sx={{ width: "auto" }}
         flexDirection={"row"}
+        alignItems={"center"}
       >
-        <Sort sx={{ display: { xs: "none", md: "flex" } }} />
+        <Sort sx={{ display: "flex" }} />
+        <Layout.Spacer horizontal multiplier={1} />
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
