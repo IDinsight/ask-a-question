@@ -1,5 +1,4 @@
 Reviewer:
-
 Estimate:
 
 ---
@@ -8,19 +7,17 @@ Estimate:
 
 Fixes: JIRA_TICKET_LINK
 
-## Description, Motivation and Context
+## Description
 
 ### Goal
 
 ### Changes
 
+### Futue Tasks (optional)
+
 ## How has this been tested?
 
-## To-do before merge
-
-(Optional -- remove this section if not needed)
-
-- [ ] Ensure PR #56 is merged
+## To-do before merge (optional)
 
 ## Checklist
 
