@@ -58,10 +58,11 @@ async def create_content(
         )
 
 
-@router.put("/{content_id}/", response_model=ContentTextRetrieve)
+@router.put("/{content_id}", response_model=ContentTextRetrieve)
 async def edit_content(
-    content_text_id: int,
+    content_id: int,
     content: ContentTextCreate,
+    language_id: int,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
@@ -70,28 +71,30 @@ async def edit_content(
     """
     Edit content endpoint
     """
-    old_content = await get_content_from_db(
-        content_text_id,
+    language_db = await get_language_from_db(language_id, asession)
+    if not language_db:
+        raise HTTPException(
+            status_code=404, detail=f"Language `{language_id}` not found"
+        )
+
+    old_content = await get_content_from_content_id_and_language(
+        content_id,
+        language_db.language_id,
         asession,
     )
 
-    if not old_content:
-        raise HTTPException(
-            status_code=404, detail=f"Content text id `{content_text_id}` not found"
-        )
-
     is_valid, reason = await validate_edit_content(
-        content=content,
-        asession=asession,
-        old_content=old_content,
+        content=content, old_content=old_content, asession=asession
     )
     if is_valid:
-        updated_content = await update_content_in_db(
-            content_text_id,
-            old_content,
-            content,
-            asession,
-        )
+        if old_content:
+            updated_content = await update_content_in_db(
+                old_content,
+                content,
+                asession,
+            )
+        else:
+            updated_content = await save_content_to_db(content, asession)
 
         return _convert_record_to_schema(updated_content)
     else:
@@ -257,7 +260,9 @@ async def validate_create_content(
 
 
 async def validate_edit_content(
-    content: ContentTextCreate, old_content: ContentTextDB, asession: AsyncSession
+    content: ContentTextCreate,
+    asession: AsyncSession,
+    old_content: Optional[ContentTextDB] = None,
 ) -> tuple[bool, Optional[str]]:
     """
     Validate content and language before editing content text.
@@ -276,14 +281,15 @@ async def validate_edit_content(
     if not language:
         return (False, f"Language id `{content.language_id}` does not exist")
 
-    is_language_updated = old_content.language_id != content.language_id
+    if old_content:
+        is_language_updated = old_content.language_id != content.language_id
 
-    if is_language_updated and not (
-        await is_content_language_combination_unique(
-            content.content_id, content.language_id, asession
-        )
-    ):
-        return (False, "Content and language combination already exists")
+        if is_language_updated and not (
+            await is_content_language_combination_unique(
+                content.content_id, content.language_id, asession
+            )
+        ):
+            return (False, "Content and language combination already exists")
 
     return (True, None)
 

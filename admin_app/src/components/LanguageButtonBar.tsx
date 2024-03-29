@@ -16,15 +16,17 @@ interface Language {
 }
 interface LanguageButtonBarProps {
   expandable: boolean;
-  onLanguageSelect: (language_id: number) => void;
   defaultLanguageId: number;
   enabledLanguages?: number[];
+  onLanguageSelect: (language_id: number) => void;
+  onMenuItemSelect?: (language_id: number) => void;
 }
 const LanguageButtonBar = ({
   expandable,
-  onLanguageSelect,
   defaultLanguageId,
-  enabledLanguages }: LanguageButtonBarProps) => {
+  enabledLanguages,
+  onLanguageSelect,
+  onMenuItemSelect }: LanguageButtonBarProps) => {
   const [langList, setLangList] = React.useState<Language[]>([]);
   const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
 
@@ -66,6 +68,11 @@ const LanguageButtonBar = ({
   const handleToggleButtonSelect = (language: Language) => {
     setSelectedLang(language.language_id);
     onLanguageSelect(language.language_id);
+  };
+  const handleMenuItemSelect = (language: Language) => {
+    onMenuItemSelect && onMenuItemSelect(language.language_id);
+    setSelectedLang(language.language_id);
+    setAnchorEl(null);
   };
   return (
     <Layout.FlexBox
@@ -118,12 +125,12 @@ const LanguageButtonBar = ({
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        {langList.filter((l) => l.language_id !== selectedLang).map(
+        {langList.filter((l) => !enabledLanguages?.includes(l.language_id)).map(
           (language, index) => (
             <MenuItem
               key={language.language_id}
               onClick={() =>
-                handleToggleButtonSelect(language)
+                handleMenuItemSelect(language)
               }
 
             >

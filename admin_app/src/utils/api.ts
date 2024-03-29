@@ -4,7 +4,7 @@ const BACKEND_ROOT_PATH: string =
 interface ContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
+  language_id: number;
   content_metadata: Record<string, unknown>;
 }
 
@@ -102,10 +102,11 @@ const createContent = async (content: number, token: string) => {
 
 const editContent = async (
   content_id: number,
+  language_id: number,
   content: ContentBody,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/edit`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}?language_id=${language_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
