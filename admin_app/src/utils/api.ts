@@ -41,6 +41,7 @@ const getContentListLanding = async (language: string, token: string) => {
     }
   });
 };
+
 const getContent = async (content_id: number, language: string | null, token: string) => {
   const languageQuery = language ? `?language=${encodeURIComponent(language)}` : '';
   const uri = `${BACKEND_ROOT_PATH}/content/${content_id}${languageQuery}`;
