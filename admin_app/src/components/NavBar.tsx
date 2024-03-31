@@ -17,7 +17,7 @@ import * as React from "react";
 import { Layout } from "./Layout";
 const pages = [
   { title: "Manage Content", path: "/content" },
-  // { title: "Playground", path: "/playground" },
+  { title: "Playground", path: "/playground" },
   // { title: "Dashboard", path: "/dashboard" },
 ];
 
