@@ -15,7 +15,6 @@ from .models import (
     delete_content_from_db,
     get_all_languages_version_of_content,
     get_content_from_content_id_and_language,
-    get_content_from_db,
     get_landing_view_of_content_from_db,
     get_list_of_content_from_db,
     is_content_language_combination_unique,
@@ -26,6 +25,7 @@ from .schemas import (
     ContentLanding,
     ContentTextCreate,
     ContentTextRetrieve,
+    ContentTextUpdate,
 )
 
 router = APIRouter(prefix="/content")
@@ -61,7 +61,7 @@ async def create_content(
 @router.put("/{content_id}", response_model=ContentTextRetrieve)
 async def edit_content(
     content_id: int,
-    content: ContentTextCreate,
+    content: ContentTextUpdate,
     language_id: int,
     full_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_fullaccess_user)
@@ -261,7 +261,7 @@ async def validate_create_content(
 
 
 async def validate_edit_content(
-    content: ContentTextCreate,
+    content: ContentTextUpdate,
     asession: AsyncSession,
     old_content: Optional[ContentTextDB] = None,
 ) -> tuple[bool, Optional[str]]:
@@ -269,14 +269,11 @@ async def validate_edit_content(
     Validate content and language before editing content text.
     """
 
-    if not content.content_id:
-        content.content_id = old_content.content_id
-    else:
-        contents = await get_all_languages_version_of_content(
-            content.content_id, asession=asession
-        )
-        if len(contents) < 1:
-            return (False, f"Content id `{content.content_id}` does not exist")
+    contents = await get_all_languages_version_of_content(
+        content.content_id, asession=asession
+    )
+    if len(contents) < 1:
+        return (False, f"Content id `{content.content_id}` does not exist")
 
     language = await get_language_from_db(content.language_id, asession)
     if not language:

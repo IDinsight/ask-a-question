@@ -26,6 +26,10 @@ class ContentTextCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ContentTextUpdate(ContentTextCreate):
+    content_id: int
+
+
 class ContentTextRetrieve(ContentTextCreate):
     """
     Pydantic model for content retrieval

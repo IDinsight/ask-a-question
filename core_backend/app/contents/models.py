@@ -1,6 +1,5 @@
 from datetime import datetime
 from datetime import timezone as tz
-
 from typing import Dict, List, Optional, Sequence
 
 from litellm import aembedding, embedding
@@ -263,6 +262,7 @@ async def get_landing_view_of_content_from_db(
             ContentTextDB.content_id == language_subquery.c.content_id,
         )
         .where(ContentTextDB.language_id == language_id)
+        .order_by(ContentTextDB.content_id)
     )
 
     if offset > 0:
