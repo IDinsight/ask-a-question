@@ -1,14 +1,13 @@
 version: "3"
 services:
   caddy:
-    image: caddy:2.7.6
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     environment:
