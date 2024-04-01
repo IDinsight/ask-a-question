@@ -4,11 +4,13 @@
 
 ## Option 1 - Using Docker Compose Watch
 
-This option uses the same Docker Compose script as deployment and so is *environment-agnostic*. It's good for
-quick startup and end-to-end testing but the downside is that changes take 5-10s to be reflected in the app (1).
-{ .annotate }
+Recommended.
 
-1. This is because the backend and admin app images are rebuilt every time there is a change to their respective code folders.
+| Pros | Cons |
+| --- | --- |
+| Good for end-to-end testing | Changes take 5-10s to be reflected in the app |
+| Environment-agnostic | |
+| Set environemnt variables and configs once | |
 
 Steps:
 
@@ -25,115 +27,45 @@ The admin app will be available on `http://localhost` and the backend API testin
 
 ## Option 2 - Manual
 
-Go with this option if you have set your environment up correctly and want instant feedback from your changes.
-Takes a little more configuration before each run.
+| Pros | Cons |
+| --- | --- |
+| Instant feedback from changes | Requires a little more configuration before each run |
+| | Requires dependencies to be set up correctly |
 
-Once you have your local environment setup (1), you can setup the components needed to
-develop your new feature.
-{ .annotate }
+### A: Run the Backend
 
-1. If you haven't, see [Contributing to AAQ](../contributing)
+Steps:
 
-### Database
+1. Set up your conda environment as per [Contributing to AAQ](../contributing).
 
-#### Running the database on docker
+2. Set required environment variables in your terminal using
 
-You can launch a container running PostgreSQL database and run the necessary migrations using:
+        export PROMETHEUS_MULTIPROC_DIR=/tmp
+        export OPENAI_API_KEY=sk...
 
-    make setup-db
+3. In the root of the repository, edit the `litellm_config.yaml` as required.
 
-!!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
+4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
-You can stop and remove the PostgreSQL container using:
+        make setup-dev
 
-    make teardown-db
+5. Run the app
 
-Otherwise, you can run them manually as below.
+        cd core_backend
+        python main.py
 
-??? note "Setting up the database manually"
+    This will launch the application in "reload" mode i.e. the app with automatically
+    refresh everytime you make a change to one of the files.
 
-    ### Run a local postgres server
+    Backend will now be running on [http://localhost/8000](http://localhost/8000) - test the endpoints by going to [http://localhost/8000/docs](http://localhost/8000/docs)
 
-        docker run --name postgres-local \
-            -e POSTGRES_PASSWORD=<your password> \
-            -p 5432:5432 \
-            -d pgvector/pgvector:pg16
+6. Once done, exit the running app process with `ctrl+c` and run
 
-    Note that data will not be persisted when the container is destroyed. It might be
-    preferable to create your database from scratch each time. But if you wish to persist data
-    use a volume as below:
+        make teardown-dev
 
-        docker run --name postgres-local \
-        -e POSTGRES_PASSWORD=<your password> \
-        -p 5432:5432 \
-        -v postgres_local_vol:/var/lib/postrges/data \
-        -d pgvector/pgvector:pg16
+!!! note "To see how to set up database and LiteLLM prox containers manually, go [here](manual-dev-requirements.md)."
 
-    ### Run migrations
-
-    From `aaq-core/core_backend` run:
-
-        python -m alembic upgrade head
-
-#### Connecting to remote databases
-
-In your `.env` file, define the following variables.
-
-To connect to remote Postgres instance:
-
-```
-POSTGRES_HOST=
-POSTGRES_PORT=
-POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-```
-
-See `core_backend/app/configs/app_config.py` for the default values for these variables.
-
-### LiteLLM Proxy Server (Required)
-
-1. Pull the LiteLLM proxy image with
-
-        docker pull ghcr.io/berriai/litellm:main-v1.34.6
-
-2. Set models and parameters in a `config.yaml` (see `deployement/docker-compose/litellm-config.yaml` for an example)
-
-3. Run the Docker container
-
-        docker run \
-            --name litellm-proxy \
-            --rm \
-            -v <PATH_TO_CONFIG>:/app/config.yaml \
-            -e OPENAI_API_KEY="sk-..." \
-            -p 4000:4000 \
-            ghcr.io/berriai/litellm:main-v1.34.6 \
-            --config /app/config.yaml --detailed_debug
-
-### Run the backend app
-
-#### Step 1: Set environment variables
-
-Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY`, before running the app.
-
-You can do this directly using
-
-    export PROMETHEUS_MULTIPROC_DIR=/tmp
-
-Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
-
-    set -a && source ./deployment/.env && set +a
-
-#### Step 2: Run the backend app
-
-With the Docker databases running, from `aaq-core/core_backend` run:
-
-    python main.py
-
-This will launch the application in "reload" mode i.e. the app with automatically
-refresh everytime you make a change to one of the files
-
-### Run the Admin app
+### B: Run the Admin app
 
 ??? warning "You need to have nodejs v19 installed locally"
 
@@ -147,26 +79,10 @@ From `aaq-core/admin_app` run
 
 This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
 
-## Check health
-
-### Backend
-
-Go to the following URL to check that the app came up correctly
-
-    http://localhost:8000/healthcheck
-
-You can also easily test each endpoint through:
-
-    http://localhost:8000/docs
-
-### Admin app
-
-Admin app can be reached at
-
-    http://localhost:3000/
+The admin app will now be accessible on [http://localhost:3000/](http://localhost:3000/)
 
 ## Setting up docs
 
-To host docs offline so you can see your changes, run the following (with altered port so it doesn't interfere with the app's server):
+To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
 
     mkdocs serve -a "localhost:8080"
