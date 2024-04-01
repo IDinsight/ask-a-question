@@ -1,7 +1,7 @@
 model_list:
   - model_name: embeddings
     litellm_params:
-      model: text-embedding-ada-002
+      model: text-embedding-3-small
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: default
     litellm_params:
