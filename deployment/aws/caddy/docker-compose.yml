@@ -13,6 +13,19 @@ services:
       - caddy_config:/config
     environment:
       - DOMAIN=${DOMAIN}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/caddy-task-${PROJECT_NAME}-${ENV} # this has to match with what is in Terraform
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: caddy
+
 volumes:
   caddy_data:
   caddy_config:

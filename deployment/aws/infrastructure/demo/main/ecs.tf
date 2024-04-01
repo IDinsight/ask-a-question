@@ -136,8 +136,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
     memory = 512,
     cpu    = 256,
 
-
-
     portMappings = [
       {
         "containerPort" : 3000,
@@ -225,8 +223,8 @@ resource "aws_cloudwatch_log_group" "backend" {
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
 
-resource "aws_cloudwatch_log_group" "nginx" {
-  name = "/ecs/nginx-task-${var.project_name}-${var.environment}"
+resource "aws_cloudwatch_log_group" "caddy" {
+  name = "/ecs/caddy-task-${var.project_name}-${var.environment}"
 
-  tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
+  tags = merge({ Name = "caddy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
