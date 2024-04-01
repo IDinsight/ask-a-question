@@ -81,10 +81,8 @@ checking if the LLM response is supported by the provided context.
 
 You can run these test using:
 
-```bash
-cd /core_backend
-python -m pytest -m rail
-```
+    cd /core_backend
+    python -m pytest -m rail
 
 !!! Note
 
@@ -97,30 +95,3 @@ python -m pytest -m rail
     ```
 
     See "Other Components" for how to setup required infrastructure.
-
-
-## Calling endpoints
-
-### Run the app
-
-- *Option 1 [Docker Compose]*: See [Quick Start](../index.md#quick_start) for how to start the application stack using docker-compose.
-- *Option 2 [Dev Setup]*: Run each container manually as per [dev setup](setup.md).
-
-
-### Call the endpoints
-
-You can use FastAPI's Swagger UI to test out the desired endpoints
-
-``` yaml
-https://$DOMAIN/api/docs # (1)!
-```
-
-1.  if you are using the [dev setup](setup.md), you can access it at `http://localhost:8000/docs`
-
-
-??? warning "Authorising the `/embedding_search` and `/llm-response` endpoints"
-    To use these endpoints, you'll have to Authorise and set the bearer token to the
-    value of `QUESTION_ANSWER_SECRET`.
-
-    The default value can be found in `core_backend/app/configs/app_config.py` but may have been overridden if the
-    environment variable was manually set differently.

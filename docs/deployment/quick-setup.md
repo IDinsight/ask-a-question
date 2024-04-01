@@ -20,9 +20,7 @@ See [LiteLLM Proxy Server](../other-components/litellm-proxy/index.md) for more 
         -p aaq-stack up -d --build
 
 You can now view the AAQ admin app at `https://$DOMAIN/` (e.g. `https://localhost/`) and the API documentation at
-`https://$DOMAIN/api/docs`
-
-!!! note "To test the endpoints, see [Calling the endpoints](../develop/testing.md#call-the-endpoints)."
+`https://$DOMAIN/api/docs` (you can also test the endpoints here).
 
 **Step 6:** Shutdown containers
 
