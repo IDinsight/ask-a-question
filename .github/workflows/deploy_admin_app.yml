@@ -48,10 +48,9 @@ jobs:
           IMAGE_TAG: admin-app
         with:
           context: admin_app
+          no-cache: true
           platforms: linux/arm64
           file: admin_app/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha
           push: true
           tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
           build-args: |
