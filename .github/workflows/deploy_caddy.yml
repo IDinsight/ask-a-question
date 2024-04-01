@@ -34,13 +34,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Install the ECS CLI
-        if: steps.check_changes.outputs.changed == 'true'
         run: |
           sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
           sudo chmod +x /usr/local/bin/ecs-cli
 
       - name: Create Task Definition
-        if: steps.check_changes.outputs.changed == 'true'
         id: create-task-def
         run: |
           ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
