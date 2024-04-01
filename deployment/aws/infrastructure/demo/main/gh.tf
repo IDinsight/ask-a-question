@@ -81,12 +81,12 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
     actions = [
       "ecs:DescribeServices",
     "ecs:UpdateService"]
-    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
+    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.caddy_service.id]
   }
   statement {
     effect    = "Allow"
     actions   = ["logs:CreateLogStream"]
-    resources = [aws_cloudwatch_log_group.backend.arn, aws_cloudwatch_log_group.admin_app.arn, aws_cloudwatch_log_group.nginx.arn]
+    resources = [aws_cloudwatch_log_group.backend.arn, aws_cloudwatch_log_group.admin_app.arn, aws_cloudwatch_log_group.caddy.arn]
   }
 
 }

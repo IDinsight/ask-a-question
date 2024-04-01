@@ -129,7 +129,7 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     actions = [
       "ecs:DescribeServices",
     "ecs:UpdateService"]
-    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
+    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.caddy_service.id]
   }
 
   statement {
