@@ -68,7 +68,37 @@ Steps:
 
         make teardown-dev
 
-!!! note "To see how to set up database and LiteLLM prox containers manually, go [here](manual-dev-requirements.md)."
+??? note "Setting up up database and LiteLLM proxy containers manually"
+
+    ## Database
+
+    ### Running the database on docker
+
+    You can launch a container running PostgreSQL database and run the necessary migrations using:
+
+        make setup-db
+
+    You can stop and remove the PostgreSQL container using:
+
+        make teardown-db
+
+    See the contents of these Makefile targets to see how you could run them manually if required.
+
+    ## LiteLLM Proxy Server
+
+    1. Set models and parameters in `core_backend/litellm-config.yaml`
+
+    2. Set OpenAI API key environment variable in your terminal using
+
+            export OPENAI_API_KEY=sk...
+
+    3. Run the Make target
+
+            make setup-llm-proxy
+
+    4. Once done, teardown the container with
+
+            make teardown-llm-proxy
 
 ### B: Run the Admin app
 
