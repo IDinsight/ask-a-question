@@ -15,15 +15,19 @@ Recommended.
 Steps:
 
 1. go to `deployment/docker-compose`
-2. copy `template.env` to a new file `.env` and set the necessary variables (for localhost deployment, you just
-need to set the `OPENAI_API_KEY` and leave everything else as default)
-3. run
+
+2. copy `template.env` to a new file `.env` and set the necessary variables (for local deployment, you just
+need to set the `OPENAI_API_KEY` and can leave everything else as default)
+
+3. (optional) Edit which LLMscon are used in the `litellm_config.yaml`
+
+4. run
 
         docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
 
 The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
 
-The admin app will be available on `http://localhost` and the backend API testing UI on `http://localhost/api/docs`.
+The admin app will be available on [http://localhost](http://localhost) and the backend API testing UI on [http://localhost/api/docs](http://localhost/api/docs).
 
 ## Option 2 - Manual
 
@@ -36,7 +40,9 @@ The admin app will be available on `http://localhost` and the backend API testin
 
 Steps:
 
-1. Set up your conda environment as per [Contributing to AAQ](../contributing).
+1. Set up your conda environment as per [Contributing to AAQ](./contributing.md) and run
+
+        conda activate aaq
 
 2. Set required environment variables in your terminal using
 
@@ -51,13 +57,12 @@ Steps:
 
 5. Run the app
 
-        cd core_backend
-        python main.py
+        python core_backend/main.py
 
     This will launch the application in "reload" mode i.e. the app with automatically
     refresh everytime you make a change to one of the files.
 
-    Backend will now be running on [http://localhost/8000](http://localhost/8000) - test the endpoints by going to [http://localhost/8000/docs](http://localhost/8000/docs)
+     You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
 6. Once done, exit the running app process with `ctrl+c` and run
 

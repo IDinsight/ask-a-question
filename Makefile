@@ -1,6 +1,6 @@
 #!make
 
-PROJECT_NAME = aaq-core
+PROJECT_NAME = aaq
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 ENDPOINT_URL = localhost:8000
 OPENAI_API_KEY := $(shell printenv OPENAI_API_KEY)
@@ -42,6 +42,7 @@ setup-db:
      -e POSTGRES_PASSWORD=postgres \
      -p 5432:5432 \
      -d pgvector/pgvector:pg16
+	cd core_backend && \
 	python -m alembic upgrade head
 
 teardown-db:
