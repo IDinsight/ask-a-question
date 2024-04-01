@@ -1,0 +1,18 @@
+version: "3"
+services:
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN}
+volumes:
+  caddy_data:
+  caddy_config:
