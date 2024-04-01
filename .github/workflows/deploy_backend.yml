@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - demo
+      - testing
     paths:
       - "core_backend/**"
       - "deployment/aws/core_backend/**"

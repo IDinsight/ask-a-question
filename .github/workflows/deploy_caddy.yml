@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - demo
+      - testing
     paths:
       - "deployment/aws/caddy/**"
       - ".github/workflows/deploy_caddy.yml"
