@@ -78,7 +78,7 @@ resource "aws_ecs_service" "nginx_service" {
 
 resource "aws_ecs_task_definition" "nginx_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
-  family             = "nginx-task"
+  family             = "nginx-task-${var.project_name}-${var.environment}"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
     name       = "nginx-container",
@@ -146,7 +146,7 @@ resource "aws_ecs_service" "admin_app_service" {
 resource "aws_ecs_task_definition" "admin_app_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   # The CPU and Memory may need to be adjusted based on the application usage
-  family             = "admin-app-task"
+  family             = "admin-app-task-${var.project_name}-${var.environment}"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
     name   = "admin-app-container",
@@ -204,7 +204,7 @@ resource "aws_ecs_service" "backend_service" {
 
 resource "aws_ecs_task_definition" "backend_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
-  family             = "backend-task"
+  family             = "backend-task-${var.project_name}-${var.environment}"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
     name   = "backend-container",
