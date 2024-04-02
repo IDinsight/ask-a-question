@@ -13,7 +13,7 @@ Fixes: JIRA_TICKET_LINK
 
 ### Changes
 
-### Futue Tasks (optional)
+### Future Tasks (optional)
 
 ## How has this been tested?
 
