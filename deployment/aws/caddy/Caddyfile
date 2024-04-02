@@ -1,9 +1,9 @@
 {$DOMAIN:localhost} {
     handle_path /api/* {
-        reverse_proxy core_backend:8000
+        reverse_proxy backend.{$PROJECT_NAME}-{$ENV}.local:8000
     }
 
     handle {
-        reverse_proxy admin_app:3000
+        reverse_proxy frontend.{$PROJECT_NAME}-{$ENV}.local:3000
     }
 }
