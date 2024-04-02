@@ -10,8 +10,8 @@ on:
       - ".github/workflows/deploy_caddy.yml"
 
 jobs:
-  DeployNginx:
-    name: Deploying Nginx ${{github.ref_name}}
+  DeployCaddy:
+    name: Deploying Caddy ${{github.ref_name}})
     runs-on: ubuntu-latest
     environment:
       name: ${{github.ref_name}}

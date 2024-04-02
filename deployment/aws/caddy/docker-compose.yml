@@ -12,6 +12,8 @@ services:
       - caddy_config:/config
     environment:
       - DOMAIN=${DOMAIN}
+      - ENV=${ENV}
+      - PROJECT_NAME=${PROJECT_NAME}
     deploy:
       resources:
         limits:
