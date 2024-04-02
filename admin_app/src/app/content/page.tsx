@@ -34,7 +34,6 @@ interface Language {
 }
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
-  const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { token, accessLevel } = useAuth();
   React.useEffect(() => {
@@ -119,7 +118,6 @@ const CardsUtilityStrip = ({
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
-            value={displayLanguage ? displayLanguage.language_name : ""}
             value={displayLanguage ? displayLanguage.language_name : ""}
             label="Language"
             onChange={({ target }) => {

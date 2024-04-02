@@ -12,12 +12,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 export interface Content extends EditContentBody {
-  content_id: number | null;
+
   created_datetime_utc: string;
   updated_datetime_utc: string;
 }
 
 interface EditContentBody {
+  content_id: number | null;
   content_title: string;
   content_text: string;
   language_id: number;
@@ -48,10 +49,9 @@ const AddEditContentPage = () => {
           {} as { [key: string]: Content }
         );
         setContentData(contentDic);
-
         setContent(language_id !== null ? contentDic[language_id] : null);
-        setIsLoading(false);
       });
+      setIsLoading(false);
     }
   }, [content_id, token, refreshKey]);
   const handleSaveSuccess = () => {
@@ -84,10 +84,12 @@ const AddEditContentPage = () => {
         >
           <Layout.Spacer multiplier={2} />
           <ContentBox
+            contentId={content_id!}
             content={content}
             setContent={setContent}
             contentData={contentData}
             setContentData={setContentData}
+            languageId={language_id!}
             onSaveSuccess={handleSaveSuccess} />
           <SavedContentDialog
             showModal={showDialog}
@@ -104,23 +106,24 @@ const AddEditContentPage = () => {
 };
 
 const ContentBox = ({
+  contentId,
   content,
   setContent,
   contentData,
   setContentData,
+  languageId,
   onSaveSuccess,
 }: {
+  contentId: number;
   content: Content | null;
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   contentData: { [key: number]: Content };
   setContentData: React.Dispatch<React.SetStateAction<{ [key: number]: Content }>>;
+  languageId: number;
   onSaveSuccess: () => void;
 
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
-
-  const searchParams = useSearchParams();
-  const content_id = Number(searchParams.get("content_id")) || null;
   const [saveError, setSaveError] = React.useState(false);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
@@ -129,12 +132,12 @@ const ContentBox = ({
 
   const saveContent = async (content: Content) => {
     const body: EditContentBody = {
+      content_id: content.content_id,
       content_title: content.content_title,
       content_text: content.content_text,
       language_id: content.language_id,
       content_metadata: content.content_metadata,
     };
-    console.log(content)
     const promise =
       content.content_id === null
         ? apiCalls.addContent(body, token!)
@@ -160,18 +163,17 @@ const ContentBox = ({
     key: keyof Content,
   ) => {
     const emptyContent: Content = {
-      content_id: content?.content_id || content_id,
+      content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
       content_title: "",
       content_text: "",
-      language_id: 1,
+      language_id: content?.language_id || 0,
       content_metadata: {},
     };
 
     setIsTitleEmpty(false);
     setIsContentEmpty(false);
-
     content
       ? setContent({ ...content, [key]: e.target.value })
       : setContent({ ...emptyContent, [key]: e.target.value });
@@ -191,12 +193,10 @@ const ContentBox = ({
       content_metadata: {},
     };
     setContentData((prevContentData) => {
-      return {
-        ...prevContentData,
-        [language_id]: emptyContent,
-      };
+      const updatedContentData = { ...prevContentData, [language_id]: emptyContent };
+      setContent(updatedContentData[language_id]);
+      return updatedContentData;
     });
-    setContent(contentData[language_id]);
   };
 
   return (
@@ -215,7 +215,7 @@ const ContentBox = ({
       <LanguageButtonBar
         expandable={true}
         onLanguageSelect={handleLanguageSelect}
-        defaultLanguageId={content?.language_id || 1}
+        defaultLanguageId={content?.language_id || languageId}
         enabledLanguages={Object.keys(contentData).map(Number)}
         onMenuItemSelect={handleNewLanguageSelect}
       />
