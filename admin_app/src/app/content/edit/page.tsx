@@ -218,6 +218,7 @@ const ContentBox = ({
         defaultLanguageId={content?.language_id || languageId}
         enabledLanguages={Object.keys(contentData).map(Number)}
         onMenuItemSelect={handleNewLanguageSelect}
+        isEdit={true}
       />
       <Layout.Spacer multiplier={1} />
       <Typography variant="body2">Title</Typography>

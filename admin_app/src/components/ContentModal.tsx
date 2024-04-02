@@ -115,7 +115,8 @@ const ContentViewModal = ({
               expandable={false}
               onLanguageSelect={handleLanguageSelect}
               defaultLanguageId={defaultLanguageId}
-              enabledLanguages={enabledLanguages} />
+              enabledLanguages={enabledLanguages}
+              isEdit={false} />
             <Layout.FlexBox
               flex={1}
               flexDirection={"column"}

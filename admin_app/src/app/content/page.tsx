@@ -2,7 +2,7 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { appColors, sizes } from "@/utils";
+import { appColors, sizes, appFonts } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add, Sort } from "@mui/icons-material";
@@ -14,6 +14,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Typography,
 } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
@@ -130,15 +131,22 @@ const CardsUtilityStrip = ({
             }}
             sx={{
               backgroundColor: appColors.white,
+              typography: appFonts.h5,
+              fontSize: sizes.mediumGap,
             }}
           >
             {loadingLanguages ? (
-              <MenuItem value="">Loading...</MenuItem>
+              <MenuItem value=""
+                sx={{ fontSize: sizes.mediumGap, typography: appFonts.h5 }}
+              >
+                Loading...
+              </MenuItem>
             ) : (
               languageOptions.map((language) => (
                 <MenuItem
                   key={language.language_id}
                   value={language.language_name}
+                  sx={{ fontSize: sizes.mediumGap, typography: appFonts.h5 }}
                 >
                   {language.language_name}
                 </MenuItem>
@@ -192,24 +200,26 @@ const CardsGrid = ({
     setSnackMessage(`Content #${content_id} deleted successfully`);
   };
   React.useEffect(() => {
-    setIsLoading(true);
-    apiCalls
-      .getContentListLanding(
-        displayLanguage ? displayLanguage.language_name : "",
-        token!,
-      )
-      .then((data) => {
-        const filteredData = data.filter(
-          (card: ContentLanding) =>
-            card.content_title.includes(searchTerm) ||
-            card.content_text.includes(searchTerm),
-        );
-        setCards(filteredData);
-        setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
-        setIsLoading(false);
-      })
-      .catch((error) => console.error("Failed to fetch content:", error))
-      .finally(() => setIsLoading(false));
+    if (displayLanguage) {
+      setIsLoading(true);
+      apiCalls
+        .getContentListLanding(
+          displayLanguage ? displayLanguage.language_name : "",
+          token!,
+        )
+        .then((data) => {
+          const filteredData = data.filter(
+            (card: ContentLanding) =>
+              card.content_title.includes(searchTerm) ||
+              card.content_text.includes(searchTerm),
+          );
+          setCards(filteredData);
+          setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
+          setIsLoading(false);
+        })
+        .catch((error) => console.error("Failed to fetch content:", error))
+        .finally(() => setIsLoading(false));
+    }
   }, [refreshKey, searchTerm, displayLanguage, token]);
 
   if (isLoading) {

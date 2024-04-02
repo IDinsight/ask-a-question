@@ -13,6 +13,7 @@ export const LANGUAGE_OPTIONS = [
 export const sizes = {
   tinyGap: theme.spacing(0.5),
   smallGap: theme.spacing(1),
+  mediumGap: theme.spacing(1.5),
   baseGap: theme.spacing(2),
   doubleBaseGap: theme.spacing(4),
   tripleBaseGap: theme.spacing(6),
@@ -42,6 +43,10 @@ export const appColors = {
   inverseSurface: "#F1F0F7",
 };
 
+export const appFonts = {
+  h5: theme.typography.h5,
+  subtitle1: theme.typography.subtitle1,
+};
 export const appStyles = {
   alignItemsCenter: {
     alignItems: "center",

@@ -20,13 +20,16 @@ interface LanguageButtonBarProps {
   onMenuItemSelect?: (language_id: number) => void;
   defaultLanguageId: number;
   enabledLanguages?: number[];
+  isEdit: boolean;
 }
 const LanguageButtonBar = ({
   expandable,
   onLanguageSelect,
   onMenuItemSelect,
   defaultLanguageId,
-  enabledLanguages }: LanguageButtonBarProps) => {
+  enabledLanguages,
+  isEdit
+}: LanguageButtonBarProps) => {
   const [langList, setLangList] = React.useState<Language[]>([]);
   const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
 
@@ -80,33 +83,36 @@ const LanguageButtonBar = ({
       {...appStyles.alignItemsCenter}
     >
       <ToggleButtonGroup>
-        {langList.map((lang) =>
-          lang && (
-            <ToggleButton
-              key={lang.language_id}
-              value={lang.language_id}
-              size="medium"
-              onClick={() => handleToggleButtonSelect(lang)}
-              disabled={!isLanguageEnabled(lang.language_id)}
-              sx={[
-                {
-                  border: 0,
-                  borderBottomColor: appColors.outline,
-                  borderBottomWidth: 1,
-                },
-                selectedLang === lang?.language_id && {
-                  borderBottomColor: appColors.primary,
-                  borderBottomWidth: 3,
-                  color: appColors.primary,
-                },
-              ]}
-            >
-              <Layout.Spacer horizontal multiplier={0.5} />
-              {lang?.language_name}
-              <Layout.Spacer horizontal multiplier={0.5} />
-            </ToggleButton>
-          ),
-        )
+        {langList
+          .filter(lang => !isEdit || isLanguageEnabled(lang.language_id))
+          .map((lang) =>
+            lang && (
+
+              <ToggleButton
+                key={lang.language_id}
+                value={lang.language_id}
+                size="medium"
+                onClick={() => handleToggleButtonSelect(lang)}
+                disabled={!isEdit && !isLanguageEnabled(lang.language_id)}
+                sx={[
+                  {
+                    border: 0,
+                    borderBottomColor: appColors.outline,
+                    borderBottomWidth: 1,
+                  },
+                  selectedLang === lang?.language_id && {
+                    borderBottomColor: appColors.primary,
+                    borderBottomWidth: 3,
+                    color: appColors.primary,
+                  },
+                ]}
+              >
+                <Layout.Spacer horizontal multiplier={0.5} />
+                {lang?.language_name}
+                <Layout.Spacer horizontal multiplier={0.5} />
+              </ToggleButton>
+            ),
+          )
         }
       </ToggleButtonGroup>
       {
