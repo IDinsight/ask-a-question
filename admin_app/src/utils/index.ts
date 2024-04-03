@@ -1,14 +1,6 @@
 import theme from "@/theme";
+import createCache from '@emotion/cache';
 
-export const DEFAULT_LANGUAGE = "en";
-
-export const LANGUAGE_OPTIONS = [
-  { code: "en", label: "English" },
-  // { code: "hi", label: "Hindi" },
-  // { code: "zu", label: "Zulu" },
-  // { code: "xh", label: "Xhosa" },
-  // { code: "af", label: "Afrikaans" },
-];
 
 export const sizes = {
   tinyGap: theme.spacing(0.5),
@@ -85,3 +77,7 @@ export const appStyles = {
     flexGrow: 1,
   },
 };
+
+export default function createEmotionCache() {
+  return createCache({ key: 'css', prepend: true });
+}

@@ -131,13 +131,12 @@ const CardsUtilityStrip = ({
             }}
             sx={{
               backgroundColor: appColors.white,
-              typography: appFonts.h5,
               fontSize: sizes.mediumGap,
             }}
           >
             {loadingLanguages ? (
               <MenuItem value=""
-                sx={{ fontSize: sizes.mediumGap, typography: appFonts.h5 }}
+                sx={{ fontSize: sizes.mediumGap }}
               >
                 Loading...
               </MenuItem>
@@ -146,7 +145,7 @@ const CardsUtilityStrip = ({
                 <MenuItem
                   key={language.language_id}
                   value={language.language_name}
-                  sx={{ fontSize: sizes.mediumGap, typography: appFonts.h5 }}
+                  sx={{ fontSize: sizes.mediumGap }}
                 >
                   {language.language_name}
                 </MenuItem>
