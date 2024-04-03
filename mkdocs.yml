@@ -89,7 +89,7 @@ nav:
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
       - Deploying on AWS:
-          - Intro: deployment/aws/aws.md
+          - deployment/aws/index.md
           - Infrastructure: deployment/aws/infrastructure.md
           - CI/CD: deployment/aws/cicd.md
   - Contributing:
