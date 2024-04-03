@@ -4,13 +4,12 @@
 
 ## Option 1 - Using Docker Compose Watch
 
-Recommended.
-
 | Pros | Cons |
 | --- | --- |
 | Good for end-to-end testing | Changes take 5-10s to be reflected in the app |
-| Environment-agnostic | |
-| Set environemnt variables and configs once | |
+| Local environment identical to production deployment | |
+| No need to setup local environment | |
+| Set environment variables and configs once | |
 
 Steps:
 
@@ -19,7 +18,7 @@ Steps:
 2. copy `template.env` to a new file `.env` and set the necessary variables (for local deployment, you just
 need to set the `OPENAI_API_KEY` and can leave everything else as default)
 
-3. (optional) Edit which LLMscon are used in the `litellm_config.yaml`
+3. (optional) Edit which LLMs are used in the `litellm_config.yaml`
 
 4. run
 
@@ -27,14 +26,14 @@ need to set the `OPENAI_API_KEY` and can leave everything else as default)
 
 The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
 
-The admin app will be available on [http://localhost](http://localhost) and the backend API testing UI on [http://localhost/api/docs](http://localhost/api/docs).
+The admin app will be available on [https://localhost](https://localhost) and the backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
 
 ## Option 2 - Manual
 
 | Pros | Cons |
 | --- | --- |
-| Instant feedback from changes | Requires a little more configuration before each run |
-| | Requires dependencies to be set up correctly |
+| Instant feedback from changes | Requires more configuration before each run |
+| | Requires environment and dependencies to be set up correctly |
 
 ### A: Run the Backend
 
@@ -49,7 +48,7 @@ Steps:
         export PROMETHEUS_MULTIPROC_DIR=/tmp
         export OPENAI_API_KEY=sk...
 
-3. In the root of the repository, edit the `litellm_config.yaml` as required.
+3. (optional) Edit which LLMs are used in the `litellm_config.yaml` at the repository root.
 
 4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
@@ -59,7 +58,7 @@ Steps:
 
         python core_backend/main.py
 
-    This will launch the application in "reload" mode i.e. the app with automatically
+    This will launch the application in "reload" mode i.e. the app will automatically
     refresh everytime you make a change to one of the files.
 
      You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
