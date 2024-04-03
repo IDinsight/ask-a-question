@@ -57,7 +57,8 @@ services:
       - .env
     volumes:
       - ./litellm_config.yaml:/app/config.yaml
-    command: --config /app/config.yaml
+    command:
+      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 
   alignScore:
     image: idinsight/alignscore-base:latest
