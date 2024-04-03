@@ -45,10 +45,8 @@ resource "aws_ssm_document" "session_manager_prefs" {
     description   = "Document to hold regional settings for Session Manager"
     sessionType   = "Standard_Stream"
     inputs = {
-
       maxSessionDuration = 720,
       idleSessionTimeout = 60
-
     }
   })
 }
