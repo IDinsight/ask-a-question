@@ -18,7 +18,7 @@ Steps:
 2. copy `template.env` to a new file `.env` and set the necessary variables (for local deployment, you just
 need to set the `OPENAI_API_KEY` and can leave everything else as default)
 
-3. (optional) Edit which LLMs are used in the `litellm_config.yaml`
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
 
 4. run
 
@@ -48,7 +48,7 @@ Steps:
         export PROMETHEUS_MULTIPROC_DIR=/tmp
         export OPENAI_API_KEY=sk...
 
-3. (optional) Edit which LLMs are used in the `litellm_config.yaml` at the repository root.
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml` at the repository root.
 
 4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 

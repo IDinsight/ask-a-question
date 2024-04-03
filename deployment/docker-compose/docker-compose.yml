@@ -56,7 +56,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./litellm_config.yaml:/app/config.yaml
+      - ./litellm_proxy_config.yaml:/app/config.yaml
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 

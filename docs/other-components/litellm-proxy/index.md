@@ -6,7 +6,7 @@ managing LLM calls, allowing you to use any LiteLLM [supported model](https://do
 This proxy server runs as a separate Docker container with configs read from a `config.yaml` file, where you can set the appropriate model
 names and endpoints for each LLM task.
 
-You can see an example `litellm_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "summarize"), but
+You can see an example `litellm_proxy_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "summarize"), but
 which actual LLM model each call is routed to is set here.
 
 ```yaml

@@ -59,7 +59,7 @@ setup-llm-proxy:
 	@docker run \
 		--name litellm-proxy \
 		--rm \
-		-v "$(CURDIR)/litellm_config.yaml":/app/config.yaml \
+		-v "$(CURDIR)/litellm_proxy_config.yaml":/app/config.yaml \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
 		-p 4000:4000 \
 		-d ghcr.io/berriai/litellm:main-v1.34.6 \
