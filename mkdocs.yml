@@ -75,8 +75,8 @@ nav:
           - other-components/chat_managers/index.md
           - Typebot: other-components/chat_managers/typebot.md
           - Botpress: other-components/chat_managers/botpress_v12.md
-      - Offline LLMs:
-          - other-components/self_hosted_llms/index.md
+      - LLM Proxy Server:
+          - other-components/litellm-proxy/index.md
       - WhatsApp Connector:
           - other-components/whatsapp/index.md
           - Testing: other-components/whatsapp/testing.md
@@ -89,7 +89,7 @@ nav:
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
       - Deploying on AWS:
-          - deployment/aws/aws.md
+          - Intro: deployment/aws/aws.md
           - Infrastructure: deployment/aws/infrastructure.md
           - CI/CD: deployment/aws/cicd.md
   - Contributing:
