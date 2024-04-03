@@ -11,16 +11,17 @@
 **Step 3:** Copy `template.env` to `.env` and edit it to set the
 variables. If `DOMAIN` is commented out, it defaults to `localhost`.
 
-**Step 4:** Run docker-compose
+**Step 4:** If you want to change which LLMs are used, edit `litellm_proxy_config.yaml`.
+See [LiteLLM Proxy Server](../other-components/litellm-proxy/index.md) for more details.
+
+**Step 5:** Run docker-compose
 
     docker compose -f docker-compose.yml -f docker-compose.dev.yml \
         -p aaq-stack up -d --build
 
 You can now view the AAQ admin app at `https://$DOMAIN/` (e.g. `https://localhost/`) and the API documentation at
-`https://$DOMAIN/api/docs`
+`https://$DOMAIN/api/docs` (you can also test the endpoints here).
 
-!!! note "To test the endpoints, see [Calling the endpoints](../develop/testing.md#call-the-endpoints)."
-
-**Step 5:** Shutdown containers
+**Step 6:** Shutdown containers
 
     docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down

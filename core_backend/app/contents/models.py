@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..config import LITELLM_EMBEDDING_MODEL
+from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_EMBEDDING
 from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from .schemas import (
@@ -151,9 +151,12 @@ async def _get_content_embeddings(
     Vectorizes the content
     """
     text_to_embed = content.content_title + "\n" + content.content_text
-    content_embedding = embedding(LITELLM_EMBEDDING_MODEL, text_to_embed).data[0][
-        "embedding"
-    ]
+    content_embedding = embedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input=text_to_embed,
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    ).data[0]["embedding"]
     return content_embedding
 
 
@@ -165,7 +168,12 @@ async def get_similar_content(
     """
     Get the most similar points in the vector table
     """
-    response = embedding(LITELLM_EMBEDDING_MODEL, question)
+    response = embedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input=question,
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    )
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
@@ -181,7 +189,12 @@ async def get_similar_content_async(
     """
     Get the most similar points in the vector table
     """
-    response = await aembedding(LITELLM_EMBEDDING_MODEL, question)
+    response = await aembedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input=question,
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    )
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
