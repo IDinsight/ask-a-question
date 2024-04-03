@@ -71,19 +71,19 @@ nav:
           - components/triaging/index.md
   - Other Components:
       - other-components/index.md
-      - Chat Managers:
-          - other-components/chat_managers/index.md
-          - Typebot: other-components/chat_managers/typebot.md
-          - Botpress: other-components/chat_managers/botpress_v12.md
       - LLM Proxy Server:
           - other-components/litellm-proxy/index.md
-      - WhatsApp Connector:
-          - other-components/whatsapp/index.md
-          - Testing: other-components/whatsapp/testing.md
       - Align Score:
           - other-components/align-score/index.md
           - Deployment: other-components/align-score/deployment.md
           - Testing: other-components/align-score/testing.md
+      - Chat Managers:
+          - other-components/chat_managers/index.md
+          - Typebot: other-components/chat_managers/typebot.md
+          - Botpress: other-components/chat_managers/botpress_v12.md
+      - WhatsApp Connector:
+          - other-components/whatsapp/index.md
+          - Testing: other-components/whatsapp/testing.md
   - Deploying:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
