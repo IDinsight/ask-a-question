@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - demo
+      - testing
     paths:
       - "deployment/aws/nginx/**"
       - ".github/workflows/deploy_nginx.yml"

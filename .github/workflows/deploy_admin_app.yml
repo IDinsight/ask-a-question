@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - demo
+      - testing
     paths:
       - "admin_app/**"
       - "deployment/aws/admin_app/**"
