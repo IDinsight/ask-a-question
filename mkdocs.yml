@@ -82,7 +82,7 @@ nav:
           - Typebot: other-components/chat_managers/typebot.md
           - Botpress: other-components/chat_managers/botpress_v12.md
       - WhatsApp Connector:
-          - other-components/whatsapp/index.md
+          - Setup: other-components/whatsapp/setup.md
           - Testing: other-components/whatsapp/testing.md
   - Deploying:
       - Quick setup with Docker Compose: deployment/quick-setup.md
