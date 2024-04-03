@@ -46,7 +46,6 @@ resource "aws_service_discovery_service" "admin_app" {
   }
 }
 
-
 # Nginx Service with EC2 Launch Type
 resource "aws_ecs_service" "nginx_service" {
   # This is a resource, which means it will create a resource in AWS
@@ -64,10 +63,7 @@ resource "aws_ecs_service" "nginx_service" {
   scheduling_strategy                = "REPLICA"
   desired_count                      = 1
 
-
-
   # workaround for https://github.com/hashicorp/terraform/issues/12634
-
   # we ignore task_definition changes as the revision changes on deploy
   # of a new version of the application
   # desired_count is ignored as it can change due to autoscaling policy
@@ -86,7 +82,6 @@ resource "aws_ecs_task_definition" "nginx_task" {
     memory     = 512,
     cpu        = 256,
     entryPoint = ["/entrypoint.sh"],
-
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -111,9 +106,7 @@ resource "aws_ecs_task_definition" "nginx_task" {
         }
       }
   }])
-
 }
-
 
 # Frontend Service with EC2 Launch Type
 resource "aws_ecs_service" "admin_app_service" {
@@ -136,11 +129,9 @@ resource "aws_ecs_service" "admin_app_service" {
     container_port = 3000
   }
 
-
   lifecycle {
     ignore_changes = [task_definition, desired_count]
   }
-
 }
 
 resource "aws_ecs_task_definition" "admin_app_task" {
@@ -153,9 +144,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
     image  = "admin-app:latest",
     memory = 512,
     cpu    = 256,
-
-
-
     portMappings = [
       {
         "containerPort" : 3000,
@@ -163,7 +151,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
         "protocol" : "tcp"
       }
     ]
-
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -173,7 +160,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
       }
     }
   }])
-
 }
 
 # Backend Service with EC2 Launch Type
@@ -233,18 +219,13 @@ resource "aws_ecs_task_definition" "backend_task" {
 
 resource "aws_cloudwatch_log_group" "admin_app" {
   name = "/ecs/admin-app-task-${var.project_name}-${var.environment}"
-
   tags = merge({ Name = "admin-app-task-${var.environment}", Module = "Web" }, var.tags)
 }
-
 resource "aws_cloudwatch_log_group" "backend" {
   name = "/ecs/backend-task-${var.project_name}-${var.environment}"
-
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
-
 resource "aws_cloudwatch_log_group" "nginx" {
   name = "/ecs/nginx-task-${var.project_name}-${var.environment}"
-
   tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }

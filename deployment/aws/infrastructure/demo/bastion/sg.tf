@@ -25,8 +25,6 @@ resource "aws_security_group_rule" "bastion_sg_s3_prefix_list_egress" {
   prefix_list_ids   = [var.s3_vpc_endpoint_prefix_list_ids, ]
 }
 
-
-
 # The following rule allows the bastion host to connect to the application database
 resource "aws_security_group_rule" "bastion_to_web_db_egress" {
   type                     = "egress"

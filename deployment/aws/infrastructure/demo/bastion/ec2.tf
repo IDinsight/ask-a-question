@@ -5,7 +5,6 @@ data "aws_ami" "amazon_linux_2" {
   # This data source will fetch the latest Amazon Linux 2 AMI for the region specified
   # AMI is dictated by the instance type.
 
-
   owners = ["amazon"]
 
   filter {

@@ -32,7 +32,6 @@ resource "aws_eip" "web_eip" {
   vpc      = true
   instance = aws_instance.web_instance.id
   tags     = merge({ Name = var.web_ec2_server_name, Module = "Web" }, var.tags)
-
 }
 
 
@@ -44,7 +43,6 @@ resource "aws_instance" "web_instance" {
   ami                    = data.aws_ami.amazon_linux_2.id
   iam_instance_profile   = aws_iam_instance_profile.web_instance_profile.id
   vpc_security_group_ids = [aws_security_group.web_ec2_sg.id]
-
   # The following user data will be executed when the EC2 instance is created
   # The user data will also register the EC2 instance with the ECS cluster
   user_data = base64encode(
@@ -69,7 +67,6 @@ resource "aws_iam_instance_profile" "web_instance_profile" {
   # This is the instance profile that will be attached to the EC2 instance
   # The instance profile is a container for the role
   # The instance profile is then attached to the EC2 instance
-
   name = var.web_instance_profile_name
   role = aws_iam_role.web_instance_role.name
 }
