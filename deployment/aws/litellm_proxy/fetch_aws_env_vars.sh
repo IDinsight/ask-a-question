@@ -21,5 +21,3 @@ echo "Fetching variables from aws store.."
 # The values should be the same as the ones in the infrastructure module
 SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
 export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
-
-exec "$@"
