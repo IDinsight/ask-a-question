@@ -10,7 +10,7 @@ on:
       - ".github/workflows/deploy_litellm_proxy.yml"
 
 jobs:
-  DeployCoreBackend:
+  DeployLiteLLMProxy:
     name: Deploying litellm_proxy ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
