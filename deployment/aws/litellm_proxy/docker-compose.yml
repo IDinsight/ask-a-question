@@ -1,0 +1,24 @@
+# Docker Compose file
+version: "3"
+services:
+  litellm_proxy-container:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:litellm_proxy
+    restart: always
+    # Note: We don't need to pass the config since we bake it into the Docker container
+    command: --config /app/config.yaml
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - 4000:4000
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 2g
+
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/litellm-proxy-task-${PROJECT_NAME}-${ENV} # this has to match with what is in Terraform
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: litellm-proxy
