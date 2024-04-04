@@ -117,6 +117,7 @@ const LanguageButtonBar = ({
             ),
           )
         }
+
       </ToggleButtonGroup>
       {
         expandable && (
@@ -141,7 +142,6 @@ const LanguageButtonBar = ({
               onClick={() =>
                 handleMenuItemSelect(language)
               }
-
             >
               {language.language_name}
             </MenuItem>

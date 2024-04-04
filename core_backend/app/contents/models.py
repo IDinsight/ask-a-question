@@ -182,14 +182,13 @@ async def delete_content_from_db(
     language_id: Optional[int] = None,
 ) -> None:
     """
-    Deletes a content  from the database
+    Deletes a content from the database
     """
     if language_id:
         stmt = delete(ContentTextDB).where(
             (ContentTextDB.content_id == content_id)
             & (ContentTextDB.language_id == language_id)
         )
-
     else:
         stmt = delete(ContentTextDB).where(ContentTextDB.content_id == content_id)
     await asession.execute(stmt)

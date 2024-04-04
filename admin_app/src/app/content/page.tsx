@@ -23,7 +23,6 @@ import { useSearchParams } from "next/navigation";
 import React from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { get } from "http";
 
 const MAX_CARDS_PER_PAGE = 12;
 

@@ -1,6 +1,4 @@
 import theme from "@/theme";
-import createCache from '@emotion/cache';
-
 
 export const sizes = {
   tinyGap: theme.spacing(0.5),
@@ -77,7 +75,3 @@ export const appStyles = {
     flexGrow: 1,
   },
 };
-
-export default function createEmotionCache() {
-  return createCache({ key: 'css', prepend: true });
-}

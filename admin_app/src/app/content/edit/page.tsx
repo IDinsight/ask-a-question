@@ -410,10 +410,11 @@ const SavedContentDialog = ({
   languageId: number | null;
 }) => {
   const router = useRouter();
+
   const getDialogTitle = () => {
     return contentId == null
-      ? `New content #${newContentId} successfully edited`
-      : `Content #${contentId} successfully added`;
+      ? `New content #${newContentId} successfully added`
+      : `Content #${contentId} successfully edited`;
   };
   const handleClose = () => {
     setShowModal(false);
@@ -421,7 +422,7 @@ const SavedContentDialog = ({
 
   const handleNo = () => {
     handleClose();
-    router.push(`/content/?content_id=${contentId}&action=added`);
+    router.push(`/content/?content_id=${contentId}&action=edit`);
   };
 
   const handleYes = () => {

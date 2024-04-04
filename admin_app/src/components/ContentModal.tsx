@@ -21,7 +21,6 @@ import { Layout } from "./Layout";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Content } from "@/app/content/edit/page";
-import { get } from "http";
 
 
 const ContentViewModal = ({
