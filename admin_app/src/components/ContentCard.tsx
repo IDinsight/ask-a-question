@@ -33,7 +33,7 @@ const ContentCard = ({
   languages: string[];
   getContentData: (content_id: number) => Promise<any>;
   getLanguageList: () => Promise<any>;
-  onSuccessfulDelete: (content_id: number) => void;
+  onSuccessfulDelete: (content_id: number, language_id: number | null) => void;
   onFailedDelete: (content_id: number) => void;
   deleteContent: (content_id: number) => Promise<any>;
   deleteLanguageVersion:

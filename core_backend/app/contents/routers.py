@@ -69,7 +69,9 @@ async def edit_content(
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentTextRetrieve:
     """
-    Edit content endpoint
+    Edit content endpoint. If the language provided does not correspond
+    to any content_text in the DB, a new content_text will be created
+    with the language provided.
     """
     language_db = await get_language_from_db(language_id, asession)
     if not language_db:
@@ -157,7 +159,7 @@ async def delete_content(
 ) -> None:
     """
     Delete content endpoint.
-    If no language is provided, all languages versions of the content will be deleted
+    If no language is provided, all languages versions of the content will be deleted.
     """
     if language_id:
         language_db = await get_language_from_db(language_id, asession)

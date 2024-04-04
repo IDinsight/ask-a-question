@@ -13,7 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 export interface Content extends EditContentBody {
-
+  content_text_id: number | null;
   created_datetime_utc: string;
   updated_datetime_utc: string;
 }
@@ -133,7 +133,8 @@ const AddEditContentPage = () => {
             languageId={language_id!}
             onSaveSuccess={handleSaveSuccess}
             onDeleteSuccess={handleDeleteSuccess}
-            setSnackMessage={setSnackMessage} />
+            setReloadTrigger={setReloadTrigger}
+          />
 
           <Layout.Spacer multiplier={1} />
           <Snackbar
@@ -169,7 +170,7 @@ const ContentBox = ({
   languageId,
   onSaveSuccess,
   onDeleteSuccess,
-  setSnackMessage,
+  setReloadTrigger
 }: {
   contentId: number;
   content: Content | null;
@@ -179,8 +180,7 @@ const ContentBox = ({
   languageId: number;
   onSaveSuccess: (content: Content, action: string) => void;
   onDeleteSuccess: (content_id: number, language_id: number | null) => void;
-  setSnackMessage: React.Dispatch<React.SetStateAction<string | null>>;
-
+  setReloadTrigger: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
   const [saveError, setSaveError] = React.useState(false);
@@ -230,6 +230,8 @@ const ContentBox = ({
     key: keyof Content,
   ) => {
     const emptyContent: Content = {
+
+      content_text_id: content?.content_text_id || 0,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
@@ -251,6 +253,7 @@ const ContentBox = ({
   };
   const handleNewLanguageSelect = (language_id: number) => {
     const emptyContent: Content = {
+      content_text_id: 0,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
@@ -265,6 +268,17 @@ const ContentBox = ({
       return updatedContentData;
     });
   };
+  const handleDeleteClick = () => {
+    if (content) {
+      if (content.content_text_id && content.content_text_id > 0) {
+        setOpenDeleteModal(true)
+      }
+      else {
+        setReloadTrigger(prev => prev + 1);
+      }
+    }
+
+  }
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -300,7 +314,7 @@ const ContentBox = ({
           disabled={!editAccess}
           aria-label="delete"
           size="small"
-          onClick={() => setOpenDeleteModal(true)}
+          onClick={handleDeleteClick}
         >
 
           <Delete fontSize="inherit" />
@@ -379,7 +393,7 @@ const ContentBox = ({
         <Layout.Spacer horizontal multiplier={1} />
         {saveError ? (
           <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-            Failed to save content. {errorText}
+            {errorText ? errorText : "Failed to save content"}
           </Alert>
         ) : null}
         <DeleteContentModal
@@ -389,9 +403,10 @@ const ContentBox = ({
           onClose={() => setOpenDeleteModal(false)}
           onSuccessfulDelete={onDeleteSuccess}
           onFailedDelete={(content_id: number, language_id: number | null) => {
-            setSnackMessage(
+            setErrorText(
               `Failed to delete content #${content_id} with language_id: #${language_id}`,
             );
+            setSaveError(true);
           }}
           deleteContent={(content_id: number, language_id: number | null) => {
             return apiCalls.deleteContent(content_id, language_id, token!);

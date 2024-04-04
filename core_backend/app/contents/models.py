@@ -139,11 +139,11 @@ async def save_content_to_db(
 
 async def update_content_in_db(
     old_content: ContentTextDB,
-    content_text: ContentTextCreate,
+    content_text: ContentTextUpdate,
     asession: AsyncSession,
 ) -> ContentTextDB:
     """
-    Updates a content and vector in the database
+    Updates a content and vector in the database.
     """
     content_embedding = await _get_content_embeddings(
         content_text.content_title, content_text.content_text
