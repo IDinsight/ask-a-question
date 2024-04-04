@@ -79,7 +79,7 @@ async def _check_align_score(
     evidence = _build_evidence(llm_response)
     claim = llm_response.llm_response
     assert claim is not None, "LLM response is None"
-    align_score_date = AlignScoreData(evidence=evidence, claim=claim)
+    align_score_data = AlignScoreData(evidence=evidence, claim=claim)
 
     if ALIGN_SCORE_METHOD is None:
         logger.warning(
@@ -89,11 +89,11 @@ async def _check_align_score(
 
     elif ALIGN_SCORE_METHOD == "AlignScore":
         if ALIGN_SCORE_API is not None:
-            align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_date)
+            align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(align_score_date)
+        align_score = await _get_llm_align_score(align_score_data)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
@@ -105,6 +105,15 @@ async def _check_align_score(
     }
 
     if align_score.score < float(ALIGN_SCORE_THRESHOLD):
+        logger.info(
+            (
+                f"Alignment score {align_score.score} is below the threshold "
+                f"{ALIGN_SCORE_THRESHOLD}.\n"
+                f"Reason: {align_score.reason}\n"
+                f"Claim: {claim}\n"
+                f"Evidence: {evidence}\n"
+            )
+        )
         llm_response.llm_response = None
 
     llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
