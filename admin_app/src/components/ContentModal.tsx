@@ -29,7 +29,6 @@ const ContentViewModal = ({
   getLanguageList,
   deleteLanguageVersion,
   open,
-  setOpen,
   onClose,
   editAccess,
 }: {
@@ -40,7 +39,6 @@ const ContentViewModal = ({
   deleteLanguageVersion:
   (content_id: number, language_id: number | null) => Promise<any>;
   open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
   editAccess: boolean;
 }) => {

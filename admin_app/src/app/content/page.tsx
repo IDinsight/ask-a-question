@@ -2,7 +2,7 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { appColors, sizes, appFonts } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add, Sort } from "@mui/icons-material";
@@ -14,7 +14,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Typography,
 } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";

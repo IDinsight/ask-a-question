@@ -138,7 +138,6 @@ const ContentCard = ({
         getLanguageList={getLanguageList}
         deleteLanguageVersion={deleteLanguageVersion}
         open={openReadModal}
-        setOpen={setOpenReadModal}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
       />
