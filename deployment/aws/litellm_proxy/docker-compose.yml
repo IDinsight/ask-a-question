@@ -7,6 +7,7 @@ services:
     # Note: We don't need to pass the config since we bake it into the Docker container
     command: --config /app/config.yaml
     environment:
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
       - AWS_REGION=${AWS_REGION}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
