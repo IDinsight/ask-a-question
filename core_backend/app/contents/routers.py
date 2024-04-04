@@ -153,20 +153,18 @@ async def delete_content(
         AuthenticatedUser, Depends(get_current_fullaccess_user)
     ],
     asession: AsyncSession = Depends(get_async_session),
-    language: Optional[str] = None,
+    language_id: Optional[int] = None,
 ) -> None:
     """
     Delete content endpoint.
     If no language is provided, all languages versions of the content will be deleted
     """
-    if language:
-        language_db = await get_language_from_language_name_db(
-            language.upper(), asession
-        )
+    if language_id:
+        language_db = await get_language_from_db(language_id, asession)
         if not language_db:
             raise HTTPException(
                 status_code=404,
-                detail=f"Language `{language}` not found",
+                detail=f"Language `{language_id}` not found",
             )
         record = await get_content_from_content_id_and_language(
             content_id, language_db.language_id, asession
@@ -175,7 +173,7 @@ async def delete_content(
             raise HTTPException(
                 status_code=404,
                 detail=f"""Content `{content_id}`
-                with language name `{language}` not found""",
+                with language  `{language_id}` not found""",
             )
         await delete_content_from_db(
             content_id,
@@ -237,25 +235,12 @@ async def validate_create_content(
     asession: AsyncSession,
 ) -> tuple[bool, Optional[str]]:
     """
-    Make sure the content and language is valid before saving content_text to db.
+    Make sure the content_text data is valid before saving to db.
     """
-    if content.content_id is not None:
-        contents = await get_all_languages_version_of_content(
-            content.content_id, asession=asession
-        )
-        if len(contents) < 1:
-            return (False, f"Content id `{content.content_id}` does not exist")
 
     language = await get_language_from_db(content.language_id, asession)
     if not language:
         return (False, f"Language id `{content.language_id}` does not exist")
-
-    if not (
-        await is_content_language_combination_unique(
-            content.content_id, content.language_id, asession
-        )
-    ):
-        return (False, "Content and language combination already exists")
 
     return (True, None)
 

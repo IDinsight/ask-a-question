@@ -7,7 +7,7 @@ import {
   ThumbDown,
   ThumbUp,
 } from "@mui/icons-material";
-import { Box, Button, Fade, Modal, Typography } from "@mui/material";
+import { Alert, Box, Button, Fade, IconButton, Modal, Snackbar, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -21,6 +21,7 @@ import { Layout } from "./Layout";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Content } from "@/app/content/edit/page";
+import { get } from "http";
 
 
 const ContentViewModal = ({
@@ -41,15 +42,27 @@ const ContentViewModal = ({
   const [enabledLanguages, setEnabledLanguages] = React.useState<number[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const [reloadTrigger, setReloadTrigger] = React.useState(0);
+
+  const getSnackMessage = (
+    content_id: number | null,
+    language_id: number | null,
+  ): string | null => {
+    return `Content #${content_id} with language_id:#${language_id} deleted successfully`;
+  };
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(
+    null,
+  );
   const handleLanguageSelect = (language_id: number) => {
     setContentTextData(contentData[language_id]);
   };
-  const { token } = useAuth();
+  const { token, accessLevel } = useAuth();
   React.useEffect(() => {
     const fetchData = async () => {
       if (open) {
         setLoading(true);
-        setError(null);  // Reset error state on new fetch
+        setError(null);
         try {
           apiCalls.getContent(content_id, null, token!).then((data) => {
             const contentDic: { [key: number]: Content } = data.reduce(
@@ -60,10 +73,10 @@ const ContentViewModal = ({
               {} as { [key: string]: Content }
             );
             setContentData(contentDic);
-
-            setContentData(contentDic);
             setEnabledLanguages(Object.keys(contentDic).map(Number))
-            setContentTextData(contentDic[defaultLanguageId]);
+            setContentTextData(
+              contentDic[defaultLanguageId] ? contentDic[defaultLanguageId] :
+                Object.values(contentDic)[0]);
           });
           setLoading(false);
         } catch (err) {
@@ -74,7 +87,26 @@ const ContentViewModal = ({
     };
 
     fetchData();
-  }, [open, content_id, token]);
+  }, [open, content_id, token, reloadTrigger]);
+  const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+    setSnackMessage(getSnackMessage(content_id, language_id));
+  };
+  const handleDelete = async (content_id: number, language_id: number | null) => {
+
+    try {
+      setLoading(true);
+      await apiCalls.deleteContent(content_id, language_id, token!);
+    } catch (error) {
+      console.error('Failed to delete content:', error);
+      setError('Failed to delete content. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+
+  };
+
   return (
     <Modal
       open={open as boolean}
@@ -129,6 +161,7 @@ const ContentViewModal = ({
                 borderRadius: 1,
               }}
             >
+
               <Layout.Spacer multiplier={1} />
               <Typography variant="subtitle1">{contentTextData?.content_title}</Typography>
               <Layout.Spacer multiplier={1} />
@@ -155,6 +188,15 @@ const ContentViewModal = ({
                   <Layout.Spacer horizontal multiplier={0.4} />
                   Edit
                 </Button>
+                <Layout.Spacer horizontal multiplier={1} />
+                <IconButton
+                  disabled={accessLevel === "fullaccess"}
+                  aria-label="delete"
+                  size="small"
+                  onClick={() => setOpenDeleteModal(true)}
+                >
+                  <Delete fontSize="inherit" />
+                </IconButton>
                 <Layout.Spacer horizontal multiplier={1} />
               </Layout.FlexBox>
               <Layout.FlexBox
@@ -188,6 +230,37 @@ const ContentViewModal = ({
                 <Typography variant="body2">_</Typography>
               </Layout.FlexBox>
             </Layout.FlexBox>
+            <DeleteContentModal
+              content_id={contentTextData?.content_id!}
+              language_id={contentTextData?.language_id!}
+              open={openDeleteModal}
+              onClose={() => setOpenDeleteModal(false)}
+              onSuccessfulDelete={onSuccessfulDelete}
+              onFailedDelete={(content_id: number, language_id: number | null) => {
+                setSnackMessage(
+                  `Failed to delete content #${content_id} with language_id: #${language_id}`,
+                );
+              }}
+              deleteContent={handleDelete}
+            />
+            <Snackbar
+              open={snackMessage !== null}
+              autoHideDuration={6000}
+              onClose={() => {
+                setSnackMessage(null);
+              }}
+            >
+              <Alert
+                onClose={() => {
+                  setSnackMessage(null);
+                }}
+                severity="success"
+                variant="filled"
+                sx={{ width: "100%" }}
+              >
+                {snackMessage}
+              </Alert>
+            </Snackbar>
           </Layout.FlexBox>
         </Box>
       </Fade>
@@ -197,6 +270,7 @@ const ContentViewModal = ({
 
 const DeleteContentModal = ({
   content_id,
+  language_id,
   open,
   onClose,
   onSuccessfulDelete,
@@ -204,11 +278,12 @@ const DeleteContentModal = ({
   deleteContent,
 }: {
   content_id: number;
+  language_id: number | null;
   open: boolean;
   onClose: () => void;
-  onSuccessfulDelete: (content_id: number) => void;
-  onFailedDelete: (content_id: number) => void;
-  deleteContent: (content_id: number) => Promise<any>;
+  onSuccessfulDelete: (content_id: number, language_id: number | null) => void;
+  onFailedDelete: (content_id: number, language_id: number | null) => void;
+  deleteContent: (content_id: number, language_id: number | null) => Promise<any>;
 }) => {
   return (
     <Dialog
@@ -230,17 +305,17 @@ const DeleteContentModal = ({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {
-            const handleDeleteContent = async (content_id: number) => {
-              const results = deleteContent(content_id)
+            const handleDeleteContent = async (content_id: number, language_id: number | null) => {
+              const results = deleteContent(content_id, language_id)
                 .then((res) => {
-                  onSuccessfulDelete(content_id);
+                  onSuccessfulDelete(content_id, language_id);
                 })
                 .catch((err) => {
                   console.log("error", err);
-                  onFailedDelete(content_id);
+                  onFailedDelete(content_id, language_id);
                 });
             };
-            handleDeleteContent(Number(content_id));
+            handleDeleteContent(Number(content_id), language_id);
             onClose();
           }}
           autoFocus

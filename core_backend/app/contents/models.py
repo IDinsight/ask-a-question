@@ -24,6 +24,7 @@ from ..languages.models import LanguageDB, get_language_from_db
 from ..models import Base, JSONDict
 from .schemas import (
     ContentTextCreate,
+    ContentTextUpdate,
 )
 
 
@@ -98,7 +99,7 @@ async def is_content_language_combination_unique(
 
 
 async def save_content_to_db(
-    content: ContentTextCreate,
+    content: ContentTextCreate | ContentTextUpdate,
     asession: AsyncSession,
 ) -> ContentTextDB:
     """
@@ -108,9 +109,11 @@ async def save_content_to_db(
     content_embedding = await _get_content_embeddings(
         content.content_title, content.content_text
     )
-    stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
-    content_db = (await asession.execute(stmt)).scalar_one_or_none()
-    if not content_db:
+
+    if hasattr(content, "content_id") and content.content_id:
+        stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
+        content_db = (await asession.execute(stmt)).scalar_one_or_none()
+    else:
         content_db = ContentDB()
         asession.add(content_db)
 
@@ -186,6 +189,7 @@ async def delete_content_from_db(
             (ContentTextDB.content_id == content_id)
             & (ContentTextDB.language_id == language_id)
         )
+
     else:
         stmt = delete(ContentTextDB).where(ContentTextDB.content_id == content_id)
     await asession.execute(stmt)
@@ -193,6 +197,7 @@ async def delete_content_from_db(
     content_stmt = select(ContentDB).where(ContentDB.content_id == content_id)
     content_row = (await asession.execute(content_stmt)).scalar_one_or_none()
     if not content_row:
+        print("This is also being deleted")
         stmt = delete(ContentDB).where(ContentDB.content_id == content_id)
         await asession.execute(stmt)
     await asession.commit()

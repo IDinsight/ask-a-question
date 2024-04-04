@@ -44,11 +44,14 @@ const LanguageButtonBar = ({
         const languages = await apiCalls.getLanguageList(token!);
         setLangList(languages);
 
-        const defaultLanguage = langList
-          .find(lang => lang.language_id === defaultLanguageId);
+        const defaultLanguage = langList.find(lang => lang.language_id === defaultLanguageId);
         if (defaultLanguage && !selectedLang) {
           setSelectedLang(defaultLanguageId);
           onLanguageSelect(defaultLanguageId);
+        }
+        if (enabledLanguages && selectedLang && !enabledLanguages.includes(selectedLang)) {
+          setSelectedLang(enabledLanguages[0]);
+          onLanguageSelect(enabledLanguages[0]);
         }
       } catch (error) {
         console.error('Failed to fetch languages:', error);

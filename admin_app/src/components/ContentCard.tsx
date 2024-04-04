@@ -133,6 +133,7 @@ const ContentCard = ({
       />
       <DeleteContentModal
         content_id={content_id}
+        language_id={null}
         open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
         onSuccessfulDelete={onSuccessfulDelete}

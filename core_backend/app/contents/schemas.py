@@ -15,11 +15,6 @@ class ContentTextCreate(BaseModel):
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     language_id: int = Field(default=1, description="Language ID")
-    content_id: Optional[int] = Field(
-        default=None,
-        description="If adding or editing content text to an existing content"
-        ", provide its ID",
-    )
 
     content_metadata: dict = {}
 
@@ -35,6 +30,7 @@ class ContentTextRetrieve(ContentTextCreate):
     Pydantic model for content retrieval
     """
 
+    content_id: int
     content_text_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
