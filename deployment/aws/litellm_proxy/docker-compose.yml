@@ -4,7 +4,7 @@ services:
   litellm_proxy-container:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:litellm-proxy
     # Note: We don't need to pass the config since we bake it into the Docker container
-    command: --config /app/config.yaml
+    command: ["--config", "/app/config.yaml"]
     environment:
       - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
       - AWS_REGION=${AWS_REGION}
