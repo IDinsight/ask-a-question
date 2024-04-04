@@ -11,6 +11,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
+      - LITELLM_ENDPOINT="http://litellm_proxy:4000"
     volumes:
       - local_dynamic_storage:/home/storage
     ports:
