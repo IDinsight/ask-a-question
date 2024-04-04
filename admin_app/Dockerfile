@@ -6,7 +6,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN  npm install --production
+RUN  npm ci
 
 FROM base AS builder
 ARG NEXT_PUBLIC_BACKEND_URL

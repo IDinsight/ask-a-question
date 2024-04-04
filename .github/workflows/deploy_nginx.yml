@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - demo
+      - testing
     paths:
       - "deployment/aws/nginx/**"
       - ".github/workflows/deploy_nginx.yml"
@@ -106,8 +107,7 @@ jobs:
           --region ${{ secrets.AWS_REGION }} \
           --default-launch-type EC2 \
           --config-name ${{secrets.PROJECT_NAME}}-${{github.ref_name}}-nginx-config
-          ecs-cli compose --project-name nginx-task --file deployment/aws/nginx/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
-          echo "taskdef=nginx-task" >> $GITHUB_OUTPUT
+          ecs-cli compose --project-name nginx-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }} --file deployment/aws/nginx/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           DOMAIN: ${{ secrets.DOMAIN }}
@@ -121,7 +121,7 @@ jobs:
       - name: Task definition download
         id: download-task-def
         env:
-          ecs_task_def_name: nginx-task
+          ecs_task_def_name: nginx-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }}
         run: |
           aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
           echo $(cat task-definition.json | jq 'del(

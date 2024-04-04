@@ -11,15 +11,11 @@ provider "aws" {
 resource "aws_s3_bucket" "terraform_state" {
   bucket        = "${var.project_name}-terraform-state"
   force_destroy = true
-
-
   tags = merge({ Name = "${var.project_name}-terraform-state" }, local.required_tags)
-
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.bucket
-
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -42,6 +38,5 @@ resource "aws_dynamodb_table" "terraform_locks" {
     name = "LockID"
     type = "S"
   }
-
   tags = merge({ Name = "${var.project_name}-terraform-state-lock-table" }, local.required_tags)
 }
