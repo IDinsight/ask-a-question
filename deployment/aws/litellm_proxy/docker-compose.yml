@@ -10,7 +10,6 @@ services:
       - AWS_REGION=${AWS_REGION}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - 4000:4000
     deploy:
