@@ -16,8 +16,6 @@ function get_secret_value() {
 }
 
 echo "Fetching variables from aws store.."
-# This is the name of the secrets in aws secrets manager.
-# The secrets are created by the infrastructure module
-# The values should be the same as the ones in the infrastructure module
 SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
+echo $SECRET_OPENAI
 export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
