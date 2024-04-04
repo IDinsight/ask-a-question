@@ -132,9 +132,11 @@ class TestLLMSearch:
             llm_response = response.json()["llm_response"]
             assert len(llm_response) != 0
 
-        if expected_status_code == 200:
             content_response = response.json()["content_response"]
             assert len(content_response) != 0
+
+            result_state = response.json()["state"]
+            assert result_state == ResultState.FINAL
 
 
 class TestErrorResponses:
