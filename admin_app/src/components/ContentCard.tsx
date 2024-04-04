@@ -107,7 +107,7 @@ const ContentCard = ({
           <Button
             disabled={!editAccess}
             component={Link}
-            href={`/content/edit?content_id=${content_id}`}
+            href={`/content/edit?content_id=${content_id}&language_id=${language_id}`}
           >
             <Edit fontSize="small" />
             <Layout.Spacer horizontal multiplier={0.3} />

@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone as tz
 from typing import Dict, List, Optional, Sequence
 
 from litellm import aembedding, embedding
@@ -121,8 +122,8 @@ async def save_content_to_db(
         language=content_language,
         content=content_db,
         content_metadata=content.content_metadata,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
+        updated_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
     )
 
     asession.add(content_text_db)
@@ -134,7 +135,6 @@ async def save_content_to_db(
 
 
 async def update_content_in_db(
-    content_text_id: int,
     old_content: ContentTextDB,
     content_text: ContentTextCreate,
     asession: AsyncSession,
@@ -146,19 +146,20 @@ async def update_content_in_db(
         content_text.content_title, content_text.content_text
     )
     language = await get_language_from_db(content_text.language_id, asession)
-    content_db = ContentTextDB(
-        content_text_id=content_text_id,
+    content_text_db = ContentTextDB(
+        content_text_id=old_content.content_text_id,
         content_embedding=content_embedding,
         content_title=content_text.content_title,
         content_text=content_text.content_text,
         content_id=content_text.content_id,
         language=language,
         content_metadata=content_text.content_metadata,
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=old_content.created_datetime_utc,
+        updated_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
     )
 
-    content_db = await asession.merge(content_db)
-    if content_db.content_id != old_content.content_id:
+    content_text_db = await asession.merge(content_text_db)
+    if content_text_db.content_id != old_content.content_id:
         old_contents = await get_all_languages_version_of_content(
             old_content.content_id, asession
         )
@@ -169,7 +170,7 @@ async def update_content_in_db(
             await asession.execute(stmt)
 
     await asession.commit()
-    return content_db
+    return content_text_db
 
 
 async def delete_content_from_db(
@@ -178,7 +179,7 @@ async def delete_content_from_db(
     language_id: Optional[int] = None,
 ) -> None:
     """
-    Deletes a content  from the database
+    Deletes a content from the database
     """
     if language_id:
         stmt = delete(ContentTextDB).where(
@@ -261,6 +262,7 @@ async def get_landing_view_of_content_from_db(
             ContentTextDB.content_id == language_subquery.c.content_id,
         )
         .where(ContentTextDB.language_id == language_id)
+        .order_by(ContentTextDB.content_id)
     )
 
     if offset > 0:

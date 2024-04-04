@@ -14,7 +14,7 @@ class ContentTextCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
-    language_id: int
+    language_id: int = Field(default=1, description="Language ID")
     content_id: Optional[int] = Field(
         default=None,
         description="If adding or editing content text to an existing content"
@@ -24,6 +24,10 @@ class ContentTextCreate(BaseModel):
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ContentTextUpdate(ContentTextCreate):
+    content_id: int
 
 
 class ContentTextRetrieve(ContentTextCreate):

@@ -51,16 +51,18 @@ const ContentViewModal = ({
         setLoading(true);
         setError(null);  // Reset error state on new fetch
         try {
-          const dataList = await apiCalls.getContent(content_id, null, token!);
-          const transformedData: { [key: string]: any } = dataList.reduce((acc: { [key: number]: any }, item: any) => {
-            const { language_id, ...rest } = item;
-            acc[language_id] = rest;
-            return acc;
-          }, {});
-
-          setContentData(transformedData);
-          setEnabledLanguages(Object.keys(transformedData).map(Number))
-          setContentTextData(transformedData[defaultLanguageId]);
+          apiCalls.getContent(content_id, null, token!).then((data) => {
+            const contentDic: { [key: number]: Content } = data.reduce(
+              (acc: { [key: number]: Content }, currentContent: Content) => {
+                acc[currentContent.language_id] = currentContent;
+                return acc;
+              },
+              {} as { [key: string]: Content }
+            );
+            setContentData(contentDic);
+            setEnabledLanguages(Object.keys(contentDic).map(Number))
+            setContentTextData(contentDic[defaultLanguageId]);
+          });
           setLoading(false);
         } catch (err) {
           setError((err as Error).message || "Something went wrong");
@@ -111,7 +113,8 @@ const ContentViewModal = ({
               expandable={false}
               onLanguageSelect={handleLanguageSelect}
               defaultLanguageId={defaultLanguageId}
-              enabledLanguages={enabledLanguages} />
+              enabledLanguages={enabledLanguages}
+              isEdit={false} />
             <Layout.FlexBox
               flex={1}
               flexDirection={"column"}
@@ -144,7 +147,7 @@ const ContentViewModal = ({
                   color="primary"
                   disabled={!editAccess}
                   component={Link}
-                  href={`/content/edit?content_id=${content_id}`}
+                  href={`/content/edit?content_id=${content_id}&language_id=${contentTextData ? contentTextData.language_id : defaultLanguageId}`}
                 >
                   <Edit />
                   <Layout.Spacer horizontal multiplier={0.4} />
