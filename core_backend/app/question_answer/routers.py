@@ -8,6 +8,7 @@ from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async
 from ..database import get_async_session
 from ..llm_call.check_output import check_align_score__after
+from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
     classify_safety__before,
@@ -84,10 +85,16 @@ async def get_llm_answer(
             )
         )
         response.content_response = content_response
-        response.llm_response = await get_llm_rag_answer(
+        llm_response = await get_llm_rag_answer(
             user_query_refined.query_text, content_response[0].retrieved_text
         )
-        response.state = ResultState.FINAL
+        if llm_response == SUMMARY_FAILURE_MESSAGE:
+            response.state = ResultState.ERROR
+            response.llm_response = None
+            response.debug_info["reason"] = "LLM Summary failed"
+        else:
+            response.state = ResultState.FINAL
+            response.llm_response = llm_response
 
     return response
 

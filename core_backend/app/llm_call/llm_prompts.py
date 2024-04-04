@@ -160,17 +160,18 @@ PARAPHRASE_INPUT = (
 
 # ----  Question answering bot
 
+SUMMARY_FAILURE_MESSAGE = "Sorry, no relevant information found."
 ANSWER_QUESTION_PROMPT = textwrap.dedent(
-    """You are a high-performing question answering bot.
+    f"""You are a high-performing question answering bot.
 
     Answer the question based on the content delimited by triple backticks.
     Address the question directly and do not respond with anything that is
     outside of the context of the given content.
 
     If the content doesn't seem to answer the question, respond exactly with
-    "Sorry, no relevant information found."
-
-    ```{content}```"""
+    "{SUMMARY_FAILURE_MESSAGE}".
+    """
+    + "```{content}```"
 )
 
 

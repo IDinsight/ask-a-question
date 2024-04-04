@@ -14,6 +14,7 @@ from ..config import (
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
+    ResultState,
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
@@ -52,13 +53,16 @@ def check_align_score__after(func: Callable) -> Callable:
 
         llm_response = await func(question, response, *args, **kwargs)
 
-        if isinstance(llm_response, UserQueryResponseError):
+        if (
+            isinstance(llm_response, UserQueryResponseError)
+            or llm_response.state == ResultState.ERROR
+        ):
             return llm_response
 
         if llm_response.llm_response is None:
             logger.warning(
                 (
-                    "No LLM response found in the LLM response but "
+                    "No LLM response found in the response but "
                     "`check_align_score` was called"
                 )
             )
@@ -115,7 +119,8 @@ async def _check_align_score(
             )
         )
         llm_response.llm_response = None
-
+        llm_response.state = ResultState.ERROR
+        llm_response.debug_info["reason"] = "Align score failed"
     llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
 
     return llm_response
@@ -155,7 +160,7 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
     try:
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
-        logger.error(f"LLM alignment score respone is not valid json: {e}")
+        logger.error(f"LLM alignment score response is not valid json: {e}")
 
     logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
 
