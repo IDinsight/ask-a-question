@@ -47,15 +47,13 @@ jobs:
           ECR_REPOSITORY: ${{secrets.REPO}}
           IMAGE_TAG: litellm-proxy
         with:
-          context: litellm_proxy
+          context: deployment/aws/litellm_proxy
           platforms: linux/arm64
           file: deployment/aws/litellm_proxy/Dockerfile
           cache-from: type=gha
           cache-to: type=gha
           push: true
           tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
-          build-args: |
-            BOOTSTRAP_FILE=${{secrets.BOOTSTRAP_FILE}}
       # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
       # This will reduce the number of task definitions created and will speed up the deployment process
       # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
