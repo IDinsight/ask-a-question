@@ -39,10 +39,6 @@ jobs:
         with:
           mask-password: true
 
-      - name: Copy AWS deployment files
-        run: |
-          cp --recursive deployment/aws/litellm_proxy/* litellm_proxy/
-
       - name: Build and push
         id: build-image
         uses: docker/build-push-action@v5
