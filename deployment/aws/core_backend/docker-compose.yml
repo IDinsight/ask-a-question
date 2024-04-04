@@ -12,8 +12,6 @@ services:
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
       - LITELLM_ENDPOINT="http://litellm_proxy:4000"
-    volumes:
-      - local_dynamic_storage:/home/storage
     ports:
       - 8000:8000
     deploy:
