@@ -3,7 +3,6 @@ version: "3"
 services:
   litellm_proxy-container:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:litellm-proxy
-    restart: always
     # Note: We don't need to pass the config since we bake it into the Docker container
     command: --config /app/config.yaml
     environment:
