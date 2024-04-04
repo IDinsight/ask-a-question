@@ -8,6 +8,7 @@ import Avatar from "@mui/material/Avatar";
 import { sizes } from "@/utils";
 import PersonIcon from "@mui/icons-material/Person";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
+import Grid from "@mui/material/Grid";
 
 const PersistentSearchBar = () => (
   <Box
@@ -28,6 +29,7 @@ interface Message {
   dateTime: string;
   type: "question" | "response";
   text: string;
+  json?: string;
 }
 
 const dummyTexts: Message[] = [
@@ -50,6 +52,7 @@ const dummyTexts: Message[] = [
         Trump’s company paid Mr. Weisselberg’s legal bills and awarded him a $2 \
         million severance, with a condition: He could not voluntarily cooperate \
         with any law enforcement agency.`,
+    json: "{'hello': 'world'}",
   },
 ];
 
@@ -62,34 +65,43 @@ const MessageBox = (message: Message) => (
   <Box
     sx={{
       display: "flex",
-      boxShadow: 3,
+      boxShadow: 0,
       py: 2,
-      background: "lightgray",
+      background: "white",
       justifyContent: "flex-start",
     }}
   >
-    <Box>
-      <Avatar
-        alt="FA"
+    <Box width="100%">
+      <Box>
+        <Avatar
+          alt="FA"
+          sx={{
+            mx: 2,
+            my: 2,
+            width: sizes.icons.medium,
+            height: sizes.icons.medium,
+            bgcolor:
+              message.type === "question" ? "primary.main" : "secondary.main",
+          }}
+        >
+          {message.type === "question" ? <PersonIcon /> : <SmartToyIcon />}
+        </Avatar>
+      </Box>
+      <Box
+        display="flex"
+        flexDirection="column"
         sx={{
           mx: 2,
           my: 2,
-          width: sizes.icons.medium,
-          height: sizes.icons.medium,
-          bgcolor:
-            message.type === "question" ? "primary.main" : "secondary.main",
         }}
       >
-        {message.type === "question" ? <PersonIcon /> : <SmartToyIcon />}
-      </Avatar>
-    </Box>
-    <Box
-      sx={{
-        mx: 2,
-        my: 2,
-      }}
-    >
-      <Typography variant="body1">{message.text}</Typography>
+        <Typography variant="body1" align="left">
+          {message.text}
+        </Typography>
+        <Typography variant="caption" align="right">
+          json
+        </Typography>
+      </Box>
     </Box>
   </Box>
 );
