@@ -60,8 +60,6 @@ const ContentViewModal = ({
               {} as { [key: string]: Content }
             );
             setContentData(contentDic);
-
-            setContentData(contentDic);
             setEnabledLanguages(Object.keys(contentDic).map(Number))
             setContentTextData(contentDic[defaultLanguageId]);
           });
