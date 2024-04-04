@@ -46,6 +46,21 @@ resource "aws_service_discovery_service" "admin_app" {
   }
 }
 
+resource "aws_service_discovery_service" "litellm_proxy" {
+  name = "litellm_proxy"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.web.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "SRV"
+    }
+  }
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 # Nginx Service with EC2 Launch Type
 resource "aws_ecs_service" "nginx_service" {
   # This is a resource, which means it will create a resource in AWS
