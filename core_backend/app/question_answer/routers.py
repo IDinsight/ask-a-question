@@ -26,6 +26,7 @@ from .models import (
 )
 from .schemas import (
     FeedbackBase,
+    ResultState,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
@@ -86,6 +87,8 @@ async def get_llm_answer(
         response.llm_response = await get_llm_rag_answer(
             user_query_refined.query_text, content_response[0].retrieved_text
         )
+        response.state = ResultState.FINAL
+
     return response
 
 
