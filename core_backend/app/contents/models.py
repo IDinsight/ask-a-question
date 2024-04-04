@@ -179,7 +179,7 @@ async def delete_content_from_db(
     language_id: Optional[int] = None,
 ) -> None:
     """
-    Deletes a content  from the database
+    Deletes a content from the database
     """
     if language_id:
         stmt = delete(ContentTextDB).where(
