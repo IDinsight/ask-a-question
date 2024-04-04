@@ -18,26 +18,34 @@ import React from "react";
 
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
-import { apiCalls } from "@/utils/api";
-import { useAuth } from "@/utils/auth";
 import { Content } from "@/app/content/edit/page";
+import { useRouter } from "next/router";
 
 
 const ContentViewModal = ({
   content_id,
   defaultLanguageId,
+  getContentData,
+  getLanguageList,
+  deleteLanguageVersion,
   open,
+  setOpen,
   onClose,
   editAccess,
 }: {
   content_id: number;
   defaultLanguageId: number;
+  getContentData: (content_id: number) => Promise<any>;
+  getLanguageList: () => Promise<any>;
+  deleteLanguageVersion:
+  (content_id: number, language_id: number | null) => Promise<any>;
   open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
   editAccess: boolean;
 }) => {
   const [contentData, setContentData] = React.useState<{ [key: number]: any }>({});
-  const [contentTextData, setContentTextData] = React.useState<Content | null>(null);
+  const [content, setContent] = React.useState<Content | null>(null);
   const [enabledLanguages, setEnabledLanguages] = React.useState<number[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -54,16 +62,15 @@ const ContentViewModal = ({
     null,
   );
   const handleLanguageSelect = (language_id: number) => {
-    setContentTextData(contentData[language_id]);
+    setContent(contentData[language_id]);
   };
-  const { token, accessLevel } = useAuth();
   React.useEffect(() => {
     const fetchData = async () => {
       if (open) {
         setLoading(true);
         setError(null);
         try {
-          apiCalls.getContent(content_id, null, token!).then((data) => {
+          getContentData(content_id).then((data) => {
             const contentDic: { [key: number]: Content } = data.reduce(
               (acc: { [key: number]: Content }, currentContent: Content) => {
                 acc[currentContent.language_id] = currentContent;
@@ -73,7 +80,7 @@ const ContentViewModal = ({
             );
             setContentData(contentDic);
             setEnabledLanguages(Object.keys(contentDic).map(Number))
-            setContentTextData(
+            setContent(
               contentDic[defaultLanguageId] ? contentDic[defaultLanguageId] :
                 Object.values(contentDic)[0]);
           });
@@ -86,24 +93,31 @@ const ContentViewModal = ({
     };
 
     fetchData();
-  }, [open, content_id, token, reloadTrigger]);
+  }, [open, content_id, reloadTrigger]);
   const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
     setLoading(true);
     setReloadTrigger(prev => prev + 1);
     setSnackMessage(getSnackMessage(content_id, language_id));
-  };
-  const handleDelete = async (content_id: number, language_id: number | null) => {
+    if (language_id) {
+      setContentData(prevContentData => {
+        const updatedContentData = { ...prevContentData };
+        delete updatedContentData[language_id];
+        if (Object.keys(updatedContentData).length === 0) {
+          const router = useRouter();
+          setTimeout(() => router
+            .push(`/content?content_id=${content_id}&action=delete`), 0);
 
-    try {
-      setLoading(true);
-      await apiCalls.deleteContent(content_id, language_id, token!);
-    } catch (error) {
-      console.error('Failed to delete content:', error);
-      setError('Failed to delete content. Please try again.');
-    } finally {
-      setLoading(false);
+        }
+
+        return updatedContentData;
+      });
     }
+  };
+  const onDeleteLanguageVersion = async () => {
+    if (content) {
+      const result = await deleteLanguageVersion(content_id, content.language_id);
 
+    }
   };
 
   return (
@@ -144,6 +158,7 @@ const ContentViewModal = ({
           >
             <LanguageButtonBar
               expandable={false}
+              getLanguageList={getLanguageList}
               onLanguageSelect={handleLanguageSelect}
               defaultLanguageId={defaultLanguageId}
               enabledLanguages={enabledLanguages}
@@ -162,9 +177,9 @@ const ContentViewModal = ({
             >
 
               <Layout.Spacer multiplier={1} />
-              <Typography variant="subtitle1">{contentTextData?.content_title}</Typography>
+              <Typography variant="subtitle1">{content?.content_title}</Typography>
               <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">{contentTextData?.content_text}</Typography>
+              <Typography variant="body2">{content?.content_text}</Typography>
             </Layout.FlexBox>
             <Layout.Spacer multiplier={1} />
             <Layout.FlexBox
@@ -181,7 +196,7 @@ const ContentViewModal = ({
                   color="primary"
                   disabled={!editAccess}
                   component={Link}
-                  href={`/content/edit?content_id=${content_id}&language_id=${contentTextData ? contentTextData.language_id : defaultLanguageId}`}
+                  href={`/content/edit?content_id=${content_id}&language_id=${content ? content.language_id : defaultLanguageId}`}
                 >
                   <Edit />
                   <Layout.Spacer horizontal multiplier={0.4} />
@@ -189,7 +204,7 @@ const ContentViewModal = ({
                 </Button>
                 <Layout.Spacer horizontal multiplier={1} />
                 <IconButton
-                  disabled={accessLevel === "fullaccess"}
+                  disabled={!editAccess}
                   aria-label="delete"
                   size="small"
                   onClick={() => setOpenDeleteModal(true)}
@@ -204,7 +219,7 @@ const ContentViewModal = ({
               >
                 <Typography variant="body2" color={appColors.darkGrey}>
                   Last modified on{" "}
-                  {new Date(contentTextData?.updated_datetime_utc!).toLocaleString(undefined, {
+                  {new Date(content?.updated_datetime_utc!).toLocaleString(undefined, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -230,8 +245,8 @@ const ContentViewModal = ({
               </Layout.FlexBox>
             </Layout.FlexBox>
             <DeleteContentModal
-              content_id={contentTextData?.content_id!}
-              language_id={contentTextData?.language_id!}
+              content_id={content?.content_id!}
+              language_id={content?.language_id!}
               open={openDeleteModal}
               onClose={() => setOpenDeleteModal(false)}
               onSuccessfulDelete={onSuccessfulDelete}
@@ -240,7 +255,7 @@ const ContentViewModal = ({
                   `Failed to delete content #${content_id} with language_id: #${language_id}`,
                 );
               }}
-              deleteContent={handleDelete}
+              deleteContent={onDeleteLanguageVersion}
             />
             <Snackbar
               open={snackMessage !== null}

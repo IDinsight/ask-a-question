@@ -180,10 +180,8 @@ const CardsGrid = ({
     action: string | null,
     content_id: number | null,
   ): string | null => {
-    if (action === "edit") {
-      return `Content #${content_id} updated`;
-    } else if (action === "add") {
-      return `Content #${content_id} created`;
+    if (action === "delete") {
+      return `Content #${content_id} deleted successfully`;
     }
     return null;
   };
@@ -193,10 +191,13 @@ const CardsGrid = ({
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
-  const onSuccessfulDelete = (content_id: number) => {
+  const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
-    setSnackMessage(`Content #${content_id} deleted successfully`);
+    setSnackMessage(getSnackMessage("delete", content_id));
+  };
+  const handleDeleteLanguageVersion = (content_id: number, language_id: number | null) => {
+    return apiCalls.deleteContent(content_id, language_id, token!);
   };
   React.useEffect(() => {
     if (displayLanguage) {
@@ -291,6 +292,12 @@ const CardsGrid = ({
                       language_id={displayLanguage.language_id}
                       last_modified={item.updated_datetime_utc}
                       languages={item.languages}
+                      getContentData={(content_id: number) => {
+                        return apiCalls.getContent(content_id, null, token!);
+                      }}
+                      getLanguageList={() => {
+                        return apiCalls.getLanguageList(token!);
+                      }}
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
@@ -300,6 +307,7 @@ const CardsGrid = ({
                       deleteContent={(content_id: number) => {
                         return apiCalls.deleteContent(content_id, null, token!);
                       }}
+                      deleteLanguageVersion={handleDeleteLanguageVersion}
                       editAccess={accessLevel === "fullaccess"}
                     />
                   </Grid>

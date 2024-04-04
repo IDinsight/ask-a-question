@@ -17,9 +17,12 @@ const ContentCard = ({
   language_id,
   last_modified,
   languages,
+  getContentData,
+  getLanguageList,
   onSuccessfulDelete,
   onFailedDelete,
   deleteContent,
+  deleteLanguageVersion,
   editAccess,
 }: {
   title: string;
@@ -28,9 +31,13 @@ const ContentCard = ({
   language_id: number;
   last_modified: string;
   languages: string[];
+  getContentData: (content_id: number) => Promise<any>;
+  getLanguageList: () => Promise<any>;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
   deleteContent: (content_id: number) => Promise<any>;
+  deleteLanguageVersion:
+  (content_id: number, language_id: number | null) => Promise<any>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
@@ -127,7 +134,11 @@ const ContentCard = ({
       <ContentViewModal
         content_id={content_id}
         defaultLanguageId={language_id}
+        getContentData={getContentData}
+        getLanguageList={getLanguageList}
+        deleteLanguageVersion={deleteLanguageVersion}
         open={openReadModal}
+        setOpen={setOpenReadModal}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
       />
