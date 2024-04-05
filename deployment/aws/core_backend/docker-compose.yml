@@ -11,7 +11,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
-      - LITELLM_ENDPOINT=http://litellm_proxy-container:4000
+      - LITELLM_ENDPOINT=http://litellm_proxy.${PROJECT_NAME}-${ENV}.local:4000
     ports:
       - 8000:8000
     deploy:
@@ -26,6 +26,3 @@ services:
         awslogs-group: /ecs/backend-task-${PROJECT_NAME}-${ENV} # this has to match with what is in Terraform
         awslogs-region: ${AWS_REGION}
         awslogs-stream-prefix: backend
-
-volumes:
-  local_dynamic_storage:
