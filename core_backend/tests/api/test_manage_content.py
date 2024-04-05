@@ -13,7 +13,6 @@ from core_backend.app.contents.routers import (
 
 from .conftest import fake_embedding
 
-
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 

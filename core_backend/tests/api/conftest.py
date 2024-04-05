@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timezone as tz
 from typing import Any, Generator, Tuple
 
-from core_backend.app.languages.models import LanguageDB
 import httpx
 import numpy as np
 import pytest
@@ -16,6 +15,7 @@ from core_backend.app.config import EMBEDDING_MODEL
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB, ContentTextDB
 from core_backend.app.database import get_session
+from core_backend.app.languages.models import LanguageDB
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.question_answer.schemas import (

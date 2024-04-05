@@ -256,7 +256,7 @@ async def validate_create_content(
     if not language:
         return (False, f"Language id `{content.language_id}` does not exist", 400)
 
-    return (True, None, None)
+    return (True, None, 200)
 
 
 async def validate_edit_content(
@@ -276,7 +276,7 @@ async def validate_edit_content(
 
     language = await get_language_from_db(content.language_id, asession)
     if not language:
-        return (False, f"Language id `{content.language_id}` does not exist")
+        return (False, f"Language id `{content.language_id}` does not exist", 400)
 
     if old_content:
         is_language_updated = old_content.language_id != content.language_id
@@ -288,7 +288,7 @@ async def validate_edit_content(
         ):
             return (False, "Content and language combination already exists", 400)
 
-    return (True, None, None)
+    return (True, None, 200)
 
 
 def _convert_record_to_schema(record: ContentTextDB) -> ContentTextRetrieve:
