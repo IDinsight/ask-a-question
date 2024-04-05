@@ -196,7 +196,6 @@ async def delete_content_from_db(
     content_stmt = select(ContentDB).where(ContentDB.content_id == content_id)
     content_row = (await asession.execute(content_stmt)).scalar_one_or_none()
     if not content_row:
-        print("This is also being deleted")
         stmt = delete(ContentDB).where(ContentDB.content_id == content_id)
         await asession.execute(stmt)
     await asession.commit()
