@@ -26,21 +26,21 @@ class TestManageLanguage:
     def test_edit_language(
         self,
         client: TestClient,
-        existing_language_id: tuple[int, int],
+        existing_languages: tuple[dict, dict],
         fullaccess_token: str,
         readonly_token: str,
     ) -> None:
         new_language = "ZULU"
 
         response = client.put(
-            f"/language/{existing_language_id[0]}/",
+            f"/language/{existing_languages[0]['language_id']}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": new_language, "is_default": True},
         )
         assert response.status_code == 200
 
         response = client.get(
-            f"/language/{existing_language_id[0]}",
+            f"/language/{existing_languages[0]['language_id']}",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
 
@@ -73,7 +73,7 @@ class TestManageLanguage:
     def test_language_name_unique(
         self,
         client: TestClient,
-        existing_language_id: tuple[int, int],
+        existing_languages: tuple[dict, dict],
         fullaccess_token: str,
     ) -> None:
         language_name = "HINDI"
@@ -86,7 +86,7 @@ class TestManageLanguage:
 
     def test_delete_default_language(
         self,
-        existing_language_id: tuple,
+        existing_languages: tuple[dict, dict],
         client: TestClient,
         fullaccess_token: str,
         readonly_token: str,
@@ -113,7 +113,7 @@ class TestManageLanguage:
     def test_always_one_default_language(
         self,
         client: TestClient,
-        existing_language_id: tuple,
+        existing_languages: tuple,
         language_name: str,
         fullaccess_token: str,
         readonly_token: str,
@@ -135,7 +135,7 @@ class TestManageLanguage:
         assert response.json()["language_id"] == new_default_id
 
         response = client.put(
-            f"/language/{existing_language_id[0]}/",
+            f"/language/{existing_languages[0]['language_id']}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": "XHOSA", "is_default": True},
         )
@@ -145,11 +145,11 @@ class TestManageLanguage:
     def test_default_language_cannot_be_unset(
         self,
         client: TestClient,
-        existing_language_id: tuple,
+        existing_languages: tuple[dict, dict],
         fullaccess_token: str,
     ) -> None:
         response = client.put(
-            f"/language/{existing_language_id[0]}/",
+            f"/language/{existing_languages[0]['language_id']}/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={"language_name": "XHOSA", "is_default": False},
         )
