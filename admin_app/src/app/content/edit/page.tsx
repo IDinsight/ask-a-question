@@ -94,7 +94,7 @@ const AddEditContentPage = () => {
           setTimeout(() => router
             .push(`/content?content_id=${content_id}&action=delete`), 0);
         }
-
+        setLanguageId(Object.keys(updatedContentData).map(Number)[0]);
         return updatedContentData;
       });
     }

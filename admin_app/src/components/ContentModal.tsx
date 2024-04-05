@@ -19,7 +19,7 @@ import React from "react";
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
 import { Content } from "@/app/content/edit/page";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 
 const ContentViewModal = ({
