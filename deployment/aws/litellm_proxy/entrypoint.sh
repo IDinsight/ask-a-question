@@ -20,4 +20,4 @@ SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
 echo $SECRET_OPENAI
 export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
 
-exec "$@"
+exec litellm "$@"
