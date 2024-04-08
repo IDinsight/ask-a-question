@@ -259,8 +259,8 @@ const ContentBox = ({
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
-      content_title: content?.content_text_id == null ? content?.content_title ?? "" : "",
-      content_text: content?.content_text_id == null ? content?.content_text ?? "" : "",
+      content_title: content?.content_title || "",
+      content_text: content?.content_text || "",
       language_id: language_id,
       content_metadata: {},
     };
