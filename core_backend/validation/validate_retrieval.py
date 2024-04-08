@@ -13,7 +13,7 @@ from litellm import embedding
 from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
 from core_backend.app.config import LITELLM_MODEL_EMBEDDING
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.question_answer.config import N_TOP_SIMILAR
+from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import UserQueryBase
 from core_backend.app.utils import setup_logger
 
@@ -205,7 +205,7 @@ class TestRetrievalPerformance:
     ) -> List[float]:
         """Get top K accuracy table for validation results"""
         accuracies = []
-        for i in range(1, int(N_TOP_SIMILAR) + 1):
+        for i in range(1, int(N_TOP_CONTENT_FOR_SEARCH) + 1):
             acc = (df["rank"] <= i).mean()
             accuracies.append(acc)
         return accuracies
