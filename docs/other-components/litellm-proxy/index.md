@@ -50,3 +50,7 @@ litellm_settings:
 ```
 
 See the [Contributing Setup](../../develop/setup.md) and [Docker Compose Setup](../../deployment/quick-setup.md) for how this service is run in our stack.
+
+## Also see
+
+- [Latest Updates: Adding a model proxy server](../../blog/posts/move-to-litellm-proxy.md)

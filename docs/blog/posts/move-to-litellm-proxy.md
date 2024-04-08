@@ -39,3 +39,8 @@ Potential downsides include:
 - Dependency on the LiteLLM project for updates for new models and parameters
 - A possible increase in latency
 - A new Docker container in our stack which, despite its name, it not "lite"!
+
+## Docs reference
+
+- [LLM Proxy Server](../../other-components/litellm-proxy/index.md)
+- [Dev setup](../../develop/setup.md)
