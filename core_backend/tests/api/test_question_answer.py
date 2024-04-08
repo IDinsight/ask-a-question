@@ -8,7 +8,7 @@ from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.parse_input import _classify_safety, _translate_question
-from core_backend.app.question_answer.config import N_TOP_SIMILAR
+from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import (
     ErrorType,
     ResultState,
@@ -40,7 +40,7 @@ class TestEmbeddingsSearch:
 
         if expected_status_code == 200:
             json_content_response = response.json()["content_response"]
-            assert len(json_content_response.keys()) == int(N_TOP_SIMILAR)
+            assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> UserQueryResponse:

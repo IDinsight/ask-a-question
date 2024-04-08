@@ -16,7 +16,7 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
-from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_SIMILAR
+from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
     check_secret_key_match,
@@ -149,7 +149,7 @@ async def embeddings_search(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_semantic_matches(
-        user_query_refined, response, int(N_TOP_SIMILAR), asession
+        user_query_refined, response, int(N_TOP_CONTENT_FOR_SEARCH), asession
     )
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
