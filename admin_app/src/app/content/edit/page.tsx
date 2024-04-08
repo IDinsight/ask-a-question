@@ -232,7 +232,7 @@ const ContentBox = ({
   ) => {
     const emptyContent: Content = {
 
-      content_text_id: content?.content_text_id || null,
+      content_text_id: null,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
@@ -250,8 +250,12 @@ const ContentBox = ({
     setIsSaved(false);
   };
   const handleLanguageSelect = (language_id: number) => {
-
-    setContent(contentData[language_id]);
+    if (contentData[language_id]?.content_text_id) {
+      setContent(contentData[language_id]);
+    }
+    else {
+      handleNewLanguageSelect(language_id);
+    }
   };
   const handleNewLanguageSelect = (language_id: number) => {
     const newContent: Content = {
@@ -259,11 +263,12 @@ const ContentBox = ({
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
-      content_title: content?.content_title || "",
-      content_text: content?.content_text || "",
+      content_title: content?.content_text_id ? "" : content?.content_title || "",
+      content_text: content?.content_text_id ? "" : content?.content_text || "",
       language_id: language_id,
       content_metadata: {},
     };
+
     setContentData((prevContentData) => {
       const updatedContentData = { ...prevContentData, [language_id]: newContent };
       setContent(updatedContentData[language_id]);
