@@ -39,25 +39,29 @@ const LanguageButtonBar = ({
   }
   React.useEffect(() => {
     const fetchLanguages = async () => {
-      try {
-        getLanguageList().then((data) => {
-          setLangList(data);
 
-          const defaultLanguage = langList.find(lang => lang.language_id === defaultLanguageId);
-          if (defaultLanguage && !selectedLang) {
-            setSelectedLang(defaultLanguageId);
-            onLanguageSelect(defaultLanguageId);
-          }
-          if (enabledLanguages && selectedLang && !enabledLanguages.includes(selectedLang)) {
-            setSelectedLang(enabledLanguages[0]);
-            onLanguageSelect(enabledLanguages[0]);
-          }
-
-        });
-
-      } catch (error) {
-        console.error('Failed to fetch languages:', error);
+      if (langList.length < 1) {
+        try {
+          getLanguageList().then((data) => {
+            setLangList(data);
+          });
+        } catch (error) {
+          console.error('Failed to fetch languages:', error);
+        }
       }
+      const defaultLanguage = langList.find(lang => lang.language_id === defaultLanguageId);
+      if (defaultLanguage && !selectedLang) {
+        setSelectedLang(defaultLanguageId);
+        onLanguageSelect(defaultLanguageId);
+      }
+      if (enabledLanguages && selectedLang && !enabledLanguages.includes(selectedLang)) {
+        setSelectedLang(enabledLanguages[0]);
+        onLanguageSelect(enabledLanguages[0]);
+      }
+
+
+
+
     };
 
     fetchLanguages();

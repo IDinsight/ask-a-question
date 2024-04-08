@@ -34,6 +34,7 @@ interface Language {
 }
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
+  const [defaultLanguage, setDefaultLanguage] = React.useState<Language>();
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { token, accessLevel } = useAuth();
   React.useEffect(() => {
@@ -42,6 +43,7 @@ const CardsPage = () => {
         try {
           const defaultLanguage = await apiCalls.getDefaultLanguage(token!);
           setDisplayLanguage(defaultLanguage);
+          setDefaultLanguage(defaultLanguage);
         } catch (error) {
           console.error("Failed to fetch default language:", error);
         }
@@ -69,7 +71,9 @@ const CardsPage = () => {
         }}
       />
       <CardsGrid displayLanguage={displayLanguage!} searchTerm={searchTerm} />
-      <CardsBottomStrip editAccess={accessLevel === "fullaccess"} />
+      <CardsBottomStrip
+        editAccess={accessLevel === "fullaccess"}
+        defaultLanguageId={defaultLanguage ? defaultLanguage.language_id : null} />
       <Layout.Spacer multiplier={4} />
     </Layout.FlexBox>
   );
@@ -101,6 +105,9 @@ const CardsUtilityStrip = ({
     fetchLanguages();
     onChangeDisplayLanguage(displayLanguage);
   }, [token]);
+  const selectedValue = displayLanguage
+    ? displayLanguage.language_name
+    : "";
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -118,7 +125,7 @@ const CardsUtilityStrip = ({
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
-            value={displayLanguage ? displayLanguage.language_name : ""}
+            value={loadingLanguages || !displayLanguage ? "" : selectedValue}
             label="Language"
             onChange={({ target }) => {
               const selectedLanguage = languageOptions.find(
@@ -133,13 +140,13 @@ const CardsUtilityStrip = ({
               fontSize: sizes.mediumGap,
             }}
           >
-            {loadingLanguages ? (
+            {loadingLanguages || !displayLanguage ? (
               <MenuItem value=""
                 sx={{ fontSize: sizes.mediumGap }}
               >
                 Loading...
               </MenuItem>
-            ) : (
+            ) :
               languageOptions.map((language) => (
                 <MenuItem
                   key={language.language_id}
@@ -149,7 +156,7 @@ const CardsUtilityStrip = ({
                   {language.language_name}
                 </MenuItem>
               ))
-            )}
+            }
           </Select>
         </FormControl>
       </Layout.FlexBox>
@@ -320,7 +327,11 @@ const CardsGrid = ({
   );
 };
 
-const CardsBottomStrip = ({ editAccess }: { editAccess: boolean }) => {
+const CardsBottomStrip = ({ editAccess, defaultLanguageId }:
+  {
+    editAccess: boolean;
+    defaultLanguageId: number | null;
+  }) => {
 
   return (
     <Layout.FlexBox
@@ -332,7 +343,7 @@ const CardsBottomStrip = ({ editAccess }: { editAccess: boolean }) => {
         variant="contained"
         disabled={!editAccess}
         component={Link}
-        href="/content/edit"
+        href={`/content/edit?default_language_id=${defaultLanguageId}`}
       >
         <Add />
         New
