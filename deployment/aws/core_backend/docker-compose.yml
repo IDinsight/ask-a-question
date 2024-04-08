@@ -11,7 +11,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
-      - LITELLM_ENDPOINT=http://litellm_proxy:4000
+      - LITELLM_ENDPOINT=${LITELLM_ENDPOINT}
     ports:
       - 8000:8000
     deploy:
