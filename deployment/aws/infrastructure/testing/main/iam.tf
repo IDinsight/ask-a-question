@@ -76,9 +76,10 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       "servicediscovery:ListServices",
       "servicediscovery:UpdateInstanceCustomHealthStatus",
       "servicediscovery:Get*",
-    "servicediscovery:List*"]
+      "servicediscovery:List*"]
     resources = [
       aws_service_discovery_service.backend.arn,
+      aws_service_discovery_service.litellm_proxy.arn
     ]
   }
 
