@@ -8,6 +8,7 @@ from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async
 from ..database import get_async_session
 from ..llm_call.check_output import check_align_score__after
+from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
     classify_safety__before,
@@ -15,7 +16,7 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
-from .config import N_TOP_SIMILAR
+from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
     check_secret_key_match,
@@ -26,12 +27,17 @@ from .models import (
 )
 from .schemas import (
     FeedbackBase,
+    ResultState,
     UserQueryBase,
     UserQueryRefined,
     UserQueryResponse,
     UserQueryResponseError,
 )
-from .utils import convert_search_results_to_schema, generate_secret_key
+from .utils import (
+    convert_search_results_to_schema,
+    generate_secret_key,
+    get_context_string_from_retrieved_contents,
+)
 
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
@@ -55,6 +61,7 @@ async def llm_response(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_llm_answer(user_query_refined, response, asession)
+
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
         return JSONResponse(status_code=400, content=response.model_dump())
@@ -79,13 +86,23 @@ async def get_llm_answer(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_query_refined.query_text, int(N_TOP_SIMILAR), asession
+                user_query_refined.query_text, int(N_TOP_CONTENT_FOR_RAG), asession
             )
         )
+
         response.content_response = content_response
-        response.llm_response = await get_llm_rag_answer(
-            user_query_refined.query_text, content_response[0].retrieved_text
-        )
+        context = get_context_string_from_retrieved_contents(content_response)
+
+        llm_response = await get_llm_rag_answer(user_query_refined.query_text, context)
+
+        if llm_response == SUMMARY_FAILURE_MESSAGE:
+            response.state = ResultState.ERROR
+            response.llm_response = None
+            response.debug_info["reason"] = "LLM Summary failed"
+        else:
+            response.state = ResultState.FINAL
+            response.llm_response = llm_response
+
     return response
 
 
@@ -132,7 +149,7 @@ async def embeddings_search(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_semantic_matches(
-        user_query_refined, response, int(N_TOP_SIMILAR), asession
+        user_query_refined, response, int(N_TOP_CONTENT_FOR_SEARCH), asession
     )
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
