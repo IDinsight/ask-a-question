@@ -156,13 +156,13 @@ variable "vpc_id" {
 
 variable "ec2_sg_ingress_ports" {
   type        = list(number)
-  default     = [80, 443, 53]
+  default     = [80, 443, 53, 4000, 8000, 3000]
   description = "value for the ec2 security group ingress ports"
 }
 
 variable "ec2_sg_egress_ports" {
   type        = list(number)
-  default     = [80, 443, 53, 8000, 3000]
+  default     = [80, 443, 53]
   description = "value for the ec2 security group egress ports"
 }
 

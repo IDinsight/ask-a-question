@@ -246,7 +246,7 @@ resource "aws_ecs_service" "litellm_proxy_service" {
 
   service_registries {
     registry_arn   = aws_service_discovery_service.litellm_proxy.arn
-    container_name = "litellm_proxy-container"
+    container_name = "litellm-proxy-container"
     container_port = 4000
   }
 
@@ -259,7 +259,7 @@ resource "aws_ecs_task_definition" "litellm_proxy_task" {
   family             = "litellm-proxy-task-${var.project_name}-${var.environment}"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
-    name   = "litellm_proxy-container",
+    name   = "litellm-proxy-container",
     image  = "ghcr.io/berriai/litellm:main-v1.34.6",
     memory = 2048,
     cpu    = 512,
@@ -267,7 +267,6 @@ resource "aws_ecs_task_definition" "litellm_proxy_task" {
     portMappings = [
       {
         "containerPort" : 4000,
-        "hostPort" : 4000,
         "protocol" : "tcp"
       }
     ],
