@@ -21,7 +21,7 @@ jobs:
 
       - name: Merge main into testing
         run: |
-          git fetch origin main:main
+          git fetch origin
           git checkout testing
-          git merge main
+          git merge origin/main
           git push origin testing
