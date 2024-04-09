@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    UniqueConstraint,
     delete,
     func,
     select,
@@ -24,6 +25,7 @@ from ..languages.models import LanguageDB, get_language_from_db
 from ..models import Base, JSONDict
 from .schemas import (
     ContentTextCreate,
+    ContentTextUpdate,
 )
 
 
@@ -47,6 +49,9 @@ class ContentTextDB(Base):
     """
 
     __tablename__ = "content_texts"
+    __table_args__ = (
+        UniqueConstraint("content_id", "language_id", name="uq_content_id_language_id"),
+    )
 
     content_text_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
@@ -98,7 +103,7 @@ async def is_content_language_combination_unique(
 
 
 async def save_content_to_db(
-    content: ContentTextCreate,
+    content: ContentTextCreate | ContentTextUpdate,
     asession: AsyncSession,
 ) -> ContentTextDB:
     """
@@ -108,9 +113,11 @@ async def save_content_to_db(
     content_embedding = await _get_content_embeddings(
         content.content_title, content.content_text
     )
-    stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
-    content_db = (await asession.execute(stmt)).scalar_one_or_none()
-    if not content_db:
+
+    if hasattr(content, "content_id") and content.content_id:
+        stmt = select(ContentDB).where(ContentDB.content_id == content.content_id)
+        content_db = (await asession.execute(stmt)).scalar_one_or_none()
+    else:
         content_db = ContentDB()
         asession.add(content_db)
 
@@ -136,11 +143,11 @@ async def save_content_to_db(
 
 async def update_content_in_db(
     old_content: ContentTextDB,
-    content_text: ContentTextCreate,
+    content_text: ContentTextUpdate,
     asession: AsyncSession,
 ) -> ContentTextDB:
     """
-    Updates a content and vector in the database
+    Updates a content and vector in the database.
     """
     content_embedding = await _get_content_embeddings(
         content_text.content_title, content_text.content_text

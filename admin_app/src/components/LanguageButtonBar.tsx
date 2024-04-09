@@ -1,11 +1,9 @@
 import { Layout } from "@/components/Layout";
-import { useAuth } from "@/utils/auth";
 import {
   appColors,
   appStyles,
   sizes,
 } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import { AddCircle } from "@mui/icons-material";
 import { Menu, MenuItem, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
@@ -16,6 +14,7 @@ interface Language {
 }
 interface LanguageButtonBarProps {
   expandable: boolean;
+  getLanguageList: () => Promise<Language[]>;
   onLanguageSelect: (language_id: number) => void;
   onMenuItemSelect?: (language_id: number) => void;
   defaultLanguageId: number;
@@ -24,6 +23,7 @@ interface LanguageButtonBarProps {
 }
 const LanguageButtonBar = ({
   expandable,
+  getLanguageList,
   onLanguageSelect,
   onMenuItemSelect,
   defaultLanguageId,
@@ -34,31 +34,40 @@ const LanguageButtonBar = ({
   const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const { token } = useAuth();
   const isLanguageEnabled = (languageId: number) => {
     return typeof enabledLanguages === 'undefined' || enabledLanguages.includes(languageId);
   }
   React.useEffect(() => {
     const fetchLanguages = async () => {
-      try {
-        const languages = await apiCalls.getLanguageList(token!);
-        setLangList(languages);
 
-        const defaultLanguage = langList
-          .find(lang => lang.language_id === defaultLanguageId);
-        if (defaultLanguage && !selectedLang) {
-          setSelectedLang(defaultLanguageId);
-          onLanguageSelect(defaultLanguageId);
+      if (langList.length < 1) {
+        try {
+          getLanguageList().then((data) => {
+            setLangList(data);
+          });
+        } catch (error) {
+          console.error('Failed to fetch languages:', error);
         }
-      } catch (error) {
-        console.error('Failed to fetch languages:', error);
       }
+      const defaultLanguage = langList.find(lang => lang.language_id === defaultLanguageId);
+      if (defaultLanguage && !selectedLang) {
+        setSelectedLang(defaultLanguageId);
+        onLanguageSelect(defaultLanguageId);
+      }
+      if (enabledLanguages && selectedLang && !enabledLanguages.includes(selectedLang)) {
+        setSelectedLang(enabledLanguages[0]);
+        onLanguageSelect(enabledLanguages[0]);
+      }
+
+
+
+
     };
 
     fetchLanguages();
 
 
-  }, [token, expandable, defaultLanguageId]);
+  }, [expandable, getLanguageList, defaultLanguageId, enabledLanguages]);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -117,7 +126,7 @@ const LanguageButtonBar = ({
 
       </ToggleButtonGroup>
       {
-        expandable && (
+        expandable && enabledLanguages && langList.length > enabledLanguages.length && (
           <AddCircle
             fontSize="small"
             onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {

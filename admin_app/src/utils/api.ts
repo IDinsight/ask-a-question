@@ -63,8 +63,8 @@ const getContent = async (content_id: number, language: string | null, token: st
   });
 };
 
-const deleteContent = async (content_id: number, language: string | null, token: string) => {
-  const languageQuery = language ? `?language=${encodeURIComponent(language)}` : '';
+const deleteContent = async (content_id: number, language_id: number | null, token: string) => {
+  const languageQuery = language_id ? `?language_id=${encodeURIComponent(language_id)}` : '';
   const uri = `${BACKEND_ROOT_PATH}/content/${content_id}${languageQuery}`;
 
   return fetch(uri, {
@@ -79,24 +79,6 @@ const deleteContent = async (content_id: number, language: string | null, token:
       return resp;
     } else {
       throw new Error("Error deleting content");
-    }
-  });
-};
-
-const createContent = async (content: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
     }
   });
 };
@@ -125,7 +107,7 @@ const editContent = async (
 };
 
 const addContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -197,7 +179,6 @@ export const apiCalls = {
   getContentListLanding,
   getContent,
   deleteContent,
-  createContent,
   editContent,
   addContent,
   getLanguageList,

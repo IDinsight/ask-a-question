@@ -1,18 +1,19 @@
 "use client";
+import { DeleteContentModal } from "@/components/ContentModal";
 import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ChevronLeft } from "@mui/icons-material";
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, Typography } from "@mui/material";
+import { ChevronLeft, Delete } from "@mui/icons-material";
+import { Button, CircularProgress, IconButton, Snackbar, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 export interface Content extends EditContentBody {
-
+  content_text_id: number | null;
   created_datetime_utc: string;
   updated_datetime_utc: string;
 }
@@ -28,19 +29,39 @@ interface EditContentBody {
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
-  const language_id = Number(searchParams.get("language_id")) || null;
+  const defaultLanguageId = Number(searchParams.get("default_language_id"));
+  const language_id = Number(searchParams.get("language_id")) || defaultLanguageId;
   const [contentData, setContentData] = React.useState<{ [key: number]: Content }>({});
+  const [contentId, setContentId] = React.useState<number | null>(content_id);
+  const [languageId, setLanguageId] = React.useState<number | null>(language_id);
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [refreshKey, setRefreshKey] = React.useState(0);
-  const [showDialog, setShowDialog] = React.useState(false);
-  const { token } = useAuth();
+  const [reloadTrigger, setReloadTrigger] = React.useState(0);
+  const { token, accessLevel } = useAuth();
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(
+    null,
+  );
+  const getSnackMessage = (
+    action: string,
+    content_id: number | null,
+    language_id: number | null,
+  ): string | null => {
+    if (action === "delete") {
+      return `Content #${content_id} with language_id:#${language_id} deleted successfully`;
+    }
+    else if (action == "edit" || action == "add") {
+      return `Content #${content_id} with language_id:#${language_id} ${action}ed successfully`;
+    }
+    else {
+      return null;
+    }
+  };
   React.useEffect(() => {
-    if (!content_id) {
+    if (!contentId) {
       setIsLoading(false);
       return;
     } else {
-      apiCalls.getContent(content_id, null, token!).then((data) => {
+      apiCalls.getContent(contentId, null, token!).then((data) => {
         const contentDic: { [key: number]: Content } = data.reduce(
           (acc: { [key: number]: Content }, currentContent: Content) => {
             acc[currentContent.language_id] = currentContent;
@@ -49,14 +70,35 @@ const AddEditContentPage = () => {
           {} as { [key: string]: Content }
         );
         setContentData(contentDic);
-        setContent(language_id !== null ? contentDic[language_id] : null);
+        setContent(languageId !== null ? contentDic[languageId] : null);
       });
       setIsLoading(false);
     }
-  }, [content_id, token, refreshKey]);
-  const handleSaveSuccess = () => {
-    setRefreshKey(prevKey => prevKey + 1);
-    setShowDialog(true);
+  }, [contentId, token, reloadTrigger]);
+  const handleSaveSuccess = (content: Content, action: string) => {
+    setContentId(content.content_id);
+    setLanguageId(content.language_id);
+    setReloadTrigger(prev => prev + 1);
+    setSnackMessage(getSnackMessage(action, content.content_id, content.language_id));
+
+
+  };
+  const handleDeleteSuccess = (content_id: number, language_id: number | null) => {
+    setReloadTrigger(prev => prev + 1);
+    setSnackMessage(getSnackMessage("delete", content_id, language_id));
+    if (language_id) {
+      setContentData(prevContentData => {
+        const updatedContentData = { ...prevContentData };
+        delete updatedContentData[language_id];
+        if (Object.keys(updatedContentData).length === 0) {
+          const router = useRouter();
+          setTimeout(() => router
+            .push(`/content?content_id=${content_id}&action=delete`), 0);
+        }
+        setLanguageId(Object.keys(updatedContentData).map(Number)[0]);
+        return updatedContentData;
+      });
+    }
   };
   if (isLoading) {
     return (
@@ -77,28 +119,43 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-        <Header content_id={content_id} />
+        <Header content_id={contentId} />
         <Layout.FlexBox
           flexDirection={"column"}
           sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
         >
           <Layout.Spacer multiplier={2} />
           <ContentBox
-            contentId={content_id!}
+            contentId={contentId!}
             content={content}
             setContent={setContent}
             contentData={contentData}
             setContentData={setContentData}
             languageId={language_id!}
-            onSaveSuccess={handleSaveSuccess} />
-          <SavedContentDialog
-            showModal={showDialog}
-            setShowModal={setShowDialog}
-            contentId={content_id ? content_id : null}
-            languageId={content?.language_id || null}
-            newContentId={content?.content_id || null} />
+            onSaveSuccess={handleSaveSuccess}
+            onDeleteSuccess={handleDeleteSuccess}
+            setReloadTrigger={setReloadTrigger}
+          />
 
           <Layout.Spacer multiplier={1} />
+          <Snackbar
+            open={snackMessage !== null}
+            autoHideDuration={6000}
+            onClose={() => {
+              setSnackMessage(null);
+            }}
+          >
+            <Alert
+              onClose={() => {
+                setSnackMessage(null);
+              }}
+              severity="success"
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {snackMessage}
+            </Alert>
+          </Snackbar>
         </Layout.FlexBox>
       </Layout.FlexBox>
     </FullAccessComponent>
@@ -113,6 +170,8 @@ const ContentBox = ({
   setContentData,
   languageId,
   onSaveSuccess,
+  onDeleteSuccess,
+  setReloadTrigger
 }: {
   contentId: number;
   content: Content | null;
@@ -120,15 +179,18 @@ const ContentBox = ({
   contentData: { [key: number]: Content };
   setContentData: React.Dispatch<React.SetStateAction<{ [key: number]: Content }>>;
   languageId: number;
-  onSaveSuccess: () => void;
-
+  onSaveSuccess: (content: Content, action: string) => void;
+  onDeleteSuccess: (content_id: number, language_id: number | null) => void;
+  setReloadTrigger: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
   const [saveError, setSaveError] = React.useState(false);
+  const [errorText, setErrorText] = React.useState<string>("");
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
-
-  const { token } = useAuth();
+  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const { token, accessLevel } = useAuth();
+  const editAccess = accessLevel === "fullaccess";
 
   const saveContent = async (content: Content) => {
     const body: EditContentBody = {
@@ -138,6 +200,12 @@ const ContentBox = ({
       language_id: content.language_id,
       content_metadata: content.content_metadata,
     };
+    if (body.language_id === 0) {
+      setErrorText("Please select a language");
+      setSaveError(true);
+      return null;
+    }
+    setIsSaved(true);
     const promise =
       content.content_id === null
         ? apiCalls.addContent(body, token!)
@@ -145,13 +213,14 @@ const ContentBox = ({
 
     const result = promise
       .then((data) => {
-        setIsSaved(true);
         setSaveError(false);
         return data.content_id;
       })
       .catch((error: Error) => {
         console.error("Error processing content:", error);
         setSaveError(true);
+        setIsSaved(false);
+
         return null;
       });
 
@@ -163,12 +232,14 @@ const ContentBox = ({
     key: keyof Content,
   ) => {
     const emptyContent: Content = {
+
+      content_text_id: null,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
       content_title: "",
       content_text: "",
-      language_id: content?.language_id || 0,
+      language_id: content?.language_id || languageId,
       content_metadata: {},
     };
 
@@ -180,25 +251,42 @@ const ContentBox = ({
     setIsSaved(false);
   };
   const handleLanguageSelect = (language_id: number) => {
-    setContent(contentData[language_id]);
+    if (contentData[language_id]?.content_text_id) {
+      setContent(contentData[language_id]);
+    }
+    else {
+      handleNewLanguageSelect(language_id);
+    }
   };
   const handleNewLanguageSelect = (language_id: number) => {
-    const emptyContent: Content = {
-      content_id: content!.content_id || contentId,
+    const newContent: Content = {
+      content_text_id: null,
+      content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
-      content_title: "",
-      content_text: "",
+      content_title: content?.content_text_id ? "" : content?.content_title || "",
+      content_text: content?.content_text_id ? "" : content?.content_text || "",
       language_id: language_id,
       content_metadata: {},
     };
+
     setContentData((prevContentData) => {
-      const updatedContentData = { ...prevContentData, [language_id]: emptyContent };
+      const updatedContentData = { ...prevContentData, [language_id]: newContent };
       setContent(updatedContentData[language_id]);
       return updatedContentData;
     });
   };
+  const handleDeleteClick = () => {
+    if (content) {
+      if (content.content_text_id && content.content_text_id > 0) {
+        setOpenDeleteModal(true)
+      }
+      else {
+        setReloadTrigger(prev => prev + 1);
+      }
+    }
 
+  }
   return (
     <Layout.FlexBox
       flexDirection={"column"}
@@ -214,14 +302,35 @@ const ContentBox = ({
     >
       <LanguageButtonBar
         expandable={true}
+        getLanguageList={() => {
+          return apiCalls.getLanguageList(token!);
+        }}
         onLanguageSelect={handleLanguageSelect}
         defaultLanguageId={content?.language_id || languageId}
-        enabledLanguages={Object.keys(contentData).map(Number)}
+        enabledLanguages={
+          Object.keys(contentData).length === 0 ? [languageId] : Object.keys(contentData).map(Number)
+        }
         onMenuItemSelect={handleNewLanguageSelect}
         isEdit={true}
       />
       <Layout.Spacer multiplier={1} />
-      <Typography variant="body2">Title</Typography>
+      <Layout.FlexBox
+        {...appStyles.alignItemsCenter}
+        flexDirection={"row"}
+        justifyContent="space-between"
+      >
+        <Typography variant="body2">Title</Typography>
+        {contentId && (
+          <IconButton
+            disabled={!editAccess}
+            aria-label="delete"
+            size="small"
+            onClick={handleDeleteClick}
+          >
+            <Delete fontSize="inherit" />
+          </IconButton>
+        )}
+      </Layout.FlexBox>
       <Layout.Spacer multiplier={0.5} />
       <TextField
         required
@@ -276,8 +385,13 @@ const ContentBox = ({
             } else {
               const handleSaveContent = async (content: Content) => {
                 const content_id = await saveContent(content);
+                const action = content.content_id === null ? "add" : "edit";
                 if (content_id) {
-                  onSaveSuccess();
+                  if (content.content_id === null) {
+                    content.content_id = content_id;
+                  }
+                  setContent(content);
+                  onSaveSuccess(content, action);
 
                 }
               };
@@ -287,11 +401,28 @@ const ContentBox = ({
         >
           Save
         </Button>
+        <Layout.Spacer horizontal multiplier={1} />
         {saveError ? (
           <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-            Failed to save content.
+            {errorText ? errorText : "Failed to save content"}
           </Alert>
         ) : null}
+        <DeleteContentModal
+          content_id={content?.content_id!}
+          language_id={content?.language_id!}
+          open={openDeleteModal}
+          onClose={() => setOpenDeleteModal(false)}
+          onSuccessfulDelete={onDeleteSuccess}
+          onFailedDelete={(content_id: number, language_id: number | null) => {
+            setErrorText(
+              `Failed to delete content #${content_id} with language_id: #${language_id}`,
+            );
+            setSaveError(true);
+          }}
+          deleteContent={(content_id: number, language_id: number | null) => {
+            return apiCalls.deleteContent(content_id, language_id, token!);
+          }}
+        />
       </Layout.FlexBox>
     </Layout.FlexBox>
   );
@@ -304,7 +435,7 @@ const Header = ({ content_id }: { content_id: number | null }) => {
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft
         style={{ cursor: "pointer" }}
-        onClick={() => (content_id ? router.back() : router.push("/content"))}
+        onClick={() => (router.push("/content"))}
       />
       <Layout.Spacer multiplier={1} horizontal />
       {content_id ? (
@@ -319,64 +450,6 @@ const Header = ({ content_id }: { content_id: number | null }) => {
         <Typography variant="h5">Add Content</Typography>
       )}
     </Layout.FlexBox>
-  );
-};
-const SavedContentDialog = ({
-  showModal,
-  setShowModal,
-  contentId,
-  newContentId,
-  languageId
-}: {
-  showModal: boolean;
-  setShowModal: (show: boolean) => void;
-  contentId: number | null;
-  newContentId: number | null;
-  languageId: number | null;
-}) => {
-  const router = useRouter();
-
-  const getDialogTitle = () => {
-    return contentId == null
-      ? `New content #${newContentId} successfully added`
-      : `Content #${contentId} successfully edited`;
-  };
-  const handleClose = () => {
-    setShowModal(false);
-  };
-
-  const handleNo = () => {
-    handleClose();
-    router.push(`/content/?content_id=${contentId}&action=edit`);
-  };
-
-  const handleYes = () => {
-    handleClose();
-
-    const targetContentId = newContentId || contentId;
-    router.push(
-      `/content/edit` +
-      `?content_id=${targetContentId}` +
-      `&action=edit` +
-      `&language_id=${languageId}`
-    );
-  };
-
-  return (
-    <Dialog open={showModal} onClose={handleClose}>
-      <DialogTitle>{getDialogTitle()}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Would you like to add/edit a language version for this content?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleNo}>No</Button>
-        <Button onClick={handleYes} autoFocus>
-          Yes
-        </Button>
-      </DialogActions>
-    </Dialog>
   );
 };
 export default AddEditContentPage;

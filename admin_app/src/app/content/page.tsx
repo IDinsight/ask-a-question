@@ -2,7 +2,7 @@
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { Layout } from "@/components/Layout";
-import { appColors, sizes, appFonts } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add, Sort } from "@mui/icons-material";
@@ -14,7 +14,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Typography,
 } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
@@ -35,6 +34,7 @@ interface Language {
 }
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<Language>();
+  const [defaultLanguage, setDefaultLanguage] = React.useState<Language>();
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { token, accessLevel } = useAuth();
   React.useEffect(() => {
@@ -43,6 +43,7 @@ const CardsPage = () => {
         try {
           const defaultLanguage = await apiCalls.getDefaultLanguage(token!);
           setDisplayLanguage(defaultLanguage);
+          setDefaultLanguage(defaultLanguage);
         } catch (error) {
           console.error("Failed to fetch default language:", error);
         }
@@ -70,7 +71,9 @@ const CardsPage = () => {
         }}
       />
       <CardsGrid displayLanguage={displayLanguage!} searchTerm={searchTerm} />
-      <CardsBottomStrip editAccess={accessLevel === "fullaccess"} />
+      <CardsBottomStrip
+        editAccess={accessLevel === "fullaccess"}
+        defaultLanguageId={defaultLanguage ? defaultLanguage.language_id : null} />
       <Layout.Spacer multiplier={4} />
     </Layout.FlexBox>
   );
@@ -102,6 +105,9 @@ const CardsUtilityStrip = ({
     fetchLanguages();
     onChangeDisplayLanguage(displayLanguage);
   }, [token]);
+  const selectedValue = displayLanguage
+    ? displayLanguage.language_name
+    : "";
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -119,7 +125,7 @@ const CardsUtilityStrip = ({
         <FormControl sx={{ width: "100%" }}>
           <InputLabel>Language</InputLabel>
           <Select
-            value={displayLanguage ? displayLanguage.language_name : ""}
+            value={loadingLanguages || !displayLanguage ? "" : selectedValue}
             label="Language"
             onChange={({ target }) => {
               const selectedLanguage = languageOptions.find(
@@ -134,13 +140,13 @@ const CardsUtilityStrip = ({
               fontSize: sizes.mediumGap,
             }}
           >
-            {loadingLanguages ? (
+            {loadingLanguages || !displayLanguage ? (
               <MenuItem value=""
                 sx={{ fontSize: sizes.mediumGap }}
               >
                 Loading...
               </MenuItem>
-            ) : (
+            ) :
               languageOptions.map((language) => (
                 <MenuItem
                   key={language.language_id}
@@ -150,7 +156,7 @@ const CardsUtilityStrip = ({
                   {language.language_name}
                 </MenuItem>
               ))
-            )}
+            }
           </Select>
         </FormControl>
       </Layout.FlexBox>
@@ -180,10 +186,8 @@ const CardsGrid = ({
     action: string | null,
     content_id: number | null,
   ): string | null => {
-    if (action === "edit") {
-      return `Content #${content_id} updated`;
-    } else if (action === "add") {
-      return `Content #${content_id} created`;
+    if (action === "delete") {
+      return `Content #${content_id} deleted successfully`;
     }
     return null;
   };
@@ -193,10 +197,13 @@ const CardsGrid = ({
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
-  const onSuccessfulDelete = (content_id: number) => {
+  const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
-    setSnackMessage(`Content #${content_id} deleted successfully`);
+    setSnackMessage(getSnackMessage("delete", content_id));
+  };
+  const handleDeleteLanguageVersion = (content_id: number, language_id: number | null) => {
+    return apiCalls.deleteContent(content_id, language_id, token!);
   };
   React.useEffect(() => {
     if (displayLanguage) {
@@ -291,6 +298,12 @@ const CardsGrid = ({
                       language_id={displayLanguage.language_id}
                       last_modified={item.updated_datetime_utc}
                       languages={item.languages}
+                      getContentData={(content_id: number) => {
+                        return apiCalls.getContent(content_id, null, token!);
+                      }}
+                      getLanguageList={() => {
+                        return apiCalls.getLanguageList(token!);
+                      }}
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
@@ -300,6 +313,7 @@ const CardsGrid = ({
                       deleteContent={(content_id: number) => {
                         return apiCalls.deleteContent(content_id, null, token!);
                       }}
+                      deleteLanguageVersion={handleDeleteLanguageVersion}
                       editAccess={accessLevel === "fullaccess"}
                     />
                   </Grid>
@@ -313,7 +327,12 @@ const CardsGrid = ({
   );
 };
 
-const CardsBottomStrip = ({ editAccess }: { editAccess: boolean }) => {
+const CardsBottomStrip = ({ editAccess, defaultLanguageId }:
+  {
+    editAccess: boolean;
+    defaultLanguageId: number | null;
+  }) => {
+
   return (
     <Layout.FlexBox
       flexDirection={"row"}
@@ -324,7 +343,7 @@ const CardsBottomStrip = ({ editAccess }: { editAccess: boolean }) => {
         variant="contained"
         disabled={!editAccess}
         component={Link}
-        href="/content/edit"
+        href={`/content/edit?default_language_id=${defaultLanguageId}`}
       >
         <Add />
         New
