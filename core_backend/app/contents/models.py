@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    UniqueConstraint,
     delete,
     func,
     select,
@@ -48,6 +49,9 @@ class ContentTextDB(Base):
     """
 
     __tablename__ = "content_texts"
+    __table_args__ = (
+        UniqueConstraint("content_id", "language_id", name="uq_content_id_language_id"),
+    )
 
     content_text_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False

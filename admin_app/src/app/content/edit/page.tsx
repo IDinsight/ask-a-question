@@ -205,6 +205,7 @@ const ContentBox = ({
       setSaveError(true);
       return null;
     }
+    setIsSaved(true);
     const promise =
       content.content_id === null
         ? apiCalls.addContent(body, token!)
@@ -212,13 +213,13 @@ const ContentBox = ({
 
     const result = promise
       .then((data) => {
-        setIsSaved(true);
         setSaveError(false);
         return data.content_id;
       })
       .catch((error: Error) => {
         console.error("Error processing content:", error);
         setSaveError(true);
+        setIsSaved(false);
 
         return null;
       });
