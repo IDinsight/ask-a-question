@@ -29,7 +29,8 @@ interface EditContentBody {
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
-  const language_id = Number(searchParams.get("language_id")) || null;
+  const defaultLanguageId = Number(searchParams.get("default_language_id"));
+  const language_id = Number(searchParams.get("language_id")) || defaultLanguageId;
   const [contentData, setContentData] = React.useState<{ [key: number]: Content }>({});
   const [contentId, setContentId] = React.useState<number | null>(content_id);
   const [languageId, setLanguageId] = React.useState<number | null>(language_id);
@@ -94,7 +95,7 @@ const AddEditContentPage = () => {
           setTimeout(() => router
             .push(`/content?content_id=${content_id}&action=delete`), 0);
         }
-
+        setLanguageId(Object.keys(updatedContentData).map(Number)[0]);
         return updatedContentData;
       });
     }
@@ -204,6 +205,7 @@ const ContentBox = ({
       setSaveError(true);
       return null;
     }
+    setIsSaved(true);
     const promise =
       content.content_id === null
         ? apiCalls.addContent(body, token!)
@@ -211,13 +213,13 @@ const ContentBox = ({
 
     const result = promise
       .then((data) => {
-        setIsSaved(true);
         setSaveError(false);
         return data.content_id;
       })
       .catch((error: Error) => {
         console.error("Error processing content:", error);
         setSaveError(true);
+        setIsSaved(false);
 
         return null;
       });
@@ -231,13 +233,13 @@ const ContentBox = ({
   ) => {
     const emptyContent: Content = {
 
-      content_text_id: content?.content_text_id || 0,
+      content_text_id: null,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
       content_title: "",
       content_text: "",
-      language_id: content?.language_id || 0,
+      language_id: content?.language_id || languageId,
       content_metadata: {},
     };
 
@@ -249,21 +251,27 @@ const ContentBox = ({
     setIsSaved(false);
   };
   const handleLanguageSelect = (language_id: number) => {
-    setContent(contentData[language_id]);
+    if (contentData[language_id]?.content_text_id) {
+      setContent(contentData[language_id]);
+    }
+    else {
+      handleNewLanguageSelect(language_id);
+    }
   };
   const handleNewLanguageSelect = (language_id: number) => {
-    const emptyContent: Content = {
-      content_text_id: 0,
+    const newContent: Content = {
+      content_text_id: null,
       content_id: content?.content_id || contentId,
       created_datetime_utc: "",
       updated_datetime_utc: "",
-      content_title: "",
-      content_text: "",
+      content_title: content?.content_text_id ? "" : content?.content_title || "",
+      content_text: content?.content_text_id ? "" : content?.content_text || "",
       language_id: language_id,
       content_metadata: {},
     };
+
     setContentData((prevContentData) => {
-      const updatedContentData = { ...prevContentData, [language_id]: emptyContent };
+      const updatedContentData = { ...prevContentData, [language_id]: newContent };
       setContent(updatedContentData[language_id]);
       return updatedContentData;
     });
@@ -299,7 +307,9 @@ const ContentBox = ({
         }}
         onLanguageSelect={handleLanguageSelect}
         defaultLanguageId={content?.language_id || languageId}
-        enabledLanguages={Object.keys(contentData).map(Number)}
+        enabledLanguages={
+          Object.keys(contentData).length === 0 ? [languageId] : Object.keys(contentData).map(Number)
+        }
         onMenuItemSelect={handleNewLanguageSelect}
         isEdit={true}
       />
@@ -310,15 +320,16 @@ const ContentBox = ({
         justifyContent="space-between"
       >
         <Typography variant="body2">Title</Typography>
-        <IconButton
-          disabled={!editAccess}
-          aria-label="delete"
-          size="small"
-          onClick={handleDeleteClick}
-        >
-
-          <Delete fontSize="inherit" />
-        </IconButton>
+        {contentId && (
+          <IconButton
+            disabled={!editAccess}
+            aria-label="delete"
+            size="small"
+            onClick={handleDeleteClick}
+          >
+            <Delete fontSize="inherit" />
+          </IconButton>
+        )}
       </Layout.FlexBox>
       <Layout.Spacer multiplier={0.5} />
       <TextField
