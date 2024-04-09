@@ -56,31 +56,31 @@ nav:
       - Roadmap: roadmap.md
   - Latest Updates:
       - blog/index.md
-  - Features:
-      - features/index.md
+  - Components:
+      - components/index.md
       - Admin App:
-          - features/admin-app/index.md
-          - Access Levels: features/admin-app/access-level.md
-          - Manage Content: features/admin-app/manage-content.md
-          - Playground: features/admin-app/playground.md
+          - components/admin-app/index.md
+          - Access Levels: components/admin-app/access-level.md
+          - Manage Content: components/admin-app/manage-content.md
+          - Playground: components/admin-app/playground.md
       - Question-Answering Service:
-          - features/qa-service/index.md
-          - Semantic Search: features/qa-service/semantic-search.md
-          - LLM Response: features/qa-service/llm-response.md
+          - components/qa-service/index.md
+          - Semantic Search: components/qa-service/semantic-search.md
+          - LLM Response: components/qa-service/llm-response.md
       - LLM Proxy Server:
-          - features/litellm-proxy/index.md
+          - components/litellm-proxy/index.md
       - Align Score:
-          - features/align-score/index.md
-          - Deployment: features/align-score/deployment.md
-          - Testing: features/align-score/testing.md
+          - components/align-score/index.md
+          - Deployment: components/align-score/deployment.md
+          - Testing: components/align-score/testing.md
       - Chat Managers:
-          - features/chat_managers/index.md
-          - Typebot: features/chat_managers/typebot.md
-          - Botpress: features/chat_managers/botpress_v12.md
+          - components/chat_managers/index.md
+          - Typebot: components/chat_managers/typebot.md
+          - Botpress: components/chat_managers/botpress_v12.md
       - WhatsApp Connector:
-          - features/whatsapp/index.md
-          - Setup: features/whatsapp/setup.md
-          - Testing: features/whatsapp/testing.md
+          - components/whatsapp/index.md
+          - Setup: components/whatsapp/setup.md
+          - Testing: components/whatsapp/testing.md
   - Deploying:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md

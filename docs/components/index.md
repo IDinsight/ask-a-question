@@ -1,6 +1,6 @@
-# Features
+# Components
 
-## Main Features
+## Main Components
 
 There are 3 main components in Ask-A-Question.
 
@@ -32,7 +32,7 @@ There are 3 main components in Ask-A-Question.
 
 </div>
 
-## Other Features
+## Other Components
 
 <div class="grid cards" markdown>
 
