@@ -2,7 +2,7 @@
 
 ## Main Components
 
-There are 3 main components in Ask-A-Question.
+There are 2 main components in Ask-A-Question.
 
 <div class="grid cards" markdown>
 
@@ -23,12 +23,6 @@ There are 3 main components in Ask-A-Question.
     View dashboard on service performance and usage.
 
     [:octicons-arrow-right-24: More info](./admin-app/index.md)
-
-- :material-directions-fork:{ .lg .middle } __Triaging Service (Coming Soon)__
-
-    ---
-
-    Triage incoming messages.
 
 </div>
 
