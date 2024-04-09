@@ -314,6 +314,7 @@ const CardsGrid = ({
                         return apiCalls.deleteContent(content_id, null, token!);
                       }}
                       deleteLanguageVersion={handleDeleteLanguageVersion}
+                      setRefreshKey={setRefreshKey}
                       editAccess={accessLevel === "fullaccess"}
                     />
                   </Grid>

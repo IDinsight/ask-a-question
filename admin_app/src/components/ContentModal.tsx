@@ -94,17 +94,19 @@ const ContentViewModal = ({
   }, [open, content_id, reloadTrigger]);
   const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
     setLoading(true);
-    setReloadTrigger(prev => prev + 1);
     setSnackMessage(getSnackMessage(content_id, language_id));
     if (language_id) {
       setContentData(prevContentData => {
         const updatedContentData = { ...prevContentData };
         delete updatedContentData[language_id];
         if (Object.keys(updatedContentData).length === 0) {
+          onClose();
           const router = useRouter();
           setTimeout(() => router
             .push(`/content?content_id=${content_id}&action=delete`), 0);
 
+        } else {
+          setReloadTrigger(prev => prev + 1);
         }
 
         return updatedContentData;
