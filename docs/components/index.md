@@ -1,6 +1,8 @@
-# Components
+# Components and Integrations
 
-## Main Components
+In this section you can find the different components within AAQ and different integrations it supports so far.
+
+## User-facing Components
 
 There are 2 main components in Ask-A-Question.
 
@@ -19,23 +21,23 @@ There are 2 main components in Ask-A-Question.
 
     ---
 
-    Manage content in the database. Use the `playground` to test the service.
-    View dashboard on service performance and usage.
+    Manage content in the database. Test the service in the playground.
+    Explore usage dashboards.
 
     [:octicons-arrow-right-24: More info](./admin-app/index.md)
 
 </div>
 
-## Other Components
+## Internal Components
 
 <div class="grid cards" markdown>
 
-- :material-view-dashboard:{ .lg .middle } __LLM Proxy Server__
+- :material-view-dashboard:{ .lg .middle } __Model Proxy Server__
 
     ---
 
     AAQ uses the [LiteLLM Proxy Server](https://litellm.vercel.app/docs/simple_proxy) for
-    managing LLM calls, allowing you to use any LiteLLM supported model (including self-hosted ones).
+    managing LLM and embedding calls, allowing you to use any LiteLLM supported model (including self-hosted ones).
 
     [:octicons-arrow-right-24: More info](./litellm-proxy/index.md)
 
@@ -43,7 +45,7 @@ There are 2 main components in Ask-A-Question.
 
     ---
 
-    Use a custom dockerised [AlignScore](https://arxiv.org/abs/2305.16739) model to catch
+    _(Optional)_ Use a custom dockerised [AlignScore](https://arxiv.org/abs/2305.16739) model to catch
     hallucination and check if LLM response is consistent with the context.
 
     [:octicons-arrow-right-24: More info](./align-score/index.md)
