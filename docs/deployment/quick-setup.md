@@ -12,7 +12,7 @@
 variables. If `DOMAIN` is commented out, it defaults to `localhost`.
 
 **Step 4:** If you want to change which LLMs are used, edit `litellm_proxy_config.yaml`.
-See [LiteLLM Proxy Server](../other-components/litellm-proxy/index.md) for more details.
+See [LiteLLM Proxy Server](../components/litellm-proxy/index.md) for more details.
 
 **Step 5:** Run docker-compose
 
