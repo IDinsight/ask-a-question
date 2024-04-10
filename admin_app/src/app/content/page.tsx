@@ -199,8 +199,9 @@ const CardsGrid = ({
   const [refreshKey, setRefreshKey] = React.useState(0);
   const onSuccessfulDelete = (content_id: number, language_id: number | null) => {
     setIsLoading(true);
-    setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage(getSnackMessage("delete", content_id));
+    setRefreshKey((prevKey) => prevKey + 1);
+
   };
   const handleDeleteLanguageVersion = (content_id: number, language_id: number | null) => {
     return apiCalls.deleteContent(content_id, language_id, token!);
