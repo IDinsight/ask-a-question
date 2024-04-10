@@ -1,6 +1,6 @@
-# Components and Integrations
+# Components
 
-In this section you can find the different components within AAQ and different integrations it supports so far.
+In this section you can find the different components within AAQ.
 
 ## User-facing Components
 
@@ -49,28 +49,5 @@ There are 2 main components in Ask-A-Question.
     hallucination and check if LLM response is consistent with the context.
 
     [:octicons-arrow-right-24: More info](./align-score/index.md)
-
-</div>
-
-## Integrations
-
-<div class="grid cards" markdown>
-
-- :material-chat-question:{ .lg .middle } __Chat Managers__
-
-    ---
-
-    You can use the AAQ endpoints through various chat managers.
-
-    [:octicons-arrow-right-24: More info](./chat_managers/index.md)
-
-- :material-database:{ .lg .middle .red} __Direct WhatsApp Connector__
-
-    ---
-
-    The direct WhatsApp connector allows you to send and receive messages
-    using the WhatsApp Business API without a chat manager.
-
-    [:octicons-arrow-right-24: More info](./whatsapp/index.md)
 
 </div>

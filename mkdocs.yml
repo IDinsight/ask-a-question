@@ -1,5 +1,5 @@
 site_name: "" # already part of the logo
-site_description: "Ask-a-Question Documentation"
+site_description: "Ask A Question Documentation"
 site_url: https://idinsight.github.io/aaq-core/
 repo_url: https://github.com/IDinsight/aaq-core
 copyright: "© 2024 IDinsight"
@@ -36,16 +36,19 @@ nav:
           - components/align-score/index.md
           - Deployment: components/align-score/deployment.md
           - Testing: components/align-score/testing.md
-      - Chat Managers:
-          - components/chat_managers/index.md
-          - Typebot: components/chat_managers/typebot.md
-          - Botpress: components/chat_managers/botpress_v12.md
-      - WhatsApp Connector:
-          - components/whatsapp/index.md
-          - Setup: components/whatsapp/setup.md
-          - Testing: components/whatsapp/testing.md
 
-  - Deploying:
+  - Integrations:
+      - integrations/index.md
+      - Chat Managers:
+          - integrations/chat_managers/index.md
+          - Typebot: integrations/chat_managers/typebot.md
+          - Botpress: integrations/chat_managers/botpress_v12.md
+      - WhatsApp Connector:
+          - integrations/whatsapp/index.md
+          - Setup: integrations/whatsapp/setup.md
+          - Testing: integrations/whatsapp/testing.md
+
+  - Deploy:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
@@ -54,7 +57,7 @@ nav:
           - Infrastructure: deployment/aws/infrastructure.md
           - CI/CD: deployment/aws/cicd.md
 
-  - Contributing:
+  - Contribute:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
       - Testing: develop/testing.md

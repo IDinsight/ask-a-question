@@ -1,3 +1,5 @@
+# Chat Managers
+
 You can use the AAQ endpoints through various chat managers. Below are some examples:
 
 <div class="grid cards" markdown>
