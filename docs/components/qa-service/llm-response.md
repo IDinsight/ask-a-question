@@ -57,5 +57,5 @@ sequenceDiagram
 ```
 
 To use AlignScore, AAQ needs access to the AlignScore service. See
-[documentation](../../other-components/align-score/index.md) for how to setup
+[documentation](../../components/align-score/index.md) for how to setup
 the service and configure AAQ to call it.
