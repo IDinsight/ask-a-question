@@ -5,7 +5,7 @@
 }
 .md-header__button.md-logo img {
   height: 43px;
-  width: 240px;
+  aspect-ratio: 1200 / 214;
 }
 .component-title {
   color: #5480cb;
