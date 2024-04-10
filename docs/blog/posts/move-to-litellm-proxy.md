@@ -42,5 +42,5 @@ Potential downsides include:
 
 ## Docs reference
 
-- [LLM Proxy Server](../../other-components/litellm-proxy/index.md)
+- [LLM Proxy Server](../../components/litellm-proxy/index.md)
 - [Dev setup](../../develop/setup.md)
