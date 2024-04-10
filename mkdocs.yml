@@ -21,21 +21,23 @@ nav:
 
   - Components:
       - components/index.md
-      - Admin App:
-          - components/admin-app/index.md
-          - Access Levels: components/admin-app/access-level.md
-          - Manage Content: components/admin-app/manage-content.md
-          - Playground: components/admin-app/playground.md
-      - Question-Answering Service:
-          - components/qa-service/index.md
-          - Semantic Search: components/qa-service/semantic-search.md
-          - LLM Response: components/qa-service/llm-response.md
-      - LLM Proxy Server:
-          - components/litellm-proxy/index.md
-      - Align Score:
-          - components/align-score/index.md
-          - Deployment: components/align-score/deployment.md
-          - Testing: components/align-score/testing.md
+      - User-facing components:
+          - Admin App:
+              - components/admin-app/index.md
+              - Access Levels: components/admin-app/access-level.md
+              - Manage Content: components/admin-app/manage-content.md
+              - Playground: components/admin-app/playground.md
+          - Question-Answering Service:
+              - components/qa-service/index.md
+              - Semantic Search: components/qa-service/semantic-search.md
+              - LLM Response: components/qa-service/llm-response.md
+      - Internal components:
+          - LLM Proxy Server:
+              - components/litellm-proxy/index.md
+          - Align Score:
+              - components/align-score/index.md
+              - Deployment: components/align-score/deployment.md
+              - Testing: components/align-score/testing.md
 
   - Integrations:
       - integrations/index.md
@@ -52,7 +54,7 @@ nav:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-      - Deploying on AWS:
+      - AWS:
           - deployment/aws/index.md
           - Infrastructure: deployment/aws/infrastructure.md
           - CI/CD: deployment/aws/cicd.md
