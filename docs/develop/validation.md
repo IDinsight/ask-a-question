@@ -58,7 +58,7 @@ An example content data will look like
     2. For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
         and modify as per your own requirements. For example:
         ```
-        conda env config vars set EMBEDDING_MODEL=<...>
+        conda env config vars set LITELLM_MODEL_EMBEDDING=<...>
         ```
     3. If you are using an external LLM endpoint, e.g. OpenAI, make sure to export the
         API key variable as well.

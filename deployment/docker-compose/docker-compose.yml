@@ -16,6 +16,7 @@ services:
           path: ../../core_backend
     volumes:
       - local_dynamic_storage:/home/storage
+
   admin_app:
     image: idinsight/aaq-admin-app:latest
     build:
@@ -34,6 +35,7 @@ services:
       watch:
         - action: rebuild
           path: ../../admin_app
+
   caddy:
     image: caddy:2.7.6
     restart: unless-stopped
@@ -47,6 +49,17 @@ services:
       - caddy_config:/config
     env_file:
       - .env
+
+  litellm_proxy:
+    image: ghcr.io/berriai/litellm:main-v1.34.6
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./litellm_proxy_config.yaml:/app/config.yaml
+    command:
+      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+
   alignScore:
     image: idinsight/alignscore-base:latest
     profiles:
@@ -58,6 +71,7 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
+
 volumes:
   local_dynamic_storage:
   caddy_data:

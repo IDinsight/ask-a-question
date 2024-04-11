@@ -21,14 +21,14 @@
 
     [:octicons-arrow-right-24: More info](./playground.md)
 
--   :material-view-dashboard:{ .lg .middle } __Content Manager's Dashboard (Coming Soon!)__
+-   :material-view-dashboard:{ .lg .middle } __Content Manager's Dashboard (Coming Soon)__
 
     ---
 
     Allows you to see statistices like which content is most frequently being
     used, or the feedback from users on responses provided by the service.
 
--   :material-monitor-dashboard: __Engineer's Dashboard (Coming Soon!)__
+-   :material-monitor-dashboard: __Engineer's Dashboard (Coming Soon)__
 
     ---
 

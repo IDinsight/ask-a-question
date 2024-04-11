@@ -4,6 +4,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import React from "react";
+import { Suspense } from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -24,7 +25,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AuthProvider>{children}</AuthProvider>
+          <Suspense>
+            <AuthProvider>{children}</AuthProvider>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

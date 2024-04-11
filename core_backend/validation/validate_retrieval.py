@@ -14,11 +14,11 @@ from core_backend.app.auth.config import (
     QUESTION_ANSWER_SECRET,
 )
 from core_backend.app.config import (
-    EMBEDDING_MODEL,
+    LITELLM_MODEL_EMBEDDING,
 )
 from core_backend.app.contents.models import ContentDB, ContentTextDB
-from core_backend.app.question_answer.config import N_TOP_SIMILAR
-from core_backend.app.question_answer.models import UserQueryBase
+from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
+from core_backend.app.question_answer.schemas import UserQueryBase
 from core_backend.app.utils import setup_logger
 
 logger = setup_logger()
@@ -109,7 +109,7 @@ class TestRetrievalPerformance:
         logger.info(f"Loading {n_content} content item to vector table...")
 
         embedding_results = embedding(
-            EMBEDDING_MODEL, input=content_dataframe["content_text"].tolist()
+            LITELLM_MODEL_EMBEDDING, input=content_dataframe["content_text"].tolist()
         )
         content_embeddings = [x["embedding"] for x in embedding_results.data]
         content_dbs = [ContentDB(content_id=i) for i in range(len(content_dataframe))]
@@ -219,7 +219,7 @@ class TestRetrievalPerformance:
     ) -> List[float]:
         """Get top K accuracy table for validation results"""
         accuracies = []
-        for i in range(1, int(N_TOP_SIMILAR) + 1):
+        for i in range(1, int(N_TOP_CONTENT_FOR_SEARCH) + 1):
             acc = (df["rank"] <= i).mean()
             accuracies.append(acc)
         return accuracies
@@ -262,7 +262,7 @@ class TestRetrievalPerformance:
             f"   • Content data: {content_data_path}\n"
             f"      • Text column: {content_data_text_col}\n"
             f"      • Label column: {content_data_label_col}\n"
-            f"• Embedding model: {EMBEDDING_MODEL}\n"
+            f"• Embedding model: {LITELLM_MODEL_EMBEDDING}\n"
             f"• Retrieval failure rate: {retrieval_failure_rate:.1%}\n"
             f"• Top N accuracies:\n" + self.format_accuracies(accuracies)
         )

@@ -1,121 +1,105 @@
 # Setting up your development environment
 
+!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+
 ## Option 1 - Using Docker Compose Watch
 
-This option uses the same Docker Compose script as deployment and so is *environment-agnostic*. It's good for
-quick startup and end-to-end testing but the downside is that changes take 5-10s to be reflected in the app (1).
-{ .annotate }
-
-1. This is because the backend and admin app images are rebuilt every time there is a change to their respective code folders.
+| Pros | Cons |
+| --- | --- |
+| Good for end-to-end testing | Changes take 5-10s to be reflected in the app |
+| Local environment identical to production deployment | |
+| No need to setup local environment | |
+| Set environment variables and configs once | |
 
 Steps:
 
 1. go to `deployment/docker-compose`
-2. copy `template.env` to a new file `.env` and set the necessary variables (for localhost deployment, you just
-need to set the `OPENAI_API_KEY` and leave everything else as default)
-3. run
+
+2. copy `template.env` to a new file `.env` and set the necessary variables (for local deployment, you just
+need to set the `OPENAI_API_KEY` and can leave everything else as default)
+
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
+
+4. run
 
         docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
 
 The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
 
-The admin app will be available on `http://localhost` and the backend API testing UI on `http://localhost/api/docs`.
+The admin app will be available on [https://localhost](https://localhost) and the backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
 
 ## Option 2 - Manual
 
-Go with this option if you have set your environment up correctly and want instant feedback from your changes.
-Takes a little more configuration before each run.
+| Pros | Cons |
+| --- | --- |
+| Instant feedback from changes | Requires more configuration before each run |
+| | Requires environment and dependencies to be set up correctly |
 
-Once you have your local environment setup (1), you can setup the components needed to
-develop your new feature.
-{ .annotate }
+### A: Run the Backend
 
-1. if you haven't see [Contributing to AAQ]("./contributing.md")
+Steps:
 
-### Database
+1. Set up your conda environment as per [Contributing to AAQ](./contributing.md) and run
 
-#### Running the database on docker
+        conda activate aaq
 
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+2. Set required environment variables in your terminal using
 
-You can launch a container running PostgreSQL database and run the necessary migrations using:
+        export PROMETHEUS_MULTIPROC_DIR=/tmp
+        export OPENAI_API_KEY=sk...
 
-    make setup-db
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml` at the repository root.
 
-!!! note "After you've run the FastAPI app, you can also run `make add-dummy-faqs` to auto-load some default FAQs into the database if you wish."
+4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
-You can stop and remove the PostgreSQL container using:
+        make setup-dev
 
-    make teardown-db
+5. Run the app
 
-Otherwise, you can run them manually as below.
+        python core_backend/main.py
 
-??? note "Setting up the database manually"
+    This will launch the application in "reload" mode i.e. the app will automatically
+    refresh everytime you make a change to one of the files.
 
-    ### Run a local postgres server
+     You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
-        docker run --name postgres-local \
-            -e POSTGRES_PASSWORD=<your password> \
-            -p 5432:5432 \
-            -d pgvector/pgvector:pg16
+6. Once done, exit the running app process with `ctrl+c` and run
 
-    Note that data will not be persisted when the container is destroyed. It might be
-    preferable to create your database from scratch each time. But if you wish to persist data
-    use a volume as below:
+        make teardown-dev
 
-        docker run --name postgres-local \
-        -e POSTGRES_PASSWORD=<your password> \
-        -p 5432:5432 \
-        -v postgres_local_vol:/var/lib/postrges/data \
-        -d pgvector/pgvector:pg16
+??? note "Setting up up database and LiteLLM proxy containers manually"
 
-    ### Run migrations
+    ## Database
 
-    From `aaq-core/core_backend` run:
+    ### Running the database on docker
 
-        python -m alembic upgrade head
+    You can launch a container running PostgreSQL database and run the necessary migrations using:
 
-#### Connecting to remote databases
+        make setup-db
 
-In your `.env` file, define the following variables.
+    You can stop and remove the PostgreSQL container using:
 
-To connect to remote Postgres instance:
+        make teardown-db
 
-```
-POSTGRES_HOST=
-POSTGRES_PORT=
-POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-```
+    See the contents of these Makefile targets to see how you could run them manually if required.
 
-See `core_backend/app/configs/app_config.py` for the default values for these variables.
+    ## LiteLLM Proxy Server
 
-### Run the backend app
+    1. Set models and parameters in `core_backend/litellm-config.yaml`
 
-#### Step 1: Set environment variables
+    2. Set OpenAI API key environment variable in your terminal using
 
-Make sure you have the necessary environment variables set, e.g. `OPENAI_API_KEY`, before running the app.
+            export OPENAI_API_KEY=sk...
 
-You can do this directly using
+    3. Run the Make target
 
-    export OPENAI_API_KEY="sk-..."
-    export PROMETHEUS_MULTIPROC_DIR=/tmp
+            make setup-llm-proxy
 
-Or by loading the variables stored in the deployment or test folders' `.env` file (if you've created those)
+    4. Once done, teardown the container with
 
-    set -a && source ./deployment/.env && set +a
+            make teardown-llm-proxy
 
-#### Step 2: Run the backend app
-
-With the Docker databases running, from `aaq-core/core_backend` run:
-
-    python main.py
-
-This will launch the application in "reload" mode i.e. the app with automatically
-refresh everytime you make a change to one of the files
-
-### Run the Admin app
+### B: Run the Admin app
 
 ??? warning "You need to have nodejs v19 installed locally"
 
@@ -129,26 +113,10 @@ From `aaq-core/admin_app` run
 
 This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
 
-## Check health
-
-### Backend
-
-Go to the following URL to check that the app came up correctly
-
-    http://localhost:8000/healthcheck
-
-You can also easily test each endpoint through:
-
-    http://localhost:8000/docs
-
-### Admin app
-
-Admin app can be reached at
-
-    http://localhost:3000/
+The admin app will now be accessible on [http://localhost:3000/](http://localhost:3000/)
 
 ## Setting up docs
 
-To host docs offline so you can see your changes, run the following (with altered port so it doesn't interfere with the app's server):
+To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
 
     mkdocs serve -a "localhost:8080"

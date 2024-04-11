@@ -1,3 +1,4 @@
+from ..config import LITELLM_MODEL_SUMMARIZATION
 from .llm_prompts import ANSWER_QUESTION_PROMPT
 from .utils import _ask_llm_async
 
@@ -9,4 +10,8 @@ async def get_llm_rag_answer(question: str, faq_data: str) -> str:
 
     prompt = ANSWER_QUESTION_PROMPT.format(content=faq_data)
 
-    return await _ask_llm_async(question, prompt)
+    return await _ask_llm_async(
+        question,
+        prompt,
+        litellm_model=LITELLM_MODEL_SUMMARIZATION,
+    )

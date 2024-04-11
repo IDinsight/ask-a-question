@@ -5,6 +5,12 @@ These are functions that can be used to parse the input questions.
 from functools import wraps
 from typing import Any, Callable, Tuple
 
+from ..config import (
+    LITELLM_MODEL_LANGUAGE_DETECT,
+    LITELLM_MODEL_PARAPHRASE,
+    LITELLM_MODEL_SAFETY,
+    LITELLM_MODEL_TRANSLATE,
+)
 from ..question_answer.config import STANDARD_FAILURE_MESSAGE
 from ..question_answer.schemas import (
     ErrorType,
@@ -59,7 +65,9 @@ async def _classify_safety(
         safety_classification = getattr(
             SafetyClassification,
             await _ask_llm_async(
-                question.query_text, SafetyClassification.get_prompt()
+                question.query_text,
+                SafetyClassification.get_prompt(),
+                litellm_model=LITELLM_MODEL_SAFETY,
             ),
         )
         if safety_classification != SafetyClassification.SAFE:
@@ -116,7 +124,9 @@ async def _identify_language(
     """
     if not isinstance(response, UserQueryResponseError):
         identified_lang = await _ask_llm_async(
-            question.query_text, IdentifiedLanguage.get_prompt()
+            question.query_text,
+            IdentifiedLanguage.get_prompt(),
+            litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         )
         if identified_lang in IdentifiedLanguage.get_supported_languages():
             question.original_language = getattr(IdentifiedLanguage, identified_lang)
@@ -190,7 +200,9 @@ async def _translate_question(
         return question, error_response
     else:
         translation_response = await _ask_llm_async(
-            question.query_text, TRANSLATE_INPUT + question.original_language.value
+            question.query_text,
+            TRANSLATE_INPUT + question.original_language.value,
+            litellm_model=LITELLM_MODEL_TRANSLATE,
         )
         if translation_response != TRANSLATE_FAILED_MESSAGE:
             question.query_text = translation_response
@@ -242,7 +254,11 @@ async def _paraphrase_question(
     if isinstance(response, UserQueryResponseError):
         return question, response
 
-    paraphrase_response = await _ask_llm_async(question.query_text, PARAPHRASE_INPUT)
+    paraphrase_response = await _ask_llm_async(
+        question.query_text,
+        PARAPHRASE_INPUT,
+        litellm_model=LITELLM_MODEL_PARAPHRASE,
+    )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response
         response.debug_info["paraphrased_question"] = paraphrase_response

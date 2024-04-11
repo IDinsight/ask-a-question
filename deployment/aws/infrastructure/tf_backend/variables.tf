@@ -23,7 +23,6 @@ variable "billing_code" {
 
 variable "aws_region" {
   type = string
-
   validation {
     condition     = var.aws_region != ""
     error_message = "You must provide your AWS region in tf_backend.auto.tfvars."

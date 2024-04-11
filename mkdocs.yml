@@ -1,10 +1,8 @@
-# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
-
-site_name: ""
+site_name: "" # already part of the logo
+site_description: "Ask A Question Documentation"
 site_url: https://idinsight.github.io/aaq-core/
-extra_css:
-  - stylesheets/extra.css
-
+repo_url: https://github.com/IDinsight/aaq-core
+copyright: "© 2024 IDinsight"
 extra:
   generator: false
   social:
@@ -12,8 +10,62 @@ extra:
       link: https://www.idinsight.org/about/privacy-policy/
       name: Privacy Policy
 
-copyright: "© 2024 IDinsight"
+nav:
+  - Home:
+      - "": index.md
+      - Usage: usage.md
+      - Roadmap: roadmap.md
 
+  - Latest Updates:
+      - blog/index.md
+
+  - Components:
+      - components/index.md
+      - User-facing components:
+          - Admin App:
+              - components/admin-app/index.md
+              - Access Levels: components/admin-app/access-level.md
+              - Manage Content: components/admin-app/manage-content.md
+              - Playground: components/admin-app/playground.md
+          - Question-Answering Service:
+              - components/qa-service/index.md
+              - Semantic Search: components/qa-service/semantic-search.md
+              - LLM Response: components/qa-service/llm-response.md
+      - Internal components:
+          - LLM Proxy Server:
+              - components/litellm-proxy/index.md
+          - Align Score:
+              - components/align-score/index.md
+              - Deployment: components/align-score/deployment.md
+              - Testing: components/align-score/testing.md
+
+  - Integrations:
+      - integrations/index.md
+      - Chat Managers:
+          - integrations/chat_managers/index.md
+          - Typebot: integrations/chat_managers/typebot.md
+          - Botpress: integrations/chat_managers/botpress_v12.md
+      - WhatsApp Connector:
+          - integrations/whatsapp/index.md
+          - Setup: integrations/whatsapp/setup.md
+          - Testing: integrations/whatsapp/testing.md
+
+  - Deploy:
+      - Quick setup with Docker Compose: deployment/quick-setup.md
+      - Architecture: deployment/architecture.md
+      - Configuring AAQ: deployment/config-options.md
+      - AWS:
+          - deployment/aws/index.md
+          - Infrastructure: deployment/aws/infrastructure.md
+          - CI/CD: deployment/aws/cicd.md
+
+  - Contribute:
+      - Guidelines: develop/contributing.md
+      - Setup: develop/setup.md
+      - Testing: develop/testing.md
+      - Validation: develop/validation.md
+
+# Themes and extensions
 theme:
   name: material
   logo: images/logo-light.png
@@ -22,19 +74,16 @@ theme:
     text: "Inter"
     code: "Roboto Mono"
   palette:
-    # Palette toggle for dark mode
-    - scheme: slate
+    - scheme: slate # Palette toggle for dark mode
       primary: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-    # Palette toggle for light mode
-    - scheme: default
+    - scheme: default # Palette toggle for light mode
       primary: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -47,56 +96,8 @@ theme:
       note: material/alert-circle
     annotation: material/help-circle
 
-repo_url: https://github.com/IDinsight/aaq-core
-
-nav:
-  - Home:
-      - "": index.md
-      - Usage: usage.md
-      - Roadmap: roadmap.md
-  - Latest Updates:
-      - blog/index.md
-  - Core Components:
-      - components/index.md
-      - Admin App:
-          - components/admin-app/index.md
-          - Access Levels: components/admin-app/access-level.md
-          - Manage Content: components/admin-app/manage-content.md
-          - Playground: components/admin-app/playground.md
-      - Question-Answering Service:
-          - components/qa-service/index.md
-          - Semantic Search: components/qa-service/semantic-search.md
-          - LLM Response: components/qa-service/llm-response.md
-      - Triaging Service:
-          - components/triaging/index.md
-  - Other Components:
-      - other-components/index.md
-      - Chat Managers:
-          - other-components/chat_managers/index.md
-          - Typebot: other-components/chat_managers/typebot.md
-          - Botpress: other-components/chat_managers/botpress_v12.md
-      - Offline LLMs:
-          - other-components/self_hosted_llms/index.md
-      - WhatsApp Connector:
-          - other-components/whatsapp/index.md
-          - Testing: other-components/whatsapp/testing.md
-      - Align Score:
-          - other-components/align-score/index.md
-          - Deployment: other-components/align-score/deployment.md
-          - Testing: other-components/align-score/testing.md
-  - Deploying:
-      - Quick setup with Docker Compose: deployment/quick-setup.md
-      - Architecture: deployment/architecture.md
-      - Configuring AAQ: deployment/config-options.md
-      - Deploying on AWS:
-          - deployment/aws/aws.md
-          - Infrastructure: deployment/aws/infrastructure.md
-          - CI/CD: deployment/aws/cicd.md
-  - Contributing:
-      - Guidelines: develop/contributing.md
-      - Setup: develop/setup.md
-      - Testing: develop/testing.md
-      - Validation: develop/validation.md
+extra_css:
+  - stylesheets/extra.css
 
 markdown_extensions:
   - tables
@@ -115,6 +116,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      title: On this page
 
 plugins:
   - glightbox

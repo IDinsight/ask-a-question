@@ -14,9 +14,7 @@ These steps show you how to raise a pull request to the project
 
 2. Clone the repo using:
 
-```
-git clone git@github.com:<your GitHub handle>/aaq-core.git
-```
+        git clone git@github.com:<your GitHub handle>/aaq-core.git
 
 ### Setup your virtual python environment
 
@@ -36,6 +34,8 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
 
 ??? note "Setting up the environment manually"
 
+    ## Manual environment setup
+
     If you would like to setup the environment manually, you can use conda to create virtual environment (or `venv` or other).
 
         conda create --name aaq-core python=3.10
@@ -45,40 +45,40 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
         pip install -r core_backend/requirements.txt
         pip install -r requirements-dev.txt
 
-### Install pre-commit
+    ## Install pre-commit
 
-Navigate to repo and run pre-commit
+    Navigate to repo and run pre-commit
 
-    cd aaq-core
-    pre-commit install  # 👈 to run it automatically before each commit
+        cd aaq-core
+        pre-commit install  # 👈 to run it automatically before each commit
 
 ### Make your changes
 
 <div class="annotate" markdown>
+
 1. Create a `feature` branch for your development changes:
-```
-git checkout -b feature
-```
+
+        git checkout -b feature
 
 2. Make your changes and then run `pre-commits` if you have not set it up to run automatically.
-```
-pre-commit run --all      # 👈 to run it manually
-```
+
+        pre-commit run --all  # 👈 to run it manually
+
 3. Run `mypy` separately with `mypy core_backend/app` (1)
 
+4. Then `git add` and `git commit` your changes:
 
-3. Then `git add` and `git commit` your changes:
-```
-git add modified_files
-git commit
-```
-And then push the changes to your fork in GitHub
-```
-git push -u origin feature
-```
-4. Go to the GitHub web page of your fork of the AAQ repo. Click the ‘Pull request’ button
+        git add modified_files
+        git commit
+
+5. And then push the changes to your fork in GitHub
+
+        git push -u origin feature
+
+6. Go to the GitHub web page of your fork of the AAQ repo. Click the ‘Pull request’ button
 to send your changes to the project’s maintainers for review.
 This will send a notification to the committers.
+
 </div>
 
 1. `pre-commit` runs in its own virtual environment. Since `mypy` needs all the
@@ -87,7 +87,6 @@ This will send a notification to the committers.
    a few high-level typing things. You still need to run `mypy` directly to catch
    all the typing issues.
    If you forget, GitHub Actions 'Linting' workflow will pick up all the mypy errors.
-
 
 ## Next steps
 

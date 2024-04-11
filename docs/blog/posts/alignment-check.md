@@ -19,7 +19,7 @@ our other checks.
 
 ## Checking alignment of LLM Response
 
-Despite clear prompting, LLMs hallucinate. And sometimes use their large training 
+Despite clear prompting, LLMs hallucinate. And sometimes use their large training
 set to answer a question instead of solely using the context provided.
 
 One of the endpoints that AAQ presents is
@@ -37,16 +37,16 @@ are consitent with the content it is meant to use to generate it.
 We can use GPT4-turbo and it does remarkably well on our test data. But there
 may be reasons - from data governance and privacy rules to costs - for not sending the data
 to OpenAI. One option is to use your own
-[locally hosted LLM]("../../other-components/self_hosted_llms/index.md").
+[locally hosted LLM]("../../components/self_hosted_llms/index.md").
 
-The other option is to use [AlignScore](../../other-components/align-score/index.md), a model
-built specifically for this use case. It can be deployes as another container that 
-exposes an endpoint that AAQ can call to check consistency. 
+The other option is to use [AlignScore](../../components/align-score/index.md), a model
+built specifically for this use case. It can be deployes as another container that
+exposes an endpoint that AAQ can call to check consistency.
 
-See [docs](../../other-components/align-score/deployment.md) for how to do this.
+See [docs](../../components/align-score/deployment.md) for how to do this.
 
 ## Doc references
 
-- [Locally hosted LLMs]("../../other-components/self_hosted_llms/index.md")
+- [Locally hosted LLMs]("../../components/self_hosted_llms/index.md")
 - [LLM Response](../../components/qa-service/llm-response.md)
-- [AlignScore](../../other-components/align-score/index.md)
+- [AlignScore](../../components/align-score/index.md)
