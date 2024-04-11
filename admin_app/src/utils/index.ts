@@ -1,18 +1,9 @@
 import theme from "@/theme";
 
-export const DEFAULT_LANGUAGE = "en";
-
-export const LANGUAGE_OPTIONS = [
-  { code: "en", label: "English" },
-  // { code: "hi", label: "Hindi" },
-  // { code: "zu", label: "Zulu" },
-  // { code: "xh", label: "Xhosa" },
-  // { code: "af", label: "Afrikaans" },
-];
-
 export const sizes = {
   tinyGap: theme.spacing(0.5),
   smallGap: theme.spacing(1),
+  mediumGap: theme.spacing(1.5),
   baseGap: theme.spacing(2),
   doubleBaseGap: theme.spacing(4),
   tripleBaseGap: theme.spacing(6),
@@ -42,6 +33,10 @@ export const appColors = {
   inverseSurface: "#F1F0F7",
 };
 
+export const appFonts = {
+  h5: theme.typography.h5,
+  subtitle1: theme.typography.subtitle1,
+};
 export const appStyles = {
   alignItemsCenter: {
     alignItems: "center",

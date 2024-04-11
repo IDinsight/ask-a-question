@@ -8,7 +8,10 @@ from core_backend.app.whatsapp_qa.config import (
 
 class TestWhatsAppWebhook:
     def test_post_webhook_response(
-        self, client: TestClient, patch_httpx_call: pytest.FixtureRequest
+        self,
+        client: TestClient,
+        faq_contents: pytest.FixtureRequest,
+        patch_httpx_call: pytest.FixtureRequest,
     ) -> None:
         """Test that the webhook response is correct."""
 

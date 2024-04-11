@@ -1,7 +1,5 @@
 import { Layout } from "@/components/Layout";
 import {
-  DEFAULT_LANGUAGE,
-  LANGUAGE_OPTIONS,
   appColors,
   appStyles,
   sizes,
@@ -11,84 +9,152 @@ import { Menu, MenuItem, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
 
 interface Language {
-  code: string;
-  label: string;
+  language_id: number;
+  language_name: string;
 }
+interface LanguageButtonBarProps {
+  expandable: boolean;
+  getLanguageList: () => Promise<Language[]>;
+  onLanguageSelect: (language_id: number) => void;
+  onMenuItemSelect?: (language_id: number) => void;
+  defaultLanguageId: number;
+  enabledLanguages?: number[];
+  isEdit: boolean;
+}
+const LanguageButtonBar = ({
+  expandable,
+  getLanguageList,
+  onLanguageSelect,
+  onMenuItemSelect,
+  defaultLanguageId,
+  enabledLanguages,
+  isEdit
+}: LanguageButtonBarProps) => {
+  const [langList, setLangList] = React.useState<Language[]>([]);
+  const [selectedLang, setSelectedLang] = React.useState<number | undefined>(defaultLanguageId);
 
-const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
-  const [langList, setLangList] = React.useState<(Language | undefined)[]>(
-    expandable
-      ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)].filter(
-          Boolean,
-        )
-      : LANGUAGE_OPTIONS,
-  );
-  const [selectedLang, setSelectedLang] = React.useState<string>("en");
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  return (
+  const isLanguageEnabled = (languageId: number) => {
+    return typeof enabledLanguages === 'undefined' || enabledLanguages.includes(languageId);
+  }
+  React.useEffect(() => {
+    const fetchLanguages = async () => {
+
+      if (langList.length < 1) {
+        try {
+          getLanguageList().then((data) => {
+            setLangList(data);
+          });
+        } catch (error) {
+          console.error('Failed to fetch languages:', error);
+        }
+      }
+      const defaultLanguage = langList.find(lang => lang.language_id === defaultLanguageId);
+      if (defaultLanguage && !selectedLang) {
+        setSelectedLang(defaultLanguageId);
+        onLanguageSelect(defaultLanguageId);
+      }
+      if (enabledLanguages && selectedLang && !enabledLanguages.includes(selectedLang)) {
+        setSelectedLang(enabledLanguages[0]);
+        onLanguageSelect(enabledLanguages[0]);
+      }
+
+
+
+
+    };
+
+    fetchLanguages();
+
+
+  }, [expandable, getLanguageList, defaultLanguageId, enabledLanguages]);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleToggleButtonSelect = (language: Language) => {
+    setSelectedLang(language.language_id);
+    onLanguageSelect(language.language_id);
+  };
+  const handleMenuItemSelect = (language: Language) => {
+    setSelectedLang(language.language_id);
+    setAnchorEl(null);
+    onMenuItemSelect && onMenuItemSelect(language.language_id);
+  }; return (
     <Layout.FlexBox
       flexDirection={"row"}
       gap={sizes.smallGap}
       {...appStyles.alignItemsCenter}
     >
       <ToggleButtonGroup>
-        {langList.map(
-          (lang, index) =>
+        {langList
+          .filter(lang => !isEdit || isLanguageEnabled(lang.language_id))
+          .map((lang) =>
             lang && (
+
               <ToggleButton
-                key={lang.code}
-                value={lang.code}
+                key={lang.language_id}
+                value={lang.language_id}
                 size="medium"
+                onClick={() => handleToggleButtonSelect(lang)}
+                disabled={!isEdit && !isLanguageEnabled(lang.language_id)}
                 sx={[
                   {
                     border: 0,
                     borderBottomColor: appColors.outline,
                     borderBottomWidth: 1,
                   },
-                  selectedLang === lang?.code && {
+                  selectedLang === lang?.language_id && {
                     borderBottomColor: appColors.primary,
                     borderBottomWidth: 3,
                     color: appColors.primary,
                   },
                 ]}
-                onClick={() => setSelectedLang(lang.code)}
               >
                 <Layout.Spacer horizontal multiplier={0.5} />
-                {lang?.label}
+                {lang?.language_name}
                 <Layout.Spacer horizontal multiplier={0.5} />
               </ToggleButton>
             ),
-        )}
+          )
+        }
+
       </ToggleButtonGroup>
-      {expandable && LANGUAGE_OPTIONS.length > langList.length && (
-        <AddCircle
-          fontSize="small"
-          onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-            setAnchorEl(event.currentTarget as unknown as HTMLElement);
-          }}
-        />
-      )}
+      {
+        expandable && enabledLanguages && langList.length > enabledLanguages.length && (
+          <AddCircle
+            fontSize="small"
+            onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+              setAnchorEl(event.currentTarget as unknown as HTMLElement);
+            }}
+          />
+        )
+      }
       <Menu
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        {LANGUAGE_OPTIONS.filter((l) => !langList.includes(l)).map(
+        {langList.filter((l) => !enabledLanguages?.includes(l.language_id)).map(
           (language, index) => (
             <MenuItem
-              onClick={() => {
-                setLangList([...langList, language]);
-                setAnchorEl(null);
-              }}
-              key={index}
+              key={language.language_id}
+              onClick={() =>
+                handleMenuItemSelect(language)
+              }
             >
-              {language.label}
+              {language.language_name}
             </MenuItem>
           ),
         )}
       </Menu>
-    </Layout.FlexBox>
+    </Layout.FlexBox >
   );
 };
 

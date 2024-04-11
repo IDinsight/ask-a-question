@@ -4,7 +4,8 @@ import {
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Button, Card, IconButton, Typography } from "@mui/material";
+import { Button, Card, IconButton, Typography, setRef } from "@mui/material";
+import TranslateIcon from '@mui/icons-material/Translate';
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
@@ -13,24 +14,41 @@ const ContentCard = ({
   title,
   text,
   content_id,
+  language_id,
   last_modified,
+  languages,
+  getContentData,
+  getLanguageList,
   onSuccessfulDelete,
   onFailedDelete,
   deleteContent,
+  deleteLanguageVersion,
+  setRefreshKey,
   editAccess,
 }: {
   title: string;
   text: string;
   content_id: number;
+  language_id: number;
   last_modified: string;
-  onSuccessfulDelete: (content_id: number) => void;
+  languages: string[];
+  getContentData: (content_id: number) => Promise<any>;
+  getLanguageList: () => Promise<any>;
+  onSuccessfulDelete: (content_id: number, language_id: number | null) => void;
   onFailedDelete: (content_id: number) => void;
   deleteContent: (content_id: number) => Promise<any>;
+  deleteLanguageVersion:
+  (content_id: number, language_id: number | null) => Promise<any>;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const handleCloseModal = () => {
+    setRefreshKey((prev) => prev + 1);
+    setOpenReadModal(false);
 
+  }
   return (
     <>
       <Card
@@ -69,9 +87,26 @@ const ContentCard = ({
             year: "numeric",
             hour: "numeric",
             minute: "numeric",
-            hour12: true,
+            hour12: false,
           })}
         </Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <Layout.FlexBox
+          flexDirection="row"
+          alignItems="center"
+          gap={sizes.tinyGap}
+        >
+          <TranslateIcon fontSize="small" />
+          <Typography
+            variant="body2"
+            color={appColors.darkGrey}
+            sx={{
+              fontSize: '0.75rem',
+              textTransform: 'lowercase'
+            }}>
+            {languages.join(', ')}
+          </Typography>
+        </Layout.FlexBox>
         <Layout.Spacer multiplier={0.75} />
         <Layout.FlexBox
           flexDirection={"row"}
@@ -85,7 +120,7 @@ const ContentCard = ({
           <Button
             disabled={!editAccess}
             component={Link}
-            href={`/content/edit?content_id=${content_id}`}
+            href={`/content/edit?content_id=${content_id}&language_id=${language_id}`}
           >
             <Edit fontSize="small" />
             <Layout.Spacer horizontal multiplier={0.3} />
@@ -103,16 +138,18 @@ const ContentCard = ({
         </Layout.FlexBox>
       </Card>
       <ContentViewModal
-        title={title}
-        text={text}
         content_id={content_id}
-        last_modified={last_modified}
+        defaultLanguageId={language_id}
+        getContentData={getContentData}
+        getLanguageList={getLanguageList}
+        deleteLanguageVersion={deleteLanguageVersion}
         open={openReadModal}
-        onClose={() => setOpenReadModal(false)}
+        onClose={handleCloseModal}
         editAccess={editAccess}
       />
       <DeleteContentModal
         content_id={content_id}
+        language_id={null}
         open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
         onSuccessfulDelete={onSuccessfulDelete}
