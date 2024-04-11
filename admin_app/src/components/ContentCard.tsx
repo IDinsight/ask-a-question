@@ -4,7 +4,7 @@ import {
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Button, Card, IconButton, Typography } from "@mui/material";
+import { Button, Card, IconButton, Typography, setRef } from "@mui/material";
 import TranslateIcon from '@mui/icons-material/Translate';
 import Link from "next/link";
 import React from "react";
@@ -23,6 +23,7 @@ const ContentCard = ({
   onFailedDelete,
   deleteContent,
   deleteLanguageVersion,
+  setRefreshKey,
   editAccess,
 }: {
   title: string;
@@ -38,11 +39,16 @@ const ContentCard = ({
   deleteContent: (content_id: number) => Promise<any>;
   deleteLanguageVersion:
   (content_id: number, language_id: number | null) => Promise<any>;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const handleCloseModal = () => {
+    setRefreshKey((prev) => prev + 1);
+    setOpenReadModal(false);
 
+  }
   return (
     <>
       <Card
@@ -138,7 +144,7 @@ const ContentCard = ({
         getLanguageList={getLanguageList}
         deleteLanguageVersion={deleteLanguageVersion}
         open={openReadModal}
-        onClose={() => setOpenReadModal(false)}
+        onClose={handleCloseModal}
         editAccess={editAccess}
       />
       <DeleteContentModal

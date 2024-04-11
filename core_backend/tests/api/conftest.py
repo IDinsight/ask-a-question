@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
 from datetime import datetime
+from datetime import timezone as tz
 from typing import Any, Generator, Tuple
 
 import httpx
@@ -12,8 +13,9 @@ from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.config import EMBEDDING_MODEL
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
-from core_backend.app.contents.models import ContentDB
+from core_backend.app.contents.models import ContentDB, ContentTextDB
 from core_backend.app.database import get_session
+from core_backend.app.languages.models import LanguageDB
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.question_answer.schemas import (
@@ -45,8 +47,12 @@ def db_session() -> pytest.FixtureRequest:
         next(session_gen, None)
 
 
-@pytest.fixture(scope="session")
-def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
+@pytest.fixture(scope="module")
+def faq_contents(
+    client: TestClient,
+    existing_languages: Tuple[int, int],
+    db_session: pytest.FixtureRequest,
+) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -56,16 +62,18 @@ def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
         content_embedding = fake_embedding(EMBEDDING_MODEL, text_to_embed).data[0][
             "embedding"
         ]
-
-        contend_db = ContentDB(
+        content_db = ContentDB(content_id=i)
+        db_session.add(content_db)
+        contend_db = ContentTextDB(
+            content_text_id=i,
             content_id=i,
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
-            content_language="ENGLISH",
+            language_id=existing_languages[0]["language_id"],
             content_metadata=content.get("content_metadata", {}),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
+            updated_datetime_utc=datetime.now(tz.utc).replace(tzinfo=None),
         )
         contents.append(contend_db)
 
@@ -74,7 +82,7 @@ def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
 
 
 @pytest.fixture(scope="module")
-def existing_language_id(
+def existing_languages(
     client: TestClient,
     fullaccess_token: str,
 ) -> Generator[tuple[int, int], None, None]:
@@ -90,9 +98,11 @@ def existing_language_id(
         json={"language_name": "HINDI", "is_default": False},
     )
 
-    language_id_1 = response_1.json()["language_id"]
-    language_id_2 = response_2.json()["language_id"]
-    yield (language_id_1, language_id_2)
+    language_1 = response_1.json()
+    language_2 = response_2.json()
+    yield (language_1, language_2)
+    language_id_1 = language_1["language_id"]
+    language_id_2 = language_2["language_id"]
     client.delete(
         f"/language/{language_id_1}/",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
@@ -101,6 +111,15 @@ def existing_language_id(
         f"/language/{language_id_2}/",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def delete_all_rows(db_session: pytest.FixtureRequest) -> Generator[None, None, None]:
+    yield
+    db_session.query(ContentTextDB).delete()
+    db_session.query(ContentDB).delete()
+    db_session.query(LanguageDB).delete()
+    db_session.commit()
 
 
 @pytest.fixture(scope="session")
