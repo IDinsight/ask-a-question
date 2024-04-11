@@ -84,8 +84,7 @@ const AddEditContentPage = () => {
 
   };
   const handleDeleteSuccess = (content_id: number, language_id: number | null) => {
-    setReloadTrigger(prev => prev + 1);
-    setSnackMessage(getSnackMessage("delete", content_id, language_id));
+
     if (language_id) {
       setContentData(prevContentData => {
         const updatedContentData = { ...prevContentData };
@@ -94,6 +93,10 @@ const AddEditContentPage = () => {
           const router = useRouter();
           setTimeout(() => router
             .push(`/content?content_id=${content_id}&action=delete`), 0);
+        }
+        else {
+          setReloadTrigger(prev => prev + 1);
+          setSnackMessage(getSnackMessage("delete", content_id, language_id));
         }
         setLanguageId(Object.keys(updatedContentData).map(Number)[0]);
         return updatedContentData;

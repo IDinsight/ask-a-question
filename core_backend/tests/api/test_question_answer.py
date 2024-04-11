@@ -20,7 +20,6 @@ from core_backend.app.question_answer.schemas import (
 
 
 class TestEmbeddingsSearch:
-
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
@@ -111,7 +110,6 @@ class TestEmbeddingsSearch:
 
 
 class TestLLMSearch:
-
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],

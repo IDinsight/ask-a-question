@@ -7,7 +7,6 @@ from core_backend.app.whatsapp_qa.config import (
 
 
 class TestWhatsAppWebhook:
-
     def test_post_webhook_response(
         self,
         client: TestClient,
