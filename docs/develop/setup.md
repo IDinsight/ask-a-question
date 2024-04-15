@@ -48,7 +48,7 @@ Steps:
         export PROMETHEUS_MULTIPROC_DIR=/tmp
         export OPENAI_API_KEY=sk...
 
-3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml` at the repository root.
+3. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
 4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 

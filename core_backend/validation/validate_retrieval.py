@@ -11,7 +11,11 @@ from fastapi.testclient import TestClient
 from litellm import embedding
 
 from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
-from core_backend.app.config import LITELLM_MODEL_EMBEDDING
+from core_backend.app.config import (
+    LITELLM_API_KEY,
+    LITELLM_ENDPOINT,
+    LITELLM_MODEL_EMBEDDING,
+)
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import UserQueryBase
@@ -86,6 +90,7 @@ class TestRetrievalPerformance:
         df = pd.read_csv(
             content_data_path,
             storage_options=dict(profile=aws_profile),
+            nrows=5,
         )
         df["content_id"] = list(range(len(df)))
         df = df.rename(
@@ -105,7 +110,10 @@ class TestRetrievalPerformance:
         logger.info(f"Loading {n_content} content item to vector table...")
 
         embedding_results = embedding(
-            LITELLM_MODEL_EMBEDDING, input=content_dataframe["content_text"].tolist()
+            LITELLM_MODEL_EMBEDDING,
+            input=content_dataframe["content_text"].tolist(),
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
         )
         content_embeddings = [x["embedding"] for x in embedding_results.data]
 
