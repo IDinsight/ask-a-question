@@ -2,23 +2,48 @@
 
 In this section you can find the different integrations AAQ supports so far.
 
+## Chat Managers
+
+You can use the AAQ endpoints through various chat managers. Below are some examples:
+
 <div class="grid cards" markdown>
 
-- :material-chat-question:{ .lg .middle } __Chat Managers__
+- :material-chat-plus:{ .lg .middle } __Typebot (Recommended)__
 
     ---
 
-    You can use the AAQ endpoints through various chat managers.
+    How to get Typebot running and connected to AAQ endpoints
 
-    [:octicons-arrow-right-24: More info](./chat_managers/index.md)
+    [:octicons-arrow-right-24: More info](./chat_managers/typebot.md)
 
-- :material-database:{ .lg .middle .red} __Direct WhatsApp Connector__
+- :material-chat-plus:{ .lg .middle } __Botpress__
 
     ---
 
-    The direct WhatsApp connector allows you to send and receive messages
-    using the WhatsApp Business API without a chat manager.
+    How to get Botpress v12 (OSS) running and connected to AAQ endpoints
 
-    [:octicons-arrow-right-24: More info](./whatsapp/index.md)
+    [:octicons-arrow-right-24: More info](./chat_managers/botpress_v12.md)
 
 </div>
+
+## Direct WhatsApp Connector
+
+The WhatsApp connector allows you to directly send and receive messages using the WhatsApp Business API.
+
+<div class="grid cards" markdown>
+
+-   :octicons-gear-16:{ .lg .middle } __Setup__
+
+    ---
+
+    Setup the webhook.
+
+    [:octicons-arrow-right-24: More info](./whatsapp/setup.md)
+
+-   :material-test-tube:{ .lg .middle } __Testing__
+
+    ---
+
+    Connect to your Meta Business account and test.
+
+    [:octicons-arrow-right-24: More info](./whatsapp/testing.md)
