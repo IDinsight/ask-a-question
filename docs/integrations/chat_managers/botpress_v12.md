@@ -1,4 +1,4 @@
-# Botpress v12
+# ![botpress logo](./botpress_logo.svg){ width="30" } Botpress v12
 
 You can use the AAQ endpoints through various chat managers. Below is an example of how to get Botpress v12 (OSS) running and connected to AAQ endpoints using a provided demo bot.
 
@@ -38,7 +38,7 @@ To install through Docker (recommended), follow the official Botpress v12 docs [
 
 Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v12 locally as per your OS.
 
-## Running Botpress
+## Demo AAQ Chatflow
 
 1. Go to the URL where the app is running
 2. Make an account and login

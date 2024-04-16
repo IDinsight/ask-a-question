@@ -1,4 +1,4 @@
-# Typebot
+# ![typebot logo](./typebot_logo.svg){ width="30" } Typebot
 
 Below is an example of how to get Typebot running and connected to AAQ endpoints using a provided demo bot.
 
@@ -27,7 +27,7 @@ You can now access Typebot at `https://[DOMAIN]/`
 
     docker compose -p typebot-stack down
 
-## Using Typebot
+## Demo AAQ Chatflow
 
 1. Go to the URL where the app is running
 2. Make an account and login
