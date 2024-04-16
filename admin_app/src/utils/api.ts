@@ -134,6 +134,42 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getEmbeddingsSearch = async (search: string, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/embeddings-search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching embedding search");
+    }
+  });
+};
+
+const getLLMResponse = async (search: string, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/llm-response`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching llm response");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
@@ -142,4 +178,6 @@ export const apiCalls = {
   editContent,
   addContent,
   getLoginToken,
+  getEmbeddingsSearch,
+  getLLMResponse,
 };
