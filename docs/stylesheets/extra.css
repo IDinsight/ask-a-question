@@ -69,3 +69,9 @@ strong {
 .footer {
   font-size: small;
 }
+
+.md-content .blog-img {
+  border-width: 1px;
+  border-style: solid;
+  border-color: "9dc1e0";
+}
