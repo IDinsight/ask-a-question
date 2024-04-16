@@ -44,6 +44,7 @@ nav:
       - Chat Managers:
           - Typebot: integrations/chat_managers/typebot.md
           - Botpress: integrations/chat_managers/botpress_v12.md
+          - Turn.io: integrations/chat_managers/turn.md
       - WhatsApp Connector:
           - Setup: integrations/whatsapp/setup.md
           - Testing: integrations/whatsapp/testing.md

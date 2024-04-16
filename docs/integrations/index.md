@@ -24,6 +24,14 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
     [:octicons-arrow-right-24: More info](./chat_managers/botpress_v12.md)
 
+- ![turn logo](./chat_managers/turn_logo.png){ width="20" } __Turn.io__
+
+    ---
+
+    How to connect a Turn.io Journey to AAQ endpoints
+
+    [:octicons-arrow-right-24: More info](./chat_managers/turn.md)
+
 </div>
 
 ## Direct WhatsApp Connector
