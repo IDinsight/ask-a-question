@@ -215,9 +215,7 @@ async def get_search_results(
                 "distance"
             ),
         )
-        .order_by(
-            ContentDB.content_embedding.cosine_distance(question_embedding).desc()
-        )
+        .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
         .limit(n_similar)
     )
     search_result = (await asession.execute(query)).all()
