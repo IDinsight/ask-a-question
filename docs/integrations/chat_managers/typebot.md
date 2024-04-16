@@ -4,6 +4,11 @@ Below is an example of how to get Typebot running and connected to AAQ endpoints
 
 ## Deployment
 
+You can either use the cloud-hosted [Typebot](https://typebot.io/) service or self-host the application.
+
+For self-hosting, you can either follow the [official docs](https://docs.typebot.io/self-hosting/get-started)
+or follow our quick start below:
+
 **Step 1:** Navigate to `chat_managers/typebot/deployment/`
 
 **Step 2:** Copy `template.env` to `.env` and edit it to set the variables
