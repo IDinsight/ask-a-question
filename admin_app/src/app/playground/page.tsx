@@ -173,8 +173,20 @@ const Page = () => {
   }, []);
 
   return (
-    <>
-      <Box mb={10}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      sx={{ height: "100vh", width: "100%", pb: 10 }}
+    >
+      <Box
+        mb={10}
+        sx={{
+          width: "100%",
+          maxWidth: "lg",
+          pb: 10,
+        }}
+      >
         {messages.map((message, index) => (
           <MessageBox key={index} {...message} />
         ))}
@@ -188,11 +200,13 @@ const Page = () => {
         handleSave={handleSaveToken}
         currApiKey={currApiKey}
       />
-      <PersistentSearchBar
-        onSend={onSend}
-        openApiKeyDialog={handleDialogOpen}
-      />
-    </>
+      <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
+        <PersistentSearchBar
+          onSend={onSend}
+          openApiKeyDialog={handleDialogOpen}
+        />
+      </Box>
+    </Box>
   );
 };
 

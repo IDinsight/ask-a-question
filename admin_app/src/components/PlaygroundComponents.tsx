@@ -88,92 +88,102 @@ const PersistentSearchBar = ({
     <Box
       sx={{
         position: "fixed",
+        flexGrow: 1,
         bottom: 10,
-        left: 0,
-        right: 0,
-        background: "white",
-        boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
-        display: "flex",
-        alignItems: "center",
-        mx: 2,
+        width: "100%",
+        maxWidth: "lg",
+        left: "50%",
+        transform: "translateX(-50%)",
+        px: 2,
       }}
     >
-      <TextField
-        fullWidth
-        aria-label="search"
-        placeholder="Ask a question..."
-        value={queryText}
-        onChange={(e) => setQueryText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        sx={{ px: 0 }}
-        InputProps={{
-          style: {
-            padding: 3,
-            borderRadius: 0,
-          },
-          startAdornment: (
-            <InputAdornment position="start" sx={{ margin: 0 }}>
-              <Select
-                value={selectedOption}
-                onChange={handleSelectChange}
-                displayEmpty
-                inputProps={{ "aria-label": "Without label" }}
-                size="small"
-                sx={{
-                  marginRight: 1,
-                  marginTop: 2,
-                  marginBottom: 2,
-                  marginLeft: 0,
-                  minWidth: 160,
-                  background: "paper",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderRight: 1,
-                    borderLeft: 0,
-                    borderTop: 0,
-                    borderBottom: 0,
-                    borderRadius: 0,
-                    borderColor: appColors.lightGrey,
-                    "& .Mui-focused": {
-                      borderColor: "transparent",
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="embeddings-search" autoFocus={true}>
-                  <Typography variant="caption">Embedding Search</Typography>
-                </MenuItem>
-                <MenuItem value="llm-response">
-                  <Typography variant="caption">LLM Search</Typography>
-                </MenuItem>
-              </Select>
+      <Box
+        sx={{
+          display: "flex",
+          background: "white",
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
 
-              <IconButton
-                aria-label="toggle password visibility"
-                edge="start"
-                sx={{
-                  mx: 0.3,
-                }}
-                onClick={openApiKeyDialog}
-              >
-                <KeyIcon />
-              </IconButton>
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end" sx={{ pr: 2 }}>
-              <IconButton
-                onClick={() => {
-                  onSend(queryText, selectedOption);
-                  setQueryText("");
-                }}
-                edge="end"
-              >
-                <SendIcon />
-              </IconButton>
-            </InputAdornment>
-          ),
+          borderRadius: "12px",
         }}
-      />
+      >
+        <TextField
+          fullWidth
+          aria-label="search"
+          placeholder="Ask a question..."
+          value={queryText}
+          onChange={(e) => setQueryText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          sx={{
+            width: "100%",
+          }}
+          InputProps={{
+            style: {
+              borderRadius: "12px",
+            },
+            startAdornment: (
+              <InputAdornment position="start" sx={{ margin: 0 }}>
+                <Select
+                  value={selectedOption}
+                  onChange={handleSelectChange}
+                  displayEmpty
+                  inputProps={{ "aria-label": "Without label" }}
+                  size="small"
+                  sx={{
+                    marginRight: 1,
+                    marginTop: 2,
+                    marginBottom: 2,
+                    marginLeft: 0,
+                    minWidth: 160,
+                    background: "paper",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderRight: 1,
+                      borderLeft: 0,
+                      borderTop: 0,
+                      borderBottom: 0,
+                      borderRadius: 0,
+                      borderColor: appColors.lightGrey,
+                      "& .Mui-focused": {
+                        borderColor: "transparent",
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="embeddings-search" autoFocus={true}>
+                    <Typography variant="caption">Embedding Search</Typography>
+                  </MenuItem>
+                  <MenuItem value="llm-response">
+                    <Typography variant="caption">LLM Search</Typography>
+                  </MenuItem>
+                </Select>
+
+                <IconButton
+                  aria-label="toggle password visibility"
+                  edge="start"
+                  sx={{
+                    mx: 0.3,
+                  }}
+                  onClick={openApiKeyDialog}
+                >
+                  <KeyIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end" sx={{ pr: 2 }}>
+                <IconButton
+                  onClick={() => {
+                    onSend(queryText, selectedOption);
+                    setQueryText("");
+                  }}
+                  edge="end"
+                >
+                  <SendIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
     </Box>
   );
 };
@@ -239,10 +249,12 @@ const MessageBox = (message: Message) => {
     left: "50%",
     transform: "translate(-50%, -50%)",
     width: "80%",
+    maxHeight: "80%",
     flexGrow: 1,
     bgcolor: "background.paper",
     boxShadow: 24,
     p: 4,
+    overflow: "scroll",
   };
   return (
     <Box
