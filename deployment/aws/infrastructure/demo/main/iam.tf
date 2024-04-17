@@ -76,9 +76,10 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       "servicediscovery:ListServices",
       "servicediscovery:UpdateInstanceCustomHealthStatus",
       "servicediscovery:Get*",
-    "servicediscovery:List*"]
+      "servicediscovery:List*"]
     resources = [
       aws_service_discovery_service.backend.arn,
+      aws_service_discovery_service.litellm_proxy.arn
     ]
   }
 
@@ -121,7 +122,12 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     actions = [
       "ecs:DescribeServices",
     "ecs:UpdateService"]
-    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.nginx_service.id]
+    resources = [
+      aws_ecs_service.admin_app_service.id,
+      aws_ecs_service.backend_service.id,
+      aws_ecs_service.nginx_service.id,
+      aws_ecs_service.litellm_proxy_service.id
+    ]
   }
 
   statement {
