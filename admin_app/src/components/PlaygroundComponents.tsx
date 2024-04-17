@@ -194,6 +194,7 @@ const MessageSkeleton = () => {
         alignItems: "top", // Ensures vertical alignment is centered
         boxShadow: 0,
         py: 2,
+        px: 2,
         background: "white",
         width: "100%",
       }}
@@ -212,9 +213,9 @@ const MessageSkeleton = () => {
       </Avatar>
       <Skeleton
         sx={{
-          mx: 2,
-          my: 1,
+          mx: 1,
           flexGrow: 1,
+          maxWidth: "90%",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center", // Vertically centers the content if there's extra space
@@ -261,6 +262,7 @@ const MessageBox = (message: Message) => {
         alignItems: "top", // Ensures vertical alignment is centered
         boxShadow: 0,
         py: 2,
+        px: 2,
         background: "white",
         width: "100%",
       }}
