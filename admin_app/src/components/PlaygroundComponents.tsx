@@ -1,36 +1,34 @@
-import React, { useState } from "react";
 import { SelectChangeEvent } from "@mui/material";
+import React, { useState } from "react";
 
 import {
+  Alert,
+  Avatar,
   Box,
-  Typography,
+  Button,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Avatar,
-  Skeleton,
-  Button,
-  Modal,
-  Link,
   Fade,
-  InputAdornment,
-  MenuItem,
-  Select,
   IconButton,
+  InputAdornment,
+  Link,
+  MenuItem,
+  Modal,
+  Select,
+  Skeleton,
   Snackbar,
-  Alert,
+  Typography,
 } from "@mui/material";
 
+import { appColors, sizes } from "@/utils";
 import CloseIcon from "@mui/icons-material/Close";
-import { appColors, appStyles, sizes } from "@/utils";
-import TextField from "@mui/material/TextField";
-import PersonIcon from "@mui/icons-material/Person";
 import KeyIcon from "@mui/icons-material/Key";
+import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
-import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
 
 type QueryType = "embeddings-search" | "llm-response";
 
@@ -412,17 +410,17 @@ const ApiKeyDialog = ({
     </Dialog>
   );
 };
+export {
+  ApiKeyDialog,
+  ErrorSnackBar,
+  MessageBox,
+  MessageSkeleton,
+  PersistentSearchBar,
+};
 export type {
   Message,
+  QueryType,
+  ResponseMessage,
   ResponseSummary,
   UserMessage,
-  ResponseMessage,
-  QueryType,
-};
-export {
-  MessageBox,
-  PersistentSearchBar,
-  MessageSkeleton,
-  ErrorSnackBar,
-  ApiKeyDialog,
 };

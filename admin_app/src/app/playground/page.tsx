@@ -3,25 +3,21 @@
 // 3. Modal to add and save token
 // 5. QueryType to enum
 
-import React, { useState, useRef, useEffect } from "react";
-import { SelectChangeEvent } from "@mui/material";
 import { apiCalls } from "@/utils/api";
+import React, { useEffect, useRef, useState } from "react";
 
-import { sizes } from "@/utils";
 import {
+  ApiKeyDialog,
+  ErrorSnackBar,
   Message,
+  MessageBox,
+  MessageSkeleton,
+  PersistentSearchBar,
+  QueryType,
   ResponseSummary,
   UserMessage,
-  ResponseMessage,
-  QueryType,
-  MessageBox,
-  PersistentSearchBar,
-  MessageSkeleton,
-  ErrorSnackBar,
-  ApiKeyDialog,
 } from "@/components/PlaygroundComponents";
-import { Box, Typography, Skeleton, Avatar } from "@mui/material";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
+import { Box } from "@mui/material";
 
 const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
