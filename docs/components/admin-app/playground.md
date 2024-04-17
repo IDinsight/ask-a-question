@@ -3,7 +3,6 @@
 The __Playground__ allows you to test the Question Answering service using a simple
 chat window.
 
-<img src="../playground.png" alt="playground-screenshot" style="border: 1px solid  lightgray;">
-
-When accessing it for the first time, you will need to provide the Beaerer token to access
+![Playground Screenshot](./playground.png)
+When accessing it for the first time, you will need to provide the Bearer token to access
 the backend APIs.
