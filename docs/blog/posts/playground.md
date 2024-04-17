@@ -27,7 +27,6 @@ by the server. This include debugging information that may be useful in understa
 
 ![Playground JSON](../images/playground-json.png)
 
-Let us know what you think!
 
 ## Doc references
 

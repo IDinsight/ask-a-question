@@ -149,7 +149,11 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
         let resp = response.json();
         return resp;
       } else {
-        throw new Error("Error fetching embedding search");
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching embeddings response: ${errData.message} Status: ${response.status}`,
+          );
+        });
       }
     })
     .catch((error) => {
@@ -175,7 +179,11 @@ const getLLMResponse = async (search: string, token: string) => {
         let resp = response.json();
         return resp;
       } else {
-        throw new Error("Error fetching llm response");
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching llm response: ${errData.message} Status: ${response.status}`,
+          );
+        });
       }
     })
     .catch((error) => {

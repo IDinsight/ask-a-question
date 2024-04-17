@@ -54,11 +54,6 @@ interface ResponseMessage extends BaseMessage {
   json: string;
 }
 
-interface MessageBoxProps {
-  message: Message;
-  index: number;
-}
-
 type Message = UserMessage | ResponseMessage;
 
 const PersistentSearchBar = ({
@@ -86,7 +81,6 @@ const PersistentSearchBar = ({
     <Box
       sx={{
         position: "fixed",
-        flexGrow: 1,
         bottom: 10,
         width: "100%",
         maxWidth: "lg",
@@ -254,6 +248,7 @@ const MessageBox = (message: Message) => {
     boxShadow: 24,
     p: 4,
     overflow: "scroll",
+    borderRadius: "10px",
   };
   return (
     <Box
@@ -306,6 +301,7 @@ const MessageBox = (message: Message) => {
             variant="caption"
             align="right"
             underline="hover"
+            sx={{ cursor: "pointer" }}
           >
             {"<json>"}
           </Link>
@@ -330,7 +326,16 @@ const MessageBox = (message: Message) => {
               id="modal-modal-description"
               sx={{ mt: 2 }}
             >
-              <pre>
+              <pre
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  border: "1px solid #ccc",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  overflowX: "auto",
+                  fontFamily: "Courier, monospace",
+                }}
+              >
                 {"json" in message
                   ? JSON.stringify(message.json, null, 2)
                   : "No JSON message found"}
