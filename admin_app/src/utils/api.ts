@@ -135,39 +135,55 @@ const getLoginToken = async (username: string, password: string) => {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/embeddings-search`, {
+  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
+  return fetch(embeddingUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ query_text: search }),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error fetching embedding search");
-    }
-  });
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        throw new Error("Error fetching embedding search");
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
+          error.message,
+      );
+    });
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/llm-response`, {
+  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
+  return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ query_text: search }),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error fetching llm response");
-    }
-  });
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        throw new Error("Error fetching llm response");
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
+          error.message,
+      );
+    });
 };
 
 export const apiCalls = {

@@ -74,6 +74,18 @@ const Page = () => {
     ]);
   };
 
+  const processErrorMessage = (error: Error) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        dateTime: new Date().toISOString(),
+        type: "response",
+        content: "API call failed. See JSON for details.",
+        json: `{error: ${error.message}}`,
+      },
+    ]);
+  };
+
   const onSend = (queryText: string, queryType: QueryType) => {
     if (queryText === "") {
       return;
@@ -103,7 +115,8 @@ const Page = () => {
             processEmbeddingsSearchResponse(response);
           })
           .catch((error: Error) => {
-            setError("Embeddings search failed. See console for details.");
+            setError("Embeddings search failed.");
+            processErrorMessage(error);
             console.error(error);
           })
           .finally(() => {
@@ -116,7 +129,8 @@ const Page = () => {
             processLLMSearchResponse(response);
           })
           .catch((error: Error) => {
-            setError("LLM Response failed. See console for details.");
+            setError("LLM Response failed.");
+            processErrorMessage(error);
             console.error(error);
           })
           .finally(() => {

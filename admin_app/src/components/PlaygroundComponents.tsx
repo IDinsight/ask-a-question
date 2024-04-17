@@ -27,7 +27,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import KeyIcon from "@mui/icons-material/Key";
 import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
 
 type QueryType = "embeddings-search" | "llm-response";
@@ -209,7 +209,7 @@ const MessageSkeleton = () => {
           bgcolor: "secondary.main",
         }}
       >
-        <SmartToyIcon />
+        <AutoAwesomeIcon />
       </Avatar>
       <Skeleton
         sx={{
@@ -278,7 +278,7 @@ const MessageBox = (message: Message) => {
             message.type === "question" ? "primary.main" : "secondary.main",
         }}
       >
-        {message.type === "question" ? <PersonIcon /> : <SmartToyIcon />}
+        {message.type === "question" ? <PersonIcon /> : <AutoAwesomeIcon />}
       </Avatar>
       <Box
         sx={{
