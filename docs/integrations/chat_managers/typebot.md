@@ -32,7 +32,7 @@ You can now access Typebot at `https://[DOMAIN]/`
 1. Go to the URL where the app is running
 2. Make an account and login
 3. Go to "Create a typebot" and then "Import a file"
-4. Load the `.json` file given under `chat_managers/typebot/` in this repo
+4. Load the `.json` file given under `chat_managers/typebot/` in the [AAQ repo](https://github.com/IDinsight/aaq-core)
 5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running
 
     a. Click on the card

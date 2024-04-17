@@ -43,7 +43,7 @@ Follow the official docs [here](https://v12.botpress.com/) to set up Botpress v1
 1. Go to the URL where the app is running
 2. Make an account and login
 3. Go to "Create Bot" and then "Import Existing" (you can set Bot ID to anything you want)
-4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in this repo
+4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in the [AAQ repo](https://github.com/IDinsight/aaq-core)
 5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running *
 
     a. Click on the card
