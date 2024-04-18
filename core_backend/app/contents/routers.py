@@ -22,7 +22,7 @@ router = APIRouter(prefix="/content")
 logger = setup_logger()
 
 
-@router.post("/create", response_model=ContentRetrieve)
+@router.post("/", response_model=ContentRetrieve)
 async def create_content(
     content: ContentCreate,
     full_access_user: Annotated[
@@ -39,7 +39,7 @@ async def create_content(
     return _convert_record_to_schema(content_db)
 
 
-@router.put("/{content_id}/edit", response_model=ContentRetrieve)
+@router.put("/{content_id}", response_model=ContentRetrieve)
 async def edit_content(
     content_id: int,
     content: ContentCreate,
@@ -69,7 +69,7 @@ async def edit_content(
     return _convert_record_to_schema(updated_content)
 
 
-@router.get("/list", response_model=list[ContentRetrieve])
+@router.get("/", response_model=list[ContentRetrieve])
 async def retrieve_content(
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
@@ -88,7 +88,7 @@ async def retrieve_content(
     return contents
 
 
-@router.delete("/{content_id}/delete")
+@router.delete("/{content_id}")
 async def delete_content(
     content_id: int,
     full_access_user: Annotated[
