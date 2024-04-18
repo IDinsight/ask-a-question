@@ -22,9 +22,9 @@ This shift is a step towards cleaner maintainable code and a commitment to provi
 | Old UI                                                                | MUI                                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Main page                                                             |
-| ![old UI main screenshot](../images/mui_switch/old_main.png) | ![MUI main screenshot](../images/mui_switch/mui_main.png) |
+| ![old UI main screenshot](../images/move_to_mui/old_main.png) | ![MUI main screenshot](../images/move_to_mui/mui_main.png) |
 | Edit page                                                             |
-| ![old UI edit screenshot](../images/mui_switch/old_edit.png) | ![MUI edit screenshot](../images/mui_switch/mui_edit.png) |
+| ![old UI edit screenshot](../images/move_to_mui/old_edit.png) | ![MUI edit screenshot](../images/move_to_mui/mui_edit.png) |
 
 We're already starting to see some benefits of moving to Material UI:
 

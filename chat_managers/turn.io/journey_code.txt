@@ -1,0 +1,82 @@
+interaction_timeout(120)
+
+card Greeting, then: Question do
+  text("Hi!")
+end
+
+card Question, then: AAQ_LLM_Call do
+  question =
+    ask("What's your question?")
+end
+
+card AAQ_LLM_Call, then: Response do
+  response =
+    post("https://<INSERT_AAQ_URL>/api/llm-response",
+      # milliseconds
+      timeout: 20_000,
+      body: """
+      {
+        "query_text": "@question",
+        "query_metadata": {}
+      }
+      """,
+      headers: [
+        ["content-type", "application/json"],
+        ["Authorization", "Bearer <INSERT_AAQ_TOKEN>"]
+      ]
+    )
+
+  # log("@response")
+end
+
+# if Turn fails to reach AAQ:
+card Response when not response.status, then: AnotherQuestion do
+  text("""
+  Turn.io is having trouble connecting to AAQ.
+
+  The error was:
+
+  ```@response.body```
+  """)
+end
+
+# if AAQ responds with non-200 response
+card Response when response.status != 200, then: AnotherQuestion do
+  text("""
+  Apologies but we are not able to answer that question.
+
+  The response error was:
+
+  ```Error type: @response.body.error_type```
+  ```@response.body.error_message```
+  """)
+end
+
+# if AAQ responds with 200 response but llm_response is empty due to alignscore fail
+# we respond with 200 so that best-match FAQs are still accessible
+card Response when response.body.state == "error", then: AnotherQuestion do
+  text("""
+  Apologies but we are not able to answer that question.
+
+  ```Reason: @response.body.debug_info.reason```
+  """)
+end
+
+# if AAQ successfully responds
+card Response, then: AnotherQuestion do
+  message = response.body.llm_response
+  text("@message")
+end
+
+card AnotherQuestion, then: AAQ_LLM_Call do
+  buttons([Yes, No]) do
+    text("Do you want to ask another question?")
+  end
+end
+
+card No do
+  text("Bye!")
+end
+
+card Yes, then: Question do
+end
