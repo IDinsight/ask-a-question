@@ -134,6 +134,66 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getEmbeddingsSearch = async (search: string, token: string) => {
+  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
+  return fetch(embeddingUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching embeddings response: ${errData.message} Status: ${response.status}`,
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
+          error.message,
+      );
+    });
+};
+
+const getLLMResponse = async (search: string, token: string) => {
+  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
+  return fetch(llmResponseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching llm response: ${errData.message} Status: ${response.status}`,
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
+          error.message,
+      );
+    });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
@@ -142,4 +202,6 @@ export const apiCalls = {
   editContent,
   addContent,
   getLoginToken,
+  getEmbeddingsSearch,
+  getLLMResponse,
 };
