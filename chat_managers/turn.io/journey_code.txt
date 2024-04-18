@@ -25,6 +25,7 @@ card AAQ_LLM_Call, then: Response do
         ["Authorization", "Bearer <INSERT_AAQ_TOKEN>"]
       ]
     )
+
   # log("@response")
 end
 
@@ -48,6 +49,16 @@ card Response when response.status != 200, then: AnotherQuestion do
 
   ```Error type: @response.body.error_type```
   ```@response.body.error_message```
+  """)
+end
+
+# if AAQ responds with 200 response but llm_response is empty due to alignscore fail
+# we respond with 200 so that best-match FAQs are still accessible
+card Response when response.body.state == "error", then: AnotherQuestion do
+  text("""
+  Apologies but we are not able to answer that question.
+
+  ```Reason: @response.body.debug_info.reason```
   """)
 end
 
