@@ -40,7 +40,7 @@ Potential downsides include:
 - A possible increase in latency
 - A new Docker container in our stack which, despite its name, it not "lite"!
 
-## Docs reference
+## Docs references
 
 - [LLM Proxy Server](../../components/litellm-proxy/index.md)
 - [Dev setup](../../develop/setup.md)
