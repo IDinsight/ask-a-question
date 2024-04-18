@@ -42,11 +42,10 @@ nav:
   - Integrations:
       - integrations/index.md
       - Chat Managers:
-          - integrations/chat_managers/index.md
           - Typebot: integrations/chat_managers/typebot.md
           - Botpress: integrations/chat_managers/botpress_v12.md
+          - Turn.io: integrations/chat_managers/turn.md
       - WhatsApp Connector:
-          - integrations/whatsapp/index.md
           - Setup: integrations/whatsapp/setup.md
           - Testing: integrations/whatsapp/testing.md
 
