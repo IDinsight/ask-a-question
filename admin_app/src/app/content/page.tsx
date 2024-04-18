@@ -132,18 +132,32 @@ const CardsGrid = ({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "50vh",
-          width: "100%",
-        }}
-      >
-        <CircularProgress />
-      </div>
+      <>
+        <Layout.FlexBox
+          bgcolor="lightgray.main"
+          sx={{
+            mx: sizes.baseGap,
+            py: sizes.tinyGap,
+            width: "98%",
+            minHeight: "660px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50vh",
+              width: "100%",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        </Layout.FlexBox>
+        <PageNavigation page={1} setPage={setPage} max_pages={1} />
+        <Layout.Spacer multiplier={1} />
+      </>
     );
   }
   return (

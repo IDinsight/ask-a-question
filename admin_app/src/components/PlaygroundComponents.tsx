@@ -1,3 +1,5 @@
+import { keyframes } from "@emotion/react";
+import styled from "@emotion/styled";
 import { SelectChangeEvent } from "@mui/material";
 import React, { useState } from "react";
 
@@ -17,7 +19,6 @@ import {
   MenuItem,
   Modal,
   Select,
-  Skeleton,
   Snackbar,
   Typography,
 } from "@mui/material";
@@ -180,6 +181,30 @@ const PersistentSearchBar = ({
   );
 };
 
+// For 3-dot typing animation
+const typing = keyframes`
+  from { opacity: 0 }
+  to { opacity: 1 }
+`;
+const Fader = styled("div")`
+  animation: ${typing} 1s infinite;
+  &:nth-of-type(2) {
+    animation-delay: 0.2s;
+  }
+  &:nth-of-type(3) {
+    animation-delay: 0.4s;
+  }
+`;
+const TypingAnimation = () => {
+  return (
+    <Box sx={{ display: "flex", fontSize: "1.3rem" }}>
+      <Fader>.</Fader>
+      <Fader>.</Fader>
+      <Fader>.</Fader>
+    </Box>
+  );
+};
+
 const MessageSkeleton = () => {
   return (
     <Box
@@ -205,19 +230,15 @@ const MessageSkeleton = () => {
       >
         <AutoAwesomeIcon />
       </Avatar>
-      <Skeleton
+      <Box
         sx={{
-          mx: 1,
-          flexGrow: 1,
-          maxWidth: "90%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center", // Vertically centers the content if there's extra space
+          py: 0.5,
+          px: 1.5,
         }}
-        variant="text"
-        width={100}
-        height={60}
-      />
+      >
+        <TypingAnimation />
+      </Box>
     </Box>
   );
 };
