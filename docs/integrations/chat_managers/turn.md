@@ -1,4 +1,4 @@
-# Turn.io
+# ![turn logo](./turn_logo.png){ width="30" } Turn.io
 
 Below is an example of how to connect a [Turn.io Journey](https://whatsapp.turn.io/docs/build/journeys_overview) to AAQ endpoints.
 

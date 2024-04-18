@@ -22,7 +22,7 @@ The rest of the docs have now also been restructured to make it easy to parse.
 A lot of the index pages now show cards like the one shown below. These should
 make it easy to grasp the content in section in a glance.
 
-![Manage Content Screenshot](../images/cards.png)
+![Manage Content Screenshot](../images/cards.png){: .blog-img }
 
 ## Process Flow Diagrams
 
@@ -31,4 +31,4 @@ make it easy to grasp the content in section in a glance.
 pages both now show process flow diagrams. It should make it a lot easier to understand
 what is happening under the hood when you call either of these endopints.
 
-![LLM Process Flow](../images/llm-response-processflow.png)
+![LLM Process Flow](../images/llm-response-processflow.png){: .blog-img }

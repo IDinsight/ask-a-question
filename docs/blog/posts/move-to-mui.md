@@ -7,7 +7,7 @@ category:
 date: 2024-03-22
 ---
 
-# Hello Material UI!
+# Hello Material UI
 
 We've switched to MaterialUI: Cleaner, easier to build and maintain, more familiar.
 
@@ -22,9 +22,9 @@ This shift is a step towards cleaner maintainable code and a commitment to provi
 | Old UI                                                                | MUI                                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Main page                                                             |
-| ![old UI main screenshot](../images/move_to_mui/old_main.png) | ![MUI main screenshot](../images/move_to_mui/mui_main.png) |
+| ![old UI main screenshot](../images/move_to_mui/old_main.png){: .blog-img } | ![MUI main screenshot](../images/move_to_mui/mui_main.png){: .blog-img } |
 | Edit page                                                             |
-| ![old UI edit screenshot](../images/move_to_mui/old_edit.png) | ![MUI edit screenshot](../images/move_to_mui/mui_edit.png) |
+| ![old UI edit screenshot](../images/move_to_mui/old_edit.png){: .blog-img } | ![MUI edit screenshot](../images/move_to_mui/mui_edit.png){: .blog-img } |
 
 We're already starting to see some benefits of moving to Material UI:
 
