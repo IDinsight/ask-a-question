@@ -59,24 +59,6 @@ const deleteContent = async (content_id: number, token: string) => {
   });
 };
 
-const createContent = async (content: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
-    }
-  });
-};
-
 const editContent = async (
   content_id: number,
   content: ContentBody,
@@ -198,7 +180,6 @@ export const apiCalls = {
   getContentList,
   getContent,
   deleteContent,
-  createContent,
   editContent,
   addContent,
   getLoginToken,
