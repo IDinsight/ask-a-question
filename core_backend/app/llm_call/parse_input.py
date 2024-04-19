@@ -77,9 +77,9 @@ async def _classify_safety(
                 error_type=ErrorType.QUERY_UNSAFE,
             )
             error_response.debug_info.update(response.debug_info)
-            error_response.debug_info[
-                "safety_classification"
-            ] = safety_classification.value
+            error_response.debug_info["safety_classification"] = (
+                safety_classification.value
+            )
             error_response.debug_info["query_text"] = question.query_text
             logger.info(
                 (

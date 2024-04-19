@@ -187,6 +187,7 @@ const Page = () => {
       display="flex"
       flexDirection="column"
       alignItems="center"
+      bgcolor="white"
       sx={{ height: "100vh", width: "100%", pb: 10 }}
     >
       <Box
