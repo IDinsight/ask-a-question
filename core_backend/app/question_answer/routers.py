@@ -2,6 +2,7 @@ from typing import Tuple
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import auth_bearer_token
@@ -236,7 +237,21 @@ async def content_feedback(
             },
         )
     else:
-        feedback_db = await save_content_feedback_to_db(feedback, asession)
+        try:
+            feedback_db = await save_content_feedback_to_db(feedback, asession)
+        except IntegrityError as e:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": (f"Content id: {feedback.content_id} does not exist. "),
+                    "details": {
+                        "content_id": feedback.content_id,
+                        "query_id": feedback.query_id,
+                        "exception": "IntegrityError",
+                        "exception_details": str(e),
+                    },
+                },
+            )
         await update_votes_in_db(
             feedback.content_id, feedback.feedback_sentiment, asession
         )
