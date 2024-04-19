@@ -142,6 +142,8 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_title=record.content_title,
         content_text=record.content_text,
         content_language=record.content_language,
+        positive_votes=record.positive_votes,
+        negative_votes=record.negative_votes,
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,

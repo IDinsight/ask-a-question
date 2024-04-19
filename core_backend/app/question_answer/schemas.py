@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import Dict, Literal, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, ConfigDict
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
+from ..schemas import FeedbackSentiment
 
 
 class UserQueryBase(BaseModel):
@@ -94,8 +95,18 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int
-    feedback_sentiment: Literal["positive", "negative", "neutral"] = "neutral"
+    feedback_sentiment: FeedbackSentiment = FeedbackSentiment.NEUTRAL
     feedback_text: Optional[str] = None
     feedback_secret_key: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContentFeedback(ResponseFeedbackBase):
+    """
+    Pydantic model for content feedback
+    """
+
+    content_id: int
 
     model_config = ConfigDict(from_attributes=True)
