@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..models import Base, JSONDict
 from .schemas import (
-    FeedbackBase,
+    ResponseFeedbackBase,
     UserQueryBase,
     UserQueryResponse,
     UserQueryResponseError,
@@ -36,8 +36,8 @@ class UserQueryDB(Base):
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-    feedback: Mapped[List["FeedbackDB"]] = relationship(
-        "FeedbackDB", back_populates="query", lazy=True
+    feedback: Mapped[List["ResponseFeedbackDB"]] = relationship(
+        "ResponseFeedbackDB", back_populates="query", lazy=True
     )
     response: Mapped[List["UserQueryResponseDB"]] = relationship(
         "UserQueryResponseDB", back_populates="query", lazy=True
@@ -174,7 +174,7 @@ async def save_query_response_error_to_db(
     return user_query_response_error_db
 
 
-class FeedbackDB(Base):
+class ResponseFeedbackDB(Base):
     """
     SQLAlchemy data model for feedback provided by user
     """
@@ -200,14 +200,14 @@ class FeedbackDB(Base):
         )
 
 
-async def save_feedback_to_db(
-    feedback: FeedbackBase,
+async def save_response_feedback_to_db(
+    feedback: ResponseFeedbackBase,
     asession: AsyncSession,
-) -> FeedbackDB:
+) -> ResponseFeedbackDB:
     """
     Saves feedback to the database.
     """
-    feedback_db = FeedbackDB(
+    feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=datetime.utcnow(),
         query_id=feedback.query_id,
         feedback_text=feedback.feedback_text,

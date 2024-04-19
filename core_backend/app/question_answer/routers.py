@@ -20,13 +20,13 @@ from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
     check_secret_key_match,
-    save_feedback_to_db,
     save_query_response_error_to_db,
     save_query_response_to_db,
+    save_response_feedback_to_db,
     save_user_query_to_db,
 )
 from .schemas import (
-    FeedbackBase,
+    ResponseFeedbackBase,
     ResultState,
     UserQueryBase,
     UserQueryRefined,
@@ -182,9 +182,9 @@ async def get_semantic_matches(
     return response
 
 
-@router.post("/feedback")
+@router.post("/response-feedback")
 async def feedback(
-    feedback: FeedbackBase, asession: AsyncSession = Depends(get_async_session)
+    feedback: ResponseFeedbackBase, asession: AsyncSession = Depends(get_async_session)
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on the results returned
@@ -202,7 +202,7 @@ async def feedback(
             },
         )
     else:
-        feedback_db = await save_feedback_to_db(feedback, asession)
+        feedback_db = await save_response_feedback_to_db(feedback, asession)
         return JSONResponse(
             status_code=200,
             content={

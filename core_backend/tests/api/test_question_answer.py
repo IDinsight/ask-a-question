@@ -68,10 +68,11 @@ class TestEmbeddingsSearch:
         feedback_secret_key = question_response["feedback_secret_key"]
 
         response = client.post(
-            "/feedback",
+            "/response-feedback",
             json={
                 "feedback_text": "This is feedback",
                 "query_id": query_id,
+                "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -83,7 +84,7 @@ class TestEmbeddingsSearch:
     ) -> None:
         query_id = question_response["query_id"]
         response = client.post(
-            "/feedback",
+            "/response-feedback",
             json={
                 "feedback_text": "This feedback has the wrong secret key",
                 "query_id": query_id,
@@ -98,7 +99,7 @@ class TestEmbeddingsSearch:
     ) -> None:
         feedback_secret_key = question_response["feedback_secret_key"]
         response = client.post(
-            "/feedback",
+            "/response-feedback",
             json={
                 "feedback_text": "This feedback has the wrong query id",
                 "query_id": 99999,
@@ -107,6 +108,39 @@ class TestEmbeddingsSearch:
             headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
         )
         assert response.status_code == 400
+
+    def test_feedback_incorrect_sentiment(
+        self, client: TestClient, question_response: Dict[str, Any]
+    ) -> None:
+        query_id = question_response["query_id"]
+        feedback_secret_key = question_response["feedback_secret_key"]
+        response = client.post(
+            "/response-feedback",
+            json={
+                "feedback_text": "This feedback has the wrong sentiment",
+                "query_id": query_id,
+                "feedback_sentimemt": "incorrect",
+                "feedback_secret_key": feedback_secret_key,
+            },
+            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+        )
+        assert response.status_code == 400
+
+    def test_feedback_sentiment_only(
+        self, client: TestClient, question_response: Dict[str, Any]
+    ) -> None:
+        query_id = question_response["query_id"]
+        feedback_secret_key = question_response["feedback_secret_key"]
+        response = client.post(
+            "/response-feedback",
+            json={
+                "query_id": query_id,
+                "feedback_sentiment": "positive",
+                "feedback_secret_key": feedback_secret_key,
+            },
+            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+        )
+        assert response.status_code == 200
 
 
 class TestLLMSearch:

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -88,13 +88,14 @@ class UserQueryResponseError(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FeedbackBase(BaseModel):
+class ResponseFeedbackBase(BaseModel):
     """
     Pydantic model for feedback
     """
 
     query_id: int
-    feedback_text: str
+    feedback_sentiment: Literal["positive", "negative", "neutral"] = "neutral"
+    feedback_text: Optional[str] = None
     feedback_secret_key: str
 
     model_config = ConfigDict(from_attributes=True)
