@@ -184,8 +184,9 @@ class ResponseFeedbackDB(Base):
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
+    feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
-    feedback_text: Mapped[str] = mapped_column(String, nullable=False)
+    feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     query: Mapped[UserQueryDB] = relationship(
@@ -209,6 +210,7 @@ async def save_response_feedback_to_db(
     """
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=datetime.utcnow(),
+        feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         feedback_text=feedback.feedback_text,
     )

@@ -119,12 +119,12 @@ class TestEmbeddingsSearch:
             json={
                 "feedback_text": "This feedback has the wrong sentiment",
                 "query_id": query_id,
-                "feedback_sentimemt": "incorrect",
+                "feedback_sentiment": "incorrect",
                 "feedback_secret_key": feedback_secret_key,
             },
             headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
         )
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_feedback_sentiment_only(
         self, client: TestClient, question_response: Dict[str, Any]
