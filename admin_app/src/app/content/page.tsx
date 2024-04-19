@@ -212,6 +212,8 @@ const CardsGrid = ({
                       text={item.content_text}
                       content_id={item.content_id}
                       last_modified={item.updated_datetime_utc}
+                      positive_votes={item.positive_votes}
+                      negative_votes={item.negative_votes}
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
