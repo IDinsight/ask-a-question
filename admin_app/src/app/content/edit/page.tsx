@@ -102,7 +102,7 @@ const ContentBox = ({
 
     const promise =
       content.content_id === null
-        ? apiCalls.addContent(body, token!)
+        ? apiCalls.createContent(body, token!)
         : apiCalls.editContent(content.content_id, body, token!);
 
     const result = promise
