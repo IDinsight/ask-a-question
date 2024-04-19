@@ -81,7 +81,7 @@ const editContent = async (
   });
 };
 
-const addContent = async (content: ContentBody, token: string) => {
+const createContent = async (content: ContentBody, token: string) => {
   return fetch(`${BACKEND_ROOT_PATH}/content`, {
     method: "POST",
     headers: {
@@ -94,7 +94,7 @@ const addContent = async (content: ContentBody, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error adding content");
+      throw new Error("Error creating content");
     }
   });
 };
@@ -181,7 +181,7 @@ export const apiCalls = {
   getContent,
   deleteContent,
   editContent,
-  addContent,
+  createContent,
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
