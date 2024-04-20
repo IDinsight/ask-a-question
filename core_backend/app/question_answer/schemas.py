@@ -95,7 +95,7 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int
-    feedback_sentiment: FeedbackSentiment = FeedbackSentiment.NEUTRAL
+    feedback_sentiment: FeedbackSentiment = FeedbackSentiment.UNKNOWN
     feedback_text: Optional[str] = None
     feedback_secret_key: str
 

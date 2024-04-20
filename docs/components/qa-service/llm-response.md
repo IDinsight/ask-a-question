@@ -3,7 +3,7 @@
 
 ![LLM Response](./llm-response-screenshot.png)
 
-This service returns uses most similar content in the database to construct a
+This service uses most similar content in the database to construct a
 custom answer for the user.
 
 See OpenAPI specification or SwaggerUI for more details on how to call the service.

@@ -8,4 +8,4 @@ class FeedbackSentiment(str, Enum):
 
     POSITIVE = "positive"
     NEGATIVE = "negative"
-    NEUTRAL = "neutral"
+    UNKNOWN = "unknown"
