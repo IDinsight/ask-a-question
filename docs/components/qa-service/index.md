@@ -30,8 +30,8 @@ There are two major endpoints that your application can integrate with:
 The service also provides two endpoint to capture feedback from users. One to capture
 feedback for the response returned and the other for the content items retrieved.
 
-For both of these, you can provide feedback as sentiment ("positive", "negative", "neutral"),
-as text, or both.
+For both of these, you can provide feedback as sentiment ("positive", "negative"),
+as text, or as both.
 
 
 <div class="grid cards" markdown>

@@ -181,7 +181,7 @@ async def save_query_response_error_to_db(
 
 class ResponseFeedbackDB(Base):
     """
-    SQLAlchemy data model for feedback provided by user
+    SQLAlchemy data model for feedback provided by user for responses
     """
 
     __tablename__ = "response_feedback"
@@ -226,6 +226,9 @@ async def save_response_feedback_to_db(
 
 
 class ContentFeedbackDB(Base):
+    """
+    SQLAlchemy data model for feedback provided by user for content
+    """
 
     __tablename__ = "content_feedback"
 
