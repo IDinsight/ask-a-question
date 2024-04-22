@@ -13,7 +13,8 @@ except ImportError:
 
 
 parser = argparse.ArgumentParser(
-    description="Bulk add content to the database from a CSV file.",
+    description="Bulk add content to the database from a CSV file."
+    "Expects the CSV file to have columns: title, body. (optionally, language)",
     usage="""
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
 
@@ -24,11 +25,13 @@ parser = argparse.ArgumentParser(
         --language ENGLISH
 """,
 )
-parser.add_argument("--csv", help="Path to the CSV file", required=True)
+parser.add_argument(
+    "--csv", help="Path to the CSV file with columns: title, body", required=True
+)
 parser.add_argument("--domain", help="Your AAQ domain", required=True)
 parser.add_argument(
     "--language",
-    help="Language of the content, if it is the same for the whole file",
+    help="Language of the content, if it is the same for the whole file.",
     required=False,
 )
 args = parser.parse_args()
