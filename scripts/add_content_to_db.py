@@ -12,7 +12,18 @@ except ImportError:
     )
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description="Bulk add content to the database from a CSV file.",
+    usage="""
+    python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
+
+    (example)
+    python add_content_to_db.py \\
+        --csv content.csv \\
+        --domain aaq.idinsight.com \\
+        --language ENGLISH
+""",
+)
 parser.add_argument("--csv", help="Path to the CSV file", required=True)
 parser.add_argument("--domain", help="Your AAQ domain", required=True)
 parser.add_argument(
