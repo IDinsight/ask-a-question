@@ -13,8 +13,9 @@ except ImportError:
 
 
 parser = argparse.ArgumentParser(
-    description="Bulk add content to the database from a CSV file."
-    "Expects the CSV file to have columns: title, body. (optionally, language)",
+    description="Bulk add content to the database from a CSV file. "
+    "Expects the CSV file to have columns: title, body. (Optionally, language. "
+    "See also the --language option.)",
     usage="""
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
 
