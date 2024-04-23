@@ -49,7 +49,16 @@ class ContentDB(Base):
 
     def __repr__(self) -> str:
         """Pretty Print"""
-        return f"<Content #{self.content_id}:  {self.content_text}>"
+        return (
+            f"ContentDB(content_id={self.content_id}, "
+            f"content_embedding=..., "
+            f"content_title={self.content_title}, "
+            f"content_text={self.content_text}, "
+            f"content_language={self.content_language}, "
+            f"content_metadata={self.content_metadata}, "
+            f"created_datetime_utc={self.created_datetime_utc}, "
+            f"updated_datetime_utc={self.updated_datetime_utc})"
+        )
 
 
 async def save_content_to_db(
