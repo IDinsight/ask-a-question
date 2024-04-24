@@ -25,7 +25,7 @@ services:
       args:
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
     command: >
-      npm start
+      node server.js
     depends_on:
       - core_backend
     restart: always
