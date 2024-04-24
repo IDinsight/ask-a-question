@@ -128,10 +128,7 @@ async def _identify_language(
             IdentifiedLanguage.get_prompt(),
             litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         )
-        if identified_lang in IdentifiedLanguage.get_supported_languages():
-            question.original_language = getattr(IdentifiedLanguage, identified_lang)
-        else:
-            question.original_language = IdentifiedLanguage.UNKNOWN
+        question.original_language = getattr(IdentifiedLanguage, identified_lang)
 
         if question.original_language is not None:
             response.debug_info["original_language"] = question.original_language.value
@@ -182,12 +179,29 @@ async def _translate_question(
             )
         )
 
-    if question.original_language == IdentifiedLanguage.UNKNOWN:
+    if question.original_language == IdentifiedLanguage.UNSUPPORTED:
         supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
 
         error_response = UserQueryResponseError(
             error_message=STANDARD_FAILURE_MESSAGE
             + f" Only the following languages are supported: {supported_languages}. ",
+            query_id=response.query_id,
+            error_type=ErrorType.UNSUPPORTED_LANGUAGE,
+        )
+
+        logger.info(
+            "TRANSLATION FAILED due to UNSUPPORTED language on query id: "
+            + str(response.query_id)
+        )
+
+        return question, error_response
+    elif question.original_language == IdentifiedLanguage.UNKNOWN:
+        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+
+        error_response = UserQueryResponseError(
+            error_message=STANDARD_FAILURE_MESSAGE
+            + " Unknown language. The following languages are supported: "
+            f"{supported_languages}. ",
             query_id=response.query_id,
             error_type=ErrorType.UNKNOWN_LANGUAGE,
         )
