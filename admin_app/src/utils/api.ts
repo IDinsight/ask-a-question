@@ -26,7 +26,7 @@ const getContentList = async (token: string) => {
 };
 
 const getContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ const getContent = async (content_id: number, token: string) => {
 };
 
 const deleteContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +64,7 @@ const editContent = async (
   content: ContentBody,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
