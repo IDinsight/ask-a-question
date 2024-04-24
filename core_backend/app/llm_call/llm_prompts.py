@@ -69,7 +69,7 @@ class IdentifiedLanguage(str, Enum):
     ZULU = "ZULU"
     AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
-    UNKNOWN = "UNKNOWN"
+    UNINTELLIGIBLE = "UNINTELLIGIBLE"
     UNSUPPORTED = "UNSUPPORTED"
 
     @classmethod
@@ -80,7 +80,7 @@ class IdentifiedLanguage(str, Enum):
         return [
             lang
             for lang in cls._member_names_
-            if lang not in ("UNKNOWN", "UNSUPPORTED")
+            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
         ]
 
     @classmethod

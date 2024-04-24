@@ -239,7 +239,7 @@ class TestLLMSearch:
 
 
 class TestErrorResponses:
-    VALID_LANGUAGE = IdentifiedLanguage.get_supported_languages()[-1]
+    SUPPORTED_LANGUAGE = IdentifiedLanguage.get_supported_languages()[-1]
 
     @pytest.fixture
     def user_query_response(
@@ -267,8 +267,13 @@ class TestErrorResponses:
         )
 
     @pytest.mark.parametrize(
-        "user_query_refined,should_error",
-        [("ENGLISH", False), ("MADE_UP_LANGUAGE", True), (VALID_LANGUAGE, False)],
+        "user_query_refined,should_error,expected_error_type",
+        [
+            ("ENGLISH", False, None),
+            ("GIBBERISH", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("VALID_UNSUPPORTED_LANGAUGE", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            (SUPPORTED_LANGUAGE, False, None),
+        ],
         indirect=["user_query_refined"],
     )
     async def test_translate_error(
@@ -276,6 +281,7 @@ class TestErrorResponses:
         user_query_refined: UserQueryRefined,
         user_query_response: UserQueryResponse,
         should_error: bool,
+        expected_error_type: ErrorType,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
@@ -289,7 +295,7 @@ class TestErrorResponses:
         )
         if should_error:
             assert isinstance(response, UserQueryResponseError)
-            assert response.error_type == ErrorType.UNKNOWN_LANGUAGE
+            assert response.error_type == expected_error_type
         else:
             assert isinstance(response, UserQueryResponse)
             if query.original_language == "ENGLISH":

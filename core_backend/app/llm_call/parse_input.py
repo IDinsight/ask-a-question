@@ -195,7 +195,7 @@ async def _translate_question(
         )
 
         return question, error_response
-    elif question.original_language == IdentifiedLanguage.UNKNOWN:
+    elif question.original_language == IdentifiedLanguage.UNINTELLIGIBLE:
         supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
 
         error_response = UserQueryResponseError(
@@ -203,7 +203,7 @@ async def _translate_question(
             + " Unknown language. The following languages are supported: "
             f"{supported_languages}. ",
             query_id=response.query_id,
-            error_type=ErrorType.UNKNOWN_LANGUAGE,
+            error_type=ErrorType.UNINTELLIGIBLE_QUESTION,
         )
 
         logger.info(
