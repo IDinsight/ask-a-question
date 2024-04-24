@@ -28,7 +28,7 @@ repos:
     rev: v1.6.1 # Use the sha / tag you want to point at
     hooks:
       - id: mypy
-        exclude: ^data/
+        exclude: ^data/|^scripts/
         additional_dependencies:
           [types-PyYAML==6.0.12.12, types-python-dateutil]
         args: [--ignore-missing-imports, --explicit-package-base]
