@@ -130,6 +130,8 @@ const ContentBox = ({
       content_id: null,
       created_datetime_utc: "",
       updated_datetime_utc: "",
+      positive_votes: 0,
+      negative_votes: 0,
       content_title: "",
       content_text: "",
       content_language: "ENGLISH",
