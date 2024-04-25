@@ -103,7 +103,7 @@ const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
   formData.append("password", password);
-  return fetch(`${BACKEND_ROOT_PATH}/login/`, {
+  return fetch(`${BACKEND_ROOT_PATH}/login`, {
     method: "POST",
     body: formData,
   }).then((response) => {
