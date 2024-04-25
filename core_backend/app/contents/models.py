@@ -32,6 +32,8 @@ class ContentDB(Base):
     __tablename__ = "content"
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+
     content_embedding: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
@@ -53,6 +55,7 @@ class ContentDB(Base):
 
 
 async def save_content_to_db(
+    user_id: str,
     content: ContentCreate,
     asession: AsyncSession,
 ) -> ContentDB:
@@ -63,6 +66,7 @@ async def save_content_to_db(
     content_embedding = await _get_content_embeddings(content)
 
     content_db = ContentDB(
+        user_id=user_id,
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
@@ -81,6 +85,7 @@ async def save_content_to_db(
 
 
 async def update_content_in_db(
+    user_id: str,
     content_id: int,
     content: ContentCreate,
     asession: AsyncSession,
@@ -92,6 +97,7 @@ async def update_content_in_db(
     content_embedding = await _get_content_embeddings(content)
     content_db = ContentDB(
         content_id=content_id,
+        user_id=user_id,
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
@@ -106,25 +112,35 @@ async def update_content_in_db(
 
 
 async def delete_content_from_db(
+    user_id: str,
     content_id: int,
     asession: AsyncSession,
 ) -> None:
     """
     Deletes a content from the database
     """
-    stmt = delete(ContentDB).where(ContentDB.content_id == content_id)
+    stmt = (
+        delete(ContentDB)
+        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.content_id == content_id)
+    )
     await asession.execute(stmt)
     await asession.commit()
 
 
 async def get_content_from_db(
+    user_id: str,
     content_id: int,
     asession: AsyncSession,
 ) -> Optional[ContentDB]:
     """
     Retrieves a content from the database
     """
-    stmt = select(ContentDB).where(ContentDB.content_id == content_id)
+    stmt = (
+        select(ContentDB)
+        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.content_id == content_id)
+    )
     content_row = (await asession.execute(stmt)).first()
     if content_row:
         return content_row[0]
@@ -133,12 +149,19 @@ async def get_content_from_db(
 
 
 async def get_list_of_content_from_db(
-    asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
+    user_id: str,
+    asession: AsyncSession,
+    offset: int = 0,
+    limit: Optional[int] = None,
 ) -> List[ContentDB]:
     """
     Retrieves all content from the database
     """
-    stmt = select(ContentDB).order_by(ContentDB.content_id)
+    stmt = (
+        select(ContentDB)
+        .where(ContentDB.user_id == user_id)
+        .order_by(ContentDB.content_id)
+    )
     if offset > 0:
         stmt = stmt.offset(offset)
     if limit is not None:
@@ -165,6 +188,7 @@ async def _get_content_embeddings(
 
 
 async def get_similar_content(
+    user_id: str,
     question: str,
     n_similar: int,
     asession: AsyncSession,
@@ -181,14 +205,18 @@ async def get_similar_content(
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
-        question_embedding,
-        n_similar,
-        asession,
+        user_id=user_id,
+        question_embedding=question_embedding,
+        n_similar=n_similar,
+        asession=asession,
     )
 
 
 async def get_similar_content_async(
-    question: str, n_similar: int, asession: AsyncSession
+    user_id: str,
+    question: str,
+    n_similar: int,
+    asession: AsyncSession,
 ) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
@@ -202,14 +230,18 @@ async def get_similar_content_async(
     question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
-        question_embedding,
-        n_similar,
-        asession,
+        user_id=user_id,
+        question_embedding=question_embedding,
+        n_similar=n_similar,
+        asession=asession,
     )
 
 
 async def get_search_results(
-    question_embedding: List[float], n_similar: int, asession: AsyncSession
+    user_id: str,
+    question_embedding: List[float],
+    n_similar: int,
+    asession: AsyncSession,
 ) -> Dict[int, tuple[str, str, int, float]]:
     """Get similar content to given embedding and return search results"""
     query = (
@@ -219,6 +251,7 @@ async def get_search_results(
                 "distance"
             ),
         )
+        .where(ContentDB.user_id == user_id)
         .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
         .limit(n_similar)
     )
@@ -232,6 +265,7 @@ async def get_search_results(
 
 
 async def update_votes_in_db(
+    user_id: str,
     content_id: int,
     vote: str,
     asession: AsyncSession,
@@ -240,7 +274,9 @@ async def update_votes_in_db(
     Updates the votes in the database
     """
 
-    content_db = await get_content_from_db(content_id, asession)
+    content_db = await get_content_from_db(
+        user_id=user_id, content_id=content_id, asession=asession
+    )
     if not content_db:
         return None
     else:
