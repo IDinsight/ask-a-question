@@ -2,10 +2,11 @@ from typing import Tuple
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import auth_bearer_token
-from ..contents.models import get_similar_content_async
+from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
 from ..llm_call.check_output import check_align_score__after
 from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
@@ -20,13 +21,15 @@ from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
     check_secret_key_match,
-    save_feedback_to_db,
+    save_content_feedback_to_db,
     save_query_response_error_to_db,
     save_query_response_to_db,
+    save_response_feedback_to_db,
     save_user_query_to_db,
 )
 from .schemas import (
-    FeedbackBase,
+    ContentFeedback,
+    ResponseFeedbackBase,
     ResultState,
     UserQueryBase,
     UserQueryRefined,
@@ -182,9 +185,9 @@ async def get_semantic_matches(
     return response
 
 
-@router.post("/feedback")
+@router.post("/response-feedback")
 async def feedback(
-    feedback: FeedbackBase, asession: AsyncSession = Depends(get_async_session)
+    feedback: ResponseFeedbackBase, asession: AsyncSession = Depends(get_async_session)
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on the results returned
@@ -202,13 +205,63 @@ async def feedback(
             },
         )
     else:
-        feedback_db = await save_feedback_to_db(feedback, asession)
+        feedback_db = await save_response_feedback_to_db(feedback, asession)
         return JSONResponse(
             status_code=200,
             content={
                 "message": (
                     f"Added Feedback: {feedback_db.feedback_id} "
                     f"for Query: {feedback_db.query_id}"
+                )
+            },
+        )
+
+
+@router.post("/content-feedback")
+async def content_feedback(
+    feedback: ContentFeedback, asession: AsyncSession = Depends(get_async_session)
+) -> JSONResponse:
+    """
+    Feedback endpoint used to capture user feedback on specific content
+    """
+
+    is_matched = await check_secret_key_match(
+        feedback.feedback_secret_key, feedback.query_id, asession
+    )
+
+    if is_matched is False:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "message": f"Secret key does not match query id : {feedback.query_id}"
+            },
+        )
+    else:
+        try:
+            feedback_db = await save_content_feedback_to_db(feedback, asession)
+        except IntegrityError as e:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": (f"Content id: {feedback.content_id} does not exist."),
+                    "details": {
+                        "content_id": feedback.content_id,
+                        "query_id": feedback.query_id,
+                        "exception": "IntegrityError",
+                        "exception_details": str(e),
+                    },
+                },
+            )
+        await update_votes_in_db(
+            feedback.content_id, feedback.feedback_sentiment, asession
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": (
+                    f"Added Feedback: {feedback_db.feedback_id} "
+                    f"for Query: {feedback_db.query_id} "
+                    f"for Content: {feedback_db.content_id}"
                 )
             },
         )

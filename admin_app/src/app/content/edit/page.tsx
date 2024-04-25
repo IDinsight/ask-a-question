@@ -13,6 +13,8 @@ import React from "react";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
+  positive_votes: number;
+  negative_votes: number;
   created_datetime_utc: string;
   updated_datetime_utc: string;
 }
@@ -128,6 +130,8 @@ const ContentBox = ({
       content_id: null,
       created_datetime_utc: "",
       updated_datetime_utc: "",
+      positive_votes: 0,
+      negative_votes: 0,
       content_title: "",
       content_text: "",
       content_language: "ENGLISH",

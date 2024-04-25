@@ -9,7 +9,7 @@ interface ContentBody {
 }
 
 const getContentList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -82,7 +82,7 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -103,7 +103,7 @@ const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
   formData.append("password", password);
-  return fetch(`${BACKEND_ROOT_PATH}/login`, {
+  return fetch(`${BACKEND_ROOT_PATH}/login/`, {
     method: "POST",
     body: formData,
   }).then((response) => {

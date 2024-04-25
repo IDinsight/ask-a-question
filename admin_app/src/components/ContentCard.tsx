@@ -14,6 +14,8 @@ const ContentCard = ({
   text,
   content_id,
   last_modified,
+  positive_votes,
+  negative_votes,
   onSuccessfulDelete,
   onFailedDelete,
   deleteContent,
@@ -23,6 +25,8 @@ const ContentCard = ({
   text: string;
   content_id: number;
   last_modified: string;
+  positive_votes: number;
+  negative_votes: number;
   onSuccessfulDelete: (content_id: number) => void;
   onFailedDelete: (content_id: number) => void;
   deleteContent: (content_id: number) => Promise<any>;
@@ -108,6 +112,8 @@ const ContentCard = ({
         content_id={content_id}
         last_modified={last_modified}
         open={openReadModal}
+        positive_votes={positive_votes}
+        negative_votes={negative_votes}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
       />

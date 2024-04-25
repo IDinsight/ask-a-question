@@ -17,6 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_EMBEDDING
 from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
+from ..schemas import FeedbackSentiment
 from .schemas import (
     ContentCreate,
     ContentUpdate,
@@ -42,6 +43,9 @@ class ContentDB(Base):
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     def __repr__(self) -> str:
         """Pretty Print"""
@@ -164,7 +168,7 @@ async def get_similar_content(
     question: str,
     n_similar: int,
     asession: AsyncSession,
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -185,7 +189,7 @@ async def get_similar_content(
 
 async def get_similar_content_async(
     question: str, n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -206,7 +210,7 @@ async def get_similar_content_async(
 
 async def get_search_results(
     question_embedding: List[float], n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """Get similar content to given embedding and return search results"""
     query = (
         select(
@@ -222,6 +226,29 @@ async def get_search_results(
 
     results_dict = {}
     for i, r in enumerate(search_result):
-        results_dict[i] = (r[0].content_title, r[0].content_text, r[1])
+        results_dict[i] = (r[0].content_title, r[0].content_text, r[0].content_id, r[1])
 
     return results_dict
+
+
+async def update_votes_in_db(
+    content_id: int,
+    vote: str,
+    asession: AsyncSession,
+) -> Optional[ContentDB]:
+    """
+    Updates the votes in the database
+    """
+
+    content_db = await get_content_from_db(content_id, asession)
+    if not content_db:
+        return None
+    else:
+        if vote == FeedbackSentiment.POSITIVE:
+            content_db.positive_votes = content_db.positive_votes + 1
+        elif vote == FeedbackSentiment.NEGATIVE:
+            content_db.negative_votes = content_db.negative_votes + 1
+
+    content_db = await asession.merge(content_db)
+    await asession.commit()
+    return content_db
