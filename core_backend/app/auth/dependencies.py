@@ -11,8 +11,8 @@ from jose import JWTError, jwt
 
 from .config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    CONTENT_FULLACCESS_PASSWORD,
-    CONTENT_READONLY_PASSWORD,
+    CONTENT_USER1_PASSWORD,
+    CONTENT_USER2_PASSWORD,
     JWT_ALGORITHM,
     JWT_SECRET,
     QUESTION_ANSWER_SECRET,
@@ -24,11 +24,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 USERS = {
-    "fullaccess": {
-        "password": CONTENT_FULLACCESS_PASSWORD,
+    "user1": {
+        "password": CONTENT_USER1_PASSWORD,
         "access_level": "fullaccess",
     },
-    "readonly": {"password": CONTENT_READONLY_PASSWORD, "access_level": "readonly"},
+    "user2": {
+        "password": CONTENT_USER2_PASSWORD,
+        "access_level": "fullaccess",
+    },
 }
 
 
