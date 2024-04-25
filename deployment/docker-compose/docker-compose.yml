@@ -1,4 +1,3 @@
-version: "3"
 services:
   core_backend:
     image: idinsight/aaq-backend:latest
