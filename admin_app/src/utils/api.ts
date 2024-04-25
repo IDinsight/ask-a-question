@@ -1,4 +1,4 @@
-const BACKEND_ROOT_PATH: string =
+const NEXT_PUBLIC_BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface ContentBody {
@@ -9,7 +9,7 @@ interface ContentBody {
 }
 
 const getContentList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +26,7 @@ const getContentList = async (token: string) => {
 };
 
 const getContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ const getContent = async (content_id: number, token: string) => {
 };
 
 const deleteContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +64,7 @@ const editContent = async (
   content: ContentBody,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -82,7 +82,7 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -103,7 +103,7 @@ const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
   formData.append("password", password);
-  return fetch(`${BACKEND_ROOT_PATH}/login`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login`, {
     method: "POST",
     body: formData,
   }).then((response) => {
@@ -117,7 +117,7 @@ const getLoginToken = async (username: string, password: string) => {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
+  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
@@ -147,7 +147,7 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
+  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/llm-response`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
