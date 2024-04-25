@@ -190,7 +190,10 @@ async def feedback(
     feedback: ResponseFeedbackBase, asession: AsyncSession = Depends(get_async_session)
 ) -> JSONResponse:
     """
-    Feedback endpoint used to capture user feedback on the results returned
+    Feedback endpoint used to capture user feedback on the results returned.
+    <BR>
+    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
+    `feedback_sentiment` in the payload.
     """
 
     is_matched = await check_secret_key_match(
@@ -201,7 +204,7 @@ async def feedback(
         return JSONResponse(
             status_code=400,
             content={
-                "message": f"Secret key does not match query id : {feedback.query_id}"
+                "message": f"Secret key does not match query id: {feedback.query_id}"
             },
         )
     else:
@@ -223,6 +226,9 @@ async def content_feedback(
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on specific content
+    <BR>
+    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
+    `feedback_sentiment` in the payload.
     """
 
     is_matched = await check_secret_key_match(
@@ -233,7 +239,7 @@ async def content_feedback(
         return JSONResponse(
             status_code=400,
             content={
-                "message": f"Secret key does not match query id : {feedback.query_id}"
+                "message": f"Secret key does not match query id: {feedback.query_id}"
             },
         )
     else:

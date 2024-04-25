@@ -6,7 +6,7 @@
 This service uses most similar content in the database to construct a
 custom answer for the user.
 
-See OpenAPI specification or SwaggerUI for more details on how to call the service.
+See OpenAPI specification or [SwaggerUI](index.md/#swaggerui) for more details on how to call the service.
 
 ## Process flow
 ``` mermaid
