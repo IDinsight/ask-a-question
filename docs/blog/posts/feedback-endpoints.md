@@ -6,25 +6,25 @@ category:
   - LLM Response
   - Embeddings Search
   - Feedback
-date: 2024-04-16
+date: 2024-04-20
 ---
 # Revamped feedback endpoints
 
 There are now two new endpoints for feedback:
 
-1. `POST /response-feedback` - Allows you to capture feedback for the responses returned by either of the
+1. `POST /response-feedback` - Allows you to capture feedback for the overall response returned by either of the
 Question-Answering APIs.
-2. `POST /content-feedback` - Embeddings Search API, returns the top N content matches to your question. Now you
-can also capture feedback for each of these content matches.
+2. `POST /content-feedback` - Allows you to capture feedback for a specific piece of content.
 
+These can be used in chat managers to collect feedback after answers are shown.
 <!-- more -->
 
 ## Sentiment and Text
 
-For both of these endpoints, you are able to provide either sentiment (positive, negative),
+For both of these endpoints, you are able to provide either sentiment (positive, negative) or
 text feedback, or both.
 
-See OpenAPI documentation at `https://[DOMAIN]/api/docs` for more details.
+See your deployment's OpenAPI documentation at `https://[DOMAIN]/api/docs` for more details.
 
 ## Content cards show feedback
 

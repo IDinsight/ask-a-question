@@ -243,7 +243,7 @@ async def content_feedback(
             return JSONResponse(
                 status_code=400,
                 content={
-                    "message": (f"Content id: {feedback.content_id} does not exist. "),
+                    "message": (f"Content id: {feedback.content_id} does not exist."),
                     "details": {
                         "content_id": feedback.content_id,
                         "query_id": feedback.query_id,
