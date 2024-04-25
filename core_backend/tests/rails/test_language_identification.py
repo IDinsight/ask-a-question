@@ -31,9 +31,9 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
         return [(key, value) for key, values in content.items() for value in values]
 
 
-@pytest.mark.parametrize("language, content", read_test_data(LANGUAGE_FILE))
+@pytest.mark.parametrize("expected_label, content", read_test_data(LANGUAGE_FILE))
 async def test_language_identification(
-    available_languages: list[str], language: str, content: str
+    available_languages: list[str], expected_label: str, content: str
 ) -> None:
     """Test language identification"""
     question = UserQueryRefined(query_text=content, query_text_original=content)
@@ -43,7 +43,8 @@ async def test_language_identification(
         llm_response="Dummy response",
         feedback_secret_key="feedback-string",
     )
-    if language not in available_languages:
-        language = "UNKNOWN"
+    if expected_label not in available_languages:
+        expected_label = "UNSUPPORTED"
     _, response = await _identify_language(question, response)
-    assert response.debug_info["original_language"] == language
+    print(response)
+    assert response.debug_info["original_language"] == expected_label

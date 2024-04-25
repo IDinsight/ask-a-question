@@ -100,17 +100,17 @@ class IdentifiedLanguage(str, Enum):
         return textwrap.dedent(
             f"""
             You are a high-performing language identification bot that classifies the
-            language of the user input into one of {" ".join(cls._member_names_)}.
+            language of the user input into one of {", ".join(cls._member_names_)}.
 
-            If the user input is in
-            1. one of the supported languages, then respond with that language.
-            2. a language other than supported languages, then respond with UNSUPPORTED.
-            3. a mix of languages, then respond with the dominant language.
-            4. no known language, even outside of supported languages, then respond with
-            UNKNOWN.
+            If the user input is
+            1. in one of the supported languages, then respond with that language.
+            2. written in a mix of languages, then respond with the dominant language.
+            3. in a real language but not a supported language, then respond with
+            UNSUPPORTED.
+            4. unintelligible or gibberish, then respond with UNINTELLIGIBLE.
 
             Answer should be a single word and strictly one of
-            [{",".join(cls._member_names_)}]"""
+            [{", ".join(cls._member_names_)}]"""
         )
 
 
