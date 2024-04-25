@@ -90,7 +90,7 @@ async def get_llm_answer(
         raise ValueError(
             (
                 "Language hasn't been identified. "
-                "Identify language before running translation"
+                "Identify language before calling this function."
             )
         )
 
