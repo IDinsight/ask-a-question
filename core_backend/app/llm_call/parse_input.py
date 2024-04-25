@@ -127,7 +127,7 @@ def _process_identified_language_response(
 
     match identified_language:
         case IdentifiedLanguage.UNINTELLIGIBLE:
-            processed_response = UserQueryResponseError(
+            error_response = UserQueryResponseError(
                 error_message=STANDARD_FAILURE_MESSAGE
                 + " Unintelligible question. The following languages are supported: "
                 f"{supported_language_string}. ",
@@ -138,9 +138,10 @@ def _process_identified_language_response(
                 f"{task} FAILED due to {identified_language.value} "
                 "language on query id: " + str(response.query_id)
             )
-            processed_response.debug_info.update(response.debug_info)
+            error_response.debug_info.update(response.debug_info)
+            return error_response
         case IdentifiedLanguage.UNSUPPORTED:
-            processed_response = UserQueryResponseError(
+            error_response = UserQueryResponseError(
                 error_message=STANDARD_FAILURE_MESSAGE
                 + " Only the following languages are supported: "
                 + f"{supported_language_string}. ",
@@ -151,11 +152,10 @@ def _process_identified_language_response(
                 f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value} "
                 "language on query id: " + str(response.query_id)
             )
-            processed_response.debug_info.update(response.debug_info)
+            error_response.debug_info.update(response.debug_info)
+            return error_response
         case _:
-            processed_response = response
-
-    return processed_response
+            return response
 
 
 async def _identify_language(
