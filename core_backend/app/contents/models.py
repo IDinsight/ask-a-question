@@ -168,7 +168,7 @@ async def get_similar_content(
     question: str,
     n_similar: int,
     asession: AsyncSession,
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -189,7 +189,7 @@ async def get_similar_content(
 
 async def get_similar_content_async(
     question: str, n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
     """
@@ -210,7 +210,7 @@ async def get_similar_content_async(
 
 async def get_search_results(
     question_embedding: List[float], n_similar: int, asession: AsyncSession
-) -> Dict[int, tuple[str, str, float]]:
+) -> Dict[int, tuple[str, str, int, float]]:
     """Get similar content to given embedding and return search results"""
     query = (
         select(
@@ -226,7 +226,7 @@ async def get_search_results(
 
     results_dict = {}
     for i, r in enumerate(search_result):
-        results_dict[i] = (r[0].content_title, r[0].content_text, r[1])
+        results_dict[i] = (r[0].content_title, r[0].content_text, r[0].content_id, r[1])
 
     return results_dict
 

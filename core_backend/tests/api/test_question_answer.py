@@ -337,11 +337,13 @@ class TestAlignScore:
                 1: UserQuerySearchResult(
                     retrieved_title="World",
                     retrieved_text="hello world",
+                    retrieved_content_id=1,
                     score=0.2,
                 ),
                 2: UserQuerySearchResult(
                     retrieved_title="Universe",
                     retrieved_text="goodbye universe",
+                    retrieved_content_id=2,
                     score=0.2,
                 ),
             },

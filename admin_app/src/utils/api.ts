@@ -117,7 +117,7 @@ const getLoginToken = async (username: string, password: string) => {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search/`;
+  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
@@ -147,7 +147,7 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response/`;
+  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {

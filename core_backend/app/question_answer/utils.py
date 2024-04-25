@@ -19,7 +19,8 @@ def convert_search_results_to_schema(
         i: UserQuerySearchResult(
             retrieved_title=value[0],
             retrieved_text=value[1],
-            score=value[2],
+            retrieved_content_id=value[2],
+            score=value[3],
         )
         for i, value in results.items()
     }
