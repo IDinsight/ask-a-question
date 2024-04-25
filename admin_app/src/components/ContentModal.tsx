@@ -21,6 +21,8 @@ const ContentViewModal = ({
   title,
   text,
   content_id,
+  positive_votes,
+  negative_votes,
   last_modified,
   open,
   onClose,
@@ -30,6 +32,8 @@ const ContentViewModal = ({
   text: string;
   content_id: number;
   last_modified: string;
+  positive_votes: number;
+  negative_votes: number;
   open: boolean;
   onClose: () => void;
   editAccess: boolean;
@@ -137,9 +141,9 @@ const ContentViewModal = ({
                 <RemoveRedEye fontSize="small" color="disabled" />
                 <Typography variant="body2">_</Typography>
                 <ThumbUp fontSize="small" color="disabled" />
-                <Typography variant="body2">_</Typography>
+                <Typography variant="body2">{positive_votes}</Typography>
                 <ThumbDown fontSize="small" color="disabled" />
-                <Typography variant="body2">_</Typography>
+                <Typography variant="body2">{negative_votes}</Typography>
               </Layout.FlexBox>
             </Layout.FlexBox>
           </Layout.FlexBox>

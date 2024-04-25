@@ -31,6 +31,8 @@ nav:
               - components/qa-service/index.md
               - Semantic Search: components/qa-service/semantic-search.md
               - LLM Response: components/qa-service/llm-response.md
+              - Response Feedback: components/qa-service/response-feedback.md
+              - Content Feedback: components/qa-service/content-feedback.md
       - Internal components:
           - LLM Proxy Server:
               - components/litellm-proxy/index.md

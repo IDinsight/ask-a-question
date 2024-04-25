@@ -12,9 +12,11 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..contents.models import ContentDB
 from ..models import Base, JSONDict
 from .schemas import (
-    FeedbackBase,
+    ContentFeedback,
+    ResponseFeedbackBase,
     UserQueryBase,
     UserQueryResponse,
     UserQueryResponseError,
@@ -36,8 +38,11 @@ class UserQueryDB(Base):
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-    feedback: Mapped[List["FeedbackDB"]] = relationship(
-        "FeedbackDB", back_populates="query", lazy=True
+    response_feedback: Mapped[List["ResponseFeedbackDB"]] = relationship(
+        "ResponseFeedbackDB", back_populates="query", lazy=True
+    )
+    content_feedback: Mapped[List["ContentFeedbackDB"]] = relationship(
+        "ContentFeedbackDB", back_populates="query", lazy=True
     )
     response: Mapped[List["UserQueryResponseDB"]] = relationship(
         "UserQueryResponseDB", back_populates="query", lazy=True
@@ -174,22 +179,23 @@ async def save_query_response_error_to_db(
     return user_query_response_error_db
 
 
-class FeedbackDB(Base):
+class ResponseFeedbackDB(Base):
     """
-    SQLAlchemy data model for feedback provided by user
+    SQLAlchemy data model for feedback provided by user for responses
     """
 
-    __tablename__ = "feedback"
+    __tablename__ = "response_feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
+    feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
-    feedback_text: Mapped[str] = mapped_column(String, nullable=False)
+    feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="feedback", lazy=True
+        "UserQueryDB", back_populates="response_feedback", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -200,19 +206,70 @@ class FeedbackDB(Base):
         )
 
 
-async def save_feedback_to_db(
-    feedback: FeedbackBase,
+async def save_response_feedback_to_db(
+    feedback: ResponseFeedbackBase,
     asession: AsyncSession,
-) -> FeedbackDB:
+) -> ResponseFeedbackDB:
     """
     Saves feedback to the database.
     """
-    feedback_db = FeedbackDB(
+    response_feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=datetime.utcnow(),
+        feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         feedback_text=feedback.feedback_text,
     )
-    asession.add(feedback_db)
+    asession.add(response_feedback_db)
     await asession.commit()
-    await asession.refresh(feedback_db)
-    return feedback_db
+    await asession.refresh(response_feedback_db)
+    return response_feedback_db
+
+
+class ContentFeedbackDB(Base):
+    """
+    SQLAlchemy data model for feedback provided by user for content
+    """
+
+    __tablename__ = "content_feedback"
+
+    feedback_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, index=True, nullable=False
+    )
+    feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    feedback_text: Mapped[str] = mapped_column(String, nullable=True)
+    feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
+
+    query: Mapped[UserQueryDB] = relationship(
+        "UserQueryDB", back_populates="content_feedback", lazy=True
+    )
+
+    content: Mapped["ContentDB"] = relationship("ContentDB")
+
+    def __repr__(self) -> str:
+        """Pretty Print"""
+        return (
+            f"<Feedback #{self.feedback_id} for query "
+            f"#{self.query_id}> and content #{self.content_id} {self.feedback_text}"
+        )
+
+
+async def save_content_feedback_to_db(
+    feedback: ContentFeedback,
+    asession: AsyncSession,
+) -> ContentFeedbackDB:
+    """
+    Saves feedback to the database.
+    """
+    content_feedback_db = ContentFeedbackDB(
+        feedback_datetime_utc=datetime.utcnow(),
+        feedback_sentiment=feedback.feedback_sentiment,
+        query_id=feedback.query_id,
+        feedback_text=feedback.feedback_text,
+        content_id=feedback.content_id,
+    )
+    asession.add(content_feedback_db)
+    await asession.commit()
+    await asession.refresh(content_feedback_db)
+    return content_feedback_db

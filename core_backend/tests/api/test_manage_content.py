@@ -273,6 +273,8 @@ def test_convert_record_to_schema() -> None:
         content_text="sample text",
         content_embedding=fake_embedding(),
         content_language="ENGLISH",
+        positive_votes=0,
+        negative_votes=0,
         content_metadata={"extra_field": "extra value"},
         created_datetime_utc=datetime.datetime.utcnow(),
         updated_datetime_utc=datetime.datetime.utcnow(),
