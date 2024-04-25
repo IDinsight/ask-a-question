@@ -35,7 +35,11 @@ async def create_content(
     upserts it to PG database
     """
 
-    content_db = await save_content_to_db(content, asession)
+    content_db = await save_content_to_db(
+        user_id=full_access_user.username,
+        content=content,
+        asession=asession,
+    )
     return _convert_record_to_schema(content_db)
 
 
@@ -52,8 +56,9 @@ async def edit_content(
     Edit content endpoint
     """
     old_content = await get_content_from_db(
-        content_id,
-        asession,
+        user_id=full_access_user.username,
+        content_id=content_id,
+        asession=asession,
     )
 
     if not old_content:
@@ -61,9 +66,10 @@ async def edit_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
     updated_content = await update_content_in_db(
-        content_id,
-        content,
-        asession,
+        user_id=full_access_user.username,
+        content_id=content_id,
+        content=content,
+        asession=asession,
     )
 
     return _convert_record_to_schema(updated_content)
@@ -82,7 +88,10 @@ async def retrieve_content(
     Retrieve all content endpoint
     """
     records = await get_list_of_content_from_db(
-        offset=skip, limit=limit, asession=asession
+        user_id=readonly_access_user.username,
+        offset=skip,
+        limit=limit,
+        asession=asession,
     )
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
@@ -100,15 +109,20 @@ async def delete_content(
     Delete content endpoint
     """
     record = await get_content_from_db(
-        content_id,
-        asession,
+        user_id=full_access_user.username,
+        content_id=content_id,
+        asession=asession,
     )
 
     if not record:
         raise HTTPException(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
-    await delete_content_from_db(content_id, asession)
+    await delete_content_from_db(
+        user_id=full_access_user.username,
+        content_id=content_id,
+        asession=asession,
+    )
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
@@ -123,7 +137,11 @@ async def retrieve_content_by_id(
     Retrieve content by id endpoint
     """
 
-    record = await get_content_from_db(content_id, asession)
+    record = await get_content_from_db(
+        user_id=readonly_access_user.username,
+        content_id=content_id,
+        asession=asession,
+    )
 
     if not record:
         raise HTTPException(
@@ -139,6 +157,7 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     """
     content_retrieve = ContentRetrieve(
         content_id=record.content_id,
+        user_id=record.user_id,
         content_title=record.content_title,
         content_text=record.content_text,
         content_language=record.content_language,

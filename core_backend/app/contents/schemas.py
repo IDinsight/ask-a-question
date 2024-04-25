@@ -39,6 +39,7 @@ class ContentRetrieve(ContentCreate):
     """
 
     content_id: int
+    user_id: str
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
     positive_votes: int
