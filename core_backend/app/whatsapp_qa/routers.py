@@ -57,9 +57,10 @@ async def process_whatsapp_message(
                 )
 
                 content_response = await get_similar_content_async(
-                    msg_body,
-                    1,
-                    asession,
+                    user_id="user1",  # TEMPORARY HARDCODED USER ID
+                    question=msg_body,
+                    n_similar=1,
+                    asession=asession,
                 )
                 top_faq = content_response[0][1]
                 data_obj = {

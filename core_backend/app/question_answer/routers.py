@@ -63,7 +63,12 @@ async def llm_response(
         response,
     ) = await get_user_query_and_response(user_query, asession)
 
-    response = await get_llm_answer(user_query_refined, response, asession)
+    response = await get_llm_answer(
+        user_query_refined=user_query_refined,
+        response=response,
+        n_similar=int(N_TOP_CONTENT_FOR_RAG),
+        asession=asession,
+    )
 
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
@@ -81,6 +86,7 @@ async def llm_response(
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
+    n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
     """
@@ -89,7 +95,10 @@ async def get_llm_answer(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_query_refined.query_text, int(N_TOP_CONTENT_FOR_RAG), asession
+                user_id="user1",  # TEMPORARY HARDCODED USER ID
+                question=user_query_refined.query_text,
+                n_similar=n_similar,
+                asession=asession,
             )
         )
 
@@ -168,7 +177,7 @@ async def embeddings_search(
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse | UserQueryResponseError,
-    n_top_similar: int,
+    n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
     """
@@ -177,7 +186,10 @@ async def get_semantic_matches(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_query_refined.query_text, n_top_similar, asession
+                user_id="user1",  # TEMPORARY HARDCODED USER ID
+                question=user_query_refined.query_text,
+                n_similar=n_similar,
+                asession=asession,
             )
         )
 
@@ -259,7 +271,10 @@ async def content_feedback(
                 },
             )
         await update_votes_in_db(
-            feedback.content_id, feedback.feedback_sentiment, asession
+            user_id="user1",  # TEMPORARY HARDCODED USER ID
+            content_id=feedback.content_id,
+            vote=feedback.feedback_sentiment,
+            asession=asession,
         )
         return JSONResponse(
             status_code=200,
