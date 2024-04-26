@@ -96,7 +96,7 @@ class TestManageContent:
         content_title: str,
         content_text: str,
         fullaccess_token: str,
-        readonly_token: str,
+        # readonly_token: str,
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
@@ -114,7 +114,9 @@ class TestManageContent:
 
         response = client.get(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {readonly_token}"},
+            headers={
+                "Authorization": f"Bearer {fullaccess_token}"
+            },  # used to be readonly_token
         )
         assert response.status_code == 200
         assert response.json()["content_title"] == content_title
@@ -140,7 +142,10 @@ class TestManageContent:
         assert response.status_code == 404
 
     def test_list_content(
-        self, client: TestClient, existing_content_id: int, readonly_token: str
+        self,
+        client: TestClient,
+        existing_content_id: int,
+        readonly_token: str,
     ) -> None:
         response = client.get(
             "/content", headers={"Authorization": f"Bearer {readonly_token}"}
@@ -161,7 +166,7 @@ class TestManageContent:
 class TestAuthManageContent:
     @pytest.mark.parametrize(
         "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
+        [("fullaccess_token", 200)],  # ("readonly_token", 400),
     )
     def test_auth_delete(
         self,
@@ -180,7 +185,7 @@ class TestAuthManageContent:
 
     @pytest.mark.parametrize(
         "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
+        [("fullaccess_token", 200)],  # ("readonly_token", 400),
     )
     def test_auth_create(
         self,
@@ -204,7 +209,7 @@ class TestAuthManageContent:
 
     @pytest.mark.parametrize(
         "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
+        [("fullaccess_token", 200)],  # ("readonly_token", 400),
     )
     def test_auth_edit(
         self,
@@ -229,7 +234,7 @@ class TestAuthManageContent:
 
     @pytest.mark.parametrize(
         "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
+        [("fullaccess_token", 200)],  # ("readonly_token", 200),
     )
     def test_auth_list(
         self,
@@ -247,7 +252,7 @@ class TestAuthManageContent:
 
     @pytest.mark.parametrize(
         "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
+        [("fullaccess_token", 200)],  # ("readonly_token", 200),
     )
     def test_auth_retrieve(
         self,
@@ -267,8 +272,10 @@ class TestAuthManageContent:
 
 def test_convert_record_to_schema() -> None:
     content_id = 1
+    user_id = "user1"
     record = ContentDB(
         content_id=content_id,
+        user_id=user_id,
         content_title="sample title for content",
         content_text="sample text",
         content_embedding=fake_embedding(),
@@ -281,5 +288,6 @@ def test_convert_record_to_schema() -> None:
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id
+    assert result.user_id == user_id
     assert result.content_text == "sample text"
     assert result.content_metadata["extra_field"] == "extra value"

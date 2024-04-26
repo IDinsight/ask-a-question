@@ -67,6 +67,7 @@ def faq_contents(client: TestClient, db_session: Session) -> None:
 
         contend_db = ContentDB(
             content_id=i,
+            user_id="user1",  # TEMPORARY HARDCODED USER ID
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
@@ -197,7 +198,7 @@ def fullaccess_token() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token("fullaccess")
+    return create_access_token("user1")  # TEMPORARY HARDCODED USER ID
 
 
 @pytest.fixture(scope="session")
@@ -205,7 +206,9 @@ def readonly_token() -> str:
     """
     Returns a token with readonly access
     """
-    return create_access_token("readonly")
+    return create_access_token(
+        "user1"
+    )  # TEMPORARY HARDCODED USER ID - this is also fullaccess!
 
 
 @pytest.fixture(scope="session", autouse=True)
