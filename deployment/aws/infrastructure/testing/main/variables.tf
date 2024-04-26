@@ -106,6 +106,18 @@ variable "web_ecs_task_role_name" {
   default     = ""
 }
 
+variable "web_ec2_instance_role_name" {
+  description = "value for the web ec2 instance role name"
+  type        = string
+  default     = ""
+}
+
+variable "web_instance_profile_name" {
+  description = "value for the web instance profile name"
+  type        = string
+  default     = ""
+}
+
 variable "web_ec2_server_name" {
   description = "value for the web ec2 server name"
   type        = string
@@ -120,6 +132,18 @@ variable "web_asg_name" {
 
 variable "web_ec2_instance_type" {
   description = "value for the web ec2 instance type"
+  type        = string
+  default     = ""
+}
+
+variable "public_subnets" {
+  description = "value for the public subnets"
+  type        = list(any)
+  default     = []
+}
+
+variable "web_ec2_sg_name" {
+  description = "value for the web ec2 instance security group name"
   type        = string
   default     = ""
 }
