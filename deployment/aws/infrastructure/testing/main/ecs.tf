@@ -247,11 +247,11 @@ resource "aws_ecs_task_definition" "litellm_proxy_task" {
     image  = "ghcr.io/berriai/litellm:main-v1.34.6",
     memory = 2048,
     cpu    = 512,
-
     portMappings = [
       {
-        "containerPort" : 4000,
-        "protocol" : "tcp"
+        "containerPort": 4000,
+        "hostPort": 4000,
+        "protocol": "tcp"
       }
     ],
 
