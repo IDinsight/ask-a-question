@@ -161,6 +161,7 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
         logger.error(f"LLM alignment score response is not valid json: {e}")
+        raise RuntimeError("LLM alignment score response is not valid json") from e
 
     logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
 
