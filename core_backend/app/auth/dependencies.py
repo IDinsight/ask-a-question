@@ -11,11 +11,14 @@ from jose import JWTError, jwt
 
 from .config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    CONTENT_USER1_PASSWORD,
-    CONTENT_USER2_PASSWORD,
     JWT_ALGORITHM,
     JWT_SECRET,
-    QUESTION_ANSWER_SECRET,
+    USER1_PASSWORD,
+    USER1_RETRIEVAL_SECRET,
+    USER1_USERNAME,
+    USER2_PASSWORD,
+    USER2_RETRIEVAL_SECRET,
+    USER2_USERNAME,
 )
 from .schemas import AccessLevel, AuthenticatedUser
 
@@ -24,12 +27,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 USERS = {
-    "user1": {
-        "password": CONTENT_USER1_PASSWORD,
+    USER1_USERNAME: {
+        "password": USER1_PASSWORD,
         "access_level": "fullaccess",
     },
-    "user2": {
-        "password": CONTENT_USER2_PASSWORD,
+    USER2_USERNAME: {
+        "password": USER2_PASSWORD,
         "access_level": "fullaccess",
     },
 }
@@ -37,14 +40,17 @@ USERS = {
 
 def auth_bearer_token(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> None:
+) -> str:
     """
     Authenticate using basic bearer token. Used for calling
     the question-answering endpoints
     """
     token = credentials.credentials
-    if token != QUESTION_ANSWER_SECRET:
+    # change to "hash check against db" logic later
+    if token not in [USER1_RETRIEVAL_SECRET, USER2_RETRIEVAL_SECRET]:
         raise HTTPException(status_code=401, detail="Invalid bearer token")
+    else:
+        return token  # NOT SURE ABOUT THIS - IS THIS REASONABLE?
 
 
 def authenticate_user(*, username: str, password: str) -> Optional[AuthenticatedUser]:

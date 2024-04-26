@@ -17,6 +17,8 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
+from ..users.models import get_user_by_token
+from ..utils import setup_logger
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
@@ -42,6 +44,8 @@ from .utils import (
     get_context_string_from_retrieved_contents,
 )
 
+logger = setup_logger()
+
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 
@@ -51,12 +55,21 @@ router = APIRouter(dependencies=[Depends(auth_bearer_token)])
     responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
 )
 async def llm_response(
-    user_query: UserQueryBase, asession: AsyncSession = Depends(get_async_session)
+    user_query: UserQueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> UserQueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
     """
+    user = await get_user_by_token(auth_token, asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
+        )
+
     (
         user_query_db,
         user_query_refined,
@@ -66,6 +79,7 @@ async def llm_response(
     response = await get_llm_answer(
         question=user_query_refined,
         response=response,
+        user_id=user.user_id,
         n_similar=int(N_TOP_CONTENT_FOR_RAG),
         asession=asession,
     )
@@ -86,6 +100,7 @@ async def llm_response(
 async def get_llm_answer(
     question: UserQueryRefined,
     response: UserQueryResponse,
+    user_id: str,
     n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
@@ -95,8 +110,8 @@ async def get_llm_answer(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_id="user1",  # TEMPORARY HARDCODED USER ID
                 question=question.query_text,
+                user_id=user_id,
                 n_similar=n_similar,
                 asession=asession,
             )
@@ -148,12 +163,22 @@ async def get_user_query_and_response(
     responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
 )
 async def embeddings_search(
-    user_query: UserQueryBase, asession: AsyncSession = Depends(get_async_session)
+    user_query: UserQueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> UserQueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
+
+    user = await get_user_by_token(auth_token, asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
+        )
+
     (
         user_query_db,
         user_query_refined,
@@ -161,7 +186,11 @@ async def embeddings_search(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_semantic_matches(
-        user_query_refined, response, int(N_TOP_CONTENT_FOR_SEARCH), asession
+        question=user_query_refined,
+        response=response,
+        user_id=user.user_id,
+        n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
+        asession=asession,
     )
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
@@ -175,8 +204,9 @@ async def embeddings_search(
 @translate_question__before
 @paraphrase_question__before
 async def get_semantic_matches(
-    user_query_refined: UserQueryRefined,
+    question: UserQueryRefined,
     response: UserQueryResponse | UserQueryResponseError,
+    user_id: str,
     n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
@@ -186,8 +216,8 @@ async def get_semantic_matches(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_id="user1",  # TEMPORARY HARDCODED USER ID
-                question=user_query_refined.query_text,
+                user_id=user_id,
+                question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
             )

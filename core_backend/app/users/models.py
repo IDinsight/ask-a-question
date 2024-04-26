@@ -25,7 +25,7 @@ class UserDB(Base):
     user_id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False)
 
-    # retrieval_token: Mapped[str] = mapped_column(String, nullable=False)
+    retrieval_token: Mapped[str] = mapped_column(String, nullable=False)
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -55,6 +55,7 @@ async def save_user_to_db(
     content_db = UserDB(
         user_id=user.user_id,
         username=user.username,
+        retrieval_token=user.retrieval_token,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -88,6 +89,7 @@ def save_user_to_db_sync(
     content_db = UserDB(
         user_id=user.user_id,
         username=user.username,
+        retrieval_token=user.retrieval_token,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -118,4 +120,20 @@ async def get_user_by_username(
         raise ValueError(f"User with username {username} does not exist.") from err
 
 
-# async def get_user_by_token(...)
+async def get_user_by_token(
+    token: str,
+    asession: AsyncSession,
+) -> Optional[UserDB]:
+    """
+    Retrieves a user by token
+    """
+
+    # Check if user with same username already exists
+    stmt = select(UserDB).where(UserDB.retrieval_token == token)
+    result = await asession.execute(stmt)
+    try:
+        user = result.scalar_one()
+        return user
+    except NoResultFound as err:
+        # remove logging of the actual token here
+        raise ValueError(f"User with token {token} does not exist.") from err

@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
 
     username: str
     user_id: str
-    # retrieval_token: str
+    retrieval_token: str
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
