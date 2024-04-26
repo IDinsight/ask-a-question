@@ -46,6 +46,7 @@ resource "aws_service_discovery_service" "admin_app" {
   }
 }
 
+# Litellm Proxy service discovery service
 resource "aws_service_discovery_service" "litellm_proxy" {
   name = "litellm_proxy"
   dns_config {
@@ -61,7 +62,7 @@ resource "aws_service_discovery_service" "litellm_proxy" {
   }
 }
 
-# Caddy Service with EC2 Launch Type
+# Caddy Service
 resource "aws_ecs_service" "caddy_service" {
   # This is a resource, which means it will create a resource in AWS
   # This resource will create an ECS service with EC2 launch type for the Caddy container
@@ -95,6 +96,7 @@ resource "aws_ecs_task_definition" "caddy_task" {
     image      = "caddy:2.7.6",
     memory     = 512,
     cpu        = 256,
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -186,7 +188,6 @@ resource "aws_ecs_service" "backend_service" {
   }
 }
 
-
 resource "aws_ecs_task_definition" "backend_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
   family             = "backend-task-${var.project_name}-${var.environment}"
@@ -246,11 +247,11 @@ resource "aws_ecs_task_definition" "litellm_proxy_task" {
     image  = "ghcr.io/berriai/litellm:main-v1.34.6",
     memory = 2048,
     cpu    = 512,
-
     portMappings = [
       {
-        "containerPort" : 4000,
-        "protocol" : "tcp"
+        "containerPort": 4000,
+        "hostPort": 4000,
+        "protocol": "tcp"
       }
     ],
 
@@ -266,6 +267,11 @@ resource "aws_ecs_task_definition" "litellm_proxy_task" {
 }
 
 # CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "caddy" {
+  name = "/ecs/caddy-task-${var.project_name}-${var.environment}"
+  tags = merge({ Name = "caddy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
+}
+
 resource "aws_cloudwatch_log_group" "litellm_proxy" {
   name = "/ecs/litellm-proxy-task-${var.project_name}-${var.environment}"
   tags = merge({ Name = "litellm-proxy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
@@ -277,10 +283,4 @@ resource "aws_cloudwatch_log_group" "admin_app" {
 resource "aws_cloudwatch_log_group" "backend" {
   name = "/ecs/backend-task-${var.project_name}-${var.environment}"
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
-}
-
-resource "aws_cloudwatch_log_group" "caddy" {
-  name = "/ecs/caddy-task-${var.project_name}-${var.environment}"
-
-  tags = merge({ Name = "caddy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }

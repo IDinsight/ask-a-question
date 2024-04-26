@@ -33,7 +33,6 @@ resource "aws_iam_role" "github_actions" {
 # It also grants access to ECR and ECS
 # This will allow github actions to deploy the application
 data "aws_iam_policy_document" "gh_actions_policy_document" {
-
   statement {
     actions = ["sts:AssumeRole", "iam:GetRole", "iam:PassRole"]
     # Set the web-task-role as the resource
