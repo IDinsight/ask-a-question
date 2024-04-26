@@ -4,7 +4,7 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
+from core_backend.app.auth.config import USER1_RETRIEVAL_SECRET
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.parse_input import _classify_safety, _translate_question
@@ -22,7 +22,7 @@ from core_backend.app.question_answer.schemas import (
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
+        [(f"{USER1_RETRIEVAL_SECRET}_incorrect", 401), (USER1_RETRIEVAL_SECRET, 200)],
     )
     def test_content_response(
         self,
@@ -49,17 +49,17 @@ class TestEmbeddingsSearch:
             json={
                 "query_text": "Tell me about a good sport to play",
             },
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         return response.json()
 
     @pytest.mark.parametrize(
         "token, expected_status_code, endpoint",
         [
-            (f"{QUESTION_ANSWER_SECRET}_incorrect", 401, "/response-feedback"),
-            (QUESTION_ANSWER_SECRET, 200, "/response-feedback"),
-            (f"{QUESTION_ANSWER_SECRET}_incorrect", 401, "/content-feedback"),
-            (QUESTION_ANSWER_SECRET, 200, "/content-feedback"),
+            (f"{USER1_RETRIEVAL_SECRET}_incorrect", 401, "/response-feedback"),
+            (USER1_RETRIEVAL_SECRET, 200, "/response-feedback"),
+            (f"{USER1_RETRIEVAL_SECRET}_incorrect", 401, "/content-feedback"),
+            (USER1_RETRIEVAL_SECRET, 200, "/content-feedback"),
         ],
     )
     def test_response_feedback_correct_token(
@@ -113,7 +113,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         assert response.status_code == 400
 
@@ -133,7 +133,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         assert response.status_code == 400
 
@@ -157,7 +157,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         assert response.status_code == 422
 
@@ -179,7 +179,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         assert response.status_code == 200
 
@@ -203,7 +203,7 @@ class TestEmbeddingsSearch:
                 "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_SECRET}"},
         )
         assert response.status_code == response_code
 
@@ -211,7 +211,7 @@ class TestEmbeddingsSearch:
 class TestLLMSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
+        [(f"{USER1_RETRIEVAL_SECRET}_incorrect", 401), (USER1_RETRIEVAL_SECRET, 200)],
     )
     def test_llm_response(
         self,
