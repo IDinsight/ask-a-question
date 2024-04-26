@@ -1,11 +1,9 @@
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, validator
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
-
-AccessLevel = Literal["fullaccess", "readonly"]
 
 
 class ContentCreate(BaseModel):
