@@ -1,5 +1,6 @@
 import datetime
 from typing import Any, Dict, Generator
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -272,7 +273,7 @@ class TestAuthManageContent:
 
 def test_convert_record_to_schema() -> None:
     content_id = 1
-    user_id = "user1"
+    user_id = uuid4().hex
     record = ContentDB(
         content_id=content_id,
         user_id=user_id,
