@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.config import USER1_USERNAME
 from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
@@ -237,7 +236,9 @@ async def get_semantic_matches(
 
 @router.post("/response-feedback")
 async def feedback(
-    feedback: ResponseFeedbackBase, asession: AsyncSession = Depends(get_async_session)
+    feedback: ResponseFeedbackBase,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on the results returned.
@@ -245,11 +246,16 @@ async def feedback(
     <B>Note</B>: If you wish to only provide `feedback_text`, don't include
     `feedback_sentiment` in the payload.
     """
+    user = await get_user_by_token(auth_token, asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
+        )
 
     is_matched = await check_secret_key_match(
         feedback.feedback_secret_key, feedback.query_id, asession
     )
-
     if is_matched is False:
         return JSONResponse(
             status_code=400,
@@ -257,22 +263,24 @@ async def feedback(
                 "message": f"Secret key does not match query id: {feedback.query_id}"
             },
         )
-    else:
-        feedback_db = await save_response_feedback_to_db(feedback, asession)
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": (
-                    f"Added Feedback: {feedback_db.feedback_id} "
-                    f"for Query: {feedback_db.query_id}"
-                )
-            },
-        )
+
+    feedback_db = await save_response_feedback_to_db(feedback, asession)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": (
+                f"Added Feedback: {feedback_db.feedback_id} "
+                f"for Query: {feedback_db.query_id}"
+            )
+        },
+    )
 
 
 @router.post("/content-feedback")
 async def content_feedback(
-    feedback: ContentFeedback, asession: AsyncSession = Depends(get_async_session)
+    feedback: ContentFeedback,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on specific content
@@ -280,11 +288,16 @@ async def content_feedback(
     <B>Note</B>: If you wish to only provide `feedback_text`, don't include
     `feedback_sentiment` in the payload.
     """
+    user = await get_user_by_token(auth_token, asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
+        )
 
     is_matched = await check_secret_key_match(
         feedback.feedback_secret_key, feedback.query_id, asession
     )
-
     if is_matched is False:
         return JSONResponse(
             status_code=400,
@@ -309,7 +322,7 @@ async def content_feedback(
                 },
             )
         await update_votes_in_db(
-            user_id=USER1_USERNAME,  # TEMPORARY HARDCODED USER ID
+            user_id=user.user_id,
             content_id=feedback.content_id,
             vote=feedback.feedback_sentiment,
             asession=asession,
