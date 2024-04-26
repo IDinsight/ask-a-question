@@ -64,7 +64,7 @@ async def llm_response(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_llm_answer(
-        user_query_refined=user_query_refined,
+        question=user_query_refined,
         response=response,
         n_similar=int(N_TOP_CONTENT_FOR_RAG),
         asession=asession,
@@ -84,7 +84,7 @@ async def llm_response(
 @paraphrase_question__before
 @classify_safety__before
 async def get_llm_answer(
-    user_query_refined: UserQueryRefined,
+    question: UserQueryRefined,
     response: UserQueryResponse,
     n_similar: int,
     asession: AsyncSession,
@@ -96,7 +96,7 @@ async def get_llm_answer(
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id="user1",  # TEMPORARY HARDCODED USER ID
-                question=user_query_refined.query_text,
+                question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
             )
@@ -105,7 +105,7 @@ async def get_llm_answer(
         response.content_response = content_response
         context = get_context_string_from_retrieved_contents(content_response)
 
-        llm_response = await get_llm_rag_answer(user_query_refined.query_text, context)
+        llm_response = await get_llm_rag_answer(question.query_text, context)
 
         if llm_response == SUMMARY_FAILURE_MESSAGE:
             response.state = ResultState.ERROR
