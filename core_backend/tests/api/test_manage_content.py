@@ -23,7 +23,7 @@ def existing_content_id(
     request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
 ) -> Generator[str, None, None]:
     response = client.post(
-        "/content/create",
+        "/content",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
         json={
             "content_title": request.param[0],
@@ -35,7 +35,7 @@ def existing_content_id(
     content_id = response.json()["content_id"]
     yield content_id
     client.delete(
-        f"/content/{content_id}/delete",
+        f"/content/{content_id}",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
 
@@ -57,7 +57,7 @@ class TestManageContent:
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.post(
-            "/content/create",
+            "/content",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "content_title": content_title,
@@ -72,7 +72,7 @@ class TestManageContent:
         assert "content_id" in json_response
 
         response = client.delete(
-            f"/content/{json_response['content_id']}/delete",
+            f"/content/{json_response['content_id']}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
 
@@ -100,7 +100,7 @@ class TestManageContent:
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
-            f"/content/{existing_content_id}/edit",
+            f"/content/{existing_content_id}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "content_title": content_title,
@@ -127,7 +127,7 @@ class TestManageContent:
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
-            "/content/12345/edit",
+            "/content/12345",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "content_title": "title",
@@ -143,7 +143,7 @@ class TestManageContent:
         self, client: TestClient, existing_content_id: int, readonly_token: str
     ) -> None:
         response = client.get(
-            "/content/list", headers={"Authorization": f"Bearer {readonly_token}"}
+            "/content", headers={"Authorization": f"Bearer {readonly_token}"}
         )
         assert response.status_code == 200
         assert len(response.json()) > 0
@@ -152,7 +152,7 @@ class TestManageContent:
         self, client: TestClient, existing_content_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
-            f"/content/{existing_content_id}/delete",
+            f"/content/{existing_content_id}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
@@ -173,7 +173,7 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.delete(
-            f"/content/{existing_content_id}/delete",
+            f"/content/{existing_content_id}",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
@@ -191,7 +191,7 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.post(
-            "/content/create",
+            "/content",
             headers={"Authorization": f"Bearer {access_token}"},
             json={
                 "content_title": "sample title",
@@ -216,7 +216,7 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.put(
-            f"/content/{existing_content_id}/edit",
+            f"/content/{existing_content_id}",
             headers={"Authorization": f"Bearer {access_token}"},
             json={
                 "content_title": "sample title",
@@ -240,7 +240,7 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.get(
-            "/content/list",
+            "/content",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
@@ -273,6 +273,8 @@ def test_convert_record_to_schema() -> None:
         content_text="sample text",
         content_embedding=fake_embedding(),
         content_language="ENGLISH",
+        positive_votes=0,
+        negative_votes=0,
         content_metadata={"extra_field": "extra value"},
         created_datetime_utc=datetime.datetime.utcnow(),
         updated_datetime_utc=datetime.datetime.utcnow(),

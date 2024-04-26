@@ -61,7 +61,7 @@ jobs:
       # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
       - name: Calculate Docker Compose hash
         id: hash
-        run: echo "compose_hash=$(sha256sum deployment/aws/core_backend/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
+        run: echo "compose_hash=$(sha256sum deployment/aws/caddy/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Compose hash
         uses: actions/cache@v4

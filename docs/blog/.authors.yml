@@ -6,5 +6,12 @@ authors:
   Carlos:
     name: Carlos
     description: Data Scientist
-    avatar: https://raw.githubusercontent.com/IDinsight/aaq-core/main/docs/blog/author-avatars/carlos.jpeg
-  
+    avatar: https://raw.githubusercontent.com/IDinsight/aaq-core/main/docs/blog/author-avatars/carlos.jpg
+  Amir:
+    name: Amir
+    description: Data Scientist
+    avatar: https://raw.githubusercontent.com/IDinsight/aaq-core/main/docs/blog/author-avatars/amir.jpg
+  Tanmay:
+    name: Tanmay
+    description: Product Manager
+    avatar: https://raw.githubusercontent.com/IDinsight/aaq-core/main/docs/blog/author-avatars/tanmay.png

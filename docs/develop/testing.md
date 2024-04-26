@@ -70,7 +70,7 @@ After debugging, clean up the testing resources by calling `make teardown-test-d
 
 ## Running optional tests
 
-There are a bunch of additional tests that are not run by default. Most of these
+There are some additional tests that are not run by default. Most of these
 either make call to OpenAI or depend on other components:
 
 - *Language Identification*: Tests if the the solution is able to identify the
@@ -79,48 +79,16 @@ language given a short sample text.
 checking if the LLM response is supported by the provided context.
 - *Test safety*: Tests for prompt injection and jailbreaking.
 
-You can run these test using:
+These tests will require the LiteLLM Proxy server to be running (to accept LLM calls). You can run this by going to root and running:
 
-```bash
-cd /core_backend
-python -m pytest -m rail
-```
+    make setup-llm-proxy
 
-!!! Note
+Then run the tests using:
 
-    Remember to export the right API keys or setup the required service before you
-    run the tests. For example, for test that call OpenAI, you should export your
-    OpenAI key:
+    cd core_backend
+    make setup-test-db
+    python -m pytest -m rails
 
-    ```bash
-    export OPENAI_API_KEY=sk-...
-    ```
+And when done:
 
-    See "Other Components" for how to setup required infrastructure.
-
-
-## Calling endpoints
-
-### Run the app
-
-- *Option 1 [Docker Compose]*: See [Quick Start](../index.md#quick_start) for how to start the application stack using docker-compose.
-- *Option 2 [Dev Setup]*: Run each container manually as per [dev setup](setup.md).
-
-
-### Call the endpoints
-
-You can use FastAPI's Swagger UI to test out the desired endpoints
-
-``` yaml
-https://$DOMAIN/api/docs # (1)!
-```
-
-1.  if you are using the [dev setup](setup.md), you can access it at `http://localhost:8000/docs`
-
-
-??? warning "Authorising the `/embedding_search` and `/llm-response` endpoints"
-    To use these endpoints, you'll have to Authorise and set the bearer token to the
-    value of `QUESTION_ANSWER_SECRET`.
-
-    The default value can be found in `core_backend/app/configs/app_config.py` but may have been overridden if the
-    environment variable was manually set differently.
+    make teardown-test-db

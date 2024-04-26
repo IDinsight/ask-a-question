@@ -9,7 +9,7 @@ interface ContentBody {
 }
 
 const getContentList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/list`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ const getContent = async (content_id: number, token: string) => {
 };
 
 const deleteContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/delete`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -59,30 +59,12 @@ const deleteContent = async (content_id: number, token: string) => {
   });
 };
 
-const createContent = async (content: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
-    }
-  });
-};
-
 const editContent = async (
   content_id: number,
   content: ContentBody,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}/edit`, {
+  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -99,8 +81,8 @@ const editContent = async (
   });
 };
 
-const addContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/create`, {
+const createContent = async (content: ContentBody, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -112,7 +94,7 @@ const addContent = async (content: ContentBody, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error adding content");
+      throw new Error("Error creating content");
     }
   });
 };
@@ -134,12 +116,73 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getEmbeddingsSearch = async (search: string, token: string) => {
+  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
+  return fetch(embeddingUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching embeddings response: ${errData.message} Status: ${response.status}`,
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
+          error.message,
+      );
+    });
+};
+
+const getLLMResponse = async (search: string, token: string) => {
+  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
+  return fetch(llmResponseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ query_text: search }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching llm response: ${errData.message} Status: ${response.status}`,
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
+          error.message,
+      );
+    });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
   deleteContent,
-  createContent,
   editContent,
-  addContent,
+  createContent,
   getLoginToken,
+  getEmbeddingsSearch,
+  getLLMResponse,
 };

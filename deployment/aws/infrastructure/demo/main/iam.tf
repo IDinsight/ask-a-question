@@ -1,7 +1,6 @@
 data "aws_iam_policy_document" "agent_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
-
     principals {
       type        = "Service"
       identifiers = ["ec2.amazonaws.com"]
@@ -29,7 +28,6 @@ resource "aws_iam_role_policy_attachment" "ecs_agent_ec2" {
 
 resource "aws_iam_role" "web_task_role" {
   name = var.web_ecs_task_role_name
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -42,7 +40,6 @@ resource "aws_iam_role" "web_task_role" {
       }
     ]
   })
-
   tags = merge({ Name = var.web_ecs_task_role_name, Module = "Web" }, var.tags)
 }
 
@@ -52,9 +49,9 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
   # - Service Discovery
   # - CloudWatch Logs
   # - ECR
+
   statement {
     actions = ["secretsmanager:GetSecretValue"]
-
     resources = [
       aws_secretsmanager_secret.rds_credentials.arn,
       aws_secretsmanager_secret.jwt_secret.arn,
@@ -64,7 +61,6 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       aws_secretsmanager_secret.question_answer_secret.arn,
       aws_secretsmanager_secret.whatsapp_verify_token_secret.arn,
     ]
-
   }
 
   statement {
@@ -80,16 +76,15 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       "servicediscovery:ListServices",
       "servicediscovery:UpdateInstanceCustomHealthStatus",
       "servicediscovery:Get*",
-    "servicediscovery:List*"]
-
+      "servicediscovery:List*"]
     resources = [
       aws_service_discovery_service.backend.arn,
+      aws_service_discovery_service.litellm_proxy.arn
     ]
   }
 
   statement {
     effect = "Allow"
-
     actions = [
       "secretsmanager:GetRandomPassword",
     "secretsmanager:ListSecrets"]
@@ -118,23 +113,25 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
     "ecr:BatchGetImage", ]
-
     effect    = "Allow"
     resources = [aws_ecr_repository.web_ecr_repo.arn]
   }
 
   statement {
     effect = "Allow"
-
     actions = [
       "ecs:DescribeServices",
     "ecs:UpdateService"]
-    resources = [aws_ecs_service.admin_app_service.id, aws_ecs_service.backend_service.id, aws_ecs_service.caddy_service.id]
+    resources = [
+      aws_ecs_service.admin_app_service.id,
+      aws_ecs_service.backend_service.id,
+      aws_ecs_service.caddy_service.id,
+      aws_ecs_service.litellm_proxy_service.id
+    ]
   }
 
   statement {
     effect = "Allow"
-
     actions = [
     "ecr:GetAuthorizationToken"]
     resources = ["*"]

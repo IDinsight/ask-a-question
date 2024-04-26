@@ -1,7 +1,6 @@
 resource "aws_subnet" "public" {
   # The subnet is a range of IP addresses in your VPC. You can launch AWS resources into a specified subnet.
   # Use a public subnet for resources that must be connected to the internet
-
   count                   = var.public_subnet_count
   vpc_id                  = aws_vpc.vpc.id
   tags                    = merge({ Name = "${var.public_subnet_name}-${count.index + 1}", Type = "public", Module = "Network" }, var.tags)

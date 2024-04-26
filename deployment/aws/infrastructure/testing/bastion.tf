@@ -12,5 +12,4 @@ module "bastion_host" {
   web_db_sg_id                    = module.main.web_db_sg_id
   web_db_endpoint                 = module.main.web_db_endpoint
   s3_vpc_endpoint_prefix_list_ids = module.vpc.s3_vpc_endpoint_prefix_list
-
 }

@@ -1,14 +1,11 @@
-
 resource "aws_vpc" "vpc" {
   # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#VPC_Sizing
   # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#vpc-sizing-ipv4
   # The smallest VPC you can create uses a /28 netmask (16 IP addresses), and the largest uses a /16 netmask (65,536 IP addresses).
-
   enable_dns_support   = true
   enable_dns_hostnames = true                # https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html#vpc-dns-updating
   cidr_block           = "${var.cidr_ip}/16" # 65k IP addresses
   tags                 = merge({ Name = "${var.vpc_name}", Module = "Network" }, var.tags)
-
 }
 
 resource "aws_flow_log" "vpc" {
@@ -37,7 +34,6 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   # The log group must use the following naming format: /aws/vpc/flow-log-id
   name = "${var.vpc_flow_log_name_prefix}-flow-logs-cloudwatch-logs"
   tags = merge({ Name = "${var.vpc_flow_log_name_prefix}-flow-logs", Module = "Network" }, var.tags)
-
 }
 
 resource "aws_iam_role" "vpc_flow_logs" {
@@ -51,7 +47,6 @@ resource "aws_iam_role" "vpc_flow_logs" {
   # logs:DescribeLogGroups
   # logs:DescribeLogStreams
   name = "${var.vpc_flow_log_name_prefix}-flow-logs-iam-role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -70,11 +65,8 @@ resource "aws_iam_role" "vpc_flow_logs" {
 resource "aws_iam_role_policy" "vpc_flow_logs" {
   # https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html#flow-logs-iam
   # https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html#flow-logs-iam-example
-
-
   name = "${var.vpc_flow_log_name_prefix}-flow-logs-iam-policy"
   role = aws_iam_role.vpc_flow_logs.id
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

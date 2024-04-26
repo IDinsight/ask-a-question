@@ -46,6 +46,20 @@ resource "aws_service_discovery_service" "admin_app" {
   }
 }
 
+resource "aws_service_discovery_service" "litellm_proxy" {
+  name = "litellm_proxy"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.web.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "SRV"
+    }
+  }
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
 
 # Caddy Service with EC2 Launch Type
 resource "aws_ecs_service" "caddy_service" {
@@ -63,10 +77,7 @@ resource "aws_ecs_service" "caddy_service" {
   scheduling_strategy                = "REPLICA"
   desired_count                      = 1
 
-
-
   # workaround for https://github.com/hashicorp/terraform/issues/12634
-
   # we ignore task_definition changes as the revision changes on deploy
   # of a new version of the application
   # desired_count is ignored as it can change due to autoscaling policy
@@ -84,7 +95,6 @@ resource "aws_ecs_task_definition" "caddy_task" {
     image      = "caddy:2.7.6",
     memory     = 512,
     cpu        = 256,
-
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -95,7 +105,6 @@ resource "aws_ecs_task_definition" "caddy_task" {
     }
   }])
 }
-
 
 # Frontend Service with EC2 Launch Type
 resource "aws_ecs_service" "admin_app_service" {
@@ -118,11 +127,9 @@ resource "aws_ecs_service" "admin_app_service" {
     container_port = 3000
   }
 
-
   lifecycle {
     ignore_changes = [task_definition, desired_count]
   }
-
 }
 
 resource "aws_ecs_task_definition" "admin_app_task" {
@@ -135,7 +142,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
     image  = "admin-app:latest",
     memory = 512,
     cpu    = 256,
-
     portMappings = [
       {
         "containerPort" : 3000,
@@ -143,7 +149,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
         "protocol" : "tcp"
       }
     ]
-
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -153,7 +158,6 @@ resource "aws_ecs_task_definition" "admin_app_task" {
       }
     }
   }])
-
 }
 
 # Backend Service with EC2 Launch Type
@@ -181,6 +185,7 @@ resource "aws_ecs_service" "backend_service" {
     ignore_changes = [task_definition, desired_count]
   }
 }
+
 
 resource "aws_ecs_task_definition" "backend_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
@@ -211,15 +216,66 @@ resource "aws_ecs_task_definition" "backend_task" {
   }])
 }
 
-resource "aws_cloudwatch_log_group" "admin_app" {
-  name = "/ecs/admin-app-task-${var.project_name}-${var.environment}"
+# litellm_proxy container Service with EC2 Launch Type
+resource "aws_ecs_service" "litellm_proxy_service" {
+  name                               = "litellm-proxy-service"
+  cluster                            = aws_ecs_cluster.web_cluster.id
+  task_definition                    = aws_ecs_task_definition.litellm_proxy_task.arn
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 200
+  launch_type                        = "EC2"
+  scheduling_strategy                = "REPLICA"
+  desired_count                      = 1
 
-  tags = merge({ Name = "admin-app-task-${var.environment}", Module = "Web" }, var.tags)
+  service_registries {
+    registry_arn   = aws_service_discovery_service.litellm_proxy.arn
+    container_name = "litellm-proxy-container"
+    container_port = 4000
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition, desired_count]
+  }
 }
 
+resource "aws_ecs_task_definition" "litellm_proxy_task" {
+  family             = "litellm-proxy-task-${var.project_name}-${var.environment}"
+  execution_role_arn = aws_iam_role.web_task_role.arn
+  container_definitions = jsonencode([{
+    name   = "litellm-proxy-container",
+    image  = "ghcr.io/berriai/litellm:main-v1.34.6",
+    memory = 2048,
+    cpu    = 512,
+
+    portMappings = [
+      {
+        "containerPort" : 4000,
+        "protocol" : "tcp"
+      }
+    ],
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.litellm_proxy.name
+        awslogs-stream-prefix = "ecs"
+        awslogs-region        = var.aws_region
+      }
+    }
+  }])
+}
+
+# CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "litellm_proxy" {
+  name = "/ecs/litellm-proxy-task-${var.project_name}-${var.environment}"
+  tags = merge({ Name = "litellm-proxy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
+}
+resource "aws_cloudwatch_log_group" "admin_app" {
+  name = "/ecs/admin-app-task-${var.project_name}-${var.environment}"
+  tags = merge({ Name = "admin-app-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
+}
 resource "aws_cloudwatch_log_group" "backend" {
   name = "/ecs/backend-task-${var.project_name}-${var.environment}"
-
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
 

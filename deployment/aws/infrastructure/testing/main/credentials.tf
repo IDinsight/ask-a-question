@@ -13,12 +13,9 @@ resource "random_password" "secrets" {
   count   = 5 # n passwords are generated
 }
 
-
-
 resource "aws_secretsmanager_secret" "rds_credentials" {
   # AWS Secrets Manager is used to store the RDS credentials.
   # The secret is then used by the application to connect to the database.
-
   name                    = var.rds_credentials_secret_name
   tags                    = merge({ Name = var.rds_credentials_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
@@ -27,7 +24,6 @@ resource "aws_secretsmanager_secret" "rds_credentials" {
 resource "aws_secretsmanager_secret_version" "rds_credentials" {
   # The secret version is created for the RDS credentials.
   # The secret version is then used by the application to connect to the database.
-
   secret_id = aws_secretsmanager_secret.rds_credentials.id
   secret_string = jsonencode({
     username = aws_db_instance.web_db.username,
@@ -42,11 +38,9 @@ resource "aws_secretsmanager_secret_version" "rds_credentials" {
 resource "aws_secretsmanager_secret" "jwt_secret" {
   # AWS Secrets Manager is used to store the JWT secret.
   # The secret is then used by the application to generate JWT tokens.
-
   name                    = var.jwt_secret_secret_name
   tags                    = merge({ Name = var.jwt_secret_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_version" "jwt_secret" {
@@ -59,7 +53,6 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
 # secret for access content
 resource "aws_secretsmanager_secret" "content_access_secret" {
   # AWS Secrets Manager is used to store the access secret.
-
   name                    = var.content_access_secret_name
   tags                    = merge({ Name = var.content_access_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
@@ -78,11 +71,9 @@ resource "aws_secretsmanager_secret_version" "content_access_secret" {
 # whatsapp token secret
 resource "aws_secretsmanager_secret" "whatsapp_token_secret" {
   # AWS Secrets Manager is used to store the whatsapp token secret.
-
   name                    = var.whatsapp_token_secret_name
   tags                    = merge({ Name = var.whatsapp_token_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
@@ -99,11 +90,9 @@ resource "aws_secretsmanager_secret_version" "whatsapp_token_secret" {
 # Whatsapp verify token secret
 resource "aws_secretsmanager_secret" "whatsapp_verify_token_secret" {
   # AWS Secrets Manager is used to store the whatsapp verify token secret.
-
   name                    = var.whatsapp_verify_token_secret_name
   tags                    = merge({ Name = var.whatsapp_verify_token_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
@@ -111,17 +100,13 @@ resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.whatsapp_verify_token_secret.id
   secret_string = random_password.secrets[3].result
-
-
 }
 
 resource "aws_secretsmanager_secret" "open_ai_key_secret" {
   # AWS Secrets Manager is used to store the open ai key secret.
-
   name                    = var.open_ai_key_secret_name
   tags                    = merge({ Name = var.open_ai_key_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_version" "open_ai_key_secret" {
@@ -137,11 +122,9 @@ resource "aws_secretsmanager_secret_version" "open_ai_key_secret" {
 
 resource "aws_secretsmanager_secret" "question_answer_secret" {
   # AWS Secrets Manager is used to store the question answer secret.
-
   name                    = var.question_answer_secret_name
   tags                    = merge({ Name = var.question_answer_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_version" "question_answer_secret" {
@@ -149,5 +132,4 @@ resource "aws_secretsmanager_secret_version" "question_answer_secret" {
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.question_answer_secret.id
   secret_string = random_password.secrets[4].result
-
 }

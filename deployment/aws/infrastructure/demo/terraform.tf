@@ -5,6 +5,5 @@ terraform {
       version = "~> 4"
     }
   }
-
   backend "s3" {}
 }

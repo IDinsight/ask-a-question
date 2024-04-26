@@ -1,5 +1,5 @@
 bastion_ec2_instance_type = "t3.nano"
-ec2_instance_type         = "t4g.small"
+ec2_instance_type         = "t4g.medium"
 aws_region                = "ap-south-1"
 aws_profile               = "aaq"
 project_name              = "aaq"

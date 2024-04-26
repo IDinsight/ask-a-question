@@ -17,14 +17,12 @@ variable "resource_tags" {
   description = "map of tags to be applied to all resources"
   type        = map(string)
   default     = {}
-
 }
 
 variable "aws_region" {
   description = "AWS region to deploy to"
   type        = string
   default     = "af-south-1"
-
 }
 
 variable "aws_profile" {

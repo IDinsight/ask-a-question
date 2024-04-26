@@ -7,10 +7,15 @@ import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
-from core_backend.app.config import LITELLM_EMBEDDING_MODEL
+from core_backend.app.config import (
+    LITELLM_API_KEY,
+    LITELLM_ENDPOINT,
+    LITELLM_MODEL_EMBEDDING,
+)
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
@@ -33,7 +38,7 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
 @pytest.fixture(scope="session")
-def db_session() -> pytest.FixtureRequest:
+def db_session() -> Generator[Session, None, None]:
     """Create a test database session."""
     session_gen = get_session()
     session = next(session_gen)
@@ -46,16 +51,19 @@ def db_session() -> pytest.FixtureRequest:
 
 
 @pytest.fixture(scope="session")
-def faq_contents(client: TestClient, db_session: pytest.FixtureRequest) -> None:
+def faq_contents(client: TestClient, db_session: Session) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
 
     for i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
-        content_embedding = fake_embedding(LITELLM_EMBEDDING_MODEL, text_to_embed).data[
-            0
-        ]["embedding"]
+        content_embedding = fake_embedding(
+            model=LITELLM_MODEL_EMBEDDING,
+            input=text_to_embed,
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+        ).data[0]["embedding"]
 
         contend_db = ContentDB(
             content_id=i,

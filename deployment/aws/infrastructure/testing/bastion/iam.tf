@@ -16,7 +16,6 @@ data "aws_iam_policy_document" "agent_assume_role" {
 
 resource "aws_iam_role" "bastion_instance_role" {
   # The role that the EC2 instance will assume
-
   name               = var.bastion_instance_role_name
   assume_role_policy = data.aws_iam_policy_document.agent_assume_role.json
   tags               = merge({ Name = var.bastion_instance_role_name, Module = "Bastion" }, var.tags)
@@ -34,7 +33,6 @@ resource "aws_iam_instance_profile" "bastion_instance_profile" {
   # This is the instance profile that will be attached to the EC2 instance
   # The instance profile is a container for the role
   # The instance profile is then attached to the EC2 instance
-
   name = var.bastion_instance_profile_name
   role = aws_iam_role.bastion_instance_role.name
 }

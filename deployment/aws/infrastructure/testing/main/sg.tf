@@ -1,6 +1,5 @@
 resource "aws_security_group" "web_ec2_sg" {
   # This is the security group for the web ec2 instance
-
   vpc_id = var.vpc_id
   name   = var.web_ec2_sg_name
   tags   = merge({ Name = var.web_ec2_sg_name, Module = "Web" }, var.tags)
@@ -9,7 +8,6 @@ resource "aws_security_group" "web_ec2_sg" {
 resource "aws_security_group_rule" "web_ec2_sg_ingress" {
   # This is the security group rule for the web ec2 instance
   # The security group rule allows ingress traffic on the ports specified in the variable ec2_sg_ingress_ports
-
   count             = length(var.ec2_sg_ingress_ports)
   type              = "ingress"
   from_port         = var.ec2_sg_ingress_ports[count.index]

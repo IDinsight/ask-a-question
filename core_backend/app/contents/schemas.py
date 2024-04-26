@@ -41,6 +41,8 @@ class ContentRetrieve(ContentCreate):
     content_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
+    positive_votes: int
+    negative_votes: int
 
 
 class ContentUpdate(ContentCreate):

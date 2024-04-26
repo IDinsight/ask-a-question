@@ -4,6 +4,7 @@ from typing import Dict, Optional
 from pydantic import BaseModel, ConfigDict
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
+from ..schemas import FeedbackSentiment
 
 
 class UserQueryBase(BaseModel):
@@ -33,6 +34,7 @@ class UserQuerySearchResult(BaseModel):
 
     retrieved_title: str
     retrieved_text: str
+    retrieved_content_id: int
     score: float
 
     model_config = ConfigDict(from_attributes=True)
@@ -88,13 +90,24 @@ class UserQueryResponseError(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FeedbackBase(BaseModel):
+class ResponseFeedbackBase(BaseModel):
     """
     Pydantic model for feedback
     """
 
     query_id: int
-    feedback_text: str
+    feedback_sentiment: FeedbackSentiment = FeedbackSentiment.UNKNOWN
+    feedback_text: Optional[str] = None
     feedback_secret_key: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContentFeedback(ResponseFeedbackBase):
+    """
+    Pydantic model for content feedback
+    """
+
+    content_id: int
 
     model_config = ConfigDict(from_attributes=True)

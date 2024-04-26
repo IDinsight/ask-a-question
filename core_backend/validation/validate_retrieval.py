@@ -11,9 +11,13 @@ from fastapi.testclient import TestClient
 from litellm import embedding
 
 from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
-from core_backend.app.config import LITELLM_EMBEDDING_MODEL
+from core_backend.app.config import (
+    LITELLM_API_KEY,
+    LITELLM_ENDPOINT,
+    LITELLM_MODEL_EMBEDDING,
+)
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.question_answer.config import N_TOP_SIMILAR
+from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import UserQueryBase
 from core_backend.app.utils import setup_logger
 
@@ -86,6 +90,7 @@ class TestRetrievalPerformance:
         df = pd.read_csv(
             content_data_path,
             storage_options=dict(profile=aws_profile),
+            nrows=5,
         )
         df["content_id"] = list(range(len(df)))
         df = df.rename(
@@ -105,7 +110,10 @@ class TestRetrievalPerformance:
         logger.info(f"Loading {n_content} content item to vector table...")
 
         embedding_results = embedding(
-            LITELLM_EMBEDDING_MODEL, input=content_dataframe["content_text"].tolist()
+            LITELLM_MODEL_EMBEDDING,
+            input=content_dataframe["content_text"].tolist(),
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
         )
         content_embeddings = [x["embedding"] for x in embedding_results.data]
 
@@ -205,7 +213,7 @@ class TestRetrievalPerformance:
     ) -> List[float]:
         """Get top K accuracy table for validation results"""
         accuracies = []
-        for i in range(1, int(N_TOP_SIMILAR) + 1):
+        for i in range(1, int(N_TOP_CONTENT_FOR_SEARCH) + 1):
             acc = (df["rank"] <= i).mean()
             accuracies.append(acc)
         return accuracies
@@ -248,7 +256,7 @@ class TestRetrievalPerformance:
             f"   • Content data: {content_data_path}\n"
             f"      • Text column: {content_data_text_col}\n"
             f"      • Label column: {content_data_label_col}\n"
-            f"• Embedding model: {LITELLM_EMBEDDING_MODEL}\n"
+            f"• Embedding model: {LITELLM_MODEL_EMBEDDING}\n"
             f"• Retrieval failure rate: {retrieval_failure_rate:.1%}\n"
             f"• Top N accuracies:\n" + self.format_accuracies(accuracies)
         )

@@ -7,7 +7,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 24.3.0
     hooks:
       - id: black
         language_version: python3.10
@@ -28,7 +28,7 @@ repos:
     rev: v1.6.1 # Use the sha / tag you want to point at
     hooks:
       - id: mypy
-        exclude: ^data/
+        exclude: ^data/|^scripts/
         additional_dependencies:
           [types-PyYAML==6.0.12.12, types-python-dateutil]
         args: [--ignore-missing-imports, --explicit-package-base]

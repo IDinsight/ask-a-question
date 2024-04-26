@@ -1,9 +1,11 @@
 :root {
   --md-primary-fg-color: #263568;
+  --md-typeset-strong-color--light: #263568;
+  --md-typeset-strong-color--dark: #9dc1e0;
 }
 .md-header__button.md-logo img {
-  height: 35px; /* Replace with the height you want */
-  width: 210px; /* Replace with the width you want */
+  height: 43px;
+  aspect-ratio: 1200 / 214;
 }
 .component-title {
   color: #5480cb;
@@ -17,7 +19,11 @@
   color: #9dc1e0;
 }
 strong {
-  color: #5480cb;
+  color: var(--md-typeset-strong-color--light);
+}
+
+[data-md-color-scheme="slate"] strong {
+  color: var(--md-typeset-strong-color--dark);
 }
 
 .md-ellipsis:hover {
@@ -62,4 +68,10 @@ strong {
 }
 .footer {
   font-size: small;
+}
+
+.md-content .blog-img {
+  border-width: 1px;
+  border-style: solid;
+  border-color: "9dc1e0";
 }

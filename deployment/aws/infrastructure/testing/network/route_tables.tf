@@ -12,5 +12,4 @@ resource "aws_route_table" "private" {
   # This is the private route table
   vpc_id = aws_vpc.vpc.id
   tags   = merge({ Name = var.private_route_table_name, Module = "Network" }, var.tags)
-
 }
