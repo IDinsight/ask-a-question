@@ -76,8 +76,7 @@ There are three main modules.
    the VPC that the RDS instance resides in.
 2. `main`: This is where all the infrastructure code for backend (`core_backend`) and
    frontend (`admin-app`) is stored. The application will run on ECS with an EC2 launch type. The
-   load-balancing is done using Nginx, and certificate generation and maintainance will
-   be handled by Certbot. The docker images will be stored in ECR.
+   load-balancing as well as certificate management is done using Caddy. The docker images will be stored in ECR.
 3. `network`: This module has the code for the VPC and its components. The other modules will only have Security Groups resources. The rest are placed here.
 
 ### Creating AAQ infrastructure

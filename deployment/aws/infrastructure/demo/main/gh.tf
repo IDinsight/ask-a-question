@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
     resources = [
       aws_ecs_service.admin_app_service.id,
       aws_ecs_service.backend_service.id,
-      aws_ecs_service.nginx_service.id,
+      aws_ecs_service.caddy_service.id,
       aws_ecs_service.litellm_proxy_service.id
     ]
   }
@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "gh_actions_policy_document" {
     resources = [
       aws_cloudwatch_log_group.backend.arn,
       aws_cloudwatch_log_group.admin_app.arn,
-      aws_cloudwatch_log_group.nginx.arn,
+      aws_cloudwatch_log_group.caddy.arn,
       aws_cloudwatch_log_group.litellm_proxy.arn
     ]
   }

@@ -5,7 +5,7 @@ have created 3 services in your AAQ ECS cluster.
 
 1. backend
 2. admin-app
-3. nginx
+3. caddy
 
 This page will show you how the CI/CD pipelines work and how to configure your GitHub
 Actions for CI/CD.

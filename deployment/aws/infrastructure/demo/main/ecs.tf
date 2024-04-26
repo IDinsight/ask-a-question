@@ -61,17 +61,16 @@ resource "aws_service_discovery_service" "litellm_proxy" {
   }
 }
 
-# Nginx Service with EC2 Launch Type
-resource "aws_ecs_service" "nginx_service" {
+# Caddy Service with EC2 Launch Type
+resource "aws_ecs_service" "caddy_service" {
   # This is a resource, which means it will create a resource in AWS
-  # This resource will create an ECS service with EC2 launch type for the Nginx container
-  # The ECS service will be used to route traffic to the Nginx container
+  # This resource will create an ECS service with EC2 launch type for the Caddy container
+  # The ECS service will be used to route traffic to the Caddy container
   # The ECS service will be attached to the ECS cluster
   # This will be the entry point for the application
-  # Service will have two tasks running at all times, nginx and certbot
-  name                               = "nginx-service"
+  name                               = "caddy-service"
   cluster                            = aws_ecs_cluster.web_cluster.id
-  task_definition                    = aws_ecs_task_definition.nginx_task.arn
+  task_definition                    = aws_ecs_task_definition.caddy_task.arn
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
   launch_type                        = "EC2"
@@ -87,39 +86,23 @@ resource "aws_ecs_service" "nginx_service" {
   }
 }
 
-resource "aws_ecs_task_definition" "nginx_task" {
+resource "aws_ecs_task_definition" "caddy_task" {
   # The rest of the container definitions will be added when the application is deployed. It will be added to the task definition from docker-compose.yml using the ecs-cli compose create command
-  family             = "nginx-task-${var.project_name}-${var.environment}"
+  family             = "caddy-task-${var.project_name}-${var.environment}"
   execution_role_arn = aws_iam_role.web_task_role.arn
   container_definitions = jsonencode([{
-    name       = "nginx-container",
-    image      = "nginx:latest",
+    name       = "caddy-container",
+    image      = "caddy:2.7.6",
     memory     = 512,
     cpu        = 256,
-    entryPoint = ["/entrypoint.sh"],
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.nginx.name
+        awslogs-group         = aws_cloudwatch_log_group.caddy.name
         awslogs-stream-prefix = "ecs"
         awslogs-region        = var.aws_region
       }
     }
-    },
-    {
-      name   = "certbot",
-      image  = "certbot/certbot:latest",
-      memory = 256,
-      cpu    = 256,
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.nginx.name
-          awslogs-stream-prefix = "ecs"
-          awslogs-region        = var.aws_region
-        }
-      }
   }])
 }
 
@@ -295,7 +278,9 @@ resource "aws_cloudwatch_log_group" "backend" {
   name = "/ecs/backend-task-${var.project_name}-${var.environment}"
   tags = merge({ Name = "backend-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
-resource "aws_cloudwatch_log_group" "nginx" {
-  name = "/ecs/nginx-task-${var.project_name}-${var.environment}"
-  tags = merge({ Name = "nginx-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
+
+resource "aws_cloudwatch_log_group" "caddy" {
+  name = "/ecs/caddy-task-${var.project_name}-${var.environment}"
+
+  tags = merge({ Name = "caddy-task-${var.project_name}-${var.environment}", Module = "Web" }, var.tags)
 }
