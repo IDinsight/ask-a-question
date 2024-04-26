@@ -104,10 +104,6 @@ variable "web_ecs_task_role_name" {
   description = "value for the web ecs task role name"
   type        = string
   default     = ""
-  type        = string
-  default     = ""
-  type        = string
-  default     = ""
 }
 
 variable "web_ec2_server_name" {
@@ -124,10 +120,6 @@ variable "web_asg_name" {
 
 variable "web_ec2_instance_type" {
   description = "value for the web ec2 instance type"
-  type        = string
-  default     = ""
-  type        = list(any)
-  default     = []
   type        = string
   default     = ""
 }
