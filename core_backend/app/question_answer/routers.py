@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth.config import USER1_USERNAME
 from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
@@ -58,8 +59,8 @@ async def llm_response(
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
     """
-    # hardcode "user1" here. Later will change this to "get_user_by_token()"
-    user = await get_user_by_username("user1", asession)
+    # hardcode USER1_USERNAME here. Later will change this to "get_user_by_token()"
+    user = await get_user_by_username(USER1_USERNAME, asession)
     if user is None:
         return JSONResponse(
             status_code=400, content={"message": "User not found in the database"}
@@ -163,8 +164,8 @@ async def embeddings_search(
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
-    # hardcode "user1" here. Later will change this to "get_user_by_token()"
-    user = await get_user_by_username("user1", asession)
+    # hardcode USER1_USERNAME here. Later will change this to "get_user_by_token()"
+    user = await get_user_by_username(USER1_USERNAME, asession)
     if user is None:
         return JSONResponse(
             status_code=400, content={"message": "User not found in the database"}
@@ -291,7 +292,7 @@ async def content_feedback(
                 },
             )
         await update_votes_in_db(
-            user_id="user1",  # TEMPORARY HARDCODED USER ID
+            user_id=USER1_USERNAME,  # TEMPORARY HARDCODED USER ID
             content_id=feedback.content_id,
             vote=feedback.feedback_sentiment,
             asession=asession,

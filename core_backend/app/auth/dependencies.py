@@ -15,7 +15,9 @@ from .config import (
     JWT_SECRET,
     QUESTION_ANSWER_SECRET,
     USER1_PASSWORD,
+    USER1_USERNAME,
     USER2_PASSWORD,
+    USER2_USERNAME,
 )
 from .schemas import AccessLevel, AuthenticatedUser
 
@@ -24,11 +26,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 USERS = {
-    "user1": {
+    USER1_USERNAME: {
         "password": USER1_PASSWORD,
         "access_level": "fullaccess",
     },
-    "user2": {
+    USER2_USERNAME: {
         "password": USER2_PASSWORD,
         "access_level": "fullaccess",
     },

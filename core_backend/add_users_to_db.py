@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
+from app.auth.config import USER1_USERNAME, USER2_USERNAME
 from app.database import get_session
 from app.users.models import UserDB
 from app.utils import setup_logger
@@ -11,13 +12,13 @@ logger = setup_logger()
 
 user_dbs = [
     UserDB(
-        username="user1",
+        username=USER1_USERNAME,
         user_id=uuid4().hex,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     ),
     UserDB(
-        username="user2",
+        username=USER2_USERNAME,
         user_id=uuid4().hex,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
