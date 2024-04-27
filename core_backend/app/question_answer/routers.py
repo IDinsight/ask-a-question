@@ -18,7 +18,8 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
-from ..users.models import get_user_by_username
+from ..users.models import get_user_by_token
+from ..utils import setup_logger
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -44,6 +45,8 @@ from .utils import (
     get_context_string_from_retrieved_contents,
 )
 
+logger = setup_logger()
+
 router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 
@@ -53,18 +56,21 @@ router = APIRouter(dependencies=[Depends(auth_bearer_token)])
     responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
 )
 async def llm_response(
-    user_query: QueryBase, asession: AsyncSession = Depends(get_async_session)
+    user_query: QueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> QueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
     """
-    # hardcode USER1_USERNAME here. Later will change this to "get_user_by_token()"
-    user = await get_user_by_username(USER1_USERNAME, asession)
+    user = await get_user_by_token(auth_token, asession)
     if user is None:
         return JSONResponse(
-            status_code=400, content={"message": "User not found in the database"}
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
         )
+
     (
         user_query_db,
         user_query_refined,
@@ -158,18 +164,22 @@ async def get_user_query_and_response(
     responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
 )
 async def embeddings_search(
-    user_query: QueryBase, asession: AsyncSession = Depends(get_async_session)
+    user_query: QueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    auth_token: str = Depends(auth_bearer_token),
 ) -> QueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
-    # hardcode USER1_USERNAME here. Later will change this to "get_user_by_token()"
-    user = await get_user_by_username(USER1_USERNAME, asession)
+
+    user = await get_user_by_token(auth_token, asession)
     if user is None:
         return JSONResponse(
-            status_code=400, content={"message": "User not found in the database"}
+            status_code=400,
+            content={"message": "No user associated with the provided token."},
         )
+
     (
         user_query_db,
         user_query_refined,
