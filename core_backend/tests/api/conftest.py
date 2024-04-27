@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
+from core_backend.app.auth.config import USER1_USERNAME
 from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.config import (
     LITELLM_API_KEY,
@@ -26,6 +27,7 @@ from core_backend.app.question_answer.schemas import (
     UserQueryRefined,
     UserQueryResponse,
 )
+from core_backend.app.users.models import UserDB
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -35,6 +37,9 @@ EmbeddingValues = namedtuple("EmbeddingValues", "embedding")
 CompletionData = namedtuple("CompletionData", "choices")
 CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
+
+
+TEST_USER_ID = "test_user_id"
 
 
 @pytest.fixture(scope="session")
@@ -48,6 +53,19 @@ def db_session() -> Generator[Session, None, None]:
     finally:
         session.rollback()
         next(session_gen, None)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def user(client: TestClient, db_session: Session) -> None:
+
+    user_db = UserDB(
+        username=USER1_USERNAME,
+        user_id=TEST_USER_ID,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(user_db)
+    db_session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -67,7 +85,7 @@ def faq_contents(client: TestClient, db_session: Session) -> None:
 
         contend_db = ContentDB(
             content_id=i,
-            user_id="user1",  # TEMPORARY HARDCODED USER ID
+            user_id=TEST_USER_ID,
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
@@ -198,7 +216,7 @@ def fullaccess_token() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token("user1")  # TEMPORARY HARDCODED USER ID
+    return create_access_token(USER1_USERNAME)
 
 
 @pytest.fixture(scope="session")
@@ -206,9 +224,8 @@ def readonly_token() -> str:
     """
     Returns a token with readonly access
     """
-    return create_access_token(
-        "user1"
-    )  # TEMPORARY HARDCODED USER ID - this is also fullaccess!
+    # NOTE: ALSO FULLACCESS
+    return create_access_token(USER1_USERNAME)
 
 
 @pytest.fixture(scope="session", autouse=True)
