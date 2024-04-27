@@ -40,7 +40,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("feedback_id"),
     )
     op.create_index(
-        op.f("ix_content_feedback_feedback_id"),
+        op.f("ix_content-feedback_feedback_id"),
         "content-feedback",
         ["feedback_id"],
         unique=False,
@@ -59,7 +59,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("feedback_id"),
     )
     op.create_index(
-        op.f("ix_response_feedback_feedback_id"),
+        op.f("ix_query-response-feedback_feedback_id"),
         "query-response-feedback",
         ["feedback_id"],
         unique=False,
@@ -98,11 +98,12 @@ def downgrade() -> None:
         "ix_feedback_feedback_id", "feedback", ["feedback_id"], unique=False
     )
     op.drop_index(
-        op.f("ix_response_feedback_feedback_id"), table_name="query-response-feedback"
+        op.f("ix_query-response-feedback_feedback_id"),
+        table_name="query-response-feedback",
     )
     op.drop_table("query-response-feedback")
     op.drop_index(
-        op.f("ix_content_feedback_feedback_id"), table_name="content-feedback"
+        op.f("ix_content-feedback_feedback_id"), table_name="content-feedback"
     )
     op.drop_table("content-feedback")
     # ### end Alembic commands ###
