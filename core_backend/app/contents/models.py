@@ -6,6 +6,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     DateTime,
+    ForeignKey,
     Integer,
     String,
     delete,
@@ -32,7 +33,9 @@ class ContentDB(Base):
     __tablename__ = "content"
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("user.user_id"), nullable=False
+    )
 
     content_embedding: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
