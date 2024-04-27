@@ -38,6 +38,9 @@ LITELLM_MODEL_PARAPHRASE = os.environ.get(
 LITELLM_MODEL_ALIGNSCORE = os.environ.get(
     "LITELLM_MODEL_ALIGNSCORE", "openai/alignscore"
 )
+LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
+    "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
+)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
