@@ -17,6 +17,7 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
+from ..users.models import get_user_by_username
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
@@ -57,6 +58,12 @@ async def llm_response(
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
     """
+    # hardcode "user1" here. Later will change this to "get_user_by_token()"
+    user = await get_user_by_username("user1", asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400, content={"message": "User not found in the database"}
+        )
     (
         user_query_db,
         user_query_refined,
@@ -66,6 +73,7 @@ async def llm_response(
     response = await get_llm_answer(
         question=user_query_refined,
         response=response,
+        user_id=user.user_id,
         n_similar=int(N_TOP_CONTENT_FOR_RAG),
         asession=asession,
     )
@@ -86,6 +94,7 @@ async def llm_response(
 async def get_llm_answer(
     question: UserQueryRefined,
     response: UserQueryResponse,
+    user_id: str,
     n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
@@ -95,7 +104,7 @@ async def get_llm_answer(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_id="user1",  # TEMPORARY HARDCODED USER ID
+                user_id=user_id,
                 question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
@@ -154,6 +163,12 @@ async def embeddings_search(
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
+    # hardcode "user1" here. Later will change this to "get_user_by_token()"
+    user = await get_user_by_username("user1", asession)
+    if user is None:
+        return JSONResponse(
+            status_code=400, content={"message": "User not found in the database"}
+        )
     (
         user_query_db,
         user_query_refined,
@@ -163,6 +178,7 @@ async def embeddings_search(
     response = await get_semantic_matches(
         question=user_query_refined,
         response=response,
+        user_id=user.user_id,
         n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
         asession=asession,
     )
@@ -180,6 +196,7 @@ async def embeddings_search(
 async def get_semantic_matches(
     question: UserQueryRefined,
     response: UserQueryResponse | UserQueryResponseError,
+    user_id: str,
     n_similar: int,
     asession: AsyncSession,
 ) -> UserQueryResponse | UserQueryResponseError:
@@ -189,7 +206,7 @@ async def get_semantic_matches(
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
-                user_id="user1",  # TEMPORARY HARDCODED USER ID
+                user_id=user_id,
                 question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
