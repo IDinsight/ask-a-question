@@ -28,7 +28,7 @@ class UserQueryDB(Base):
     SQLAlchemy data model for questions asked by user
     """
 
-    __tablename__ = "user-queries"
+    __tablename__ = "query"
 
     query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -98,7 +98,7 @@ class UserQueryResponseDB(Base):
     __tablename__ = "user-query-responses"
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -140,7 +140,7 @@ class UserQueryResponseErrorDB(Base):
     __tablename__ = "user-query-response-errors"
 
     error_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     error_message: Mapped[str] = mapped_column(String, nullable=False)
     error_type: Mapped[str] = mapped_column(String, nullable=False)
     error_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -190,7 +190,7 @@ class ResponseFeedbackDB(Base):
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -236,7 +236,7 @@ class ContentFeedbackDB(Base):
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
