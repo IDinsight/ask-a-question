@@ -1,9 +1,15 @@
+import hashlib
 import logging
 from logging import Logger
 
 import aiohttp
 
 from .config import LOG_LEVEL
+
+
+def get_key_hash(retrieval_key: str) -> str:
+    """Hashes the retrieval key using SHA256."""
+    return hashlib.sha256(retrieval_key.encode()).hexdigest()
 
 
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:

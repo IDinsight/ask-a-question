@@ -9,7 +9,7 @@ from app.auth.config import (
 )
 from app.database import get_session
 from app.users.models import UserDB
-from app.utils import setup_logger
+from app.utils import get_key_hash, setup_logger
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -19,14 +19,14 @@ user_dbs = [
     UserDB(
         username=USER1_USERNAME,
         user_id=uuid4().hex,
-        retrieval_key=USER1_RETRIEVAL_KEY,
+        hashed_retrieval_key=get_key_hash(USER1_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     ),
     UserDB(
         username=USER2_USERNAME,
         user_id=uuid4().hex,
-        retrieval_key=USER2_RETRIEVAL_KEY,
+        hashed_retrieval_key=get_key_hash(USER2_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     ),
