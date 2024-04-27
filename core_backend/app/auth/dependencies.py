@@ -13,10 +13,11 @@ from .config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,
     JWT_SECRET,
-    QUESTION_ANSWER_SECRET,
     USER1_PASSWORD,
+    USER1_RETRIEVAL_KEY,
     USER1_USERNAME,
     USER2_PASSWORD,
+    USER2_RETRIEVAL_KEY,
     USER2_USERNAME,
 )
 from .schemas import AccessLevel, AuthenticatedUser
@@ -39,14 +40,17 @@ USERS = {
 
 def auth_bearer_token(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> None:
+) -> str:
     """
     Authenticate using basic bearer token. Used for calling
     the question-answering endpoints
     """
     token = credentials.credentials
-    if token != QUESTION_ANSWER_SECRET:
+    # change to "hash check against db" logic later
+    if token not in [USER1_RETRIEVAL_KEY, USER2_RETRIEVAL_KEY]:
         raise HTTPException(status_code=401, detail="Invalid bearer token")
+    else:
+        return token  # NOT SURE ABOUT THIS - IS THIS REASONABLE?
 
 
 def authenticate_user(*, username: str, password: str) -> Optional[AuthenticatedUser]:
