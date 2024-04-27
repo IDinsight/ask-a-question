@@ -1,8 +1,8 @@
 import os
 
-USER1_USERNAME = os.environ.get("USER1_USERNAME", "user_one")
+USER1_USERNAME = os.environ.get("USER1_USERNAME", "user1")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
-USER2_USERNAME = os.environ.get("USER2_USERNAME", "user_two")
+USER2_USERNAME = os.environ.get("USER2_USERNAME", "user2")
 USER2_PASSWORD = os.environ.get("USER2_PASSWORD", "fullaccess")
 
 QUESTION_ANSWER_SECRET = os.environ.get("QUESTION_ANSWER_SECRET", "update-me")
