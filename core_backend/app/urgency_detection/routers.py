@@ -12,7 +12,11 @@ from ..urgency_rules.models import (
     get_urgency_rules_from_db,
 )
 from ..utils import generate_secret_key
-from .config import URGENCY_CLASSIFIER, URGENCY_DETECTION_MAX_DISTANCE
+from .config import (
+    URGENCY_CLASSIFIER,
+    URGENCY_DETECTION_MAX_DISTANCE,
+    URGENCY_DETECTION_MIN_PROBABILITY,
+)
 from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
@@ -93,7 +97,7 @@ async def llm_entailment_classifier(
     results_dict = {str(i): result for i, result in enumerate(results)}
 
     for result in results:
-        if float(result["probability"]) > 0.5:
+        if float(result["probability"]) > int(URGENCY_DETECTION_MIN_PROBABILITY):
             return UrgencyResponse(is_urgent=True, details=results_dict)
 
     return UrgencyResponse(is_urgent=False, details=results_dict)

@@ -72,6 +72,7 @@ async def update_urgency_rule_in_db(
         id=urgency_rule_id,
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
+        urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
         updated_datetime_utc=datetime.utcnow(),
     )
     urgency_rule_db = await asession.merge(urgency_rule_db)
@@ -94,13 +95,11 @@ async def delete_urgency_rule_from_db(
 
 async def get_urgency_rule_by_id_from_db(
     urgency_rule_id: int, asession: AsyncSession
-) -> UrgencyRuleDB:
+) -> UrgencyRuleDB | None:
     """
     Get urgency rule by ID from the database
     """
     urgency_rule = await asession.get(UrgencyRuleDB, urgency_rule_id)
-    if urgency_rule is None:
-        raise ValueError(f"Urgency rule with ID {urgency_rule_id} not found")
     return urgency_rule
 
 

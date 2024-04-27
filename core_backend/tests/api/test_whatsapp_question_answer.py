@@ -7,7 +7,7 @@ from core_backend.app.whatsapp_qa.config import (
 
 
 class TestWhatsAppWebhook:
-    def test_post_webhook_response(
+    async def test_post_webhook_response(
         self, client: TestClient, patch_httpx_call: pytest.FixtureRequest
     ) -> None:
         """Test that the webhook response is correct."""
@@ -38,7 +38,7 @@ class TestWhatsAppWebhook:
         assert response.status_code == 200
         assert response.json() == {"status": "success"}
 
-    def test_get_webhook_correct_token(self, client: TestClient) -> None:
+    async def test_get_webhook_correct_token(self, client: TestClient) -> None:
         """Test resopnse when token is correct."""
         response = client.get(
             "/webhook",
@@ -47,7 +47,7 @@ class TestWhatsAppWebhook:
         assert response.status_code == 200
         assert response.text == "1234"
 
-    def test_get_webhook_incorrect_token(self, client: TestClient) -> None:
+    async def test_get_webhook_incorrect_token(self, client: TestClient) -> None:
         """Test response when token is incorrect."""
         response = client.get(
             "/webhook",

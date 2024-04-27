@@ -13,5 +13,4 @@ async def detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
     prompt = get_urgency_detection_prompt(urgency_rule, message)
     json = await _ask_llm_async("", prompt, LITELLM_MODEL_URGENCY_DETECT)
     json = json.replace("```json", "").replace("```", "")
-    print(json)
     return loads(json)

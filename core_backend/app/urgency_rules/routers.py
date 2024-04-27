@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_fullaccess_user
+from ..auth.dependencies import get_current_fullaccess_user, get_current_readonly_user
 from ..auth.schemas import AuthenticatedUser
 from ..database import get_async_session
 from ..utils import setup_logger
@@ -18,7 +18,7 @@ from .models import (
 )
 from .schemas import UrgencyRuleCreate, UrgencyRuleRetrieve
 
-router = APIRouter(prefix="/urgency_rules", tags=["Urgency Rules"])
+router = APIRouter(prefix="/urgency-rules", tags=["Urgency Rules"])
 logger = setup_logger(__name__)
 
 
@@ -40,9 +40,7 @@ async def create_urgency_rule(
 @router.get("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
 async def get_urgency_rule(
     urgency_rule_id: int,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_readonly_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """
@@ -50,6 +48,10 @@ async def get_urgency_rule(
     """
 
     urgency_rule_db = await get_urgency_rule_by_id_from_db(urgency_rule_id, asession)
+    if not urgency_rule_db:
+        raise HTTPException(
+            status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
+        )
     return _convert_record_to_schema(urgency_rule_db)
 
 
@@ -98,9 +100,7 @@ async def update_urgency_rule(
 
 @router.get("/", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_readonly_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
     """
