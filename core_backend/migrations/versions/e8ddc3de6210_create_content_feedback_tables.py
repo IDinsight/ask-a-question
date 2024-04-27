@@ -46,7 +46,7 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_table(
-        "response_feedback",
+        "query-response-feedback",
         sa.Column("feedback_id", sa.Integer(), nullable=False),
         sa.Column("feedback_sentiment", sa.String(), nullable=True),
         sa.Column("query_id", sa.Integer(), nullable=False),
@@ -60,7 +60,7 @@ def upgrade() -> None:
     )
     op.create_index(
         op.f("ix_response_feedback_feedback_id"),
-        "response_feedback",
+        "query-response-feedback",
         ["feedback_id"],
         unique=False,
     )
@@ -98,9 +98,9 @@ def downgrade() -> None:
         "ix_feedback_feedback_id", "feedback", ["feedback_id"], unique=False
     )
     op.drop_index(
-        op.f("ix_response_feedback_feedback_id"), table_name="response_feedback"
+        op.f("ix_response_feedback_feedback_id"), table_name="query-response-feedback"
     )
-    op.drop_table("response_feedback")
+    op.drop_table("query-response-feedback")
     op.drop_index(
         op.f("ix_content_feedback_feedback_id"), table_name="content_feedback"
     )
