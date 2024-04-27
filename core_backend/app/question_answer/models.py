@@ -230,7 +230,7 @@ class ContentFeedbackDB(Base):
     SQLAlchemy data model for feedback provided by user for content
     """
 
-    __tablename__ = "content_feedback"
+    __tablename__ = "content-feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
