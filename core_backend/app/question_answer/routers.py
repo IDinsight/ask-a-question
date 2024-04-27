@@ -75,7 +75,9 @@ async def llm_response(
         user_query_db,
         user_query_refined,
         response,
-    ) = await get_user_query_and_response(user_query, asession)
+    ) = await get_user_query_and_response(
+        user_id=user.user_id, user_query=user_query, asession=asession
+    )
 
     response = await get_llm_answer(
         question=user_query_refined,
@@ -135,7 +137,7 @@ async def get_llm_answer(
 
 
 async def get_user_query_and_response(
-    user_query: QueryBase, asession: AsyncSession
+    user_id: str, user_query: UserQueryBase, asession: AsyncSession
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """
     Get the user query from the request and save it to the db.
@@ -143,7 +145,10 @@ async def get_user_query_and_response(
     """
     feedback_secret_key = generate_secret_key()
     user_query_db = await save_user_query_to_db(
-        feedback_secret_key, user_query, asession
+        user_id=user_id,
+        feedback_secret_key=feedback_secret_key,
+        user_query=user_query,
+        asession=asession,
     )
     user_query_refined = QueryRefined(
         **user_query.model_dump(), query_text_original=user_query.query_text
@@ -184,7 +189,9 @@ async def embeddings_search(
         user_query_db,
         user_query_refined,
         response,
-    ) = await get_user_query_and_response(user_query, asession)
+    ) = await get_user_query_and_response(
+        user_id=user.user_id, user_query=user_query, asession=asession
+    )
 
     response = await get_semantic_matches(
         question=user_query_refined,

@@ -33,6 +33,9 @@ class QueryDB(Base):
     query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("user.user_id"), nullable=False
+    )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
@@ -57,12 +60,16 @@ class QueryDB(Base):
 
 
 async def save_user_query_to_db(
-    feedback_secret_key: str, user_query: QueryBase, asession: AsyncSession
+    user_id: str,
+    feedback_secret_key: str,
+    user_query: QueryBase,
+    asession: AsyncSession,
 ) -> QueryDB:
     """
     Saves a user query to the database.
     """
     user_query_db = QueryDB(
+        user_id=user_id,
         feedback_secret_key=feedback_secret_key,
         query_datetime_utc=datetime.utcnow(),
         **user_query.model_dump(),
