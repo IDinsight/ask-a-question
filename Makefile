@@ -28,10 +28,16 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db setup-llm-proxy
+setup-dev: setup-db add-users-to-db setup-llm-proxy
 teardown-dev: teardown-db teardown-llm-proxy
 
 ## Helper targets
+
+# Add users to db
+add-users-to-db:
+	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
+	python core_backend/add_users_to_db.py
+
 # Dev db
 setup-db:
 	-@docker stop postgres-local
