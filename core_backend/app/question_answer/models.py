@@ -95,7 +95,7 @@ class UserQueryResponseDB(Base):
     SQLAlchemy data model for responses sent to user
     """
 
-    __tablename__ = "user-query-responses"
+    __tablename__ = "query-response"
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
