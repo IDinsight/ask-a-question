@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column("debug_info", sa.JSON(), nullable=False),
         sa.ForeignKeyConstraint(
             ["query_id"],
-            ["user-queries.query_id"],
+            ["query.query_id"],
         ),
         sa.PrimaryKeyConstraint("error_id"),
     )

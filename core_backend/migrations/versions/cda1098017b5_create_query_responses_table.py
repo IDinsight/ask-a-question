@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("response_datetime_utc", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
             ["query_id"],
-            ["user-queries.query_id"],
+            ["query.query_id"],
         ),
         sa.PrimaryKeyConstraint("response_id"),
     )
