@@ -11,11 +11,11 @@ from jose import JWTError, jwt
 
 from .config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    CONTENT_USER1_PASSWORD,
-    CONTENT_USER2_PASSWORD,
     JWT_ALGORITHM,
     JWT_SECRET,
     QUESTION_ANSWER_SECRET,
+    USER1_PASSWORD,
+    USER2_PASSWORD,
 )
 from .schemas import AccessLevel, AuthenticatedUser
 
@@ -25,11 +25,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 USERS = {
     "user1": {
-        "password": CONTENT_USER1_PASSWORD,
+        "password": USER1_PASSWORD,
         "access_level": "fullaccess",
     },
     "user2": {
-        "password": CONTENT_USER2_PASSWORD,
+        "password": USER2_PASSWORD,
         "access_level": "fullaccess",
     },
 }
