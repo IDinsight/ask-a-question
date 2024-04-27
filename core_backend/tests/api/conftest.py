@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
-from core_backend.app.auth.config import USER1_USERNAME
+from core_backend.app.auth.config import USER1_RETRIEVAL_KEY, USER1_USERNAME
 from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.config import (
     LITELLM_API_KEY,
@@ -59,8 +59,9 @@ def db_session() -> Generator[Session, None, None]:
 def user(client: TestClient, db_session: Session) -> None:
 
     user_db = UserDB(
-        username=USER1_USERNAME,
         user_id=TEST_USER_ID,
+        username=USER1_USERNAME,
+        retrieval_key=USER1_RETRIEVAL_KEY,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
