@@ -21,7 +21,7 @@ from ..llm_call.parse_input import (
 from ..users.models import get_user_by_username
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
-    UserQueryDB,
+    QueryDB,
     check_secret_key_match,
     save_content_feedback_to_db,
     save_query_response_error_to_db,
@@ -130,7 +130,7 @@ async def get_llm_answer(
 
 async def get_user_query_and_response(
     user_query: UserQueryBase, asession: AsyncSession
-) -> Tuple[UserQueryDB, UserQueryRefined, UserQueryResponse]:
+) -> Tuple[QueryDB, UserQueryRefined, UserQueryResponse]:
     """
     Get the user query from the request and save it to the db.
     Construct an object for user query and a default response object.
