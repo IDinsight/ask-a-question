@@ -9,7 +9,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, Session, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
 from .schemas import UserCreate
@@ -63,39 +63,6 @@ async def save_user_to_db(
 
     await asession.commit()
     await asession.refresh(content_db)
-
-    return content_db
-
-
-# TEMPORARY - sync version of save_user_to_db for loading users on app load
-def save_user_to_db_sync(
-    user: UserCreate,
-    session: Session,
-) -> UserDB:
-    """
-    Saves a user in the database
-    """
-
-    # Check if user with same username already exists
-    stmt = select(UserDB).where(UserDB.username == user.username)
-    result = session.execute(stmt)
-    try:
-        result.scalar_one()
-        raise ValueError(f"User with username {user.username} already exists.")
-    except NoResultFound:
-        pass
-
-    content_db = UserDB(
-        user_id=user.user_id,
-        username=user.username,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
-    )
-
-    session.add(content_db)
-
-    session.commit()
-    session.refresh(content_db)
 
     return content_db
 
