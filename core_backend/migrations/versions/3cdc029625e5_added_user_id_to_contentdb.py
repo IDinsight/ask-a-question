@@ -1,4 +1,4 @@
-"""Added user_id to ContentDB
+"""add user_id to content table
 
 Revision ID: 3cdc029625e5
 Revises: e8ddc3de6210

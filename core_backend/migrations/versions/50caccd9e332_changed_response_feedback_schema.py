@@ -1,4 +1,4 @@
-"""Changed Response Feedback Schema
+"""change response feedback schema
 
 Revision ID: 50caccd9e332
 Revises: f269c75dbf69
