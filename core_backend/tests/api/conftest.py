@@ -28,6 +28,7 @@ from core_backend.app.question_answer.schemas import (
     ResultState,
 )
 from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -61,7 +62,7 @@ def user(client: TestClient, db_session: Session) -> None:
     user_db = UserDB(
         user_id=TEST_USER_ID,
         username=USER1_USERNAME,
-        retrieval_key=USER1_RETRIEVAL_KEY,
+        hashed_retrieval_key=get_key_hash(USER1_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )

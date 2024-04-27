@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
+from ..utils import get_key_hash
 from .schemas import UserCreate
 
 
@@ -25,7 +26,7 @@ class UserDB(Base):
     user_id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False)
 
-    retrieval_key: Mapped[str] = mapped_column(String, nullable=False)
+    hashed_retrieval_key: Mapped[str] = mapped_column(String(64), nullable=False)
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -56,16 +57,17 @@ async def save_user_to_db(
     except NoResultFound:
         pass
 
+    hashed_retrieval_key = get_key_hash(user.retrieval_key)
+
     content_db = UserDB(
         user_id=user.user_id,
         username=user.username,
-        retrieval_key=user.retrieval_key,
+        hashed_retrieval_key=hashed_retrieval_key,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
 
     asession.add(content_db)
-
     await asession.commit()
     await asession.refresh(content_db)
 
@@ -98,12 +100,12 @@ async def get_user_by_token(
     Retrieves a user by token
     """
 
-    # Check if user with same username already exists
-    stmt = select(UserDB).where(UserDB.retrieval_key == token)
+    hashed_token = get_key_hash(token)
+
+    stmt = select(UserDB).where(UserDB.hashed_retrieval_key == hashed_token)
     result = await asession.execute(stmt)
     try:
         user = result.scalar_one()
         return user
     except NoResultFound as err:
-        # remove logging of the actual token here
-        raise ValueError(f"User with token {token} does not exist.") from err
+        raise ValueError("User with given token does not exist.") from err
