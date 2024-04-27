@@ -184,7 +184,7 @@ class ResponseFeedbackDB(Base):
     SQLAlchemy data model for feedback provided by user for responses
     """
 
-    __tablename__ = "response_feedback"
+    __tablename__ = "query-response-feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
