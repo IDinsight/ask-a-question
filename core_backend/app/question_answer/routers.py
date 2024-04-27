@@ -161,7 +161,10 @@ async def embeddings_search(
     ) = await get_user_query_and_response(user_query, asession)
 
     response = await get_semantic_matches(
-        user_query_refined, response, int(N_TOP_CONTENT_FOR_SEARCH), asession
+        question=user_query_refined,
+        response=response,
+        n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
+        asession=asession,
     )
     if isinstance(response, UserQueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
@@ -175,7 +178,7 @@ async def embeddings_search(
 @translate_question__before
 @paraphrase_question__before
 async def get_semantic_matches(
-    user_query_refined: UserQueryRefined,
+    question: UserQueryRefined,
     response: UserQueryResponse | UserQueryResponseError,
     n_similar: int,
     asession: AsyncSession,
@@ -187,7 +190,7 @@ async def get_semantic_matches(
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id="user1",  # TEMPORARY HARDCODED USER ID
-                question=user_query_refined.query_text,
+                question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
             )
