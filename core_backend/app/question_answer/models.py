@@ -137,7 +137,7 @@ class UserQueryResponseErrorDB(Base):
     SQLAlchemy data model for errors sent to user
     """
 
-    __tablename__ = "user-query-response-errors"
+    __tablename__ = "query-response-error"
 
     error_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
