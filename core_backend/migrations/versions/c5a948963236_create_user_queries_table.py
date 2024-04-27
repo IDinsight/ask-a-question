@@ -1,4 +1,4 @@
-"""Initial Migration - create query table
+"""initial migration: create query table
 
 Revision ID: c5a948963236
 Revises:

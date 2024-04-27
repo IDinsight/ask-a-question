@@ -1,4 +1,4 @@
-"""Create error table
+"""create query-response-error table
 
 Revision ID: 9eaf63e424ea
 Revises: 56b62dbe2d89

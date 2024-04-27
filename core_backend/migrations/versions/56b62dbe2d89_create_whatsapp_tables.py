@@ -1,4 +1,4 @@
-"""Create WhatsApp Tables
+"""create WhatsApp tables
 
 Revision ID: 56b62dbe2d89
 Revises: 8929d5c246e7

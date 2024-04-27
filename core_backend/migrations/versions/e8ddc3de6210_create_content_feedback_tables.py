@@ -1,4 +1,4 @@
-"""Create Content Feedback Tables
+"""create new feedback tables
 
 Revision ID: e8ddc3de6210
 Revises: 50caccd9e332

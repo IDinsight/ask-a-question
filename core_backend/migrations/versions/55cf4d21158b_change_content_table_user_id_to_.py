@@ -1,4 +1,4 @@
-"""change content table user_id to ForeignKey
+"""change content table's user_id to ForeignKey
 
 Revision ID: 55cf4d21158b
 Revises: cf28de217848

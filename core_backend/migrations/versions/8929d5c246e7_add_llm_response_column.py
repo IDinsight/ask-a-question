@@ -1,4 +1,4 @@
-"""add llm_response column
+"""add llm_response column to query-response table
 
 Revision ID: 8929d5c246e7
 Revises: cda1098017b5
