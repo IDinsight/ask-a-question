@@ -26,7 +26,9 @@ class UrgencyRuleDB(Base):
 
     __tablename__ = "urgency_rules"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    urgency_rule_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, nullable=False
+    )
     urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
     urgency_rule_vector: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
@@ -37,7 +39,7 @@ class UrgencyRuleDB(Base):
 
     def __repr__(self) -> str:
         """Pretty-print the UrgencyRuleDB object"""
-        return f"<UrgencyRuleDB #{self.id}: {self.urgency_rule_text})>"
+        return f"<UrgencyRuleDB #{self.urgency_rule_id}: {self.urgency_rule_text})>"
 
 
 async def save_urgency_rule_to_db(
@@ -69,7 +71,7 @@ async def update_urgency_rule_in_db(
     """
     urgency_rule_vector = await embedding(urgency_rule.urgency_rule_text)
     urgency_rule_db = UrgencyRuleDB(
-        id=urgency_rule_id,
+        urgency_rule_id=urgency_rule_id,
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
         urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
@@ -88,7 +90,7 @@ async def delete_urgency_rule_from_db(
     """
     Delete urgency rule from the database
     """
-    stmt = delete(UrgencyRuleDB).where(UrgencyRuleDB.id == urgency_rule_id)
+    stmt = delete(UrgencyRuleDB).where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
     await asession.execute(stmt)
     await asession.commit()
 
@@ -109,7 +111,7 @@ async def get_urgency_rules_from_db(
     """
     Get urgency rules from the database
     """
-    stmt = select(UrgencyRuleDB).order_by(UrgencyRuleDB.id)
+    stmt = select(UrgencyRuleDB).order_by(UrgencyRuleDB.urgency_rule_id)
     if offset > 0:
         stmt = stmt.offset(offset)
     if limit is not None:

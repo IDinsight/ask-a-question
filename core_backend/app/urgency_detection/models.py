@@ -16,7 +16,7 @@ class UrgencyQueryDB(Base):
 
     __tablename__ = "urgency_queries"
 
-    id: Mapped[int] = mapped_column(
+    urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     message_text: Mapped[str] = mapped_column(String, nullable=False)
@@ -52,7 +52,7 @@ async def check_secret_key_match(
     Check if the secret key matches the one generated for query id
     """
     stmt = select(UrgencyQueryDB.feedback_secret_key).where(
-        UrgencyQueryDB.id == query_id
+        UrgencyQueryDB.urgency_query_id == query_id
     )
     query_record = (await asession.execute(stmt)).first()
 
@@ -69,12 +69,14 @@ class UrgencyResponseDB(Base):
 
     __tablename__ = "urgency_responses"
 
-    id: Mapped[int] = mapped_column(
+    urgency_response_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
     details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("urgency_queries.id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("urgency_queries.urgency_query_id")
+    )
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     query: Mapped[UrgencyQueryDB] = relationship(
@@ -84,7 +86,7 @@ class UrgencyResponseDB(Base):
     def __repr__(self) -> str:
         """Pretty print the response."""
         return (
-            f"Urgency Response {self.id} for query #{self.query_id} "
+            f"Urgency Response {self.urgency_response_id} for query #{self.query_id} "
             f"is_urgent={self.is_urgent}"
         )
 
@@ -98,7 +100,7 @@ async def save_urgency_response_to_db(
     Saves the user query response to the database.
     """
     urgency_query_responses_db = UrgencyResponseDB(
-        query_id=urgency_query_db.id,
+        query_id=urgency_query_db.urgency_query_id,
         is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
         response_datetime_utc=datetime.utcnow(),

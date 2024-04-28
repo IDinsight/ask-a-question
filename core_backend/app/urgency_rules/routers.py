@@ -118,7 +118,7 @@ def _convert_record_to_schema(urgency_rule_db: UrgencyRuleDB) -> UrgencyRuleRetr
     Convert a UrgencyRuleDB record to a UrgencyRuleRetrieve schema
     """
     return UrgencyRuleRetrieve(
-        urgency_rule_id=urgency_rule_db.id,
+        urgency_rule_id=urgency_rule_db.urgency_rule_id,
         created_datetime_utc=urgency_rule_db.created_datetime_utc,
         updated_datetime_utc=urgency_rule_db.updated_datetime_utc,
         urgency_rule_text=urgency_rule_db.urgency_rule_text,

@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import AsyncGenerator, Callable
 
 import pytest
 from fastapi.testclient import TestClient
@@ -40,7 +40,7 @@ class TestUrgencyDetectionToken:
 
 class TestUrgencyClassifiers:
     @pytest.fixture(scope="class")
-    async def asession(self) -> AsyncSession:
+    async def asession(self) -> AsyncGenerator[AsyncSession, None]:
         async for session in get_async_session():
             yield session
 

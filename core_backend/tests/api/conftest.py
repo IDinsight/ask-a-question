@@ -96,7 +96,7 @@ async def urgency_rules(client: TestClient, db_session: Session) -> int:
         )
 
         rule_db = UrgencyRuleDB(
-            id=i,
+            urgency_rule_id=i,
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
