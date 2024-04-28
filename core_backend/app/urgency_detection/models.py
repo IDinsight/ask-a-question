@@ -14,7 +14,7 @@ class UrgencyQueryDB(Base):
     Urgency query database model.
     """
 
-    __tablename__ = "urgency_queries"
+    __tablename__ = "urgency-queries"
 
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -67,7 +67,7 @@ class UrgencyResponseDB(Base):
     Urgency response database model.
     """
 
-    __tablename__ = "urgency_responses"
+    __tablename__ = "urgency~responses"
 
     urgency_response_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -75,7 +75,7 @@ class UrgencyResponseDB(Base):
     is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
     details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("urgency_queries.urgency_query_id")
+        Integer, ForeignKey("urgency-queries.urgency_query_id")
     )
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
