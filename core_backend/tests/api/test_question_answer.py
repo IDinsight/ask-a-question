@@ -11,11 +11,11 @@ from core_backend.app.llm_call.parse_input import _classify_safety, _translate_q
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import (
     ErrorType,
+    QueryRefined,
+    QueryResponse,
+    QueryResponseError,
+    QuerySearchResult,
     ResultState,
-    UserQueryRefined,
-    UserQueryResponse,
-    UserQueryResponseError,
-    UserQuerySearchResult,
 )
 
 
@@ -43,7 +43,7 @@ class TestEmbeddingsSearch:
             assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
-    def question_response(self, client: TestClient) -> UserQueryResponse:
+    def question_response(self, client: TestClient) -> QueryResponse:
         response = client.post(
             "/embeddings-search",
             json={
@@ -244,8 +244,8 @@ class TestErrorResponses:
     @pytest.fixture
     def user_query_response(
         self,
-    ) -> UserQueryResponse:
-        return UserQueryResponse(
+    ) -> QueryResponse:
+        return QueryResponse(
             query_id=124,
             content_response={},
             llm_response=None,
@@ -255,12 +255,12 @@ class TestErrorResponses:
         )
 
     @pytest.fixture
-    def user_query_refined(self, request: pytest.FixtureRequest) -> UserQueryRefined:
+    def user_query_refined(self, request: pytest.FixtureRequest) -> QueryRefined:
         if hasattr(request, "param"):
             language = request.param
         else:
             language = None
-        return UserQueryRefined(
+        return QueryRefined(
             query_text="This is a basic query",
             original_language=language,
             query_text_original="This is a query original",
@@ -273,8 +273,8 @@ class TestErrorResponses:
     )
     async def test_translate_error(
         self,
-        user_query_refined: UserQueryRefined,
-        user_query_response: UserQueryResponse,
+        user_query_refined: QueryRefined,
+        user_query_response: QueryResponse,
         should_error: bool,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -288,10 +288,10 @@ class TestErrorResponses:
             user_query_refined, user_query_response
         )
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == ErrorType.UNKNOWN_LANGUAGE
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
             if query.original_language == "ENGLISH":
                 assert query.query_text == "This is a basic query"
             else:
@@ -304,8 +304,8 @@ class TestErrorResponses:
     async def test_unsafe_query_error(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        user_query_refined: UserQueryRefined,
-        user_query_response: UserQueryResponse,
+        user_query_refined: QueryRefined,
+        user_query_response: QueryResponse,
         classification: str,
         should_error: bool,
     ) -> None:
@@ -321,26 +321,26 @@ class TestErrorResponses:
         )
 
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == ErrorType.QUERY_UNSAFE
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
             assert query.query_text == "This is a basic query"
 
 
 class TestAlignScore:
     @pytest.fixture
-    def user_query_response(self) -> UserQueryResponse:
-        return UserQueryResponse(
+    def user_query_response(self) -> QueryResponse:
+        return QueryResponse(
             query_id=124,
             content_response={
-                1: UserQuerySearchResult(
+                1: QuerySearchResult(
                     retrieved_title="World",
                     retrieved_text="hello world",
                     retrieved_content_id=1,
                     score=0.2,
                 ),
-                2: UserQuerySearchResult(
+                2: QuerySearchResult(
                     retrieved_title="Universe",
                     retrieved_text="goodbye universe",
                     retrieved_content_id=2,
@@ -355,7 +355,7 @@ class TestAlignScore:
 
     @pytest.mark.asyncio
     async def test_score_less_than_threshold(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
             return AlignmentScore(score=0.2, reason="test - low score")
@@ -373,13 +373,13 @@ class TestAlignScore:
             0.7,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert isinstance(update_query_response, UserQueryResponse)
+        assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
         assert update_query_response.llm_response is None
 
     @pytest.mark.asyncio
     async def test_score_greater_than_threshold(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
             return AlignmentScore(score=0.9, reason="test - high score")
@@ -397,11 +397,11 @@ class TestAlignScore:
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert isinstance(update_query_response, UserQueryResponse)
+        assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
     def test_build_evidence(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         evidence = _build_evidence(user_query_response)
         assert evidence == "hello world\ngoodbye universe\n"
