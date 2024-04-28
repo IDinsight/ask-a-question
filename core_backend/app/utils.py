@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import secrets
 from logging import Logger
 from typing import List
 from uuid import uuid4
@@ -13,6 +14,15 @@ from .config import (
     LITELLM_MODEL_EMBEDDING,
     LOG_LEVEL,
 )
+
+
+def generate_key() -> str:
+    """
+    Generate a new 32-character API key
+    """
+
+    # 24 bytes gives 32 characters here
+    return secrets.token_urlsafe(24)
 
 
 def get_key_hash(retrieval_key: str) -> str:
