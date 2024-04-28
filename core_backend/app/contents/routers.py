@@ -33,7 +33,7 @@ async def create_content(
 ) -> ContentRetrieve | None:
     """
     Create content endpoint. Calls embedding model to get content embedding and
-    upserts it to PG database
+    inserts it to PG database
     """
 
     user = await get_user_by_username(full_access_user.username, asession)
