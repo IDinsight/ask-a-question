@@ -6,7 +6,7 @@ from app.database import get_session
 from app.users.models import UserDB
 from app.utils import setup_logger
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 logger = setup_logger()
 
@@ -32,12 +32,18 @@ if __name__ == "__main__":
         stmt = select(UserDB).where(UserDB.username == user_db.username)
         result = db_session.execute(stmt)
         try:
-            result.scalar_one()
+            result.one()
             logger.info(f"User with username {user_db.username} already exists.")
         except NoResultFound:
             db_session.add(user_db)
             logger.info(
                 f"User with username {user_db.username} added to local database."
             )
+        except MultipleResultsFound:
+            logger.error(
+                "Multiple users with username "
+                f"{user_db.username} found in local database."
+            )
+
     db_session.commit()
     db_session.close()

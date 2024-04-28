@@ -7,7 +7,7 @@ from sqlalchemy import (
     # delete,
     select,
 )
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -47,8 +47,12 @@ async def save_user_to_db(
     stmt = select(UserDB).where(UserDB.username == user.username)
     result = await asession.execute(stmt)
     try:
-        result.scalar_one()
+        result.one()
         raise ValueError(f"User with username {user.username} already exists.")
+    except MultipleResultsFound as err:
+        raise ValueError(
+            f"Multiple users with username {user.username} found in local database."
+        ) from err
     except NoResultFound:
         pass
 
