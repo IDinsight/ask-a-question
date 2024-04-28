@@ -24,7 +24,7 @@ class UrgencyRuleDB(Base):
     UrgencyRuleDB model class
     """
 
-    __tablename__ = "urgency~rules"
+    __tablename__ = "urgency-rules"
 
     urgency_rule_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False

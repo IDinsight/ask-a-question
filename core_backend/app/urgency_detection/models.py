@@ -67,7 +67,7 @@ class UrgencyResponseDB(Base):
     Urgency response database model.
     """
 
-    __tablename__ = "urgency~responses"
+    __tablename__ = "urgency-responses"
 
     urgency_response_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
