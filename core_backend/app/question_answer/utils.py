@@ -1,7 +1,7 @@
 from typing import Dict, Mapping
 from uuid import uuid4
 
-from .schemas import UserQuerySearchResult
+from .schemas import QuerySearchResult
 
 
 def generate_secret_key() -> str:
@@ -13,10 +13,10 @@ def generate_secret_key() -> str:
 
 def convert_search_results_to_schema(
     results: Mapping[int, tuple]
-) -> Dict[int, UserQuerySearchResult]:
+) -> Dict[int, QuerySearchResult]:
     """Converts retrieval results to schema."""
     return {
-        i: UserQuerySearchResult(
+        i: QuerySearchResult(
             retrieved_title=value[0],
             retrieved_text=value[1],
             retrieved_content_id=value[2],
@@ -27,7 +27,7 @@ def convert_search_results_to_schema(
 
 
 def get_context_string_from_retrieved_contents(
-    content_response: Dict[int, UserQuerySearchResult]
+    content_response: Dict[int, QuerySearchResult]
 ) -> str:
     """
     Get the context string from the retrieved content

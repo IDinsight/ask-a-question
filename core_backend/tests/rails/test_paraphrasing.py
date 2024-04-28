@@ -6,9 +6,9 @@ import yaml
 
 from core_backend.app.llm_call.parse_input import _paraphrase_question
 from core_backend.app.question_answer.schemas import (
-    UserQueryRefined,
-    UserQueryResponse,
-    UserQueryResponseError,
+    QueryRefined,
+    QueryResponse,
+    QueryResponseError,
 )
 
 pytestmark = pytest.mark.rails
@@ -35,8 +35,8 @@ async def test_paraphrasing(test_data: Dict) -> None:
     contains = test_data.get("contains", [])
     missing = test_data.get("missing", [])
 
-    question = UserQueryRefined(query_text=message, query_text_original=message)
-    response = UserQueryResponse(
+    question = QueryRefined(query_text=message, query_text_original=message)
+    response = QueryResponse(
         query_id=1,
         content_response=None,
         llm_response="Dummy response",
@@ -52,4 +52,4 @@ async def test_paraphrasing(test_data: Dict) -> None:
         for text in missing:
             assert text not in paraphrased_question.query_text.lower()
     if not succeeds:
-        assert isinstance(paraphrased_response, UserQueryResponseError)
+        assert isinstance(paraphrased_response, QueryResponseError)

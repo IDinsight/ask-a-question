@@ -23,9 +23,9 @@ from core_backend.app.database import get_session
 from core_backend.app.llm_call import check_output, parse_input
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.question_answer.schemas import (
+    QueryRefined,
+    QueryResponse,
     ResultState,
-    UserQueryRefined,
-    UserQueryResponse,
 )
 from core_backend.app.users.models import UserDB
 
@@ -147,14 +147,14 @@ async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
 
 
 async def mock_return_args(
-    question: UserQueryRefined, response: UserQueryResponse
-) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    question: QueryRefined, response: QueryResponse
+) -> Tuple[QueryRefined, QueryResponse]:
     return question, response
 
 
 async def mock_identify_language(
-    question: UserQueryRefined, response: UserQueryResponse
-) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    question: QueryRefined, response: QueryResponse
+) -> Tuple[QueryRefined, QueryResponse]:
     """
     Monkeypatch call to LLM language identification service
     """
@@ -165,8 +165,8 @@ async def mock_identify_language(
 
 
 async def mock_translate_question(
-    question: UserQueryRefined, response: UserQueryResponse
-) -> Tuple[UserQueryRefined, UserQueryResponse]:
+    question: QueryRefined, response: QueryResponse
+) -> Tuple[QueryRefined, QueryResponse]:
     """
     Monkeypatch call to LLM translation service
     """

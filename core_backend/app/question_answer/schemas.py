@@ -7,7 +7,7 @@ from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment
 
 
-class UserQueryBase(BaseModel):
+class QueryBase(BaseModel):
     """
     Pydantic model for query APIs
     """
@@ -18,7 +18,7 @@ class UserQueryBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserQueryRefined(UserQueryBase):
+class QueryRefined(QueryBase):
     """
     Pydantic model for refined query
     """
@@ -27,7 +27,7 @@ class UserQueryRefined(UserQueryBase):
     original_language: IdentifiedLanguage | None = None
 
 
-class UserQuerySearchResult(BaseModel):
+class QuerySearchResult(BaseModel):
     """
     Pydantic model for each individual search result
     """
@@ -62,13 +62,13 @@ class ErrorType(str, Enum):
     ALIGNMENT_TOO_LOW = "alignment_too_low"
 
 
-class UserQueryResponse(BaseModel):
+class QueryResponse(BaseModel):
     """
     Pydantic model for response to Query
     """
 
     query_id: int
-    content_response: Dict[int, UserQuerySearchResult] | None
+    content_response: Dict[int, QuerySearchResult] | None
     llm_response: Optional[str] = None
     feedback_secret_key: str
     debug_info: dict = {}
@@ -77,7 +77,7 @@ class UserQueryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserQueryResponseError(BaseModel):
+class QueryResponseError(BaseModel):
     """
     Pydantic model when there is an error
     """

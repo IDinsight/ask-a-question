@@ -16,10 +16,10 @@ from ..contents.models import ContentDB
 from ..models import Base, JSONDict
 from .schemas import (
     ContentFeedback,
+    QueryBase,
+    QueryResponse,
+    QueryResponseError,
     ResponseFeedbackBase,
-    UserQueryBase,
-    UserQueryResponse,
-    UserQueryResponseError,
 )
 
 
@@ -57,7 +57,7 @@ class QueryDB(Base):
 
 
 async def save_user_query_to_db(
-    feedback_secret_key: str, user_query: UserQueryBase, asession: AsyncSession
+    feedback_secret_key: str, user_query: QueryBase, asession: AsyncSession
 ) -> QueryDB:
     """
     Saves a user query to the database.
@@ -112,7 +112,7 @@ class QueryResponseDB(Base):
 
 async def save_query_response_to_db(
     user_query_db: QueryDB,
-    response: UserQueryResponse,
+    response: QueryResponse,
     asession: AsyncSession,
 ) -> QueryResponseDB:
     """
@@ -158,7 +158,7 @@ class QueryResponseErrorDB(Base):
 
 async def save_query_response_error_to_db(
     user_query_db: QueryDB,
-    error: UserQueryResponseError,
+    error: QueryResponseError,
     asession: AsyncSession,
 ) -> QueryResponseErrorDB:
     """

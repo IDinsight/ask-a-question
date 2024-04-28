@@ -31,12 +31,12 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    QueryBase,
+    QueryRefined,
+    QueryResponse,
+    QueryResponseError,
     ResponseFeedbackBase,
     ResultState,
-    UserQueryBase,
-    UserQueryRefined,
-    UserQueryResponse,
-    UserQueryResponseError,
 )
 from .utils import (
     convert_search_results_to_schema,
@@ -49,12 +49,12 @@ router = APIRouter(dependencies=[Depends(auth_bearer_token)])
 
 @router.post(
     "/llm-response",
-    response_model=UserQueryResponse,
-    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+    response_model=QueryResponse,
+    responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
 )
 async def llm_response(
-    user_query: UserQueryBase, asession: AsyncSession = Depends(get_async_session)
-) -> UserQueryResponse | JSONResponse:
+    user_query: QueryBase, asession: AsyncSession = Depends(get_async_session)
+) -> QueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
@@ -79,7 +79,7 @@ async def llm_response(
         asession=asession,
     )
 
-    if isinstance(response, UserQueryResponseError):
+    if isinstance(response, QueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
@@ -93,16 +93,16 @@ async def llm_response(
 @paraphrase_question__before
 @classify_safety__before
 async def get_llm_answer(
-    question: UserQueryRefined,
-    response: UserQueryResponse,
+    question: QueryRefined,
+    response: QueryResponse,
     user_id: str,
     n_similar: int,
     asession: AsyncSession,
-) -> UserQueryResponse | UserQueryResponseError:
+) -> QueryResponse | QueryResponseError:
     """
     Get similar content and construct the LLM answer for the user query
     """
-    if not isinstance(response, UserQueryResponseError):
+    if not isinstance(response, QueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,
@@ -129,8 +129,8 @@ async def get_llm_answer(
 
 
 async def get_user_query_and_response(
-    user_query: UserQueryBase, asession: AsyncSession
-) -> Tuple[QueryDB, UserQueryRefined, UserQueryResponse]:
+    user_query: QueryBase, asession: AsyncSession
+) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """
     Get the user query from the request and save it to the db.
     Construct an object for user query and a default response object.
@@ -139,10 +139,10 @@ async def get_user_query_and_response(
     user_query_db = await save_user_query_to_db(
         feedback_secret_key, user_query, asession
     )
-    user_query_refined = UserQueryRefined(
+    user_query_refined = QueryRefined(
         **user_query.model_dump(), query_text_original=user_query.query_text
     )
-    response = UserQueryResponse(
+    response = QueryResponse(
         query_id=user_query_db.query_id,
         content_response=None,
         llm_response=None,
@@ -154,12 +154,12 @@ async def get_user_query_and_response(
 
 @router.post(
     "/embeddings-search",
-    response_model=UserQueryResponse,
-    responses={400: {"model": UserQueryResponseError, "description": "Bad Request"}},
+    response_model=QueryResponse,
+    responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
 )
 async def embeddings_search(
-    user_query: UserQueryBase, asession: AsyncSession = Depends(get_async_session)
-) -> UserQueryResponse | JSONResponse:
+    user_query: QueryBase, asession: AsyncSession = Depends(get_async_session)
+) -> QueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
@@ -183,7 +183,7 @@ async def embeddings_search(
         n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
         asession=asession,
     )
-    if isinstance(response, UserQueryResponseError):
+    if isinstance(response, QueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
@@ -195,16 +195,16 @@ async def embeddings_search(
 @translate_question__before
 @paraphrase_question__before
 async def get_semantic_matches(
-    question: UserQueryRefined,
-    response: UserQueryResponse | UserQueryResponseError,
+    question: QueryRefined,
+    response: QueryResponse | QueryResponseError,
     user_id: str,
     n_similar: int,
     asession: AsyncSession,
-) -> UserQueryResponse | UserQueryResponseError:
+) -> QueryResponse | QueryResponseError:
     """
     Get similar contents from content table
     """
-    if not isinstance(response, UserQueryResponseError):
+    if not isinstance(response, QueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,

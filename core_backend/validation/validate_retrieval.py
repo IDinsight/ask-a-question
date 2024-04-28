@@ -18,7 +18,7 @@ from core_backend.app.config import (
 )
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
-from core_backend.app.question_answer.schemas import UserQueryBase
+from core_backend.app.question_answer.schemas import QueryBase
 from core_backend.app.utils import setup_logger
 
 logger = setup_logger()
@@ -179,7 +179,7 @@ class TestRetrievalPerformance:
         client: TestClient,
     ) -> List[str]:
         """Single POST /embeddings-search request"""
-        request_json = UserQueryBase(query_text=query_text).model_dump()
+        request_json = QueryBase(query_text=query_text).model_dump()
         headers = {"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"}
         response = client.post("/embeddings-search", json=request_json, headers=headers)
 

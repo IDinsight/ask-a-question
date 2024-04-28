@@ -6,9 +6,9 @@ from core_backend.app.llm_call.llm_prompts import SafetyClassification
 from core_backend.app.llm_call.parse_input import _classify_safety
 from core_backend.app.question_answer.schemas import (
     ErrorType,
-    UserQueryRefined,
-    UserQueryResponse,
-    UserQueryResponseError,
+    QueryRefined,
+    QueryResponse,
+    QueryResponseError,
 )
 
 pytestmark = pytest.mark.rails
@@ -29,9 +29,9 @@ def read_test_data(file: str) -> list[str]:
 
 
 @pytest.fixture
-def response() -> UserQueryResponse:
+def response() -> QueryResponse:
     """Returns a dummy response"""
-    return UserQueryResponse(
+    return QueryResponse(
         query_id=1,
         content_response=None,
         llm_response="Dummy response",
@@ -44,11 +44,11 @@ async def test_prompt_injection_found(
     prompt_injection: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that prompt injection is found"""
-    question = UserQueryRefined(
+    question = QueryRefined(
         query_text=prompt_injection, query_text_original=prompt_injection
     )
     _, response = await _classify_safety(question, response)
-    assert isinstance(response, UserQueryResponseError)
+    assert isinstance(response, QueryResponseError)
     assert response.error_type == ErrorType.QUERY_UNSAFE
     assert (
         response.debug_info["safety_classification"]
@@ -61,10 +61,10 @@ async def test_safe_message(
     safe_text: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that safe messages are classified as safe"""
-    question = UserQueryRefined(query_text=safe_text, query_text_original=safe_text)
+    question = QueryRefined(query_text=safe_text, query_text_original=safe_text)
     _, response = await _classify_safety(question, response)
 
-    assert isinstance(response, UserQueryResponse)
+    assert isinstance(response, QueryResponse)
     assert (
         response.debug_info["safety_classification"] == SafetyClassification.SAFE.value
     )
@@ -77,12 +77,12 @@ async def test_inappropriate_language(
     inappropriate_text: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that inappropriate language is found"""
-    question = UserQueryRefined(
+    question = QueryRefined(
         query_text=inappropriate_text, query_text_original=inappropriate_text
     )
     _, response = await _classify_safety(question, response)
 
-    assert isinstance(response, UserQueryResponseError)
+    assert isinstance(response, QueryResponseError)
     assert response.error_type == ErrorType.QUERY_UNSAFE
     assert (
         response.debug_info["safety_classification"]
