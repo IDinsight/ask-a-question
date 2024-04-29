@@ -209,7 +209,7 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         Wrapper function to check if the question is on-topic or off-topic.
         """
         response = await _classify_on_off_topic(question, response)
-        question, response = await func(question, response, *args, **kwargs)
+        response = await func(question, response, *args, **kwargs)
         return response
 
     return wrapper
