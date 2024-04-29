@@ -5,6 +5,7 @@ on:
     branches:
       - demo
       - testing
+      - main
     paths:
       - "deployment/aws/litellm_proxy/**"
       - ".github/workflows/deploy_litellm_proxy.yml"
@@ -14,7 +15,7 @@ jobs:
     name: Deploying litellm_proxy ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
-      name: ${{github.ref_name}}
+      name: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     permissions:
       id-token: write
