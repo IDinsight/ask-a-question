@@ -172,7 +172,8 @@ ANSWER_QUESTION_PROMPT = (
 
 Answer the question based on the content delimited by triple backticks. \
 Address the question directly and do not respond with anything that is \
-outside of the context of the given content. Respond in {response_language}.
+outside of the context of the given content. Respond in {response_language} using the
+same dialect and script as the question.
 """
     + f"""
 If the content doesn't seem to answer the question, respond exactly with \
