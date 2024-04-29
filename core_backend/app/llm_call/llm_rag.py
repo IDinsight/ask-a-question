@@ -15,7 +15,7 @@ async def get_llm_rag_answer(
     )
 
     return await _ask_llm_async(
-        question,
-        prompt,
+        question=question,
+        prompt=prompt,
         litellm_model=LITELLM_MODEL_SUMMARIZATION,
     )
