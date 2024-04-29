@@ -116,8 +116,7 @@ class IdentifiedLanguage(str, Enum):
 
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
-TRANSLATE_INPUT = f"""You are a high-performing translation bot for \
-low-resourced African languages.
+TRANSLATE_INPUT = f"""You are a high-performing translation bot. \
 You support a question-answering chatbot. \
 If you are unable to translate the user's input, \
 respond with "{TRANSLATE_FAILED_MESSAGE}" \
