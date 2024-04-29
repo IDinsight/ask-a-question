@@ -116,75 +116,80 @@ def identify_language__before(func: Callable) -> Callable:
     return wrapper
 
 
-def _process_identified_language_response(
-    identified_language: IdentifiedLanguage | None,
-    response: UserQueryResponse,
-    task: str = "LANGUAGE IDENTIFICATION",
-) -> UserQueryResponse | UserQueryResponseError:
-    """Process the identified language and return the response."""
-    supported_languages = IdentifiedLanguage.get_supported_languages()
-    supported_language_string = ", ".join(supported_languages)
-
-    match identified_language:
-        case IdentifiedLanguage.UNINTELLIGIBLE:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE
-                + " Unintelligible input. The following languages are supported: "
-                f"{supported_language_string}. ",
-                query_id=response.query_id,
-                error_type=ErrorType.UNINTELLIGIBLE_QUESTION,
-            )
-            logger.info(
-                f"{task} FAILED due to {identified_language.value} "
-                "language on query id: " + str(response.query_id)
-            )
-            error_response.debug_info.update(response.debug_info)
-            return error_response
-        case IdentifiedLanguage.UNSUPPORTED:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE
-                + " Only the following languages are supported: "
-                + f"{supported_language_string}. ",
-                query_id=response.query_id,
-                error_type=ErrorType.UNSUPPORTED_LANGUAGE,
-            )
-            logger.info(
-                f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value} "
-                "language on query id: " + str(response.query_id)
-            )
-            error_response.debug_info.update(response.debug_info)
-            return error_response
-        case _:
-            return response
-
-
 async def _identify_language(
     question: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
 ) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
     """
     Identifies the language of the question.
     """
-    if not isinstance(response, UserQueryResponseError):
-        identified_lang = await _ask_llm_async(
-            question.query_text,
-            IdentifiedLanguage.get_prompt(),
-            litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
+    if isinstance(response, UserQueryResponseError):
+        return question, response
+
+    llm_identified_lang = await _ask_llm_async(
+        question.query_text,
+        IdentifiedLanguage.get_prompt(),
+        litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
+    )
+
+    try:
+        identified_lang = getattr(IdentifiedLanguage, llm_identified_lang)
+    except AttributeError:
+        identified_lang = IdentifiedLanguage.UNSUPPORTED
+
+    question.original_language = identified_lang
+    if question.original_language is not None:
+        response.debug_info["original_language"] = question.original_language.value
+
+    processed_response = _process_identified_language_response(
+        identified_lang,
+        response,
+    )
+
+    return question, processed_response
+
+
+def _process_identified_language_response(
+    identified_language: IdentifiedLanguage,
+    response: UserQueryResponse,
+) -> UserQueryResponse | UserQueryResponseError:
+    """Process the identified language and return the response."""
+    is_language_supported = identified_language not in (
+        IdentifiedLanguage.UNSUPPORTED,
+        IdentifiedLanguage.UNINTELLIGIBLE,
+    )
+
+    if is_language_supported:
+        return response
+    else:
+        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+
+        match identified_language:
+            case IdentifiedLanguage.UNINTELLIGIBLE:
+                error_message = (
+                    "Unintelligible input. "
+                    + f"The following languages are supported: {supported_languages}."
+                )
+                error_type = ErrorType.UNINTELLIGIBLE_QUESTION
+            case IdentifiedLanguage.UNSUPPORTED:
+                error_message = (
+                    "Unsupported language. Only the following languages "
+                    + f"are supported: {supported_languages}."
+                )
+                error_type = ErrorType.UNSUPPORTED_LANGUAGE
+
+        error_response = UserQueryResponseError(
+            error_message=error_message,
+            query_id=response.query_id,
+            error_type=error_type,
+        )
+        error_response.debug_info.update(response.debug_info)
+
+        logger.info(
+            f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value}"
+            "language on query id: " + str(response.query_id)
         )
 
-        try:
-            question.original_language = getattr(IdentifiedLanguage, identified_lang)
-        except AttributeError:
-            question.original_language = IdentifiedLanguage.UNSUPPORTED
-
-        if question.original_language is not None:
-            response.debug_info["original_language"] = question.original_language.value
-
-        processed_response = _process_identified_language_response(
-            question.original_language, response, task="LANGUAGE IDENTIFICATION"
-        )
-
-        return question, processed_response
-    return question, response
+        return error_response
 
 
 def translate_question__before(func: Callable) -> Callable:
@@ -230,13 +235,8 @@ async def _translate_question(
             )
         )
 
-    # In case translation is run on an invalid language question
-    processed_response = _process_identified_language_response(
-        question.original_language, response, task="TRANSLATION"
-    )
-
-    if isinstance(processed_response, UserQueryResponseError):
-        return question, processed_response
+    if isinstance(response, UserQueryResponseError):
+        return question, response
     else:
         translation_response = await _ask_llm_async(
             question.query_text,
