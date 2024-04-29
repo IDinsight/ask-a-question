@@ -6,7 +6,7 @@ from sqlalchemy import Float, cast, extract, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ..question_answer.models import ResponseFeedbackDB, UserQueryDB
+from ..question_answer.models import ContentFeedbackDB, UserQueryDB
 from .schemas import QuestionDashBoard
 
 
@@ -73,13 +73,13 @@ async def get_upvotes_stats(
     """
     stmt = (
         select(
-            extract("year", ResponseFeedbackDB.feedback_datetime_utc).label("year"),
-            extract("month", ResponseFeedbackDB.feedback_datetime_utc).label("month"),
-            cast(func.count(ResponseFeedbackDB.feedback_id), Float).label("count"),
+            extract("year", ContentFeedbackDB.feedback_datetime_utc).label("year"),
+            extract("month", ContentFeedbackDB.feedback_datetime_utc).label("month"),
+            cast(func.count(ContentFeedbackDB.feedback_id), Float).label("count"),
         )
         .where(
-            (ResponseFeedbackDB.feedback_datetime_utc >= from_date)
-            & (ResponseFeedbackDB.feedback_sentiment == "positive")
+            (ContentFeedbackDB.feedback_datetime_utc >= from_date)
+            & (ContentFeedbackDB.feedback_sentiment == "positive")
         )
         .group_by("year", "month")
         .order_by("year", "month")
