@@ -186,7 +186,7 @@ def _process_identified_language_response(
 
         logger.info(
             f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value}"
-            "language on query id: " + str(response.query_id)
+            " language on query id: " + str(response.query_id)
         )
 
         return error_response
