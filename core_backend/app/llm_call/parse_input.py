@@ -129,7 +129,7 @@ def _process_identified_language_response(
         case IdentifiedLanguage.UNINTELLIGIBLE:
             error_response = UserQueryResponseError(
                 error_message=STANDARD_FAILURE_MESSAGE
-                + " Unintelligible question. The following languages are supported: "
+                + " Unintelligible input. The following languages are supported: "
                 f"{supported_language_string}. ",
                 query_id=response.query_id,
                 error_type=ErrorType.UNINTELLIGIBLE_QUESTION,
