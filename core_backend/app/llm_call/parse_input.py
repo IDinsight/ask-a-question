@@ -154,7 +154,7 @@ def _process_identified_language_response(
 ) -> UserQueryResponse | UserQueryResponseError:
     """Process the identified language and return the response."""
     is_language_supported = (
-        identified_language not in IdentifiedLanguage.get_supported_languages()
+        identified_language in IdentifiedLanguage.get_supported_languages()
     )
 
     if is_language_supported:
