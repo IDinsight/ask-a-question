@@ -1,4 +1,5 @@
 import json
+import random
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, Generator, Tuple
@@ -26,6 +27,7 @@ from core_backend.app.question_answer.schemas import (
     UserQueryRefined,
     UserQueryResponse,
 )
+from core_backend.app.question_dashboard.schemas import QuestionDashBoard
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -190,6 +192,17 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
     data_obj = EmbeddingData([{"embedding": embedding_list}])
 
     return data_obj
+
+
+async def mock_dashboard_stats(*arg: str, **kwargs: str):
+    """
+    Replicates question_dashboard.models.get_dashboard_stats but generates random
+    statistics.
+    """
+    return QuestionDashBoard(
+        six_months_question=[random.randint(0, 100) for _ in range(6)],
+        sis_months_upvote=[random.randint(0, 100) for _ in range(6)],
+    )
 
 
 @pytest.fixture(scope="session")

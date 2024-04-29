@@ -18,7 +18,7 @@ import { Layout } from "./Layout";
 const pages = [
   { title: "Manage Content", path: "/content" },
   { title: "Playground", path: "/playground" },
-  // { title: "Dashboard", path: "/dashboard" },
+  { title: "Dashboard", path: "/dashboard" },
 ];
 
 const settings = ["Logout"];

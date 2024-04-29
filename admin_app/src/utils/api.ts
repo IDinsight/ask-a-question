@@ -141,7 +141,7 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
     .catch((error) => {
       throw new Error(
         `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
-          error.message,
+        error.message,
       );
     });
 };
@@ -171,9 +171,26 @@ const getLLMResponse = async (search: string, token: string) => {
     .catch((error) => {
       throw new Error(
         `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
-          error.message,
+        error.message,
       );
     });
+};
+
+const getQuestionStats = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/dashboard/question_answer`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching questions statistics");
+    }
+  });
 };
 
 export const apiCalls = {
@@ -185,4 +202,5 @@ export const apiCalls = {
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  getQuestionStats
 };
