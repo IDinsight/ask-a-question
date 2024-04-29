@@ -46,5 +46,5 @@ async def test_language_identification(
     if expected_label not in available_languages:
         expected_label = "UNSUPPORTED"
     _, response = await _identify_language(question, response)
-    print(response)
+
     assert response.debug_info["original_language"] == expected_label

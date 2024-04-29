@@ -7,6 +7,7 @@ from typing import Any, Callable, Tuple
 
 from ..config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
+    LITELLM_MODEL_ON_OFF_TOPIC,
     LITELLM_MODEL_PARAPHRASE,
     LITELLM_MODEL_SAFETY,
     LITELLM_MODEL_TRANSLATE,
@@ -26,6 +27,7 @@ from .llm_prompts import (
     TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_INPUT,
     IdentifiedLanguage,
+    OnOffTopicClassification,
     SafetyClassification,
 )
 from .utils import _ask_llm_async
@@ -189,6 +191,66 @@ def _process_identified_language_response(
         )
 
         return error_response
+
+
+def classify_on_off_topic__before(func: Callable) -> Callable:
+    """
+    Decorator to check if the question is on-topic or off-topic.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        question: UserQueryRefined,
+        response: UserQueryResponse | UserQueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> UserQueryResponse | UserQueryResponseError:
+        """
+        Wrapper function to check if the question is on-topic or off-topic.
+        """
+        response = await _classify_on_off_topic(question, response)
+        question, response = await func(question, response, *args, **kwargs)
+        return response
+
+    return wrapper
+
+
+async def _classify_on_off_topic(
+    user_query: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
+) -> UserQueryResponse | UserQueryResponseError:
+    """
+    Checks if the user query is on-topic or off-topic.
+    """
+    label = await _ask_llm_async(
+        question=user_query.query_text,
+        prompt=OnOffTopicClassification.get_prompt(),
+        litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
+    )
+
+    basic_cleaned = label.replace(" ", "_").upper()
+
+    try:
+        on_off_topic_label = getattr(OnOffTopicClassification, basic_cleaned)
+    except AttributeError:
+        on_off_topic_label = OnOffTopicClassification.UNKNOWN
+
+    response.debug_info["on_off_topic"] = on_off_topic_label.value
+
+    if on_off_topic_label == OnOffTopicClassification.OFF_TOPIC:
+        error_response = UserQueryResponseError(
+            error_message="Off-topic query",
+            query_id=response.query_id,
+            error_type=ErrorType.OFF_TOPIC,
+        )
+        error_response.debug_info.update(response.debug_info)
+        error_response.debug_info["query_text"] = user_query.query_text
+        logger.info(
+            f"OFF-TOPIC query found on query id: {response.query_id} for query text"
+            f" {user_query.query_text}"
+        )
+        return error_response
+
+    return response
 
 
 def translate_question__before(func: Callable) -> Callable:

@@ -30,6 +30,9 @@ LITELLM_MODEL_SUMMARIZATION = os.environ.get(
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
 )
+LITELLM_MODEL_ON_OFF_TOPIC = os.environ.get(
+    "LITELLM_MODEL_ON_OFF_TOPIC", "openai/on-off-topic"
+)
 LITELLM_MODEL_TRANSLATE = os.environ.get("LITELLM_MODEL_TRANSLATE", "openai/translate")
 LITELLM_MODEL_SAFETY = os.environ.get("LITELLM_MODEL_SAFETY", "openai/safety")
 LITELLM_MODEL_PARAPHRASE = os.environ.get(
@@ -38,7 +41,6 @@ LITELLM_MODEL_PARAPHRASE = os.environ.get(
 LITELLM_MODEL_ALIGNSCORE = os.environ.get(
     "LITELLM_MODEL_ALIGNSCORE", "openai/alignscore"
 )
-
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 # Method: LLM, AlignScore, or None
