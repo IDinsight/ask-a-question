@@ -41,6 +41,10 @@ LITELLM_MODEL_PARAPHRASE = os.environ.get(
 LITELLM_MODEL_ALIGNSCORE = os.environ.get(
     "LITELLM_MODEL_ALIGNSCORE", "openai/alignscore"
 )
+
+# On/Off Topic variables
+SERVICE_IDENTITY = os.environ.get("SERVICE_IDENTITY", "WHO AirQuality chatbot")
+
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 # Method: LLM, AlignScore, or None

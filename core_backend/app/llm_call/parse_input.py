@@ -11,6 +11,7 @@ from ..config import (
     LITELLM_MODEL_PARAPHRASE,
     LITELLM_MODEL_SAFETY,
     LITELLM_MODEL_TRANSLATE,
+    SERVICE_IDENTITY,
 )
 from ..question_answer.config import STANDARD_FAILURE_MESSAGE
 from ..question_answer.schemas import (
@@ -208,7 +209,7 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         """
         Wrapper function to check if the question is on-topic or off-topic.
         """
-        response = await _classify_on_off_topic(question, response)
+        question, response = await _classify_on_off_topic(question, response)
         response = await func(question, response, *args, **kwargs)
         return response
 
@@ -217,13 +218,15 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
 
 async def _classify_on_off_topic(
     user_query: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
-) -> UserQueryResponse | UserQueryResponseError:
+) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
     """
     Checks if the user query is on-topic or off-topic.
     """
     label = await _ask_llm_async(
         question=user_query.query_text,
-        prompt=OnOffTopicClassification.get_prompt(),
+        prompt=OnOffTopicClassification.get_prompt().format(
+            service_identity=SERVICE_IDENTITY
+        ),
         litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
     )
 
@@ -248,9 +251,9 @@ async def _classify_on_off_topic(
             f"OFF-TOPIC query found on query id: {response.query_id} for query text"
             f" {user_query.query_text}"
         )
-        return error_response
+        return user_query, error_response
 
-    return response
+    return user_query, response
 
 
 def translate_question__before(func: Callable) -> Callable:

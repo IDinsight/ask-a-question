@@ -430,7 +430,9 @@ class TestErrorResponses:
             "core_backend.app.llm_call.parse_input._ask_llm_async",
             partial(mock_ask_llm, classification),
         )
-        response = await _classify_on_off_topic(user_query_refined, user_query_response)
+        _, response = await _classify_on_off_topic(
+            user_query_refined, user_query_response
+        )
 
         if should_error:
             assert isinstance(response, UserQueryResponseError)

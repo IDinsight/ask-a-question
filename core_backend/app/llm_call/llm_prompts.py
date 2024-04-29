@@ -140,11 +140,12 @@ class OnOffTopicClassification(str, Enum):
         """
 
         return textwrap.dedent(
-            f"""
+            """
             You are a labelling agent. You declare whether a message sent to an
-            WHO AirQuality chatbot is relevant to the topic or not. You classify each
-            message as one of {cls.get_available_labels()}.
-
+            {service_identity} is relevant to the topic or not. You classify each
+            message as one of """
+            + f"{cls.get_available_labels()}."
+            + """
             Examples:
             "What are the health benefits of drinking green tea?" -> OFF_TOPIC
             "How do cars affect air quality as per the WHO guidelines?" -> ON_TOPIC
