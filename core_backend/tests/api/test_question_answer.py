@@ -7,7 +7,11 @@ from fastapi.testclient import TestClient
 from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
-from core_backend.app.llm_call.parse_input import _classify_safety, _translate_question
+from core_backend.app.llm_call.parse_input import (
+    _classify_safety,
+    _identify_language,
+    _translate_question,
+)
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import (
     ErrorType,
@@ -267,11 +271,54 @@ class TestErrorResponses:
         )
 
     @pytest.mark.parametrize(
+        "identified_lang_str,should_error,expected_error_type",
+        [
+            ("ENGLISH", False, None),
+            ("HINDI", False, None),
+            ("UNINTELLIGIBLE", True, ErrorType.UNINTELLIGIBLE_INPUT),
+            ("GIBBERISH", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("UNSUPPORTED", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("SOME_UNSUPPORTED_LANG", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("don't kow", True, ErrorType.UNSUPPORTED_LANGUAGE),
+        ],
+    )
+    async def test_language_identify_error(
+        self,
+        user_query_response: UserQueryResponse,
+        identified_lang_str: str,
+        should_error: bool,
+        expected_error_type: ErrorType,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        user_query_refined = UserQueryRefined(
+            query_text="This is a basic query",
+            original_language=None,
+            query_text_original="This is a query original",
+        )
+
+        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+            return identified_lang_str
+
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+        )
+
+        query, response = await _identify_language(
+            user_query_refined, user_query_response
+        )
+        if should_error:
+            assert isinstance(response, UserQueryResponseError)
+            assert response.error_type == expected_error_type
+        else:
+            assert isinstance(response, UserQueryResponse)
+            assert query.original_language == getattr(
+                IdentifiedLanguage, identified_lang_str
+            )
+
+    @pytest.mark.parametrize(
         "user_query_refined,should_error,expected_error_type",
         [
             ("ENGLISH", False, None),
-            ("GIBBERISH", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("VALID_UNSUPPORTED_LANGAUGE", True, ErrorType.UNSUPPORTED_LANGUAGE),
             (SUPPORTED_LANGUAGE, False, None),
         ],
         indirect=["user_query_refined"],
@@ -302,6 +349,28 @@ class TestErrorResponses:
                 assert query.query_text == "This is a basic query"
             else:
                 assert query.query_text == "This is a translated LLM response"
+
+    async def test_translate_before_language_id_errors(
+        self,
+        user_query_response: UserQueryResponse,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+            return "This is a translated LLM response"
+
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+        )
+
+        user_query_refined = UserQueryRefined(
+            query_text="This is a basic query",
+            original_language=None,
+            query_text_original="This is a query original",
+        )
+        with pytest.raises(ValueError):
+            query, response = await _translate_question(
+                user_query_refined, user_query_response
+            )
 
     @pytest.mark.parametrize(
         "classification, should_error",

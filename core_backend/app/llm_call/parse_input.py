@@ -169,7 +169,7 @@ def _process_identified_language_response(
                     "Unintelligible input. "
                     + f"The following languages are supported: {supported_languages}."
                 )
-                error_type = ErrorType.UNINTELLIGIBLE_QUESTION
+                error_type = ErrorType.UNINTELLIGIBLE_INPUT
             case IdentifiedLanguage.UNSUPPORTED:
                 error_message = (
                     "Unsupported language. Only the following languages "
@@ -235,28 +235,25 @@ async def _translate_question(
             )
         )
 
-    if isinstance(response, UserQueryResponseError):
+    translation_response = await _ask_llm_async(
+        question=question.query_text,
+        prompt=TRANSLATE_INPUT + question.original_language.value,
+        litellm_model=LITELLM_MODEL_TRANSLATE,
+    )
+    if translation_response != TRANSLATE_FAILED_MESSAGE:
+        question.query_text = translation_response
+        response.debug_info["translated_question"] = translation_response
         return question, response
     else:
-        translation_response = await _ask_llm_async(
-            question=question.query_text,
-            prompt=TRANSLATE_INPUT + question.original_language.value,
-            litellm_model=LITELLM_MODEL_TRANSLATE,
+        error_response = UserQueryResponseError(
+            error_message=STANDARD_FAILURE_MESSAGE,
+            query_id=response.query_id,
+            error_type=ErrorType.UNABLE_TO_TRANSLATE,
         )
-        if translation_response != TRANSLATE_FAILED_MESSAGE:
-            question.query_text = translation_response
-            response.debug_info["translated_question"] = translation_response
-        else:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE,
-                query_id=response.query_id,
-                error_type=ErrorType.UNABLE_TO_TRANSLATE,
-            )
-            error_response.debug_info.update(response.debug_info)
-            logger.info("TRANSLATION FAILED on query id: " + str(response.query_id))
+        error_response.debug_info.update(response.debug_info)
+        logger.info("TRANSLATION FAILED on query id: " + str(response.query_id))
 
-            return question, error_response
-    return question, response
+        return question, error_response
 
 
 def paraphrase_question__before(func: Callable) -> Callable:
