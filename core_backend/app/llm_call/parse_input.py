@@ -122,21 +122,73 @@ async def _identify_language(
     """
     Identifies the language of the question.
     """
-    if not isinstance(response, UserQueryResponseError):
-        identified_lang = await _ask_llm_async(
-            question.query_text,
-            IdentifiedLanguage.get_prompt(),
-            litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
+    if isinstance(response, UserQueryResponseError):
+        return question, response
+
+    llm_identified_lang = await _ask_llm_async(
+        question=question.query_text,
+        prompt=IdentifiedLanguage.get_prompt(),
+        litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
+    )
+
+    try:
+        identified_lang = getattr(IdentifiedLanguage, llm_identified_lang)
+    except AttributeError:
+        identified_lang = IdentifiedLanguage.UNSUPPORTED
+
+    question.original_language = identified_lang
+    if question.original_language is not None:
+        response.debug_info["original_language"] = question.original_language.value
+
+    processed_response = _process_identified_language_response(
+        identified_lang,
+        response,
+    )
+
+    return question, processed_response
+
+
+def _process_identified_language_response(
+    identified_language: IdentifiedLanguage,
+    response: UserQueryResponse,
+) -> UserQueryResponse | UserQueryResponseError:
+    """Process the identified language and return the response."""
+    is_language_supported = (
+        identified_language in IdentifiedLanguage.get_supported_languages()
+    )
+
+    if is_language_supported:
+        return response
+    else:
+        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+
+        match identified_language:
+            case IdentifiedLanguage.UNINTELLIGIBLE:
+                error_message = (
+                    "Unintelligible input. "
+                    + f"The following languages are supported: {supported_languages}."
+                )
+                error_type = ErrorType.UNINTELLIGIBLE_INPUT
+            case IdentifiedLanguage.UNSUPPORTED:
+                error_message = (
+                    "Unsupported language. Only the following languages "
+                    + f"are supported: {supported_languages}."
+                )
+                error_type = ErrorType.UNSUPPORTED_LANGUAGE
+
+        error_response = UserQueryResponseError(
+            error_message=error_message,
+            query_id=response.query_id,
+            error_type=error_type,
         )
-        if identified_lang in IdentifiedLanguage.get_supported_languages():
-            question.original_language = getattr(IdentifiedLanguage, identified_lang)
-        else:
-            question.original_language = IdentifiedLanguage.UNKNOWN
+        error_response.debug_info.update(response.debug_info)
 
-        if question.original_language is not None:
-            response.debug_info["original_language"] = question.original_language.value
+        logger.info(
+            f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value}"
+            " language on query id: " + str(response.query_id)
+        )
 
-    return question, response
+        return error_response
 
 
 def translate_question__before(func: Callable) -> Callable:
@@ -182,42 +234,25 @@ async def _translate_question(
             )
         )
 
-    if question.original_language == IdentifiedLanguage.UNKNOWN:
-        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
-
+    translation_response = await _ask_llm_async(
+        question=question.query_text,
+        prompt=TRANSLATE_INPUT + question.original_language.value,
+        litellm_model=LITELLM_MODEL_TRANSLATE,
+    )
+    if translation_response != TRANSLATE_FAILED_MESSAGE:
+        question.query_text = translation_response
+        response.debug_info["translated_question"] = translation_response
+        return question, response
+    else:
         error_response = UserQueryResponseError(
-            error_message=STANDARD_FAILURE_MESSAGE
-            + f" Only the following languages are supported: {supported_languages}. ",
+            error_message=STANDARD_FAILURE_MESSAGE,
             query_id=response.query_id,
-            error_type=ErrorType.UNKNOWN_LANGUAGE,
+            error_type=ErrorType.UNABLE_TO_TRANSLATE,
         )
-
-        logger.info(
-            "TRANSLATION FAILED due to UNKNOWN language on query id: "
-            + str(response.query_id)
-        )
+        error_response.debug_info.update(response.debug_info)
+        logger.info("TRANSLATION FAILED on query id: " + str(response.query_id))
 
         return question, error_response
-    else:
-        translation_response = await _ask_llm_async(
-            question.query_text,
-            TRANSLATE_INPUT + question.original_language.value,
-            litellm_model=LITELLM_MODEL_TRANSLATE,
-        )
-        if translation_response != TRANSLATE_FAILED_MESSAGE:
-            question.query_text = translation_response
-            response.debug_info["translated_question"] = translation_response
-        else:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE,
-                query_id=response.query_id,
-                error_type=ErrorType.UNABLE_TO_TRANSLATE,
-            )
-            error_response.debug_info.update(response.debug_info)
-            logger.info("TRANSLATION FAILED on query id: " + str(response.query_id))
-
-            return question, error_response
-    return question, response
 
 
 def paraphrase_question__before(func: Callable) -> Callable:
@@ -255,8 +290,8 @@ async def _paraphrase_question(
         return question, response
 
     paraphrase_response = await _ask_llm_async(
-        question.query_text,
-        PARAPHRASE_INPUT,
+        question=question.query_text,
+        prompt=PARAPHRASE_INPUT,
         litellm_model=LITELLM_MODEL_PARAPHRASE,
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:

@@ -5,6 +5,7 @@ on:
     branches:
       - demo
       - testing
+      - main
     paths:
       - "admin_app/**"
       - "deployment/aws/admin_app/**"
@@ -15,7 +16,7 @@ jobs:
     name: Deploying Admin App ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
-      name: ${{github.ref_name}}
+      name: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     permissions:
       id-token: write

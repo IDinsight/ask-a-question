@@ -56,7 +56,8 @@ class ErrorType(str, Enum):
     """
 
     QUERY_UNSAFE = "query_unsafe"
-    UNKNOWN_LANGUAGE = "unknown_language"
+    UNINTELLIGIBLE_INPUT = "unintelligible_input"
+    UNSUPPORTED_LANGUAGE = "unsupported_language"
     UNABLE_TO_TRANSLATE = "unable_to_translate"
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
     ALIGNMENT_TOO_LOW = "alignment_too_low"

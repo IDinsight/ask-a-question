@@ -13,7 +13,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: detect-language
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: translate
     litellm_params:
@@ -29,7 +29,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: alignscore
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
 litellm_settings:
   num_retries: 2 # retry call 3 times on each model_name (e.g. translate).

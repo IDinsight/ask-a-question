@@ -76,8 +76,8 @@ async def llm_response(
 @check_align_score__after
 @identify_language__before
 @translate_question__before
-@paraphrase_question__before
 @classify_safety__before
+@paraphrase_question__before
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
@@ -86,6 +86,14 @@ async def get_llm_answer(
     """
     Get similar content and construct the LLM answer for the user query
     """
+    if user_query_refined.original_language is None:
+        raise ValueError(
+            (
+                "Language hasn't been identified. "
+                "Identify language before calling this function."
+            )
+        )
+
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
@@ -96,7 +104,11 @@ async def get_llm_answer(
         response.content_response = content_response
         context = get_context_string_from_retrieved_contents(content_response)
 
-        llm_response = await get_llm_rag_answer(user_query_refined.query_text, context)
+        llm_response = await get_llm_rag_answer(
+            user_query_refined.query_text,
+            context,
+            user_query_refined.original_language,
+        )
 
         if llm_response == SUMMARY_FAILURE_MESSAGE:
             response.state = ResultState.ERROR

@@ -59,8 +59,6 @@ class SafetyClassification(str, Enum):
 
 
 # ----  Language identification bot
-
-
 class IdentifiedLanguage(str, Enum):
     """
     Identified language of the user's input.
@@ -71,14 +69,27 @@ class IdentifiedLanguage(str, Enum):
     ZULU = "ZULU"
     AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
-    UNKNOWN = "UNKNOWN"
+    UNINTELLIGIBLE = "UNINTELLIGIBLE"
+    UNSUPPORTED = "UNSUPPORTED"
+
+    @classmethod
+    def get_supported_languages(cls) -> list[str]:
+        """
+        Returns a list of supported languages.
+        """
+        return [
+            lang
+            for lang in cls._member_names_
+            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
+        ]
 
     @classmethod
     def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
         """
-        If language identified is not one of the above, it is classified as UNKNOWN.
+        If language identified is not one of the supported language, it is classified
+        as UNSUPPORTED.
         """
-        return cls.UNKNOWN
+        return cls.UNSUPPORTED
 
     @classmethod
     def get_prompt(cls) -> str:
@@ -88,26 +99,24 @@ class IdentifiedLanguage(str, Enum):
 
         return textwrap.dedent(
             f"""
-            You are a high-performing language identification bot.
-            You can only identify the following languages:
-            {" ".join(cls._member_names_)}.
-            Respond with the language of the user's input or UNKNOWN if it is not
-            one of the above. Answer should be a single word and strictly one of
-            [{",".join(cls._member_names_)}]"""
-        )
+            You are a high-performing language identification bot that classifies the
+            language of the user input into one of {", ".join(cls._member_names_)}.
 
-    @classmethod
-    def get_supported_languages(cls) -> list[str]:
-        """
-        Returns a list of supported languages.
-        """
-        return [lang for lang in cls._member_names_ if lang != "UNKNOWN"]
+            If the user input is
+            1. in one of the supported languages, then respond with that language.
+            2. written in a mix of languages, then respond with the dominant language.
+            3. in a real language but not a supported language, then respond with
+            UNSUPPORTED.
+            4. unintelligible or gibberish, then respond with UNINTELLIGIBLE.
+
+            Answer should be a single word and strictly one of
+            [{", ".join(cls._member_names_)}]"""
+        )
 
 
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
-TRANSLATE_INPUT = f"""You are a high-performing translation bot for \
-low-resourced African languages.
+TRANSLATE_INPUT = f"""You are a high-performing translation bot. \
 You support a question-answering chatbot. \
 If you are unable to translate the user's input, \
 respond with "{TRANSLATE_FAILED_MESSAGE}" \
@@ -159,12 +168,14 @@ Examples:\n\n
 # ----  Question answering bot
 SUMMARY_FAILURE_MESSAGE = "Sorry, no relevant information found."
 ANSWER_QUESTION_PROMPT = (
-    f"""You are a high-performing question answering bot.\
+    """You are a high-performing question answering bot.\
 
 Answer the question based on the content delimited by triple backticks. \
 Address the question directly and do not respond with anything that is \
-outside of the context of the given content.
-
+outside of the context of the given content. Respond in {response_language} using the
+same dialect and script as the question.
+"""
+    + f"""
 If the content doesn't seem to answer the question, respond exactly with \
 "{SUMMARY_FAILURE_MESSAGE}".\n
 """
