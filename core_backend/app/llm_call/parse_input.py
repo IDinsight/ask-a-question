@@ -126,8 +126,8 @@ async def _identify_language(
         return question, response
 
     llm_identified_lang = await _ask_llm_async(
-        question.query_text,
-        IdentifiedLanguage.get_prompt(),
+        question=question.query_text,
+        prompt=IdentifiedLanguage.get_prompt(),
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
     )
 
@@ -239,8 +239,8 @@ async def _translate_question(
         return question, response
     else:
         translation_response = await _ask_llm_async(
-            question.query_text,
-            TRANSLATE_INPUT + question.original_language.value,
+            question=question.query_text,
+            prompt=TRANSLATE_INPUT + question.original_language.value,
             litellm_model=LITELLM_MODEL_TRANSLATE,
         )
         if translation_response != TRANSLATE_FAILED_MESSAGE:
@@ -294,8 +294,8 @@ async def _paraphrase_question(
         return question, response
 
     paraphrase_response = await _ask_llm_async(
-        question.query_text,
-        PARAPHRASE_INPUT,
+        question=question.query_text,
+        prompt=PARAPHRASE_INPUT,
         litellm_model=LITELLM_MODEL_PARAPHRASE,
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
