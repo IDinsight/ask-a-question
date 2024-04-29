@@ -24,6 +24,7 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -54,6 +55,7 @@ jobs:
           cache-to: type=gha
           push: true
           tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
+
       # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
       # This will reduce the number of task definitions created and will speed up the deployment process
       # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated

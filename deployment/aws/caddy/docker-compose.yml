@@ -1,0 +1,32 @@
+version: "3"
+services:
+  caddy:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN}
+      - ENV=${ENV}
+      - PROJECT_NAME=${PROJECT_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/caddy-task-${PROJECT_NAME}-${ENV} # this has to match with what is in Terraform
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: caddy
+
+volumes:
+  caddy_data:
+  caddy_config:

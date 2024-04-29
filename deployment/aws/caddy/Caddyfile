@@ -1,0 +1,9 @@
+{$DOMAIN:localhost} {
+    handle_path /api/* {
+        reverse_proxy 172.17.0.1:8000
+    }
+
+    handle {
+        reverse_proxy 172.17.0.1:3000
+    }
+}
