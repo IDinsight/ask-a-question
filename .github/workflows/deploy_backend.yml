@@ -5,7 +5,7 @@ on:
     branches:
       - demo
       - testing
-      - main
+      - AAQ-460-response-language
     paths:
       - "core_backend/**"
       - "deployment/aws/core_backend/**"
@@ -16,7 +16,7 @@ jobs:
     name: Deploying core_backend ${{github.ref_name}}
     runs-on: ubuntu-latest
     environment:
-      name: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      name: ${{ (github.ref_name == 'AAQ-460-response-language' && 'testing') || github.ref_name }}
 
     permissions:
       id-token: write
