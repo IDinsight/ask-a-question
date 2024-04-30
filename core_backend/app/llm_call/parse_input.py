@@ -221,6 +221,9 @@ async def _classify_on_off_topic(
     """
     Checks if the user query is on-topic or off-topic.
     """
+    if isinstance(response, UserQueryResponseError):
+        return user_query, response
+
     label = await _ask_llm_async(
         question=user_query.query_text,
         prompt=OnOffTopicClassification.get_prompt().format(
