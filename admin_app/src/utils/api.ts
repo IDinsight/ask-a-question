@@ -99,6 +99,23 @@ const createContent = async (content: ContentBody, token: string) => {
   });
 };
 
+const getUrgencyRuleList = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/urgency-rule/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching urgency rule list");
+    }
+  });
+};
+
 const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
@@ -182,6 +199,7 @@ export const apiCalls = {
   deleteContent,
   editContent,
   createContent,
+  getUrgencyRuleList,
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
