@@ -4,7 +4,7 @@ import {
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Button, Card, IconButton, Typography } from "@mui/material";
+import { Button, Card, IconButton, Typography, Box } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
@@ -38,8 +38,10 @@ const ContentCard = ({
   return (
     <>
       <Card
+        onClick={() => setOpenReadModal(true)}
         sx={[
           {
+            cursor: "pointer",
             m: sizes.smallGap,
             p: sizes.baseGap,
             display: "flex",
@@ -82,9 +84,6 @@ const ContentCard = ({
           gap={sizes.tinyGap}
           sx={{ alignItems: "center" }}
         >
-          <Button variant="contained" onClick={() => setOpenReadModal(true)}>
-            Read
-          </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
           <Button
             disabled={!editAccess}
