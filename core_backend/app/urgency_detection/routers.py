@@ -69,12 +69,19 @@ async def cosine_distance_classifier(
     cosine_distances = await get_cosine_distances_from_rules(
         asession, urgency_query.message_text
     )
+    failed_rules = []
     for _, rule in cosine_distances.items():
         if float(rule["distance"]) < float(URGENCY_DETECTION_MAX_DISTANCE):
-            return UrgencyResponse(is_urgent=True, details=cosine_distances)
+            failed_rules.append(rule["urgency_rule"])
+
+    if failed_rules:
+        return UrgencyResponse(
+            is_urgent=True, failed_rules=failed_rules, details=cosine_distances
+        )
 
     return UrgencyResponse(
         is_urgent=False,
+        failed_rules=failed_rules,
         details=cosine_distances,
     )
 
@@ -95,9 +102,16 @@ async def llm_entailment_classifier(
 
     results = await asyncio.gather(*tasks)
     results_dict = {str(i): result for i, result in enumerate(results)}
-
+    failed_rules = []
     for result in results:
         if float(result["probability"]) > int(URGENCY_DETECTION_MIN_PROBABILITY):
-            return UrgencyResponse(is_urgent=True, details=results_dict)
+            failed_rules.append(result["statement"])
 
-    return UrgencyResponse(is_urgent=False, details=results_dict)
+    if failed_rules:
+        return UrgencyResponse(
+            is_urgent=True, failed_rules=failed_rules, details=results_dict
+        )
+
+    return UrgencyResponse(
+        is_urgent=False, failed_rules=failed_rules, details=results_dict
+    )

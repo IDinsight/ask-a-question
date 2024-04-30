@@ -159,25 +159,6 @@ async def _get_content_embeddings(
     return await embedding(text_to_embed)
 
 
-async def get_similar_content(
-    question: str,
-    n_similar: int,
-    asession: AsyncSession,
-) -> Dict[int, tuple[str, str, int, float]]:
-    """
-    Get the most similar points in the vector table
-    """
-    question_embedding = await embedding(
-        question,
-    )
-
-    return await get_search_results(
-        question_embedding,
-        n_similar,
-        asession,
-    )
-
-
 async def get_similar_content_async(
     question: str, n_similar: int, asession: AsyncSession
 ) -> Dict[int, tuple[str, str, int, float]]:

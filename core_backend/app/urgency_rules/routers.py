@@ -82,12 +82,12 @@ async def update_urgency_rule(
     """
     Update a single urgency rule by id
     """
-    old_content = await get_urgency_rule_by_id_from_db(
+    old_urgency_rule = await get_urgency_rule_by_id_from_db(
         urgency_rule_id,
         asession,
     )
 
-    if not old_content:
+    if not old_urgency_rule:
         raise HTTPException(
             status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
         )

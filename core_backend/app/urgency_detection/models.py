@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import JSON, Boolean, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.sqltypes import ARRAY
 
 from ..models import Base, JSONDict
 from .schemas import UrgencyQuery, UrgencyResponse
@@ -14,7 +16,7 @@ class UrgencyQueryDB(Base):
     Urgency query database model.
     """
 
-    __tablename__ = "urgency-queries"
+    __tablename__ = "urgency-query"
 
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -67,15 +69,16 @@ class UrgencyResponseDB(Base):
     Urgency response database model.
     """
 
-    __tablename__ = "urgency-responses"
+    __tablename__ = "urgency-response"
 
     urgency_response_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    failed_rules: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
     details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("urgency-queries.urgency_query_id")
+        Integer, ForeignKey("urgency-query.urgency_query_id")
     )
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -103,6 +106,7 @@ async def save_urgency_response_to_db(
         query_id=urgency_query_db.urgency_query_id,
         is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
+        failed_rules=response.failed_rules,
         response_datetime_utc=datetime.utcnow(),
     )
     asession.add(urgency_query_responses_db)
