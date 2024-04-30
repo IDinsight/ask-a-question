@@ -178,6 +178,7 @@ async def embeddings_search(
 
 @identify_language__before
 @translate_question__before
+@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
