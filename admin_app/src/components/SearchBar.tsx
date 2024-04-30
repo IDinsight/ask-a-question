@@ -1,4 +1,3 @@
-"use client";
 import { Layout } from "@/components/Layout";
 import { appColors } from "@/utils";
 import { Search } from "@mui/icons-material";
@@ -20,6 +19,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         sx={{
           width: "100%",
           backgroundColor: appColors.white,
+          borderRadius: "5px",
         }}
         variant="outlined"
         placeholder="Search"
