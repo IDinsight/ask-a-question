@@ -20,7 +20,6 @@ const Dashboard = () => {
   const [upvoteStats, setUpvoteStats] = React.useState<Array<number>>([]);
   const { token } = useAuth();
   const [labels, setLabels] = React.useState<Array<string>>([]);
-  const [lastFetch, setLastFetch] = React.useState<number>(Date.now());
   React.useEffect(() => {
     const fetchQuestionStats = async () => {
       setIsLoading(true);
@@ -37,11 +36,7 @@ const Dashboard = () => {
     fetchQuestionStats();
     const lastSixMonths = getPastSixMonths();
     setLabels(lastSixMonths);
-    const interval = setInterval(() => {
-      setLastFetch(Date.now());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [token, lastFetch]);
+  }, [token]);
   function calculatePercentageChange(array: number[]): string {
     if (array.length < 2) {
       return "N/A";
