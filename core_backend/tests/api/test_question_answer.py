@@ -8,6 +8,7 @@ from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
 from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.parse_input import (
+    _classify_on_off_topic,
     _classify_safety,
     _identify_language,
     _translate_question,
@@ -212,7 +213,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == response_code
 
 
-class TestLLMSearch:
+class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
@@ -401,6 +402,43 @@ class TestErrorResponses:
         else:
             assert isinstance(response, UserQueryResponse)
             assert query.query_text == "This is a basic query"
+
+    @pytest.mark.parametrize(
+        "classification, should_error",
+        [
+            ("ON_TOPIC", False),
+            ("UNKNOWN", False),
+            ("OFF_TOPIC", True),
+            ("on topic", False),
+            ("Off_Topic", True),
+            ("Sorry..", False),
+            ("This is off topic", False),
+        ],
+    )
+    async def test_off_topic_query_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        user_query_refined: UserQueryRefined,
+        user_query_response: UserQueryResponse,
+        classification: str,
+        should_error: bool,
+    ) -> None:
+        async def mock_ask_llm(llm_response: str, *args: Any, **kwargs: Any) -> str:
+            return llm_response
+
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.parse_input._ask_llm_async",
+            partial(mock_ask_llm, classification),
+        )
+        _, response = await _classify_on_off_topic(
+            user_query_refined, user_query_response
+        )
+
+        if should_error:
+            assert isinstance(response, UserQueryResponseError)
+            assert response.error_type == ErrorType.OFF_TOPIC
+        else:
+            assert isinstance(response, UserQueryResponse)
 
 
 class TestAlignScore:

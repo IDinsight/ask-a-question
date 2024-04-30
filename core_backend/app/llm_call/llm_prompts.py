@@ -114,13 +114,54 @@ class IdentifiedLanguage(str, Enum):
         )
 
 
+# ----  On/Off topic bot
+class OnOffTopicClassification(str, Enum):
+    """
+    On/Off topic classification of the user's input.
+    """
+
+    ON_TOPIC = "ON_TOPIC"
+    OFF_TOPIC = "OFF_TOPIC"
+    UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def get_available_labels(cls) -> list[str]:
+        """
+        Returns a list of available classes for on/off topic classification.
+        UNKNOWN is only used internally.
+        """
+
+        return [label for label in cls._member_names_ if label != "UNKNOWN"]
+
+    @classmethod
+    def get_prompt(cls) -> str:
+        """
+        Returns the prompt for the on/off topic bot.
+        """
+
+        return textwrap.dedent(
+            """
+            You are a labelling agent. You declare whether a message sent to an
+            {service_identity} is relevant to the topic or not. You classify each
+            message as one of """
+            + f"{cls.get_available_labels()}."
+            + """
+            Examples:
+            "What are the health benefits of drinking green tea?" -> OFF_TOPIC
+            "How do cars affect air quality as per the WHO guidelines?" -> ON_TOPIC
+            "Are respirators useful in for protecting against air pollution" -> ON_TOPIC
+            "How does one maintain cardiovascular health?" -> OFF_TOPIC
+            """
+        )
+
+
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_INPUT = f"""You are a high-performing translation bot. \
 You support a question-answering chatbot. \
 If you are unable to translate the user's input, \
 respond with "{TRANSLATE_FAILED_MESSAGE}" \
-Translate the user's input to English from"""
+Translate the user's input to English from """
 
 
 # ---- Paraphrase question

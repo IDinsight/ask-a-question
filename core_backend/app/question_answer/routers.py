@@ -12,6 +12,7 @@ from ..llm_call.check_output import check_align_score__after
 from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
+    classify_on_off_topic__before,
     classify_safety__before,
     identify_language__before,
     paraphrase_question__before,
@@ -77,6 +78,7 @@ async def llm_response(
 @identify_language__before
 @translate_question__before
 @classify_safety__before
+@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
@@ -176,6 +178,7 @@ async def embeddings_search(
 
 @identify_language__before
 @translate_question__before
+@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,
