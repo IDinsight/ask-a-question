@@ -134,10 +134,9 @@ async def _identify_language(
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
     )
 
-    try:
-        identified_lang = getattr(IdentifiedLanguage, llm_identified_lang)
-    except AttributeError:
-        identified_lang = IdentifiedLanguage.UNSUPPORTED
+    identified_lang = getattr(
+        IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
+    )
 
     question.original_language = identified_lang
     if question.original_language is not None:
@@ -232,10 +231,9 @@ async def _classify_on_off_topic(
 
     basic_cleaned = label.replace(" ", "_").upper()
 
-    try:
-        on_off_topic_label = getattr(OnOffTopicClassification, basic_cleaned)
-    except AttributeError:
-        on_off_topic_label = OnOffTopicClassification.UNKNOWN
+    on_off_topic_label = getattr(
+        OnOffTopicClassification, basic_cleaned, OnOffTopicClassification.UNKNOWN
+    )
 
     response.debug_info["on_off_topic"] = on_off_topic_label.value
 
