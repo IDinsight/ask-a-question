@@ -4,7 +4,7 @@ import {
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Button, Card, IconButton, Typography, Box } from "@mui/material";
+import { Button, Card, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
