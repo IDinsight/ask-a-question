@@ -13,7 +13,7 @@ on:
 
 jobs:
   DeployAdminApp:
-    name: Deploying Admin App ${{github.ref_name}}
+    name: Deploying Admin App to ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
     runs-on: ubuntu-latest
     environment:
       name: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
@@ -95,22 +95,22 @@ jobs:
           ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
           --default-launch-type EC2 \
-          --config-name ${{ secrets.PROJECT_NAME }}-${{github.ref_name}}-admin-app-config
-          ecs-cli compose --project-name admin-app-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }} --file deployment/aws/admin_app/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
+          --config-name ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}-admin-app-config
+          ecs-cli compose --project-name admin-app-task-${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }} --file deployment/aws/admin_app/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
         env:
           NEXT_PUBLIC_BACKEND_URL: ${{secrets.NEXT_PUBLIC_BACKEND_URL}}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           REPO: ${{ secrets.REPO }}
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-          ENV: ${{ github.ref_name }}
+          ENV: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
       # We need this since deploy task definition action needs the task definition in
       # json format
 
       - name: Task definition download
         id: download-task-def
         env:
-          ecs_task_def_name: admin-app-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }}
+          ecs_task_def_name: admin-app-task-${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
         run: |
           aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
           echo $(cat task-definition.json | jq 'del(
