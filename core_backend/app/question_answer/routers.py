@@ -18,6 +18,7 @@ from ..llm_call.parse_input import (
     paraphrase_question__before,
     translate_question__before,
 )
+from ..utils import generate_secret_key
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
@@ -39,11 +40,12 @@ from .schemas import (
 )
 from .utils import (
     convert_search_results_to_schema,
-    generate_secret_key,
     get_context_string_from_retrieved_contents,
 )
 
-router = APIRouter(dependencies=[Depends(auth_bearer_token)])
+router = APIRouter(
+    dependencies=[Depends(auth_bearer_token)], tags=["Question Answering"]
+)
 
 
 @router.post(

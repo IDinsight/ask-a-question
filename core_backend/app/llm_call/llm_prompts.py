@@ -254,3 +254,31 @@ class AlignmentScore(BaseModel):
         CONTEXT:
         {context}"""
     )
+
+
+def get_urgency_detection_prompt(condition: str, message: str) -> str:
+    """
+    Returns the prompt for the urgency detection bot.
+    """
+
+    return textwrap.dedent(
+        (
+            """Given a [statement] and [comment], score the share of meaning
+            of [statement] covered by [comment].
+            Respond with a score between 0 and 1 with 0.1 increments.
+            """
+            """
+            Respond in json string:
+
+            \{
+               statement: str
+               probability: float
+               reason: str
+            \}
+            """
+            f"""
+            statement: {condition}
+            comment: {message}
+            """
+        )
+    )

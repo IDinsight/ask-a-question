@@ -4,8 +4,8 @@ from typing import Any, Dict, Generator
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.contents.models import ContentDB
-from core_backend.app.contents.routers import _convert_record_to_schema
+from core_backend.app.urgency_rules.models import UrgencyRuleDB
+from core_backend.app.urgency_rules.routers import _convert_record_to_schema
 
 from .conftest import async_fake_embedding
 
@@ -15,144 +15,132 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 @pytest.fixture(
     scope="function",
     params=[
-        ("test title 1", "test content - no metadata", {}),
-        ("test title 2", "test content - with metadata", {"meta_key": "meta_value"}),
+        ("test ud rule 1 - no metadata", {}),
+        ("test ud rule 2 - with metadata", {"meta_key": "meta_value"}),
     ],
 )
-def existing_content_id(
+def existing_rule_id(
     request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
 ) -> Generator[str, None, None]:
     response = client.post(
-        "/content",
+        "/urgency-rules",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
         json={
-            "content_title": request.param[0],
-            "content_text": request.param[1],
-            "content_language": "ENGLISH",
-            "content_metadata": request.param[2],
+            "urgency_rule_text": request.param[0],
+            "urgency_rule_metadata": request.param[1],
         },
     )
-    content_id = response.json()["content_id"]
-    yield content_id
+    rule_id = response.json()["urgency_rule_id"]
+    yield rule_id
     client.delete(
-        f"/content/{content_id}",
+        f"/urgency-rules/{rule_id}",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
 
 
-class TestManageContent:
+class TestManageUDRules:
     @pytest.mark.parametrize(
-        "content_title, content_text, content_metadata",
+        "urgency_rule_text, urgency_rule_metadata",
         [
-            ("title 3", "test content 3", {}),
-            ("title 2", "test content 2", {"meta_key": "meta_value"}),
+            ("test rule 3", {}),
+            ("test rule 2", {"meta_key": "meta_value"}),
         ],
     )
-    async def test_create_and_delete_content(
+    async def test_create_and_delete_UDrules(
         self,
         client: TestClient,
-        content_title: str,
-        content_text: str,
+        urgency_rule_text: str,
         fullaccess_token: str,
-        content_metadata: Dict[Any, Any],
+        urgency_rule_metadata: Dict[Any, Any],
     ) -> None:
         response = client.post(
-            "/content",
+            "/urgency-rules",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "content_title": content_title,
-                "content_text": content_text,
-                "content_language": "ENGLISH",
-                "content_metadata": content_metadata,
+                "urgency_rule_text": urgency_rule_text,
+                "urgency_rule_metadata": urgency_rule_metadata,
             },
         )
         assert response.status_code == 200
         json_response = response.json()
-        assert json_response["content_metadata"] == content_metadata
-        assert "content_id" in json_response
+        assert json_response["urgency_rule_metadata"] == urgency_rule_metadata
+        assert "urgency_rule_id" in json_response
 
         response = client.delete(
-            f"/content/{json_response['content_id']}",
+            f"/urgency-rules/{json_response['urgency_rule_id']}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
 
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "content_title, content_text, content_metadata",
+        "urgency_rule_text, urgency_rule_metadata",
         [
-            ("test content 3 title - edited", "test content 3 - edited", {}),
+            ("test rule 3 - edited", {}),
             (
-                "test content 4 title - edited",
-                "test content 4 - edited",
+                "test rule 4 - edited",
                 {"new_meta_key": "new meta_value", "meta_key": "meta_value_edited #2"},
             ),
         ],
     )
-    async def test_edit_and_retrieve_content(
+    async def test_edit_and_retrieve_UDrules(
         self,
         client: TestClient,
-        existing_content_id: int,
-        content_title: str,
-        content_text: str,
+        existing_rule_id: int,
+        urgency_rule_text: str,
         fullaccess_token: str,
         readonly_token: str,
-        content_metadata: Dict[Any, Any],
+        urgency_rule_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "content_title": content_title,
-                "content_text": content_text,
-                "content_language": "ENGLISH",
-                "content_metadata": content_metadata,
+                "urgency_rule_text": urgency_rule_text,
+                "urgency_rule_metadata": urgency_rule_metadata,
             },
         )
 
         assert response.status_code == 200
 
         response = client.get(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {readonly_token}"},
         )
         assert response.status_code == 200
-        assert response.json()["content_title"] == content_title
-        assert response.json()["content_text"] == content_text
-        edited_metadata = response.json()["content_metadata"]
+        assert response.json()["urgency_rule_text"] == urgency_rule_text
+        edited_metadata = response.json()["urgency_rule_metadata"]
 
-        assert all(edited_metadata[k] == v for k, v in content_metadata.items())
+        assert all(edited_metadata[k] == v for k, v in urgency_rule_metadata.items())
 
-    async def test_edit_content_not_found(
+    async def test_edit_UDrules_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
-            "/content/12345",
+            "/urgency-rules/12345",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "content_title": "title",
-                "content_text": "sample text",
-                "content_language": "ENGLISH",
-                "content_metadata": {"key": "value"},
+                "urgency_rule_text": "sample text",
+                "urgency_rule_metadata": {"key": "value"},
             },
         )
 
         assert response.status_code == 404
 
-    async def test_list_content(
-        self, client: TestClient, existing_content_id: int, readonly_token: str
+    async def test_list_UDrules(
+        self, client: TestClient, existing_rule_id: int, readonly_token: str
     ) -> None:
         response = client.get(
-            "/content", headers={"Authorization": f"Bearer {readonly_token}"}
+            "/urgency-rules/", headers={"Authorization": f"Bearer {readonly_token}"}
         )
         assert response.status_code == 200
         assert len(response.json()) > 0
 
-    async def test_delete_content(
-        self, client: TestClient, existing_content_id: int, fullaccess_token: str
+    async def test_delete_UDrules(
+        self, client: TestClient, existing_rule_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
@@ -166,14 +154,14 @@ class TestAuthManageContent:
     async def test_auth_delete(
         self,
         client: TestClient,
-        existing_content_id: int,
+        existing_rule_id: int,
         access_token: str,
         expected_status: int,
         request: pytest.FixtureRequest,
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.delete(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
@@ -191,16 +179,19 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.post(
-            "/content",
+            "/urgency-rules",
             headers={"Authorization": f"Bearer {access_token}"},
             json={
-                "content_title": "sample title",
-                "content_text": "sample text",
-                "content_language": "ENGLISH",
-                "content_metadata": {},
+                "urgency_rule_text": "sample text",
+                "urgency_rule_metadata": {},
             },
         )
         assert response.status_code == expected_status
+        if response.status_code == 200:
+            client.delete(
+                f"/urgency-rules/{response.json()['urgency_rule_id']}",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
 
     @pytest.mark.parametrize(
         "access_token, expected_status",
@@ -209,20 +200,18 @@ class TestAuthManageContent:
     async def test_auth_edit(
         self,
         client: TestClient,
-        existing_content_id: int,
+        existing_rule_id: int,
         access_token: str,
         expected_status: int,
         request: pytest.FixtureRequest,
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.put(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {access_token}"},
             json={
-                "content_title": "sample title",
-                "content_text": "sample text",
-                "content_language": "ENGLISH",
-                "content_metadata": {},
+                "urgency_rule_text": "sample text",
+                "urgency_rule_metadata": {},
             },
         )
         assert response.status_code == expected_status
@@ -240,7 +229,7 @@ class TestAuthManageContent:
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.get(
-            "/content",
+            "/urgency-rules",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
@@ -252,34 +241,30 @@ class TestAuthManageContent:
     async def test_auth_retrieve(
         self,
         client: TestClient,
-        existing_content_id: int,
+        existing_rule_id: int,
         access_token: str,
         expected_status: int,
         request: pytest.FixtureRequest,
     ) -> None:
         access_token = request.getfixturevalue(access_token)
         response = client.get(
-            f"/content/{existing_content_id}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == expected_status
 
 
 async def test_convert_record_to_schema() -> None:
-    content_id = 1
-    record = ContentDB(
-        content_id=content_id,
-        content_title="sample title for content",
-        content_text="sample text",
-        content_embedding=await async_fake_embedding(),
-        content_language="ENGLISH",
-        positive_votes=0,
-        negative_votes=0,
-        content_metadata={"extra_field": "extra value"},
+    _id = 1
+    record = UrgencyRuleDB(
+        urgency_rule_id=_id,
+        urgency_rule_text="sample text",
+        urgency_rule_vector=await async_fake_embedding(),
+        urgency_rule_metadata={"extra_field": "extra value"},
         created_datetime_utc=datetime.datetime.utcnow(),
         updated_datetime_utc=datetime.datetime.utcnow(),
     )
     result = _convert_record_to_schema(record)
-    assert result.content_id == content_id
-    assert result.content_text == "sample text"
-    assert result.content_metadata["extra_field"] == "extra value"
+    assert result.urgency_rule_id == _id
+    assert result.urgency_rule_text == "sample text"
+    assert result.urgency_rule_metadata["extra_field"] == "extra value"

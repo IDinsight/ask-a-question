@@ -41,6 +41,9 @@ LITELLM_MODEL_PARAPHRASE = os.environ.get(
 LITELLM_MODEL_ALIGNSCORE = os.environ.get(
     "LITELLM_MODEL_ALIGNSCORE", "openai/alignscore"
 )
+LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
+    "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
+)
 
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get("SERVICE_IDENTITY", "WHO AirQuality chatbot")

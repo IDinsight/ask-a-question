@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 from datetime import datetime
-from typing import Any, Generator, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 
 import httpx
 import numpy as np
@@ -26,6 +26,7 @@ from core_backend.app.question_answer.schemas import (
     UserQueryRefined,
     UserQueryResponse,
 )
+from core_backend.app.urgency_rules.models import UrgencyRuleDB
 
 # Define namedtuples for the embedding endpoint
 EmbeddingData = namedtuple("EmbeddingData", "data")
@@ -51,21 +52,20 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture(scope="session")
-def faq_contents(client: TestClient, db_session: Session) -> None:
+async def faq_contents(client: TestClient, db_session: Session) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
 
     for i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
-        content_embedding = fake_embedding(
+        content_embedding = await async_fake_embedding(
             model=LITELLM_MODEL_EMBEDDING,
             input=text_to_embed,
             api_base=LITELLM_ENDPOINT,
             api_key=LITELLM_API_KEY,
-        ).data[0]["embedding"]
-
-        contend_db = ContentDB(
+        )
+        content_db = ContentDB(
             content_id=i,
             content_embedding=content_embedding,
             content_title=content["content_title"],
@@ -75,10 +75,40 @@ def faq_contents(client: TestClient, db_session: Session) -> None:
             created_datetime_utc=datetime.utcnow(),
             updated_datetime_utc=datetime.utcnow(),
         )
-        contents.append(contend_db)
+        contents.append(content_db)
 
     db_session.add_all(contents)
     db_session.commit()
+
+
+@pytest.fixture(scope="session")
+async def urgency_rules(client: TestClient, db_session: Session) -> int:
+    with open("tests/api/data/urgency_rules.json", "r") as f:
+        json_data = json.load(f)
+    rules = []
+
+    for i, rule in enumerate(json_data):
+        rule_embedding = await async_fake_embedding(
+            model=LITELLM_MODEL_EMBEDDING,
+            input=rule["urgency_rule_text"],
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+        )
+
+        rule_db = UrgencyRuleDB(
+            urgency_rule_id=i,
+            urgency_rule_text=rule["urgency_rule_text"],
+            urgency_rule_vector=rule_embedding,
+            urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
+            created_datetime_utc=datetime.utcnow(),
+            updated_datetime_utc=datetime.utcnow(),
+        )
+        rules.append(rule_db)
+
+    db_session.add_all(rules)
+    db_session.commit()
+
+    return len(rules)
 
 
 @pytest.fixture(scope="session")
@@ -104,9 +134,11 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch call to LLM embeddings service
     """
-    monkeysession.setattr("core_backend.app.contents.models.embedding", fake_embedding)
     monkeysession.setattr(
-        "core_backend.app.contents.models.aembedding", async_fake_embedding
+        "core_backend.app.contents.models.embedding", async_fake_embedding
+    )
+    monkeysession.setattr(
+        "core_backend.app.urgency_rules.models.embedding", async_fake_embedding
     )
     monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(parse_input, "_classify_on_off_topic", mock_return_args)
@@ -114,6 +146,10 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     monkeysession.setattr(parse_input, "_paraphrase_question", mock_return_args)
     monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
     monkeysession.setattr(check_output, "_get_llm_align_score", mock_get_align_score)
+    monkeysession.setattr(
+        "core_backend.app.urgency_detection.routers.detect_urgency", mock_detect_urgency
+    )
+
     monkeysession.setattr(
         "core_backend.app.question_answer.routers.get_llm_rag_answer",
         patched_llm_rag_answer,
@@ -132,6 +168,15 @@ async def mock_return_args(
     question: UserQueryRefined, response: UserQueryResponse
 ) -> Tuple[UserQueryRefined, UserQueryResponse]:
     return question, response
+
+
+async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
+
+    return {
+        "statement": urgency_rule,
+        "probability": 0.7,
+        "reason": "this is a mocked response",
+    }
 
 
 async def mock_identify_language(
@@ -165,32 +210,16 @@ async def mock_translate_question(
     return question, response
 
 
-def fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
+async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
     """
-    Replicates `litellm.embedding` function but just generates a random
+    Replicates `embedding` function but just generates a random
     list of floats
     """
 
     embedding_list = (
         np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
     )
-    data_obj = EmbeddingData([{"embedding": embedding_list}])
-
-    return data_obj
-
-
-async def async_fake_embedding(*arg: str, **kwargs: str) -> EmbeddingData:
-    """
-    Replicates `litellm.aembedding` function but just generates a random
-    list of floats
-    """
-
-    embedding_list = (
-        np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
-    )
-    data_obj = EmbeddingData([{"embedding": embedding_list}])
-
-    return data_obj
+    return embedding_list
 
 
 @pytest.fixture(scope="session")

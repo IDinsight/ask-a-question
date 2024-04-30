@@ -29,7 +29,7 @@ class TestEmbeddingsSearch:
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
     )
-    def test_content_response(
+    async def test_content_response(
         self,
         token: str,
         expected_status_code: int,
@@ -67,7 +67,7 @@ class TestEmbeddingsSearch:
             (QUESTION_ANSWER_SECRET, 200, "/content-feedback"),
         ],
     )
-    def test_response_feedback_correct_token(
+    async def test_response_feedback_correct_token(
         self,
         token: str,
         expected_status_code: int,
@@ -98,7 +98,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == expected_status_code
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    def test_response_feedback_incorrect_secret(
+    async def test_response_feedback_incorrect_secret(
         self,
         endpoint: str,
         client: TestClient,
@@ -123,7 +123,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    def test_response_feedback_incorrect_query_id(
+    async def test_response_feedback_incorrect_query_id(
         self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
     ) -> None:
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -143,7 +143,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    def test_response_feedback_incorrect_sentiment(
+    async def test_response_feedback_incorrect_sentiment(
         self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
     ) -> None:
         query_id = question_response["query_id"]
@@ -167,7 +167,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 422
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    def test_response_feedback_sentiment_only(
+    async def test_response_feedback_sentiment_only(
         self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
     ) -> None:
         query_id = question_response["query_id"]
@@ -189,7 +189,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 200
 
     @pytest.mark.parametrize("content_id, response_code", ([1, 200], [999, 400]))
-    def test_content_feedback_check_content_id(
+    async def test_content_feedback_check_content_id(
         self,
         content_id: int,
         response_code: int,
@@ -218,7 +218,7 @@ class TestGenerateResponse:
         "token, expected_status_code",
         [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
     )
-    def test_llm_response(
+    async def test_llm_response(
         self,
         token: str,
         expected_status_code: int,
@@ -466,7 +466,6 @@ class TestAlignScore:
             state=ResultState.IN_PROGRESS,
         )
 
-    @pytest.mark.asyncio
     async def test_score_less_than_threshold(
         self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -490,7 +489,6 @@ class TestAlignScore:
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
         assert update_query_response.llm_response is None
 
-    @pytest.mark.asyncio
     async def test_score_greater_than_threshold(
         self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -513,7 +511,7 @@ class TestAlignScore:
         assert isinstance(update_query_response, UserQueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
-    def test_build_evidence(
+    async def test_build_evidence(
         self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         evidence = _build_evidence(user_query_response)
