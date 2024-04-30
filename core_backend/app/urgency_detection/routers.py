@@ -72,7 +72,7 @@ async def cosine_distance_classifier(
     failed_rules = []
     for _, rule in cosine_distances.items():
         if float(rule["distance"]) < float(URGENCY_DETECTION_MAX_DISTANCE):
-            failed_rules.append(rule["urgency_rule"])
+            failed_rules.append(str(rule["urgency_rule"]))
 
     if failed_rules:
         return UrgencyResponse(
@@ -105,7 +105,7 @@ async def llm_entailment_classifier(
     failed_rules = []
     for result in results:
         if float(result["probability"]) > int(URGENCY_DETECTION_MIN_PROBABILITY):
-            failed_rules.append(result["statement"])
+            failed_rules.append(str(result["statement"]))
 
     if failed_rules:
         return UrgencyResponse(
