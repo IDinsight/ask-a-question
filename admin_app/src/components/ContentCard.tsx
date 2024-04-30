@@ -48,6 +48,7 @@ const ContentCard = ({
             flexDirection: "column",
             justifyContent: "space-between",
           },
+          appStyles.hoverShadow,
           appStyles.shadow,
         ]}
       >
