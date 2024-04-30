@@ -83,10 +83,6 @@ async def update_user_retrieval_key(
     Updates a user's API key
     """
 
-    # test if new_retrieval_key is a 32-character string
-    if len(new_retrieval_key) != 32:
-        raise ValueError("New retrieval key must be a 32-character string.")
-
     user_db.hashed_retrieval_key = get_key_hash(new_retrieval_key)
     user_db.updated_datetime_utc = datetime.utcnow()
 

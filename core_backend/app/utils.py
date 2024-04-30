@@ -21,8 +21,8 @@ def generate_key() -> str:
     Generate a new 32-character API key
     """
 
-    # 24 bytes gives 32 characters here
-    return secrets.token_urlsafe(24)
+    # 32 bytes gives 43 characters here
+    return secrets.token_urlsafe(32)
 
 
 def get_key_hash(retrieval_key: str) -> str:
