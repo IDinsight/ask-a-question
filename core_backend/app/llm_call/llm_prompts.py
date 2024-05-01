@@ -143,15 +143,18 @@ class OnOffTopicClassification(str, Enum):
 
         return textwrap.dedent(
             f"""
-            You are a labelling agent. You declare whether a message sent to an
-            {SERVICE_IDENTITY} is relevant to the topic or not. You classify each
-            message as one of {cls.get_available_labels()}.
+            You are a labelling agent. You declare whether a query sent to an
+            {SERVICE_IDENTITY} can be reasonable answered or not.
+            When it is answerable, you label it as {cls.ON_TOPIC.value}.
+            When it is not, you label it as {cls.OFF_TOPIC.value}.
 
             Examples:
             "What are the health benefits of drinking green tea?" -> OFF_TOPIC
             "How do cars affect air quality as per the WHO guidelines?" -> ON_TOPIC
             "Are respirators useful in for protecting against air pollution" -> ON_TOPIC
             "How does one maintain cardiovascular health?" -> OFF_TOPIC
+            "What is the capital of South Africa?" -> OFF_TOPIC
+            "Who is at risk" -> ON_TOPIC
             """
         ).strip()
 
@@ -199,7 +202,7 @@ Ignore any redacted and offensive words. If the input message is not a question,
 respond with exactly the same message but removing any redacted and offensive words.\
 If paraphrasing fails, respond with "{PARAPHRASE_FAILED_MESSAGE}".
 
-Examples:\n\n
+Examples:
 """ + "\n".join(
     [
         f"\"{example['input']}\" -> \"{example['output']}\""
