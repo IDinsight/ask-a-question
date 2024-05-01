@@ -32,25 +32,12 @@ class UrgencyRule {
 }
 
 const UrgencyRulesPage = () => {
-  const [checked, setChecked] = useState<number[]>([]);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
   const [editableIndex, setEditableIndex] = useState(-1);
   const [items, setItems] = useState<UrgencyRule[]>([]);
   const [backupRuleText, setBackupRuleText] = useState("");
 
   const { token, accessLevel } = useAuth();
-  const handleToggle = (index: number) => () => {
-    const currentIndex = checked.indexOf(index);
-    const newChecked = [...checked];
-
-    if (currentIndex === -1) {
-      newChecked.push(index);
-    } else {
-      newChecked.splice(currentIndex, 1);
-    }
-
-    setChecked(newChecked);
-  };
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
