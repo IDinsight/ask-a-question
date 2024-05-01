@@ -38,14 +38,17 @@ const ContentCard = ({
   return (
     <>
       <Card
+        onClick={() => setOpenReadModal(true)}
         sx={[
           {
+            cursor: "pointer",
             m: sizes.smallGap,
             p: sizes.baseGap,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
           },
+          appStyles.hoverShadow,
           appStyles.shadow,
         ]}
       >
@@ -82,9 +85,6 @@ const ContentCard = ({
           gap={sizes.tinyGap}
           sx={{ alignItems: "center" }}
         >
-          <Button variant="contained" onClick={() => setOpenReadModal(true)}>
-            Read
-          </Button>
           <Layout.Spacer horizontal multiplier={0.2} />
           <Button
             disabled={!editAccess}
