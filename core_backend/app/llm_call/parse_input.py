@@ -11,7 +11,6 @@ from ..config import (
     LITELLM_MODEL_PARAPHRASE,
     LITELLM_MODEL_SAFETY,
     LITELLM_MODEL_TRANSLATE,
-    SERVICE_IDENTITY,
 )
 from ..question_answer.config import STANDARD_FAILURE_MESSAGE
 from ..question_answer.schemas import (
@@ -226,9 +225,7 @@ async def _classify_on_off_topic(
 
     label = await _ask_llm_async(
         question=user_query.query_text,
-        prompt=OnOffTopicClassification.get_prompt().format(
-            service_identity=SERVICE_IDENTITY
-        ),
+        prompt=OnOffTopicClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
     )
 

@@ -46,7 +46,9 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 )
 
 # On/Off Topic variables
-SERVICE_IDENTITY = os.environ.get("SERVICE_IDENTITY", "WHO AirQuality chatbot")
+SERVICE_IDENTITY = os.environ.get(
+    "SERVICE_IDENTITY", "air pollution and air quality chatbot"
+)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)

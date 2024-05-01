@@ -9,7 +9,7 @@ from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
 from ..llm_call.check_output import check_align_score__after
-from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
+from ..llm_call.llm_prompts import ANSWER_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.parse_input import (
     classify_on_off_topic__before,
@@ -114,10 +114,10 @@ async def get_llm_answer(
             user_query_refined.original_language,
         )
 
-        if llm_response == SUMMARY_FAILURE_MESSAGE:
+        if llm_response == ANSWER_FAILURE_MESSAGE:
             response.state = ResultState.ERROR
             response.llm_response = None
-            response.debug_info["reason"] = "LLM Summary failed"
+            response.debug_info["reason"] = "Response generation failed"
         else:
             response.state = ResultState.FINAL
             response.llm_response = llm_response
