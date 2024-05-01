@@ -156,7 +156,7 @@ const ContentBox = ({
         border: 1,
         borderColor: appColors.darkGrey,
         backgroundColor: appColors.lightGrey,
-        borderRadius: 4,
+        borderRadius: 2,
         p: sizes.baseGap,
       }}
     >
@@ -177,7 +177,6 @@ const ContentBox = ({
         value={content ? content.content_title : ""}
         onChange={(e) => handleChange(e, "content_title")}
       />
-      <Layout.Spacer multiplier={0.25} />
       <Typography variant="body2">Content</Typography>
       <Layout.Spacer multiplier={0.5} />
       <TextField
@@ -195,7 +194,6 @@ const ContentBox = ({
         value={content ? content.content_text : ""}
         onChange={(e) => handleChange(e, "content_text")}
       />
-      <Layout.Spacer multiplier={1} />
       <Layout.FlexBox
         flexDirection="row"
         sx={{ justifyContent: "space-between" }}
