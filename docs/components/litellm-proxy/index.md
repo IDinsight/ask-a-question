@@ -10,7 +10,7 @@ names and endpoints for each LLM task.
 
 ## Example config
 
-You can see an example `litellm_proxy_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "summarize"), but
+You can see an example `litellm_proxy_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "generate-response"), but
 which actual LLM model each call is routed to is set here.
 
 ```yaml
@@ -23,7 +23,7 @@ model_list:
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: summarize
+  - model_name: generate-response
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"

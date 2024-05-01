@@ -7,7 +7,7 @@ model_list:
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: summarize
+  - model_name: generate-response
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
