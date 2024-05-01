@@ -100,7 +100,7 @@ const createContent = async (content: ContentBody, token: string) => {
 };
 
 const getUrgencyRuleList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rule/`, {
+  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -112,6 +112,63 @@ const getUrgencyRuleList = async (token: string) => {
       return resp;
     } else {
       throw new Error("Error fetching urgency rule list");
+    }
+  });
+};
+
+const addUrgencyRule = async (rule_text: string, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ urgency_rule_text: rule_text }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error adding urgency rule");
+    }
+  });
+};
+
+const updateUrgencyRule = async (
+  rule_id: number,
+  rule_text: string,
+  token: string,
+) => {
+  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ urgency_rule_text: rule_text }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error updating urgency rule");
+    }
+  });
+};
+
+const deleteUrgencyRule = async (rule_id: number, token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error deleting urgency rule");
     }
   });
 };
@@ -200,6 +257,9 @@ export const apiCalls = {
   editContent,
   createContent,
   getUrgencyRuleList,
+  addUrgencyRule,
+  updateUrgencyRule,
+  deleteUrgencyRule,
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,

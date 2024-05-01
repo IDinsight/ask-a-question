@@ -17,22 +17,26 @@ import Link from "next/link";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
+class UrgencyRule {
+  urgency_rule_id: number | null;
+  urgency_rule_text: string;
+  updated_datetime_utc: string;
+  created_datetime_utc: string;
+
+  constructor() {
+    this.urgency_rule_id = null;
+    this.urgency_rule_text = "";
+    this.updated_datetime_utc = "";
+    this.created_datetime_utc = "";
+  }
+}
+
 const UrgencyRulesPage = () => {
   const [checked, setChecked] = useState<number[]>([]);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
   const [editableIndex, setEditableIndex] = useState(-1);
-  const [items, setItems] = useState([
-    "text1",
-    "text2",
-    "text3",
-    "text4",
-    "text5",
-    "text6",
-    "text7",
-    "text8",
-    "text9",
-    "text10",
-  ]);
+  const [items, setItems] = useState<UrgencyRule[]>([]);
+  const [backupRuleText, setBackupRuleText] = useState("");
 
   const { token, accessLevel } = useAuth();
   const handleToggle = (index: number) => () => {
@@ -47,20 +51,72 @@ const UrgencyRulesPage = () => {
 
     setChecked(newChecked);
   };
-  const handleDoubleClick = (index: number) => () => {
+  const handleEdit = (index: number) => () => {
+    setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
   };
 
-  const handleTextChange = (text: string, index: number) => {
+  const handleTextChange = (ruleText: string, index: number) => {
     const newItems = [...items];
-    newItems[index] = text;
+    newItems[index].urgency_rule_text = ruleText;
     setItems(newItems);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
     if (e.key === "Enter") {
+      if (items[index].urgency_rule_id === null) {
+        apiCalls
+          .addUrgencyRule(items[index].urgency_rule_text, token!)
+          .then((data: UrgencyRule) => {
+            const newItems = [...items];
+            newItems[index] = data;
+            setItems(newItems);
+          });
+      } else {
+        apiCalls
+          .updateUrgencyRule(
+            items[index].urgency_rule_id!,
+            items[index].urgency_rule_text,
+            token!,
+          )
+          .then((data: UrgencyRule) => {
+            const newItems = [...items];
+            newItems[index] = data;
+            setItems(newItems);
+          });
+      }
       setEditableIndex(-1);
     }
+    if (e.key === "Escape") {
+      restoreBackup(index);
+      setEditableIndex(-1);
+    }
+  };
+
+  const restoreBackup = (index: number) => {
+    const newItems = [...items];
+    newItems[index].urgency_rule_text = backupRuleText;
+    setItems(newItems);
+  };
+
+  const createNewRecord = () => {
+    const newItems = [...items];
+    newItems.push(new UrgencyRule());
+    setEditableIndex(newItems.length - 1);
+    setItems(newItems);
+  };
+
+  const deleteItem = (index: number) => () => {
+    const newItems = [...items];
+    apiCalls
+      .deleteUrgencyRule(items[index].urgency_rule_id!, token!)
+      .then(() => {
+        newItems.splice(index, 1);
+        setItems(newItems);
+      });
   };
 
   useEffect(() => {
@@ -84,7 +140,7 @@ const UrgencyRulesPage = () => {
           minWidth: "sm",
         }}
       >
-        <Typography sx={{ pl: 2 }} variant="h4" align="left" color="primary">
+        <Typography sx={{ pl: 0 }} variant="h4" align="left" color="primary">
           Urgency Rules
         </Typography>
         <Layout.FlexBox
@@ -102,27 +158,15 @@ const UrgencyRulesPage = () => {
           <Button
             variant="contained"
             disabled={false}
-            component={Link}
-            href="/content/edit"
+            onClick={() => createNewRecord()}
           >
             <Add fontSize="small" />
             New
           </Button>
-          <Button
-            variant="contained"
-            disabled={checked.length === 0}
-            component={Link}
-            href="/content/edit"
-            color="warning"
-          >
-            <Delete fontSize="small" />
-            Delete
-          </Button>
         </Layout.FlexBox>
         <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-          {items.map((value: string, index: number) => {
-            const labelId = `checkbox-list-label-${value}`;
-
+          {items.map((urgencyRule: UrgencyRule, index: number) => {
+            const labelId = `checkbox-list-label-${index}`;
             return (
               <ListItem
                 key={index}
@@ -134,15 +178,12 @@ const UrgencyRulesPage = () => {
                         edge="end"
                         aria-label="delete"
                         sx={{ mx: 0.5 }}
+                        onClick={deleteItem(index)}
                       >
                         <Delete fontSize="small" color="secondary" />
                       </IconButton>
-                      <IconButton aria-label="edit">
-                        <Edit
-                          fontSize="small"
-                          color="secondary"
-                          onClick={() => setEditableIndex(index)}
-                        />
+                      <IconButton aria-label="edit" onClick={handleEdit(index)}>
+                        <Edit fontSize="small" color="secondary" />
                       </IconButton>
                     </>
                   )
@@ -150,50 +191,54 @@ const UrgencyRulesPage = () => {
                 disablePadding
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(-1)}
-                onDoubleClick={handleDoubleClick(index)}
+                onDoubleClick={handleEdit(index)}
               >
-                <ListItemButton
-                  role={undefined}
-                  onClick={handleToggle(index)}
-                  dense
-                >
-                  <ListItemIcon>
-                    <Checkbox
-                      edge="start"
-                      checked={checked.indexOf(index) !== -1}
-                      tabIndex={-1}
-                      disableRipple
-                      inputProps={{ "aria-labelledby": labelId }}
-                    />
-                  </ListItemIcon>
-                  {editableIndex === index ? (
-                    <TextField
-                      fullWidth
-                      size="medium"
-                      value={value}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleTextChange(e.target.value, index)
-                      }
-                      onKeyDown={handleKeyDown}
-                      onBlur={() => setEditableIndex(-1)}
-                      sx={{ pr: 7, pl: 0 }}
-                    />
-                  ) : (
-                    <ListItemText
-                      id={`checkbox-list-label-${index}`}
-                      primary={value}
-                      secondary={"Last update: DD/MM/YYYY HH:SS"}
-                      sx={{
-                        pt: 0.3,
-                        pb: 0.3,
-                        pr: 5,
-                        ".MuiListItemText-secondary": {
-                          fontSize: "0.75rem",
+                <ListItemIcon>#{index + 1}</ListItemIcon>
+                {editableIndex === index ? (
+                  <TextField
+                    fullWidth
+                    size="medium"
+                    value={urgencyRule.urgency_rule_text}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleTextChange(e.target.value, index)
+                    }
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                      handleKeyDown(e, index)
+                    }
+                    onBlur={() => {
+                      restoreBackup(index);
+                      setEditableIndex(-1);
+                    }}
+                    sx={{ pr: 12, pl: 0 }}
+                  />
+                ) : (
+                  <ListItemText
+                    id={`checkbox-list-label-${index}`}
+                    primary={urgencyRule.urgency_rule_text}
+                    secondary={
+                      "Last updated: " +
+                      new Date(urgencyRule.updated_datetime_utc).toLocaleString(
+                        undefined,
+                        {
+                          day: "numeric",
+                          month: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
                         },
-                      }}
-                    />
-                  )}
-                </ListItemButton>
+                      )
+                    }
+                    sx={{
+                      pt: 0.3,
+                      pb: 0.3,
+                      pr: 5,
+                      ".MuiListItemText-secondary": {
+                        fontSize: "0.75rem",
+                      },
+                    }}
+                  />
+                )}
               </ListItem>
             );
           })}
