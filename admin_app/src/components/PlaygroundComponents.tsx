@@ -31,7 +31,7 @@ import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
 
-type QueryType = "embeddings-search" | "llm-response";
+type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
 
 interface ResponseSummary {
   index: string;
@@ -146,6 +146,9 @@ const PersistentSearchBar = ({
                   </MenuItem>
                   <MenuItem value="llm-response">
                     <Typography variant="caption">LLM Search</Typography>
+                  </MenuItem>
+                  <MenuItem value="urgency-detection">
+                    <Typography variant="caption">Urgency Detection</Typography>
                   </MenuItem>
                 </Select>
 
