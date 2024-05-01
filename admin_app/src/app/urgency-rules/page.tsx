@@ -140,7 +140,7 @@ const UrgencyRulesPage = () => {
           minWidth: "sm",
         }}
       >
-        <Typography sx={{ pl: 0 }} variant="h4" align="left" color="primary">
+        <Typography sx={{ pl: 1 }} variant="h4" align="left" color="primary">
           Urgency Rules
         </Typography>
         <Layout.FlexBox
@@ -164,7 +164,7 @@ const UrgencyRulesPage = () => {
             New
           </Button>
         </Layout.FlexBox>
-        <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+        <List sx={{ width: "100%", pl: 1, bgcolor: "background.paper" }}>
           {items.map((urgencyRule: UrgencyRule, index: number) => {
             const labelId = `checkbox-list-label-${index}`;
             return (
