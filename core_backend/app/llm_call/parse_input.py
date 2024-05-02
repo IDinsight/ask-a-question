@@ -23,9 +23,9 @@ from ..question_answer.schemas import (
 from ..utils import setup_logger
 from .llm_prompts import (
     PARAPHRASE_FAILED_MESSAGE,
-    PARAPHRASE_INPUT,
+    PARAPHRASE_PROMPT,
     TRANSLATE_FAILED_MESSAGE,
-    TRANSLATE_INPUT,
+    TRANSLATE_PROMPT,
     IdentifiedLanguage,
     OnOffTopicClassification,
     SafetyClassification,
@@ -176,7 +176,7 @@ async def _translate_question(
 
     translation_response = await _ask_llm_async(
         question=question.query_text,
-        prompt=TRANSLATE_INPUT.format(language=question.original_language.value),
+        prompt=TRANSLATE_PROMPT.format(language=question.original_language.value),
         litellm_model=LITELLM_MODEL_TRANSLATE,
     )
     if translation_response != TRANSLATE_FAILED_MESSAGE:
@@ -354,7 +354,7 @@ async def _paraphrase_question(
 
     paraphrase_response = await _ask_llm_async(
         question=question.query_text,
-        prompt=PARAPHRASE_INPUT,
+        prompt=PARAPHRASE_PROMPT,
         litellm_model=LITELLM_MODEL_PARAPHRASE,
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:

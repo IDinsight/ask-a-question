@@ -67,7 +67,7 @@ class IdentifiedLanguage(str, Enum):
 
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
-TRANSLATE_INPUT = f"""You are a high-performing translation bot. \
+TRANSLATE_PROMPT = f"""You are a high-performing translation bot. \
 You support a {SERVICE_IDENTITY}. \
 Translate the user's input from {{language}} to English.
 Do not answer the question, just translate it.
@@ -184,7 +184,7 @@ paraphrase_examples = [
         "output": "Pearson correlation",
     },
 ]
-PARAPHRASE_INPUT = f"""You are a high-performing paraphrasing bot.
+PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot.
 
 You support a {SERVICE_IDENTITY}. The user has sent a message.
 
