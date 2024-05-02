@@ -1,15 +1,11 @@
 from pydantic import BaseModel, ConfigDict
 
 
-# not yet used.
-class UserCreate(BaseModel):
+class KeyResponse(BaseModel):
     """
-    Pydantic model for user creation
+    Pydantic model for key response
     """
 
     username: str
-    password: str
-    user_id: str
     retrieval_key: str
-
     model_config = ConfigDict(from_attributes=True)
