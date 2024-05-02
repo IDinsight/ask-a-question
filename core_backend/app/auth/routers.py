@@ -11,7 +11,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
     """
     Login route for users to authenticate and receive a JWT token.
     """
-    user = authenticate_user(username=form_data.username, password=form_data.password)
+    user = await authenticate_user(
+        username=form_data.username, password=form_data.password
+    )
     if not user:
         raise HTTPException(
             status_code=400,

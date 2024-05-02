@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     DateTime,
@@ -98,7 +97,7 @@ async def update_user_retrieval_key(
 async def get_user_by_username(
     username: str,
     asession: AsyncSession,
-) -> Optional[UserDB]:
+) -> UserDB:
     """
     Retrieves a user by username
     """
@@ -111,12 +110,16 @@ async def get_user_by_username(
         return user
     except NoResultFound as err:
         raise ValueError(f"User with username {username} does not exist.") from err
+    except MultipleResultsFound as err:
+        raise ValueError(
+            f"Multiple users with username {username} found in local database."
+        ) from err
 
 
 async def get_user_by_token(
     token: str,
     asession: AsyncSession,
-) -> Optional[UserDB]:
+) -> UserDB:
     """
     Retrieves a user by token
     """
@@ -130,3 +133,7 @@ async def get_user_by_token(
         return user
     except NoResultFound as err:
         raise ValueError("User with given token does not exist.") from err
+    except MultipleResultsFound as err:
+        raise ValueError(
+            "Multiple users with given token found in local database."
+        ) from err
