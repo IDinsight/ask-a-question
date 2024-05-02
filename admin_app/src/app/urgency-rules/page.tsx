@@ -6,6 +6,7 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
+  InputAdornment,
   Button,
 } from "@mui/material";
 import { Layout } from "@/components/Layout";
@@ -14,6 +15,7 @@ import { Delete, Edit, Add } from "@mui/icons-material";
 import { TextField, Typography, Box } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
+import SendIcon from "@mui/icons-material/Send";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -40,32 +42,36 @@ const UrgencyRulesPage = () => {
     setItems(newItems);
   };
 
+  const addOrUpdateItem = (index: number) => {
+    if (items[index].urgency_rule_id === null) {
+      apiCalls
+        .addUrgencyRule(items[index].urgency_rule_text, token!)
+        .then((data: UrgencyRule) => {
+          const newItems = [...items];
+          newItems[index] = data;
+          setItems(newItems);
+        });
+    } else {
+      apiCalls
+        .updateUrgencyRule(
+          items[index].urgency_rule_id!,
+          items[index].urgency_rule_text,
+          token!,
+        )
+        .then((data: UrgencyRule) => {
+          const newItems = [...items];
+          newItems[index] = data;
+          setItems(newItems);
+        });
+    }
+  };
+
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
     index: number,
   ) => {
     if (e.key === "Enter") {
-      if (items[index].urgency_rule_id === null) {
-        apiCalls
-          .addUrgencyRule(items[index].urgency_rule_text, token!)
-          .then((data: UrgencyRule) => {
-            const newItems = [...items];
-            newItems[index] = data;
-            setItems(newItems);
-          });
-      } else {
-        apiCalls
-          .updateUrgencyRule(
-            items[index].urgency_rule_id!,
-            items[index].urgency_rule_text,
-            token!,
-          )
-          .then((data: UrgencyRule) => {
-            const newItems = [...items];
-            newItems[index] = data;
-            setItems(newItems);
-          });
-      }
+      addOrUpdateItem(index);
       setEditableIndex(-1);
     }
     if (e.key === "Escape") {
@@ -203,6 +209,22 @@ const UrgencyRulesPage = () => {
                       setEditableIndex(-1);
                     }}
                     sx={{ pr: 12, pl: 0 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ pr: 2 }}>
+                          <IconButton
+                            onMouseDown={() => {
+                              addOrUpdateItem(index);
+                              console.log("Saving urgency rule");
+                              setEditableIndex(-1);
+                            }}
+                            edge="end"
+                          >
+                            <SendIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 ) : (
                   <ListItemText
