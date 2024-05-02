@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from .dependencies import authenticate_user, create_access_token
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/login")

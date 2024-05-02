@@ -14,7 +14,7 @@ from .models import (
 )
 from .schemas import WhatsAppIncoming, WhatsAppResponse
 
-router = APIRouter()
+router = APIRouter(tags=["WhatsApp"])
 
 
 @router.post("/webhook")
