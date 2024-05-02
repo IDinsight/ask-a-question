@@ -10,12 +10,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
-from core_backend.app.auth.config import USER1_RETRIEVAL_KEY, USER1_USERNAME
 from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
+    USER1_RETRIEVAL_KEY,
+    USER1_USERNAME,
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB

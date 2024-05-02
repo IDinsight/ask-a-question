@@ -10,11 +10,11 @@ from dateutil import tz
 from fastapi.testclient import TestClient
 from litellm import embedding
 
-from core_backend.app.auth.config import USER1_RETRIEVAL_KEY
 from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
+    USER1_RETRIEVAL_KEY,
 )
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH

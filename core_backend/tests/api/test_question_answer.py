@@ -4,7 +4,7 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.auth.config import USER1_RETRIEVAL_KEY
+from core_backend.app.config import USER1_RETRIEVAL_KEY
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.process_input import (
     _classify_on_off_topic,

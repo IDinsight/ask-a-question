@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.auth.config import USER1_RETRIEVAL_KEY
+from core_backend.app.config import USER1_RETRIEVAL_KEY
 from core_backend.app.database import get_async_session
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse

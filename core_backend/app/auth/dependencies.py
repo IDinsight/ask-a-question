@@ -9,16 +9,18 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 
-from .config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_ALGORITHM,
-    JWT_SECRET,
+from ..config import (
     USER1_PASSWORD,
     USER1_RETRIEVAL_KEY,
     USER1_USERNAME,
     USER2_PASSWORD,
     USER2_RETRIEVAL_KEY,
     USER2_USERNAME,
+)
+from .config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_ALGORITHM,
+    JWT_SECRET,
 )
 from .schemas import AccessLevel, AuthenticatedUser
 

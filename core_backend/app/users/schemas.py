@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     """
 
     username: str
+    password: str
     user_id: str
     retrieval_key: str
 
