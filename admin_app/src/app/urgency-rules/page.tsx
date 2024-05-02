@@ -220,7 +220,7 @@ const UrgencyRulesPage = () => {
                             }}
                             edge="end"
                           >
-                            <SendIcon />
+                            <SendIcon fontSize="small" />
                           </IconButton>
                         </InputAdornment>
                       ),
