@@ -17,11 +17,11 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./qa-service/index.md)
 
-- :material-api:{ .lg .middle } __The Urgency Detection Service__
+- :material-api:{ .lg .middle .red} __The Urgency Detection Service__
 
     ---
 
-    Use this API endpoint to detect is the message is urgent.
+    Integrate with this API endpoint to tag messages as urgent or not.
 
     [:octicons-arrow-right-24: More info](./urgency-detection/index.md)
 
@@ -29,8 +29,8 @@ There are 3 main components in Ask-A-Question.
 
     ---
 
-    Manage content and urgency detection rules in the database.
-    Test the service in the playground. Explore usage dashboards.
+    Manage content in the database. Manage urgency detection rules. Test the service in the playground.
+    Explore usage dashboards.
 
     [:octicons-arrow-right-24: More info](./admin-app/index.md)
 
