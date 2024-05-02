@@ -79,6 +79,7 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       "servicediscovery:List*"]
     resources = [
       aws_service_discovery_service.backend.arn,
+      aws_service_discovery_service.admin_app.arn,
       aws_service_discovery_service.litellm_proxy.arn
     ]
   }
@@ -125,7 +126,7 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
     resources = [
       aws_ecs_service.admin_app_service.id,
       aws_ecs_service.backend_service.id,
-      aws_ecs_service.nginx_service.id,
+      aws_ecs_service.caddy_service.id,
       aws_ecs_service.litellm_proxy_service.id
     ]
   }

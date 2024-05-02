@@ -7,11 +7,15 @@ model_list:
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: summarize
+  - model_name: generate-response
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: detect-language
+    litellm_params:
+      model: gpt-4-0125-preview
+      api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: on-off-topic
     litellm_params:
       model: gpt-3.5-turbo-1106
       api_key: "os.environ/OPENAI_API_KEY"
@@ -29,6 +33,10 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: alignscore
     litellm_params:
+      model: gpt-4-0125-preview
+      api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: urgency-detection
+    litellm_params:
       model: gpt-3.5-turbo-1106
       api_key: "os.environ/OPENAI_API_KEY"
 litellm_settings:
@@ -36,3 +44,4 @@ litellm_settings:
   request_timeout: 100 # raise Timeout error if call takes longer than 10s. Sets litellm.request_timeout
   # fallbacks: [{"paraphrase": ["default"]}] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
+  # success_callback: ["langfuse"]  # Optional, if you want to monitor with Langfuse

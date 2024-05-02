@@ -35,6 +35,7 @@ async def _ask_llm_async(
         temperature=0,
         api_base=litellm_endpoint,
         api_key=LITELLM_API_KEY,
+        metadata={"generation_name": litellm_model},
     )
     logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")
 

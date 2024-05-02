@@ -19,7 +19,7 @@ from .models import (
 )
 from .schemas import ContentCreate, ContentRetrieve
 
-router = APIRouter(prefix="/content")
+router = APIRouter(prefix="/content", tags=["Content Management"])
 logger = setup_logger()
 
 

@@ -1,0 +1,736 @@
+- condition: Bleeding from the vagina
+  tests:
+    - statement: "I've been spotting a bit"
+      expected: True
+    - statement: "Kinda bleeding down there"
+      expected: True
+    - statement: "When I pee, there’s some blood, what’s up with that?"
+      expected: True
+    - statement: "Got some bleeding going on. Normal or no?"
+      expected: True
+    - statement: "Seeing red when I wipe"
+      expected: True
+    - statement: "Started to bleed a little, that a red flag?"
+      expected: True
+    - statement: "Got some light bleeding, not sure if I should worry."
+      expected: True
+    - statement: "Noticed a bit of bleeding after the baby, is that regular?"
+      expected: True
+    - statement: "Got some weird bloody discharge."
+      expected: True
+    - statement: "There’s some bleeding since yesterday, is that a thing after giving birth?"
+      expected: True
+    - statement: "Feels like I’m losing too much blood"
+      expected: True
+    - statement: "Just saw blood down there"
+      expected: True
+    - statement: "Bit of blood, do I need to call someone"
+      expected: True
+    - statement: "I’m kinda bleeding more than should"
+      expected: True
+    - statement: "Been bleeding a bit"
+      expected: True
+    - statement: "My bleeding’s not just spots"
+      expected: True
+    - statement: "Woke up to heavy bleeding today"
+      expected: True
+    - statement: "This light bleeding keeps going"
+      expected: True
+    - statement: "Bleeding and it hurts too"
+      expected: True
+    - statement: "Blood’s kinda bright on my pad"
+      expected: True
+    - statement: "I cut my finger while cooking, it’s bleeding a bit."
+      expected: False
+    - statement: "My nose bleeds sometimes."
+      expected: False
+    - statement: "Just a bit itchy down there."
+      expected: False
+    - statement: "Bloody traffic today."
+      expected: False
+    - statement: "Got a bruise on my leg."
+      expected: False
+    - statement: "Watching a bloody good show right now."
+      expected: False
+    - statement: "Feel a bit of discomfort in my lower abdomen."
+      expected: False
+    - statement: "Im sore but not bleeding from my vagina."
+      expected: False
+    - statement: "Bloody mary is my favorite."
+      expected: False
+    - statement: "Had a bloody nose this morning."
+      expected: False
+    - statement: "There’s a strange feeling, but no pain or bleeding."
+      expected: False
+    - statement: "That was a bloody difficult!"
+      expected: False
+    - statement: "My gums bleed"
+      expected: False
+    - statement: "Feels like there’s some swelling."
+      expected: False
+    - statement: "This bloody weather sucks"
+      expected: False
+    - statement: "I have a bit of vaginal dryness."
+      expected: False
+    - statement: "Pricked my thumb tiny bit of blood."
+      expected: False
+    - statement: "He’s always so bloody cheerful"
+      expected: False
+    - statement: "That movie was bloody scary!"
+      expected: False
+    - statement: "got a yeast infection, no bleeding though."
+      expected: False
+- condition: Bad tummy pain
+  tests:
+    - statement: "My stomach is really hurting, feels like cramps."
+      expected: True
+    - statement: "Got a bad ache in my belly."
+      expected: True
+    - statement: "There's this sharp pain in my lower abdomen that won't go away."
+      expected: True
+    - statement: "Feeling a terrible pain around my navel area."
+      expected: True
+    - statement: "My tummy's been aching all day, it's getting worse."
+      expected: True
+    - statement: "I've got severe cramps."
+      expected: True
+    - statement: "this stomach pain is killing me"
+      expected: True
+    - statement: "Got a nasty pain in my gut"
+      expected: True
+    - statement: "I'm experiencing some really bad abdominal pain"
+      expected: True
+    - statement: "There's a continuous sharp pain in my stomach"
+      expected: True
+    - statement: "This intense stomach pain doesn’t seem to subside."
+      expected: True
+    - statement: "Feels like my stomach is in knots, really sharp pains."
+      expected: True
+    - statement: "I've been having these terrible stomach cramps lately."
+      expected: True
+    - statement: "My lower abdomen hurts badly "
+      expected: True
+    - statement: "I’m feeling some painful spasms in my belly."
+      expected: True
+    - statement: "Every time I eat, my stomach starts hurting badly."
+      expected: True
+    - statement: "There’s a throbbing pain in my abdomen that’s really intense."
+      expected: True
+    - statement: "Got a really bad stomachache."
+      expected: True
+    - statement: "My tummy hurts so much, I think I need to lie down."
+      expected: True
+    - statement: "I’m having sharp, stabbing pains in my stomach area."
+      expected: True
+    - statement: "I just have a little headache, nothing else."
+      expected: False
+    - statement: "Feeling a bit bloated, but no pain really."
+      expected: False
+    - statement: "I stubbed my toe really bad, hurts a lot."
+      expected: False
+    - statement: "Just feeling a bit tired today, no other issues."
+      expected: False
+    - statement: "My back is aching from sitting too long."
+      expected: False
+    - statement: "Got a sore throat this morning."
+      expected: False
+    - statement: "I'm just feeling hungry, that’s all."
+      expected: False
+    - statement: "Feeling nervous about the meeting, but I’m fine."
+      expected: False
+    - statement: "I have a mild itch on my arm."
+      expected: False
+    - statement: "My leg is sore from the workout."
+      expected: False
+    - statement: "Just a little heartburn after eating."
+      expected: False
+    - statement: "My knee hurts from the fall"
+      expected: False
+    - statement: "Feeling chilly, might be coming down with a cold."
+      expected: False
+    - statement: "My eyes are a bit tired from looking at the screen"
+      expected: False
+    - statement: "I've got a bit of a cough."
+      expected: False
+    - statement: "My ankle’s been bothering me."
+      expected: False
+    - statement: "Just a bit dizzy."
+      expected: False
+    - statement: "I have a rash on my arm."
+      expected: False
+    - statement: "Feeling a bit stressed with work, but no physical pain."
+      expected: False
+    - statement: "I'm dealing with a bit of nasal congestion today."
+      expected: False
+- condition: Bad headache that won’t go away
+  tests:
+    - statement: "This headache has been bothering me all day."
+      expected: True
+    - statement: "I’ve got a really bad headache that seems to linger."
+      expected: True
+    - statement: "My head has been pounding nonstop since morning."
+      expected: True
+    - statement: "Can’t shake this terrible headache, it’s really persistent."
+      expected: True
+    - statement: "This constant headache is making it hard to focus."
+      expected: True
+    - statement: "I’ve been dealing with a severe headache that won’t ease up."
+      expected: True
+    - statement: "My headache is really bad and it just won’t go away."
+      expected: True
+    - statement: "There’s a throbbing pain in my head that hasn’t stopped."
+      expected: True
+    - statement: "This relentless headache has been with me all day."
+      expected: True
+    - statement: "Experiencing a really stubborn headache that’s not getting better."
+      expected: True
+    - statement: "I have a headache that’s so bad and it won’t quit."
+      expected: True
+    - statement: "My head hurts really badly and the pain isn’t subsiding."
+      expected: True
+    - statement: "Got a killer headache that’s been going on for hours."
+      expected: True
+    - statement: "This headache is unrelenting, it’s driving me nuts."
+      expected: True
+    - statement: "Been trying to get rid of this headache, but it won’t budge."
+      expected: True
+    - statement: "This painful headache is lingering way too long."
+      expected: True
+    - statement: "I’m struggling with a headache that just won’t let up."
+      expected: True
+    - statement: "Got a headache that’s been constant all afternoon."
+      expected: True
+    - statement: "My head is throbbing nonstop, this headache is unbearable."
+      expected: True
+    - statement: "This headache isn’t going away no matter what I do."
+      expected: True
+    - statement: "I've got a slight ache in my knee, nothing too bad."
+      expected: False
+    - statement: "Feeling a bit under the weather."
+      expected: False
+    - statement: "Had a brief headache earlier, but it's gone now."
+      expected: False
+    - statement: "Just feeling a bit dizzy, no pain"
+      expected: False
+    - statement: "My stomach's upset. "
+      expected: False
+    - statement: "I’m just tired, haven’t slept well."
+      expected: False
+    - statement: "Got a bit of back pain from sitting too long."
+      expected: False
+    - statement: "My feet hurt from walking all day"
+      expected: False
+    - statement: "Just have a bit of a sore throat, that’s all."
+      expected: False
+    - statement: "My allergies are acting up"
+      expected: False
+    - statement: "Feeling some eye strain from the screen"
+      expected: False
+    - statement: "I’ve been coughing a lot."
+      expected: False
+    - statement: "A bit of heartburn after eating"
+      expected: False
+    - statement: "I stubbed my toe really badly, it's quite painful."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "My elbow has been aching, but it's manageable."
+      expected: False
+    - statement: "I have a rash, but it doesn’t hurt or cause headaches."
+      expected: False
+    - statement: "Felt a bit lightheaded earlier"
+      expected: False
+    - statement: "I’m just stressed, no physical symptoms though."
+      expected: False
+    - statement: "Had a minor headache this morning, but it didn’t last."
+      expected: False
+- condition: Changes to vision
+  tests:
+    - statement: "I've noticed my vision is getting blurry these days."
+      expected: True
+    - statement: "Things look a bit fuzzy, especially at a distance."
+      expected: True
+    - statement: "My eyesight has worsened, I can't see the text clearly anymore."
+      expected: True
+    - statement: "There's a shadow over part of my vision that wasn't there before."
+      expected: True
+    - statement: "Lately, everything seems dimmer, even with my glasses on."
+      expected: True
+    - statement: "I’m seeing double sometimes, which is new."
+      expected: True
+    - statement: "Colors don't look as bright as they used to."
+      expected: True
+    - statement: "There's a noticeable change in how I see things at night."
+      expected: True
+    - statement: "My vision gets blurry when I look at screens."
+      expected: True
+    - statement: "I've started seeing halos around lights at night."
+      expected: True
+    - statement: "It’s become hard to focus my eyes when reading."
+      expected: True
+    - statement: "Suddenly, it's difficult to recognize faces from a distance."
+      expected: True
+    - statement: "Noticed some floaters in my vision that are quite distracting."
+      expected: True
+    - statement: "My peripheral vision isn't as good as it used to be."
+      expected: True
+    - statement: "Everything's a bit out of focus, regardless of the distance."
+      expected: True
+    - statement: "I’m experiencing flashes of light in my vision occasionally."
+      expected: True
+    - statement: "There’s a persistent blur that affects half of my visual field."
+      expected: True
+    - statement: "Depth perception seems off lately."
+      expected: True
+    - statement: "I feel like there’s a film over my eyes, making things look cloudy."
+      expected: True
+    - statement: "I've been needing more light to read than before."
+      expected: True
+    - statement: "I have a headache, but my vision is fine."
+      expected: False
+    - statement: "Feeling dizzy occasionally"
+      expected: False
+    - statement: "My hearing has been a bit off"
+      expected: False
+    - statement: "I've been sneezing a lot"
+      expected: False
+    - statement: "Got a sore throat"
+      expected: False
+    - statement: "My legs have been aching"
+      expected: False
+    - statement: "I feel tired all the time."
+      expected: False
+    - statement: "Experiencing some back pain."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "My joints are sore."
+      expected: False
+    - statement: "I've lost some weight."
+      expected: False
+    - statement: "Feeling a bit anxious lately."
+      expected: False
+    - statement: "Got a minor skin rash."
+      expected: False
+    - statement: "I've been coughing."
+      expected: False
+    - statement: "Been dealing with insomnia."
+      expected: False
+    - statement: "I have a bit of a stomach ache."
+      expected: False
+    - statement: "Feeling stressed."
+      expected: False
+    - statement: "My appetite has changed."
+      expected: False
+    - statement: "Having some mood swings."
+      expected: False
+    - statement: "Experiencing chest pains."
+      expected: False
+- condition: Trouble breathing
+  tests:
+    - statement: "I've been feeling short of breath when walking."
+      expected: True
+    - statement: "My breathing feels heavy after climbing stairs."
+      expected: True
+    - statement: "I can't seem to catch my breath easily anymore."
+      expected: True
+    - statement: "Lately, I've been wheezing during the night."
+      expected: True
+    - statement: "It's getting hard to breathe deeply without coughing."
+      expected: True
+    - statement: "I've been noticing some tightness in my chest when breathing."
+      expected: True
+    - statement: "There’s a whistling sound when I exhale."
+      expected: True
+    - statement: "Feeling a bit lightheaded, like I’m not getting enough air."
+      expected: True
+    - statement: "My breaths are short and quick, feels like I can’t breathe fully."
+      expected: True
+    - statement: "Experiencing occasional breathlessness while sitting."
+      expected: True
+    - statement: "Every time I lie down, I feel like I'm suffocating."
+      expected: True
+    - statement: "Even light activities are making me gasp for air."
+      expected: True
+    - statement: "My breathing is shallow and fast, even at rest."
+      expected: True
+    - statement: "I get winded from just talking too long."
+      expected: True
+    - statement: "There's this constant feeling of not getting enough oxygen."
+      expected: True
+    - statement: "Breathing difficulties that wake me up at night."
+      expected: True
+    - statement: "After a little exertion, I need to stop and catch my breath."
+      expected: True
+    - statement: "Feeling unable to breathe in fully without discomfort."
+      expected: True
+    - statement: "My chest feels constricted almost all the time now."
+      expected: True
+    - statement: "I need to pause to breathe even during normal household tasks."
+      expected: True
+    - statement: "I have a headache, but breathing is normal."
+      expected: False
+    - statement: "Feeling dizzy occasionally"
+      expected: False
+    - statement: "My legs feel weak"
+      expected: False
+    - statement: "I've been very tired"
+      expected: False
+    - statement: "Got a sore throat."
+      expected: False
+    - statement: "Experiencing some back pain."
+      expected: False
+    - statement: "My stomach has been upset."
+      expected: False
+    - statement: "Been dealing with anxiety."
+      expected: False
+    - statement: "Having mood swings."
+      expected: False
+    - statement: "Feeling stressed."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "I feel bloated after meals."
+      expected: False
+    - statement: "There's a rash on my arm."
+      expected: False
+    - statement: "I'm having chest pains."
+      expected: False
+    - statement: "Experiencing a lot of hair loss."
+      expected: False
+    - statement: "My ears are ringing."
+      expected: False
+    - statement: "Got a bit of a stomach ache."
+      expected: False
+    - statement: "Feeling cold."
+      expected: False
+    - statement: "I'm feeling generally unwell."
+      expected: False
+- condition: Hot or very cold, and very weak
+  tests:
+    - statement: "I'm feeling unusually hot and incredibly weak today."
+      expected: True
+    - statement: "Suddenly, I am feeling very cold and hardly have any energy."
+      expected: True
+    - statement: "There's a heat wave and it's making me feel extremely weak."
+      expected: True
+    - statement: "I've been shivering all day and feel too weak to stand."
+      expected: True
+    - statement: "I feel so hot, like I'm burning up, and can't muster any strength."
+      expected: True
+    - statement: "The cold is penetrating and I’m feeling drained of all energy."
+      expected: True
+    - statement: "No matter how much I bundle up, I'm still cold and lethargic."
+      expected: True
+    - statement: "This fever has left me feeling hot and completely sapped."
+      expected: True
+    - statement: "I am sweating profusely and feeling weak all over."
+      expected: True
+    - statement: "Chills are running down my spine and my muscles feel weak."
+      expected: True
+    - statement: "Extreme temperatures are making me feel both hot and drained."
+      expected: True
+    - statement: "It feels like I can’t get warm, and my energy is gone."
+      expected: True
+    - statement: "The room feels boiling and it's sapping all my strength."
+      expected: True
+    - statement: "I've got the chills and feel too weak to do anything."
+      expected: True
+    - statement: "Feeling overwhelmingly hot then suddenly cold, with no strength."
+      expected: True
+    - statement: "The heat is unbearable, making me feel faint and weak."
+      expected: True
+    - statement: "I feel like I'm freezing and my body is too weak to respond."
+      expected: True
+    - statement: "Experiencing waves of heat followed by intense weakness."
+      expected: True
+    - statement: "My body can’t decide if it’s hot or cold, but I feel weak either way."
+      expected: True
+    - statement: "I’m so cold that it’s making me feel weak and lethargic."
+      expected: True
+    - statement: "I have a mild headache, but my temperature feels normal."
+      expected: False
+    - statement: "I'm experiencing some nausea."
+      expected: False
+    - statement: "I feel anxious today."
+      expected: False
+    - statement: "My knee hurts."
+      expected: False
+    - statement: "I'm a bit dizzy."
+      expected: False
+    - statement: "Experiencing heartburn."
+      expected: False
+    - statement: "There's a persistent pain in my back."
+      expected: False
+    - statement: "I have been sneezing a lot."
+      expected: False
+    - statement: "Feeling bloated after eating."
+      expected: False
+    - statement: "My throat is sore."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "I feel bloated."
+      expected: False
+    - statement: "Experiencing a bit of a rash."
+      expected: False
+    - statement: "I've got a small cut on my hand."
+      expected: False
+    - statement: "Dealing with some leg cramps."
+      expected: False
+    - statement: "My ears are ringing."
+      expected: False
+    - statement: "Got a bit of an eye irritation."
+      expected: False
+    - statement: "Feeling a bit stressed."
+      expected: False
+    - statement: "I'm feeling generally unwell."
+      expected: False
+    - statement: "I'm experiencing some mood swings."
+      expected: False
+- condition: Fits or uncontrolled shaking
+  tests:
+    - statement: "I've been experiencing sudden fits where I can't control my shaking."
+      expected: True
+    - statement: "There are moments when I suddenly start shaking uncontrollably."
+      expected: True
+    - statement: "I had a fit last night where my whole body was shaking."
+      expected: True
+    - statement: "Sometimes, out of nowhere, I start trembling and can't stop."
+      expected: True
+    - statement: "I've noticed episodes of uncontrolled shaking that come and go."
+      expected: True
+    - statement: "My hands have been shaking a lot lately, I can't control them."
+      expected: True
+    - statement: "Experienced a severe trembling episode yesterday, couldn't control it."
+      expected: True
+    - statement: "Lately, I've been having fits of shakes that I can't control."
+      expected: True
+    - statement: "There are times when my body just starts to shake violently."
+      expected: True
+    - statement: "I occasionally have these uncontrolled shaking spells."
+      expected: True
+    - statement: "I've been dealing with sudden, intense shaking that I can’t manage."
+      expected: True
+    - statement: "Sometimes, my legs begin to tremble uncontrollably for no clear reason."
+      expected: True
+    - statement: "Had a bout of shaking last night that I couldn't stop."
+      expected: True
+    - statement: "I experience sudden shakes that make it hard to function."
+      expected: True
+    - statement: "My body occasionally goes into fits where it shakes uncontrollably."
+      expected: True
+    - statement: "Out of the blue, I get these shakes all over my body that I can't control."
+      expected: True
+    - statement: "There are moments when I lose control and my body just starts shaking."
+      expected: True
+    - statement: "Uncontrollable shaking happens to me without any warning."
+      expected: True
+    - statement: "I've been having these unexplained episodes of shaking that are quite severe."
+      expected: True
+    - statement: "Sometimes, I wake up in the middle of the night shaking uncontrollably."
+      expected: True
+    - statement: "I have a mild headache, but no shaking or tremors."
+      expected: False
+    - statement: "I feel a bit nauseous."
+      expected: False
+    - statement: "My leg hurts, but it's stable."
+      expected: False
+    - statement: "I've been feeling anxious."
+      expected: False
+    - statement: "Experiencing some dizziness."
+      expected: False
+    - statement: "I've got a sore throat."
+      expected: False
+    - statement: "My stomach has been upset."
+      expected: False
+    - statement: "Been dealing with insomnia."
+      expected: False
+    - statement: "I have a bit of a backache."
+      expected: False
+    - statement: "Feeling under the weather."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "I feel bloated after meals."
+      expected: False
+    - statement: "Experiencing a bit of a rash."
+      expected: False
+    - statement: "I've got a small cut on my hand."
+      expected: False
+    - statement: "Dealing with some leg cramps."
+      expected: False
+    - statement: "My ears are ringing, but my body is stable."
+      expected: False
+    - statement: "Got a bit of an eye irritation."
+      expected: False
+    - statement: "Feeling a bit stressed."
+      expected: False
+    - statement: "I'm feeling generally unwell."
+      expected: False
+    - statement: "Experiencing some mood swings."
+      expected: False
+- condition: Baby moves less
+  tests:
+    - statement: "I've noticed that the baby is moving less than usual today."
+      expected: True
+    - statement: "The baby's movements have decreased significantly since yesterday."
+      expected: True
+    - statement: "I used to feel the baby move a lot, but it’s less frequent now."
+      expected: True
+    - statement: "It seems like there are fewer kicks from the baby lately."
+      expected: True
+    - statement: "The baby isn’t as active as before, I’m feeling fewer movements."
+      expected: True
+    - statement: "I'm concerned because the baby is moving much less than before."
+      expected: True
+    - statement: "Today, the baby's movements are noticeably less than normal."
+      expected: True
+    - statement: "I haven’t felt the baby move as much as usual in the past few hours."
+      expected: True
+    - statement: "It feels like the baby's activity level has dropped off a bit."
+      expected: True
+    - statement: "The baby used to move more, but now the movements are subtle."
+      expected: True
+    - statement: "I'm worried; the baby isn't moving as much as it did last week."
+      expected: True
+    - statement: "Usually, the baby moves a lot at night, but last night was quiet."
+      expected: True
+    - statement: "The frequency of the baby kicking has decreased over the past few days."
+      expected: True
+    - statement: "There’s a noticeable reduction in how much the baby moves."
+      expected: True
+    - statement: "The baby's movements have slowed down a lot, which is unusual."
+      expected: True
+    - statement: "I used to feel strong kicks, but now they’re much weaker."
+      expected: True
+    - statement: "The baby hardly moves now compared to two days ago."
+      expected: True
+    - statement: "I'm getting less frequent bumps and wiggles from the baby inside."
+      expected: True
+    - statement: "Movements from the baby have become rare these last couple of days."
+      expected: True
+    - statement: "I feel like the baby’s movements have lessened a lot this week."
+      expected: True
+    - statement: "I have a bit of back pain, but the baby is moving fine."
+      expected: False
+    - statement: "Baby has been kicking a lot today"
+      expected: False
+    - statement: "I'm a bit nauseous."
+      expected: False
+    - statement: "Had some heartburn."
+      expected: False
+    - statement: "I’ve been dealing with headaches."
+      expected: False
+    - statement: "Baby is moving a lot today."
+      expected: False
+    - statement: "Baby is as active as ever"
+      expected: False
+    - statement: "Had trouble sleeping last night."
+      expected: False
+    - statement: "Baby was up all night last night"
+      expected: False
+    - statement: "Despite my cold, the baby is moving a lot."
+      expected: False
+    - statement: "Just a bit of nasal congestion."
+      expected: False
+    - statement: "Feeling bloated after meals."
+      expected: False
+    - statement: "My legs are swelling"
+      expected: False
+    - statement: "Experiencing some leg cramps."
+      expected: False
+    - statement: "I’ve got some minor pains."
+      expected: False
+    - statement: "I feel a bit stressed."
+      expected: False
+    - statement: "Despite feeling unwell."
+      expected: False
+    - statement: "The baby's keeping it's usual activity patterns."
+      expected: False
+    - statement: "Does my cold impact my baby's movements?"
+      expected: False
+    - statement: "Experiencing some allergies."
+      expected: False
+- condition: Fluid from the vagina
+  tests:
+    - statement: "I've noticed some unusual fluid discharge from my vagina."
+      expected: True
+    - statement: "There's been a clear, watery discharge coming from my vagina."
+      expected: True
+    - statement: "I'm experiencing a thick, white discharge from my vagina."
+      expected: True
+    - statement: "Lately, I’ve had a lot of fluid leaking from my vagina."
+      expected: True
+    - statement: "There’s a new, smelly fluid coming from my vagina."
+      expected: True
+    - statement: "I've seen an increase in vaginal discharge that's yellowish."
+      expected: True
+    - statement: "There's a slippery fluid that's been discharging from my vagina."
+      expected: True
+    - statement: "I noticed a creamy fluid discharge from my vagina today."
+      expected: True
+    - statement: "My vaginal discharge has changed color and is now grey."
+      expected: True
+    - statement: "I'm worried about this sudden gush of fluid from my vagina."
+      expected: True
+    - statement: "There's been a continuous dribble of fluid from my vagina."
+      expected: True
+    - statement: "Experiencing a frothy discharge from my vagina."
+      expected: True
+    - statement: "I've been having a persistent, odorless fluid leaking from my vagina."
+      expected: True
+    - statement: "There’s been a noticeable increase in wetness due to vaginal discharge."
+      expected: True
+    - statement: "I've had thick, clumpy discharge from my vagina like cottage cheese."
+      expected: True
+    - statement: "Recently, there's been a viscous, jelly-like fluid from my vagina."
+      expected: True
+    - statement: "I feel a constant wetness from vaginal fluid throughout the day."
+      expected: True
+    - statement: "I've started noticing a bloody discharge mixed with clear fluid from my vagina."
+      expected: True
+    - statement: "The fluid from my vagina has an unusual, strong odor."
+      expected: True
+    - statement: "There's been an increase in vaginal fluid that feels sticky."
+      expected: True
+    - statement: "I have a bit of a headache, but no unusual vaginal discharge."
+      expected: False
+    - statement: "Feeling tired today."
+      expected: False
+    - statement: "I'm a bit nauseous."
+      expected: False
+    - statement: "Had some heartburn."
+      expected: False
+    - statement: "I’ve been dealing with leg cramps."
+      expected: False
+    - statement: "Experiencing some dizziness."
+      expected: False
+    - statement: "Can I have vaginal sex while pregnant?"
+      expected: False
+    - statement: "Had trouble sleeping last night"
+      expected: False
+    - statement: "I have a sore throat"
+      expected: False
+    - statement: "Despite my cold"
+      expected: False
+    - statement: "Just a bit of nasal congestion; however"
+      expected: False
+    - statement: "Feeling bloated after meals."
+      expected: False
+    - statement: "My allergies are acting up"
+      expected: False
+    - statement: "Experiencing a rash on my arm"
+      expected: False
+    - statement: "I've got a small cut on my hand"
+      expected: False
+    - statement: "Dealing with some stress"
+      expected: False
+    - statement: "Feeling a bit stressed"
+      expected: False
+    - statement: "I'm feeling generally unwell"
+      expected: False
+    - statement: "Experiencing some mood swings."
+      expected: False
+    - statement: "Feeling under the weather"
+      expected: False

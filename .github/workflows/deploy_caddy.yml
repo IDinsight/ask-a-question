@@ -1,20 +1,21 @@
-name: Deploying Nginx Container to Amazon ECS
+name: Deploying Caddy Container to Amazon ECS
 
 on:
   push:
     branches:
       - demo
       - testing
+      - main
     paths:
-      - "deployment/aws/nginx/**"
-      - ".github/workflows/deploy_nginx.yml"
+      - "deployment/aws/caddy/**"
+      - ".github/workflows/deploy_caddy.yml"
 
 jobs:
-  DeployNginx:
-    name: Deploying Nginx ${{github.ref_name}}
+  DeployCaddy:
+    name: Deploying Caddy to ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }})
     runs-on: ubuntu-latest
     environment:
-      name: ${{github.ref_name}}
+      name: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     permissions:
       id-token: write
@@ -24,6 +25,7 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -37,45 +39,30 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
         with:
-          mask-password: "true"
+          mask-password: true
 
-      - name: Build and push Nginx image
-        id: build-image-nginx
-        uses: docker/build-push-action@v5
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.REPO }}
-          IMAGE_TAG: nginx
-        with:
-          context: deployment/aws/nginx
-          platforms: linux/arm64
-          file: deployment/aws/nginx/Dockerfile.nginx
-          cache-from: type=gha
-          cache-to: type=gha
-          push: true
-          tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
-
-      - name: Build and push Certbot image
-        id: build-image-certbot
+      - name: Build and push
+        id: build-image
         uses: docker/build-push-action@v5
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{secrets.REPO}}
-          IMAGE_TAG: certbot
+          IMAGE_TAG: caddy
         with:
-          context: deployment/aws/nginx
+          context: deployment/aws/caddy
           platforms: linux/arm64
-          file: deployment/aws/nginx/Dockerfile.certbot
+          file: deployment/aws/caddy/Dockerfile
           cache-from: type=gha
           cache-to: type=gha
           push: true
           tags: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}
+
       # The following makes sure that the Docker Compose file is cached between builds and only changes to the file will trigger creation of task definition
       # This will reduce the number of task definitions created and will speed up the deployment process
       # A drawback of this approach is that if you change the variables used in the Docker Compose, the task definition will not be updated
       - name: Calculate Docker Compose hash
         id: hash
-        run: echo "compose_hash=$(sha256sum deployment/aws/nginx/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
+        run: echo "compose_hash=$(sha256sum deployment/aws/caddy/docker-compose.yml | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Compose hash
         uses: actions/cache@v4
@@ -93,35 +80,33 @@ jobs:
             echo "${{ steps.hash.outputs.compose_hash }}" > ./.compose_hash
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
       - name: Install the ECS CLI
-        if: steps.check_changes.outputs.changed == 'true'
         run: |
           sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
           sudo chmod +x /usr/local/bin/ecs-cli
 
       - name: Create Task Definition
-        if: steps.check_changes.outputs.changed == 'true'
         id: create-task-def
         run: |
           ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
           --region ${{ secrets.AWS_REGION }} \
           --default-launch-type EC2 \
-          --config-name ${{secrets.PROJECT_NAME}}-${{github.ref_name}}-nginx-config
-          ecs-cli compose --project-name nginx-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }} --file deployment/aws/nginx/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
+          --config-name ${{secrets.PROJECT_NAME}}-${{(github.ref_name == 'main' && 'testing') || github.ref_name}}-caddy-config
+          ecs-cli compose --project-name caddy-task-${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }} --file deployment/aws/caddy/docker-compose.yml --task-role-arn ${{secrets.TASK_ROLE_ARN}} create
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           DOMAIN: ${{ secrets.DOMAIN }}
-          EMAIL: ${{ secrets.EMAIL }}
           REPO: ${{ secrets.REPO }}
           PROJECT_NAME: ${{secrets.PROJECT_NAME}}
-          ENV: ${{github.ref_name}}
+          ENV: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
           REGION: ${{secrets.REGION}}
       # We need this since deploy task definition action needs the task definition in json format
 
       - name: Task definition download
         id: download-task-def
         env:
-          ecs_task_def_name: nginx-task-${{ secrets.PROJECT_NAME }}-${{ github.ref_name }}
+          ecs_task_def_name: caddy-task-${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
         run: |
           aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
           echo $(cat task-definition.json | jq 'del(
@@ -143,7 +128,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.download-task-def.outputs.task-def }}
-          service: nginx-service
+          service: caddy-service
           cluster: ${{ secrets.CLUSTER_NAME }}
           wait-for-service-stability: true
 
@@ -155,7 +140,7 @@ jobs:
       - name: Check if deployment was successful
         id: check-deployment
         run: |
-          RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services nginx-service --query services[0].deployments[0].runningCount | jq -r ".")
+          RUNNING_TASKS=$(aws ecs describe-services --cluster ${{ secrets.CLUSTER_NAME }} --services caddy-service --query services[0].deployments[0].runningCount | jq -r ".")
 
           if [ "$RUNNING_TASKS" -eq "0" ]; then
             echo "Deployment failed."

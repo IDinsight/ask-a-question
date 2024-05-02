@@ -1,10 +1,18 @@
 import hashlib
 import logging
 from logging import Logger
+from typing import List
+from uuid import uuid4
 
 import aiohttp
+from litellm import aembedding
 
-from .config import LOG_LEVEL
+from .config import (
+    LITELLM_API_KEY,
+    LITELLM_ENDPOINT,
+    LITELLM_MODEL_EMBEDDING,
+    LOG_LEVEL,
+)
 
 
 def get_key_hash(retrieval_key: str) -> str:
@@ -26,6 +34,27 @@ def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:
     }
 
     return log_level_dict.get(log_level_str.upper(), logging.INFO)
+
+
+def generate_secret_key() -> str:
+    """
+    Generate a secret key for the user query
+    """
+    return uuid4().hex
+
+
+async def embedding(text_to_embed: str) -> List[float]:
+    """
+    Get embedding for the given text
+    """
+    content_embedding = await aembedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input=text_to_embed,
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    )
+
+    return content_embedding.data[0]["embedding"]
 
 
 def setup_logger(

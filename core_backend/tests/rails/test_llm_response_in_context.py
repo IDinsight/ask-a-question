@@ -11,7 +11,7 @@ import pytest
 import yaml
 
 from core_backend.app.config import ALIGN_SCORE_API, ALIGN_SCORE_THRESHOLD
-from core_backend.app.llm_call.check_output import (
+from core_backend.app.llm_call.process_output import (
     _get_alignScore_score,
     _get_llm_align_score,
 )

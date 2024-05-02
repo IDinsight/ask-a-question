@@ -68,6 +68,12 @@ export const appStyles = {
   shadow: {
     boxShadow: `0px 4px 4px ${appColors.grey}`,
   },
+  hoverShadow: {
+    transition: "box-shadow 0.15s ease-in-out", // faster transition
+    "&:hover": {
+      boxShadow: `0px 6.5px 6.5px ${appColors.grey}`,
+    },
+  },
   noShadow: {
     boxShadow: "none",
   },

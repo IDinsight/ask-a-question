@@ -10,7 +10,7 @@ from dateutil import tz
 from fastapi.testclient import TestClient
 from litellm import embedding
 
-from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
+from core_backend.app.auth.config import USER1_RETRIEVAL_KEY
 from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -180,7 +180,7 @@ class TestRetrievalPerformance:
     ) -> List[str]:
         """Single POST /embeddings-search request"""
         request_json = QueryBase(query_text=query_text).model_dump()
-        headers = {"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"}
+        headers = {"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"}
         response = client.post("/embeddings-search", json=request_json, headers=headers)
 
         if response.status_code != 200:

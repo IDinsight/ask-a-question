@@ -44,7 +44,7 @@ export CONTENT_READONLY_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "read_only
 export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "" "text")
 export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP_VERIFY} "" "text")
 export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
-export QUESTION_ANSWER_SECRET=$(get_secret_value ${SECRET_QUESTION_ANSWER} "" "text")
+export USER1_RETRIEVAL_KEY=$(get_secret_value ${SECRET_QUESTION_ANSWER} "" "text")
 
 # if using a nginx reverse proxy, set path here
 export BACKEND_ROOT_PATH="/api"

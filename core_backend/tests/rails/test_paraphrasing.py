@@ -4,7 +4,7 @@ from typing import Dict, List
 import pytest
 import yaml
 
-from core_backend.app.llm_call.parse_input import _paraphrase_question
+from core_backend.app.llm_call.process_input import _paraphrase_question
 from core_backend.app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,

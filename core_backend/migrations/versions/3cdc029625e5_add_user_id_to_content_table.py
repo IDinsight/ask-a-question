@@ -1,7 +1,7 @@
 """add user_id to content table
 
 Revision ID: 3cdc029625e5
-Revises: e8ddc3de6210
+Revises: 72d3851d44a6
 Create Date: 2024-04-25 21:46:56.540434
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "3cdc029625e5"
-down_revision: Union[str, None] = "e8ddc3de6210"
+down_revision: Union[str, None] = "72d3851d44a6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
