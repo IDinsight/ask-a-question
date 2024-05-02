@@ -66,6 +66,9 @@ nav:
       - Testing: develop/testing.md
       - Validation: develop/validation.md
 
+  - Contact us:
+      - Team: contact_us.md
+
 # Themes and extensions
 theme:
   name: material
