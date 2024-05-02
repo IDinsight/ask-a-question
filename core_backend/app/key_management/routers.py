@@ -37,7 +37,7 @@ async def get_new_retrieval_key(
         )
         return KeyResponse(
             username=user_db.username,
-            retrieval_key=new_retrieval_key,
+            new_retrieval_key=new_retrieval_key,
         )
     except Exception as e:
         logger.error(f"Error updating user retrieval key: {e}")
