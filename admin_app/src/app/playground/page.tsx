@@ -1,9 +1,9 @@
 "use client";
 // To do
-// 3. Modal to add and save token
 // 5. QueryType to enum
 
 import { apiCalls } from "@/utils/api";
+import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
@@ -183,41 +183,50 @@ const Page = () => {
   }, []);
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      bgcolor="white"
-      sx={{ height: "100vh", width: "100%", pb: 10 }}
-    >
-      <Box
-        mb={10}
-        sx={{
-          width: "100%",
-          maxWidth: "lg",
-          pb: 10,
-        }}
-      >
-        {messages.map((message, index) => (
-          <MessageBox key={index} {...message} />
-        ))}
-        {loading && <MessageSkeleton />}
-        <div ref={bottomRef} />
-      </Box>
-      <ErrorSnackBar message={error} onClose={handleErrorClose} />
-      <ApiKeyDialog
-        open={openDialog}
-        handleClose={handleDialogClose}
-        handleSave={handleSaveToken}
-        currApiKey={currApiKey}
+    <>
+      <Global
+        styles={css`
+          body {
+            background-color: white;
+          }
+        `}
       />
-      <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
-        <PersistentSearchBar
-          onSend={onSend}
-          openApiKeyDialog={handleDialogOpen}
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        bgcolor="white"
+        sx={{ height: "100vh", width: "100%", pb: 10 }}
+      >
+        <Box
+          mb={10}
+          sx={{
+            width: "100%",
+            maxWidth: "lg",
+            pb: 10,
+          }}
+        >
+          {messages.map((message, index) => (
+            <MessageBox key={index} {...message} />
+          ))}
+          {loading && <MessageSkeleton />}
+          <div ref={bottomRef} />
+        </Box>
+        <ErrorSnackBar message={error} onClose={handleErrorClose} />
+        <ApiKeyDialog
+          open={openDialog}
+          handleClose={handleDialogClose}
+          handleSave={handleSaveToken}
+          currApiKey={currApiKey}
         />
+        <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
+          <PersistentSearchBar
+            onSend={onSend}
+            openApiKeyDialog={handleDialogOpen}
+          />
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 
