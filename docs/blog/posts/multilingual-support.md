@@ -15,7 +15,9 @@ We are excited to announce a significant enhancement to our web application: _mu
 ## What's new?
 
 Multilingual content support changes the way contents are managed. Now contents can have many languages version, up to the number of languages supported. Allowing contents to have different language versions will help enhancing the accessibility of contents by breaking the language barrier. Users will be able to ask questions in their local language and receive answers in the same language, improving user experience. Here is the new look of our projet's Admin App.
+Multilingual content support changes the way contents are managed: now contents can have many languages version, up to the number of languages supported. This will enhance the accessibility of the system by breaking the language barrier and users will now be able to ask questions in their local language and receive answers in the same language. 
 
+Here is the new look of our projet's Admin App:
 | Old UI                                                                | Multilingual UI                                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Main page                                                             |
