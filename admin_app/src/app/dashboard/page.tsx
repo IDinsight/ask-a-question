@@ -2,9 +2,9 @@
 
 import Grid from "@mui/material/Grid";
 
-import EmailIcon from "@mui/icons-material/Email";
+import SmsIcon from "@mui/icons-material/Sms";
 import WeeklyOverview from "@/components/BarChart";
-import RecommendIcon from "@mui/icons-material/Recommend";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CardStatisticsVerticalComponent from "@/components/StatisticsCard";
 import ApexChartWrapper from "@/components/ApexCharWrapper";
 import React from "react";
@@ -123,7 +123,7 @@ const Dashboard = () => {
                     ? questionStats[5].toString()
                     : "0"
                 }
-                icon={<EmailIcon />}
+                icon={<SmsIcon />}
                 trend={
                   questionStats &&
                   questionStats.length > 5 &&
@@ -155,7 +155,7 @@ const Dashboard = () => {
                   upvoteStats ? calculatePercentageChange(upvoteStats) : "0"
                 }
                 title="Total upvotes"
-                icon={<RecommendIcon />}
+                icon={<ThumbUpIcon />}
               />
             </Grid>
             <Grid item xs={12} md={6} lg={10} sx={{ mt: 4 }}>
