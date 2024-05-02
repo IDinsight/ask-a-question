@@ -30,13 +30,14 @@ async def auth_bearer_token(
     """
     token = credentials.credentials
 
+    asession = await get_async_session_direct()
     try:
-        asession = await get_async_session_direct()
         user_db = await get_user_by_token(token, asession)
-        await asession.aclose()
         return user_db
     except Exception as err:
         raise HTTPException(status_code=401, detail="Invalid bearer token") from err
+    finally:
+        await asession.aclose()
 
 
 async def authenticate_user(
@@ -45,9 +46,8 @@ async def authenticate_user(
     """
     Authenticate user using username and password.
     """
-
+    asession = await get_async_session_direct()
     try:
-        asession = await get_async_session_direct()
         user_db = await get_user_by_username(username, asession)
         await asession.aclose()
         if user_db.hashed_password == get_key_hash(password):
@@ -55,9 +55,10 @@ async def authenticate_user(
             return AuthenticatedUser(username=username, access_level="fullaccess")
         else:
             return None
-
     except Exception:
         return None
+    finally:
+        await asession.aclose()
 
 
 def create_access_token(username: str) -> str:
@@ -90,15 +91,17 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         if username is None:
             raise credentials_exception
 
+        # fetch user from database
+        asession = await get_async_session_direct()
         try:
-            # fetch user from database
-            asession = await get_async_session_direct()
             user_db = await get_user_by_username(username, asession)
             await asession.aclose()
             return user_db
         except Exception as err:
             await asession.aclose()
             raise credentials_exception from err
+        finally:
+            await asession.aclose()
 
     except JWTError as err:
         raise credentials_exception from err
