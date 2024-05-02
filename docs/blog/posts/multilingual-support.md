@@ -9,7 +9,7 @@ date: 2024-04-19
 # Namaste Multilingual support
 
 We are excited to announce a significant enhancement to our web application: _multilingual content management_. This update sets stone to one of our key features which is to enable multlilingual model support. This update will make managing contents in different languages easier.
-
+We are excited to announce a significant enhancement to our web application: _multilingual content management_. You can now add different language versions for each of your content pieces.
 <!-- more -->
 
 ## What's new?
