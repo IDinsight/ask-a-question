@@ -47,8 +47,3 @@ If you have the [application running](../../deployment/quick-setup.md), you can 
 or if you are using the [dev](../../develop/setup.md) setup:
 
     http://localhost:3000/
-
-### Access Levels
-
-There are two logins - `readonly` and `fullaccess` with different access levels.
-See [Access Level](./access-level.md) for more details.

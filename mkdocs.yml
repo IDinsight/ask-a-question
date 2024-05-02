@@ -24,7 +24,6 @@ nav:
       - User-facing components:
           - Admin App:
               - components/admin-app/index.md
-              - Access Levels: components/admin-app/access-level.md
               - Manage Content: components/admin-app/manage-content.md
               - Playground: components/admin-app/playground.md
           - Question-Answering Service:
