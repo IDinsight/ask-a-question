@@ -5,14 +5,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
-from core_backend.app.llm_call.check_output import _build_evidence, _check_align_score
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
-from core_backend.app.llm_call.parse_input import (
+from core_backend.app.llm_call.process_input import (
     _classify_on_off_topic,
     _classify_safety,
     _identify_language,
     _translate_question,
 )
+from core_backend.app.llm_call.process_output import _build_evidence, _check_align_score
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import (
     ErrorType,
@@ -301,7 +301,7 @@ class TestErrorResponses:
             return identified_lang_str
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
 
         query, response = await _identify_language(
@@ -336,7 +336,7 @@ class TestErrorResponses:
             return "This is a translated LLM response"
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
         query, response = await _translate_question(
             user_query_refined, user_query_response
@@ -360,7 +360,7 @@ class TestErrorResponses:
             return "This is a translated LLM response"
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.parse_input._ask_llm_async", mock_ask_llm
+            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
 
         user_query_refined = UserQueryRefined(
@@ -389,7 +389,7 @@ class TestErrorResponses:
             return llm_response
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.parse_input._ask_llm_async",
+            "core_backend.app.llm_call.process_input._ask_llm_async",
             partial(mock_ask_llm, classification),
         )
         query, response = await _classify_safety(
@@ -427,7 +427,7 @@ class TestErrorResponses:
             return llm_response
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.parse_input._ask_llm_async",
+            "core_backend.app.llm_call.process_input._ask_llm_async",
             partial(mock_ask_llm, classification),
         )
         _, response = await _classify_on_off_topic(
@@ -473,15 +473,15 @@ class TestAlignScore:
             return AlignmentScore(score=0.2, reason="test - low score")
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output._get_alignScore_score",
+            "core_backend.app.llm_call.process_output._get_alignScore_score",
             mock_get_align_score,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output._get_llm_align_score",
+            "core_backend.app.llm_call.process_output._get_llm_align_score",
             mock_get_align_score,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output.ALIGN_SCORE_THRESHOLD",
+            "core_backend.app.llm_call.process_output.ALIGN_SCORE_THRESHOLD",
             0.7,
         )
         update_query_response = await _check_align_score(user_query_response)
@@ -496,15 +496,15 @@ class TestAlignScore:
             return AlignmentScore(score=0.9, reason="test - high score")
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output._get_alignScore_score",
+            "core_backend.app.llm_call.process_output._get_alignScore_score",
             mock_get_align_score,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output.ALIGN_SCORE_THRESHOLD",
+            "core_backend.app.llm_call.process_output.ALIGN_SCORE_THRESHOLD",
             0.7,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.check_output._get_llm_align_score",
+            "core_backend.app.llm_call.process_output._get_llm_align_score",
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
