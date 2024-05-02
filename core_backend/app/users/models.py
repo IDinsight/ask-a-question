@@ -25,6 +25,7 @@ class UserDB(Base):
 
     user_id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(64), nullable=False)
 
     hashed_retrieval_key: Mapped[str] = mapped_column(String(64), nullable=False)
 
@@ -57,11 +58,13 @@ async def save_user_to_db(
     except NoResultFound:
         pass
 
+    hashed_password = get_key_hash(user.password)
     hashed_retrieval_key = get_key_hash(user.retrieval_key)
 
     content_db = UserDB(
         user_id=user.user_id,
         username=user.username,
+        hashed_password=hashed_password,
         hashed_retrieval_key=hashed_retrieval_key,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),

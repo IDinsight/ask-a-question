@@ -1,9 +1,11 @@
 from datetime import datetime
 from uuid import uuid4
 
-from app.auth.config import (
+from app.config import (
+    USER1_PASSWORD,
     USER1_RETRIEVAL_KEY,
     USER1_USERNAME,
+    USER2_PASSWORD,
     USER2_RETRIEVAL_KEY,
     USER2_USERNAME,
 )
@@ -18,6 +20,7 @@ logger = setup_logger()
 user_dbs = [
     UserDB(
         username=USER1_USERNAME,
+        hashed_password=get_key_hash(USER1_PASSWORD),
         user_id=uuid4().hex,
         hashed_retrieval_key=get_key_hash(USER1_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
@@ -25,6 +28,7 @@ user_dbs = [
     ),
     UserDB(
         username=USER2_USERNAME,
+        hashed_password=get_key_hash(USER2_PASSWORD),
         user_id=uuid4().hex,
         hashed_retrieval_key=get_key_hash(USER2_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
