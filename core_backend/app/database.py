@@ -50,7 +50,7 @@ def get_sqlalchemy_engine() -> Engine:
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
-    """Return a SQLAlchemy async engine."""
+    """Return a SQLAlchemy async engine generator."""
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
@@ -59,7 +59,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 
 
 def get_session() -> Generator[Session, None, None]:
-    """Return a SQLAlchemy session."""
+    """Return a SQLAlchemy session generator."""
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
         yield session
 
@@ -70,3 +70,10 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
+
+
+async def get_async_session_direct() -> AsyncSession:
+    """Return a SQLAlchemy async session."""
+    engine = get_sqlalchemy_async_engine()
+    async_session = AsyncSession(engine, expire_on_commit=False)
+    return async_session
