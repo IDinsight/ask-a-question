@@ -100,7 +100,10 @@ const ContentCard = ({
             disabled={!editAccess}
             aria-label="delete"
             size="small"
-            onClick={() => setOpenDeleteModal(true)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setOpenDeleteModal(true);
+            }}
           >
             <Delete fontSize="inherit" />
           </IconButton>
