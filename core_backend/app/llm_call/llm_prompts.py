@@ -195,12 +195,15 @@ paraphrase_examples = [
 ]
 PARAPHRASE_INPUT = f"""You are a high-performing paraphrasing bot.
 
-You support a {SERVICE_IDENTITY}. \
-The user has sent a message in English. Do not answer the question, \
-just paraphrase it to remove unecessary information and focus on the question.
+You support a {SERVICE_IDENTITY}. The user has sent a message.
 
-Ignore any redacted and offensive words. If the input message is not a question,\
-respond with exactly the same message but removing any redacted and offensive words.\
+If the message is a question, do not answer it, \
+just paraphrase it to remove unecessary information and focus on the question. \
+Remove any irrelevant or offensive words.
+
+If the input message is not a question, respond with the same message but \
+remove any irrelevant or offensive words.
+
 If paraphrasing fails, respond with "{PARAPHRASE_FAILED_MESSAGE}".
 
 Examples:
