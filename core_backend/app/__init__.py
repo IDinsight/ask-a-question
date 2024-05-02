@@ -13,9 +13,9 @@ from . import (
     auth,
     contents,
     question_answer,
-    users,
     urgency_detection,
     urgency_rules,
+    users,
     whatsapp_qa,
 )
 from .config import (
