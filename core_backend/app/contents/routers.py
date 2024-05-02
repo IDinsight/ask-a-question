@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_fullaccess_user, get_current_readonly_user
-from ..auth.schemas import AuthenticatedUser
+from ..auth.dependencies import get_current_user
 from ..database import get_async_session
-from ..users.models import get_user_by_username
+from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
     ContentDB,
@@ -26,9 +25,7 @@ logger = setup_logger()
 @router.post("/", response_model=ContentRetrieve)
 async def create_content(
     content: ContentCreate,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve | None:
     """
@@ -36,12 +33,8 @@ async def create_content(
     inserts it to PG database
     """
 
-    user = await get_user_by_username(full_access_user.username, asession)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
     content_db = await save_content_to_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content=content,
         asession=asession,
     )
@@ -52,20 +45,15 @@ async def create_content(
 async def edit_content(
     content_id: int,
     content: ContentCreate,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
     Edit content endpoint
     """
 
-    user = await get_user_by_username(full_access_user.username, asession)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     old_content = await get_content_from_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content_id=content_id,
         asession=asession,
     )
@@ -75,7 +63,7 @@ async def edit_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
     updated_content = await update_content_in_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content_id=content_id,
         content=content,
         asession=asession,
@@ -86,9 +74,7 @@ async def edit_content(
 
 @router.get("/", response_model=list[ContentRetrieve])
 async def retrieve_content(
-    readonly_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_readonly_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
     limit: int = 50,
     asession: AsyncSession = Depends(get_async_session),
@@ -97,11 +83,8 @@ async def retrieve_content(
     Retrieve all content endpoint
     """
 
-    user = await get_user_by_username(readonly_access_user.username, asession)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     records = await get_list_of_content_from_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         offset=skip,
         limit=limit,
         asession=asession,
@@ -113,20 +96,15 @@ async def retrieve_content(
 @router.delete("/{content_id}")
 async def delete_content(
     content_id: int,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
     Delete content endpoint
     """
 
-    user = await get_user_by_username(full_access_user.username, asession)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     record = await get_content_from_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content_id=content_id,
         asession=asession,
     )
@@ -136,7 +114,7 @@ async def delete_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
     await delete_content_from_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content_id=content_id,
         asession=asession,
     )
@@ -145,20 +123,15 @@ async def delete_content(
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: int,
-    readonly_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_readonly_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
     Retrieve content by id endpoint
     """
 
-    user = await get_user_by_username(readonly_access_user.username, asession)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     record = await get_content_from_db(
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         content_id=content_id,
         asession=asession,
     )

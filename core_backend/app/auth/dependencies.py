@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Annotated, Dict, Optional, Union, cast
+from typing import Annotated, Dict, Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import (
@@ -9,64 +9,55 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 
-from ..config import (
-    USER1_PASSWORD,
-    USER1_RETRIEVAL_KEY,
-    USER1_USERNAME,
-    USER2_PASSWORD,
-    USER2_RETRIEVAL_KEY,
-    USER2_USERNAME,
-)
-from .config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_ALGORITHM,
-    JWT_SECRET,
-)
-from .schemas import AccessLevel, AuthenticatedUser
+from ..database import get_async_session_direct
+from ..users.models import UserDB, get_user_by_token, get_user_by_username
+from ..utils import get_key_hash, setup_logger
+from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
+from .schemas import AuthenticatedUser
+
+logger = setup_logger()
 
 bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-USERS = {
-    USER1_USERNAME: {
-        "password": USER1_PASSWORD,
-        "access_level": "fullaccess",
-    },
-    USER2_USERNAME: {
-        "password": USER2_PASSWORD,
-        "access_level": "fullaccess",
-    },
-}
-
-
-def auth_bearer_token(
+async def auth_bearer_token(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> str:
+) -> UserDB:
     """
     Authenticate using basic bearer token. Used for calling
     the question-answering endpoints
     """
     token = credentials.credentials
-    # change to "hash check against db" logic later
-    if token not in [USER1_RETRIEVAL_KEY, USER2_RETRIEVAL_KEY]:
-        raise HTTPException(status_code=401, detail="Invalid bearer token")
-    else:
-        return token  # NOT SURE ABOUT THIS - IS THIS REASONABLE?
+
+    try:
+        asession = await get_async_session_direct()
+        user_db = await get_user_by_token(token, asession)
+        await asession.aclose()
+        return user_db
+    except Exception as err:
+        raise HTTPException(status_code=401, detail="Invalid bearer token") from err
 
 
-def authenticate_user(*, username: str, password: str) -> Optional[AuthenticatedUser]:
+async def authenticate_user(
+    *, username: str, password: str
+) -> Optional[AuthenticatedUser]:
     """
     Authenticate user using username and password.
     """
-    if username not in USERS:
+
+    try:
+        asession = await get_async_session_direct()
+        user_db = await get_user_by_username(username, asession)
+        await asession.aclose()
+        if user_db.hashed_password == get_key_hash(password):
+            # hardcode "fullaccess" now, but may use it in the future
+            return AuthenticatedUser(username=username, access_level="fullaccess")
+        else:
+            return None
+
+    except Exception:
         return None
-
-    if password == USERS[username]["password"]:
-        access_level = cast(AccessLevel, USERS[username]["access_level"])
-        return AuthenticatedUser(username=username, access_level=access_level)
-
-    return None
 
 
 def create_access_token(username: str) -> str:
@@ -84,9 +75,7 @@ def create_access_token(username: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> AuthenticatedUser:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
     """
     Get the current user from the access token
     """
@@ -101,36 +90,15 @@ def get_current_user(
         if username is None:
             raise credentials_exception
 
-        user = AuthenticatedUser(
-            username=username,
-            access_level=cast(AccessLevel, USERS[username]["access_level"]),
-        )
+        try:
+            # fetch user from database
+            asession = await get_async_session_direct()
+            user_db = await get_user_by_username(username, asession)
+            await asession.aclose()
+            return user_db
+        except Exception as err:
+            await asession.aclose()
+            raise credentials_exception from err
 
     except JWTError as err:
         raise credentials_exception from err
-
-    return user
-
-
-def get_current_fullaccess_user(
-    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-) -> AuthenticatedUser:
-    """
-    Get the current active user if they have full access
-    """
-    if current_user.access_level != "fullaccess":
-        raise HTTPException(status_code=400, detail="User does not have full access")
-    return current_user
-
-
-def get_current_readonly_user(
-    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-) -> AuthenticatedUser:
-    """
-    Get the current active user if they have readonly access
-    """
-    if current_user.access_level not in ["readonly", "fullaccess"]:
-        raise HTTPException(
-            status_code=400, detail="User does not have readonly or full access"
-        )
-    return current_user

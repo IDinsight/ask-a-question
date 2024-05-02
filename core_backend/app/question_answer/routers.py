@@ -18,7 +18,7 @@ from ..llm_call.process_input import (
     translate_question__before,
 )
 from ..llm_call.process_output import check_align_score__after
-from ..users.models import get_user_by_token
+from ..users.models import UserDB
 from ..utils import generate_secret_key, setup_logger
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
@@ -59,31 +59,24 @@ router = APIRouter(
 async def llm_response(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
-    auth_token: str = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(auth_bearer_token),
 ) -> QueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
     most similar embeddings to the user query in the vector db.
     """
-    user = await get_user_by_token(auth_token, asession)
-    if user is None:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "No user associated with the provided token."},
-        )
-
     (
         user_query_db,
         user_query_refined,
         response,
     ) = await get_user_query_and_response(
-        user_id=user.user_id, user_query=user_query, asession=asession
+        user_id=user_db.user_id, user_query=user_query, asession=asession
     )
 
     response = await get_llm_answer(
         question=user_query_refined,
         response=response,
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT_FOR_RAG),
         asession=asession,
     )
@@ -185,32 +178,25 @@ async def get_user_query_and_response(
 async def embeddings_search(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
-    auth_token: str = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(auth_bearer_token),
 ) -> QueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
     from the vector db.
     """
 
-    user = await get_user_by_token(auth_token, asession)
-    if user is None:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "No user associated with the provided token."},
-        )
-
     (
         user_query_db,
         user_query_refined,
         response,
     ) = await get_user_query_and_response(
-        user_id=user.user_id, user_query=user_query, asession=asession
+        user_id=user_db.user_id, user_query=user_query, asession=asession
     )
 
     response = await get_semantic_matches(
         question=user_query_refined,
         response=response,
-        user_id=user.user_id,
+        user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
         asession=asession,
     )
@@ -254,7 +240,7 @@ async def get_semantic_matches(
 async def feedback(
     feedback: ResponseFeedbackBase,
     asession: AsyncSession = Depends(get_async_session),
-    auth_token: str = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(auth_bearer_token),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on the results returned.
@@ -262,12 +248,6 @@ async def feedback(
     <B>Note</B>: If you wish to only provide `feedback_text`, don't include
     `feedback_sentiment` in the payload.
     """
-    user = await get_user_by_token(auth_token, asession)
-    if user is None:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "No user associated with the provided token."},
-        )
 
     is_matched = await check_secret_key_match(
         feedback.feedback_secret_key, feedback.query_id, asession
@@ -296,7 +276,7 @@ async def feedback(
 async def content_feedback(
     feedback: ContentFeedback,
     asession: AsyncSession = Depends(get_async_session),
-    auth_token: str = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(auth_bearer_token),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on specific content
@@ -304,12 +284,6 @@ async def content_feedback(
     <B>Note</B>: If you wish to only provide `feedback_text`, don't include
     `feedback_sentiment` in the payload.
     """
-    user = await get_user_by_token(auth_token, asession)
-    if user is None:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "No user associated with the provided token."},
-        )
 
     is_matched = await check_secret_key_match(
         feedback.feedback_secret_key, feedback.query_id, asession
@@ -338,7 +312,7 @@ async def content_feedback(
                 },
             )
         await update_votes_in_db(
-            user_id=user.user_id,
+            user_id=user_db.user_id,
             content_id=feedback.content_id,
             vote=feedback.feedback_sentiment,
             asession=asession,

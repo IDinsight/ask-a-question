@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_fullaccess_user, get_current_readonly_user
-from ..auth.schemas import AuthenticatedUser
+from ..auth.dependencies import get_current_user
 from ..database import get_async_session
+from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
     UrgencyRuleDB,
@@ -25,9 +25,7 @@ logger = setup_logger(__name__)
 @router.post("/", response_model=UrgencyRuleRetrieve)
 async def create_urgency_rule(
     urgency_rule: UrgencyRuleCreate,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """
@@ -40,7 +38,7 @@ async def create_urgency_rule(
 @router.get("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
 async def get_urgency_rule(
     urgency_rule_id: int,
-    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_readonly_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """
@@ -58,9 +56,7 @@ async def get_urgency_rule(
 @router.delete("/{urgency_rule_id}")
 async def delete_urgency_rule(
     urgency_rule_id: int,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
@@ -74,9 +70,7 @@ async def delete_urgency_rule(
 async def update_urgency_rule(
     urgency_rule_id: int,
     urgency_rule: UrgencyRuleCreate,
-    full_access_user: Annotated[
-        AuthenticatedUser, Depends(get_current_fullaccess_user)
-    ],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """
@@ -100,7 +94,7 @@ async def update_urgency_rule(
 
 @router.get("/", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
-    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_readonly_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
     """
