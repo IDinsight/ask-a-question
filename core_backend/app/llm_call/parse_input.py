@@ -299,7 +299,7 @@ async def _translate_question(
 
     translation_response = await _ask_llm_async(
         question=question.query_text,
-        prompt=TRANSLATE_INPUT + question.original_language.value,
+        prompt=TRANSLATE_INPUT.format(language=question.original_language.value),
         litellm_model=LITELLM_MODEL_TRANSLATE,
     )
     if translation_response != TRANSLATE_FAILED_MESSAGE:

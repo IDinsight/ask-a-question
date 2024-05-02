@@ -163,7 +163,8 @@ class OnOffTopicClassification(str, Enum):
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_INPUT = f"""You are a high-performing translation bot. \
 You support a {SERVICE_IDENTITY}. \
-Translate the user's input to English from {{language}}.
+Translate the user's input from {{language}} to English.
+Do not answer the question, just translate it.
 If you are unable to translate the user's input, \
 respond with "{TRANSLATE_FAILED_MESSAGE}".""".strip()
 
