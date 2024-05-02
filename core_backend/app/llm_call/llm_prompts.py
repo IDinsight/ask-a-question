@@ -144,17 +144,9 @@ class OnOffTopicClassification(str, Enum):
         return textwrap.dedent(
             f"""
             You are a labelling agent. You declare whether a query sent to an
-            {SERVICE_IDENTITY} can be reasonable answered or not.
-            When it is answerable, you label it as {cls.ON_TOPIC.value}.
+            {SERVICE_IDENTITY} can be reasonably answered or not.
+            When it is reasonably answerable, you label it as {cls.ON_TOPIC.value}.
             When it is not, you label it as {cls.OFF_TOPIC.value}.
-
-            Examples:
-            "What are the health benefits of drinking green tea?" -> OFF_TOPIC
-            "How do cars affect air quality as per the WHO guidelines?" -> ON_TOPIC
-            "Are respirators useful in for protecting against air pollution" -> ON_TOPIC
-            "How does one maintain cardiovascular health?" -> OFF_TOPIC
-            "What is the capital of South Africa?" -> OFF_TOPIC
-            "Who is at risk" -> ON_TOPIC
             """
         ).strip()
 
@@ -224,12 +216,11 @@ provide concise, accurate, and informative answers to diverse queries.
 REFERENCE TEXT:
 {{content}}
 
-Answer the user query taking into account the REFERENCE TEXT above where relevant. \
-Ignore any provided context that is not relevant to the query. Answer in a friendly \
-tone.
+Answer the user query using the information provided in the REFERENCE TEXT above. \
+DO NOT use any context not present in the REFERENCE TEXT. \
+Ignore any provided context that is not relevant to the query.
 
-IMPORTANT: Respond in {{response_language}} using the same dialect and script as the \
-query.
+IMPORTANT: Respond in {{response_language}}.
 
 If the REFERENCE TEXT does not contain any answer to the query, respond exactly with \
 "{ANSWER_FAILURE_MESSAGE}".""".strip()
