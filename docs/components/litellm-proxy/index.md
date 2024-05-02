@@ -10,7 +10,7 @@ names and endpoints for each LLM task.
 
 ## Example config
 
-You can see an example `litellm_proxy_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "summarize"), but
+You can see an example `litellm_proxy_config.yaml` file below. In our backend code, we refer to the models by their custom task `model_name` (e.g. "generate-response"), but
 which actual LLM model each call is routed to is set here.
 
 ```yaml
@@ -23,7 +23,7 @@ model_list:
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: summarize
+  - model_name: generate-response
     litellm_params:
       model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
@@ -55,6 +55,27 @@ litellm_settings:
 
 See the [Contributing Setup](../../develop/setup.md) and [Docker Compose Setup](../../deployment/quick-setup.md) for how this service is run in our stack.
 
+## Monitoring with Langfuse
+
+You can log all inputs and outputs of LiteLLM Proxy server via Langfuse.
+
+1. Add Langfuse to `litellm_proxy_config.yaml`
+
+    ```yaml
+    litellm_settings:
+      success_callback: ["langfuse"]
+    ```
+
+1. Include Langfuse credentials as environment variables in your deployment environment.
+   If you are using `docker compose`, add the following in your
+   `deployment/docker-compose/.env` file:
+
+    ```.env
+    LANGFUSE_PUBLIC_KEY=pk-...
+    LANGFUSE_SECRET_KEY=sk-...
+    ```
+
 ## Also see
 
 - [Latest Updates: Adding a model proxy server](../../blog/posts/move-to-litellm-proxy.md)
+- [LiteLLM's Langfuse Integration docs](https://docs.litellm.ai/docs/observability/langfuse_integration)

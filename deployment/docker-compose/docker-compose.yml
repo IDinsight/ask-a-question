@@ -14,8 +14,6 @@ services:
       watch:
         - action: rebuild
           path: ../../core_backend
-    volumes:
-      - local_dynamic_storage:/home/storage
 
   admin_app:
     image: idinsight/aaq-admin-app:latest
@@ -73,6 +71,5 @@ services:
     restart: always
 
 volumes:
-  local_dynamic_storage:
   caddy_data:
   caddy_config:

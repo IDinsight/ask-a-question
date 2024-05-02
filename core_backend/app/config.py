@@ -25,7 +25,7 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_SUMMARIZATION = os.environ.get(
-    "LITELLM_MODEL_SUMMARIZATION", "openai/summarize"
+    "LITELLM_MODEL_SUMMARIZATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
@@ -46,7 +46,9 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 )
 
 # On/Off Topic variables
-SERVICE_IDENTITY = os.environ.get("SERVICE_IDENTITY", "WHO AirQuality chatbot")
+SERVICE_IDENTITY = os.environ.get(
+    "SERVICE_IDENTITY", "air pollution and air quality chatbot"
+)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
