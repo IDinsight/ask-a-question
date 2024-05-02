@@ -3,13 +3,11 @@ import { useState, useEffect } from "react";
 import {
   List,
   ListItem,
-  ListItemButton,
   ListItemIcon,
   ListItemText,
   IconButton,
   Button,
 } from "@mui/material";
-import CommentIcon from "@mui/icons-material/Comment";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
 import { Delete, Edit, Add } from "@mui/icons-material";
@@ -18,17 +16,10 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
 class UrgencyRule {
-  urgency_rule_id: number | null;
-  urgency_rule_text: string;
-  updated_datetime_utc: string;
-  created_datetime_utc: string;
-
-  constructor() {
-    this.urgency_rule_id = null;
-    this.urgency_rule_text = "";
-    this.updated_datetime_utc = "";
-    this.created_datetime_utc = "";
-  }
+  urgency_rule_id: number | null = null;
+  urgency_rule_text: string = "";
+  updated_datetime_utc: string = "";
+  created_datetime_utc: string = "";
 }
 
 const UrgencyRulesPage = () => {
@@ -36,7 +27,7 @@ const UrgencyRulesPage = () => {
   const [editableIndex, setEditableIndex] = useState(-1);
   const [items, setItems] = useState<UrgencyRule[]>([]);
   const [backupRuleText, setBackupRuleText] = useState("");
-
+  const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
   const { token, accessLevel } = useAuth();
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
@@ -80,6 +71,11 @@ const UrgencyRulesPage = () => {
     if (e.key === "Escape") {
       restoreBackup(index);
       setEditableIndex(-1);
+      if (items[index].urgency_rule_id === null) {
+        const newItems = [...items];
+        newItems.splice(index, 1);
+        setItems(newItems);
+      }
     }
   };
 
@@ -98,6 +94,11 @@ const UrgencyRulesPage = () => {
 
   const deleteItem = (index: number) => () => {
     const newItems = [...items];
+    if (items[index].urgency_rule_id === null) {
+      newItems.splice(index, 1);
+      setItems(newItems);
+      return;
+    }
     apiCalls
       .deleteUrgencyRule(items[index].urgency_rule_id!, token!)
       .then(() => {
@@ -107,8 +108,14 @@ const UrgencyRulesPage = () => {
   };
 
   useEffect(() => {
-    apiCalls.getUrgencyRuleList(token!).then((data) => setItems(data));
-  }, [token]);
+    apiCalls
+      .getUrgencyRuleList(token!)
+      .then((data) => setItems(data))
+      .catch((error) => {
+        console.error(error);
+      });
+    setCurrAccessLevel(accessLevel);
+  }, [token, accessLevel]);
 
   return (
     <Layout.FlexBox
@@ -144,7 +151,7 @@ const UrgencyRulesPage = () => {
         >
           <Button
             variant="contained"
-            disabled={false}
+            disabled={currAccessLevel != "fullaccess" ? true : false}
             onClick={() => createNewRecord()}
           >
             <Add fontSize="small" />
@@ -153,7 +160,6 @@ const UrgencyRulesPage = () => {
         </Layout.FlexBox>
         <List sx={{ width: "100%", pl: 1, bgcolor: "background.paper" }}>
           {items.map((urgencyRule: UrgencyRule, index: number) => {
-            const labelId = `checkbox-list-label-${index}`;
             return (
               <ListItem
                 key={index}
