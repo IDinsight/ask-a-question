@@ -254,15 +254,6 @@ def fullaccess_token() -> str:
     return create_access_token(USER1_USERNAME)
 
 
-@pytest.fixture(scope="session")
-def readonly_token() -> str:
-    """
-    Returns a token with readonly access
-    """
-    # NOTE: ALSO FULLACCESS
-    return create_access_token(USER1_USERNAME)
-
-
 @pytest.fixture(scope="session", autouse=True)
 def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
     """
