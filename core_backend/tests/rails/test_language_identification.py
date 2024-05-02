@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
-from core_backend.app.llm_call.parse_input import _identify_language
+from core_backend.app.llm_call.process_input import _identify_language
 from core_backend.app.question_answer.schemas import UserQueryRefined, UserQueryResponse
 
 pytestmark = pytest.mark.rails

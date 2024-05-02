@@ -4,7 +4,7 @@ from typing import List, Tuple
 import pytest
 import yaml
 
-from core_backend.app.llm_call.parse_input import _classify_on_off_topic
+from core_backend.app.llm_call.process_input import _classify_on_off_topic
 from core_backend.app.question_answer.schemas import UserQueryRefined, UserQueryResponse
 
 pytestmark = pytest.mark.rails

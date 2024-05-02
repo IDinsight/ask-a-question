@@ -19,7 +19,7 @@ from core_backend.app.config import (
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
-from core_backend.app.llm_call import check_output, parse_input
+from core_backend.app.llm_call import process_input, process_output
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.question_answer.schemas import (
     ResultState,
@@ -140,12 +140,12 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     monkeysession.setattr(
         "core_backend.app.urgency_rules.models.embedding", async_fake_embedding
     )
-    monkeysession.setattr(parse_input, "_classify_safety", mock_return_args)
-    monkeysession.setattr(parse_input, "_classify_on_off_topic", mock_return_args)
-    monkeysession.setattr(parse_input, "_identify_language", mock_identify_language)
-    monkeysession.setattr(parse_input, "_paraphrase_question", mock_return_args)
-    monkeysession.setattr(parse_input, "_translate_question", mock_translate_question)
-    monkeysession.setattr(check_output, "_get_llm_align_score", mock_get_align_score)
+    monkeysession.setattr(process_input, "_classify_safety", mock_return_args)
+    monkeysession.setattr(process_input, "_classify_on_off_topic", mock_return_args)
+    monkeysession.setattr(process_input, "_identify_language", mock_identify_language)
+    monkeysession.setattr(process_input, "_paraphrase_question", mock_return_args)
+    monkeysession.setattr(process_input, "_translate_question", mock_translate_question)
+    monkeysession.setattr(process_output, "_get_llm_align_score", mock_get_align_score)
     monkeysession.setattr(
         "core_backend.app.urgency_detection.routers.detect_urgency", mock_detect_urgency
     )
