@@ -35,67 +35,6 @@ from .utils import _ask_llm_async
 logger = setup_logger("INPUT RAILS")
 
 
-def classify_safety__before(func: Callable) -> Callable:
-    """
-    Decorator to classify the safety of the question.
-    """
-
-    @wraps(func)
-    async def wrapper(
-        question: UserQueryRefined,
-        response: UserQueryResponse | UserQueryResponseError,
-        *args: Any,
-        **kwargs: Any,
-    ) -> UserQueryResponse | UserQueryResponseError:
-        """
-        Wrapper function to classify the safety of the question.
-        """
-        question, response = await _classify_safety(question, response)
-        response = await func(question, response, *args, **kwargs)
-        return response
-
-    return wrapper
-
-
-async def _classify_safety(
-    question: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
-) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
-    """
-    Classifies the safety of the question.
-    """
-    if not isinstance(response, UserQueryResponseError):
-        safety_classification = getattr(
-            SafetyClassification,
-            await _ask_llm_async(
-                question.query_text,
-                SafetyClassification.get_prompt(),
-                litellm_model=LITELLM_MODEL_SAFETY,
-            ),
-        )
-        if safety_classification != SafetyClassification.SAFE:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE,
-                query_id=response.query_id,
-                error_type=ErrorType.QUERY_UNSAFE,
-            )
-            error_response.debug_info.update(response.debug_info)
-            error_response.debug_info["safety_classification"] = (
-                safety_classification.value
-            )
-            error_response.debug_info["query_text"] = question.query_text
-            logger.info(
-                (
-                    f"SAFETY CHECK failed on query id: {str(response.query_id)} "
-                    f"for query text: {question.query_text}"
-                )
-            )
-            return question, error_response
-        else:
-            response.debug_info["safety_classification"] = safety_classification.value
-
-    return question, response
-
-
 def identify_language__before(func: Callable) -> Callable:
     """
     Decorator to identify the language of the question.
@@ -192,68 +131,6 @@ def _process_identified_language_response(
         return error_response
 
 
-def classify_on_off_topic__before(func: Callable) -> Callable:
-    """
-    Decorator to check if the question is on-topic or off-topic.
-    """
-
-    @wraps(func)
-    async def wrapper(
-        question: UserQueryRefined,
-        response: UserQueryResponse | UserQueryResponseError,
-        *args: Any,
-        **kwargs: Any,
-    ) -> UserQueryResponse | UserQueryResponseError:
-        """
-        Wrapper function to check if the question is on-topic or off-topic.
-        """
-        question, response = await _classify_on_off_topic(question, response)
-        response = await func(question, response, *args, **kwargs)
-        return response
-
-    return wrapper
-
-
-async def _classify_on_off_topic(
-    user_query: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
-) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
-    """
-    Checks if the user query is on-topic or off-topic.
-    """
-    if isinstance(response, UserQueryResponseError):
-        return user_query, response
-
-    label = await _ask_llm_async(
-        question=user_query.query_text,
-        prompt=OnOffTopicClassification.get_prompt(),
-        litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
-    )
-
-    basic_cleaned = label.replace(" ", "_").upper()
-
-    on_off_topic_label = getattr(
-        OnOffTopicClassification, basic_cleaned, OnOffTopicClassification.UNKNOWN
-    )
-
-    response.debug_info["on_off_topic"] = on_off_topic_label.value
-
-    if on_off_topic_label == OnOffTopicClassification.OFF_TOPIC:
-        error_response = UserQueryResponseError(
-            error_message="Off-topic query",
-            query_id=response.query_id,
-            error_type=ErrorType.OFF_TOPIC,
-        )
-        error_response.debug_info.update(response.debug_info)
-        error_response.debug_info["query_text"] = user_query.query_text
-        logger.info(
-            f"OFF-TOPIC query found on query id: {response.query_id} for query text"
-            f" {user_query.query_text}"
-        )
-        return user_query, error_response
-
-    return user_query, response
-
-
 def translate_question__before(func: Callable) -> Callable:
     """
     Decorator to translate the question.
@@ -316,6 +193,129 @@ async def _translate_question(
         logger.info("TRANSLATION FAILED on query id: " + str(response.query_id))
 
         return question, error_response
+
+
+def classify_safety__before(func: Callable) -> Callable:
+    """
+    Decorator to classify the safety of the question.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        question: UserQueryRefined,
+        response: UserQueryResponse | UserQueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> UserQueryResponse | UserQueryResponseError:
+        """
+        Wrapper function to classify the safety of the question.
+        """
+        question, response = await _classify_safety(question, response)
+        response = await func(question, response, *args, **kwargs)
+        return response
+
+    return wrapper
+
+
+async def _classify_safety(
+    question: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
+) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
+    """
+    Classifies the safety of the question.
+    """
+    if not isinstance(response, UserQueryResponseError):
+        safety_classification = getattr(
+            SafetyClassification,
+            await _ask_llm_async(
+                question.query_text,
+                SafetyClassification.get_prompt(),
+                litellm_model=LITELLM_MODEL_SAFETY,
+            ),
+        )
+        if safety_classification != SafetyClassification.SAFE:
+            error_response = UserQueryResponseError(
+                error_message=STANDARD_FAILURE_MESSAGE,
+                query_id=response.query_id,
+                error_type=ErrorType.QUERY_UNSAFE,
+            )
+            error_response.debug_info.update(response.debug_info)
+            error_response.debug_info["safety_classification"] = (
+                safety_classification.value
+            )
+            error_response.debug_info["query_text"] = question.query_text
+            logger.info(
+                (
+                    f"SAFETY CHECK failed on query id: {str(response.query_id)} "
+                    f"for query text: {question.query_text}"
+                )
+            )
+            return question, error_response
+        else:
+            response.debug_info["safety_classification"] = safety_classification.value
+
+    return question, response
+
+
+def classify_on_off_topic__before(func: Callable) -> Callable:
+    """
+    Decorator to check if the question is on-topic or off-topic.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        question: UserQueryRefined,
+        response: UserQueryResponse | UserQueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> UserQueryResponse | UserQueryResponseError:
+        """
+        Wrapper function to check if the question is on-topic or off-topic.
+        """
+        question, response = await _classify_on_off_topic(question, response)
+        response = await func(question, response, *args, **kwargs)
+        return response
+
+    return wrapper
+
+
+async def _classify_on_off_topic(
+    user_query: UserQueryRefined, response: UserQueryResponse | UserQueryResponseError
+) -> Tuple[UserQueryRefined, UserQueryResponse | UserQueryResponseError]:
+    """
+    Checks if the user query is on-topic or off-topic.
+    """
+    if isinstance(response, UserQueryResponseError):
+        return user_query, response
+
+    label = await _ask_llm_async(
+        question=user_query.query_text,
+        prompt=OnOffTopicClassification.get_prompt(),
+        litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
+    )
+
+    basic_cleaned = label.replace(" ", "_").upper()
+
+    on_off_topic_label = getattr(
+        OnOffTopicClassification, basic_cleaned, OnOffTopicClassification.UNKNOWN
+    )
+
+    response.debug_info["on_off_topic"] = on_off_topic_label.value
+
+    if on_off_topic_label == OnOffTopicClassification.OFF_TOPIC:
+        error_response = UserQueryResponseError(
+            error_message="Off-topic query",
+            query_id=response.query_id,
+            error_type=ErrorType.OFF_TOPIC,
+        )
+        error_response.debug_info.update(response.debug_info)
+        error_response.debug_info["query_text"] = user_query.query_text
+        logger.info(
+            f"OFF-TOPIC query found on query id: {response.query_id} for query text"
+            f" {user_query.query_text}"
+        )
+        return user_query, error_response
+
+    return user_query, response
 
 
 def paraphrase_question__before(func: Callable) -> Callable:
