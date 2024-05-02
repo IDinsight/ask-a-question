@@ -75,10 +75,8 @@ async def _identify_language(
     identified_lang = getattr(
         IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
     )
-
     question.original_language = identified_lang
-    if question.original_language is not None:
-        response.debug_info["original_language"] = question.original_language.value
+    response.debug_info["original_language"] = identified_lang
 
     processed_response = _process_identified_language_response(
         identified_lang,
@@ -93,14 +91,13 @@ def _process_identified_language_response(
     response: UserQueryResponse,
 ) -> UserQueryResponse | UserQueryResponseError:
     """Process the identified language and return the response."""
-    is_language_supported = (
-        identified_language in IdentifiedLanguage.get_supported_languages()
-    )
 
-    if is_language_supported:
+    supported_languages_list = IdentifiedLanguage.get_supported_languages()
+
+    if identified_language in supported_languages_list:
         return response
     else:
-        supported_languages = ", ".join(IdentifiedLanguage.get_supported_languages())
+        supported_languages = ", ".join(supported_languages_list)
 
         match identified_language:
             case IdentifiedLanguage.UNINTELLIGIBLE:
@@ -124,8 +121,8 @@ def _process_identified_language_response(
         error_response.debug_info.update(response.debug_info)
 
         logger.info(
-            f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value}"
-            " language on query id: " + str(response.query_id)
+            f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value} "
+            f"language on query id: {str(response.query_id)}"
         )
 
         return error_response
@@ -161,8 +158,10 @@ async def _translate_question(
     Translates the question to English.
     """
 
-    if question.original_language == IdentifiedLanguage.ENGLISH or isinstance(
-        response, UserQueryResponseError
+    # skip if error or already in English
+    if (
+        isinstance(response, UserQueryResponseError)
+        or question.original_language == IdentifiedLanguage.ENGLISH
     ):
         return question, response
 
@@ -223,37 +222,35 @@ async def _classify_safety(
     """
     Classifies the safety of the question.
     """
-    if not isinstance(response, UserQueryResponseError):
-        safety_classification = getattr(
-            SafetyClassification,
-            await _ask_llm_async(
-                question.query_text,
-                SafetyClassification.get_prompt(),
-                litellm_model=LITELLM_MODEL_SAFETY,
-            ),
-        )
-        if safety_classification != SafetyClassification.SAFE:
-            error_response = UserQueryResponseError(
-                error_message=STANDARD_FAILURE_MESSAGE,
-                query_id=response.query_id,
-                error_type=ErrorType.QUERY_UNSAFE,
-            )
-            error_response.debug_info.update(response.debug_info)
-            error_response.debug_info["safety_classification"] = (
-                safety_classification.value
-            )
-            error_response.debug_info["query_text"] = question.query_text
-            logger.info(
-                (
-                    f"SAFETY CHECK failed on query id: {str(response.query_id)} "
-                    f"for query text: {question.query_text}"
-                )
-            )
-            return question, error_response
-        else:
-            response.debug_info["safety_classification"] = safety_classification.value
 
-    return question, response
+    if isinstance(response, UserQueryResponseError):
+        return question, response
+
+    llm_classified_safety = await _ask_llm_async(
+        question.query_text,
+        SafetyClassification.get_prompt(),
+        litellm_model=LITELLM_MODEL_SAFETY,
+    )
+    safety_classification = getattr(SafetyClassification, llm_classified_safety)
+    if safety_classification == SafetyClassification.SAFE:
+        response.debug_info["safety_classification"] = safety_classification.value
+        return question, response
+    else:
+        error_response = UserQueryResponseError(
+            error_message=STANDARD_FAILURE_MESSAGE,
+            query_id=response.query_id,
+            error_type=ErrorType.QUERY_UNSAFE,
+        )
+        error_response.debug_info.update(response.debug_info)
+        error_response.debug_info["safety_classification"] = safety_classification.value
+        error_response.debug_info["query_text"] = question.query_text
+        logger.info(
+            (
+                f"SAFETY CHECK failed on query id: {str(response.query_id)} "
+                f"for query text: {question.query_text}"
+            )
+        )
+        return question, error_response
 
 
 def classify_on_off_topic__before(func: Callable) -> Callable:
@@ -292,11 +289,9 @@ async def _classify_on_off_topic(
         prompt=OnOffTopicClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
     )
-
-    basic_cleaned = label.replace(" ", "_").upper()
-
+    label_cleaned = label.replace(" ", "_").upper()
     on_off_topic_label = getattr(
-        OnOffTopicClassification, basic_cleaned, OnOffTopicClassification.UNKNOWN
+        OnOffTopicClassification, label_cleaned, OnOffTopicClassification.UNKNOWN
     )
 
     response.debug_info["on_off_topic"] = on_off_topic_label.value
@@ -310,8 +305,8 @@ async def _classify_on_off_topic(
         error_response.debug_info.update(response.debug_info)
         error_response.debug_info["query_text"] = user_query.query_text
         logger.info(
-            f"OFF-TOPIC query found on query id: {response.query_id} for query text"
-            f" {user_query.query_text}"
+            f"OFF-TOPIC query found on query id: {response.query_id} "
+            f"for query text {user_query.query_text}"
         )
         return user_query, error_response
 
