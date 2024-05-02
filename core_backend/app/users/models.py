@@ -36,6 +36,7 @@ class UserDB(Base):
         return f"<{self.username} mapped to #{self.user_id}>"
 
 
+# not yet used.
 async def save_user_to_db(
     user: UserCreate,
     asession: AsyncSession,

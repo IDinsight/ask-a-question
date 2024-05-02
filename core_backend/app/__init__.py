@@ -12,10 +12,10 @@ from . import (
     admin,
     auth,
     contents,
+    key_management,
     question_answer,
     urgency_detection,
     urgency_rules,
-    users,
     whatsapp_qa,
 )
 from .config import (
@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(contents.router)
     app.include_router(auth.router)
     app.include_router(whatsapp_qa.router)
-    app.include_router(users.router)
+    app.include_router(key_management.router)
     app.include_router(urgency_detection.router)
     app.include_router(urgency_rules.router)
 
