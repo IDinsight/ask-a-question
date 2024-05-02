@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [upvoteStats, setUpvoteStats] = React.useState<Array<number>>([]);
   const { token } = useAuth();
   const [labels, setLabels] = React.useState<Array<string>>([]);
+
   React.useEffect(() => {
     const fetchQuestionStats = async () => {
       setIsLoading(true);
@@ -37,18 +38,18 @@ const Dashboard = () => {
     const lastSixMonths = getPastSixMonths();
     setLabels(lastSixMonths);
   }, [token]);
+
   function calculatePercentageChange(array: number[]): string {
     if (array.length < 2) {
       return "N/A";
     }
     const [latest, previous] = array.slice(-2);
-
     const percentageChange = Math.abs(
-      (latest - previous) / (previous > 0 ? previous : 1)
+      (latest - previous) / (previous > 0 ? previous : 1),
     );
-
     return (percentageChange * 100).toFixed(2) + "%";
   }
+
   function getPastSixMonths(): string[] {
     const months = [
       "January",
@@ -64,28 +65,24 @@ const Dashboard = () => {
       "November",
       "December",
     ];
-
     const today = new Date();
-
     let pastSixMonths = [];
-
     for (let i = 0; i < 6; i++) {
       const monthIndex = new Date(
         today.getFullYear(),
         today.getMonth() - i,
-        1
+        1,
       ).getMonth();
       const year = new Date(
         today.getFullYear(),
         today.getMonth() - i,
-        1
+        1,
       ).getFullYear();
-
       pastSixMonths.unshift(`${months[monthIndex]} ${year}`);
     }
-
     return pastSixMonths;
   }
+
   if (isLoading) {
     return (
       <>
