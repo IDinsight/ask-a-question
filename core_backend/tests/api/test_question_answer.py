@@ -511,7 +511,7 @@ class TestAlignScore:
         assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
-    def test_build_evidence(
+    async def test_build_evidence(
         self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         evidence = _build_evidence(user_query_response)
