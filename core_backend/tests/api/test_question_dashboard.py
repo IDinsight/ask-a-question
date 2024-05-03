@@ -14,7 +14,7 @@ def test_retrieve_question_dashboard(
         mock_dashboard_stats,
     )
     response = client.get(
-        "/dashboard/question_answer",
+        "/dashboard/question_stats",
         headers={"Authorization": f"Bearer {readonly_token}"},
     )
 
