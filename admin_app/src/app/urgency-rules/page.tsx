@@ -93,9 +93,14 @@ const UrgencyRulesPage = () => {
 
   const createNewRecord = () => {
     const newItems = [...items];
-    newItems.push(new UrgencyRule());
-    setEditableIndex(newItems.length - 1);
-    setItems(newItems);
+    if (items[items.length - 1].urgency_rule_id === null) {
+      setEditableIndex(newItems.length - 1);
+      return;
+    } else {
+      newItems.push(new UrgencyRule());
+      setEditableIndex(newItems.length - 1);
+      setItems(newItems);
+    }
   };
 
   const deleteItem = (index: number) => () => {
