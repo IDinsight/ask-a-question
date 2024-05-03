@@ -15,9 +15,6 @@ from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
-    USER1_PASSWORD,
-    USER1_RETRIEVAL_KEY,
-    USER1_USERNAME,
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
@@ -44,6 +41,9 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
 TEST_USER_ID = "test_user_id"
+TEST_USERNAME = "test_username"
+TEST_PASSWORD = "test_password"
+TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
 
 
 @pytest.fixture(scope="session")
@@ -64,9 +64,9 @@ def user(client: TestClient, db_session: Session) -> None:
 
     user_db = UserDB(
         user_id=TEST_USER_ID,
-        username=USER1_USERNAME,
-        hashed_password=get_key_hash(USER1_PASSWORD),
-        hashed_retrieval_key=get_key_hash(USER1_RETRIEVAL_KEY),
+        username=TEST_USERNAME,
+        hashed_password=get_key_hash(TEST_PASSWORD),
+        hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -251,7 +251,7 @@ def fullaccess_token() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token(USER1_USERNAME)
+    return create_access_token(TEST_USERNAME)
 
 
 @pytest.fixture(scope="session", autouse=True)
