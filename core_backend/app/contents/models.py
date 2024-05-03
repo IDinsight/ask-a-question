@@ -55,6 +55,7 @@ class ContentDB(Base):
         """Pretty Print"""
         return (
             f"ContentDB(content_id={self.content_id}, "
+            f"user_id={self.user_id}, "
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
