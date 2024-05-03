@@ -11,7 +11,8 @@ from ..urgency_rules.models import (
     get_cosine_distances_from_rules,
     get_urgency_rules_from_db,
 )
-from ..utils import generate_secret_key
+from ..users.models import UserDB
+from ..utils import generate_secret_key, setup_logger
 from .config import (
     URGENCY_CLASSIFIER,
     URGENCY_DETECTION_MAX_DISTANCE,
@@ -20,6 +21,7 @@ from .config import (
 from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
+logger = setup_logger()
 router = APIRouter(
     dependencies=[Depends(auth_bearer_token)], tags=["Urgency Detection"]
 )
@@ -37,21 +39,28 @@ def urgency_classifier(classifier_func: Callable) -> Callable:
 
 @router.post("/urgency-detect", response_model=UrgencyResponse)
 async def classify_text(
-    urgency_query: UrgencyQuery, asession: AsyncSession = Depends(get_async_session)
+    urgency_query: UrgencyQuery,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(auth_bearer_token),
 ) -> UrgencyResponse:
     """
     Classify the urgency of a text message
     """
     feedback_secret_key = generate_secret_key()
     urgency_query_db = await save_urgency_query_to_db(
-        feedback_secret_key, urgency_query, asession
+        user_id=user_db.user_id,
+        feedback_secret_key=feedback_secret_key,
+        urgency_query=urgency_query,
+        asession=asession,
     )
 
     classifier = ALL_URGENCY_CLASSIFIERS.get(URGENCY_CLASSIFIER)
     if not classifier:
         raise ValueError(f"Invalid urgency classifier: {URGENCY_CLASSIFIER}")
 
-    urgency_response = await classifier(asession, urgency_query)
+    urgency_response = await classifier(
+        user_id=user_db.user_id, asession=asession, urgency_query=urgency_query
+    )
 
     await save_urgency_response_to_db(urgency_query_db, urgency_response, asession)
 
@@ -60,14 +69,18 @@ async def classify_text(
 
 @urgency_classifier
 async def cosine_distance_classifier(
-    asession: AsyncSession, urgency_query: UrgencyQuery
+    user_id: str,
+    asession: AsyncSession,
+    urgency_query: UrgencyQuery,
 ) -> UrgencyResponse:
     """
     Classify the urgency of a text message using cosine distance
     """
 
     cosine_distances = await get_cosine_distances_from_rules(
-        asession, urgency_query.message_text
+        user_id=user_id,
+        asession=asession,
+        message_text=urgency_query.message_text,
     )
     failed_rules = []
     for _, rule in cosine_distances.items():
@@ -88,14 +101,14 @@ async def cosine_distance_classifier(
 
 @urgency_classifier
 async def llm_entailment_classifier(
+    user_id: str,
     asession: AsyncSession,
     urgency_query: UrgencyQuery,
 ) -> UrgencyResponse:
     """
     Classify the urgency of a text message using LLM entailment
     """
-
-    rules = await get_urgency_rules_from_db(asession)
+    rules = await get_urgency_rules_from_db(user_id=user_id, asession=asession)
     tasks = []
     for rule in rules:
         tasks.append(detect_urgency(rule.urgency_rule_text, urgency_query.message_text))

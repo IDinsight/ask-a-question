@@ -31,7 +31,9 @@ async def create_urgency_rule(
     """
     Create a new urgency rule
     """
-    urgency_rule_db = await save_urgency_rule_to_db(urgency_rule, asession)
+    urgency_rule_db = await save_urgency_rule_to_db(
+        user_id=user_db.user_id, urgency_rule=urgency_rule, asession=asession
+    )
     return _convert_record_to_schema(urgency_rule_db)
 
 
@@ -45,7 +47,9 @@ async def get_urgency_rule(
     Get a single urgency rule by id
     """
 
-    urgency_rule_db = await get_urgency_rule_by_id_from_db(urgency_rule_id, asession)
+    urgency_rule_db = await get_urgency_rule_by_id_from_db(
+        user_id=user_db.user_id, urgency_rule_id=urgency_rule_id, asession=asession
+    )
     if not urgency_rule_db:
         raise HTTPException(
             status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
@@ -63,7 +67,9 @@ async def delete_urgency_rule(
     Delete a single urgency rule by id
     """
 
-    await delete_urgency_rule_from_db(urgency_rule_id, asession)
+    await delete_urgency_rule_from_db(
+        user_id=user_db.user_id, urgency_rule_id=urgency_rule_id, asession=asession
+    )
 
 
 @router.put("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
@@ -77,8 +83,9 @@ async def update_urgency_rule(
     Update a single urgency rule by id
     """
     old_urgency_rule = await get_urgency_rule_by_id_from_db(
-        urgency_rule_id,
-        asession,
+        user_id=user_db.user_id,
+        urgency_rule_id=urgency_rule_id,
+        asession=asession,
     )
 
     if not old_urgency_rule:
@@ -87,7 +94,10 @@ async def update_urgency_rule(
         )
 
     urgency_rule_db = await update_urgency_rule_in_db(
-        urgency_rule_id, urgency_rule, asession
+        user_id=user_db.user_id,
+        urgency_rule_id=urgency_rule_id,
+        urgency_rule=urgency_rule,
+        asession=asession,
     )
     return _convert_record_to_schema(urgency_rule_db)
 
@@ -100,7 +110,9 @@ async def get_urgency_rules(
     """
     Get all urgency rules
     """
-    urgency_rules_db = await get_urgency_rules_from_db(asession)
+    urgency_rules_db = await get_urgency_rules_from_db(
+        user_id=user_db.user_id, asession=asession
+    )
     return [
         _convert_record_to_schema(urgency_rule_db)
         for urgency_rule_db in urgency_rules_db
@@ -113,6 +125,7 @@ def _convert_record_to_schema(urgency_rule_db: UrgencyRuleDB) -> UrgencyRuleRetr
     """
     return UrgencyRuleRetrieve(
         urgency_rule_id=urgency_rule_db.urgency_rule_id,
+        user_id=urgency_rule_db.user_id,
         created_datetime_utc=urgency_rule_db.created_datetime_utc,
         updated_datetime_utc=urgency_rule_db.updated_datetime_utc,
         urgency_rule_text=urgency_rule_db.urgency_rule_text,
