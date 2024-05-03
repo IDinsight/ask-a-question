@@ -21,5 +21,6 @@ class UrgencyRuleRetrieve(UrgencyRuleCreate):
     """
 
     urgency_rule_id: int
+    user_id: str
     created_datetime_utc: datetime
     updated_datetime_utc: datetime

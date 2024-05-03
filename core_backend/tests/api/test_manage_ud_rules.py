@@ -149,6 +149,7 @@ async def test_convert_record_to_schema() -> None:
     _id = 1
     record = UrgencyRuleDB(
         urgency_rule_id=_id,
+        user_id="test_user_id",
         urgency_rule_text="sample text",
         urgency_rule_vector=await async_fake_embedding(),
         urgency_rule_metadata={"extra_field": "extra value"},

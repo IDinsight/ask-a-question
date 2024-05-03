@@ -5,6 +5,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     DateTime,
+    ForeignKey,
     Integer,
     String,
     delete,
@@ -29,6 +30,9 @@ class UrgencyRuleDB(Base):
     urgency_rule_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
     )
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("user.user_id"), nullable=False
+    )
     urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
     urgency_rule_vector: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
@@ -43,13 +47,14 @@ class UrgencyRuleDB(Base):
 
 
 async def save_urgency_rule_to_db(
-    urgency_rule: UrgencyRuleCreate, asession: AsyncSession
+    user_id: str, urgency_rule: UrgencyRuleCreate, asession: AsyncSession
 ) -> UrgencyRuleDB:
     """
     Save urgency rule to the database
     """
     urgency_rule_vector = await embedding(urgency_rule.urgency_rule_text)
     urgency_rule_db = UrgencyRuleDB(
+        user_id=user_id,
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
         urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
@@ -64,7 +69,10 @@ async def save_urgency_rule_to_db(
 
 
 async def update_urgency_rule_in_db(
-    urgency_rule_id: int, urgency_rule: UrgencyRuleCreate, asession: AsyncSession
+    user_id: str,
+    urgency_rule_id: int,
+    urgency_rule: UrgencyRuleCreate,
+    asession: AsyncSession,
 ) -> UrgencyRuleDB:
     """
     Update urgency rule in the database
@@ -72,6 +80,7 @@ async def update_urgency_rule_in_db(
     urgency_rule_vector = await embedding(urgency_rule.urgency_rule_text)
     urgency_rule_db = UrgencyRuleDB(
         urgency_rule_id=urgency_rule_id,
+        user_id=user_id,
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
         urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
@@ -85,33 +94,49 @@ async def update_urgency_rule_in_db(
 
 
 async def delete_urgency_rule_from_db(
-    urgency_rule_id: int, asession: AsyncSession
+    user_id: str, urgency_rule_id: int, asession: AsyncSession
 ) -> None:
     """
     Delete urgency rule from the database
     """
-    stmt = delete(UrgencyRuleDB).where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
+    stmt = (
+        delete(UrgencyRuleDB)
+        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
+    )
     await asession.execute(stmt)
     await asession.commit()
 
 
 async def get_urgency_rule_by_id_from_db(
-    urgency_rule_id: int, asession: AsyncSession
+    user_id: str, urgency_rule_id: int, asession: AsyncSession
 ) -> UrgencyRuleDB | None:
     """
     Get urgency rule by ID from the database
     """
-    urgency_rule = await asession.get(UrgencyRuleDB, urgency_rule_id)
-    return urgency_rule
+    stmt = (
+        select(UrgencyRuleDB)
+        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
+    )
+    urgency_rule_row = (await asession.execute(stmt)).first()
+    if urgency_rule_row:
+        return urgency_rule_row[0]
+    else:
+        return None
 
 
 async def get_urgency_rules_from_db(
-    asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
+    user_id: str, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
 ) -> List[UrgencyRuleDB]:
     """
     Get urgency rules from the database
     """
-    stmt = select(UrgencyRuleDB).order_by(UrgencyRuleDB.urgency_rule_id)
+    stmt = (
+        select(UrgencyRuleDB)
+        .where(UrgencyRuleDB.user_id == user_id)
+        .order_by(UrgencyRuleDB.urgency_rule_id)
+    )
     if offset > 0:
         stmt = stmt.offset(offset)
     if limit is not None:
@@ -122,6 +147,7 @@ async def get_urgency_rules_from_db(
 
 
 async def get_cosine_distances_from_rules(
+    user_id: str,
     asession: AsyncSession,
     message_text: str,
 ) -> Dict[int, Dict[str, Union[str, float]]]:
@@ -129,12 +155,16 @@ async def get_cosine_distances_from_rules(
     Get cosine distances from urgency rules
     """
     message_vector = await embedding(message_text)
-    query = select(
-        UrgencyRuleDB,
-        UrgencyRuleDB.urgency_rule_vector.cosine_distance(message_vector).label(
-            "distance"
-        ),
-    ).order_by("distance")
+    query = (
+        select(
+            UrgencyRuleDB,
+            UrgencyRuleDB.urgency_rule_vector.cosine_distance(message_vector).label(
+                "distance"
+            ),
+        )
+        .where(UrgencyRuleDB.user_id == user_id)
+        .order_by("distance")
+    )
 
     search_result = (await asession.execute(query)).all()
 

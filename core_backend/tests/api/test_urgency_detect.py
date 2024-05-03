@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core_backend.app.database import get_async_session
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
-from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
+from core_backend.tests.api.conftest import TEST_USER_ID, TEST_USER_RETRIEVAL_KEY
 
 
 class TestUrgencyDetectionToken:
@@ -53,6 +53,8 @@ class TestUrgencyClassifiers:
         urgency_query = UrgencyQuery(
             message_text="Is it normal to feel bloated after 2 burgers and a milkshake?"
         )
-        classifier_response = await classifier(asession, urgency_query)
+        classifier_response = await classifier(
+            user_id=TEST_USER_ID, asession=asession, urgency_query=urgency_query
+        )
 
         assert isinstance(classifier_response, UrgencyResponse)
