@@ -4,7 +4,6 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.config import USER1_RETRIEVAL_KEY
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.process_input import (
     _classify_on_off_topic,
@@ -22,12 +21,13 @@ from core_backend.app.question_answer.schemas import (
     QuerySearchResult,
     ResultState,
 )
+from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
 
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{USER1_RETRIEVAL_KEY}_incorrect", 401), (USER1_RETRIEVAL_KEY, 200)],
+        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
     )
     async def test_content_response(
         self,
@@ -54,17 +54,17 @@ class TestEmbeddingsSearch:
             json={
                 "query_text": "Tell me about a good sport to play",
             },
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         return response.json()
 
     @pytest.mark.parametrize(
         "token, expected_status_code, endpoint",
         [
-            (f"{USER1_RETRIEVAL_KEY}_incorrect", 401, "/response-feedback"),
-            (USER1_RETRIEVAL_KEY, 200, "/response-feedback"),
-            (f"{USER1_RETRIEVAL_KEY}_incorrect", 401, "/content-feedback"),
-            (USER1_RETRIEVAL_KEY, 200, "/content-feedback"),
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/response-feedback"),
+            (TEST_USER_RETRIEVAL_KEY, 200, "/response-feedback"),
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/content-feedback"),
+            (TEST_USER_RETRIEVAL_KEY, 200, "/content-feedback"),
         ],
     )
     async def test_response_feedback_correct_token(
@@ -118,7 +118,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         assert response.status_code == 400
 
@@ -138,7 +138,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         assert response.status_code == 400
 
@@ -162,7 +162,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         assert response.status_code == 422
 
@@ -184,7 +184,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         assert response.status_code == 200
 
@@ -208,7 +208,7 @@ class TestEmbeddingsSearch:
                 "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
-            headers={"Authorization": f"Bearer {USER1_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
         )
         assert response.status_code == response_code
 
@@ -216,7 +216,7 @@ class TestEmbeddingsSearch:
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{USER1_RETRIEVAL_KEY}_incorrect", 401), (USER1_RETRIEVAL_KEY, 200)],
+        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
     )
     async def test_llm_response(
         self,
