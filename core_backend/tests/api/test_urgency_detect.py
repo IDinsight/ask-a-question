@@ -54,7 +54,7 @@ class TestUrgencyClassifiers:
             message_text="Is it normal to feel bloated after 2 burgers and a milkshake?"
         )
         classifier_response = await classifier(
-            user_id=TEST_USER_ID, asession=asession, urgency_query=urgency_query
+            user_id=TEST_USER_ID, urgency_query=urgency_query, asession=asession
         )
 
         assert isinstance(classifier_response, UrgencyResponse)

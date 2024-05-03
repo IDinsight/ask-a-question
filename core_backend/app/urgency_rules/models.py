@@ -148,8 +148,8 @@ async def get_urgency_rules_from_db(
 
 async def get_cosine_distances_from_rules(
     user_id: str,
-    asession: AsyncSession,
     message_text: str,
+    asession: AsyncSession,
 ) -> Dict[int, Dict[str, Union[str, float]]]:
     """
     Get cosine distances from urgency rules
