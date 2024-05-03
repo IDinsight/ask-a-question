@@ -11,16 +11,16 @@ import ThemeColor from "@mui/material/styles/createPalette";
 import { appColors } from "@/utils";
 import { Layout } from "./Layout";
 
-const CardStatsVertical = ({
+const StatsCard = ({
   title,
-  stats,
+  stat,
   icon,
   color = "primary",
   trendNumber,
   trend = "positive",
 }: {
   title: string;
-  stats: string;
+  stat: string;
   icon: ReactNode;
   color?: typeof ThemeColor | string;
   trendNumber: string;
@@ -61,7 +61,7 @@ const CardStatsVertical = ({
               >
                 {title}
               </Typography>
-              <Typography variant="h5">{stats}</Typography>
+              <Typography variant="h5">{stat}</Typography>
             </Box>
             <Avatar
               sx={{
@@ -109,4 +109,4 @@ const CardStatsVertical = ({
   );
 };
 
-export default CardStatsVertical;
+export default StatsCard;

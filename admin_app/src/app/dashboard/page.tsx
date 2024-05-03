@@ -5,12 +5,13 @@ import Grid from "@mui/material/Grid";
 import SmsIcon from "@mui/icons-material/Sms";
 import WeeklyOverview from "@/components/BarChart";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import CardStatisticsVerticalComponent from "@/components/StatisticsCard";
+import StatsCard from "@/components/StatisticsCard";
+
 import ApexChartWrapper from "@/components/ApexCharWrapper";
 import React from "react";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { CircularProgress } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
 
@@ -45,25 +46,25 @@ const Dashboard = () => {
     }
     const [latest, previous] = array.slice(-2);
     const percentageChange = Math.abs(
-      (latest - previous) / (previous > 0 ? previous : 1),
+      (latest - previous) / (previous > 0 ? previous : 1)
     );
-    return (percentageChange * 100).toFixed(2) + "%";
+    return (percentageChange * 100).toFixed(0) + "%";
   }
 
   function getPastSixMonths(): string[] {
     const months = [
-      "January",
-      "February",
-      "March",
-      "April",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
       "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     const today = new Date();
     let pastSixMonths = [];
@@ -71,12 +72,12 @@ const Dashboard = () => {
       const monthIndex = new Date(
         today.getFullYear(),
         today.getMonth() - i,
-        1,
+        1
       ).getMonth();
       const year = new Date(
         today.getFullYear(),
         today.getMonth() - i,
-        1,
+        1
       ).getFullYear();
       pastSixMonths.unshift(`${months[monthIndex]} ${year}`);
     }
@@ -87,7 +88,6 @@ const Dashboard = () => {
     return (
       <>
         <Layout.FlexBox
-          bgcolor="lightgray.main"
           sx={{
             mx: sizes.baseGap,
             py: sizes.tinyGap,
@@ -113,60 +113,58 @@ const Dashboard = () => {
   }
   return (
     <ApexChartWrapper>
-      <Grid container spacing={6} sx={{ mt: 4 }}>
-        <Grid item xs={12}>
-          <Grid container justifyContent="center" spacing={6}>
-            <Grid item xs={6} md={4} lg={4}>
-              <CardStatisticsVerticalComponent
-                stats={
-                  questionStats && questionStats.length > 5
-                    ? questionStats[5].toString()
-                    : "0"
-                }
-                icon={<SmsIcon />}
-                trend={
-                  questionStats &&
-                  questionStats.length > 5 &&
-                  questionStats[5] >= questionStats[4]
-                    ? "positive"
-                    : "negative"
-                }
-                trendNumber={
-                  questionStats ? calculatePercentageChange(questionStats) : "0"
-                }
-                title="Total questions"
-              />
-            </Grid>
-            <Grid item xs={6} md={4} lg={4}>
-              <CardStatisticsVerticalComponent
-                stats={
-                  upvoteStats && upvoteStats.length > 5
-                    ? upvoteStats[5].toString()
-                    : "0"
-                }
-                trend={
-                  upvoteStats &&
-                  upvoteStats.length > 5 &&
-                  upvoteStats[5] >= upvoteStats[4]
-                    ? "positive"
-                    : "negative"
-                }
-                trendNumber={
-                  upvoteStats ? calculatePercentageChange(upvoteStats) : "0"
-                }
-                title="Total upvotes"
-                icon={<ThumbUpIcon />}
-              />
-            </Grid>
-            <Grid item xs={12} md={6} lg={10} sx={{ mt: 4 }}>
-              <WeeklyOverview
-                labels={labels ? labels : []}
-                data={questionStats ? questionStats : []}
-              />
-            </Grid>
+      <Box component="div" sx={{ mt: 4 }}>
+        <Grid container justifyContent="center" spacing={6}>
+          <Grid item xs={6} md={4} lg={4}>
+            <StatsCard
+              stat={
+                questionStats && questionStats.length > 5
+                  ? questionStats[5].toString()
+                  : "0"
+              }
+              icon={<SmsIcon />}
+              trend={
+                questionStats &&
+                questionStats.length > 5 &&
+                questionStats[5] >= questionStats[4]
+                  ? "positive"
+                  : "negative"
+              }
+              trendNumber={
+                questionStats ? calculatePercentageChange(questionStats) : "0"
+              }
+              title="Total questions"
+            />
+          </Grid>
+          <Grid item xs={6} md={4} lg={4}>
+            <StatsCard
+              stat={
+                upvoteStats && upvoteStats.length > 5
+                  ? upvoteStats[5].toString()
+                  : "0"
+              }
+              trend={
+                upvoteStats &&
+                upvoteStats.length > 5 &&
+                upvoteStats[5] >= upvoteStats[4]
+                  ? "positive"
+                  : "negative"
+              }
+              trendNumber={
+                upvoteStats ? calculatePercentageChange(upvoteStats) : "0"
+              }
+              title="Total upvotes"
+              icon={<ThumbUpIcon />}
+            />
+          </Grid>
+          <Grid item xs={12} md={8} lg={8} sx={{ mt: 4 }}>
+            <WeeklyOverview
+              labels={labels ? labels : []}
+              data={questionStats ? questionStats : []}
+            />
           </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </ApexChartWrapper>
   );
 };

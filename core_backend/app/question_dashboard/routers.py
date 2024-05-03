@@ -14,7 +14,7 @@ router = APIRouter(prefix="/dashboard")
 logger = setup_logger()
 
 
-@router.get("/question_answer", response_model=QuestionDashBoard)
+@router.get("/question_stats", response_model=QuestionDashBoard)
 async def retrieve_questions_stats(
     readonly_access_user: Annotated[
         AuthenticatedUser, Depends(get_current_readonly_user)
