@@ -4,6 +4,7 @@ import Card from "@mui/material/Card";
 import { useTheme } from "@mui/material/styles";
 import CardHeader from "@mui/material/CardHeader";
 import CardContent from "@mui/material/CardContent";
+import { appColors } from "@/utils";
 
 import { ApexOptions } from "apexcharts";
 
@@ -26,13 +27,16 @@ const WeeklyOverview = ({
     },
     plotOptions: {
       bar: {
-        borderRadius: 9,
-        columnWidth: "30%",
+        borderRadius: 10,
+        dataLabels: {
+          position: "top",
+        },
+        columnWidth: "10%",
       },
     },
     stroke: {
       width: 2,
-      colors: [theme.palette.background.paper],
+      colors: [appColors.yellow],
     },
     legend: { show: false },
     grid: {
@@ -44,7 +48,17 @@ const WeeklyOverview = ({
         bottom: 5,
       },
     },
-    dataLabels: { enabled: true },
+    dataLabels: {
+      enabled: true,
+      offsetY: -20,
+      style: {
+        fontSize: "12px",
+      },
+    },
+    fill: {
+      colors: [appColors.yellow],
+    },
+
     colors: [
       theme.palette.background.default,
       theme.palette.background.default,

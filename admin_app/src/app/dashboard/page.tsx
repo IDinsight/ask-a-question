@@ -13,7 +13,7 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Box, CircularProgress } from "@mui/material";
 import { Layout } from "@/components/Layout";
-import { sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
@@ -122,7 +122,7 @@ const Dashboard = () => {
                   ? questionStats[5].toString()
                   : "0"
               }
-              icon={<SmsIcon />}
+              icon={<SmsIcon fontSize="large" />}
               trend={
                 questionStats &&
                 questionStats.length > 5 &&
@@ -134,6 +134,7 @@ const Dashboard = () => {
                 questionStats ? calculatePercentageChange(questionStats) : "0"
               }
               title="Total questions"
+              color={appColors.yellow}
             />
           </Grid>
           <Grid item xs={6} md={4} lg={4}>
@@ -154,10 +155,11 @@ const Dashboard = () => {
                 upvoteStats ? calculatePercentageChange(upvoteStats) : "0"
               }
               title="Total upvotes"
-              icon={<ThumbUpIcon />}
+              icon={<ThumbUpIcon fontSize="large" />}
+              color={appColors.green}
             />
           </Grid>
-          <Grid item xs={12} md={8} lg={8} sx={{ mt: 4 }}>
+          <Grid item xs={12} md={8} lg={8} sx={{ mt: 1 }}>
             <WeeklyOverview
               labels={labels ? labels : []}
               data={questionStats ? questionStats : []}

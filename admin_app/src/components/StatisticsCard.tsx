@@ -66,9 +66,9 @@ const StatsCard = ({
             <Avatar
               sx={{
                 color: "common.white",
-                backgroundColor: `${color}.main`,
-                width: 50,
-                height: 50,
+                backgroundColor: `${color}`,
+                width: 80,
+                height: 80,
               }}
             >
               {icon}
