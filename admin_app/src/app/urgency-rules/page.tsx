@@ -171,7 +171,8 @@ const UrgencyRulesPage = () => {
                 key={index}
                 sx={{ borderBottom: 1, borderColor: "divider" }}
                 secondaryAction={
-                  index === hoveredIndex && (
+                  index === hoveredIndex &&
+                  currAccessLevel == "fullaccess" && (
                     <>
                       <IconButton
                         edge="end"
@@ -190,7 +191,9 @@ const UrgencyRulesPage = () => {
                 disablePadding
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(-1)}
-                onDoubleClick={handleEdit(index)}
+                onDoubleClick={
+                  currAccessLevel == "fullaccess" ? handleEdit(index) : () => {}
+                }
               >
                 <ListItemIcon>#{index + 1}</ListItemIcon>
                 {editableIndex === index ? (
