@@ -9,7 +9,7 @@ date: 2024-05-02
 # Introducing Urgency Detection
 
 You may wish to handle urgent messages differently. For example, when deploying
-a question answering service for in a health context, you may wish to refer them to their
+a question answering service in a health context, you may wish to refer the user to their
 nearest health center, or escalate it immediately to a human operator.
 
 We introduce a new endpoint and new page in the Admin App to enable this.
@@ -18,17 +18,19 @@ We introduce a new endpoint and new page in the Admin App to enable this.
 
 ## Defining urgency rules
 
-Using the Admin App, you can define warning signs in natural language.
+Using the Admin App, you can define your rules in natural language. For example,
+here are a few rules borrowed directly from the CDC website on
+[Urgent Maternal Warning Signs](https://www.cdc.gov/hearher/maternal-warning-signs/index.html):
 
 ![Urgency rules](../images/urgency-rules-screenshot.png){: .blog-img }
 
-It's as simple as that. You don't need to train a model (though you can if you want to,
-see ["Or write your own"](#or-write-your-own) below).
+It's as simple as that. You don't need to train a model (though you can if you want to.
+See ["Or write your own"](#or-write-your-own) below).
 
 ## Using the urgency detection endpoint
 
-You should see your Swagger UI/OpenAPI documentation for details but here is
-screenshot for us lazy ones:
+You should refer to your Swagger UI/OpenAPI documentation for details but here is
+a screenshot for us lazy ones:
 
 ![Urgency Detection Swagger](../images/swagger-ud-screenshot.png){: .blog-img }
 
@@ -67,8 +69,6 @@ and you can update the `URGENCY_CLASSIFIER` environment variable to `your_fancy_
 Reminder that we [setup a proxy server](./move-to-litellm-proxy.md) to make it
 easy to switch between models. If you want to use a different model, you can host it
 and update the `LITELLM_MODEL_URGENCY_DETECT` environment variable to point to your model.
-
-Please reach out if this is something you are interested in.
 
 ## Doc references
 
