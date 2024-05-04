@@ -29,6 +29,7 @@ nav:
               - components/admin-app/index.md
               - Access Levels: components/admin-app/access-level.md
               - Manage Content: components/admin-app/manage-content.md
+              - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
               - Playground: components/admin-app/playground.md
           - Question-Answering Service:
               - components/qa-service/index.md
@@ -36,6 +37,8 @@ nav:
               - LLM Response: components/qa-service/llm-response.md
               - Response Feedback: components/qa-service/response-feedback.md
               - Content Feedback: components/qa-service/content-feedback.md
+          - Urgency Detection:
+              - components/urgency-detection/index.md
       - Internal components:
           - LLM Proxy Server:
               - components/litellm-proxy/index.md
