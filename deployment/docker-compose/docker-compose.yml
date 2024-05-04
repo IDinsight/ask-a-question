@@ -14,8 +14,6 @@ services:
       watch:
         - action: rebuild
           path: ../../core_backend
-    volumes:
-      - local_dynamic_storage:/home/storage
 
   admin_app:
     image: idinsight/aaq-admin-app:latest
@@ -25,7 +23,7 @@ services:
       args:
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
     command: >
-      npm start
+      node server.js
     depends_on:
       - core_backend
     restart: always
@@ -73,6 +71,5 @@ services:
     restart: always
 
 volumes:
-  local_dynamic_storage:
   caddy_data:
   caddy_config:

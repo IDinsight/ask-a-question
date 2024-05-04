@@ -60,7 +60,7 @@ if __name__ == "__main__":
         print("Failed to authenticate:", response.text)
 
     # API endpoint
-    api_endpoint = f"https://{args.domain}/api/content/create"
+    api_endpoint = f"https://{args.domain}/api/content/"
 
     # Headers for the request
     headers = {

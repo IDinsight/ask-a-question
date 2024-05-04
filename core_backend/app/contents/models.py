@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from litellm import aembedding, embedding
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
@@ -14,10 +13,10 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_EMBEDDING
-from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
+from ..utils import embedding
+from .config import PGVECTOR_VECTOR_SIZE
 from .schemas import (
     ContentCreate,
     ContentUpdate,
@@ -49,7 +48,16 @@ class ContentDB(Base):
 
     def __repr__(self) -> str:
         """Pretty Print"""
-        return f"<Content #{self.content_id}:  {self.content_text}>"
+        return (
+            f"ContentDB(content_id={self.content_id}, "
+            f"content_embedding=..., "
+            f"content_title={self.content_title}, "
+            f"content_text={self.content_text}, "
+            f"content_language={self.content_language}, "
+            f"content_metadata={self.content_metadata}, "
+            f"created_datetime_utc={self.created_datetime_utc}, "
+            f"updated_datetime_utc={self.updated_datetime_utc})"
+        )
 
 
 async def save_content_to_db(
@@ -102,6 +110,8 @@ async def update_content_in_db(
 
     content_db = await asession.merge(content_db)
     await asession.commit()
+    await asession.refresh(content_db)
+
     return content_db
 
 
@@ -155,36 +165,7 @@ async def _get_content_embeddings(
     Vectorizes the content
     """
     text_to_embed = content.content_title + "\n" + content.content_text
-    content_embedding = embedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input=text_to_embed,
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-    ).data[0]["embedding"]
-    return content_embedding
-
-
-async def get_similar_content(
-    question: str,
-    n_similar: int,
-    asession: AsyncSession,
-) -> Dict[int, tuple[str, str, int, float]]:
-    """
-    Get the most similar points in the vector table
-    """
-    response = embedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input=question,
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-    )
-    question_embedding = response.data[0]["embedding"]
-
-    return await get_search_results(
-        question_embedding,
-        n_similar,
-        asession,
-    )
+    return await embedding(text_to_embed)
 
 
 async def get_similar_content_async(
@@ -193,13 +174,9 @@ async def get_similar_content_async(
     """
     Get the most similar points in the vector table
     """
-    response = await aembedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input=question,
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
+    question_embedding = await embedding(
+        question,
     )
-    question_embedding = response.data[0]["embedding"]
 
     return await get_search_results(
         question_embedding,

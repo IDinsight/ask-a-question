@@ -10,6 +10,8 @@ services:
       - AWS_REGION=${AWS_REGION}
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
+    ports:
+      - "4000:4000"
     deploy:
       resources:
         limits:

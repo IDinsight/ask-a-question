@@ -152,8 +152,8 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
     """
     prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
     result = await _ask_llm_async(
-        prompt,
-        align_score_data["claim"],
+        question=align_score_data["claim"],
+        prompt=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
     )
 
@@ -161,6 +161,7 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
         logger.error(f"LLM alignment score response is not valid json: {e}")
+        raise RuntimeError("LLM alignment score response is not valid json") from e
 
     logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
 

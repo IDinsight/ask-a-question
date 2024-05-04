@@ -138,8 +138,8 @@ const ContentViewModal = ({
                 {...appStyles.justifyContentCenter}
                 sx={{ pr: sizes.baseGap }}
               >
-                <RemoveRedEye fontSize="small" color="disabled" />
-                <Typography variant="body2">_</Typography>
+                {/* <RemoveRedEye fontSize="small" color="disabled" /> */}
+                {/* <Typography variant="body2">_</Typography> */}
                 <ThumbUp fontSize="small" color="disabled" />
                 <Typography variant="body2">{positive_votes}</Typography>
                 <ThumbDown fontSize="small" color="disabled" />

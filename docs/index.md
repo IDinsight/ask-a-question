@@ -2,7 +2,7 @@
 <img src="./images/logo-light.png#only-dark" alt="logo-light" width="600"/><img src="./images/logo-dark.png#only-light" alt="logo-dark" width="600"/>
 </pre>
 
-<h3 align="center" >On-demand answers to questions from your knowledge base</h3>
+<h3 align="center" >No-code, easy-to-setup and reliable RAG plugin for chatbots</h3>
 
 <strong > Ask A Question</strong> is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 

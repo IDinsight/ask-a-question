@@ -3,8 +3,10 @@ data "aws_iam_policy_document" "agent_assume_role" {
   # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 
   # The policy document that grants an entity permission to assume the role.
+
   statement {
     actions = ["sts:AssumeRole"]
+
     principals {
       type        = "Service"
       identifiers = ["ec2.amazonaws.com"]

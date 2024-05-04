@@ -8,15 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import auth_bearer_token
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
-from ..llm_call.check_output import check_align_score__after
-from ..llm_call.llm_prompts import SUMMARY_FAILURE_MESSAGE
+from ..llm_call.llm_prompts import ANSWER_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
-from ..llm_call.parse_input import (
+from ..llm_call.process_input import (
+    classify_on_off_topic__before,
     classify_safety__before,
     identify_language__before,
     paraphrase_question__before,
     translate_question__before,
 )
+from ..llm_call.process_output import check_align_score__after
+from ..utils import generate_secret_key
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     UserQueryDB,
@@ -38,11 +40,12 @@ from .schemas import (
 )
 from .utils import (
     convert_search_results_to_schema,
-    generate_secret_key,
     get_context_string_from_retrieved_contents,
 )
 
-router = APIRouter(dependencies=[Depends(auth_bearer_token)])
+router = APIRouter(
+    dependencies=[Depends(auth_bearer_token)], tags=["Question Answering"]
+)
 
 
 @router.post(
@@ -76,8 +79,9 @@ async def llm_response(
 @check_align_score__after
 @identify_language__before
 @translate_question__before
-@paraphrase_question__before
 @classify_safety__before
+@classify_on_off_topic__before
+@paraphrase_question__before
 async def get_llm_answer(
     user_query_refined: UserQueryRefined,
     response: UserQueryResponse,
@@ -86,6 +90,14 @@ async def get_llm_answer(
     """
     Get similar content and construct the LLM answer for the user query
     """
+    if user_query_refined.original_language is None:
+        raise ValueError(
+            (
+                "Language hasn't been identified. "
+                "Identify language before calling this function."
+            )
+        )
+
     if not isinstance(response, UserQueryResponseError):
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
@@ -96,12 +108,16 @@ async def get_llm_answer(
         response.content_response = content_response
         context = get_context_string_from_retrieved_contents(content_response)
 
-        llm_response = await get_llm_rag_answer(user_query_refined.query_text, context)
+        llm_response = await get_llm_rag_answer(
+            user_query_refined.query_text,
+            context,
+            user_query_refined.original_language,
+        )
 
-        if llm_response == SUMMARY_FAILURE_MESSAGE:
+        if llm_response == ANSWER_FAILURE_MESSAGE:
             response.state = ResultState.ERROR
             response.llm_response = None
-            response.debug_info["reason"] = "LLM Summary failed"
+            response.debug_info["reason"] = "Response generation failed"
         else:
             response.state = ResultState.FINAL
             response.llm_response = llm_response
@@ -164,6 +180,7 @@ async def embeddings_search(
 
 @identify_language__before
 @translate_question__before
+@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_semantic_matches(
     user_query_refined: UserQueryRefined,

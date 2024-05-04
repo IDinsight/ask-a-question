@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.contents.routers import _convert_record_to_schema
 
-from .conftest import fake_embedding
+from .conftest import async_fake_embedding
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
@@ -48,7 +48,7 @@ class TestManageContent:
             ("title 2", "test content 2", {"meta_key": "meta_value"}),
         ],
     )
-    def test_create_and_delete_content(
+    async def test_create_and_delete_content(
         self,
         client: TestClient,
         content_title: str,
@@ -89,7 +89,7 @@ class TestManageContent:
             ),
         ],
     )
-    def test_edit_and_retrieve_content(
+    async def test_edit_and_retrieve_content(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -123,7 +123,7 @@ class TestManageContent:
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
-    def test_edit_content_not_found(
+    async def test_edit_content_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
@@ -139,7 +139,7 @@ class TestManageContent:
 
         assert response.status_code == 404
 
-    def test_list_content(
+    async def test_list_content(
         self, client: TestClient, existing_content_id: int, readonly_token: str
     ) -> None:
         response = client.get(
@@ -148,7 +148,7 @@ class TestManageContent:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
-    def test_delete_content(
+    async def test_delete_content(
         self, client: TestClient, existing_content_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
@@ -163,7 +163,7 @@ class TestAuthManageContent:
         "access_token, expected_status",
         [("readonly_token", 400), ("fullaccess_token", 200)],
     )
-    def test_auth_delete(
+    async def test_auth_delete(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -182,7 +182,7 @@ class TestAuthManageContent:
         "access_token, expected_status",
         [("readonly_token", 400), ("fullaccess_token", 200)],
     )
-    def test_auth_create(
+    async def test_auth_create(
         self,
         client: TestClient,
         access_token: str,
@@ -206,7 +206,7 @@ class TestAuthManageContent:
         "access_token, expected_status",
         [("readonly_token", 400), ("fullaccess_token", 200)],
     )
-    def test_auth_edit(
+    async def test_auth_edit(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -231,7 +231,7 @@ class TestAuthManageContent:
         "access_token, expected_status",
         [("readonly_token", 200), ("fullaccess_token", 200)],
     )
-    def test_auth_list(
+    async def test_auth_list(
         self,
         client: TestClient,
         access_token: str,
@@ -249,7 +249,7 @@ class TestAuthManageContent:
         "access_token, expected_status",
         [("readonly_token", 200), ("fullaccess_token", 200)],
     )
-    def test_auth_retrieve(
+    async def test_auth_retrieve(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -265,13 +265,13 @@ class TestAuthManageContent:
         assert response.status_code == expected_status
 
 
-def test_convert_record_to_schema() -> None:
+async def test_convert_record_to_schema() -> None:
     content_id = 1
     record = ContentDB(
         content_id=content_id,
         content_title="sample title for content",
         content_text="sample text",
-        content_embedding=fake_embedding(),
+        content_embedding=await async_fake_embedding(),
         content_language="ENGLISH",
         positive_votes=0,
         negative_votes=0,

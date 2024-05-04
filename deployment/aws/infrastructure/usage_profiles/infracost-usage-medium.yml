@@ -193,7 +193,7 @@ resource_usage:
     storage_gb: 0.675 # Total data stored by CloudWatch logs in GB.
     monthly_data_ingested_gb: 0.225 # Monthly data ingested by CloudWatch logs in GB.
     monthly_data_scanned_gb: 6.75 # Monthly data scanned by CloudWatch logs insights in GB.
-  module.main.aws_cloudwatch_log_group.nginx:
+  module.main.aws_cloudwatch_log_group.caddy:
     storage_gb: 0.5 # Total data stored by CloudWatch logs in GB.
     monthly_data_ingested_gb: 0.1 # Monthly data ingested by CloudWatch logs in GB.
     monthly_data_scanned_gb: 0.1 # Monthly data scanned by CloudWatch logs insights in GB.

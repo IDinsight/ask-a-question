@@ -1,10 +1,9 @@
-# Docker Compose file
 version: "3"
 services:
   admin-app-container:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}:admin-app
     command: >
-      npm start
+      node server.js
     restart: always
     ports:
       - 3000:3000

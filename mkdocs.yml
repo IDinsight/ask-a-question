@@ -4,6 +4,9 @@ site_url: https://idinsight.github.io/aaq-core/
 repo_url: https://github.com/IDinsight/aaq-core
 copyright: "© 2024 IDinsight"
 extra:
+  analytics:
+    provider: google
+    property: G-K07FFTMFTN
   generator: false
   social:
     - icon: material/shield-lock
@@ -65,6 +68,9 @@ nav:
       - Setup: develop/setup.md
       - Testing: develop/testing.md
       - Validation: develop/validation.md
+
+  - Contact us:
+      - Team: contact_us.md
 
 # Themes and extensions
 theme:
