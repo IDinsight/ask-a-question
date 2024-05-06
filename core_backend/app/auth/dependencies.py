@@ -59,7 +59,6 @@ async def authenticate_user(
     ) as asession:
         try:
             user_db = await get_user_by_username(username, asession)
-            await asession.aclose()
             if user_db.hashed_password == get_key_hash(password):
                 # hardcode "fullaccess" now, but may use it in the future
                 return AuthenticatedUser(username=username, access_level="fullaccess")
@@ -90,10 +89,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         ) as asession:
             try:
                 user_db = await get_user_by_username(username, asession)
-                await asession.aclose()
                 return user_db
             except UserNotFoundError as err:
-                await asession.aclose()
                 raise credentials_exception from err
     except JWTError as err:
         raise credentials_exception from err
