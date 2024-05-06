@@ -15,6 +15,14 @@ from ..utils import get_key_hash
 from .schemas import UserCreate
 
 
+class UserNotFoundError(Exception):
+    """Exception raised when a user is not found in the database."""
+
+
+class UserAlreadyExistsError(Exception):
+    """Exception raised when a user already exists in the database."""
+
+
 class UserDB(Base):
     """
     SQL Alchemy data model for users
@@ -50,9 +58,11 @@ async def save_user_to_db(
     result = await asession.execute(stmt)
     try:
         result.one()
-        raise ValueError(f"User with username {user.username} already exists.")
+        raise UserAlreadyExistsError(
+            f"User with username {user.username} already exists."
+        )
     except MultipleResultsFound as err:
-        raise ValueError(
+        raise UserAlreadyExistsError(
             f"Multiple users with username {user.username} found in local database."
         ) from err
     except NoResultFound:
@@ -110,7 +120,9 @@ async def get_user_by_username(
         user = result.scalar_one()
         return user
     except NoResultFound as err:
-        raise ValueError(f"User with username {username} does not exist.") from err
+        raise UserNotFoundError(
+            f"User with username {username} does not exist."
+        ) from err
     except MultipleResultsFound as err:
         raise ValueError(
             f"Multiple users with username {username} found in local database."
@@ -133,7 +145,7 @@ async def get_user_by_token(
         user = result.scalar_one()
         return user
     except NoResultFound as err:
-        raise ValueError("User with given token does not exist.") from err
+        raise UserNotFoundError("User with given token does not exist.") from err
     except MultipleResultsFound as err:
         raise ValueError(
             "Multiple users with given token found in local database."

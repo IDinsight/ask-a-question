@@ -10,7 +10,12 @@ from fastapi.security import (
 from jose import JWTError, jwt
 
 from ..database import get_async_session_direct
-from ..users.models import UserDB, get_user_by_token, get_user_by_username
+from ..users.models import (
+    UserDB,
+    UserNotFoundError,
+    get_user_by_token,
+    get_user_by_username,
+)
 from ..utils import get_key_hash, setup_logger
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
 from .schemas import AuthenticatedUser
@@ -34,8 +39,8 @@ async def auth_bearer_token(
     try:
         user_db = await get_user_by_token(token, asession)
         return user_db
-    except Exception as err:
-        raise HTTPException(status_code=401, detail="Invalid bearer token") from err
+    except UserNotFoundError as err:
+        raise HTTPException(status_code=401, detail="Invalid retrieval key") from err
     finally:
         await asession.aclose()
 
@@ -55,7 +60,7 @@ async def authenticate_user(
             return AuthenticatedUser(username=username, access_level="fullaccess")
         else:
             return None
-    except Exception:
+    except UserNotFoundError:
         return None
     finally:
         await asession.aclose()
@@ -97,7 +102,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             user_db = await get_user_by_username(username, asession)
             await asession.aclose()
             return user_db
-        except Exception as err:
+        except UserNotFoundError as err:
             await asession.aclose()
             raise credentials_exception from err
         finally:

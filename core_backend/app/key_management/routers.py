@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -39,7 +40,7 @@ async def get_new_retrieval_key(
             username=user_db.username,
             new_retrieval_key=new_retrieval_key,
         )
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(f"Error updating user retrieval key: {e}")
         raise HTTPException(
             status_code=500, detail="Error updating user retrieval key"
