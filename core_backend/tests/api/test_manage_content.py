@@ -96,7 +96,6 @@ class TestManageContent:
         content_title: str,
         content_text: str,
         fullaccess_token: str,
-        # fullaccess_token: str,
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
@@ -114,9 +113,7 @@ class TestManageContent:
 
         response = client.get(
             f"/content/{existing_content_id}",
-            headers={
-                "Authorization": f"Bearer {fullaccess_token}"
-            },  # used to be fullaccess_token
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
         assert response.json()["content_title"] == content_title
