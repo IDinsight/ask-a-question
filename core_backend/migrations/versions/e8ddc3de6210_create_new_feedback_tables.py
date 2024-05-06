@@ -1,7 +1,7 @@
 """create new feedback tables
 
 Revision ID: e8ddc3de6210
-Revises: 50caccd9e332
+Revises: f269c75dbf69
 Create Date: 2024-04-19 15:36:53.671146
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "e8ddc3de6210"
-down_revision: Union[str, None] = "50caccd9e332"
+down_revision: Union[str, None] = "f269c75dbf69"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
