@@ -12,6 +12,14 @@
 
     [:octicons-arrow-right-24: More info](./manage-content.md)
 
+-   :material-database-eye:{ .lg .middle .red} __Manage urgency rules__
+
+    ---
+
+    Allows you to view, create, edit, or delete urgency rules.
+
+    [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
+
 -   :material-chat-question:{ .lg .middle } __Playground__
 
     ---

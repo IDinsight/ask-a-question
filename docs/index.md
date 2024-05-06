@@ -2,7 +2,7 @@
 <img src="./images/logo-light.png#only-dark" alt="logo-light" width="600"/><img src="./images/logo-dark.png#only-light" alt="logo-dark" width="600"/>
 </pre>
 
-<h3 align="center" >On-demand answers to questions from your knowledge base</h3>
+<h3 align="center" >No-code, easy-to-setup and reliable RAG plugin for chatbots</h3>
 
 <strong > Ask A Question</strong> is a free and open-source tool created to help non-profit organizations, governments in developing nations, and social sector organizations utilize **Large Language Models** for responding to citizen inquiries in their **native languages**.
 
@@ -34,9 +34,11 @@
 
 <strong >:octicons-check-16: LLM responses</strong> : Craft a custom reponse to users using LLM chat
 
-<strong >:octicons-check-16: Deploy on WhatsApp</strong> : Easily deploy using WhatsApp Business API
+<strong >:octicons-check-16: Chat manager integration</strong> : Integrate with [Turn.io](https://turn.io), [Glific](https://glific.org), [Typebot](https://typebot.io/) and more
 
 <strong >:octicons-check-16: Manage content</strong> : Use the Admin App to add, edit, and delete content in the database
+
+<strong >:octicons-check-16: Tag urgent messages</strong> : Identify messages that are urgent based on your rules
 
 <br>
 [See Full Roadmap :octicons-arrow-right-24:](./roadmap.md){ .md-button}

@@ -1,6 +1,4 @@
 "use client";
-// To do
-// 5. QueryType to enum
 
 import { apiCalls } from "@/utils/api";
 import { Global, css } from "@emotion/react";
@@ -74,6 +72,26 @@ const Page = () => {
     ]);
   };
 
+  const processUrgencyDetection = (response: any) => {
+    const isUrgent: boolean = response.is_urgent;
+    const responseText =
+      isUrgent === null
+        ? `No response. Reason:  See JSON for details.`
+        : isUrgent
+        ? "Urgent 🚨"
+        : "Not Urgent 🟢";
+
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        dateTime: new Date().toISOString(),
+        type: "response",
+        content: responseText,
+        json: response,
+      },
+    ]);
+  };
+
   const processErrorMessage = (error: Error) => {
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -92,8 +110,6 @@ const Page = () => {
     }
 
     setLoading(true);
-
-    // TODO: Add loading component
 
     if (currApiKey === null || currApiKey === "") {
       setError("API Key not set. Please set the API key.");
@@ -130,6 +146,20 @@ const Page = () => {
           })
           .catch((error: Error) => {
             setError("LLM Response failed.");
+            processErrorMessage(error);
+            console.error(error);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      } else if (queryType == "urgency-detection") {
+        apiCalls
+          .getUrgencyDetection(queryText, currApiKey)
+          .then((response) => {
+            processUrgencyDetection(response);
+          })
+          .catch((error: Error) => {
+            setError("Urgency Detection failed.");
             processErrorMessage(error);
             console.error(error);
           })

@@ -57,8 +57,8 @@ teardown-db:
 
 # Dev LiteLLM Proxy server
 setup-llm-proxy:
-	-@docker stop llm-proxy
-	-@docker rm llm-proxy
+	-@docker stop litellm-proxy
+	-@docker rm litellm-proxy
 	@docker system prune -f
 	@sleep 2
 	@docker pull ghcr.io/berriai/litellm:main-v1.34.6
