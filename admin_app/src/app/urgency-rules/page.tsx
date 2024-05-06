@@ -93,7 +93,7 @@ const UrgencyRulesPage = () => {
 
   const createNewRecord = () => {
     const newItems = [...items];
-    if (items[items.length - 1].urgency_rule_id === null) {
+    if (items.length > 0 && items[items.length - 1].urgency_rule_id === null) {
       setEditableIndex(newItems.length - 1);
       return;
     } else {
@@ -223,7 +223,6 @@ const UrgencyRulesPage = () => {
                           <IconButton
                             onMouseDown={() => {
                               addOrUpdateItem(index);
-                              console.log("Saving urgency rule");
                               setEditableIndex(-1);
                             }}
                             edge="end"
