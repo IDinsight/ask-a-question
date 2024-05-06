@@ -35,7 +35,8 @@ const StatsCard = ({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: 1,
+            marginLeft: 4,
+            marginRight: 4,
           }}
         >
           <Box
@@ -44,7 +45,7 @@ const StatsCard = ({
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              width: "80%",
+              width: "100%",
             }}
           >
             <Box
@@ -67,15 +68,17 @@ const StatsCard = ({
               sx={{
                 color: "common.white",
                 backgroundColor: `${color}`,
-                width: 80,
-                height: 80,
+                width: 60,
+                height: 60,
               }}
             >
               {icon}
             </Avatar>
           </Box>
           <Layout.Spacer multiplier={1} />
-          <Box sx={{ display: "flex", alignItems: "flex-start", width: "80%" }}>
+          <Box
+            sx={{ display: "flex", alignItems: "flex-start", width: "100%" }}
+          >
             <Typography
               component="sup"
               variant="caption"
