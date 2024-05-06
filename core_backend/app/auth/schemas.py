@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-AccessLevel = Literal["fullaccess", "readonly"]
+AccessLevel = Literal["fullaccess"]
 
 
 class AuthenticatedUser(BaseModel):
