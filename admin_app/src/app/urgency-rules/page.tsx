@@ -88,6 +88,7 @@ const UrgencyRulesPage = () => {
   const restoreBackup = (index: number) => {
     const newItems = [...items];
     newItems[index].urgency_rule_text = backupRuleText;
+    setBackupRuleText("");
     setItems(newItems);
   };
 
@@ -116,6 +117,17 @@ const UrgencyRulesPage = () => {
         newItems.splice(index, 1);
         setItems(newItems);
       });
+  };
+
+  const onBlur = (index: number) => {
+    if (items[index].urgency_rule_id === null) {
+      const newItems = [...items];
+      newItems.splice(index, 1);
+      setItems(newItems);
+    } else {
+      restoreBackup(index);
+      setEditableIndex(-1);
+    }
   };
 
   useEffect(() => {
@@ -213,8 +225,7 @@ const UrgencyRulesPage = () => {
                       handleKeyDown(e, index)
                     }
                     onBlur={() => {
-                      restoreBackup(index);
-                      setEditableIndex(-1);
+                      onBlur(index);
                     }}
                     sx={{ pr: 12, pl: 0 }}
                     InputProps={{
