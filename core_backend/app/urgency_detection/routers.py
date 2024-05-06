@@ -4,7 +4,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import auth_bearer_token
+from ..auth.dependencies import authenticate_key
 from ..database import get_async_session
 from ..llm_call.entailment import detect_urgency
 from ..urgency_rules.models import (
@@ -22,9 +22,7 @@ from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
 logger = setup_logger()
-router = APIRouter(
-    dependencies=[Depends(auth_bearer_token)], tags=["Urgency Detection"]
-)
+router = APIRouter(dependencies=[Depends(authenticate_key)], tags=["Urgency Detection"])
 
 ALL_URGENCY_CLASSIFIERS = {}
 
@@ -41,7 +39,7 @@ def urgency_classifier(classifier_func: Callable) -> Callable:
 async def classify_text(
     urgency_query: UrgencyQuery,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(authenticate_key),
 ) -> UrgencyResponse:
     """
     Classify the urgency of a text message

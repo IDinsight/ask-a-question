@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import auth_bearer_token
+from ..auth.dependencies import authenticate_key
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
 from ..llm_call.llm_prompts import ANSWER_FAILURE_MESSAGE
@@ -47,7 +47,7 @@ from .utils import (
 logger = setup_logger()
 
 router = APIRouter(
-    dependencies=[Depends(auth_bearer_token)], tags=["Question Answering"]
+    dependencies=[Depends(authenticate_key)], tags=["Question Answering"]
 )
 
 
@@ -59,7 +59,7 @@ router = APIRouter(
 async def llm_response(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
     """
     LLM response creates a custom response to the question using LLM chat and the
@@ -178,7 +178,7 @@ async def get_user_query_and_response(
 async def embeddings_search(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
     """
     Embeddings search finds the most similar embeddings to the user query
@@ -240,7 +240,7 @@ async def get_semantic_matches(
 async def feedback(
     feedback: ResponseFeedbackBase,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on the results returned.
@@ -276,7 +276,7 @@ async def feedback(
 async def content_feedback(
     feedback: ContentFeedback,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(auth_bearer_token),
+    user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
     Feedback endpoint used to capture user feedback on specific content
