@@ -15,14 +15,16 @@ from .config import (
     LOG_LEVEL,
 )
 
+# To make 32-byte API keys (results in 43 characters)
+SECRET_KEY_N_BYTES = 32
+
 
 def generate_key() -> str:
     """
-    Generate a new 32-character API key
+    Generate API key (default 32 byte = 43 characters)
     """
 
-    # 32 bytes gives 43 characters here
-    return secrets.token_urlsafe(32)
+    return secrets.token_urlsafe(SECRET_KEY_N_BYTES)
 
 
 def get_key_hash(retrieval_key: str) -> str:
