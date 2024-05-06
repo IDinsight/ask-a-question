@@ -120,11 +120,7 @@ const UrgencyRulesPage = () => {
   };
 
   const onBlur = (index: number) => {
-    if (items[index].urgency_rule_id === null) {
-      const newItems = [...items];
-      newItems.splice(index, 1);
-      setItems(newItems);
-    } else {
+    if (items[index].urgency_rule_id !== null) {
       restoreBackup(index);
       setEditableIndex(-1);
     }
