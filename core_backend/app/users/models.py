@@ -6,7 +6,7 @@ from sqlalchemy import (
     # delete,
     select,
 )
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,10 +31,12 @@ class UserDB(Base):
     __tablename__ = "user"
 
     user_id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
-    username: Mapped[str] = mapped_column(String, nullable=False)
+    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(64), nullable=False)
 
-    hashed_retrieval_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    hashed_retrieval_key: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True
+    )
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -61,10 +63,6 @@ async def save_user_to_db(
         raise UserAlreadyExistsError(
             f"User with username {user.username} already exists."
         )
-    except MultipleResultsFound as err:
-        raise UserAlreadyExistsError(
-            f"Multiple users with username {user.username} found in local database."
-        ) from err
     except NoResultFound:
         pass
 
@@ -123,10 +121,6 @@ async def get_user_by_username(
         raise UserNotFoundError(
             f"User with username {username} does not exist."
         ) from err
-    except MultipleResultsFound as err:
-        raise ValueError(
-            f"Multiple users with username {username} found in local database."
-        ) from err
 
 
 async def get_user_by_token(
@@ -146,7 +140,3 @@ async def get_user_by_token(
         return user
     except NoResultFound as err:
         raise UserNotFoundError("User with given token does not exist.") from err
-    except MultipleResultsFound as err:
-        raise ValueError(
-            "Multiple users with given token found in local database."
-        ) from err
