@@ -27,7 +27,7 @@ bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-async def auth_bearer_token(
+async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> UserDB:
     """
@@ -48,7 +48,7 @@ async def auth_bearer_token(
             ) from err
 
 
-async def authenticate_user(
+async def authenticate_credentials(
     *, username: str, password: str
 ) -> Optional[AuthenticatedUser]:
     """

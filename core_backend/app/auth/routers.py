@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
-from .dependencies import authenticate_user, create_access_token
+from .dependencies import authenticate_credentials, create_access_token
 
 router = APIRouter(tags=["Authentication"])
 
@@ -11,7 +11,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
     """
     Login route for users to authenticate and receive a JWT token.
     """
-    user = await authenticate_user(
+    user = await authenticate_credentials(
         username=form_data.username, password=form_data.password
     )
     if not user:
