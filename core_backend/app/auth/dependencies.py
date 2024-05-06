@@ -8,8 +8,9 @@ from fastapi.security import (
     OAuth2PasswordBearer,
 )
 from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_async_session_direct
+from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
@@ -35,14 +36,16 @@ async def auth_bearer_token(
     """
     token = credentials.credentials
 
-    asession = await get_async_session_direct()
-    try:
-        user_db = await get_user_by_token(token, asession)
-        return user_db
-    except UserNotFoundError as err:
-        raise HTTPException(status_code=401, detail="Invalid retrieval key") from err
-    finally:
-        await asession.aclose()
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_token(token, asession)
+            return user_db
+        except UserNotFoundError as err:
+            raise HTTPException(
+                status_code=401, detail="Invalid retrieval key"
+            ) from err
 
 
 async def authenticate_user(
@@ -51,34 +54,19 @@ async def authenticate_user(
     """
     Authenticate user using username and password.
     """
-    asession = await get_async_session_direct()
-    try:
-        user_db = await get_user_by_username(username, asession)
-        await asession.aclose()
-        if user_db.hashed_password == get_key_hash(password):
-            # hardcode "fullaccess" now, but may use it in the future
-            return AuthenticatedUser(username=username, access_level="fullaccess")
-        else:
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(username, asession)
+            await asession.aclose()
+            if user_db.hashed_password == get_key_hash(password):
+                # hardcode "fullaccess" now, but may use it in the future
+                return AuthenticatedUser(username=username, access_level="fullaccess")
+            else:
+                return None
+        except UserNotFoundError:
             return None
-    except UserNotFoundError:
-        return None
-    finally:
-        await asession.aclose()
-
-
-def create_access_token(username: str) -> str:
-    """
-    Create an access token for the user
-    """
-    payload: Dict[str, Union[str, datetime]] = {}
-    expire = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
-
-    payload["exp"] = expire
-    payload["iat"] = datetime.utcnow()
-    payload["sub"] = username
-    payload["type"] = "access_token"
-
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
@@ -97,16 +85,30 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             raise credentials_exception
 
         # fetch user from database
-        asession = await get_async_session_direct()
-        try:
-            user_db = await get_user_by_username(username, asession)
-            await asession.aclose()
-            return user_db
-        except UserNotFoundError as err:
-            await asession.aclose()
-            raise credentials_exception from err
-        finally:
-            await asession.aclose()
-
+        async with AsyncSession(
+            get_sqlalchemy_async_engine(), expire_on_commit=False
+        ) as asession:
+            try:
+                user_db = await get_user_by_username(username, asession)
+                await asession.aclose()
+                return user_db
+            except UserNotFoundError as err:
+                await asession.aclose()
+                raise credentials_exception from err
     except JWTError as err:
         raise credentials_exception from err
+
+
+def create_access_token(username: str) -> str:
+    """
+    Create an access token for the user
+    """
+    payload: Dict[str, Union[str, datetime]] = {}
+    expire = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    payload["exp"] = expire
+    payload["iat"] = datetime.utcnow()
+    payload["sub"] = username
+    payload["type"] = "access_token"
+
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)

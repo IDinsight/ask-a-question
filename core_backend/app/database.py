@@ -70,10 +70,3 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
-
-
-async def get_async_session_direct() -> AsyncSession:
-    """Return a SQLAlchemy async session."""
-    engine = get_sqlalchemy_async_engine()
-    async_session = AsyncSession(engine, expire_on_commit=False)
-    return async_session
