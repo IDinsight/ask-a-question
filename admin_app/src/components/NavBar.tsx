@@ -19,7 +19,7 @@ const pages = [
   { title: "Manage Content", path: "/content" },
   { title: "Urgency Rules", path: "/urgency-rules" },
   { title: "Playground", path: "/playground" },
-  // { title: "Dashboard", path: "/dashboard" },
+  { title: "Dashboard", path: "/dashboard" },
 ];
 
 const settings = ["Logout"];

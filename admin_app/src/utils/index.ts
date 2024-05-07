@@ -40,6 +40,9 @@ export const appColors = {
   darkGrey: "#6B6B6B",
   outline: "#8F9099",
   inverseSurface: "#F1F0F7",
+  yellow: "#FFC700",
+  green: "#018786",
+
 };
 
 export const appStyles = {

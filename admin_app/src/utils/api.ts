@@ -215,7 +215,7 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
     .catch((error) => {
       throw new Error(
         `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
-          error.message,
+        error.message,
       );
     });
 };
@@ -245,22 +245,39 @@ const getLLMResponse = async (search: string, token: string) => {
     .catch((error) => {
       throw new Error(
         `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
-          error.message,
+        error.message,
       );
     });
+};
+
+const getQuestionStats = async (token: string) => {
+  return fetch(`${BACKEND_ROOT_PATH}/dashboard/question_stats`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching questions statistics");
+    }
+  });
 };
 
 const getUrgencyDetection = async (search: string, token: string) => {
   const urgencyDetectionUrl = `${BACKEND_ROOT_PATH}/urgency-detect`;
   return fetch(urgencyDetectionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ message_text: search }),
-  })
-    .then((response) => {
+    method: "POST",  
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ message_text: search })
+    })
+      .then((response) => {
       if (response.ok) {
         let resp = response.json();
         return resp;
@@ -292,5 +309,6 @@ export const apiCalls = {
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  getQuestionStats,
   getUrgencyDetection,
 };
