@@ -255,9 +255,8 @@ const getQuestionStats = async (token: string) => {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
+      Authorization: `Bearer ${token}`
+      }).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;
@@ -267,6 +266,34 @@ const getQuestionStats = async (token: string) => {
   });
 };
 
+const getUrgencyDetection = async (search: string, token: string) => {
+  const urgencyDetectionUrl = `${BACKEND_ROOT_PATH}/urgency-detect`;
+  return fetch(urgencyDetectionUrl, {
+    method: "POST",  
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    body: JSON.stringify({ message_text: search }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        let resp = response.json();
+        return resp;
+      } else {
+        return response.json().then((errData) => {
+          throw new Error(
+            `Error fetching urgency detection response: ${errData.message} Status: ${response.status}`,
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      throw new Error(
+        `Error POSTING to urgency detection URL at ${urgencyDetectionUrl}. ` +
+          error.message,
+      );
+    });
+};
 export const apiCalls = {
   getContentList,
   getContent,
@@ -280,5 +307,6 @@ export const apiCalls = {
   getLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
-  getQuestionStats
+  getQuestionStats,
+  getUrgencyDetection,
 };

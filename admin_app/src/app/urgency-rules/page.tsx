@@ -88,12 +88,13 @@ const UrgencyRulesPage = () => {
   const restoreBackup = (index: number) => {
     const newItems = [...items];
     newItems[index].urgency_rule_text = backupRuleText;
+    setBackupRuleText("");
     setItems(newItems);
   };
 
   const createNewRecord = () => {
     const newItems = [...items];
-    if (items[items.length - 1].urgency_rule_id === null) {
+    if (items.length > 0 && items[items.length - 1].urgency_rule_id === null) {
       setEditableIndex(newItems.length - 1);
       return;
     } else {
@@ -116,6 +117,13 @@ const UrgencyRulesPage = () => {
         newItems.splice(index, 1);
         setItems(newItems);
       });
+  };
+
+  const onBlur = (index: number) => {
+    if (items[index].urgency_rule_id !== null) {
+      restoreBackup(index);
+      setEditableIndex(-1);
+    }
   };
 
   useEffect(() => {
@@ -213,8 +221,7 @@ const UrgencyRulesPage = () => {
                       handleKeyDown(e, index)
                     }
                     onBlur={() => {
-                      restoreBackup(index);
-                      setEditableIndex(-1);
+                      onBlur(index);
                     }}
                     sx={{ pr: 12, pl: 0 }}
                     InputProps={{
@@ -223,7 +230,6 @@ const UrgencyRulesPage = () => {
                           <IconButton
                             onMouseDown={() => {
                               addOrUpdateItem(index);
-                              console.log("Saving urgency rule");
                               setEditableIndex(-1);
                             }}
                             edge="end"

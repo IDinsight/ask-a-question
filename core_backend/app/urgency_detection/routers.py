@@ -104,7 +104,7 @@ async def llm_entailment_classifier(
     results_dict = {str(i): result for i, result in enumerate(results)}
     failed_rules = []
     for result in results:
-        if float(result["probability"]) > int(URGENCY_DETECTION_MIN_PROBABILITY):
+        if float(result["probability"]) > float(URGENCY_DETECTION_MIN_PROBABILITY):
             failed_rules.append(str(result["statement"]))
 
     if failed_rules:
