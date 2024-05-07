@@ -255,8 +255,9 @@ const getQuestionStats = async (token: string) => {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-      }).then((response) => {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;
@@ -270,12 +271,13 @@ const getUrgencyDetection = async (search: string, token: string) => {
   const urgencyDetectionUrl = `${BACKEND_ROOT_PATH}/urgency-detect`;
   return fetch(urgencyDetectionUrl, {
     method: "POST",  
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    body: JSON.stringify({ message_text: search }),
-  })
-    .then((response) => {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ message_text: search })
+    })
+      .then((response) => {
       if (response.ok) {
         let resp = response.json();
         return resp;

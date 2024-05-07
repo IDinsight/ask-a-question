@@ -115,7 +115,7 @@ const Dashboard = () => {
     <ApexChartWrapper>
       <Box component="div" sx={{ mt: 4 }}>
         <Grid container justifyContent="center" spacing={6}>
-          <Grid item xs={6} md={4} lg={4}>
+          <Grid item xs={12} sm={6} md={4} lg={4}>
             <StatsCard
               stat={
                 questionStats && questionStats.length > 5
@@ -137,7 +137,7 @@ const Dashboard = () => {
               color={appColors.yellow}
             />
           </Grid>
-          <Grid item xs={6} md={4} lg={4}>
+          <Grid item xs={12} sm={6} md={4} lg={4}>
             <StatsCard
               stat={
                 upvoteStats && upvoteStats.length > 5
@@ -159,7 +159,13 @@ const Dashboard = () => {
               color={appColors.green}
             />
           </Grid>
-          <Grid item xs={12} md={8} lg={8} sx={{ mt: 1 }}>
+          <Grid
+            item
+            xs={12}
+            md={8}
+            lg={8}
+            sx={{ mt: { xs: 2, sm: 2, md: 1, lg: 1 } }}
+          >
             <WeeklyOverview
               labels={labels ? labels : []}
               data={questionStats ? questionStats : []}

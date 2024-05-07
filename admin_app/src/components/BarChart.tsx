@@ -24,6 +24,7 @@ const WeeklyOverview = ({
     chart: {
       parentHeightOffset: 0,
       toolbar: { show: false },
+      zoom: {},
     },
     plotOptions: {
       bar: {
