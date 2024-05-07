@@ -9,12 +9,12 @@ from torch import Tensor
 from torch import nn
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 
-app = FastAPI(port=8081, debug=True)
+app = FastAPI()
 
 HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "thenlper/gte-large")
 
 security = HTTPBearer()
-STATIC_TOKEN = "question"
+STATIC_TOKEN = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
 
 
 @app.on_event("startup")
@@ -67,7 +67,7 @@ async def complete(request_model: RequestModel, token: str = Depends(verify_toke
 
     batch_dict = tokenizer(
         request_model.input,
-        max_length=1536,
+        max_length=512,
         padding=True,
         truncation=True,
         return_tensors="pt",
