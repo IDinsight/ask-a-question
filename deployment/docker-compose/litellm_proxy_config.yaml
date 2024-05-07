@@ -7,7 +7,7 @@ model_list:
     litellm_params:
       model: openai/custom-embedding
       api_base: "os.environ/EMBEDDINGS_ENDPOINT"
-      api_key: "os.environ/GTE_API_KEY"
+      api_key: "os.environ/EMBEDDINGS_API_KEY"
   - model_name: default
     litellm_params:
       model: gpt-4-0125-preview
