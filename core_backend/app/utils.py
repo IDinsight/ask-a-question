@@ -42,7 +42,7 @@ async def embedding(text_to_embed: str) -> List[float]:
     Get embedding for the given text
     """
     content_embedding = await aembedding(
-        model=LITELLM_MODEL_EMBEDDING,
+        model="openai/local-embeddings",
         input=text_to_embed,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,

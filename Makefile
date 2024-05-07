@@ -61,6 +61,7 @@ setup-llm-proxy:
 		--rm \
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		-e GTE_API_KEY=$(GTE_API_KEY) \
 		-p 4000:4000 \
 		-d ghcr.io/berriai/litellm:main-v1.34.6 \
 		--config /app/config.yaml --detailed_debug

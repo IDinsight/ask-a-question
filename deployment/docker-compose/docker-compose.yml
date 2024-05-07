@@ -33,6 +33,20 @@ services:
       watch:
         - action: rebuild
           path: ../../admin_app
+  embeddings:
+    image: idinsight/embeddings:latest
+    build:
+      context: ../../embeddings
+      dockerfile: Dockerfile
+      args:
+        HUGGINGFACE_MODEL: ${HUGGINGFACE_MODEL}
+    restart: always
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../embeddings
 
   caddy:
     image: caddy:2.7.6
@@ -53,6 +67,8 @@ services:
     restart: always
     env_file:
       - .env
+    environment:  # Add this section if you want to explicitly pass specific variables
+    - EMBEDDINGS_ENDPOINT=${EMBEDDINGS_ENDPOINT}
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
     command:
