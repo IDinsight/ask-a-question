@@ -1,4 +1,3 @@
-import os
 from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi import Depends, HTTPException, status
@@ -6,15 +5,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from torch import Tensor
-from torch import nn
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 
+from config import HUGGINGFACE_MODEL, STATIC_TOKEN
+
+print(f"Using model: {HUGGINGFACE_MODEL}")
 app = FastAPI()
 
-HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "thenlper/gte-large")
-
 security = HTTPBearer()
-STATIC_TOKEN = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
 
 
 @app.on_event("startup")
@@ -25,16 +23,6 @@ def load_model():
     config = AutoConfig.from_pretrained(HUGGINGFACE_MODEL)
     model = AutoModel.from_pretrained(HUGGINGFACE_MODEL, config=config)
     model.eval()
-
-
-class EmbeddingProjector(nn.Module):
-    def __init__(self, original_dim, target_dim=1536):
-        super().__init__()
-        # Define a linear layer to project from original_dim to target_dim
-        self.projection = nn.Linear(original_dim, target_dim)
-
-    def forward(self, x):
-        return self.projection(x)
 
 
 class RequestModel(BaseModel):
