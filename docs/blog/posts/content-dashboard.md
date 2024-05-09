@@ -1,6 +1,6 @@
 ---
 authors:
-  - Sid
+  - Carlos
 category:
   - Admin App
   - Api
@@ -14,7 +14,7 @@ Getting insights from your app has been made easy with the introduction of a que
 
 <!-- more -->
 
-## Question dashboard
+## Content dashboard
 
 On the Admin App, you can now get statistics from your question answering service with the new dashboard displaying information such as:
 
@@ -23,6 +23,7 @@ On the Admin App, you can now get statistics from your question answering servic
 - The number of questions asked during the past 6 months.
 
 The dashboard is in its first version and in the future we are planning on adding more informations such as [Urgency Detection](../../components/urgency-detection/index.md) related statistics, and content related statistics.
+![Urgency Detection Swagger](../images/dashboard-screenshot.png){: .blog-img }
 
 ## Doc references
 
