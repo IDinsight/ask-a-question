@@ -2,11 +2,11 @@
 
 Thank you for being interested in contributing to AAQ.
 
-AAQ is an open source project started by data scientists at IDinsight and sponsored by Google.org. Everyone is welcome to contribute to it - in fact, the success of the project depends on it! :handshake_dark_skin_tone:
+AAQ is an open source project started by data scientists at IDinsight and sponsored by Google.org. Everyone is welcome to contribute! :handshake_dark_skin_tone:
 
 ## Pull requests guide
 
-These steps show you how to raise a pull request to the project
+These steps show you how to raise a pull request to the project.
 
 ### Make a fork
 
@@ -18,7 +18,7 @@ These steps show you how to raise a pull request to the project
 
 ### Install prerequisites
 
-Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 ### Setup your virtual python environment
 
