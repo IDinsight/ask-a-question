@@ -16,6 +16,10 @@ These steps show you how to raise a pull request to the project
 
         git clone git@github.com:<your GitHub handle>/aaq-core.git
 
+### Install prerequisites
+
+Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
 ### Setup your virtual python environment
 
 You can automatically create a ready-to-go `aaq-core` conda environment with:
@@ -47,10 +51,10 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
 
     ## Install pre-commit
 
-    Navigate to repo and run pre-commit
+    Navigate to repo and install pre-commit
 
         cd aaq-core
-        pre-commit install  # 👈 to run it automatically before each commit
+        pre-commit install
 
 ### Make your changes
 
@@ -60,22 +64,18 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
 
         git checkout -b feature
 
-2. Make your changes and then run `pre-commits` if you have not set it up to run automatically.
+2. Run `mypy` with `mypy core_backend/app` (1)
 
-        pre-commit run --all  # 👈 to run it manually
-
-3. Run `mypy` separately with `mypy core_backend/app` (1)
-
-4. Then `git add` and `git commit` your changes:
+3. Then `git add` and `git commit` your changes:
 
         git add modified_files
         git commit
 
-5. And then push the changes to your fork in GitHub
+4. And then push the changes to your fork in GitHub
 
         git push -u origin feature
 
-6. Go to the GitHub web page of your fork of the AAQ repo. Click the ‘Pull request’ button
+5. Go to the GitHub web page of your fork of the AAQ repo. Click the ‘Pull request’ button
 to send your changes to the project’s maintainers for review.
 This will send a notification to the committers.
 

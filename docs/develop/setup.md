@@ -1,26 +1,29 @@
 # Setting up your development environment
 
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+There are two ways to set up your development environment. You can view the [pros and
+cons of each method](#pros-and-cons-of-each-setup-method) at the bottom.
 
-## Option 1 - Using Docker Compose Watch
+## Set up using Docker Compose Watch
 
-| Pros | Cons |
-| --- | --- |
-| Good for end-to-end testing | Changes take 5-10s to be reflected in the app |
-| Local environment identical to production deployment | |
-| No need to setup local environment | |
-| Set environment variables and configs once | |
+### Step 0: Install prerequisites
 
-Steps:
+Install [Docker](https://docs.docker.com/get-docker/) with Docker Compose version
+\>=2.22 to use the `watch` command.
 
-1. go to `deployment/docker-compose`
+### Step 1: Configure
 
-2. copy `template.env` to a new file `.env` and set the necessary variables (for local deployment, you just
-need to set the `OPENAI_API_KEY` and can leave everything else as default)
+1. Go to `deployment/docker-compose`
+
+2. Copy `template.env` to a new file `.env` within the same directory, and set the
+   necessary variables. For local setup, you just need to set your own `OPENAI_API_KEY`
+   as the app can use default values for other environment variables (check out the various
+   `config.py` under `core_backend/app/` and its subdirectories.)
 
 3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
 
-4. run
+### Step 3: Run `docker compose watch`
+
+In `deployment/docker-compose`, run
 
         docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
 
@@ -28,16 +31,18 @@ The app will now run and update with any changes made to the `core_backend` or `
 
 The admin app will be available on [https://localhost](https://localhost) and the backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
 
-## Option 2 - Manual
+## Set up manually
 
-| Pros | Cons |
-| --- | --- |
-| Instant feedback from changes | Requires more configuration before each run |
-| | Requires environment and dependencies to be set up correctly |
+### Step 0: Install prerequisites
 
-### A: Run the Backend
+1. Install
+   [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
+2. Install [Node.js v19](https://nodejs.org/en/download). If you have a different
+   version installed already, you may wish to use [nvm](https://github.com/nvm-sh/nvm)
+   to install v19.
+3. Install [Docker](https://docs.docker.com/get-docker/).
 
-Steps:
+### Step 1: Run the backend
 
 1. Set up your conda environment as per [Contributing to AAQ](./contributing.md) and run
 
@@ -67,11 +72,11 @@ Steps:
 
         make teardown-dev
 
-??? note "Setting up up database and LiteLLM proxy containers manually"
+??? note "Set up database and LiteLLM proxy containers manually"
 
-    ## Database
+    The `make setup-dev` command should set up the database docker container and LiteLLM proxy server automatically. If you wish to set them up separately, here are the steps:
 
-    ### Running the database on docker
+    #### PostgreSQL database on docker
 
     You can launch a container running PostgreSQL database and run the necessary migrations using:
 
@@ -83,9 +88,9 @@ Steps:
 
     See the contents of these Makefile targets to see how you could run them manually if required.
 
-    ## LiteLLM Proxy Server
+    #### LiteLLM Proxy Server
 
-    1. Set models and parameters in `core_backend/litellm-config.yaml`
+    1. Set models and parameters in `deployment/docker-compose/litellm_proxy_config.yaml`
 
     2. Set OpenAI API key environment variable in your terminal using
 
@@ -99,12 +104,7 @@ Steps:
 
             make teardown-llm-proxy
 
-### B: Run the Admin app
-
-??? warning "You need to have nodejs v19 installed locally"
-
-    If you have a different version installed already, you may wish to use
-    [nvm](https://github.com/nvm-sh/nvm) to install v19.
+### Step 2: Run the admin app
 
 From `aaq-core/admin_app` run
 
@@ -115,8 +115,20 @@ This will install the required packages required for the admin app and start the
 
 The admin app will now be accessible on [http://localhost:3000/](http://localhost:3000/)
 
-## Setting up docs
+## Set up docs
+
+Install [mkdocs](https://www.mkdocs.org/user-guide/installation/).
 
 To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
 
     mkdocs serve -a "localhost:8080"
+
+
+## Pros and cons of each setup method
+
+
+
+| Method | Pros | Cons |
+| --- | --- | --- |
+| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 5-10s to be reflected in the app</li></ul> |
+| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
