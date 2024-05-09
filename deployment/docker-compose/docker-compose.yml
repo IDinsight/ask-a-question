@@ -73,6 +73,9 @@ services:
     restart: always
   embeddings:
     image: idinsight/embeddings:latest
+    profiles:
+      - embeddings
+      - optional-components
     build:
       context: ../../optional_components/embeddings
       dockerfile: Dockerfile
