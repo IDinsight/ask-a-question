@@ -7,8 +7,8 @@ cons of each method](#pros-and-cons-of-each-setup-method) at the bottom.
 
 ### Step 0: Install prerequisites
 
-Install [Docker](https://docs.docker.com/get-docker/) with Docker Compose version
-\>=2.22 to use the `watch` command.
+1. Install [Docker](https://docs.docker.com/get-docker/).
+2. If you are not using Docker Desktop, install [Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use the `watch` command.
 
 ### Step 1: Configure
 
@@ -46,22 +46,24 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
 ### Step 1: Run the backend
 
-1. Set up your conda environment as per [Contributing to AAQ](./contributing.md) and run
+1. [Set up your python environment](contributing.md#setup-your-virtual-python-environment).
+
+2. Activate your `aaq` conda environment
 
         conda activate aaq
 
-2. Set required environment variables in your terminal using
+3. Set required environment variables in your terminal using
 
         export OPENAI_API_KEY=sk...  # required for model proxy server
         export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
 
-3. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+4. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
-4. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
+5. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
         make setup-dev
 
-5. Run the app
+6. Run the app
 
         python core_backend/main.py
 
@@ -70,7 +72,7 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
      You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
-6. Once done, exit the running app process with `ctrl+c` and run
+7. Once done, exit the running app process with `ctrl+c` and run
 
         make teardown-dev
 
@@ -119,11 +121,14 @@ The admin app will now be accessible on [http://localhost:3000/](http://localhos
 
 ## Set up docs
 
-Install [mkdocs](https://www.mkdocs.org/user-guide/installation/).
+1. [mkdocs](https://www.mkdocs.org/user-guide/installation/) should be installed in your
+development conda environment created by `make fresh-env`. Activate the conda environment:
 
-To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
+        conda activate aaq
 
-    mkdocs serve -a "localhost:8080"
+2. To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
+
+        mkdocs serve -a "localhost:8080"
 
 ## Pros and cons of each setup method
 

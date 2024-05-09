@@ -38,7 +38,7 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
 
 ??? note "Setting up the environment manually"
 
-    ## Manual environment setup
+    #### Manual environment setup
 
     If you would like to setup the environment manually, you can use conda to create virtual environment (or `venv` or other).
 
@@ -49,7 +49,7 @@ You can automatically create a ready-to-go `aaq-core` conda environment with:
         pip install -r core_backend/requirements.txt
         pip install -r requirements-dev.txt
 
-    ## Install pre-commit
+    #### Install pre-commit
 
     Navigate to repo and install pre-commit
 
