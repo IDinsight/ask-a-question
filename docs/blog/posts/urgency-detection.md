@@ -46,7 +46,7 @@ As of this blog post, there are two ways to determine urgency:
    urgency rules. It's more accurate, but slower. Also, since it's making a call to the LLM, it
    is more expensive than the cosine distance method.
 
-See [setup](../../components/urgency-detection/) sections on how to configure these.
+See [setup](../../components/urgency-detection/index.md) sections on how to configure these.
 
 ## Or write your own
 
