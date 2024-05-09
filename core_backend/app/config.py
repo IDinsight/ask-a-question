@@ -22,7 +22,9 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 # "model_name" in the proxy config.yaml.
 # "openai/..." is needed since the proxy presents a unified OpenAI-style API
 # for all of its endpoints.
-LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
+LITELLM_MODEL_EMBEDDING = os.environ.get(
+    "LITELLM_MODEL_EMBEDDING", "openai/local-embeddings"
+)
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_SUMMARIZATION = os.environ.get(
     "LITELLM_MODEL_SUMMARIZATION", "openai/generate-response"
@@ -63,3 +65,6 @@ BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 # Embeddings variables
 HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "thenlper/gte-large")
 EMBEDDINGS_API_KEY = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
+EMBEDDINGS_ENDPOINT = os.environ.get(
+    "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
+)
