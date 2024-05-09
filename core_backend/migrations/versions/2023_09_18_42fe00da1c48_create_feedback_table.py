@@ -24,7 +24,8 @@ def upgrade() -> None:
         "feedback",
         sa.Column("feedback_id", sa.Integer(), nullable=False),
         sa.Column("query_id", sa.Integer(), nullable=False),
-        sa.Column("feedback_text", sa.String(), nullable=False),
+        sa.Column("feedback_sentiment", sa.String(), nullable=True),
+        sa.Column("feedback_text", sa.String(), nullable=True),
         sa.Column("feedback_datetime_utc", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
             ["query_id"],

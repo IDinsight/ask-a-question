@@ -1,4 +1,4 @@
-"""add content table
+"""create content table
 
 Revision ID: f269c75dbf69
 Revises: 9eaf63e424ea

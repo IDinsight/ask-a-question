@@ -100,7 +100,7 @@ const createContent = async (content: ContentBody, token: string) => {
 };
 
 const getUrgencyRuleList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -117,7 +117,7 @@ const getUrgencyRuleList = async (token: string) => {
 };
 
 const addUrgencyRule = async (rule_text: string, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -139,7 +139,7 @@ const updateUrgencyRule = async (
   rule_text: string,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/${rule_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -157,7 +157,7 @@ const updateUrgencyRule = async (
 };
 
 const deleteUrgencyRule = async (rule_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/${rule_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -251,7 +251,7 @@ const getLLMResponse = async (search: string, token: string) => {
 };
 
 const getUrgencyDetection = async (search: string, token: string) => {
-  const urgencyDetectionUrl = `${BACKEND_ROOT_PATH}/urgency-detect`;
+  const urgencyDetectionUrl = `${NEXT_PUBLIC_BACKEND_URL}/urgency-detect`;
   return fetch(urgencyDetectionUrl, {
     method: "POST",
     headers: {

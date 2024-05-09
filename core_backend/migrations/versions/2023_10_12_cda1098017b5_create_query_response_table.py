@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("response_id", sa.Integer(), nullable=False),
         sa.Column("query_id", sa.Integer(), nullable=False),
         sa.Column("content_response", sa.JSON(), nullable=False),
+        sa.Column("llm_response", sa.String(), nullable=True),
         sa.Column("response_datetime_utc", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
             ["query_id"],
