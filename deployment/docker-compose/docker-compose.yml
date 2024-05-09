@@ -33,21 +33,6 @@ services:
       watch:
         - action: rebuild
           path: ../../admin_app
-  embeddings:
-    image: idinsight/embeddings:latest
-    build:
-      context: ../../optional_components/embeddings
-      dockerfile: Dockerfile
-      args:
-        HUGGINGFACE_MODEL: ${HUGGINGFACE_MODEL}
-        EMBEDDINGS_API_KEY: ${EMBEDDINGS_API_KEY}
-    restart: always
-    env_file:
-      - .env
-    develop:
-      watch:
-        - action: rebuild
-          path: ../../optional_components/embeddings
 
   caddy:
     image: caddy:2.7.6
@@ -86,7 +71,21 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
-
+  embeddings:
+    image: idinsight/embeddings:latest
+    build:
+      context: ../../optional_components/embeddings
+      dockerfile: Dockerfile
+      args:
+        HUGGINGFACE_MODEL: ${HUGGINGFACE_MODEL}
+        EMBEDDINGS_API_KEY: ${EMBEDDINGS_API_KEY}
+    restart: always
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../optional_components/embeddings
 volumes:
   caddy_data:
   caddy_config:

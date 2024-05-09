@@ -1,15 +1,13 @@
 from typing import List
-from fastapi import FastAPI, HTTPException
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from config import HUGGINGFACE_MODEL, STATIC_TOKEN
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from torch import Tensor
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 
-from config import HUGGINGFACE_MODEL, STATIC_TOKEN
-
-print(f"Using model: {HUGGINGFACE_MODEL}")
 app = FastAPI()
 
 security = HTTPBearer()
@@ -17,6 +15,7 @@ security = HTTPBearer()
 
 @app.on_event("startup")
 def load_model():
+    """Load the model and tokenizer on startup"""
     global tokenizer
     global model
     tokenizer = AutoTokenizer.from_pretrained(HUGGINGFACE_MODEL)
@@ -37,11 +36,18 @@ class ResponseModel(BaseModel):
 
 
 def average_pool(last_hidden_states: Tensor, attention_mask: Tensor) -> Tensor:
+    """
+    Compute the average pooling of the last hidden states.
+    """
     last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
     return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
 
 
 def verify_token(http_auth: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Authenticate using basic bearer token. Used for calling
+    the embedding endpoints.
+    """
     if http_auth.credentials != STATIC_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -51,8 +57,10 @@ def verify_token(http_auth: HTTPAuthorizationCredentials = Depends(security)):
 
 
 @app.post("/embeddings", response_model=ResponseModel)
-async def complete(request_model: RequestModel, token: str = Depends(verify_token)):
-
+async def get_embeddings(
+    request_model: RequestModel, token: str = Depends(verify_token)
+):
+    """Endpoint to get embeddings for the given text."""
     batch_dict = tokenizer(
         request_model.input,
         max_length=512,
@@ -72,5 +80,6 @@ async def complete(request_model: RequestModel, token: str = Depends(verify_toke
 
 
 @app.post("/chat/completions", response_model=ResponseModel)
-async def complete(token: str = Depends(verify_token)):
+async def get_completions(token: str = Depends(verify_token)):
+    """Get chat completions. Required for LiteLLM endpoints"""
     return JSONResponse(status_code=200, content={"status": "ok"})
