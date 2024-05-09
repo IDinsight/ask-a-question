@@ -21,11 +21,13 @@ Install [Docker](https://docs.docker.com/get-docker/) with Docker Compose versio
 
 3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
 
-### Step 3: Run `docker compose watch`
+### Step 2: Run `docker compose watch`
 
 In `deployment/docker-compose`, run
 
-        docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+```
 
 The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
 
@@ -50,8 +52,8 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
 2. Set required environment variables in your terminal using
 
-        export PROMETHEUS_MULTIPROC_DIR=/tmp
-        export OPENAI_API_KEY=sk...
+        export OPENAI_API_KEY=sk...  # required for model proxy server
+        export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
 
 3. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
@@ -123,10 +125,7 @@ To host docs offline so you can see your changes, run the following in the root 
 
     mkdocs serve -a "localhost:8080"
 
-
 ## Pros and cons of each setup method
-
-
 
 | Method | Pros | Cons |
 | --- | --- | --- |
