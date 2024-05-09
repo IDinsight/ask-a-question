@@ -11,6 +11,7 @@ from typing import Sequence, Union
 import pgvector
 import sqlalchemy as sa
 from alembic import op
+from app.contents.config import PGVECTOR_VECTOR_SIZE
 
 # revision identifiers, used by Alembic.
 revision: str = "72d3851d44a6"
@@ -40,7 +41,9 @@ def upgrade() -> None:
         sa.Column("urgency_rule_id", sa.Integer(), nullable=False),
         sa.Column("urgency_rule_text", sa.String(), nullable=False),
         sa.Column(
-            "urgency_rule_vector", pgvector.sqlalchemy.Vector(dim=1536), nullable=False
+            "urgency_rule_vector",
+            pgvector.sqlalchemy.Vector(dim=int(PGVECTOR_VECTOR_SIZE)),
+            nullable=False,
         ),
         sa.Column("urgency_rule_metadata", sa.JSON(), nullable=True),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),
