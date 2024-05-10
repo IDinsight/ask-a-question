@@ -1,8 +1,7 @@
 from typing import List
 
-from config import HUGGINGFACE_MODEL, API_KEY
+from config import API_KEY, HUGGINGFACE_MODEL
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from torch import Tensor
