@@ -1,6 +1,6 @@
 from typing import List
 
-from config import HUGGINGFACE_MODEL, STATIC_TOKEN
+from config import HUGGINGFACE_MODEL, API_KEY
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -48,7 +48,7 @@ def verify_token(http_auth: HTTPAuthorizationCredentials = Depends(security)):
     Authenticate using basic bearer token. Used for calling
     the embedding endpoints.
     """
-    if http_auth.credentials != STATIC_TOKEN:
+    if http_auth.credentials != API_KEY:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid authentication credentials",
