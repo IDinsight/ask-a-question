@@ -77,9 +77,3 @@ async def get_embeddings(
         "embedding": embeddings.tolist()[0],
     }
     return ResponseModel(data=[response_dict])
-
-
-@app.post("/chat/completions", response_model=ResponseModel)
-async def get_completions(token: str = Depends(verify_token)):
-    """Get chat completions. Required for LiteLLM endpoints"""
-    return JSONResponse(status_code=200, content={"status": "ok"})
