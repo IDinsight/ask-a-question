@@ -9,23 +9,24 @@ custom answer for the user.
 See OpenAPI specification or [SwaggerUI](index.md/#swaggerui) for more details on how to call the service.
 
 ## Process flow
-``` mermaid
+
+```mermaid
 sequenceDiagram
   autonumber
-  User->>Semantic Search: "Aaj ka mausum kaisa hai?"
-  Semantic Search->>LLM: Identify Language
-  LLM->>Semantic Search: <Language>
-  Semantic Search->>LLM: Translate Text
-  LLM->>Semantic Search: <Translated Text>
-  Semantic Search->>LLM: Paraphrase Question
-  LLM->>Semantic Search: <Paraphrased Question>
-  Semantic Search->>Vector Db: Find K most similar items in Db
-  Vector Db->>Semantic Search: Return K items with similarity score
-  Semantic Search->>LLM: Construct response to question with content
-  LLM->>Semantic Search: <LLM Answer>
-  Semantic Search->>LLM: Check if answer is consistent with content
-  LLM->>Semantic Search: <Consistency score>
-  Semantic Search->>User: Return JSON of LLM response and K items
+  User->>AAQ: User's question
+  AAQ->>LLM: Identify language
+  LLM->>AAQ: <Language>
+  AAQ->>LLM: Translate text
+  LLM->>AAQ: <Translated Text>
+  AAQ->>LLM: Paraphrase question
+  LLM->>AAQ: <Paraphrased Question>
+  AAQ->>Vector Db: Request N most similar contents in Db
+  Vector Db->>AAQ: <N contents with similarity score>
+  AAQ->>LLM: Construct response to question given contents
+  LLM->>AAQ: <LLM response>
+  AAQ->>LLM: Check if LLM response is consistent with contents
+  LLM->>AAQ: <Consistency score>
+  AAQ->>User: Return JSON of LLM response and N contents
 
 ```
 
@@ -34,28 +35,29 @@ sequenceDiagram
 ### Align Score
 
 In the Process Flow above, _Step 12: Check if answer is consistent with content_ can
-be done using [AlignScore](https://github.com/yuh-zha/AlignScore).
+be done using a custom [AlignScore](https://github.com/yuh-zha/AlignScore) model instead
+of another LLM call.
 
 ``` mermaid
 sequenceDiagram
   autonumber
-  User->>Semantic Search: "Aaj ka mausum kaisa hai?"
-  Semantic Search->>LLM: Identify Language
-  LLM->>Semantic Search: <Language>
-  Semantic Search->>LLM: Translate Text
-  LLM->>Semantic Search: <Translated Text>
-  Semantic Search->>LLM: Paraphrase Question
-  LLM->>Semantic Search: <Paraphrased Question>
-  Semantic Search->>Vector Db: Find K most similar items in Db
-  Vector Db->>Semantic Search: Return K items with similarity score
-  Semantic Search->>LLM: Construct response to question with content
-  LLM->>Semantic Search: <LLM Answer>
-  Semantic Search->>AlignScore: Check if answer is consistent with content
-  AlignScore->>Semantic Search: <Consistency score>
-  Semantic Search->>User: Return JSON of LLM response and K items
+  User->>AAQ: User's question
+  AAQ->>LLM: Identify language
+  LLM->>AAQ: <Language>
+  AAQ->>LLM: Translate text
+  LLM->>AAQ: <Translated Text>
+  AAQ->>LLM: Paraphrase question
+  LLM->>AAQ: <Paraphrased Question>
+  AAQ->>Vector Db: Request N most similar contents in Db
+  Vector Db->>AAQ: <N contents with similarity score>
+  AAQ->>LLM: Construct response to question given contents
+  LLM->>AAQ: <LLM response>
+  AAQ->>Custom AlignScore Model: Check if LLM response is consistent with contents
+  Custom AlignScore Model ->>AAQ: <Consistency score>
+  AAQ->>User: Return JSON of LLM response and N contents
 
 ```
 
-To use AlignScore, AAQ needs access to the AlignScore service. See
+To use the custom AlignScore model, AAQ needs access to the AlignScore service. See
 [documentation](../../components/align-score/index.md) for how to setup
 the service and configure AAQ to call it.
