@@ -19,8 +19,8 @@ sequenceDiagram
   LLM->>AAQ: <Translated text>
   AAQ->>LLM: Paraphrase question
   LLM->>AAQ: <Paraphrased question>
-  AAQ->>Vector Db: Request N most similar contents in Db
-  Vector Db->>AAQ: <N contents with similarity score>
+  AAQ->>Vector DB: Request N most similar contents in DB
+  Vector DB->>AAQ: <N contents with similarity score>
   AAQ->>User: Return JSON of N contents
 
 ```
