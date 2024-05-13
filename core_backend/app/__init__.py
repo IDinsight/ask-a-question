@@ -14,6 +14,7 @@ from . import (
     contents,
     key_management,
     question_answer,
+    question_dashboard,
     urgency_detection,
     urgency_rules,
     whatsapp_qa,
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(admin.routers.router)
     app.include_router(question_answer.router)
     app.include_router(contents.router)
+    app.include_router(question_dashboard.router)
     app.include_router(auth.router)
     app.include_router(whatsapp_qa.router)
     app.include_router(key_management.router)

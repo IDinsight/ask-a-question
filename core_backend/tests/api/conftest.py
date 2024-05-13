@@ -1,4 +1,5 @@
 import json
+import random
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Tuple
@@ -26,6 +27,7 @@ from core_backend.app.question_answer.schemas import (
     QueryResponse,
     ResultState,
 )
+from core_backend.app.question_dashboard.schemas import QuestionDashBoard
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash
@@ -245,6 +247,17 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
         np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
     )
     return embedding_list
+
+
+async def mock_dashboard_stats(*arg: str, **kwargs: str):
+    """
+    Replicates question_dashboard.models.get_dashboard_stats but generates random
+    statistics.
+    """
+    return QuestionDashBoard(
+        six_months_question=[random.randint(0, 100) for _ in range(6)],
+        sis_months_upvote=[random.randint(0, 100) for _ in range(6)],
+    )
 
 
 @pytest.fixture(scope="session")
