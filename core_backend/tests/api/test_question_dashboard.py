@@ -6,7 +6,7 @@ from .conftest import mock_dashboard_stats
 
 def test_retrieve_question_dashboard(
     client: TestClient,
-    readonly_token: str,
+    fullaccess_token: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
@@ -15,7 +15,7 @@ def test_retrieve_question_dashboard(
     )
     response = client.get(
         "/dashboard/question_stats",
-        headers={"Authorization": f"Bearer {readonly_token}"},
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
 
     assert response.status_code == 200

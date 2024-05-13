@@ -249,7 +249,7 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
     return embedding_list
 
 
-async def mock_dashboard_stats(*arg: str, **kwargs: str):
+async def mock_dashboard_stats(*arg: str, **kwargs: str) -> QuestionDashBoard:
     """
     Replicates question_dashboard.models.get_dashboard_stats but generates random
     statistics.

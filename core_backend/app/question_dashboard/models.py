@@ -6,7 +6,7 @@ from sqlalchemy import Float, cast, extract, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ..question_answer.models import ContentFeedbackDB, UserQueryDB
+from ..question_answer.models import ContentFeedbackDB, QueryDB
 from .schemas import QuestionDashBoard
 
 
@@ -33,11 +33,11 @@ async def get_questions_stats(
 
     stmt = (
         select(
-            extract("year", UserQueryDB.query_datetime_utc).label("year"),
-            extract("month", UserQueryDB.query_datetime_utc).label("month"),
-            cast(func.count(UserQueryDB.query_id), Float).label("count"),
+            extract("year", QueryDB.query_datetime_utc).label("year"),
+            extract("month", QueryDB.query_datetime_utc).label("month"),
+            cast(func.count(QueryDB.query_id), Float).label("count"),
         )
-        .where(UserQueryDB.query_datetime_utc >= from_date)
+        .where(QueryDB.query_datetime_utc >= from_date)
         .group_by("year", "month")
         .order_by("year", "month")
     )
