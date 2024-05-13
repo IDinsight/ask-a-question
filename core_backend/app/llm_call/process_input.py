@@ -76,7 +76,7 @@ async def _identify_language(
         IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
     )
     question.original_language = identified_lang
-    response.debug_info["original_language"] = identified_lang
+    response.debug_info["original_language"] = identified_lang.value
 
     processed_response = _process_identified_language_response(
         identified_lang,

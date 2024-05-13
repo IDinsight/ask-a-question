@@ -91,14 +91,16 @@ const Page = () => {
     ]);
   };
 
-  const processErrorMessage = (error: Error) => {
+  const processNotOKResponse = (response: any) => {
+    const responseText = `Error: ${response.status} - ${response.statusText}. See JSON for details.`;
+    console.error(responseText, response);
     setMessages((prevMessages) => [
       ...prevMessages,
       {
         dateTime: new Date().toISOString(),
         type: "response",
-        content: "API call failed. See JSON for details.",
-        json: `{error: ${error.message}}`,
+        content: responseText,
+        json: response,
       },
     ]);
   };
@@ -127,12 +129,11 @@ const Page = () => {
         apiCalls
           .getEmbeddingsSearch(queryText, currApiKey)
           .then((response) => {
-            processEmbeddingsSearchResponse(response);
-          })
-          .catch((error: Error) => {
-            setError("Embeddings search failed.");
-            processErrorMessage(error);
-            console.error(error);
+            if (response.status === 200) {
+              processEmbeddingsSearchResponse(response);
+            } else {
+              processNotOKResponse(response);
+            }
           })
           .finally(() => {
             setLoading(false);
@@ -141,12 +142,11 @@ const Page = () => {
         apiCalls
           .getLLMResponse(queryText, currApiKey)
           .then((response) => {
-            processLLMSearchResponse(response);
-          })
-          .catch((error: Error) => {
-            setError("LLM Response failed.");
-            processErrorMessage(error);
-            console.error(error);
+            if (response.status === 200) {
+              processLLMSearchResponse(response);
+            } else {
+              processNotOKResponse(response);
+            }
           })
           .finally(() => {
             setLoading(false);
@@ -155,12 +155,11 @@ const Page = () => {
         apiCalls
           .getUrgencyDetection(queryText, currApiKey)
           .then((response) => {
-            processUrgencyDetection(response);
-          })
-          .catch((error: Error) => {
-            setError("Urgency Detection failed.");
-            processErrorMessage(error);
-            console.error(error);
+            if (response.status === 200) {
+              processUrgencyDetection(response);
+            } else {
+              processNotOKResponse(response);
+            }
           })
           .finally(() => {
             setLoading(false);
