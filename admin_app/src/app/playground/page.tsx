@@ -98,7 +98,7 @@ const Page = () => {
         dateTime: new Date().toISOString(),
         type: "response",
         content: "API call failed. See JSON for details.",
-        json: `{error: ${error.message}}`,
+        json: JSON.parse(error.message),
       },
     ]);
   };
