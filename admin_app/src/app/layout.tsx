@@ -21,6 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <script src="https://accounts.google.com/gsi/client" async></script>
       </head>
       <body className={inter.className}>
         <ThemeProvider theme={theme}>

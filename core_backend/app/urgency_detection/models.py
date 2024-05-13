@@ -21,8 +21,8 @@ class UrgencyQueryDB(Base):
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
-    user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
     message_text: Mapped[str] = mapped_column(String, nullable=False)
     message_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -34,7 +34,7 @@ class UrgencyQueryDB(Base):
 
 
 async def save_urgency_query_to_db(
-    user_id: str,
+    user_id: int,
     feedback_secret_key: str,
     urgency_query: UrgencyQuery,
     asession: AsyncSession,

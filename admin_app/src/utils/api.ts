@@ -190,6 +190,27 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getGoogleLoginToken = async (idToken: {
+  client_id: string;
+  credential: string;
+}) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login-google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(idToken),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      console.log(resp);
+      return resp;
+    } else {
+      throw new Error("Error fetching login token");
+    }
+  });
+};
+
 const getEmbeddingsSearch = async (search: string, token: string) => {
   const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
   return fetch(embeddingUrl, {
@@ -291,6 +312,7 @@ export const apiCalls = {
   updateUrgencyRule,
   deleteUrgencyRule,
   getLoginToken,
+  getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
   getQuestionStats,

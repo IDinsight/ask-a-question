@@ -32,6 +32,13 @@ def get_key_hash(retrieval_key: str) -> str:
     return hashlib.sha256(retrieval_key.encode()).hexdigest()
 
 
+def get_random_password(size: int) -> str:
+    import random
+    import string
+
+    return "".join(random.choices(string.ascii_letters + string.digits, k=size))
+
+
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:
     """
     Get log level from string

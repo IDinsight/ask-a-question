@@ -8,8 +8,15 @@ class UserCreate(BaseModel):
     """
 
     username: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreateWithPassword(UserCreate):
+    """
+    Pydantic model for user creation
+    """
+
     password: str
-    user_id: str
-    retrieval_key: str
 
     model_config = ConfigDict(from_attributes=True)
