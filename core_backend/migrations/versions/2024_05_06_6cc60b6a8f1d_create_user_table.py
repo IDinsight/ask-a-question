@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("username", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(length=64), nullable=False),
-        sa.Column("hashed_retrieval_key", sa.String(length=64), nullable=False),
+        sa.Column("hashed_retrieval_key", sa.String(length=64), nullable=True),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),
         sa.Column("updated_datetime_utc", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("user_id"),

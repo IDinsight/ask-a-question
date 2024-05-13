@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
+from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
     authenticate_or_create_google_user,
@@ -11,8 +12,6 @@ from .dependencies import (
 from .schemas import GoogleLoginData
 
 router = APIRouter(tags=["Authentication"])
-
-CLIENT_ID = "546420096809-5n9dinjpofivh6m54pm5hmki7vbtec3u.apps.googleusercontent.com"
 
 
 @router.post("/login")
@@ -46,7 +45,9 @@ async def login_google(login_data: GoogleLoginData) -> dict:
 
     try:
         idinfo = id_token.verify_oauth2_token(
-            login_data.credential, requests.Request(), CLIENT_ID
+            login_data.credential,
+            requests.Request(),
+            NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
         )
         if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
             raise ValueError("Wrong issuer.")

@@ -13,8 +13,8 @@ import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
 
-const CLIENT_ID =
-  "546420096809-5n9dinjpofivh6m54pm5hmki7vbtec3u.apps.googleusercontent.com";
+const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
+  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "";
 
 const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
@@ -49,7 +49,7 @@ const Login = () => {
     };
 
     window.google.accounts.id.initialize({
-      client_id: CLIENT_ID,
+      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
       callback: (data) => handleCredentialResponse(data),
       state_cookie_domain: "https://example.com",
     });
