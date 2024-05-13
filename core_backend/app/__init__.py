@@ -14,6 +14,7 @@ from . import (
     contents,
     key_management,
     question_answer,
+    tags,
     urgency_detection,
     urgency_rules,
     whatsapp_qa,
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(key_management.router)
     app.include_router(urgency_detection.router)
     app.include_router(urgency_rules.router)
+    app.include_router(tags.router)
 
     origins = [
         f"http://{DOMAIN}",

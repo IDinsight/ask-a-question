@@ -3,17 +3,20 @@ from typing import Dict, List, Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    JSON,
-    DateTime,
+    Column,
     ForeignKey,
+    DateTime,
+    JSON,
     Integer,
     String,
+    Table,
     delete,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..tags.models import content_tags_table
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
 from ..utils import embedding
@@ -51,6 +54,10 @@ class ContentDB(Base):
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    content_tags = relationship(
+        "TagDB", secondary=content_tags_table, back_populates="contents"
+    )
+
     def __repr__(self) -> str:
         """Pretty Print"""
         return (
@@ -76,7 +83,6 @@ async def save_content_to_db(
     """
 
     content_embedding = await _get_content_embeddings(content)
-
     content_db = ContentDB(
         user_id=user_id,
         content_embedding=content_embedding,
@@ -89,7 +95,6 @@ async def save_content_to_db(
     )
 
     asession.add(content_db)
-
     await asession.commit()
     await asession.refresh(content_db)
 

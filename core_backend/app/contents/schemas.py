@@ -15,6 +15,7 @@ class ContentCreate(BaseModel):
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     content_language: str = "ENGLISH"
+    content_tags: list = []
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
