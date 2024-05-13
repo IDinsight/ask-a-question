@@ -199,17 +199,17 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ query_text: search }),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      return response.json().then((errData) => {
-        const errorDataWithCode = { error_code: response.status, ...errData };
-        throw new Error(JSON.stringify(errorDataWithCode));
+  })
+    .then((response) => {
+      return response.json().then((data) => {
+        const responseWithStatus = { status: response.status, ...data };
+        return responseWithStatus;
       });
-    }
-  });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      throw error;
+    });
 };
 
 const getLLMResponse = async (search: string, token: string) => {
@@ -221,17 +221,17 @@ const getLLMResponse = async (search: string, token: string) => {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ query_text: search }),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      return response.json().then((errData) => {
-        const errorDataWithCode = { error_code: response.status, ...errData };
-        throw new Error(JSON.stringify(errorDataWithCode));
+  })
+    .then((response) => {
+      return response.json().then((data) => {
+        const responseWithStatus = { status: response.status, ...data };
+        return responseWithStatus;
       });
-    }
-  });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      throw error;
+    });
 };
 
 const getQuestionStats = async (token: string) => {
