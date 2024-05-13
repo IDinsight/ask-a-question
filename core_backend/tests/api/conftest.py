@@ -42,7 +42,7 @@ CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
-TEST_USER_ID = "test_user_id"
+TEST_USER_ID = 123
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
