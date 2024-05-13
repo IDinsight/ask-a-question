@@ -22,7 +22,7 @@ sequenceDiagram
   LLM->>AAQ: <Paraphrased Question>
   AAQ->>Vector Db: Request N most similar contents in Db
   Vector Db->>AAQ: <N contents with similarity score>
-  AAQ->>LLM: Construct response to question given contents
+  AAQ->>LLM: Given contents, construct response in user's language to question
   LLM->>AAQ: <LLM response>
   AAQ->>LLM: Check if LLM response is consistent with contents
   LLM->>AAQ: <Consistency score>
