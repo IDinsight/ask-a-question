@@ -52,8 +52,8 @@ const Logo = () => {
         component="img"
         src={logowhite.src}
         sx={{
-          height: 30,
-          width: 180,
+          height: 36,
+          aspect_ratio: 1200 / 214,
           display: { xs: "none", md: "block" },
         }}
       />
