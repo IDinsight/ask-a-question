@@ -14,7 +14,7 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
-  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "";
+  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "not-set";
 
 const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
@@ -47,7 +47,6 @@ const Login = () => {
         credential: response.credential,
       });
     };
-
     window.google.accounts.id.initialize({
       client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
       callback: (data) => handleCredentialResponse(data),
