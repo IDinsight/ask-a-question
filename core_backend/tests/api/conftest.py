@@ -47,6 +47,11 @@ TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
 
+TEST_USER_ID_2 = "test_user_id_2"
+TEST_USERNAME_2 = "test_username_2"
+TEST_PASSWORD_2 = "test_password_2"
+TEST_USER_RETRIEVAL_KEY_2 = "test_retrieval_key_2"
+
 
 @pytest.fixture(scope="session")
 def db_session() -> Generator[Session, None, None]:
@@ -63,8 +68,7 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def user(client: TestClient, db_session: Session) -> None:
-
-    user_db = UserDB(
+    user1_db = UserDB(
         user_id=TEST_USER_ID,
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
@@ -72,7 +76,16 @@ def user(client: TestClient, db_session: Session) -> None:
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
-    db_session.add(user_db)
+    user2_db = UserDB(
+        user_id=TEST_USER_ID_2,
+        username=TEST_USERNAME_2,
+        hashed_password=get_key_hash(TEST_PASSWORD_2),
+        hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY_2),
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(user1_db)
+    db_session.add(user2_db)
     db_session.commit()
 
 
@@ -266,6 +279,14 @@ def fullaccess_token() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME)
+
+
+@pytest.fixture(scope="session")
+def fullaccess_token_user2() -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token(TEST_USERNAME_2)
 
 
 @pytest.fixture(scope="session", autouse=True)
