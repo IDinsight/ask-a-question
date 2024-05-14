@@ -203,7 +203,6 @@ const getGoogleLoginToken = async (idToken: {
   }).then((response) => {
     if (response.ok) {
       let resp = response.json();
-      console.log(resp);
       return resp;
     } else {
       throw new Error("Error fetching login token");
