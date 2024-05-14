@@ -32,13 +32,13 @@ class TestUsers:
 
     async def test_save_user_to_db(self, asession: AsyncSession) -> None:
         user = UserCreate(
-            user_id="test_user_id_2",
-            username="test_username_2",
-            password="test_password_2",
-            retrieval_key="test_retrieval_key_2",
+            user_id="test_user_id_3",
+            username="test_username_3",
+            password="test_password_3",
+            retrieval_key="test_retrieval_key_3",
         )
         saved_user = await save_user_to_db(user, asession)
-        assert saved_user.username == "test_username_2"
+        assert saved_user.username == "test_username_3"
 
     async def test_save_user_to_db_existing_user(self, asession: AsyncSession) -> None:
         user = UserCreate(
@@ -68,14 +68,14 @@ class TestUsers:
 
     async def test_update_user_retrieval_key(self, asession: AsyncSession) -> None:
         user = UserCreate(
-            user_id="test_user_id_3",
-            username="test_username_3",
-            password="test_password_3",
-            retrieval_key="test_retrieval_key_3",
+            user_id="test_user_id_4",
+            username="test_username_4",
+            password="test_password_4",
+            retrieval_key="test_retrieval_key_4",
         )
         saved_user = await save_user_to_db(user, asession)
-        assert saved_user.hashed_retrieval_key == get_key_hash("test_retrieval_key_3")
+        assert saved_user.hashed_retrieval_key == get_key_hash("test_retrieval_key_4")
 
         updated_user = await update_user_retrieval_key(saved_user, "new_key", asession)
-        assert updated_user.hashed_retrieval_key != get_key_hash("test_retrieval_key_3")
+        assert updated_user.hashed_retrieval_key != get_key_hash("test_retrieval_key_4")
         assert updated_user.hashed_retrieval_key == get_key_hash("new_key")
