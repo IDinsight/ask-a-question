@@ -22,7 +22,12 @@ const CardsPage = () => {
     LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
-  const { accessLevel } = useAuth();
+  const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
+  const { token, accessLevel } = useAuth();
+
+  React.useEffect(() => {
+    setCurrAccessLevel(accessLevel);
+  }, [accessLevel]);
 
   return (
     <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
@@ -37,8 +42,13 @@ const CardsPage = () => {
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </Layout.FlexBox>
-      <CardsUtilityStrip editAccess={accessLevel === "fullaccess"} />
-      <CardsGrid displayLanguage={displayLanguage} searchTerm={searchTerm} />
+      <CardsUtilityStrip editAccess={currAccessLevel === "fullaccess"} />
+      <CardsGrid
+        displayLanguage={displayLanguage}
+        searchTerm={searchTerm}
+        token={token}
+        accessLevel={currAccessLevel}
+      />
     </Layout.FlexBox>
   );
 };
@@ -73,9 +83,13 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
+  token,
+  accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
+  token: string | null;
+  accessLevel: string;
 }) => {
   const [page, setPage] = React.useState<number>(1);
   const [max_pages, setMaxPages] = React.useState<number>(1);
@@ -85,8 +99,6 @@ const CardsGrid = ({
   const searchParams = useSearchParams();
   const action = searchParams.get("action") || null;
   const content_id = Number(searchParams.get("content_id")) || null;
-
-  const { token, accessLevel } = useAuth();
 
   const getSnackMessage = (
     action: string | null,
