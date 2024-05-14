@@ -58,13 +58,26 @@ The admin app will be available on [https://localhost](https://localhost) and th
         export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
         export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional
 
-4. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+4. (optional) Set custom login credentials by setting the following environment variables. The defaults
+can be found in `core_backend/add_users_to_db.py`.
 
-5. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
+        # user 1
+        export USER1_USERNAME = "user1"
+        export USER1_PASSWORD = "fullaccess"
+        export USER1_RETRIEVAL_SECRET = "user1-key"
+
+        # user 2
+        export USER2_USERNAME = "user2"
+        export USER2_PASSWORD = "fullaccess"
+        export USER2_RETRIEVAL_SECRET = "user2-key"
+
+5. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+
+6. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
         make setup-dev
 
-6. Run the app
+7. Run the app
 
         python core_backend/main.py
 
@@ -73,7 +86,7 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
      You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
-7. Once done, exit the running app process with `ctrl+c` and run
+8. Once done, exit the running app process with `ctrl+c` and run
 
         make teardown-dev
 
