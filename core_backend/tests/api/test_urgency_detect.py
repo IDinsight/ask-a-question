@@ -39,7 +39,7 @@ class TestUrgencyDetectionToken:
 
 
 class TestUrgencyClassifiers:
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="function")
     async def asession(self) -> AsyncGenerator[AsyncSession, None]:
         async for session in get_async_session():
             yield session
