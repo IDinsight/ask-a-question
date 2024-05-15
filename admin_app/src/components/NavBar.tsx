@@ -20,6 +20,7 @@ const pages = [
   { title: "Urgency Rules", path: "/urgency-rules" },
   { title: "Playground", path: "/playground" },
   { title: "Dashboard", path: "/dashboard" },
+  { title: "Integrations", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
