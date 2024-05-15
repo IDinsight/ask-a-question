@@ -159,6 +159,8 @@ class TestManageContent:
         )
         assert response.status_code == 200
 
+
+class TestMultUserManageContent:
     @pytest.mark.parametrize(
         "content_title, content_text, content_metadata",
         [("title 3", "test content 3", {})],

@@ -144,6 +144,8 @@ class TestManageUDRules:
         )
         assert response.status_code == 200
 
+
+class TestMultUserManageUDRules:
     @pytest.mark.parametrize(
         "urgency_rule_text, urgency_rule_metadata",
         [("test rule 5", {})],
