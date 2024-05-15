@@ -67,6 +67,13 @@ async def delete_urgency_rule(
     Delete a single urgency rule by id
     """
 
+    urgency_rule_db = await get_urgency_rule_by_id_from_db(
+        user_id=user_db.user_id, urgency_rule_id=urgency_rule_id, asession=asession
+    )
+    if not urgency_rule_db:
+        raise HTTPException(
+            status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
+        )
     await delete_urgency_rule_from_db(
         user_id=user_db.user_id, urgency_rule_id=urgency_rule_id, asession=asession
     )

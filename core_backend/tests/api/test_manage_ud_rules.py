@@ -43,7 +43,7 @@ class TestManageUDRules:
         "urgency_rule_text, urgency_rule_metadata",
         [
             ("test rule 3", {}),
-            ("test rule 2", {"meta_key": "meta_value"}),
+            ("test rule 4", {"meta_key": "meta_value"}),
         ],
     )
     async def test_create_and_delete_UDrules(
@@ -140,6 +140,63 @@ class TestManageUDRules:
     ) -> None:
         response = client.delete(
             f"/urgency-rules/{existing_rule_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "urgency_rule_text, urgency_rule_metadata",
+        [("test rule 5", {})],
+    )
+    async def test_ud_rules_access_overlap(
+        self,
+        client: TestClient,
+        urgency_rule_text: str,
+        fullaccess_token: str,
+        fullaccess_token_user2: str,
+        urgency_rule_metadata: Dict[Any, Any],
+    ) -> None:
+        # make rules as user1
+        response = client.post(
+            "/urgency-rules",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "urgency_rule_text": urgency_rule_text,
+                "urgency_rule_metadata": urgency_rule_metadata,
+            },
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert "urgency_rule_id" in json_response
+
+        # try to fetch rules as user2
+        response = client.get(
+            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+        # try to edit rules as user2
+        response = client.put(
+            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "urgency_rule_text": urgency_rule_text,
+                "urgency_rule_metadata": urgency_rule_metadata,
+            },
+        )
+        assert response.status_code == 404
+
+        # try to delete rules as user2
+        response = client.delete(
+            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+        # delete rules as user1
+        response = client.delete(
+            f"/urgency-rules/{json_response['urgency_rule_id']}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
