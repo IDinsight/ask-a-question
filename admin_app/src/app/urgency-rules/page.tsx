@@ -172,8 +172,8 @@ const UrgencyRulesPage = () => {
             variant="contained"
             disabled={currAccessLevel != "fullaccess" ? true : false}
             onClick={() => createNewRecord()}
+            startIcon={<Add fontSize="small" />}
           >
-            <Add fontSize="small" />
             New
           </Button>
         </Layout.FlexBox>
