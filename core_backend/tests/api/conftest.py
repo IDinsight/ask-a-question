@@ -8,6 +8,8 @@ import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from pytest import Item
+from pytest_asyncio import is_async_test
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
@@ -51,6 +53,13 @@ TEST_USER_ID_2 = "test_user_id_2"
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_RETRIEVAL_KEY_2 = "test_retrieval_key_2"
+
+
+def pytest_collection_modifyitems(items: List[Item]) -> None:
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
 
 
 @pytest.fixture(scope="session")
