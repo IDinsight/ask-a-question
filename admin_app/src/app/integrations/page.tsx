@@ -1,21 +1,16 @@
 "use client";
+import {
+  KeyRenewConfirmationModal,
+  NewKeyModal,
+} from "@/components/APIKeyModals";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Typography,
-} from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import React, { useState } from "react";
-import { apiCalls } from "@/utils/api";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -35,6 +30,7 @@ const IntegrationsPage = () => {
     </Layout.FlexBox>
   );
 };
+
 const KeyManagement = ({
   token,
   editAccess,
@@ -46,6 +42,7 @@ const KeyManagement = ({
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [newKeyModalOpen, setNewKeyModalOpen] = useState(false);
   const [newKey, setNewKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNewKeyCopy = () => {
     navigator.clipboard.writeText(newKey);
@@ -62,11 +59,17 @@ const KeyManagement = ({
     setNewKeyModalOpen(false);
   };
   const handleRenew = async () => {
-    apiCalls.getNewAPIKey(token!).then((data) => {
+    setIsLoading(true);
+    try {
+      const data = await apiCalls.getNewAPIKey(token!);
       setNewKey(data.new_retrieval_key);
-    });
-    setConfirmationModalOpen(false);
-    setNewKeyModalOpen(true);
+      setConfirmationModalOpen(false);
+      setNewKeyModalOpen(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -108,87 +111,19 @@ const KeyManagement = ({
           Renew
         </Button>
 
-        <Dialog
+        <KeyRenewConfirmationModal
+          currentKey={currentKey}
           open={confirmationModalOpen}
           onClose={handleConfirmationModalClose}
-        >
-          <DialogTitle>
-            {"Are you sure you want to renew your API key?"}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              If you proceed,
-              <Typography component="span" style={{ fontWeight: "bold" }}>
-                {` the current "${currentKey}" key will stop working. `}
-              </Typography>
-              You will need to update your applications with the new key.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions sx={{ margin: 1 }}>
-            <Button onClick={handleConfirmationModalClose} color="primary">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRenew}
-              autoFocus
-              variant="contained"
-              color="error"
-              startIcon={<AutorenewIcon />}
-            >
-              Renew
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={newKeyModalOpen} onClose={handleNewKeyModalClose}>
-          <DialogTitle>{"Save your new key"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Please save this secret key somewhere safe and accessible. For
-              security reasons,
-              <Typography component="span" style={{ fontWeight: "bold" }}>
-                {" you won't be able to view it again here. "}
-              </Typography>
-              If you lose this secret key, you'll need to generate a new one.
-            </DialogContentText>
-            <Layout.Spacer multiplier={1} />
-            <DialogContentText>
-              Note: The API key is 32-characters.
-            </DialogContentText>
-            <Layout.Spacer multiplier={2} />
-            <Layout.FlexBox
-              flexDirection="row"
-              gap={sizes.baseGap}
-              sx={{
-                width: "80%",
-                margin: "auto",
-              }}
-            >
-              <TextField
-                autoFocus
-                fullWidth
-                value={newKey}
-                inputProps={{
-                  readOnly: true,
-                  style: { height: "36px", padding: "0 10px" },
-                }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleNewKeyCopy}
-                startIcon={<ContentCopyIcon />}
-                autoFocus
-              >
-                Copy
-              </Button>
-            </Layout.FlexBox>
-          </DialogContent>
-          <DialogActions sx={{ margin: 1 }}>
-            <Button onClick={handleNewKeyModalClose} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onRenew={handleRenew}
+          isLoading={isLoading}
+        />
+        <NewKeyModal
+          newKey={newKey}
+          open={newKeyModalOpen}
+          onClose={handleNewKeyModalClose}
+          onCopy={handleNewKeyCopy}
+        />
       </Layout.FlexBox>
     </Layout.FlexBox>
   );
