@@ -159,6 +159,69 @@ class TestManageContent:
         )
         assert response.status_code == 200
 
+    @pytest.mark.parametrize(
+        "content_title, content_text, content_metadata",
+        [("title 3", "test content 3", {})],
+    )
+    async def test_content_access_overlap(
+        self,
+        client: TestClient,
+        content_title: str,
+        content_text: str,
+        fullaccess_token: str,
+        fullaccess_token_user2: str,
+        content_metadata: Dict[Any, Any],
+    ) -> None:
+        # make content as user1
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "content_title": content_title,
+                "content_text": content_text,
+                "content_language": "ENGLISH",
+                "content_metadata": content_metadata,
+            },
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["content_metadata"] == content_metadata
+        assert "content_id" in json_response
+
+        # try to fetch content as user2
+        response = client.get(
+            f"/content/{json_response['content_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+        # try to edit content as user2
+        response = client.put(
+            f"/content/{json_response['content_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "content_title": content_title,
+                "content_text": content_text,
+                "content_language": "ENGLISH",
+                "content_metadata": content_metadata,
+            },
+        )
+        assert response.status_code == 404
+
+        # try to delete content as user2
+        response = client.delete(
+            f"/content/{json_response['content_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+        # delete content as user1
+        response = client.delete(
+            f"/content/{json_response['content_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == 200
+
 
 async def test_convert_record_to_schema() -> None:
     content_id = 1
