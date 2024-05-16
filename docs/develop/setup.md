@@ -56,6 +56,7 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
         export OPENAI_API_KEY=sk...  # required for model proxy server
         export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
+        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional
 
 4. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
@@ -110,10 +111,15 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
 ### Step 2: Run the admin app
 
-From `aaq-core/admin_app` run
+1. In a new terminal, navigate to `aaq-core/admin_app`
+2. If you want Google login option to work, you'll need to set the Google login client ID
 
-    npm i
-    npm run dev
+        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
+
+3. Run
+
+        npm i
+        npm run dev
 
 This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
 
