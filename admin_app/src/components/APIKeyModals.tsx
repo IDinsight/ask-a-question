@@ -38,7 +38,7 @@ export const KeyRenewConfirmationModal = ({
         and you will need to update your applications with the new key.
       </DialogContentText>
     </DialogContent>
-    <DialogActions sx={{ margin: 1 }}>
+    <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
       <Button onClick={onClose} color="primary">
         Cancel
       </Button>
