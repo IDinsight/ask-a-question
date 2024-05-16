@@ -118,6 +118,12 @@ const Page = () => {
     ]);
   };
 
+  const queryTypeDisplayNameMapping = {
+    "embeddings-search": "Embedding Search",
+    "llm-response": "LLM Search",
+    "urgency-detection": "Urgency Detection",
+  };
+
   const onSend = (queryText: string, queryType: QueryType) => {
     if (queryText === "") {
       return;
@@ -130,12 +136,14 @@ const Page = () => {
       setLoading(false);
       return;
     } else {
+      const queryTypeDisplayName =
+        queryTypeDisplayNameMapping[queryType] || queryType;
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           dateTime: new Date().toISOString(),
           type: "question",
-          content: queryText,
+          content: `${queryTypeDisplayName}: ${queryText}`,
         } as UserMessage,
       ]);
       if (queryType === "embeddings-search") {
