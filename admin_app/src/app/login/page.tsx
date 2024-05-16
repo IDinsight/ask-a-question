@@ -163,7 +163,7 @@ const Login = () => {
               justifyContent="center"
             >
               <Typography variant="body1" sx={{ py: 4 }}>
-                or
+                - or -
               </Typography>
               <div id="signinDiv"></div>
             </Box>
