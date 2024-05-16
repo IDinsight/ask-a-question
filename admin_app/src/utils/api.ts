@@ -8,8 +8,16 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getContentList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
+const getContentList = async ({
+  token,
+  skip = 0,
+  limit = 200,
+}: {
+  token: string;
+  skip?: number;
+  limit?: number;
+}) => {
+  return fetch(`${BACKEND_ROOT_PATH}/content/?skip=${skip}&limit=${limit}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
