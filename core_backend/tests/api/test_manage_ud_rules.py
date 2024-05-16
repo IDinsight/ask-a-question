@@ -146,62 +146,45 @@ class TestManageUDRules:
 
 
 class TestMultUserManageUDRules:
-    @pytest.mark.parametrize(
-        "urgency_rule_text, urgency_rule_metadata",
-        [("test rule 5", {})],
-    )
-    async def test_ud_rules_access_overlap(
+    async def user2_get_user1_UDrule(
         self,
         client: TestClient,
-        urgency_rule_text: str,
-        fullaccess_token: str,
+        existing_rule_id: str,
         fullaccess_token_user2: str,
-        urgency_rule_metadata: Dict[Any, Any],
     ) -> None:
-        # make rules as user1
-        response = client.post(
-            "/urgency-rules",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={
-                "urgency_rule_text": urgency_rule_text,
-                "urgency_rule_metadata": urgency_rule_metadata,
-            },
-        )
-        assert response.status_code == 200
-        json_response = response.json()
-        assert "urgency_rule_id" in json_response
-
-        # try to fetch rules as user2
         response = client.get(
-            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
         assert response.status_code == 404
 
-        # try to edit rules as user2
+    async def user2_edit_user1_UDrule(
+        self,
+        client: TestClient,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
         response = client.put(
-            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
             json={
-                "urgency_rule_text": urgency_rule_text,
-                "urgency_rule_metadata": urgency_rule_metadata,
+                "urgency_rule_text": "user2 rule",
+                "urgency_rule_metadata": {},
             },
         )
         assert response.status_code == 404
 
-        # try to delete rules as user2
+    async def user2_delete_user1_UDrule(
+        self,
+        client: TestClient,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
         response = client.delete(
-            f"/urgency-rules/{json_response['urgency_rule_id']}",
+            f"/urgency-rules/{existing_rule_id}",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
         assert response.status_code == 404
-
-        # delete rules as user1
-        response = client.delete(
-            f"/urgency-rules/{json_response['urgency_rule_id']}",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
-        )
-        assert response.status_code == 200
 
 
 async def test_convert_record_to_schema() -> None:
