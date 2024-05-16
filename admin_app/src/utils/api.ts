@@ -25,14 +25,25 @@ const getNewAPIKey = async (token: string) => {
   });
 };
 
-const getContentList = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+const getContentList = async ({
+  token,
+  skip = 0,
+  limit = 200,
+}: {
+  token: string;
+  skip?: number;
+  limit?: number;
+}) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/content/?skip=${skip}&limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     },
-  }).then((response) => {
+  ).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;

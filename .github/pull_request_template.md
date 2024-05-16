@@ -31,3 +31,4 @@ Fill with `x` for completed. Delete any lines that are not relevant
 - [ ] I have updated the requirements (if applicable)
 - [ ] I have updated the README file (if applicable)
 - [ ] I have updated affected documentation (if applicable)
+- [ ] I have added blogpost in Latest Updates

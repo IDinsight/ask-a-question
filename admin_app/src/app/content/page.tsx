@@ -15,6 +15,7 @@ import React from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
 
+const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
 
 const CardsPage = () => {
@@ -125,12 +126,14 @@ const CardsGrid = ({
 
   React.useEffect(() => {
     apiCalls
-      .getContentList(token!)
+      .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
       .then((data) => {
         const filteredData = data.filter(
           (card: Content) =>
-            card.content_title.includes(searchTerm) ||
-            card.content_text.includes(searchTerm),
+            card.content_title
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            card.content_text.toLowerCase().includes(searchTerm.toLowerCase()),
         );
         setCards(filteredData);
         setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
