@@ -72,8 +72,8 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
         disabled={!editAccess}
         component={Link}
         href="/content/edit"
+        startIcon={<Add fontSize="small" />}
       >
-        <Add fontSize="small" />
         New
       </Button>
     </Layout.FlexBox>

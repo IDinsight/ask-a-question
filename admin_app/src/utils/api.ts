@@ -8,6 +8,23 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
+const getNewAPIKey = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/key/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error rotating API key");
+    }
+  });
+};
+
 const getContentList = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
     method: "GET",
@@ -301,6 +318,7 @@ const getUrgencyDetection = async (search: string, token: string) => {
     });
 };
 export const apiCalls = {
+  getNewAPIKey,
   getContentList,
   getContent,
   deleteContent,

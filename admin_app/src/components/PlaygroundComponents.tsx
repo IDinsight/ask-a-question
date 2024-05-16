@@ -418,7 +418,17 @@ const ApiKeyDialog = ({
     >
       <DialogContent>
         <DialogContentText sx={{ my: 2 }}>
-          Please enter the key to access the search APIs.
+          {
+            "Please enter the API key to access the retrieval APIs. If you don't have one yet, head to "
+          }
+          <Link
+            href="/integrations"
+            color="primary"
+            sx={{ fontWeight: "bold" }}
+          >
+            Integrations
+          </Link>
+          {" to generate one."}
         </DialogContentText>
         <TextField
           autoFocus
