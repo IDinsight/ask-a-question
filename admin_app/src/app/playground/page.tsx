@@ -59,7 +59,7 @@ const Page = () => {
     console.log(response);
     const responseText = llmResponse
       ? llmResponse
-      : `No LLM response. Reason: "${response.debug_info.reason}". See JSON for details.`;
+      : `No LLM response. Reason: "${response.debug_info.reason}". See <json> for details.`;
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -76,7 +76,7 @@ const Page = () => {
     const isUrgent: boolean = response.is_urgent;
     const responseText =
       isUrgent === null
-        ? `No response. Reason:  See JSON for details.`
+        ? `No response. Reason:  See <json> for details.`
         : isUrgent
         ? "Urgent 🚨"
         : "Not Urgent 🟢";
@@ -93,7 +93,7 @@ const Page = () => {
   };
 
   const processNotOKResponse = (response: any) => {
-    const responseText = `Error: ${response.status}. See JSON for details.`;
+    const responseText = `Error: ${response.status}. See <json> for details.`;
     console.error(responseText, response);
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -112,7 +112,7 @@ const Page = () => {
       {
         dateTime: new Date().toISOString(),
         type: "response",
-        content: "API call failed. See JSON for details.",
+        content: "API call failed. See <json> for details.",
         json: `{error: ${error.message}}`,
       },
     ]);
