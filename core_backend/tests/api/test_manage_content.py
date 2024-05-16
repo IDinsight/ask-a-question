@@ -162,7 +162,7 @@ class TestManageContent:
 
 async def test_convert_record_to_schema() -> None:
     content_id = 1
-    user_id = "user1"
+    user_id = 123
     record = ContentDB(
         content_id=content_id,
         user_id=user_id,

@@ -11,11 +11,15 @@ import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
+import { useEffect } from "react";
+
+const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
+  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "not-set";
 
 const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
-  const { login, loginError } = useAuth();
+  const { login, loginGoogle, loginError } = useAuth();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,6 +39,30 @@ const Login = () => {
       login(username, password);
     }
   };
+
+  useEffect(() => {
+    const handleCredentialResponse = (response: any) => {
+      loginGoogle({
+        client_id: response.client_id,
+        credential: response.credential,
+      });
+    };
+    window.google.accounts.id.initialize({
+      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
+      callback: (data) => handleCredentialResponse(data),
+      state_cookie_domain: "https://example.com",
+    });
+
+    const signinDiv = document.getElementById("signinDiv");
+
+    if (signinDiv) {
+      window.google.accounts.id.renderButton(signinDiv, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+      });
+    }
+  }, []);
 
   return (
     <Grid container component="main" sx={{ height: "100vh" }}>
@@ -128,6 +156,17 @@ const Login = () => {
             >
               Sign In
             </Button>
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Typography variant="body1" sx={{ py: 4 }}>
+                - or -
+              </Typography>
+              <div id="signinDiv"></div>
+            </Box>
           </Box>
         </Box>
       </Grid>

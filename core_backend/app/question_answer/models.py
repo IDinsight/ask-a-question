@@ -33,8 +33,8 @@ class QueryDB(Base):
     query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
-    user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
@@ -60,7 +60,7 @@ class QueryDB(Base):
 
 
 async def save_user_query_to_db(
-    user_id: str,
+    user_id: int,
     feedback_secret_key: str,
     user_query: QueryBase,
     asession: AsyncSession,

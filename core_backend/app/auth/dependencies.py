@@ -16,8 +16,10 @@ from ..users.models import (
     UserNotFoundError,
     get_user_by_token,
     get_user_by_username,
+    save_user_to_db,
 )
-from ..utils import get_key_hash, setup_logger
+from ..users.schemas import UserCreate
+from ..utils import setup_logger, verify_key_hash
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
 from .schemas import AuthenticatedUser
 
@@ -59,13 +61,35 @@ async def authenticate_credentials(
     ) as asession:
         try:
             user_db = await get_user_by_username(username, asession)
-            if user_db.hashed_password == get_key_hash(password):
+            if verify_key_hash(password, user_db.hashed_password):
                 # hardcode "fullaccess" now, but may use it in the future
                 return AuthenticatedUser(username=username, access_level="fullaccess")
             else:
                 return None
         except UserNotFoundError:
             return None
+
+
+async def authenticate_or_create_google_user(
+    *, google_email: str
+) -> Optional[AuthenticatedUser]:
+    """
+    Check if user exists in Db. If not, create user
+    """
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(google_email, asession)
+            return AuthenticatedUser(
+                username=user_db.username, access_level="fullaccess"
+            )
+        except UserNotFoundError:
+            user = UserCreate(username=google_email)
+            user_db = await save_user_to_db(user, asession)
+            return AuthenticatedUser(
+                username=user_db.username, access_level="fullaccess"
+            )
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:

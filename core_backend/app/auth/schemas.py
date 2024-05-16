@@ -14,3 +14,14 @@ class AuthenticatedUser(BaseModel):
     access_level: AccessLevel
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GoogleLoginData(BaseModel):
+    """
+    Pydantic model for Google login data
+    """
+
+    client_id: str
+    credential: str
+
+    model_config = ConfigDict(from_attributes=True)
