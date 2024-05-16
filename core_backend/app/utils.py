@@ -30,13 +30,18 @@ def generate_key() -> str:
 
 def get_key_hash(retrieval_key: str) -> str:
     """Hashes the retrieval key using SHA256."""
+    return hashlib.sha256(retrieval_key.encode()).hexdigest()
+
+
+def get_password_salted_hash(retrieval_key: str) -> str:
+    """Hashes the password using SHA256 with a salt."""
     salt = os.urandom(16)
     key_salt_combo = salt + retrieval_key.encode()
     hash_obj = hashlib.sha256(key_salt_combo)
     return salt.hex() + hash_obj.hexdigest()
 
 
-def verify_key_hash(retrieval_key: str, stored_hash: str) -> bool:
+def verify_password_salted_hash(retrieval_key: str, stored_hash: str) -> bool:
     """Verifies if the retrieval key matches the hash."""
     salt = bytes.fromhex(stored_hash[:32])
     original_hash = stored_hash[32:]

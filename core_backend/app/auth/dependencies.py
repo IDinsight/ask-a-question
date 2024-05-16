@@ -19,7 +19,7 @@ from ..users.models import (
     save_user_to_db,
 )
 from ..users.schemas import UserCreate
-from ..utils import setup_logger, verify_key_hash
+from ..utils import setup_logger, verify_password_salted_hash
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
 from .schemas import AuthenticatedUser
 
@@ -61,7 +61,7 @@ async def authenticate_credentials(
     ) as asession:
         try:
             user_db = await get_user_by_username(username, asession)
-            if verify_key_hash(password, user_db.hashed_password):
+            if verify_password_salted_hash(password, user_db.hashed_password):
                 # hardcode "fullaccess" now, but may use it in the future
                 return AuthenticatedUser(username=username, access_level="fullaccess")
             else:
