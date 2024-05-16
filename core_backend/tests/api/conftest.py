@@ -44,12 +44,11 @@ CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
-TEST_USER_ID = 1
+TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
 
-TEST_USER_ID_2 = 2
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_RETRIEVAL_KEY_2 = "test_retrieval_key_2"
@@ -77,8 +76,8 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def user(client: TestClient, db_session: Session) -> None:
+    global TEST_USER_ID
     user1_db = UserDB(
-        user_id=TEST_USER_ID,
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY),
@@ -86,7 +85,6 @@ def user(client: TestClient, db_session: Session) -> None:
         updated_datetime_utc=datetime.utcnow(),
     )
     user2_db = UserDB(
-        user_id=TEST_USER_ID_2,
         username=TEST_USERNAME_2,
         hashed_password=get_key_hash(TEST_PASSWORD_2),
         hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY_2),
@@ -96,6 +94,9 @@ def user(client: TestClient, db_session: Session) -> None:
     db_session.add(user1_db)
     db_session.add(user2_db)
     db_session.commit()
+
+    # update the TEST_USER_ID global variable
+    TEST_USER_ID = user1_db.user_id
 
 
 @pytest.fixture(scope="session")
@@ -220,7 +221,6 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
-
     return {
         "statement": urgency_rule,
         "probability": 0.7,
