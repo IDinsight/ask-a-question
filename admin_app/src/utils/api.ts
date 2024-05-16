@@ -255,7 +255,7 @@ const getLLMResponse = async (search: string, token: string) => {
 };
 
 const getQuestionStats = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/dashboard/question_stats`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/question_stats`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
