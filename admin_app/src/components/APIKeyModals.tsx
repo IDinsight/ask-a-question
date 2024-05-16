@@ -16,13 +16,11 @@ import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
 
 export const KeyRenewConfirmationModal = ({
-  currentKey,
   open,
   onClose,
   onRenew,
   isLoading,
 }: {
-  currentKey: string;
   open: boolean;
   onClose: () => void;
   onRenew: () => void;
@@ -34,9 +32,9 @@ export const KeyRenewConfirmationModal = ({
       <DialogContentText>
         If you proceed,
         <Typography component="span" style={{ fontWeight: "bold" }}>
-          {` the current "${currentKey}" key will stop working. `}
+          {` your current key will stop working `}
         </Typography>
-        You will need to update your applications with the new key.
+        and you will need to update your applications with the new key.
       </DialogContentText>
     </DialogContent>
     <DialogActions sx={{ margin: 1 }}>

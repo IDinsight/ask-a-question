@@ -9,7 +9,6 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button, Typography } from "@mui/material";
-import TextField from "@mui/material/TextField";
 import React, { useState } from "react";
 
 const IntegrationsPage = () => {
@@ -84,7 +83,7 @@ const KeyManagement = ({
       gap={sizes.baseGap}
     >
       <Typography variant="h5" align="center" color="primary">
-        Your API Key
+        API Key Management
       </Typography>
       <Layout.FlexBox
         flexDirection={"row"}
@@ -95,24 +94,16 @@ const KeyManagement = ({
         }}
         gap={sizes.baseGap}
       >
-        <TextField
-          value={currentKey}
-          disabled={true}
-          inputProps={{
-            style: { height: "36px", padding: "0 10px" },
-          }}
-        />
         <Button
           variant="contained"
           onClick={handleConfirmationModalOpen}
           disabled={!editAccess}
           startIcon={<AutorenewIcon />}
         >
-          Renew
+          Generate New Key
         </Button>
 
         <KeyRenewConfirmationModal
-          currentKey={currentKey}
           open={confirmationModalOpen}
           onClose={handleConfirmationModalClose}
           onRenew={handleRenew}
