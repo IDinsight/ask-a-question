@@ -52,12 +52,12 @@ async def login_google(login_data: GoogleLoginData) -> dict:
         if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
             raise ValueError("Wrong issuer.")
     except ValueError as e:
-        raise HTTPException(status_code=400, detail="Invalid token") from e
+        raise HTTPException(status_code=401, detail="Invalid token") from e
 
     user = await authenticate_or_create_google_user(google_email=idinfo["email"])
     if not user:
         raise HTTPException(
-            status_code=400,
+            status_code=500,
             detail="Unable to create new user",
         )
 
