@@ -1,48 +1,45 @@
 # The Admin App
 
-
-
 <div class="grid cards" markdown>
 
--   :material-database:{ .lg .middle .red} __Manage content__
+- :material-database:{ .lg .middle .red} **Manage content**
 
-    ---
+  ***
 
-    Allows you to view, create, edit, or delete content.
+  Allows you to view, create, edit, or delete content.
 
-    [:octicons-arrow-right-24: More info](./manage-content.md)
+  [:octicons-arrow-right-24: More info](./manage-content.md)
 
--   :material-database-eye:{ .lg .middle .red} __Manage urgency rules__
+- :material-database-eye:{ .lg .middle .red} **Manage urgency rules**
 
-    ---
+  ***
 
-    Allows you to view, create, edit, or delete urgency rules.
+  Allows you to view, create, edit, or delete urgency rules.
 
-    [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
+  [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
 
--   :material-chat-question:{ .lg .middle } __Playground__
+- :material-chat-question:{ .lg .middle } **Playground**
 
-    ---
+  ***
 
-    Allows you to experiment with the Question-Answering Service. You can
-    use this to simulate a question being asked by a user within a chat window
+  Allows you to experiment with the Question-Answering Service. You can
+  use this to simulate a question being asked by a user within a chat window
 
-    [:octicons-arrow-right-24: More info](./playground.md)
+  [:octicons-arrow-right-24: More info](./playground.md)
 
--   :material-view-dashboard:{ .lg .middle } __Content Manager's Dashboard (Coming Soon)__
+- :material-view-dashboard:{ .lg .middle } **Content Manager's Dashboard**
 
-    ---
+  ***
 
-    Allows you to see statistices like which content is most frequently being
-    used, or the feedback from users on responses provided by the service.
+  Allows you to see statistices like which content is most frequently being
+  used, or the feedback from users on responses provided by the service.
 
--   :material-monitor-dashboard: __Engineer's Dashboard (Coming Soon)__
+- :material-monitor-dashboard: **Engineer's Dashboard (Coming Soon)**
 
-    ---
+  ***
 
-    Shows you technical performance of the application like uptime, throughput,
-    response time, and the number of responses by HTTP response codes
-
+  Shows you technical performance of the application like uptime, throughput,
+  response time, and the number of responses by HTTP response codes
 
 </div>
 
