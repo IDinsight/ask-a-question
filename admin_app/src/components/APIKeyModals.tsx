@@ -94,7 +94,7 @@ export const NewKeyModal = ({
           flexDirection="row"
           gap={sizes.baseGap}
           sx={{
-            width: "80%",
+            width: "96%",
             margin: "auto",
           }}
         >
@@ -123,7 +123,7 @@ export const NewKeyModal = ({
           </Button>
         </Layout.FlexBox>
       </DialogContent>
-      <DialogActions sx={{ margin: 1 }}>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={handleClose} color="primary">
           Close
         </Button>
