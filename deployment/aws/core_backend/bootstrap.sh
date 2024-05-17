@@ -27,7 +27,7 @@ echo "Fetching variables from aws store.."
 # The secrets are created by the infrastructure module
 # The values should be the same as the ones in the infrastructure module
 SECRET_JWT="${PROJECT_NAME}-${ENV}-jwt-secret"
-SECRET_USER_CREDENTIALS ="${PROJECT_NAME}-${ENV}-user-credentials"
+SECRET_USER_CREDENTIALS="${PROJECT_NAME}-${ENV}-user-credentials"
 SECRET_NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${PROJECT_NAME}-${ENV}-google-login-client-id"
 SECRET_WHATSAPP_VERIFY="${PROJECT_NAME}-${ENV}-whatsapp-verify-token"
 SECRET_WEB_DB_CONNECTION="${PROJECT_NAME}-${ENV}-web-db-connection-details"
