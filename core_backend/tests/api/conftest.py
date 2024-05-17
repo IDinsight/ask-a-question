@@ -171,7 +171,6 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
-
     return {
         "statement": urgency_rule,
         "probability": 0.7,
