@@ -21,7 +21,10 @@ from core_backend.app.question_answer.schemas import (
     QuerySearchResult,
     ResultState,
 )
-from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
+from core_backend.tests.api.conftest import (
+    TEST_USER_RETRIEVAL_KEY,
+    TEST_USER_RETRIEVAL_KEY_2,
+)
 
 
 class TestEmbeddingsSearch:
@@ -191,6 +194,38 @@ class TestEmbeddingsSearch:
         )
         assert response.status_code == 200
 
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_RETRIEVAL_KEY, True),
+            (TEST_USER_RETRIEVAL_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
+
     @pytest.mark.parametrize("content_id, response_code", ([1, 200], [999, 400]))
     async def test_content_feedback_check_content_id(
         self,
@@ -247,6 +282,38 @@ class TestGenerateResponse:
 
             result_state = response.json()["state"]
             assert result_state == ResultState.FINAL
+
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_RETRIEVAL_KEY, True),
+            (TEST_USER_RETRIEVAL_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/llm-response",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
 
 
 class TestErrorResponses:
