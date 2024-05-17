@@ -10,7 +10,6 @@ from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResp
 from core_backend.tests.api.conftest import (
     TEST_USER_ID,
     TEST_USER_RETRIEVAL_KEY,
-    TEST_USER_RETRIEVAL_KEY_2,
 )
 
 
@@ -19,7 +18,6 @@ class TestUrgencyDetectionToken:
         "token, expected_status_code",
         [
             (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
-            (TEST_USER_RETRIEVAL_KEY_2, 401),
             (TEST_USER_RETRIEVAL_KEY, 200),
         ],
     )

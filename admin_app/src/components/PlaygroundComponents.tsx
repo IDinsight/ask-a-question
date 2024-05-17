@@ -47,6 +47,7 @@ interface BaseMessage {
 interface UserMessage extends BaseMessage {
   type: "question";
   content: string;
+  queryType: string;
 }
 
 interface ResponseMessage extends BaseMessage {
@@ -308,6 +309,16 @@ const MessageBox = (message: Message) => {
           justifyContent: "center", // Vertically centers the content if there's extra space
         }}
       >
+        {message.type === "question" && (
+          <Typography
+            component={"span"}
+            variant="body2"
+            align="left"
+            color="grey"
+          >
+            {`${(message as UserMessage).queryType}`}
+          </Typography>
+        )}
         <Typography
           component={"span"}
           variant="body1"
