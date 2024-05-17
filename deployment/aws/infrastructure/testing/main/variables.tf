@@ -178,8 +178,14 @@ variable "jwt_secret_secret_name" {
   default     = ""
 }
 
-variable "content_access_secret_name" {
-  description = "value for the content access secret name"
+variable "user_credentials_secret_name" {
+  description = "value for the user credentials secret name"
+  type        = string
+  default     = ""
+}
+
+variable "google_login_client_id_secret_name" {
+  description = "value for the google login client ID secret name"
   type        = string
   default     = ""
 }
@@ -205,11 +211,6 @@ variable "account_id" {
 variable "open_ai_key_secret_name" {
   type        = string
   description = "value for the open ai key secret name"
-}
-
-variable "question_answer_secret_name" {
-  type        = string
-  description = "value for the question answer secret name"
 }
 
 variable "whatsapp_verify_token_secret_name" {
