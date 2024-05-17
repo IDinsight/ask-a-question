@@ -15,7 +15,7 @@ import { Delete, Edit, Add } from "@mui/icons-material";
 import { TextField, Typography, Box } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import SendIcon from "@mui/icons-material/Send";
+import SaveIcon from "@mui/icons-material/Save";
 import { Global, css } from "@emotion/react";
 
 class UrgencyRule {
@@ -248,7 +248,7 @@ const UrgencyRulesPage = () => {
                               }}
                               edge="end"
                             >
-                              <SendIcon fontSize="small" />
+                              <SaveIcon fontSize="small" />
                             </IconButton>
                           </InputAdornment>
                         ),

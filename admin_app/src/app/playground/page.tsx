@@ -143,7 +143,8 @@ const Page = () => {
         {
           dateTime: new Date().toISOString(),
           type: "question",
-          content: `${queryTypeDisplayName}: ${queryText}`,
+          content: `${queryText}`,
+          queryType: `${queryTypeDisplayName}`,
         } as UserMessage,
       ]);
       if (queryType === "embeddings-search") {
