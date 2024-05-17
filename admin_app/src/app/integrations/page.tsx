@@ -61,7 +61,7 @@ const KeyManagement = ({
     setIsLoading(true);
     try {
       const data = await apiCalls.getNewAPIKey(token!);
-      setNewKey(data.new_retrieval_key);
+      setNewKey(data.new_api_key);
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
     } catch (error) {

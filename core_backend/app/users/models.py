@@ -36,9 +36,7 @@ class UserDB(Base):
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(64), nullable=False)
 
-    hashed_retrieval_key: Mapped[str] = mapped_column(
-        String(64), nullable=True, unique=True
-    )
+    hashed_api_key: Mapped[str] = mapped_column(String(64), nullable=True, unique=True)
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -87,16 +85,16 @@ async def save_user_to_db(
     return content_db
 
 
-async def update_user_retrieval_key(
+async def update_user_api_key(
     user_db: UserDB,
-    new_retrieval_key: str,
+    new_api_key: str,
     asession: AsyncSession,
 ) -> UserDB:
     """
     Updates a user's API key
     """
 
-    user_db.hashed_retrieval_key = get_key_hash(new_retrieval_key)
+    user_db.hashed_api_key = get_key_hash(new_api_key)
     user_db.updated_datetime_utc = datetime.utcnow()
 
     await asession.commit()
@@ -135,7 +133,7 @@ async def get_user_by_token(
 
     hashed_token = get_key_hash(token)
 
-    stmt = select(UserDB).where(UserDB.hashed_retrieval_key == hashed_token)
+    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
     result = await asession.execute(stmt)
     try:
         user = result.scalar_one()

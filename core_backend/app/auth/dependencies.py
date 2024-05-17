@@ -45,9 +45,7 @@ async def authenticate_key(
             user_db = await get_user_by_token(token, asession)
             return user_db
         except UserNotFoundError as err:
-            raise HTTPException(
-                status_code=401, detail="Invalid retrieval key"
-            ) from err
+            raise HTTPException(status_code=401, detail="Invalid api key") from err
 
 
 async def authenticate_credentials(
