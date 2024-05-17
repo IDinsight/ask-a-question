@@ -5,15 +5,15 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: default
     litellm_params:
-      model: gpt-4-0125-preview
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: generate-response
     litellm_params:
-      model: gpt-4-0125-preview
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: detect-language
     litellm_params:
-      model: gpt-4-0125-preview
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: on-off-topic
     litellm_params:
@@ -33,7 +33,11 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: alignscore
     litellm_params:
-      model: gpt-4-0125-preview
+      model: gpt-4o
+      api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: urgency-detection
+    litellm_params:
+      model: gpt-3.5-turbo-1106
       api_key: "os.environ/OPENAI_API_KEY"
 litellm_settings:
   num_retries: 2 # retry call 3 times on each model_name (e.g. translate).

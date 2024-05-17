@@ -30,8 +30,8 @@ class UrgencyRuleDB(Base):
     urgency_rule_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
     )
-    user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
     urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
     urgency_rule_vector: Mapped[Vector] = mapped_column(
@@ -47,7 +47,7 @@ class UrgencyRuleDB(Base):
 
 
 async def save_urgency_rule_to_db(
-    user_id: str, urgency_rule: UrgencyRuleCreate, asession: AsyncSession
+    user_id: int, urgency_rule: UrgencyRuleCreate, asession: AsyncSession
 ) -> UrgencyRuleDB:
     """
     Save urgency rule to the database
@@ -69,7 +69,7 @@ async def save_urgency_rule_to_db(
 
 
 async def update_urgency_rule_in_db(
-    user_id: str,
+    user_id: int,
     urgency_rule_id: int,
     urgency_rule: UrgencyRuleCreate,
     asession: AsyncSession,
@@ -94,7 +94,7 @@ async def update_urgency_rule_in_db(
 
 
 async def delete_urgency_rule_from_db(
-    user_id: str, urgency_rule_id: int, asession: AsyncSession
+    user_id: int, urgency_rule_id: int, asession: AsyncSession
 ) -> None:
     """
     Delete urgency rule from the database
@@ -109,7 +109,7 @@ async def delete_urgency_rule_from_db(
 
 
 async def get_urgency_rule_by_id_from_db(
-    user_id: str, urgency_rule_id: int, asession: AsyncSession
+    user_id: int, urgency_rule_id: int, asession: AsyncSession
 ) -> UrgencyRuleDB | None:
     """
     Get urgency rule by ID from the database
@@ -127,7 +127,7 @@ async def get_urgency_rule_by_id_from_db(
 
 
 async def get_urgency_rules_from_db(
-    user_id: str, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
+    user_id: int, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
 ) -> List[UrgencyRuleDB]:
     """
     Get urgency rules from the database
@@ -147,7 +147,7 @@ async def get_urgency_rules_from_db(
 
 
 async def get_cosine_distances_from_rules(
-    user_id: str,
+    user_id: int,
     message_text: str,
     asession: AsyncSession,
 ) -> Dict[int, Dict[str, Union[str, float]]]:

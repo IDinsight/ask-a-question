@@ -184,7 +184,7 @@ const DeleteContentModal = ({
           cannot be undone.
         </DialogContentText>
       </DialogContent>
-      <DialogActions sx={{ margin: 1 }}>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {

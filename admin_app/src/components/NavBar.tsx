@@ -19,7 +19,8 @@ const pages = [
   { title: "Manage Content", path: "/content" },
   { title: "Urgency Rules", path: "/urgency-rules" },
   { title: "Playground", path: "/playground" },
-  // { title: "Dashboard", path: "/dashboard" },
+  { title: "Dashboard", path: "/dashboard" },
+  { title: "Integrations", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
@@ -52,8 +53,8 @@ const Logo = () => {
         component="img"
         src={logowhite.src}
         sx={{
-          height: 30,
-          width: 180,
+          height: 36,
+          aspect_ratio: 1200 / 214,
           display: { xs: "none", md: "block" },
         }}
       />

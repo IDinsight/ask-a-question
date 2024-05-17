@@ -8,14 +8,42 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getContentList = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
-    method: "GET",
+const getNewAPIKey = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/key/`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
   }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error rotating API key");
+    }
+  });
+};
+
+const getContentList = async ({
+  token,
+  skip = 0,
+  limit = 200,
+}: {
+  token: string;
+  skip?: number;
+  limit?: number;
+}) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/content/?skip=${skip}&limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;
@@ -190,6 +218,26 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getGoogleLoginToken = async (idToken: {
+  client_id: string;
+  credential: string;
+}) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login-google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(idToken),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching login token");
+    }
+  });
+};
+
 const getEmbeddingsSearch = async (search: string, token: string) => {
   const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
   return fetch(embeddingUrl, {
@@ -201,22 +249,14 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
     body: JSON.stringify({ query_text: search }),
   })
     .then((response) => {
-      if (response.ok) {
-        let resp = response.json();
-        return resp;
-      } else {
-        return response.json().then((errData) => {
-          throw new Error(
-            `Error fetching embeddings response: ${errData.message} Status: ${response.status}`,
-          );
-        });
-      }
+      return response.json().then((data) => {
+        const responseWithStatus = { status: response.status, ...data };
+        return responseWithStatus;
+      });
     })
     .catch((error) => {
-      throw new Error(
-        `Error POSTING to embedding search URL at ${embeddingUrl}. ` +
-          error.message,
-      );
+      console.error("Error:", error);
+      throw error;
     });
 };
 
@@ -231,23 +271,32 @@ const getLLMResponse = async (search: string, token: string) => {
     body: JSON.stringify({ query_text: search }),
   })
     .then((response) => {
-      if (response.ok) {
-        let resp = response.json();
-        return resp;
-      } else {
-        return response.json().then((errData) => {
-          throw new Error(
-            `Error fetching llm response: ${errData.message} Status: ${response.status}`,
-          );
-        });
-      }
+      return response.json().then((data) => {
+        const responseWithStatus = { status: response.status, ...data };
+        return responseWithStatus;
+      });
     })
     .catch((error) => {
-      throw new Error(
-        `Error POSTING to LLM search URL at ${llmResponseUrl}. ` +
-          error.message,
-      );
+      console.error("Error:", error);
+      throw error;
     });
+};
+
+const getQuestionStats = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/question_stats`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching questions statistics");
+    }
+  });
 };
 
 const getUrgencyDetection = async (search: string, token: string) => {
@@ -332,6 +381,7 @@ const getTagList = async (token: string) => {
 };
 
 export const apiCalls = {
+  getNewAPIKey,
   getContentList,
   getContent,
   deleteContent,
@@ -342,8 +392,10 @@ export const apiCalls = {
   updateUrgencyRule,
   deleteUrgencyRule,
   getLoginToken,
+  getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  getQuestionStats,
   getUrgencyDetection,
   createTag,
   deleteTag,

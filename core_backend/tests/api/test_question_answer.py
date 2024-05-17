@@ -27,7 +27,10 @@ from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
+        [
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
+            (TEST_USER_RETRIEVAL_KEY, 200),
+        ],
     )
     async def test_content_response(
         self,
@@ -216,7 +219,10 @@ class TestEmbeddingsSearch:
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
+        [
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
+            (TEST_USER_RETRIEVAL_KEY, 200),
+        ],
     )
     async def test_llm_response(
         self,

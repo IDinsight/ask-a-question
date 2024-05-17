@@ -1,10 +1,9 @@
 import os
 from datetime import datetime
-from uuid import uuid4
 
 from app.database import get_session
 from app.users.models import UserDB
-from app.utils import get_key_hash, setup_logger
+from app.utils import get_key_hash, get_password_salted_hash, setup_logger
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -24,16 +23,14 @@ USER2_RETRIEVAL_KEY = os.environ.get("USER2_RETRIEVAL_KEY", "user2-key")
 user_dbs = [
     UserDB(
         username=USER1_USERNAME,
-        hashed_password=get_key_hash(USER1_PASSWORD),
-        user_id=uuid4().hex,
+        hashed_password=get_password_salted_hash(USER1_PASSWORD),
         hashed_retrieval_key=get_key_hash(USER1_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     ),
     UserDB(
         username=USER2_USERNAME,
-        hashed_password=get_key_hash(USER2_PASSWORD),
-        user_id=uuid4().hex,
+        hashed_password=get_password_salted_hash(USER2_PASSWORD),
         hashed_retrieval_key=get_key_hash(USER2_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),

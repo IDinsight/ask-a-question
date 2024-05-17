@@ -33,8 +33,8 @@ class ContentDB(Base):
     __tablename__ = "content"
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
 
     content_embedding: Mapped[Vector] = mapped_column(
@@ -75,7 +75,7 @@ class ContentDB(Base):
 
 
 async def save_content_to_db(
-    user_id: str,
+    user_id: int,
     content: ContentCreate,
     asession: AsyncSession,
 ) -> ContentDB:
@@ -110,7 +110,7 @@ async def save_content_to_db(
 
 
 async def update_content_in_db(
-    user_id: str,
+    user_id: int,
     content_id: int,
     content: ContentCreate,
     asession: AsyncSession,
@@ -146,7 +146,7 @@ async def update_content_in_db(
 
 
 async def delete_content_from_db(
-    user_id: str,
+    user_id: int,
     content_id: int,
     asession: AsyncSession,
 ) -> None:
@@ -167,7 +167,7 @@ async def delete_content_from_db(
 
 
 async def get_content_from_db(
-    user_id: str,
+    user_id: int,
     content_id: int,
     asession: AsyncSession,
 ) -> Optional[ContentDB]:
@@ -188,7 +188,7 @@ async def get_content_from_db(
 
 
 async def get_list_of_content_from_db(
-    user_id: str,
+    user_id: int,
     asession: AsyncSession,
     offset: int = 0,
     limit: Optional[int] = None,
@@ -222,7 +222,7 @@ async def _get_content_embeddings(
 
 
 async def get_similar_content_async(
-    user_id: str,
+    user_id: int,
     question: str,
     n_similar: int,
     asession: AsyncSession,
@@ -243,7 +243,7 @@ async def get_similar_content_async(
 
 
 async def get_search_results(
-    user_id: str,
+    user_id: int,
     question_embedding: List[float],
     n_similar: int,
     asession: AsyncSession,
@@ -270,7 +270,7 @@ async def get_search_results(
 
 
 async def update_votes_in_db(
-    user_id: str,
+    user_id: int,
     content_id: int,
     vote: str,
     asession: AsyncSession,

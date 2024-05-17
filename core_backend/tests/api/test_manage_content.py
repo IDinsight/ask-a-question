@@ -173,9 +173,53 @@ class TestManageContent:
         assert response.status_code == 200
 
 
+class TestMultUserManageContent:
+    async def test_user2_get_user1_content(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.get(
+            f"/content/{existing_content_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+    async def test_user2_edit_user1_content(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.put(
+            f"/content/{existing_content_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "content_title": "user2 title 3",
+                "content_text": "user2 test content 3",
+                "content_language": "ENGLISH",
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 404
+
+    async def test_user2_delete_user1_content(
+        self,
+        client: TestClient,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.delete(
+            f"/content/{existing_content_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+
 async def test_convert_record_to_schema() -> None:
     content_id = 1
-    user_id = "user1"
+    user_id = 123
     record = ContentDB(
         content_id=content_id,
         user_id=user_id,

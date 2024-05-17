@@ -98,7 +98,7 @@ async def llm_response(
 async def get_llm_answer(
     question: QueryRefined,
     response: QueryResponse,
-    user_id: str,
+    user_id: int,
     n_similar: int,
     asession: AsyncSession,
 ) -> QueryResponse | QueryResponseError:
@@ -144,7 +144,7 @@ async def get_llm_answer(
 
 
 async def get_user_query_and_response(
-    user_id: str, user_query: QueryBase, asession: AsyncSession
+    user_id: int, user_query: QueryBase, asession: AsyncSession
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """
     Get the user query from the request and save it to the db.
@@ -215,7 +215,7 @@ async def embeddings_search(
 async def get_semantic_matches(
     question: QueryRefined,
     response: QueryResponse | QueryResponseError,
-    user_id: str,
+    user_id: int,
     n_similar: int,
     asession: AsyncSession,
 ) -> QueryResponse | QueryResponseError:

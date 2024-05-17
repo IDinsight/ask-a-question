@@ -59,7 +59,7 @@ const Page = () => {
     console.log(response);
     const responseText = llmResponse
       ? llmResponse
-      : `No response. Reason: "${response.debug_info.reason}". See JSON for details.`;
+      : `No LLM response. Reason: "${response.debug_info.reason}". See <json> for details.`;
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -76,11 +76,25 @@ const Page = () => {
     const isUrgent: boolean = response.is_urgent;
     const responseText =
       isUrgent === null
-        ? `No response. Reason:  See JSON for details.`
+        ? `No response. Reason:  See <json> for details.`
         : isUrgent
         ? "Urgent 🚨"
         : "Not Urgent 🟢";
 
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        dateTime: new Date().toISOString(),
+        type: "response",
+        content: responseText,
+        json: response,
+      },
+    ]);
+  };
+
+  const processNotOKResponse = (response: any) => {
+    const responseText = `Error: ${response.status}. See <json> for details.`;
+    console.error(responseText, response);
     setMessages((prevMessages) => [
       ...prevMessages,
       {
@@ -98,10 +112,16 @@ const Page = () => {
       {
         dateTime: new Date().toISOString(),
         type: "response",
-        content: "API call failed. See JSON for details.",
+        content: "API call failed. See <json> for details.",
         json: `{error: ${error.message}}`,
       },
     ]);
+  };
+
+  const queryTypeDisplayNameMapping = {
+    "embeddings-search": "Embedding Search",
+    "llm-response": "LLM Search",
+    "urgency-detection": "Urgency Detection",
   };
 
   const onSend = (queryText: string, queryType: QueryType) => {
@@ -116,19 +136,28 @@ const Page = () => {
       setLoading(false);
       return;
     } else {
+      const queryTypeDisplayName =
+        queryTypeDisplayNameMapping[queryType] || queryType;
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           dateTime: new Date().toISOString(),
           type: "question",
-          content: queryText,
+          content: `${queryText}`,
+          queryType: `${queryTypeDisplayName}`,
         } as UserMessage,
       ]);
       if (queryType === "embeddings-search") {
         apiCalls
           .getEmbeddingsSearch(queryText, currApiKey)
           .then((response) => {
-            processEmbeddingsSearchResponse(response);
+            if (response.status === 200) {
+              processEmbeddingsSearchResponse(response);
+            } else {
+              setError("Embeddings search failed.");
+              processNotOKResponse(response);
+              console.error(response);
+            }
           })
           .catch((error: Error) => {
             setError("Embeddings search failed.");
@@ -142,10 +171,16 @@ const Page = () => {
         apiCalls
           .getLLMResponse(queryText, currApiKey)
           .then((response) => {
-            processLLMSearchResponse(response);
+            if (response.status === 200) {
+              processLLMSearchResponse(response);
+            } else {
+              setError("LLM response failed.");
+              processNotOKResponse(response);
+              console.error(response);
+            }
           })
           .catch((error: Error) => {
-            setError("LLM Response failed.");
+            setError("LLM response failed.");
             processErrorMessage(error);
             console.error(error);
           })

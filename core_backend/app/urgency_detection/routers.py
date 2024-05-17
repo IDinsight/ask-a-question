@@ -71,7 +71,7 @@ async def classify_text(
 
 @urgency_classifier
 async def cosine_distance_classifier(
-    user_id: str,
+    user_id: int,
     urgency_query: UrgencyQuery,
     asession: AsyncSession,
 ) -> UrgencyResponse:
@@ -103,7 +103,7 @@ async def cosine_distance_classifier(
 
 @urgency_classifier
 async def llm_entailment_classifier(
-    user_id: str,
+    user_id: int,
     urgency_query: UrgencyQuery,
     asession: AsyncSession,
 ) -> UrgencyResponse:

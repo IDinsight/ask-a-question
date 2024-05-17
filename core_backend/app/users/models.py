@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
+    Integer,
     String,
-    # delete,
     select,
 )
 from sqlalchemy.exc import NoResultFound
@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
-from ..utils import get_key_hash
-from .schemas import UserCreate
+from ..utils import get_key_hash, get_password_salted_hash, get_random_password
+from .schemas import UserCreate, UserCreateWithPassword
+
+PASSWORD_LENGTH = 12
 
 
 class UserNotFoundError(Exception):
@@ -30,12 +32,12 @@ class UserDB(Base):
 
     __tablename__ = "user"
 
-    user_id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(64), nullable=False)
 
     hashed_retrieval_key: Mapped[str] = mapped_column(
-        String(64), nullable=False, unique=True
+        String(64), nullable=True, unique=True
     )
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -46,9 +48,8 @@ class UserDB(Base):
         return f"<{self.username} mapped to #{self.user_id}>"
 
 
-# not yet used.
 async def save_user_to_db(
-    user: UserCreate,
+    user: UserCreateWithPassword | UserCreate,
     asession: AsyncSession,
 ) -> UserDB:
     """
@@ -66,14 +67,15 @@ async def save_user_to_db(
     except NoResultFound:
         pass
 
-    hashed_password = get_key_hash(user.password)
-    hashed_retrieval_key = get_key_hash(user.retrieval_key)
+    if isinstance(user, UserCreateWithPassword):
+        hashed_password = get_password_salted_hash(user.password)
+    else:
+        random_password = get_random_password(PASSWORD_LENGTH)
+        hashed_password = get_password_salted_hash(random_password)
 
     content_db = UserDB(
-        user_id=user.user_id,
         username=user.username,
         hashed_password=hashed_password,
-        hashed_retrieval_key=hashed_retrieval_key,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
