@@ -279,6 +279,58 @@ const getUrgencyDetection = async (search: string, token: string) => {
       );
     });
 };
+
+const createTag = async (tag: string, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ tag_name: tag }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error creating tag");
+    }
+  });
+};
+
+const deleteTag = async (tag_id: number, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/${tag_id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error deleting tag");
+    }
+  });
+};
+const getTagList = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching tag list");
+    }
+  });
+};
+
 export const apiCalls = {
   getContentList,
   getContent,
@@ -293,4 +345,7 @@ export const apiCalls = {
   getEmbeddingsSearch,
   getLLMResponse,
   getUrgencyDetection,
+  createTag,
+  deleteTag,
+  getTagList,
 };

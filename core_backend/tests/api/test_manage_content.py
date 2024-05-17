@@ -20,7 +20,10 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
     ],
 )
 def existing_content_id(
-    request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
+    request: pytest.FixtureRequest,
+    client: TestClient,
+    fullaccess_token: str,
+    existing_tag_id: int,
 ) -> Generator[str, None, None]:
     response = client.post(
         "/content",
@@ -29,6 +32,7 @@ def existing_content_id(
             "content_title": request.param[0],
             "content_text": request.param[1],
             "content_language": "ENGLISH",
+            "content_tags": [],
             "content_metadata": request.param[2],
         },
     )
@@ -54,8 +58,10 @@ class TestManageContent:
         content_title: str,
         content_text: str,
         fullaccess_token: str,
+        existing_tag_id: int,
         content_metadata: Dict[Any, Any],
     ) -> None:
+        content_tags = [existing_tag_id]
         response = client.post(
             "/content",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
@@ -63,12 +69,14 @@ class TestManageContent:
                 "content_title": content_title,
                 "content_text": content_text,
                 "content_language": "ENGLISH",
+                "content_tags": content_tags,
                 "content_metadata": content_metadata,
             },
         )
         assert response.status_code == 200
         json_response = response.json()
         assert json_response["content_metadata"] == content_metadata
+        assert json_response["content_tags"] == content_tags
         assert "content_id" in json_response
 
         response = client.delete(
@@ -97,13 +105,16 @@ class TestManageContent:
         content_text: str,
         fullaccess_token: str,
         content_metadata: Dict[Any, Any],
+        existing_tag_id: int,
     ) -> None:
+        content_tags = [existing_tag_id]
         response = client.put(
             f"/content/{existing_content_id}",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "content_title": content_title,
                 "content_text": content_text,
+                "content_tags": [existing_tag_id],
                 "content_language": "ENGLISH",
                 "content_metadata": content_metadata,
             },
@@ -118,6 +129,7 @@ class TestManageContent:
         assert response.status_code == 200
         assert response.json()["content_title"] == content_title
         assert response.json()["content_text"] == content_text
+        assert response.json()["content_tags"] == content_tags
         edited_metadata = response.json()["content_metadata"]
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
@@ -143,6 +155,7 @@ class TestManageContent:
         client: TestClient,
         existing_content_id: int,
         fullaccess_token: str,
+        existing_tag_id: int,
     ) -> None:
         response = client.get(
             "/content", headers={"Authorization": f"Bearer {fullaccess_token}"}

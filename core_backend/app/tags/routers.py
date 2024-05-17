@@ -5,14 +5,14 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
-from ..auth.schemas import AuthenticatedUser
 from ..database import get_async_session
+from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
     TagDB,
     delete_tag_from_db,
-    get_tag_from_db,
     get_list_of_tag_from_db,
+    get_tag_from_db,
     save_tag_to_db,
     update_tag_in_db,
 )
@@ -25,14 +25,14 @@ logger = setup_logger()
 @router.post("/", response_model=TagRetrieve)
 async def create_tag(
     tag: TagCreate,
-    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve | None:
     """
     Create tag endpoint. Calls embedding model to upsert tag to PG database
     """
 
-    tag_db = await save_tag_to_db(tag, asession)
+    tag_db = await save_tag_to_db(user_db.user_id, tag, asession)
     return _convert_record_to_schema(tag_db)
 
 
@@ -40,13 +40,14 @@ async def create_tag(
 async def edit_tag(
     tag_id: int,
     tag: TagCreate,
-    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """
     Edit tag endpoint
     """
     old_tag = await get_tag_from_db(
+        user_db.user_id,
         tag_id,
         asession,
     )
@@ -54,6 +55,7 @@ async def edit_tag(
     if not old_tag:
         raise HTTPException(status_code=404, detail=f"Tag id `{tag_id}` not found")
     updated_tag = await update_tag_in_db(
+        user_db.user_id,
         tag_id,
         tag,
         asession,
@@ -64,7 +66,7 @@ async def edit_tag(
 
 @router.get("/", response_model=list[TagRetrieve])
 async def retrieve_tag(
-    readonly_access_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
     limit: int = 50,
     asession: AsyncSession = Depends(get_async_session),
@@ -72,7 +74,9 @@ async def retrieve_tag(
     """
     Retrieve all tag endpoint
     """
-    records = await get_list_of_tag_from_db(offset=skip, limit=limit, asession=asession)
+    records = await get_list_of_tag_from_db(
+        user_db.user_id, offset=skip, limit=limit, asession=asession
+    )
     tags = [_convert_record_to_schema(c) for c in records]
     return tags
 
@@ -80,33 +84,34 @@ async def retrieve_tag(
 @router.delete("/{tag_id}")
 async def delete_tag(
     tag_id: int,
-    full_access_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
     Delete tag endpoint
     """
     record = await get_tag_from_db(
+        user_db.user_id,
         tag_id,
         asession,
     )
 
     if not record:
         raise HTTPException(status_code=404, detail=f"Tag id `{tag_id}` not found")
-    await delete_tag_from_db(tag_id, asession)
+    await delete_tag_from_db(user_db.user_id, tag_id, asession)
 
 
 @router.get("/{tag_id}", response_model=TagRetrieve)
 async def retrieve_tag_by_id(
     tag_id: int,
-    readonly_access_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """
     Retrieve tag by id endpoint
     """
 
-    record = await get_tag_from_db(tag_id, asession)
+    record = await get_tag_from_db(user_db.user_id, tag_id, asession)
 
     if not record:
         raise HTTPException(status_code=404, detail=f"Tag id `{tag_id}` not found")
@@ -121,6 +126,7 @@ def _convert_record_to_schema(record: TagDB) -> TagRetrieve:
     tag_retrieve = TagRetrieve(
         tag_id=record.tag_id,
         tag_name=record.tag_name,
+        user_id=record.user_id,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
     )

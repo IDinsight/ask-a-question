@@ -1,8 +1,8 @@
 """add tags
 
-Revision ID: 89e7099eb52b
+Revision ID: ceb5ff864612
 Revises: 3228425eb430
-Create Date: 2024-05-13 17:01:31.058552
+Create Date: 2024-05-16 20:55:55.416854
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "89e7099eb52b"
+revision: str = "ceb5ff864612"
 down_revision: Union[str, None] = "3228425eb430"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,6 +27,11 @@ def upgrade() -> None:
         sa.Column("tag_name", sa.String(length=50), nullable=False),
         sa.Column("created_datetime_utc", sa.DateTime(), nullable=False),
         sa.Column("updated_datetime_utc", sa.DateTime(), nullable=False),
+        sa.Column("user_id", sa.String(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.user_id"],
+        ),
         sa.PrimaryKeyConstraint("tag_id"),
     )
     op.create_table(

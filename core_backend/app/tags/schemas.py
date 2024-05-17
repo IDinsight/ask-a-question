@@ -22,6 +22,7 @@ class TagRetrieve(TagCreate):
     """
 
     tag_id: int
+    user_id: str
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 

@@ -61,7 +61,6 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def user(client: TestClient, db_session: Session) -> None:
-
     user_db = UserDB(
         user_id=TEST_USER_ID,
         username=TEST_USERNAME,
@@ -103,6 +102,31 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
 
     db_session.add_all(contents)
     db_session.commit()
+
+
+@pytest.fixture(
+    scope="module",
+    params=[
+        ("Tag1"),
+        ("tag2",),
+    ],
+)
+def existing_tag_id(
+    request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
+) -> Generator[str, None, None]:
+    response = client.post(
+        "/tag",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        json={
+            "tag_name": request.param[0],
+        },
+    )
+    tag_id = response.json()["tag_id"]
+    yield tag_id
+    client.delete(
+        f"/tag/{tag_id}",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
 
 
 @pytest.fixture(scope="session")
@@ -196,7 +220,6 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
-
     return {
         "statement": urgency_rule,
         "probability": 0.7,

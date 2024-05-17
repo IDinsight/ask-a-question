@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
+from ..tags.models import validate_tags
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
@@ -16,8 +17,6 @@ from .models import (
     save_content_to_db,
     update_content_in_db,
 )
-from ..tags.models import validate_tags
-
 from .schemas import ContentCreate, ContentRetrieve
 
 router = APIRouter(prefix="/content", tags=["Content Management"])
@@ -34,10 +33,11 @@ async def create_content(
     Create content endpoint. Calls embedding model to get content embedding and
     inserts it to PG database
     """
-
-    is_tag_valid, content_tags = await validate_tags(content.content_tags, asession)
+    is_tag_valid, content_tags = await validate_tags(
+        user_db.user_id, content.content_tags, asession
+    )
     if not is_tag_valid:
-        raise HTTPException(status_code=404, detail=f"Invalid tags id: {content_tags}")
+        raise HTTPException(status_code=400, detail=f"Invalid tags id: {content_tags}")
     content.content_tags = content_tags
     content_db = await save_content_to_db(
         user_id=user_db.user_id,
@@ -69,9 +69,11 @@ async def edit_content(
             status_code=404, detail=f"Content id `{content_id}` not found"
         )
 
-    is_tag_valid, content_tags = await validate_tags(content.content_tags, asession)
+    is_tag_valid, content_tags = await validate_tags(
+        user_db.user_id, content.content_tags, asession
+    )
     if not is_tag_valid:
-        raise HTTPException(status_code=404, detail=f"Invalid tags id: {content_tags}")
+        raise HTTPException(status_code=400, detail=f"Invalid tags id: {content_tags}")
     content.content_tags = content_tags
     updated_content = await update_content_in_db(
         user_id=user_db.user_id,
@@ -159,16 +161,17 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     """
     Convert models.ContentDB models to ContentRetrieve schema
     """
+
     content_retrieve = ContentRetrieve(
         content_id=record.content_id,
         user_id=record.user_id,
         content_title=record.content_title,
         content_text=record.content_text,
         content_language=record.content_language,
+        content_tags=[tag.tag_id for tag in record.content_tags],
         positive_votes=record.positive_votes,
         negative_votes=record.negative_votes,
         content_metadata=record.content_metadata,
-        content_tags=record.content_tags,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
     )
