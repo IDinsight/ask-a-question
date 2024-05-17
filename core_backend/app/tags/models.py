@@ -35,8 +35,8 @@ class TagDB(Base):
     contents = relationship(
         "ContentDB", secondary=content_tags_table, back_populates="content_tags"
     )
-    user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -44,7 +44,7 @@ class TagDB(Base):
 
 
 async def save_tag_to_db(
-    user_id: str,
+    user_id: int,
     tag: TagCreate,
     asession: AsyncSession,
 ) -> TagDB:
@@ -68,7 +68,7 @@ async def save_tag_to_db(
 
 
 async def update_tag_in_db(
-    user_id: str,
+    user_id: int,
     tag_id: int,
     tag: TagCreate,
     asession: AsyncSession,
@@ -93,7 +93,7 @@ async def update_tag_in_db(
 
 
 async def delete_tag_from_db(
-    user_id: str,
+    user_id: int,
     tag_id: int,
     asession: AsyncSession,
 ) -> None:
@@ -110,7 +110,7 @@ async def delete_tag_from_db(
 
 
 async def get_tag_from_db(
-    user_id: str,
+    user_id: int,
     tag_id: int,
     asession: AsyncSession,
 ) -> Optional[TagDB]:
@@ -126,7 +126,7 @@ async def get_tag_from_db(
 
 
 async def get_list_of_tag_from_db(
-    user_id: str, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
+    user_id: int, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
 ) -> List[TagDB]:
     """
     Retrieves all Tags from the database
@@ -142,7 +142,7 @@ async def get_list_of_tag_from_db(
 
 
 async def validate_tags(
-    user_id: str, tags: List[int], asession: AsyncSession
+    user_id: int, tags: List[int], asession: AsyncSession
 ) -> tuple[bool, List[int] | List[TagDB]]:
     """
     Validates tags

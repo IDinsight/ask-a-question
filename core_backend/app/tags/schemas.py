@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
-
-AccessLevel = Literal["fullaccess", "readonly"]
 
 
 class TagCreate(BaseModel):
@@ -22,7 +20,7 @@ class TagRetrieve(TagCreate):
     """
 
     tag_id: int
-    user_id: str
+    user_id: int
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 

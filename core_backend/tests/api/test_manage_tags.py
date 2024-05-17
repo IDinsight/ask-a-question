@@ -135,7 +135,7 @@ class TestManageTags:
 
 async def test_convert_record_to_schema() -> None:
     tag_id = 1
-    user_id = "user1"
+    user_id = 123
     record = TagDB(
         tag_id=tag_id,
         user_id=user_id,
