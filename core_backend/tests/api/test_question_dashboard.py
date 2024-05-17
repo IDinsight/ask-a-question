@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from .conftest import mock_dashboard_stats
 
 
-def test_retrieve_question_dashboard(
+async def test_retrieve_question_dashboard(
     client: TestClient,
     fullaccess_token: str,
     monkeypatch: pytest.MonkeyPatch,

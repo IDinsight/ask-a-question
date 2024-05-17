@@ -8,6 +8,8 @@ import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from pytest import Item
+from pytest_asyncio import is_async_test
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
@@ -42,10 +44,21 @@ CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
 
 
-TEST_USER_ID = 123
+TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
+
+TEST_USERNAME_2 = "test_username_2"
+TEST_PASSWORD_2 = "test_password_2"
+TEST_USER_RETRIEVAL_KEY_2 = "test_retrieval_key_2"
+
+
+def pytest_collection_modifyitems(items: List[Item]) -> None:
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
 
 
 @pytest.fixture(scope="session")
@@ -63,17 +76,27 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def user(client: TestClient, db_session: Session) -> None:
-
-    user_db = UserDB(
-        user_id=TEST_USER_ID,
+    global TEST_USER_ID
+    user1_db = UserDB(
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
-    db_session.add(user_db)
+    user2_db = UserDB(
+        username=TEST_USERNAME_2,
+        hashed_password=get_key_hash(TEST_PASSWORD_2),
+        hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY_2),
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(user1_db)
+    db_session.add(user2_db)
     db_session.commit()
+
+    # update the TEST_USER_ID global variable
+    TEST_USER_ID = user1_db.user_id
 
 
 @pytest.fixture(scope="session")
@@ -198,7 +221,6 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
-
     return {
         "statement": urgency_rule,
         "probability": 0.7,
@@ -266,6 +288,14 @@ def fullaccess_token() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME)
+
+
+@pytest.fixture(scope="session")
+def fullaccess_token_user2() -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token(TEST_USERNAME_2)
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -43,7 +43,7 @@ class TestManageUDRules:
         "urgency_rule_text, urgency_rule_metadata",
         [
             ("test rule 3", {}),
-            ("test rule 2", {"meta_key": "meta_value"}),
+            ("test rule 4", {"meta_key": "meta_value"}),
         ],
     )
     async def test_create_and_delete_UDrules(
@@ -143,6 +143,48 @@ class TestManageUDRules:
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
+
+
+class TestMultUserManageUDRules:
+    async def user2_get_user1_UDrule(
+        self,
+        client: TestClient,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.get(
+            f"/urgency-rules/{existing_rule_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+    async def user2_edit_user1_UDrule(
+        self,
+        client: TestClient,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.put(
+            f"/urgency-rules/{existing_rule_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "urgency_rule_text": "user2 rule",
+                "urgency_rule_metadata": {},
+            },
+        )
+        assert response.status_code == 404
+
+    async def user2_delete_user1_UDrule(
+        self,
+        client: TestClient,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.delete(
+            f"/urgency-rules/{existing_rule_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
 
 
 async def test_convert_record_to_schema() -> None:

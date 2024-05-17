@@ -21,13 +21,20 @@ from core_backend.app.question_answer.schemas import (
     QuerySearchResult,
     ResultState,
 )
-from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
+from core_backend.tests.api.conftest import (
+    TEST_USER_RETRIEVAL_KEY,
+    TEST_USER_RETRIEVAL_KEY_2,
+)
 
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
+        [
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
+            (TEST_USER_RETRIEVAL_KEY_2, 401),
+            (TEST_USER_RETRIEVAL_KEY, 200),
+        ],
     )
     async def test_content_response(
         self,
@@ -63,8 +70,10 @@ class TestEmbeddingsSearch:
         [
             (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/response-feedback"),
             (TEST_USER_RETRIEVAL_KEY, 200, "/response-feedback"),
+            (TEST_USER_RETRIEVAL_KEY_2, 401, "/response-feedback"),
             (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/content-feedback"),
             (TEST_USER_RETRIEVAL_KEY, 200, "/content-feedback"),
+            (TEST_USER_RETRIEVAL_KEY_2, 401, "/content-feedback"),
         ],
     )
     async def test_response_feedback_correct_token(
@@ -216,7 +225,11 @@ class TestEmbeddingsSearch:
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401), (TEST_USER_RETRIEVAL_KEY, 200)],
+        [
+            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
+            (TEST_USER_RETRIEVAL_KEY_2, 401),
+            (TEST_USER_RETRIEVAL_KEY, 200),
+        ],
     )
     async def test_llm_response(
         self,
