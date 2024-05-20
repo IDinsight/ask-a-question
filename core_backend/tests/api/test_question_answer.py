@@ -89,7 +89,6 @@ class TestEmbeddingsSearch:
         if endpoint == "/content-feedback":
             json["content_id"] = 1
 
-        print(json)
         response = client.post(
             endpoint,
             json=json,
