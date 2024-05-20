@@ -47,11 +47,11 @@ CompletionMessage = namedtuple("CompletionMessage", "content")
 TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
-TEST_USER_RETRIEVAL_KEY = "test_retrieval_key"
+TEST_USER_API_KEY = "test_api_key"
 
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
-TEST_USER_RETRIEVAL_KEY_2 = "test_retrieval_key_2"
+TEST_USER_API_KEY_2 = "test_api_key_2"
 
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
@@ -80,14 +80,14 @@ def user(client: TestClient, db_session: Session) -> None:
     user1_db = UserDB(
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
-        hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY),
+        hashed_api_key=get_key_hash(TEST_USER_API_KEY),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
     user2_db = UserDB(
         username=TEST_USERNAME_2,
         hashed_password=get_key_hash(TEST_PASSWORD_2),
-        hashed_retrieval_key=get_key_hash(TEST_USER_RETRIEVAL_KEY_2),
+        hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )

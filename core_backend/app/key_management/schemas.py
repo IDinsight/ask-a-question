@@ -7,5 +7,5 @@ class KeyResponse(BaseModel):
     """
 
     username: str
-    new_retrieval_key: str
+    new_api_key: str
     model_config = ConfigDict(from_attributes=True)

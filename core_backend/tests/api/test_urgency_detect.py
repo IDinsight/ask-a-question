@@ -8,9 +8,9 @@ from core_backend.app.database import get_async_session
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.tests.api.conftest import (
+    TEST_USER_API_KEY,
+    TEST_USER_API_KEY_2,
     TEST_USER_ID,
-    TEST_USER_RETRIEVAL_KEY,
-    TEST_USER_RETRIEVAL_KEY_2,
 )
 
 
@@ -18,8 +18,8 @@ class TestUrgencyDetectionToken:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
-            (TEST_USER_RETRIEVAL_KEY, 200),
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
         ],
     )
     async def test_ud_response(
@@ -47,8 +47,8 @@ class TestUrgencyDetectionToken:
     @pytest.mark.parametrize(
         "token, expect_found",
         [
-            (TEST_USER_RETRIEVAL_KEY, True),
-            (TEST_USER_RETRIEVAL_KEY_2, False),
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
         ],
     )
     async def test_user2_access_user1_rules(

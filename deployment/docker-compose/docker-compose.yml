@@ -69,7 +69,21 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
-
+  embeddings:
+    image: idinsight/embeddings:latest
+    profiles:
+      - embeddings
+      - optional-components
+    build:
+      context: ../../optional_components/embeddings
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../optional_components/embeddings
 volumes:
   caddy_data:
   caddy_config:

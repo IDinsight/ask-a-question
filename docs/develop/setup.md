@@ -64,12 +64,12 @@ can be found in `core_backend/add_users_to_db.py`.
         # user 1
         export USER1_USERNAME = "user1"
         export USER1_PASSWORD = "fullaccess"
-        export USER1_RETRIEVAL_SECRET = "user1-key"
+        export USER1_API_KEY = "user1-key"
 
         # user 2
         export USER2_USERNAME = "user2"
         export USER2_PASSWORD = "fullaccess"
-        export USER2_RETRIEVAL_SECRET = "user2-key"
+        export USER2_API_KEY = "user2-key"
 
 5. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 

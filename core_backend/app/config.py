@@ -59,3 +59,10 @@ ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
+
+# Embeddings variables
+HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "thenlper/gte-large")
+EMBEDDINGS_API_KEY = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
+EMBEDDINGS_ENDPOINT = os.environ.get(
+    "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
+)
