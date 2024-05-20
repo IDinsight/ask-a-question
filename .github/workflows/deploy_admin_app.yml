@@ -81,9 +81,9 @@ jobs:
           then
             if  [ "${{ github.event_name }}" == "workflow_dispatch" ];
             then
-              "create_new_task_definition=true" >> $GITHUB_OUTPUT
+              echo "create_new_task_definition=true" >> $GITHUB_OUTPUT
             else
-              "create_new_task_definition=false" >> $GITHUB_OUTPUT
+              echo "create_new_task_definition=false" >> $GITHUB_OUTPUT
             fi
           else
             echo "${{ steps.hash.outputs.compose_hash }}" > ./.compose_hash
