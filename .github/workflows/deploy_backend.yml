@@ -10,6 +10,7 @@ on:
       - "core_backend/**"
       - "deployment/aws/core_backend/**"
       - ".github/workflows/deploy_backend.yml"
+  workflow_dispatch:
 
 jobs:
   DeployCoreBackend:
@@ -76,23 +77,31 @@ jobs:
             ./.compose_hash
           key: ${{ steps.hash.outputs.compose_hash }}
 
-      - name: Check for changes in Docker Compose
+      - name: Check if new task definition should be created
         id: check_changes
         run: |
-          if [ -f ./.compose_hash ] && [ "$(< ./.compose_hash)" == "${{ steps.hash.outputs.compose_hash }}" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
+          if [ -f ./.compose_hash ] && \
+            [ "$(< ./.compose_hash)" == "${{ steps.hash.outputs.compose_hash }}" ];
+          then
+            if  [ "${{ github.event_name }}" == "workflow_dispatch" ];
+            then
+              echo "create_new_task_definition=true" >> $GITHUB_OUTPUT
+            else
+              echo "create_new_task_definition=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "${{ steps.hash.outputs.compose_hash }}" > ./.compose_hash
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "create_new_task_definition=true" >> $GITHUB_OUTPUT
           fi
+
       - name: Install the ECS CLI
-        if: steps.check_changes.outputs.changed == 'true'
+        if: steps.check_changes.outputs.create_new_task_definition == 'true'
         run: |
           sudo curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
           sudo chmod +x /usr/local/bin/ecs-cli
 
       - name: Create Task Definition
-        if: steps.check_changes.outputs.changed == 'true'
+        if: steps.check_changes.outputs.create_new_task_definition == 'true'
         id: create-task-def
         run: |
           ecs-cli configure --cluster ${{ secrets.CLUSTER_NAME }} \
