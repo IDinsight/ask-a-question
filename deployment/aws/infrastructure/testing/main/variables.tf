@@ -184,11 +184,6 @@ variable "user_credentials_secret_name" {
   default     = ""
 }
 
-variable "google_login_client_id_secret_name" {
-  description = "value for the google login client ID secret name"
-  type        = string
-  default     = ""
-}
 
 variable "whatsapp_token_secret_name" {
   description = "value for the whatsapp token secret name"

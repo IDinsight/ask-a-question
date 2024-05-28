@@ -72,21 +72,6 @@ resource "aws_secretsmanager_secret_version" "user_credentials_secret" {
   })
 }
 
-# secret for google login client ID
-resource "aws_secretsmanager_secret" "google_login_client_id_secret" {
-  # AWS Secrets Manager is used to store the access secret.
-  name                    = var.google_login_client_id_secret_name
-  tags                    = merge({ Name = var.google_login_client_id_secret_name, Module = "Web" }, var.tags)
-  recovery_window_in_days = 0
-
-}
-
-resource "aws_secretsmanager_secret_version" "google_login_client_id_secret" {
-  # The secret version is created for the access secret.
-  secret_id = aws_secretsmanager_secret.google_login_client_id_secret.id
-  secret_string = "placeholder"
-}
-
 # whatsapp token secret
 resource "aws_secretsmanager_secret" "whatsapp_token_secret" {
   # AWS Secrets Manager is used to store the whatsapp token secret.

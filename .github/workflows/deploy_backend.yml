@@ -113,6 +113,7 @@ jobs:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           NEXT_PUBLIC_BACKEND_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
+          NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID }}
           LITELLM_ENDPOINT: ${{ secrets.LITELLM_ENDPOINT }}
           DOMAIN: ${{ secrets.DOMAIN }}
           REPO: ${{ secrets.REPO }}
