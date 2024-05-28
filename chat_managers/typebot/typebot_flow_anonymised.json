@@ -201,7 +201,7 @@
                 {
                   "id": "tk7msct2xnyx9scporoc65ua",
                   "key": "Authorization",
-                  "value": "Bearer <RETRIEVAL_KEY>"
+                  "value": "Bearer <API_KEY>"
                 },
                 {
                   "id": "fiy057mwgqzgnu5rig6pjs9c",

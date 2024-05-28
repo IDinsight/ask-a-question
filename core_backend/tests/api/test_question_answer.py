@@ -21,15 +21,19 @@ from core_backend.app.question_answer.schemas import (
     QuerySearchResult,
     ResultState,
 )
-from core_backend.tests.api.conftest import TEST_USER_RETRIEVAL_KEY
+from core_backend.tests.api.conftest import (
+    TEST_USER_API_KEY,
+    TEST_USER_API_KEY_2,
+)
+from core_backend.tests.api.conftest import TEST_USER_API_KEY
 
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
-            (TEST_USER_RETRIEVAL_KEY, 200),
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
         ],
     )
     async def test_content_response(
@@ -57,17 +61,17 @@ class TestEmbeddingsSearch:
             json={
                 "query_text": "Tell me about a good sport to play",
             },
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         return response.json()
 
     @pytest.mark.parametrize(
         "token, expected_status_code, endpoint",
         [
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/response-feedback"),
-            (TEST_USER_RETRIEVAL_KEY, 200, "/response-feedback"),
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401, "/content-feedback"),
-            (TEST_USER_RETRIEVAL_KEY, 200, "/content-feedback"),
+            (f"{TEST_USER_API_KEY}_incorrect", 401, "/response-feedback"),
+            (TEST_USER_API_KEY, 200, "/response-feedback"),
+            (f"{TEST_USER_API_KEY}_incorrect", 401, "/content-feedback"),
+            (TEST_USER_API_KEY, 200, "/content-feedback"),
         ],
     )
     async def test_response_feedback_correct_token(
@@ -92,7 +96,6 @@ class TestEmbeddingsSearch:
         if endpoint == "/content-feedback":
             json["content_id"] = 1
 
-        print(json)
         response = client.post(
             endpoint,
             json=json,
@@ -121,7 +124,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 400
 
@@ -141,7 +144,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 400
 
@@ -165,7 +168,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 422
 
@@ -187,9 +190,41 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
 
     @pytest.mark.parametrize("content_id, response_code", ([1, 200], [999, 400]))
     async def test_content_feedback_check_content_id(
@@ -211,7 +246,7 @@ class TestEmbeddingsSearch:
                 "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
-            headers={"Authorization": f"Bearer {TEST_USER_RETRIEVAL_KEY}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == response_code
 
@@ -220,8 +255,8 @@ class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
-            (TEST_USER_RETRIEVAL_KEY, 200),
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
         ],
     )
     async def test_llm_response(
@@ -247,6 +282,38 @@ class TestGenerateResponse:
 
             result_state = response.json()["state"]
             assert result_state == ResultState.FINAL
+
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/llm-response",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
 
 
 class TestErrorResponses:

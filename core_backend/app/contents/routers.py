@@ -39,6 +39,7 @@ async def create_content(
     if not is_tag_valid:
         raise HTTPException(status_code=400, detail=f"Invalid tags id: {content_tags}")
     content.content_tags = content_tags
+
     content_db = await save_content_to_db(
         user_id=user_db.user_id,
         content=content,

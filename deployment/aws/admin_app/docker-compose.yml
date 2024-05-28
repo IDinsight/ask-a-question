@@ -5,6 +5,8 @@ services:
     command: >
       node server.js
     restart: always
+    environment:
+      - NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
     ports:
       - 3000:3000
     logging:
