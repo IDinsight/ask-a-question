@@ -12,6 +12,7 @@ import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
+import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -28,10 +29,7 @@ interface EditContentBody {
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
-interface Tag {
-  tag_id: number;
-  tag_name: string;
-}
+
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
@@ -120,11 +118,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id)
+                data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined)
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -165,7 +163,7 @@ const ContentBox = ({
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content
+    key: keyof Content,
   ) => {
     const emptyContent: Content = {
       content_id: null,
@@ -190,7 +188,7 @@ const ContentBox = ({
   };
   const handleTagsChange = (
     event: React.SyntheticEvent,
-    updatedTags: Tag[]
+    updatedTags: Tag[],
   ) => {
     setContentTags(updatedTags);
     setIsSaved(false);
@@ -294,7 +292,7 @@ const ContentBox = ({
                 if (content_id) {
                   const actionType = content.content_id ? "edit" : "add";
                   router.push(
-                    `/content/?content_id=${content_id}&action=${actionType}`
+                    `/content/?content_id=${content_id}&action=${actionType}`,
                   );
                 }
               };

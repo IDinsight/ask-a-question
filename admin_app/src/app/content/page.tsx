@@ -6,7 +6,13 @@ import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
-import { Button, CircularProgress, Grid } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  CircularProgress,
+  Grid,
+  TextField,
+} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
@@ -17,19 +23,34 @@ import { SearchBar } from "../../components/SearchBar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
-
+export interface Tag {
+  tag_id: number;
+  tag_name: string;
+}
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
+  const [tags, setTags] = React.useState<Tag[]>([]);
+  const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel } = useAuth();
 
   React.useEffect(() => {
+    const fetchTags = async () => {
+      const data = await apiCalls.getTagList(token!);
+      setTags(data);
+    };
+    fetchTags();
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
-
+  const handleTagsChange = (
+    event: React.SyntheticEvent,
+    updatedTags: Tag[],
+  ) => {
+    setFilterTags(updatedTags);
+  };
   return (
     <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
@@ -43,31 +64,68 @@ const CardsPage = () => {
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </Layout.FlexBox>
-      <CardsUtilityStrip editAccess={currAccessLevel === "fullaccess"} />
+
+      <CardsUtilityStrip
+        editAccess={currAccessLevel === "fullaccess"}
+        tags={tags}
+        filterTags={filterTags}
+        setFilterTags={setFilterTags}
+      />
       <CardsGrid
         displayLanguage={displayLanguage}
         searchTerm={searchTerm}
         token={token}
         accessLevel={currAccessLevel}
+        filterTags={filterTags}
       />
     </Layout.FlexBox>
   );
 };
 
-const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
+const CardsUtilityStrip = ({
+  editAccess,
+  tags,
+  filterTags,
+  setFilterTags,
+}: {
+  editAccess: boolean;
+  tags: Tag[];
+  filterTags: Tag[];
+  setFilterTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+}) => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
       flexDirection={"row"}
-      justifyContent={"flex-right"}
-      alignItems={"right"}
+      justifyContent={"space-between"} // This will align items to the edges
+      alignItems={"center"} // Align items vertically in the center
       sx={{
         display: "flex",
-        alignSelf: "flex-end",
+        width: "100%", // Take full width to allow space-between to work
         px: sizes.baseGap,
       }}
       gap={sizes.baseGap}
     >
+      <Autocomplete
+        multiple
+        limitTags={3}
+        id="tags-autocomplete"
+        options={tags}
+        getOptionLabel={(option) => option!.tag_name}
+        value={filterTags}
+        onChange={(event, updatedTags) => {
+          setFilterTags(updatedTags);
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            variant="outlined"
+            label="Tags"
+            placeholder="Add Tags"
+          />
+        )}
+        sx={{ width: "500px" }}
+      />
       <Button
         variant="contained"
         disabled={!editAccess}
@@ -84,11 +142,13 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
+  filterTags,
   token,
   accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
+  filterTags: Tag[];
   token: string | null;
   accessLevel: string;
 }) => {
@@ -128,13 +188,22 @@ const CardsGrid = ({
     apiCalls
       .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
       .then((data) => {
-        const filteredData = data.filter(
-          (card: Content) =>
+        const filteredData = data.filter((card: Content) => {
+          const matchesSearchTerm =
             card.content_title
               .toLowerCase()
               .includes(searchTerm.toLowerCase()) ||
-            card.content_text.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+            card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+
+          const matchesAllTags = filterTags.every((fTag) =>
+            card.content_tags.includes(fTag.tag_id),
+          );
+
+          return (
+            matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
+          );
+        });
+
         setCards(filteredData);
         setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
         setIsLoading(false);
@@ -143,7 +212,7 @@ const CardsGrid = ({
         console.error("Failed to fetch content:", error);
         setIsLoading(false);
       });
-  }, [refreshKey, searchTerm, token]);
+  }, [searchTerm, filterTags, token, refreshKey]);
 
   if (isLoading) {
     return (
