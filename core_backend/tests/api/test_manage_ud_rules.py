@@ -43,7 +43,7 @@ class TestManageUDRules:
         "urgency_rule_text, urgency_rule_metadata",
         [
             ("test rule 3", {}),
-            ("test rule 2", {"meta_key": "meta_value"}),
+            ("test rule 4", {"meta_key": "meta_value"}),
         ],
     )
     async def test_create_and_delete_UDrules(
@@ -89,7 +89,6 @@ class TestManageUDRules:
         existing_rule_id: int,
         urgency_rule_text: str,
         fullaccess_token: str,
-        readonly_token: str,
         urgency_rule_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
@@ -105,7 +104,7 @@ class TestManageUDRules:
 
         response = client.get(
             f"/urgency-rules/{existing_rule_id}",
-            headers={"Authorization": f"Bearer {readonly_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
         assert response.json()["urgency_rule_text"] == urgency_rule_text
@@ -128,10 +127,10 @@ class TestManageUDRules:
         assert response.status_code == 404
 
     async def test_list_UDrules(
-        self, client: TestClient, existing_rule_id: int, readonly_token: str
+        self, client: TestClient, existing_rule_id: int, fullaccess_token: str
     ) -> None:
         response = client.get(
-            "/urgency-rules/", headers={"Authorization": f"Bearer {readonly_token}"}
+            "/urgency-rules/", headers={"Authorization": f"Bearer {fullaccess_token}"}
         )
         assert response.status_code == 200
         assert len(response.json()) > 0
@@ -146,118 +145,53 @@ class TestManageUDRules:
         assert response.status_code == 200
 
 
-class TestAuthManageContent:
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_delete(
+class TestMultUserManageUDRules:
+    async def user2_get_user1_UDrule(
         self,
         client: TestClient,
-        existing_rule_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.delete(
+        response = client.get(
             f"/urgency-rules/{existing_rule_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_create(
+    async def user2_edit_user1_UDrule(
         self,
         client: TestClient,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.post(
-            "/urgency-rules",
-            headers={"Authorization": f"Bearer {access_token}"},
-            json={
-                "urgency_rule_text": "sample text",
-                "urgency_rule_metadata": {},
-            },
-        )
-        assert response.status_code == expected_status
-        if response.status_code == 200:
-            client.delete(
-                f"/urgency-rules/{response.json()['urgency_rule_id']}",
-                headers={"Authorization": f"Bearer {access_token}"},
-            )
-
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_edit(
-        self,
-        client: TestClient,
-        existing_rule_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
-    ) -> None:
-        access_token = request.getfixturevalue(access_token)
         response = client.put(
             f"/urgency-rules/{existing_rule_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
             json={
-                "urgency_rule_text": "sample text",
+                "urgency_rule_text": "user2 rule",
                 "urgency_rule_metadata": {},
             },
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
-    )
-    async def test_auth_list(
+    async def user2_delete_user1_UDrule(
         self,
         client: TestClient,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_rule_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.get(
-            "/urgency-rules",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        assert response.status_code == expected_status
-
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
-    )
-    async def test_auth_retrieve(
-        self,
-        client: TestClient,
-        existing_rule_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
-    ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.get(
+        response = client.delete(
             f"/urgency-rules/{existing_rule_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
 
 async def test_convert_record_to_schema() -> None:
     _id = 1
     record = UrgencyRuleDB(
         urgency_rule_id=_id,
+        user_id=123,
         urgency_rule_text="sample text",
         urgency_rule_vector=await async_fake_embedding(),
         urgency_rule_metadata={"extra_field": "extra value"},

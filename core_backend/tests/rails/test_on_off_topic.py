@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from core_backend.app.llm_call.process_input import _classify_on_off_topic
-from core_backend.app.question_answer.schemas import UserQueryRefined, UserQueryResponse
+from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 
 pytestmark = pytest.mark.rails
 
@@ -26,8 +26,8 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
 @pytest.mark.parametrize("expected_label, content", read_test_data(ON_OFF_TOPIC_FILE))
 async def test_on_off_topic(expected_label: str, content: str) -> None:
     """Test on- vs. off-topic classification"""
-    question = UserQueryRefined(query_text=content, query_text_original=content)
-    response = UserQueryResponse(
+    question = QueryRefined(query_text=content, query_text_original=content)
+    response = QueryResponse(
         query_id=1,
         content_response=None,
         llm_response="Dummy response",

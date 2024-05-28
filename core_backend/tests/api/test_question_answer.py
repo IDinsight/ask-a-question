@@ -4,7 +4,6 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.app.auth.config import QUESTION_ANSWER_SECRET
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.process_input import (
     _classify_on_off_topic,
@@ -16,18 +15,25 @@ from core_backend.app.llm_call.process_output import _build_evidence, _check_ali
 from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
 from core_backend.app.question_answer.schemas import (
     ErrorType,
+    QueryRefined,
+    QueryResponse,
+    QueryResponseError,
+    QuerySearchResult,
     ResultState,
-    UserQueryRefined,
-    UserQueryResponse,
-    UserQueryResponseError,
-    UserQuerySearchResult,
+)
+from core_backend.tests.api.conftest import (
+    TEST_USER_API_KEY,
+    TEST_USER_API_KEY_2,
 )
 
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
+        [
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
+        ],
     )
     async def test_content_response(
         self,
@@ -48,23 +54,23 @@ class TestEmbeddingsSearch:
             assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
-    def question_response(self, client: TestClient) -> UserQueryResponse:
+    def question_response(self, client: TestClient) -> QueryResponse:
         response = client.post(
             "/embeddings-search",
             json={
                 "query_text": "Tell me about a good sport to play",
             },
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         return response.json()
 
     @pytest.mark.parametrize(
         "token, expected_status_code, endpoint",
         [
-            (f"{QUESTION_ANSWER_SECRET}_incorrect", 401, "/response-feedback"),
-            (QUESTION_ANSWER_SECRET, 200, "/response-feedback"),
-            (f"{QUESTION_ANSWER_SECRET}_incorrect", 401, "/content-feedback"),
-            (QUESTION_ANSWER_SECRET, 200, "/content-feedback"),
+            (f"{TEST_USER_API_KEY}_incorrect", 401, "/response-feedback"),
+            (TEST_USER_API_KEY, 200, "/response-feedback"),
+            (f"{TEST_USER_API_KEY}_incorrect", 401, "/content-feedback"),
+            (TEST_USER_API_KEY, 200, "/content-feedback"),
         ],
     )
     async def test_response_feedback_correct_token(
@@ -117,7 +123,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 400
 
@@ -137,7 +143,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 400
 
@@ -161,7 +167,7 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 422
 
@@ -183,9 +189,41 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
 
     @pytest.mark.parametrize("content_id, response_code", ([1, 200], [999, 400]))
     async def test_content_feedback_check_content_id(
@@ -207,7 +245,7 @@ class TestEmbeddingsSearch:
                 "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
-            headers={"Authorization": f"Bearer {QUESTION_ANSWER_SECRET}"},
+            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
         assert response.status_code == response_code
 
@@ -215,7 +253,10 @@ class TestEmbeddingsSearch:
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
-        [(f"{QUESTION_ANSWER_SECRET}_incorrect", 401), (QUESTION_ANSWER_SECRET, 200)],
+        [
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
+        ],
     )
     async def test_llm_response(
         self,
@@ -241,6 +282,38 @@ class TestGenerateResponse:
             result_state = response.json()["state"]
             assert result_state == ResultState.FINAL
 
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_content(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/llm-response",
+            json={"query_text": "Tell me about camping"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            all_retireved_content_ids = [
+                value["retrieved_content_id"]
+                for value in response.json()["content_response"].values()
+            ]
+            if expect_found:
+                # user1 has contents in DB uploaded by the faq_contents fixture
+                assert len(all_retireved_content_ids) > 0
+            else:
+                # user2 should not have any content
+                assert len(all_retireved_content_ids) == 0
+
 
 class TestErrorResponses:
     SUPPORTED_LANGUAGE = IdentifiedLanguage.get_supported_languages()[-1]
@@ -248,8 +321,8 @@ class TestErrorResponses:
     @pytest.fixture
     def user_query_response(
         self,
-    ) -> UserQueryResponse:
-        return UserQueryResponse(
+    ) -> QueryResponse:
+        return QueryResponse(
             query_id=124,
             content_response={},
             llm_response=None,
@@ -259,12 +332,12 @@ class TestErrorResponses:
         )
 
     @pytest.fixture
-    def user_query_refined(self, request: pytest.FixtureRequest) -> UserQueryRefined:
+    def user_query_refined(self, request: pytest.FixtureRequest) -> QueryRefined:
         if hasattr(request, "param"):
             language = request.param
         else:
             language = None
-        return UserQueryRefined(
+        return QueryRefined(
             query_text="This is a basic query",
             original_language=language,
             query_text_original="This is a query original",
@@ -284,13 +357,13 @@ class TestErrorResponses:
     )
     async def test_language_identify_error(
         self,
-        user_query_response: UserQueryResponse,
+        user_query_response: QueryResponse,
         identified_lang_str: str,
         should_error: bool,
         expected_error_type: ErrorType,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        user_query_refined = UserQueryRefined(
+        user_query_refined = QueryRefined(
             query_text="This is a basic query",
             original_language=None,
             query_text_original="This is a query original",
@@ -307,10 +380,10 @@ class TestErrorResponses:
             user_query_refined, user_query_response
         )
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == expected_error_type
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
             assert query.original_language == getattr(
                 IdentifiedLanguage, identified_lang_str
             )
@@ -325,8 +398,8 @@ class TestErrorResponses:
     )
     async def test_translate_error(
         self,
-        user_query_refined: UserQueryRefined,
-        user_query_response: UserQueryResponse,
+        user_query_refined: QueryRefined,
+        user_query_response: QueryResponse,
         should_error: bool,
         expected_error_type: ErrorType,
         monkeypatch: pytest.MonkeyPatch,
@@ -341,10 +414,10 @@ class TestErrorResponses:
             user_query_refined, user_query_response
         )
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == expected_error_type
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
             if query.original_language == "ENGLISH":
                 assert query.query_text == "This is a basic query"
             else:
@@ -352,7 +425,7 @@ class TestErrorResponses:
 
     async def test_translate_before_language_id_errors(
         self,
-        user_query_response: UserQueryResponse,
+        user_query_response: QueryResponse,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
@@ -362,7 +435,7 @@ class TestErrorResponses:
             "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
 
-        user_query_refined = UserQueryRefined(
+        user_query_refined = QueryRefined(
             query_text="This is a basic query",
             original_language=None,
             query_text_original="This is a query original",
@@ -379,8 +452,8 @@ class TestErrorResponses:
     async def test_unsafe_query_error(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        user_query_refined: UserQueryRefined,
-        user_query_response: UserQueryResponse,
+        user_query_refined: QueryRefined,
+        user_query_response: QueryResponse,
         classification: str,
         should_error: bool,
     ) -> None:
@@ -396,10 +469,10 @@ class TestErrorResponses:
         )
 
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == ErrorType.QUERY_UNSAFE
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
             assert query.query_text == "This is a basic query"
 
     @pytest.mark.parametrize(
@@ -417,8 +490,8 @@ class TestErrorResponses:
     async def test_off_topic_query_error(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        user_query_refined: UserQueryRefined,
-        user_query_response: UserQueryResponse,
+        user_query_refined: QueryRefined,
+        user_query_response: QueryResponse,
         classification: str,
         should_error: bool,
     ) -> None:
@@ -434,25 +507,25 @@ class TestErrorResponses:
         )
 
         if should_error:
-            assert isinstance(response, UserQueryResponseError)
+            assert isinstance(response, QueryResponseError)
             assert response.error_type == ErrorType.OFF_TOPIC
         else:
-            assert isinstance(response, UserQueryResponse)
+            assert isinstance(response, QueryResponse)
 
 
 class TestAlignScore:
     @pytest.fixture
-    def user_query_response(self) -> UserQueryResponse:
-        return UserQueryResponse(
+    def user_query_response(self) -> QueryResponse:
+        return QueryResponse(
             query_id=124,
             content_response={
-                1: UserQuerySearchResult(
+                1: QuerySearchResult(
                     retrieved_title="World",
                     retrieved_text="hello world",
                     retrieved_content_id=1,
                     score=0.2,
                 ),
-                2: UserQuerySearchResult(
+                2: QuerySearchResult(
                     retrieved_title="Universe",
                     retrieved_text="goodbye universe",
                     retrieved_content_id=2,
@@ -466,7 +539,7 @@ class TestAlignScore:
         )
 
     async def test_score_less_than_threshold(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
             return AlignmentScore(score=0.2, reason="test - low score")
@@ -484,12 +557,12 @@ class TestAlignScore:
             0.7,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert isinstance(update_query_response, UserQueryResponse)
+        assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.2
         assert update_query_response.llm_response is None
 
     async def test_score_greater_than_threshold(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
             return AlignmentScore(score=0.9, reason="test - high score")
@@ -507,11 +580,11 @@ class TestAlignScore:
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(user_query_response)
-        assert isinstance(update_query_response, UserQueryResponse)
+        assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
     async def test_build_evidence(
-        self, user_query_response: UserQueryResponse, monkeypatch: pytest.MonkeyPatch
+        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         evidence = _build_evidence(user_query_response)
         assert evidence == "hello world\ngoodbye universe\n"

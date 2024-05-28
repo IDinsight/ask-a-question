@@ -1,7 +1,7 @@
-"""Create WhatsApp Tables
+"""create WhatsApp tables
 
 Revision ID: 56b62dbe2d89
-Revises: 8929d5c246e7
+Revises: cda1098017b5
 Create Date: 2023-11-07 18:26:51.842395
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "56b62dbe2d89"
-down_revision: Union[str, None] = "8929d5c246e7"
+down_revision: Union[str, None] = "cda1098017b5"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

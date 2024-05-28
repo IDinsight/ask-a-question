@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir awscli
 
+COPY add_users_to_db.py /add_users_to_db.py
+
 COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user

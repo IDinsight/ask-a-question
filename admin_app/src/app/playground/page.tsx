@@ -1,6 +1,7 @@
 "use client";
 
 import { apiCalls } from "@/utils/api";
+import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
@@ -58,7 +59,7 @@ const Page = () => {
     console.log(response);
     const responseText = llmResponse
       ? llmResponse
-      : `No LLM response. Reason: "${response.debug_info.reason}". See JSON for details.`;
+      : `No LLM response. Reason: "${response.debug_info.reason}". See <json> for details.`;
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -75,7 +76,7 @@ const Page = () => {
     const isUrgent: boolean = response.is_urgent;
     const responseText =
       isUrgent === null
-        ? `No response. Reason:  See JSON for details.`
+        ? `No response. Reason:  See <json> for details.`
         : isUrgent
         ? "Urgent 🚨"
         : "Not Urgent 🟢";
@@ -92,7 +93,7 @@ const Page = () => {
   };
 
   const processNotOKResponse = (response: any) => {
-    const responseText = `Error: ${response.status}. See JSON for details.`;
+    const responseText = `Error: ${response.status}. See <json> for details.`;
     console.error(responseText, response);
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -111,10 +112,16 @@ const Page = () => {
       {
         dateTime: new Date().toISOString(),
         type: "response",
-        content: "API call failed. See JSON for details.",
+        content: "API call failed. See <json> for details.",
         json: `{error: ${error.message}}`,
       },
     ]);
+  };
+
+  const queryTypeDisplayNameMapping = {
+    "embeddings-search": "Embedding Search",
+    "llm-response": "LLM Search",
+    "urgency-detection": "Urgency Detection",
   };
 
   const onSend = (queryText: string, queryType: QueryType) => {
@@ -129,12 +136,15 @@ const Page = () => {
       setLoading(false);
       return;
     } else {
+      const queryTypeDisplayName =
+        queryTypeDisplayNameMapping[queryType] || queryType;
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           dateTime: new Date().toISOString(),
           type: "question",
-          content: queryText,
+          content: `${queryText}`,
+          queryType: `${queryTypeDisplayName}`,
         } as UserMessage,
       ]);
       if (queryType === "embeddings-search") {
@@ -238,41 +248,50 @@ const Page = () => {
   }, []);
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      bgcolor="white"
-      sx={{ height: "100vh", width: "100%", pb: 10 }}
-    >
-      <Box
-        mb={10}
-        sx={{
-          width: "100%",
-          maxWidth: "lg",
-          pb: 10,
-        }}
-      >
-        {messages.map((message, index) => (
-          <MessageBox key={index} {...message} />
-        ))}
-        {loading && <MessageSkeleton />}
-        <div ref={bottomRef} />
-      </Box>
-      <ErrorSnackBar message={error} onClose={handleErrorClose} />
-      <ApiKeyDialog
-        open={openDialog}
-        handleClose={handleDialogClose}
-        handleSave={handleSaveToken}
-        currApiKey={currApiKey}
+    <>
+      <Global
+        styles={css`
+          body {
+            background-color: white;
+          }
+        `}
       />
-      <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
-        <PersistentSearchBar
-          onSend={onSend}
-          openApiKeyDialog={handleDialogOpen}
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        bgcolor="white"
+        sx={{ height: "100vh", width: "100%", pb: 10 }}
+      >
+        <Box
+          mb={10}
+          sx={{
+            width: "100%",
+            maxWidth: "lg",
+            pb: 10,
+          }}
+        >
+          {messages.map((message, index) => (
+            <MessageBox key={index} {...message} />
+          ))}
+          {loading && <MessageSkeleton />}
+          <div ref={bottomRef} />
+        </Box>
+        <ErrorSnackBar message={error} onClose={handleErrorClose} />
+        <ApiKeyDialog
+          open={openDialog}
+          handleClose={handleDialogClose}
+          handleSave={handleSaveToken}
+          currApiKey={currApiKey}
         />
+        <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
+          <PersistentSearchBar
+            onSend={onSend}
+            openApiKeyDialog={handleDialogOpen}
+          />
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

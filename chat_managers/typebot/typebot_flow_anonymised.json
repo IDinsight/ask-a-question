@@ -201,7 +201,7 @@
                 {
                   "id": "tk7msct2xnyx9scporoc65ua",
                   "key": "Authorization",
-                  "value": "Bearer <QUESTION_ANSWER_SECRET>"
+                  "value": "Bearer <API_KEY>"
                 },
                 {
                   "id": "fiy057mwgqzgnu5rig6pjs9c",

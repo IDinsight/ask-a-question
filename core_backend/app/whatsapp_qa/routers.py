@@ -14,7 +14,7 @@ from .models import (
 )
 from .schemas import WhatsAppIncoming, WhatsAppResponse
 
-router = APIRouter()
+router = APIRouter(tags=["WhatsApp"])
 
 
 @router.post("/webhook")
@@ -57,9 +57,10 @@ async def process_whatsapp_message(
                 )
 
                 content_response = await get_similar_content_async(
-                    msg_body,
-                    1,
-                    asession,
+                    user_id=1,  # hard codes user_id for now
+                    question=msg_body,
+                    n_similar=1,
+                    asession=asession,
                 )
                 top_faq = content_response[0][1]
                 data_obj = {

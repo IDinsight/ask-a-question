@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Annotated, Dict, Optional, Union, cast
+from typing import Annotated, Dict, Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import (
@@ -8,54 +8,114 @@ from fastapi.security import (
     OAuth2PasswordBearer,
 )
 from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    CONTENT_FULLACCESS_PASSWORD,
-    CONTENT_READONLY_PASSWORD,
-    JWT_ALGORITHM,
-    JWT_SECRET,
-    QUESTION_ANSWER_SECRET,
+from ..database import get_sqlalchemy_async_engine
+from ..users.models import (
+    UserDB,
+    UserNotFoundError,
+    get_user_by_token,
+    get_user_by_username,
+    save_user_to_db,
 )
-from .schemas import AccessLevel, AuthenticatedUser
+from ..users.schemas import UserCreate
+from ..utils import setup_logger, verify_password_salted_hash
+from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
+from .schemas import AuthenticatedUser
+
+logger = setup_logger()
 
 bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-USERS = {
-    "fullaccess": {
-        "password": CONTENT_FULLACCESS_PASSWORD,
-        "access_level": "fullaccess",
-    },
-    "readonly": {"password": CONTENT_READONLY_PASSWORD, "access_level": "readonly"},
-}
-
-
-def auth_bearer_token(
+async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> None:
+) -> UserDB:
     """
     Authenticate using basic bearer token. Used for calling
     the question-answering endpoints
     """
     token = credentials.credentials
-    if token != QUESTION_ANSWER_SECRET:
-        raise HTTPException(status_code=401, detail="Invalid bearer token")
+
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_token(token, asession)
+            return user_db
+        except UserNotFoundError as err:
+            raise HTTPException(status_code=401, detail="Invalid api key") from err
 
 
-def authenticate_user(*, username: str, password: str) -> Optional[AuthenticatedUser]:
+async def authenticate_credentials(
+    *, username: str, password: str
+) -> Optional[AuthenticatedUser]:
     """
     Authenticate user using username and password.
     """
-    if username not in USERS:
-        return None
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(username, asession)
+            if verify_password_salted_hash(password, user_db.hashed_password):
+                # hardcode "fullaccess" now, but may use it in the future
+                return AuthenticatedUser(username=username, access_level="fullaccess")
+            else:
+                return None
+        except UserNotFoundError:
+            return None
 
-    if password == USERS[username]["password"]:
-        access_level = cast(AccessLevel, USERS[username]["access_level"])
-        return AuthenticatedUser(username=username, access_level=access_level)
 
-    return None
+async def authenticate_or_create_google_user(
+    *, google_email: str
+) -> Optional[AuthenticatedUser]:
+    """
+    Check if user exists in Db. If not, create user
+    """
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(google_email, asession)
+            return AuthenticatedUser(
+                username=user_db.username, access_level="fullaccess"
+            )
+        except UserNotFoundError:
+            user = UserCreate(username=google_email)
+            user_db = await save_user_to_db(user, asession)
+            return AuthenticatedUser(
+                username=user_db.username, access_level="fullaccess"
+            )
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
+    """
+    Get the current user from the access token
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+
+        # fetch user from database
+        async with AsyncSession(
+            get_sqlalchemy_async_engine(), expire_on_commit=False
+        ) as asession:
+            try:
+                user_db = await get_user_by_username(username, asession)
+                return user_db
+            except UserNotFoundError as err:
+                raise credentials_exception from err
+    except JWTError as err:
+        raise credentials_exception from err
 
 
 def create_access_token(username: str) -> str:
@@ -71,55 +131,3 @@ def create_access_token(username: str) -> str:
     payload["type"] = "access_token"
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
-def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> AuthenticatedUser:
-    """
-    Get the current user from the access token
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-
-        user = AuthenticatedUser(
-            username=username,
-            access_level=cast(AccessLevel, USERS[username]["access_level"]),
-        )
-
-    except JWTError as err:
-        raise credentials_exception from err
-
-    return user
-
-
-def get_current_fullaccess_user(
-    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-) -> AuthenticatedUser:
-    """
-    Get the current active user if they have full access
-    """
-    if current_user.access_level != "fullaccess":
-        raise HTTPException(status_code=400, detail="User does not have full access")
-    return current_user
-
-
-def get_current_readonly_user(
-    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-) -> AuthenticatedUser:
-    """
-    Get the current active user if they have readonly access
-    """
-    if current_user.access_level not in ["readonly", "fullaccess"]:
-        raise HTTPException(
-            status_code=400, detail="User does not have readonly or full access"
-        )
-    return current_user

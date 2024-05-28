@@ -1,4 +1,4 @@
-const BACKEND_ROOT_PATH: string =
+const NEXT_PUBLIC_BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface ContentBody {
@@ -7,6 +7,23 @@ interface ContentBody {
   content_language: string;
   content_metadata: Record<string, unknown>;
 }
+
+const getNewAPIKey = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/key/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error rotating API key");
+    }
+  });
+};
 
 const getContentList = async ({
   token,
@@ -17,13 +34,16 @@ const getContentList = async ({
   skip?: number;
   limit?: number;
 }) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/?skip=${skip}&limit=${limit}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/content/?skip=${skip}&limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     },
-  }).then((response) => {
+  ).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;
@@ -34,7 +54,7 @@ const getContentList = async ({
 };
 
 const getContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -51,7 +71,7 @@ const getContent = async (content_id: number, token: string) => {
 };
 
 const deleteContent = async (content_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -72,7 +92,7 @@ const editContent = async (
   content: ContentBody,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/${content_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -90,7 +110,7 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/content/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -108,7 +128,7 @@ const createContent = async (content: ContentBody, token: string) => {
 };
 
 const getUrgencyRuleList = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -125,7 +145,7 @@ const getUrgencyRuleList = async (token: string) => {
 };
 
 const addUrgencyRule = async (rule_text: string, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -147,7 +167,7 @@ const updateUrgencyRule = async (
   rule_text: string,
   token: string,
 ) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/${rule_id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -165,7 +185,7 @@ const updateUrgencyRule = async (
 };
 
 const deleteUrgencyRule = async (rule_id: number, token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/urgency-rules/${rule_id}`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/${rule_id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -185,7 +205,7 @@ const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
   formData.append("password", password);
-  return fetch(`${BACKEND_ROOT_PATH}/login`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login`, {
     method: "POST",
     body: formData,
   }).then((response) => {
@@ -198,8 +218,28 @@ const getLoginToken = async (username: string, password: string) => {
   });
 };
 
+const getGoogleLoginToken = async (idToken: {
+  client_id: string;
+  credential: string;
+}) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login-google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(idToken),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching login token");
+    }
+  });
+};
+
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${BACKEND_ROOT_PATH}/embeddings-search`;
+  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
@@ -221,7 +261,7 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${BACKEND_ROOT_PATH}/llm-response`;
+  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/llm-response`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
@@ -243,7 +283,7 @@ const getLLMResponse = async (search: string, token: string) => {
 };
 
 const getQuestionStats = async (token: string) => {
-  return fetch(`${BACKEND_ROOT_PATH}/dashboard/question_stats`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/question_stats`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -260,7 +300,7 @@ const getQuestionStats = async (token: string) => {
 };
 
 const getUrgencyDetection = async (search: string, token: string) => {
-  const urgencyDetectionUrl = `${BACKEND_ROOT_PATH}/urgency-detect`;
+  const urgencyDetectionUrl = `${NEXT_PUBLIC_BACKEND_URL}/urgency-detect`;
   return fetch(urgencyDetectionUrl, {
     method: "POST",
     headers: {
@@ -289,6 +329,7 @@ const getUrgencyDetection = async (search: string, token: string) => {
     });
 };
 export const apiCalls = {
+  getNewAPIKey,
   getContentList,
   getContent,
   deleteContent,
@@ -299,6 +340,7 @@ export const apiCalls = {
   updateUrgencyRule,
   deleteUrgencyRule,
   getLoginToken,
+  getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
   getQuestionStats,

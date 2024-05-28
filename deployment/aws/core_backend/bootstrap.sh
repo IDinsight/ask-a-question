@@ -27,24 +27,28 @@ echo "Fetching variables from aws store.."
 # The secrets are created by the infrastructure module
 # The values should be the same as the ones in the infrastructure module
 SECRET_JWT="${PROJECT_NAME}-${ENV}-jwt-secret"
-SECRET_CONTENT="${PROJECT_NAME}-${ENV}-content-access"
+SECRET_USER_CREDENTIALS="${PROJECT_NAME}-${ENV}-user-credentials"
+SECRET_NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${PROJECT_NAME}-${ENV}-google-login-client-id"
 SECRET_WHATSAPP_VERIFY="${PROJECT_NAME}-${ENV}-whatsapp-verify-token"
 SECRET_WEB_DB_CONNECTION="${PROJECT_NAME}-${ENV}-web-db-connection-details"
 SECRET_WHATSAPP="${PROJECT_NAME}-${ENV}-whatsapp-token"
-SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
 SECRET_QUESTION_ANSWER="${PROJECT_NAME}-${ENV}-question-answer"
 
 export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
+export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=$(get_secret_value ${SECRET_NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID} "" "text")
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 
-# Set password for user for `fullaccess` and `readonly` account to access content
-export CONTENT_FULLACCESS_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "full_access_password" "json")
-export CONTENT_READONLY_PASSWORD=$(get_secret_value ${SECRET_CONTENT} "read_only_password" "json")
+# Set usernames, passwords, and initial api keys for both users
+export USER1_USERNAME=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user1_username" "json")
+export USER1_PASSWORD=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user1_password" "json")
+export USER1_API_KEY=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user1_api_key" "json")
+
+export USER2_USERNAME=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_username" "json")
+export USER2_PASSWORD=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_password" "json")
+export USER2_API_KEY=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_api key" "json")
 
 export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "" "text")
 export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP_VERIFY} "" "text")
-export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
-export QUESTION_ANSWER_SECRET=$(get_secret_value ${SECRET_QUESTION_ANSWER} "" "text")
 
 # if using a nginx reverse proxy, set path here
 export BACKEND_ROOT_PATH="/api"
@@ -57,12 +61,9 @@ export POSTGRES_PASSWORD=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "passwor
 export POSTGRES_DB=$(get_secret_value ${SECRET_WEB_DB_CONNECTION} "dbname" "json")
 
 
-
-
 export PROMETHEUS_MULTIPROC_DIR="/tmp"
 
 DOMAIN="${DOMAIN}"
-
 
 
 read -r PRIORITY WEIGHT PORT HOST <<< "$(echo $SERVICE_RECORD | cut -d' ' -f 1-4)"

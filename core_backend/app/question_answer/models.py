@@ -16,22 +16,25 @@ from ..contents.models import ContentDB
 from ..models import Base, JSONDict
 from .schemas import (
     ContentFeedback,
+    QueryBase,
+    QueryResponse,
+    QueryResponseError,
     ResponseFeedbackBase,
-    UserQueryBase,
-    UserQueryResponse,
-    UserQueryResponseError,
 )
 
 
-class UserQueryDB(Base):
+class QueryDB(Base):
     """
     SQLAlchemy data model for questions asked by user
     """
 
-    __tablename__ = "user-queries"
+    __tablename__ = "query"
 
     query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
@@ -44,11 +47,11 @@ class UserQueryDB(Base):
     content_feedback: Mapped[List["ContentFeedbackDB"]] = relationship(
         "ContentFeedbackDB", back_populates="query", lazy=True
     )
-    response: Mapped[List["UserQueryResponseDB"]] = relationship(
-        "UserQueryResponseDB", back_populates="query", lazy=True
+    response: Mapped[List["QueryResponseDB"]] = relationship(
+        "QueryResponseDB", back_populates="query", lazy=True
     )
-    response_error: Mapped[List["UserQueryResponseErrorDB"]] = relationship(
-        "UserQueryResponseErrorDB", back_populates="query", lazy=True
+    response_error: Mapped[List["QueryResponseErrorDB"]] = relationship(
+        "QueryResponseErrorDB", back_populates="query", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -57,12 +60,16 @@ class UserQueryDB(Base):
 
 
 async def save_user_query_to_db(
-    feedback_secret_key: str, user_query: UserQueryBase, asession: AsyncSession
-) -> UserQueryDB:
+    user_id: int,
+    feedback_secret_key: str,
+    user_query: QueryBase,
+    asession: AsyncSession,
+) -> QueryDB:
     """
     Saves a user query to the database.
     """
-    user_query_db = UserQueryDB(
+    user_query_db = QueryDB(
+        user_id=user_id,
         feedback_secret_key=feedback_secret_key,
         query_datetime_utc=datetime.utcnow(),
         **user_query.model_dump(),
@@ -79,9 +86,7 @@ async def check_secret_key_match(
     """
     Check if the secret key matches the one generated for query id
     """
-    stmt = select(UserQueryDB.feedback_secret_key).where(
-        UserQueryDB.query_id == query_id
-    )
+    stmt = select(QueryDB.feedback_secret_key).where(QueryDB.query_id == query_id)
     query_record = (await asession.execute(stmt)).first()
 
     if (query_record is not None) and (query_record[0] == secret_key):
@@ -90,21 +95,21 @@ async def check_secret_key_match(
         return False
 
 
-class UserQueryResponseDB(Base):
+class QueryResponseDB(Base):
     """
     SQLAlchemy data model for responses sent to user
     """
 
-    __tablename__ = "user-query-responses"
+    __tablename__ = "query-response"
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-    query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="response", lazy=True
+    query: Mapped[QueryDB] = relationship(
+        "QueryDB", back_populates="response", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -113,14 +118,14 @@ class UserQueryResponseDB(Base):
 
 
 async def save_query_response_to_db(
-    user_query_db: UserQueryDB,
-    response: UserQueryResponse,
+    user_query_db: QueryDB,
+    response: QueryResponse,
     asession: AsyncSession,
-) -> UserQueryResponseDB:
+) -> QueryResponseDB:
     """
     Saves the user query response to the database.
     """
-    user_query_responses_db = UserQueryResponseDB(
+    user_query_responses_db = QueryResponseDB(
         query_id=user_query_db.query_id,
         content_response=response.model_dump()["content_response"],
         llm_response=response.model_dump()["llm_response"],
@@ -132,22 +137,22 @@ async def save_query_response_to_db(
     return user_query_responses_db
 
 
-class UserQueryResponseErrorDB(Base):
+class QueryResponseErrorDB(Base):
     """
     SQLAlchemy data model for errors sent to user
     """
 
-    __tablename__ = "user-query-response-errors"
+    __tablename__ = "query-response-error"
 
     error_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     error_message: Mapped[str] = mapped_column(String, nullable=False)
     error_type: Mapped[str] = mapped_column(String, nullable=False)
     error_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
-    query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="response_error", lazy=True
+    query: Mapped[QueryDB] = relationship(
+        "QueryDB", back_populates="response_error", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -159,14 +164,14 @@ class UserQueryResponseErrorDB(Base):
 
 
 async def save_query_response_error_to_db(
-    user_query_db: UserQueryDB,
-    error: UserQueryResponseError,
+    user_query_db: QueryDB,
+    error: QueryResponseError,
     asession: AsyncSession,
-) -> UserQueryResponseErrorDB:
+) -> QueryResponseErrorDB:
     """
     Saves the user query response error to the database.
     """
-    user_query_response_error_db = UserQueryResponseErrorDB(
+    user_query_response_error_db = QueryResponseErrorDB(
         query_id=user_query_db.query_id,
         error_message=error.error_message,
         error_type=error.error_type,
@@ -184,18 +189,18 @@ class ResponseFeedbackDB(Base):
     SQLAlchemy data model for feedback provided by user for responses
     """
 
-    __tablename__ = "response_feedback"
+    __tablename__ = "query-response-feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-    query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="response_feedback", lazy=True
+    query: Mapped[QueryDB] = relationship(
+        "QueryDB", back_populates="response_feedback", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -230,19 +235,19 @@ class ContentFeedbackDB(Base):
     SQLAlchemy data model for feedback provided by user for content
     """
 
-    __tablename__ = "content_feedback"
+    __tablename__ = "content-feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("user-queries.query_id"))
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
 
-    query: Mapped[UserQueryDB] = relationship(
-        "UserQueryDB", back_populates="content_feedback", lazy=True
+    query: Mapped[QueryDB] = relationship(
+        "QueryDB", back_populates="content_feedback", lazy=True
     )
 
     content: Mapped["ContentDB"] = relationship("ContentDB")

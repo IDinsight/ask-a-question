@@ -6,7 +6,7 @@ import yaml
 
 from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
 from core_backend.app.llm_call.process_input import _identify_language
-from core_backend.app.question_answer.schemas import UserQueryRefined, UserQueryResponse
+from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 
 pytestmark = pytest.mark.rails
 
@@ -36,8 +36,8 @@ async def test_language_identification(
     available_languages: list[str], expected_label: str, content: str
 ) -> None:
     """Test language identification"""
-    question = UserQueryRefined(query_text=content, query_text_original=content)
-    response = UserQueryResponse(
+    question = QueryRefined(query_text=content, query_text_original=content)
+    response = QueryResponse(
         query_id=1,
         content_response=None,
         llm_response="Dummy response",

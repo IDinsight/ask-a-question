@@ -21,6 +21,9 @@ class UrgencyQueryDB(Base):
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     message_text: Mapped[str] = mapped_column(String, nullable=False)
     message_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
@@ -31,12 +34,16 @@ class UrgencyQueryDB(Base):
 
 
 async def save_urgency_query_to_db(
-    feedback_secret_key: str, urgency_query: UrgencyQuery, asession: AsyncSession
+    user_id: int,
+    feedback_secret_key: str,
+    urgency_query: UrgencyQuery,
+    asession: AsyncSession,
 ) -> UrgencyQueryDB:
     """
     Saves a user query to the database.
     """
     urgency_query_db = UrgencyQueryDB(
+        user_id=user_id,
         feedback_secret_key=feedback_secret_key,
         message_datetime_utc=datetime.utcnow(),
         **urgency_query.model_dump(),

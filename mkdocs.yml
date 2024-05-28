@@ -27,7 +27,6 @@ nav:
       - User-facing components:
           - Admin App:
               - components/admin-app/index.md
-              - Access Levels: components/admin-app/access-level.md
               - Manage Content: components/admin-app/manage-content.md
               - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
               - Playground: components/admin-app/playground.md

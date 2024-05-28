@@ -96,7 +96,6 @@ class TestManageContent:
         content_title: str,
         content_text: str,
         fullaccess_token: str,
-        readonly_token: str,
         content_metadata: Dict[Any, Any],
     ) -> None:
         response = client.put(
@@ -114,7 +113,7 @@ class TestManageContent:
 
         response = client.get(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {readonly_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
         assert response.json()["content_title"] == content_title
@@ -140,10 +139,13 @@ class TestManageContent:
         assert response.status_code == 404
 
     async def test_list_content(
-        self, client: TestClient, existing_content_id: int, readonly_token: str
+        self,
+        client: TestClient,
+        existing_content_id: int,
+        fullaccess_token: str,
     ) -> None:
         response = client.get(
-            "/content", headers={"Authorization": f"Bearer {readonly_token}"}
+            "/content", headers={"Authorization": f"Bearer {fullaccess_token}"}
         )
         assert response.status_code == 200
         assert len(response.json()) > 0
@@ -158,117 +160,56 @@ class TestManageContent:
         assert response.status_code == 200
 
 
-class TestAuthManageContent:
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_delete(
+class TestMultUserManageContent:
+    async def test_user2_get_user1_content(
         self,
         client: TestClient,
-        existing_content_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.delete(
+        response = client.get(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_create(
+    async def test_user2_edit_user1_content(
         self,
         client: TestClient,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.post(
-            "/content",
-            headers={"Authorization": f"Bearer {access_token}"},
-            json={
-                "content_title": "sample title",
-                "content_text": "sample text",
-                "content_language": "ENGLISH",
-                "content_metadata": {},
-            },
-        )
-        assert response.status_code == expected_status
-
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 400), ("fullaccess_token", 200)],
-    )
-    async def test_auth_edit(
-        self,
-        client: TestClient,
-        existing_content_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
-    ) -> None:
-        access_token = request.getfixturevalue(access_token)
         response = client.put(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
             json={
-                "content_title": "sample title",
-                "content_text": "sample text",
+                "content_title": "user2 title 3",
+                "content_text": "user2 test content 3",
                 "content_language": "ENGLISH",
                 "content_metadata": {},
             },
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
-    )
-    async def test_auth_list(
+    async def test_user2_delete_user1_content(
         self,
         client: TestClient,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
+        existing_content_id: str,
+        fullaccess_token_user2: str,
     ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.get(
-            "/content",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        assert response.status_code == expected_status
-
-    @pytest.mark.parametrize(
-        "access_token, expected_status",
-        [("readonly_token", 200), ("fullaccess_token", 200)],
-    )
-    async def test_auth_retrieve(
-        self,
-        client: TestClient,
-        existing_content_id: int,
-        access_token: str,
-        expected_status: int,
-        request: pytest.FixtureRequest,
-    ) -> None:
-        access_token = request.getfixturevalue(access_token)
-        response = client.get(
+        response = client.delete(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
         )
-        assert response.status_code == expected_status
+        assert response.status_code == 404
 
 
 async def test_convert_record_to_schema() -> None:
     content_id = 1
+    user_id = 123
     record = ContentDB(
         content_id=content_id,
+        user_id=user_id,
         content_title="sample title for content",
         content_text="sample text",
         content_embedding=await async_fake_embedding(),
@@ -281,5 +222,6 @@ async def test_convert_record_to_schema() -> None:
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id
+    assert result.user_id == user_id
     assert result.content_text == "sample text"
     assert result.content_metadata["extra_field"] == "extra value"
