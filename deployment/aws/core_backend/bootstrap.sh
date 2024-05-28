@@ -28,14 +28,13 @@ echo "Fetching variables from aws store.."
 # The values should be the same as the ones in the infrastructure module
 SECRET_JWT="${PROJECT_NAME}-${ENV}-jwt-secret"
 SECRET_USER_CREDENTIALS="${PROJECT_NAME}-${ENV}-user-credentials"
-SECRET_NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${PROJECT_NAME}-${ENV}-google-login-client-id"
 SECRET_WHATSAPP_VERIFY="${PROJECT_NAME}-${ENV}-whatsapp-verify-token"
 SECRET_WEB_DB_CONNECTION="${PROJECT_NAME}-${ENV}-web-db-connection-details"
 SECRET_WHATSAPP="${PROJECT_NAME}-${ENV}-whatsapp-token"
 SECRET_QUESTION_ANSWER="${PROJECT_NAME}-${ENV}-question-answer"
 
 export NEXT_PUBLIC_BACKEND_URL="${NEXT_PUBLIC_API_URL}"
-export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=$(get_secret_value ${SECRET_NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID} "" "text")
+export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}"
 export JWT_SECRET=$(get_secret_value ${SECRET_JWT} "" "text")
 
 # Set usernames, passwords, and initial api keys for both users

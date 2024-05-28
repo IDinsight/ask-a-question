@@ -25,7 +25,6 @@ module "main" {
   web_ec2_sg_name                   = "${var.project_name}-${var.environment}-web-sg"
   interface_endpoints_sg_id         = module.vpc.interface_endpoints_sg_id
   user_credentials_secret_name      = "${var.project_name}-${var.environment}-user-credentials"
-  google_login_client_id_secret_name= "${var.project_name}-${var.environment}-google-login-client-id"
   jwt_secret_secret_name            = "${var.project_name}-${var.environment}-jwt-secret"
   whatsapp_token_secret_name        = "${var.project_name}-${var.environment}-whatsapp-token"
   open_ai_key_secret_name           = "${var.project_name}-${var.environment}-open-ai-key"
