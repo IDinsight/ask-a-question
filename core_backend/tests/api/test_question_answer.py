@@ -25,7 +25,6 @@ from core_backend.tests.api.conftest import (
     TEST_USER_API_KEY,
     TEST_USER_API_KEY_2,
 )
-from core_backend.tests.api.conftest import TEST_USER_API_KEY
 
 
 class TestEmbeddingsSearch:
