@@ -123,6 +123,27 @@ class TestManageTags:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
+    async def test_add_tag_same_name_fails(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "tag_name": "tag_unique_name",
+            },
+        )
+        assert response.status_code == 200
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "tag_name": "tag_unique_name",
+            },
+        )
+        print(response.json())
+        assert response.status_code == 400
+
     async def test_delete_tag(
         self, client: TestClient, existing_tag_id: int, fullaccess_token: str
     ) -> None:
@@ -144,7 +165,7 @@ class TestManageTags:
         )
         assert response.status_code == 404
 
-    async def test_add_tag_user1_retrieve_user2_fails(
+    async def test_add_tag_user1_edit_user2_fails(
         self,
         client: TestClient,
         fullaccess_token: str,
@@ -159,9 +180,12 @@ class TestManageTags:
         )
         assert response.status_code == 200
         tag_id = response.json()["tag_id"]
-        response = client.get(
+        response = client.put(
             f"/tag/{tag_id}",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "tag_name": "tag",
+            },
         )
         assert response.status_code == 404
 
