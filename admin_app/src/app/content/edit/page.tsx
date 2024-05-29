@@ -5,8 +5,8 @@ import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { AddCircle, ChevronLeft } from "@mui/icons-material";
-import { Autocomplete, Input } from "@mui/material";
+import { ChevronLeft } from "@mui/icons-material";
+import { Autocomplete } from "@mui/material";
 
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -120,11 +120,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id)
+                data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined)
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -165,7 +165,7 @@ const ContentBox = ({
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content
+    key: keyof Content,
   ) => {
     const emptyContent: Content = {
       content_id: null,
@@ -190,7 +190,7 @@ const ContentBox = ({
   };
   const handleTagsChange = (
     event: React.SyntheticEvent,
-    updatedTags: Tag[]
+    updatedTags: Tag[],
   ) => {
     setContentTags(updatedTags);
     setIsSaved(false);
@@ -206,20 +206,8 @@ const ContentBox = ({
   };
 
   return (
-    <Layout.FlexBox
-      flexDirection={"column"}
-      sx={{
-        maxWidth: "800px",
-        minWidth: "300px",
-        border: 1,
-        borderColor: appColors.darkGrey,
-        backgroundColor: appColors.lightGrey,
-        borderRadius: 2,
-        p: sizes.baseGap,
-      }}
-    >
-      <LanguageButtonBar expandable={true} />
-      <Layout.Spacer multiplier={2} />
+    <Layout.FlexBox>
+      <Layout.Spacer multiplier={1} />
       <Autocomplete
         multiple
         limitTags={3}
@@ -238,77 +226,92 @@ const ContentBox = ({
         )}
         sx={{ width: "500px" }}
       />
-      <Layout.Spacer multiplier={1} />
-      <Typography variant="body2">Title</Typography>
-      <Layout.Spacer multiplier={0.5} />
-      <TextField
-        required
-        placeholder="Add a title (required)"
-        inputProps={{ maxLength: 150 }}
-        variant="outlined"
-        error={isTitleEmpty}
-        helperText={isTitleEmpty ? "Should not be empty" : " "}
-        sx={{
-          "& .MuiInputBase-root": { backgroundColor: appColors.white },
-        }}
-        value={content ? content.content_title : ""}
-        onChange={(e) => handleChange(e, "content_title")}
-      />
-      <Typography variant="body2">Content</Typography>
-      <Layout.Spacer multiplier={0.5} />
-      <TextField
-        required
-        placeholder="Add content (required)"
-        inputProps={{ maxLength: 2000 }}
-        multiline
-        rows={15}
-        variant="outlined"
-        error={isContentEmpty}
-        helperText={isContentEmpty ? "Should not be empty" : " "}
-        sx={{
-          "& .MuiInputBase-root": { backgroundColor: appColors.white },
-        }}
-        value={content ? content.content_text : ""}
-        onChange={(e) => handleChange(e, "content_text")}
-      />
+      <Layout.Spacer multiplier={2} />
       <Layout.FlexBox
-        flexDirection="row"
-        sx={{ justifyContent: "space-between" }}
+        flexDirection={"column"}
+        sx={{
+          maxWidth: "800px",
+          minWidth: "300px",
+          border: 1,
+          borderColor: appColors.darkGrey,
+          backgroundColor: appColors.lightGrey,
+          borderRadius: 2,
+          p: sizes.baseGap,
+        }}
       >
-        <Button
-          variant="contained"
-          disabled={isSaved}
-          color="primary"
-          sx={[{ width: "5%" }]}
-          onClick={() => {
-            if (!content) {
-              setIsTitleEmpty(true);
-              setIsContentEmpty(true);
-            } else if (content.content_title === "") {
-              setIsTitleEmpty(true);
-            } else if (content.content_text === "") {
-              setIsContentEmpty(true);
-            } else {
-              const handleSaveContent = async (content: Content) => {
-                const content_id = await saveContent(content);
-                if (content_id) {
-                  const actionType = content.content_id ? "edit" : "add";
-                  router.push(
-                    `/content/?content_id=${content_id}&action=${actionType}`
-                  );
-                }
-              };
-              handleSaveContent(content);
-            }
+        <LanguageButtonBar expandable={true} />
+        <Layout.Spacer multiplier={1} />
+        <Typography variant="body2">Title</Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <TextField
+          required
+          placeholder="Add a title (required)"
+          inputProps={{ maxLength: 150 }}
+          variant="outlined"
+          error={isTitleEmpty}
+          helperText={isTitleEmpty ? "Should not be empty" : " "}
+          sx={{
+            "& .MuiInputBase-root": { backgroundColor: appColors.white },
           }}
+          value={content ? content.content_title : ""}
+          onChange={(e) => handleChange(e, "content_title")}
+        />
+        <Typography variant="body2">Content</Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <TextField
+          required
+          placeholder="Add content (required)"
+          inputProps={{ maxLength: 2000 }}
+          multiline
+          rows={15}
+          variant="outlined"
+          error={isContentEmpty}
+          helperText={isContentEmpty ? "Should not be empty" : " "}
+          sx={{
+            "& .MuiInputBase-root": { backgroundColor: appColors.white },
+          }}
+          value={content ? content.content_text : ""}
+          onChange={(e) => handleChange(e, "content_text")}
+        />
+        <Layout.FlexBox
+          flexDirection="row"
+          sx={{ justifyContent: "space-between" }}
         >
-          Save
-        </Button>
-        {saveError ? (
-          <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-            Failed to save content.
-          </Alert>
-        ) : null}
+          <Button
+            variant="contained"
+            disabled={isSaved}
+            color="primary"
+            sx={[{ width: "5%" }]}
+            onClick={() => {
+              if (!content) {
+                setIsTitleEmpty(true);
+                setIsContentEmpty(true);
+              } else if (content.content_title === "") {
+                setIsTitleEmpty(true);
+              } else if (content.content_text === "") {
+                setIsContentEmpty(true);
+              } else {
+                const handleSaveContent = async (content: Content) => {
+                  const content_id = await saveContent(content);
+                  if (content_id) {
+                    const actionType = content.content_id ? "edit" : "add";
+                    router.push(
+                      `/content/?content_id=${content_id}&action=${actionType}`,
+                    );
+                  }
+                };
+                handleSaveContent(content);
+              }
+            }}
+          >
+            Save
+          </Button>
+          {saveError ? (
+            <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
+              Failed to save content.
+            </Alert>
+          ) : null}
+        </Layout.FlexBox>
       </Layout.FlexBox>
     </Layout.FlexBox>
   );

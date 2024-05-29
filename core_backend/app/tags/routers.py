@@ -13,6 +13,7 @@ from .models import (
     delete_tag_from_db,
     get_list_of_tag_from_db,
     get_tag_from_db,
+    is_tag_name_unique,
     save_tag_to_db,
     update_tag_in_db,
 )
@@ -31,7 +32,10 @@ async def create_tag(
     """
     Create tag endpoint. Calls embedding model to upsert tag to PG database
     """
-
+    if not await is_tag_name_unique(user_db.user_id, tag.tag_name, asession):
+        raise HTTPException(
+            status_code=400, detail=f"Tag name `{tag.tag_name}` already exists"
+        )
     tag_db = await save_tag_to_db(user_db.user_id, tag, asession)
     return _convert_record_to_schema(tag_db)
 
@@ -54,6 +58,12 @@ async def edit_tag(
 
     if not old_tag:
         raise HTTPException(status_code=404, detail=f"Tag id `{tag_id}` not found")
+    if (tag.tag_name != old_tag.tag_name) and not (
+        await is_tag_name_unique(user_db.user_id, tag.tag_name, asession)
+    ):
+        raise HTTPException(
+            status_code=400, detail=f"Tag name `{tag.tag_name}` already exists"
+        )
     updated_tag = await update_tag_in_db(
         user_db.user_id,
         tag_id,
