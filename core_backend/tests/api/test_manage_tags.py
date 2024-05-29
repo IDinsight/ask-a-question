@@ -141,7 +141,6 @@ class TestManageTags:
                 "tag_name": "tag_unique_name",
             },
         )
-        print(response.json())
         assert response.status_code == 400
 
     async def test_delete_tag(
