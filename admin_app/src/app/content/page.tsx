@@ -6,6 +6,7 @@ import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import {
   Autocomplete,
   Button,
@@ -29,7 +30,7 @@ export interface Tag {
 }
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label,
+    LANGUAGE_OPTIONS[0].label
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -45,12 +46,7 @@ const CardsPage = () => {
     fetchTags();
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
-  const handleTagsChange = (
-    event: React.SyntheticEvent,
-    updatedTags: Tag[],
-  ) => {
-    setFilterTags(updatedTags);
-  };
+
   return (
     <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
       <Layout.Spacer multiplier={3} />
@@ -63,69 +59,62 @@ const CardsPage = () => {
         }}
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      </Layout.FlexBox>
+        <Layout.FlexBox
+          alignItems="center"
+          sx={{ flexDirection: "row" }}
+          gap={sizes.smallGap}
+        >
+          <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
 
-      <CardsUtilityStrip
-        editAccess={currAccessLevel === "fullaccess"}
-        tags={tags}
-        filterTags={filterTags}
-        setFilterTags={setFilterTags}
-      />
+          <Autocomplete
+            multiple
+            limitTags={3}
+            id="tags-autocomplete"
+            options={tags}
+            getOptionLabel={(option) => option.tag_name}
+            value={filterTags}
+            onChange={(event, updatedTags) => {
+              setFilterTags(updatedTags);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Tags"
+                placeholder="Add Tags"
+              />
+            )}
+            sx={{ width: "80%" }}
+          />
+        </Layout.FlexBox>
+      </Layout.FlexBox>
+      <CardsUtilityStrip editAccess={currAccessLevel === "fullaccess"} />
       <CardsGrid
         displayLanguage={displayLanguage}
         searchTerm={searchTerm}
         token={token}
         accessLevel={currAccessLevel}
+        tags={tags}
         filterTags={filterTags}
       />
     </Layout.FlexBox>
   );
 };
 
-const CardsUtilityStrip = ({
-  editAccess,
-  tags,
-  filterTags,
-  setFilterTags,
-}: {
-  editAccess: boolean;
-  tags: Tag[];
-  filterTags: Tag[];
-  setFilterTags: React.Dispatch<React.SetStateAction<Tag[]>>;
-}) => {
+const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
   return (
     <Layout.FlexBox
       key={"utility-strip"}
       flexDirection={"row"}
-      justifyContent={"space-between"} // This will align items to the edges
-      alignItems={"center"} // Align items vertically in the center
+      justifyContent={"flex-right"}
+      alignItems={"right"}
       sx={{
         display: "flex",
-        width: "100%", // Take full width to allow space-between to work
+        alignSelf: "flex-end",
         px: sizes.baseGap,
       }}
       gap={sizes.baseGap}
     >
-      <Autocomplete
-        multiple
-        limitTags={3}
-        id="tags-autocomplete"
-        options={tags}
-        getOptionLabel={(option) => option!.tag_name}
-        value={filterTags}
-        onChange={(event, updatedTags) => {
-          setFilterTags(updatedTags);
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            variant="outlined"
-            label="Tags"
-            placeholder="Add Tags"
-          />
-        )}
-        sx={{ width: "500px" }}
-      />
       <Button
         variant="contained"
         disabled={!editAccess}
@@ -142,12 +131,14 @@ const CardsUtilityStrip = ({
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
+  tags,
   filterTags,
   token,
   accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
+  tags: Tag[];
   filterTags: Tag[];
   token: string | null;
   accessLevel: string;
@@ -163,7 +154,7 @@ const CardsGrid = ({
 
   const getSnackMessage = (
     action: string | null,
-    content_id: number | null,
+    content_id: number | null
   ): string | null => {
     if (action === "edit") {
       return `Content #${content_id} updated`;
@@ -174,7 +165,7 @@ const CardsGrid = ({
   };
 
   const [snackMessage, setSnackMessage] = React.useState<string | null>(
-    getSnackMessage(action, content_id),
+    getSnackMessage(action, content_id)
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -196,7 +187,7 @@ const CardsGrid = ({
             card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesAllTags = filterTags.every((fTag) =>
-            card.content_tags.includes(fTag.tag_id),
+            card.content_tags.includes(fTag.tag_id)
           );
 
           return (
@@ -277,7 +268,7 @@ const CardsGrid = ({
           {cards
             .slice(
               MAX_CARDS_PER_PAGE * (page - 1),
-              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
+              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE
             )
             .map((item) => {
               if (item.content_id !== null) {
@@ -296,12 +287,19 @@ const CardsGrid = ({
                       text={item.content_text}
                       content_id={item.content_id}
                       last_modified={item.updated_datetime_utc}
+                      tags={
+                        tags
+                          ? tags.filter((tag) =>
+                              item.content_tags.includes(tag.tag_id)
+                            )
+                          : []
+                      }
                       positive_votes={item.positive_votes}
                       negative_votes={item.negative_votes}
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
-                          `Failed to delete content #${content_id}`,
+                          `Failed to delete content #${content_id}`
                         );
                       }}
                       deleteContent={(content_id: number) => {

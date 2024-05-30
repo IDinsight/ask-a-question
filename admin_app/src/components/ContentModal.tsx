@@ -1,13 +1,6 @@
 import { appColors, appStyles, sizes } from "@/utils";
-import {
-  Close,
-  Delete,
-  Edit,
-  RemoveRedEye,
-  ThumbDown,
-  ThumbUp,
-} from "@mui/icons-material";
-import { Box, Button, Fade, Modal, Typography } from "@mui/material";
+import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
+import { Box, Button, Chip, Fade, Modal, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -16,6 +9,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
 import LanguageButtonBar from "./LanguageButtonBar";
 import { Layout } from "./Layout";
+import { Tag } from "@/app/content/page";
 
 const ContentViewModal = ({
   title,
@@ -24,6 +18,7 @@ const ContentViewModal = ({
   positive_votes,
   negative_votes,
   last_modified,
+  tags,
   open,
   onClose,
   editAccess,
@@ -32,6 +27,7 @@ const ContentViewModal = ({
   text: string;
   content_id: number;
   last_modified: string;
+  tags: Tag[];
   positive_votes: number;
   negative_votes: number;
   open: boolean;
@@ -74,7 +70,33 @@ const ContentViewModal = ({
               height: "80%",
             }}
           >
+            {tags && tags.length > 0 && (
+              <Layout.FlexBox
+                flexDirection={"column"}
+                sx={{
+                  my: sizes.smallGap,
+                }}
+              >
+                <Typography variant="subtitle1" gutterBottom>
+                  Tags
+                </Typography>
+                <Layout.FlexBox
+                  flexDirection={"row"}
+                  gap={sizes.smallGap}
+                  {...appStyles.alignItemsCenter}
+                  sx={{
+                    overflowX: "auto",
+                    py: sizes.smallGap,
+                  }}
+                >
+                  {tags.map((tag) => (
+                    <Chip key={tag.tag_id} label={tag.tag_name} />
+                  ))}
+                </Layout.FlexBox>
+              </Layout.FlexBox>
+            )}
             <LanguageButtonBar expandable={false} />
+
             <Layout.FlexBox
               flex={1}
               flexDirection={"column"}
