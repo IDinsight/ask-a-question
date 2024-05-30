@@ -27,7 +27,8 @@ module "main" {
   user_credentials_secret_name      = "${var.project_name}-${var.environment}-user-credentials"
   jwt_secret_secret_name            = "${var.project_name}-${var.environment}-jwt-secret"
   whatsapp_token_secret_name        = "${var.project_name}-${var.environment}-whatsapp-token"
-  open_ai_key_secret_name           = "${var.project_name}-${var.environment}-open-ai-key"
+  openai_key_secret_name            = "${var.project_name}-${var.environment}-openai-key"
+  gemini_key_secret_name            = "${var.project_name}-${var.environment}-gemini-key"
   whatsapp_verify_token_secret_name = "${var.project_name}-${var.environment}-whatsapp-verify-token"
   aws_region                        = var.aws_region
   web_ec2_instance_type             = var.ec2_instance_type # t4g.large is the only instance type that supports ARM. If this changes, the AMI should also change

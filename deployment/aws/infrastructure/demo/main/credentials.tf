@@ -106,18 +106,36 @@ resource "aws_secretsmanager_secret_version" "whatsapp_verify_token_secret" {
   secret_string = random_password.secrets[5].result
 }
 
-resource "aws_secretsmanager_secret" "open_ai_key_secret" {
-  # AWS Secrets Manager is used to store the open ai key secret.
-  name                    = var.open_ai_key_secret_name
-  tags                    = merge({ Name = var.open_ai_key_secret_name, Module = "Web" }, var.tags)
+resource "aws_secretsmanager_secret" "openai_key_secret" {
+  # AWS Secrets Manager is used to store the OpenAI key secret.
+  name                    = var.openai_key_secret_name
+  tags                    = merge({ Name = var.openai_key_secret_name, Module = "Web" }, var.tags)
   recovery_window_in_days = 0
 }
 
-resource "aws_secretsmanager_secret_version" "open_ai_key_secret" {
-  # The secret version is created for the open ai key secret.
+resource "aws_secretsmanager_secret" "gemini_key_secret" {
+  # AWS Secrets Manager is used to store the open ai key secret.
+  name                    = var.gemini_key_secret_name
+  tags                    = merge({ Name = var.gemini_key_secret_name, Module = "Web" }, var.tags)
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "openai_key_secret" {
+  # The secret version is created for the OpenAI API key secret.
   # The value will be added manually to the secret version.
-  secret_id     = aws_secretsmanager_secret.open_ai_key_secret.id
-  secret_string = "placeholder"
+  secret_id     = aws_secretsmanager_secret.openai_key_secret.id
+  secret_string = "replace"
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "gemini_key_secret" {
+  # The secret version is created for the Gemini API key secret.
+  # The value will be added manually to the secret version.
+  secret_id     = aws_secretsmanager_secret.gemini_key_secret.id
+  secret_string = "replace"
 
   lifecycle {
     ignore_changes = [secret_string]
