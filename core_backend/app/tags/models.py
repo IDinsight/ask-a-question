@@ -26,6 +26,10 @@ content_tags_table = Table(
 
 
 class TagDB(Base):
+    """
+    SQL Alchemy data model for tags
+    """
+
     __tablename__ = "tag"
 
     tag_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
