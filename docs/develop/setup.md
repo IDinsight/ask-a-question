@@ -1,94 +1,157 @@
-# Writing and running tests
+# Setting up your development environment
 
-If you are writing new features, you should also add unit tests. Tests are under
-`core_backend/tests`.
+There are two ways to set up your development environment. You can view the [pros and
+cons of each method](#pros-and-cons-of-each-setup-method) at the bottom.
 
-## Running unit tests
+## Set up using Docker Compose Watch
 
-!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+### Step 0: Install prerequisites
 
-??? warning "Don't run `pytest` directly"
-    Unless you have updated your environment variables and started a testing instance
-    of postrges, the tests will end up writing to your dev environment :weary_cat:
+1. Install [Docker](https://docs.docker.com/get-docker/).
+2. If you are not using Docker Desktop, install [Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use the `watch` command.
 
-Run tests using:
+### Step 1: Configure
 
-    make tests
+1. Go to `deployment/docker-compose`
 
-This target starts up new postgres and qdrant containers for testing. It also sets the
-correct environment variables, runs `pytest`, and then destroys the containers.
+2. Copy `template.env` to a new file `.env` within the same directory, and set the
+   necessary variables. For local setup, you just need to set your own `OPENAI_API_KEY`
+   as the app can use default values for other environment variables (check out the various
+   `config.py` under `core_backend/app/` and its subdirectories.)
 
-### Debugging unit tests
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
 
-Before debugging, run `make setup-test-db` within `core_backend` to launch new postgres container for testing and set the correct environment variables.
+### Step 2: Run `docker compose watch`
 
-After debugging, clean up the testing resources by calling `make teardown-test-db`.
+In `deployment/docker-compose`, run
 
-#### Configs for Visual Studio Code
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+```
 
-??? note "`.vscode/launch.json`"
+The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
 
-    Add the following configuration to your `.vscode/launch.json` file to set environment
-    variables for debugging:
+The admin app will be available on [https://localhost](https://localhost) and the backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
 
-    ```json
-    {
-        "version": "0.2.0",
-        "configurations": [
-            {  // configuration for debugging
-                "name": "Python: Tests in current file",
-                "purpose": ["debug-test"],
-                "type": "python",
-                "request": "launch",
-                "program": "${file}",
-                "args": ["--color=yes"],
-                "envFile": "${workspaceFolder}/core_backend/tests/api/test.env",
-                "console": "integratedTerminal",
-                "justMyCode": false
-            }
-        ]
-    }
-    ```
+## Set up manually
 
-??? note "`.vscode/settings.json`"
+### Step 0: Install prerequisites
 
-    Add the following configuration to `.vscode/settings.json` to set the correct pytest
-    working directory and environment variables:
+1. Install
+   [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
+2. Install [Node.js v19](https://nodejs.org/en/download). If you have a different
+   version installed already, you may wish to use [nvm](https://github.com/nvm-sh/nvm)
+   to install v19.
+3. Install [Docker](https://docs.docker.com/get-docker/).
 
-    ```json
-    {
-        "python.testing.cwd": "${workspaceFolder}/core_backend",
-        "python.testing.pytestArgs": [
-            "tests",
-            "--rootdir=${workspaceFolder}/core_backend"
-        ],
-        "python.testing.unittestEnabled": false,
-        "python.testing.pytestEnabled": true,
-        "python.envFile": "${workspaceFolder}/core_backend/tests/api/test.env"
-    }
-    ```
+### Step 1: Run the backend
 
-## Running optional tests
+1. [Set up your python environment](contributing.md#setup-your-virtual-python-environment).
 
-There are some additional tests that are not run by default. Most of these
-either make call to OpenAI or depend on other components:
+2. Activate your `aaq` conda environment
 
-- *Language Identification*: Tests if the the solution is able to identify the
-language given a short sample text.
-- *Test if LLM response aligns with provided context*: Tests for hallucinations by
-checking if the LLM response is supported by the provided context.
-- *Test safety*: Tests for prompt injection and jailbreaking.
+        conda activate aaq
 
-These tests will require the LiteLLM Proxy server to be running (to accept LLM calls). You can run this by going to root and running:
+3. Set required environment variables in your terminal using
 
-    make setup-llm-proxy
+        export OPENAI_API_KEY=sk...  # required for model proxy server
+        export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
+        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional
 
-Then run the tests using:
+4. (optional) Set custom login credentials by setting the following environment variables. The defaults
+can be found in `core_backend/add_users_to_db.py`.
 
-    cd core_backend
-    make setup-test-db
-    python -m pytest -m rails
+        # user 1
+        export USER1_USERNAME = "user1"
+        export USER1_PASSWORD = "fullaccess"
+        export USER1_API_KEY = "user1-key"
 
-And when done:
+        # user 2
+        export USER2_USERNAME = "user2"
+        export USER2_PASSWORD = "fullaccess"
+        export USER2_API_KEY = "user2-key"
 
-    make teardown-test-db
+5. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+
+6. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
+
+        make setup-dev
+
+7. Run the app
+
+        python core_backend/main.py
+
+    This will launch the application in "reload" mode i.e. the app will automatically
+    refresh everytime you make a change to one of the files.
+
+     You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
+
+8. Once done, exit the running app process with `ctrl+c` and run
+
+        make teardown-dev
+
+??? note "Set up database and LiteLLM proxy containers manually"
+
+    The `make setup-dev` command should set up the database docker container and LiteLLM proxy server automatically. If you wish to set them up separately, here are the steps:
+
+    #### PostgreSQL database on docker
+
+    You can launch a container running PostgreSQL database and run the necessary migrations using:
+
+        make setup-db
+
+    You can stop and remove the PostgreSQL container using:
+
+        make teardown-db
+
+    See the contents of these Makefile targets to see how you could run them manually if required.
+
+    #### LiteLLM Proxy Server
+
+    1. Set models and parameters in `deployment/docker-compose/litellm_proxy_config.yaml`
+
+    2. Set OpenAI API key environment variable in your terminal using
+
+            export OPENAI_API_KEY=sk...
+
+    3. Run the Make target
+
+            make setup-llm-proxy
+
+    4. Once done, teardown the container with
+
+            make teardown-llm-proxy
+
+### Step 2: Run the admin app
+
+1. In a new terminal, navigate to `aaq-core/admin_app`
+2. If you want Google login option to work, you'll need to set the Google login client ID
+
+        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
+
+3. Run
+
+        npm i
+        npm run dev
+
+This will install the required packages required for the admin app and start the app in `dev` (autoreload) mode.
+
+The admin app will now be accessible on [http://localhost:3000/](http://localhost:3000/)
+
+## Set up docs
+
+1. [mkdocs](https://www.mkdocs.org/user-guide/installation/) should be installed in your
+development conda environment created by `make fresh-env`. Activate the conda environment:
+
+        conda activate aaq
+
+2. To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
+
+        mkdocs serve -a "localhost:8080"
+
+## Pros and cons of each setup method
+
+| Method | Pros | Cons |
+| --- | --- | --- |
+| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 5-10s to be reflected in the app</li></ul> |
+| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
