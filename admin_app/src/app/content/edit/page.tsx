@@ -29,10 +29,7 @@ interface EditContentBody {
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
-interface Tag {
-  tag_id: number;
-  tag_name: string;
-}
+
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
@@ -232,7 +229,9 @@ const ContentBox = ({
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
         value={contentTags}
-        onChange={handleTagsChange}
+        onChange={(event, updatedTags) => {
+          handleTagsChange(updatedTags);
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -241,6 +240,31 @@ const ContentBox = ({
             placeholder="Add Tags"
           />
         )}
+        filterOptions={(options, params) => {
+          const filtered = filter(options, params);
+
+          const { inputValue } = params;
+          const isExisting = options.some(
+            (option) => inputValue === option.tag_name
+          );
+          if (inputValue !== "" && !isExisting) {
+            filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
+          }
+
+          return filtered;
+        }}
+        renderOption={(props, option) => {
+          if (option.tag_name) {
+            return (
+              <li {...props}>
+                <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
+                  {option.tag_name}
+                </Button>
+              </li>
+            );
+          }
+          return <li {...props}>{option.tag_name}</li>;
+        }}
         sx={{ width: "500px" }}
       />
       <Layout.Spacer multiplier={2} />

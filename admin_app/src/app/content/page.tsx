@@ -61,7 +61,7 @@ const CardsPage = () => {
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         <Layout.FlexBox
           alignItems="center"
-          sx={{ flexDirection: "row" }}
+          sx={{ flexDirection: "row", justifyContent: "center" }}
           gap={sizes.smallGap}
         >
           <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
@@ -92,6 +92,8 @@ const CardsPage = () => {
       <CardsGrid
         displayLanguage={displayLanguage}
         searchTerm={searchTerm}
+        tags={tags}
+        filterTags={filterTags}
         token={token}
         accessLevel={currAccessLevel}
       />
@@ -129,11 +131,15 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
+  tags,
+  filterTags,
   token,
   accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
+  tags: Tag[];
+  filterTags: Tag[];
   token: string | null;
   accessLevel: string;
 }) => {
