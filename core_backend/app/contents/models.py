@@ -12,10 +12,11 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
+from ..tags.models import content_tags_table
 from ..utils import embedding
 from .config import PGVECTOR_VECTOR_SIZE
 from .schemas import (
@@ -51,6 +52,12 @@ class ContentDB(Base):
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    content_tags = relationship(
+        "TagDB",
+        secondary=content_tags_table,
+        back_populates="contents",
+    )
+
     def __repr__(self) -> str:
         """Pretty Print"""
         return (
@@ -61,6 +68,7 @@ class ContentDB(Base):
             f"content_text={self.content_text}, "
             f"content_language={self.content_language}, "
             f"content_metadata={self.content_metadata}, "
+            f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
             f"updated_datetime_utc={self.updated_datetime_utc})"
         )
@@ -76,7 +84,6 @@ async def save_content_to_db(
     """
 
     content_embedding = await _get_content_embeddings(content)
-
     content_db = ContentDB(
         user_id=user_id,
         content_embedding=content_embedding,
@@ -84,16 +91,22 @@ async def save_content_to_db(
         content_text=content.content_text,
         content_language=content.content_language,
         content_metadata=content.content_metadata,
+        content_tags=content.content_tags,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
-
     asession.add(content_db)
 
     await asession.commit()
     await asession.refresh(content_db)
 
-    return content_db
+    result = await get_content_from_db(
+        content_db.user_id, content_db.content_id, asession
+    )
+    if result:
+        return result
+    else:
+        return content_db
 
 
 async def update_content_in_db(
@@ -115,14 +128,21 @@ async def update_content_in_db(
         content_text=content.content_text,
         content_language=content.content_language,
         content_metadata=content.content_metadata,
+        content_tags=content.content_tags,
+        created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
 
     content_db = await asession.merge(content_db)
     await asession.commit()
     await asession.refresh(content_db)
-
-    return content_db
+    result = await get_content_from_db(
+        content_db.user_id, content_db.content_id, asession
+    )
+    if result:
+        return result
+    else:
+        return content_db
 
 
 async def delete_content_from_db(
@@ -133,6 +153,10 @@ async def delete_content_from_db(
     """
     Deletes a content from the database
     """
+    association_stmt = delete(content_tags_table).where(
+        content_tags_table.c.content_id == content_id
+    )
+    await asession.execute(association_stmt)
     stmt = (
         delete(ContentDB)
         .where(ContentDB.user_id == user_id)
@@ -152,6 +176,7 @@ async def get_content_from_db(
     """
     stmt = (
         select(ContentDB)
+        .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.user_id == user_id)
         .where(ContentDB.content_id == content_id)
     )
@@ -173,6 +198,7 @@ async def get_list_of_content_from_db(
     """
     stmt = (
         select(ContentDB)
+        .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.user_id == user_id)
         .order_by(ContentDB.content_id)
     )

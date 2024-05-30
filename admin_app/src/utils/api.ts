@@ -328,6 +328,42 @@ const getUrgencyDetection = async (search: string, token: string) => {
       );
     });
 };
+
+const createTag = async (tag: string, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ tag_name: tag }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error creating tag");
+    }
+  });
+};
+
+const getTagList = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching tag list");
+    }
+  });
+};
+
 export const apiCalls = {
   getNewAPIKey,
   getContentList,
@@ -345,4 +381,6 @@ export const apiCalls = {
   getLLMResponse,
   getQuestionStats,
   getUrgencyDetection,
+  createTag,
+  getTagList,
 };

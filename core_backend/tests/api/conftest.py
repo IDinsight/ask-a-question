@@ -130,6 +130,31 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
     db_session.commit()
 
 
+@pytest.fixture(
+    scope="module",
+    params=[
+        ("Tag1"),
+        ("tag2",),
+    ],
+)
+def existing_tag_id(
+    request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
+) -> Generator[str, None, None]:
+    response = client.post(
+        "/tag",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        json={
+            "tag_name": request.param[0],
+        },
+    )
+    tag_id = response.json()["tag_id"]
+    yield tag_id
+    client.delete(
+        f"/tag/{tag_id}",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
+
+
 @pytest.fixture(scope="session")
 async def urgency_rules(client: TestClient, db_session: Session) -> int:
     with open("tests/api/data/urgency_rules.json", "r") as f:
