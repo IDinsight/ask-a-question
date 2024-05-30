@@ -347,22 +347,6 @@ const createTag = async (tag: string, token: string) => {
   });
 };
 
-const deleteTag = async (tag_id: number, token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/${tag_id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error deleting tag");
-    }
-  });
-};
 const getTagList = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/`, {
     method: "GET",
@@ -398,6 +382,5 @@ export const apiCalls = {
   getQuestionStats,
   getUrgencyDetection,
   createTag,
-  deleteTag,
   getTagList,
 };

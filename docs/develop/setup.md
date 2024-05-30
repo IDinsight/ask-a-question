@@ -46,47 +46,47 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
 ### Step 1: Run the backend
 
-1. [Set up your python environment](contributing.md#setup-your-virtual-python-environment).
+1.  [Set up your python environment](contributing.md#setup-your-virtual-python-environment).
 
-2. Activate your `aaq` conda environment
+2.  Activate your `aaq` conda environment
 
         conda activate aaq
 
-3. Set required environment variables in your terminal using
+3.  Set required environment variables in your terminal using
 
         export OPENAI_API_KEY=sk...  # required for model proxy server
         export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
         export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional
 
-4. (optional) Set custom login credentials by setting the following environment variables. The defaults
-can be found in `core_backend/add_users_to_db.py`.
+4.  (optional) Set custom login credentials by setting the following environment variables. The defaults
+    can be found in `core_backend/add_users_to_db.py`.
 
-        # user 1
-        export USER1_USERNAME = "user1"
-        export USER1_PASSWORD = "fullaccess"
-        export USER1_RETRIEVAL_SECRET = "user1-key"
+            # user 1
+            export USER1_USERNAME = "user1"
+            export USER1_PASSWORD = "fullaccess"
+            export USER1_API_KEY = "user1-key"
 
-        # user 2
-        export USER2_USERNAME = "user2"
-        export USER2_PASSWORD = "fullaccess"
-        export USER2_RETRIEVAL_SECRET = "user2-key"
+            # user 2
+            export USER2_USERNAME = "user2"
+            export USER2_PASSWORD = "fullaccess"
+            export USER2_API_KEY = "user2-key"
 
-5. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+5.  (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
-6. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
+6.  Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
         make setup-dev
 
-7. Run the app
+7.  Run the app
 
         python core_backend/main.py
 
     This will launch the application in "reload" mode i.e. the app will automatically
     refresh everytime you make a change to one of the files.
 
-     You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
+    You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
-8. Once done, exit the running app process with `ctrl+c` and run
+8.  Once done, exit the running app process with `ctrl+c` and run
 
         make teardown-dev
 
@@ -124,12 +124,12 @@ can be found in `core_backend/add_users_to_db.py`.
 
 ### Step 2: Run the admin app
 
-1. In a new terminal, navigate to `aaq-core/admin_app`
-2. If you want Google login option to work, you'll need to set the Google login client ID
+1.  In a new terminal, navigate to `aaq-core/admin_app`
+2.  If you want Google login option to work, you'll need to set the Google login client ID
 
         export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
 
-3. Run
+3.  Run
 
         npm i
         npm run dev
@@ -140,18 +140,18 @@ The admin app will now be accessible on [http://localhost:3000/](http://localhos
 
 ## Set up docs
 
-1. [mkdocs](https://www.mkdocs.org/user-guide/installation/) should be installed in your
-development conda environment created by `make fresh-env`. Activate the conda environment:
+1.  [mkdocs](https://www.mkdocs.org/user-guide/installation/) should be installed in your
+    development conda environment created by `make fresh-env`. Activate the conda environment:
 
-        conda activate aaq
+            conda activate aaq
 
-2. To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
+2.  To host docs offline so you can see your changes, run the following in the root of the repo (with altered port so it doesn't interfere with the app's server):
 
         mkdocs serve -a "localhost:8080"
 
 ## Pros and cons of each setup method
 
-| Method | Pros | Cons |
-| --- | --- | --- |
-| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 5-10s to be reflected in the app</li></ul> |
-| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
+| Method                                                                  | Pros                                                                                                                                                                                                     | Cons                                                                                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 5-10s to be reflected in the app</li></ul>                                                                   |
+| [Set up manually](#set-up-manually)                                     | <ul><li>Instant feedback from changes</li></ul>                                                                                                                                                          | <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |

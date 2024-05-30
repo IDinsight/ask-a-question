@@ -123,6 +123,26 @@ class TestManageTags:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
+    async def test_add_tag_same_name_fails(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "tag_name": "tag_unique_name",
+            },
+        )
+        assert response.status_code == 200
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "tag_name": "tag_unique_name",
+            },
+        )
+        assert response.status_code == 400
+
     async def test_delete_tag(
         self, client: TestClient, existing_tag_id: int, fullaccess_token: str
     ) -> None:
@@ -131,6 +151,42 @@ class TestManageTags:
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
+
+    async def test_user2_get_user1_tag_fails(
+        self,
+        client: TestClient,
+        existing_tag_id: int,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.get(
+            f"/tag/{existing_tag_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert response.status_code == 404
+
+    async def test_add_tag_user1_edit_user2_fails(
+        self,
+        client: TestClient,
+        fullaccess_token: str,
+        fullaccess_token_user2: str,
+    ) -> None:
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "tag_name": "tag",
+            },
+        )
+        assert response.status_code == 200
+        tag_id = response.json()["tag_id"]
+        response = client.put(
+            f"/tag/{tag_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "tag_name": "tag",
+            },
+        )
+        assert response.status_code == 404
 
 
 async def test_convert_record_to_schema() -> None:

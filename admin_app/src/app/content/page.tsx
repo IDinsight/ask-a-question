@@ -94,8 +94,6 @@ const CardsPage = () => {
         searchTerm={searchTerm}
         token={token}
         accessLevel={currAccessLevel}
-        tags={tags}
-        filterTags={filterTags}
       />
     </Layout.FlexBox>
   );
@@ -131,15 +129,11 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
-  tags,
-  filterTags,
   token,
   accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
-  tags: Tag[];
-  filterTags: Tag[];
   token: string | null;
   accessLevel: string;
 }) => {

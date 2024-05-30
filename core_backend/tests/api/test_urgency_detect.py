@@ -8,8 +8,9 @@ from core_backend.app.database import get_async_session
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.tests.api.conftest import (
+    TEST_USER_API_KEY,
+    TEST_USER_API_KEY_2,
     TEST_USER_ID,
-    TEST_USER_RETRIEVAL_KEY,
 )
 
 
@@ -17,8 +18,8 @@ class TestUrgencyDetectionToken:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [
-            (f"{TEST_USER_RETRIEVAL_KEY}_incorrect", 401),
-            (TEST_USER_RETRIEVAL_KEY, 200),
+            (f"{TEST_USER_API_KEY}_incorrect", 401),
+            (TEST_USER_API_KEY, 200),
         ],
     )
     async def test_ud_response(
@@ -42,6 +43,36 @@ class TestUrgencyDetectionToken:
         if expected_status_code == 200:
             json_content_response = response.json()["details"]
             assert len(json_content_response.keys()) == urgency_rules
+
+    @pytest.mark.parametrize(
+        "token, expect_found",
+        [
+            (TEST_USER_API_KEY, True),
+            (TEST_USER_API_KEY_2, False),
+        ],
+    )
+    async def test_user2_access_user1_rules(
+        self,
+        client: TestClient,
+        token: str,
+        expect_found: bool,
+    ) -> None:
+        response = client.post(
+            "/urgency-detect",
+            json={"message_text": "has trouble breathing"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            is_urgent = response.json()["is_urgent"]
+            if expect_found:
+                # the breathing query should flag as urgent for user1. See
+                # data/urgency_rules.json which is loaded by the urgency_rules fixture.
+                assert is_urgent
+            else:
+                # user2 has no urgency rules so no flag
+                assert not is_urgent
 
 
 class TestUrgencyClassifiers:
