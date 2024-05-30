@@ -16,8 +16,12 @@ function get_secret_value() {
 }
 
 echo "Fetching variables from aws store.."
-SECRET_OPENAI="${PROJECT_NAME}-${ENV}-open-ai-key"
-echo $SECRET_OPENAI
-export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
+SECRET_OPENAI="${PROJECT_NAME}-${ENV}-openai-key"
+SECRET_GEMINI="${PROJECT_NAME}-${ENV}-gemini-key"
 
+echo $SECRET_OPENAI
+echo $SECRET_GEMINI
+
+export OPENAI_API_KEY=$(get_secret_value ${SECRET_OPENAI} "" "text")
+export GEMINI_API_KEY=$(get_secret_value ${SECRET_GEMINI} "" "text")
 exec litellm "$@"
