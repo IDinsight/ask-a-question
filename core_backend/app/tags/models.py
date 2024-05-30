@@ -29,14 +29,14 @@ class TagDB(Base):
     __tablename__ = "tag"
 
     tag_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     tag_name: Mapped[str] = mapped_column(String(length=50), nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     contents = relationship(
         "ContentDB", secondary=content_tags_table, back_populates="content_tags"
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -145,7 +145,7 @@ async def validate_tags(
     user_id: int, tags: List[int], asession: AsyncSession
 ) -> tuple[bool, List[int] | List[TagDB]]:
     """
-    Validates tags
+    Validates tags to make sure the tags exist in the database
     """
     stmt = select(TagDB).where(TagDB.user_id == user_id).where(TagDB.tag_id.in_(tags))
     tags_db = (await asession.execute(stmt)).all()

@@ -68,7 +68,7 @@ class ContentDB(Base):
             f"content_text={self.content_text}, "
             f"content_language={self.content_language}, "
             f"content_metadata={self.content_metadata}, "
-            f"content_metadata={self.content_tags}, "
+            f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
             f"updated_datetime_utc={self.updated_datetime_utc})"
         )
