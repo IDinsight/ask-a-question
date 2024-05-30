@@ -1,5 +1,6 @@
 from typing import Callable
 
+import litellm
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
@@ -27,6 +28,8 @@ from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
 logger = setup_logger()
+
+litellm.success_callback = ["langfuse"]
 
 
 def create_metrics_app() -> Callable:

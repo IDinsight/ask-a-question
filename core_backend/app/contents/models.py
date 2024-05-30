@@ -226,12 +226,19 @@ async def get_similar_content_async(
     question: str,
     n_similar: int,
     asession: AsyncSession,
+    metadata: Optional[dict] = None,
 ) -> Dict[int, tuple[str, str, int, float]]:
     """
     Get the most similar points in the vector table
     """
+    if metadata is None:
+        metadata = {}
+    if metadata is not None:
+        metadata["generation_name"] = "get_similar_content_async"
+
     question_embedding = await embedding(
         question,
+        metadata=metadata,
     )
 
     return await get_search_results(

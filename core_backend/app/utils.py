@@ -3,7 +3,7 @@ import logging
 import os
 import secrets
 from logging import Logger
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
@@ -81,15 +81,18 @@ def generate_secret_key() -> str:
     return uuid4().hex
 
 
-async def embedding(text_to_embed: str) -> List[float]:
+async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
     """
     Get embedding for the given text
     """
+    if metadata is None:
+        metadata = {}
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
+        metadata=metadata,
     )
 
     return content_embedding.data[0]["embedding"]
