@@ -256,10 +256,8 @@ const ContentBox = ({
         renderOption={(props, option) => {
           if (option.tag_name) {
             return (
-              <li {...props}>
-                <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
+              <li {...props} onClick={() => handleNewTag(option.tag_name)}>
                   {option.tag_name}
-                </Button>
               </li>
             );
           }
