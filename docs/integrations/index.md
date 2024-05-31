@@ -32,13 +32,13 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
     [:octicons-arrow-right-24: More info](./chat_managers/turn.md)
 
-- ![glific logo](./chat_managers/glific_logo.png){ width="40" }
+- ![glific logo](./chat_managers/glific/glific_logo.png){ width="40" }
 
     ---
 
     How to connect a Glific flow to AAQ endpoints
 
-    [:octicons-arrow-right-24: More info](./chat_managers/glific.md)
+    [:octicons-arrow-right-24: More info](./chat_managers/glific/glific.md)
 
 </div>
 
