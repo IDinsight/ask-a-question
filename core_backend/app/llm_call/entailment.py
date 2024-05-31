@@ -12,8 +12,7 @@ async def detect_urgency(
     """
     Detects the urgency of a message based on a given urgency rule.
     """
-    if metadata is None:
-        metadata = {}
+
     prompt = get_urgency_detection_prompt(urgency_rule, message)
     json = await _ask_llm_async(
         question="",
