@@ -49,14 +49,25 @@ services:
       - .env
 
   litellm_proxy:
-    image: ghcr.io/berriai/litellm:main-v1.34.6
+    image: ghcr.io/berriai/litellm-database:main-latest
     restart: always
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@litellm_proxy_db:5432/litellm
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
+    ports:
+      - "4000:4000"
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+
+  litellm_proxy_db:
+    image: postgres:16
+    environment:
+      - PORT=5432
+      - POSTGRES_DB=litellm
+      - POSTGRES_PASSWORD=postgres
 
   alignScore:
     image: idinsight/alignscore-base:latest
