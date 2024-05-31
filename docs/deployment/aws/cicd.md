@@ -36,19 +36,20 @@ should be the same as the environment name used in your infrastructure configura
 2. In the new environment, create the following secrets that are specific to this
 deployment environment:
 
-| Name              | Example                                      | Description                                                                 |
-|-------------------|----------------------------------------------|-----------------------------------------------------------------------------|
-| AWS_ACCOUNT_ID    | `000000000000`                                | AWS account ID                                                              |
-| AWS_REGION        | `af-south-1`                                  | AWS region                                                                  |
-| BOOTSTRAP_FILE    | `bootstrap.sh`                               | Name of the bootstrap file at `deployment/aws/core_backend/`                                             |
-| CLUSTER_NAME      | `aaq-demo-ecs-cluster`                        | ECS cluster name                                                            |
-| DOMAIN            | `example.domain.com`                        | Domain name                                                                 |
-| EMAIL             | `user@domain.com`                           | Email address                                                               |
-| NEXT_PUBLIC_BACKEND_URL | `https://example.domain.com/api`             | Backend URL for the application                                       |
-| PROJECT_NAME      | `aaq`                                          | Project name from Terraform (`infrastructure/demo/demo.auto.tfvars`)        |
-| REPO              | `aaq-demo-ecr-repository`                       | Name of the ECR repository created using Terraform                          |
-| ROLE              | `aaq-demo-github-actions-role`                  | Name of the GitHub Actions role for this environment created using Terraform |
-| TASK_ROLE_ARN     | `arn:aws:iam::000000000000:role/aaq-demo-web-task-role` | ARN of the ECS task role created using Terraform                            |
+| Name              |Required| Example                                      | Description                                                                 |
+|-------------------|-|----------------------------------------------|-----------------------------------------------------------------------------|
+| AWS_ACCOUNT_ID    |required| `000000000000`                                | AWS account ID                                                              |
+| AWS_REGION        |required| `af-south-1`                                  | AWS region                                                                  |
+| BOOTSTRAP_FILE    |required| `bootstrap.sh`                               | Name of the bootstrap file at `deployment/aws/core_backend/`                                             |
+| CLUSTER_NAME      |required| `aaq-demo-ecs-cluster`                        | ECS cluster name                                                            |
+| DOMAIN            |required| `example.domain.com`                        | Domain name                                                                 |
+| EMAIL             |required| `user@domain.com`                           | Email address                                                               |
+| NEXT_PUBLIC_BACKEND_URL |required| `https://example.domain.com/api`             | Backend URL for the application                                       |
+| PROJECT_NAME      |required| `aaq`                                          | Project name from Terraform (`infrastructure/demo/demo.auto.tfvars`)        |
+| REPO              |required| `aaq-demo-ecr-repository`                       | Name of the ECR repository created using Terraform                          |
+| ROLE              |required| `aaq-demo-github-actions-role`                  | Name of the GitHub Actions role for this environment created using Terraform |
+| TASK_ROLE_ARN     |required| `arn:aws:iam::000000000000:role/aaq-demo-web-task-role` | ARN of the ECS task role created using Terraform                            |
+| NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID | optional | `00000000-abcde12345.apps.googleusercontent.com` | Google Client ID if you want to use Google login |
 
 !!! note
     See Github Actions' ["Using environments for
