@@ -22,7 +22,7 @@ card AAQ_LLM_Call, then: Response do
       """,
       headers: [
         ["content-type", "application/json"],
-        ["Authorization", "Bearer <INSERT_AAQ_TOKEN>"]
+        ["Authorization", "Bearer <INSERT_AAQ_API_KEY>"]
       ]
     )
 
