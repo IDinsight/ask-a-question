@@ -741,7 +741,7 @@
             "actions": []
           }
         ],
-        "name": "AAQ testing",
+        "name": "AAQ FAQ Flow",
         "localization": {},
         "language": "base",
         "expire_after_minutes": 10080,
@@ -914,7 +914,7 @@
           }
         }
       },
-      "keywords": ["aaqtest"]
+      "keywords": ["aaqfaq"]
     }
   ],
   "contact_field": [],
