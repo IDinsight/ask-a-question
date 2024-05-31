@@ -59,6 +59,7 @@ async def save_tag_to_db(
     tag_db = TagDB(
         tag_name=tag.tag_name,
         user_id=user_id,
+        contents=[],
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
