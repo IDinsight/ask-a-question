@@ -1,10 +1,24 @@
-# ![typebot logo](./typebot_logo.svg){ width="30" } Typebot
+# ![typebot logo](./typebot_logo.svg){ width="25" } Typebot
 
-Below is an example of how to get Typebot running and connected to AAQ endpoints using a provided demo bot.
+Below is a guide on how to connect to AAQ endpoints using a provided demo flow.
+
+You can either use the cloud-hosted [Typebot](https://typebot.io/) service or self-host the application (see "Deployment" below).
+
+## Demo AAQ flow
+
+1. Go to your Typebot instance
+2. Make an account and login
+3. Go to "Create a typebot" and then "Import a file"
+4. Load the `.json` file given under `chat_managers/typebot/` in the [AAQ repo](https://github.com/IDinsight/aaq-core/tree/main/chat_managers/typebot)
+5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running
+
+    a. Click on the card
+    b. Change the base of the URL at the top
+    c. Add the bearer token in the Headers section.
+
+6. Test the bot in the emulator
 
 ## Deployment
-
-You can either use the cloud-hosted [Typebot](https://typebot.io/) service or self-host the application.
 
 For self-hosting, you can either follow the [official docs](https://docs.typebot.io/self-hosting/get-started)
 or follow our quick start below:
@@ -26,19 +40,3 @@ You can now access Typebot at `https://[DOMAIN]/`
 **Step 4:** Shutdown containers
 
     docker compose -p typebot-stack down
-
-## Demo AAQ Chatflow
-
-1. Go to the URL where the app is running
-2. Make an account and login
-3. Go to "Create a typebot" and then "Import a file"
-4. Load the `.json` file given under `chat_managers/typebot/` in the [AAQ repo](https://github.com/IDinsight/aaq-core)
-5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running
-
-    a. Click on the card
-
-    b. Change the base of the URL at the top
-
-    c. Add the bearer token in the Headers section.
-
-6. Test the bot in the emulator
