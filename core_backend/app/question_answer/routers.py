@@ -115,8 +115,8 @@ async def get_llm_answer(
 
     if not isinstance(response, QueryResponseError):
         metadata = {
-            "trace_id": response.query_id,
-            "trace_user_id": user_id,
+            "trace_id": "query_id-" + str(response.query_id),
+            "trace_user_id": "user_id-" + str(user_id),
         }
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
@@ -230,8 +230,8 @@ async def get_semantic_matches(
     """
     if not isinstance(response, QueryResponseError):
         metadata = {
-            "trace_id": response.query_id,
-            "trace_user_id": user_id,
+            "trace_id": "query_id-" + str(response.query_id),
+            "trace_user_id": "user_id-" + str(user_id),
         }
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(

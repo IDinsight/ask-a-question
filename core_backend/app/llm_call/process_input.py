@@ -51,10 +51,12 @@ def identify_language__before(func: Callable) -> Callable:
         Wrapper function to identify the language of the question.
         """
         metadata = {
-            "trace_id": response.query_id,
+            "trace_id": "query_id-" + str(response.query_id),
         }
+
         if "user_id" in kwargs:
-            metadata["trace_user_id"] = kwargs["user_id"]
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+
         question, response = await _identify_language(
             question, response, metadata=metadata
         )
@@ -72,8 +74,6 @@ async def _identify_language(
     """
     Identifies the language of the question.
     """
-    if metadata is None:
-        metadata = {}
     if isinstance(response, QueryResponseError):
         return question, response
 
@@ -156,10 +156,10 @@ def translate_question__before(func: Callable) -> Callable:
         Wrapper function to translate the question.
         """
         metadata = {
-            "trace_id": response.query_id,
+            "trace_id": "query_id-" + str(response.query_id),
         }
         if "user_id" in kwargs:
-            metadata["trace_user_id"] = kwargs["user_id"]
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
 
         question, response = await _translate_question(
             question, response, metadata=metadata
@@ -181,8 +181,7 @@ async def _translate_question(
     """
 
     # skip if error or already in English
-    if metadata is None:
-        metadata = {}
+
     if (
         isinstance(response, QueryResponseError)
         or question.original_language == IdentifiedLanguage.ENGLISH
@@ -235,10 +234,10 @@ def classify_safety__before(func: Callable) -> Callable:
         Wrapper function to classify the safety of the question.
         """
         metadata = {
-            "trace_id": response.query_id,
+            "trace_id": "query_id-" + str(response.query_id),
         }
         if "user_id" in kwargs:
-            metadata["trace_user_id"] = kwargs["user_id"]
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
 
         question, response = await _classify_safety(
             question, response, metadata=metadata
@@ -307,10 +306,10 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         Wrapper function to check if the question is on-topic or off-topic.
         """
         metadata = {
-            "trace_id": response.query_id,
+            "trace_id": "query_id-" + str(response.query_id),
         }
         if "user_id" in kwargs:
-            metadata["trace_user_id"] = kwargs["user_id"]
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
 
         question, response = await _classify_on_off_topic(
             question, response, metadata=metadata
@@ -329,8 +328,6 @@ async def _classify_on_off_topic(
     """
     Checks if the user query is on-topic or off-topic.
     """
-    if metadata is None:
-        metadata = {}
     if isinstance(response, QueryResponseError):
         return user_query, response
 
@@ -380,10 +377,10 @@ def paraphrase_question__before(func: Callable) -> Callable:
         Wrapper function to paraphrase the question.
         """
         metadata = {
-            "trace_id": response.query_id,
+            "trace_id": "query_id-" + str(response.query_id),
         }
         if "user_id" in kwargs:
-            metadata["trace_user_id"] = kwargs["user_id"]
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
         question, response = await _paraphrase_question(
             question, response, metadata=metadata
         )

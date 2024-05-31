@@ -113,7 +113,7 @@ async def llm_entailment_classifier(
     rules = await get_urgency_rules_from_db(user_id=user_id, asession=asession)
     tasks = []
     metadata = {
-        "trace_user_id": user_id,
+        "trace_user_id": "user_id-" + str(user_id),
     }
     for rule in rules:
         tasks.append(

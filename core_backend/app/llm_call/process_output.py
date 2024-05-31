@@ -97,7 +97,7 @@ async def _check_align_score(
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        metadata = {"trace_id": "query_id"}
+        metadata = {"trace_id": "query_id-" + str(llm_response.query_id)}
         align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")

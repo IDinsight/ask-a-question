@@ -17,6 +17,7 @@ async def get_llm_rag_answer(
 
     if metadata is None:
         metadata = {}
+
     prompt = ANSWER_QUESTION_PROMPT.format(
         content=context, response_language=response_language.value
     )

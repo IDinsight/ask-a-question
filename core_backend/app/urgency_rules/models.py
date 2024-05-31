@@ -78,7 +78,7 @@ async def update_urgency_rule_in_db(
     Update urgency rule in the database
     """
     metadata = {
-        "trace_user_id": user_id,
+        "trace_user_id": "user_id-" + str(user_id),
         "generation_name": "update_urgency_rule_in_db",
     }
     urgency_rule_vector = await embedding(
@@ -161,7 +161,7 @@ async def get_cosine_distances_from_rules(
     Get cosine distances from urgency rules
     """
     metadata = {
-        "trace_user_id": user_id,
+        "trace_user_id": "user_id-" + str(user_id),
         "generation_name": "get_cosine_distances_from_rules",
     }
     message_vector = await embedding(message_text, metadata=metadata)

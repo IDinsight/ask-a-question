@@ -18,8 +18,6 @@ async def _ask_llm_async(
     """
     This is a generic function to ask the LLM model a question.
     """
-    if metadata is None:
-        metadata = {}
     if metadata is not None:
         metadata["generation_name"] = litellm_model
 
@@ -34,6 +32,7 @@ async def _ask_llm_async(
         },
     ]
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
+
     llm_response_raw = await acompletion(
         model=litellm_model,
         messages=messages,

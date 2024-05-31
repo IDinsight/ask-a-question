@@ -1,6 +1,5 @@
 from typing import Callable
 
-import litellm
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
@@ -21,15 +20,19 @@ from . import (
     urgency_rules,
     whatsapp_qa,
 )
-from .config import (
-    DOMAIN,
-)
+from .config import DOMAIN, LANGFUSE
 from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
 logger = setup_logger()
 
-litellm.success_callback = ["langfuse"]
+
+if LANGFUSE == "True":
+    logger.info("Setting up langfuse callbacks")
+    import litellm
+
+    litellm.success_callback = ["langfuse"]
+    litellm.failure_callback = ["langfuse"]
 
 
 def create_metrics_app() -> Callable:
@@ -57,7 +60,6 @@ def create_app() -> FastAPI:
         f"http://{DOMAIN}",
         f"http://{DOMAIN}:3000",
         f"https://{DOMAIN}",
-        f"https://{DOMAIN}:3000",
     ]
     app.add_middleware(
         CORSMiddleware,
