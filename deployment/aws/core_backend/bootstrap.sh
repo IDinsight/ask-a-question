@@ -44,7 +44,7 @@ export USER1_API_KEY=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user1_api_ke
 
 export USER2_USERNAME=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_username" "json")
 export USER2_PASSWORD=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_password" "json")
-export USER2_API_KEY=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_api key" "json")
+export USER2_API_KEY=$(get_secret_value ${SECRET_USER_CREDENTIALS} "user2_api_key" "json")
 
 export WHATSAPP_TOKEN=$(get_secret_value ${SECRET_WHATSAPP} "" "text")
 export WHATSAPP_VERIFY_TOKEN=$(get_secret_value ${SECRET_WHATSAPP_VERIFY} "" "text")
