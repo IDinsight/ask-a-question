@@ -28,7 +28,10 @@ Fill with `x` for completed. Delete any lines that are not relevant
 - [ ] I have tested the functionality of my code to ensure it works as intended
 - [ ] I have resolved merge conflicts
 - [ ] I have updated the automated tests (if applicable)
+- [ ] I have updated the scripts in `scripts/` (if applicable)
 - [ ] I have updated the requirements (if applicable)
 - [ ] I have updated the README file (if applicable)
 - [ ] I have updated affected documentation (if applicable)
-- [ ] I have added blogpost in Latest Updates
+- [ ] I have added a blogpost in Latest Updates
+- [ ] I have updated the CI/CD scripts in `.github/workflows/` (if applicable)
+- [ ] I have updated the Terraform code (if applicable)
