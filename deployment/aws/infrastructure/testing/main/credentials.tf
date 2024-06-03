@@ -65,10 +65,10 @@ resource "aws_secretsmanager_secret_version" "user_credentials_secret" {
   secret_string = jsonencode({
     user1_username = "user1",
     user1_password = random_password.secrets[1].result,
-    user1_api_key = random_password.secrets[2].result,
+    user1_api_key  = random_password.secrets[2].result,
     user2_username = "user2",
-    user2_password   = random_password.secrets[3].result,
-    user2_api_key = random_password.secrets[4].result,
+    user2_password = random_password.secrets[3].result,
+    user2_api_key  = random_password.secrets[4].result,
   })
 }
 
