@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 import os
 from getpass import getpass
 
@@ -76,11 +77,13 @@ if __name__ == "__main__":
                 language = args.language
             else:
                 language = row["language"]
+            tags = row.get("tags", None)
 
             payload = {
                 "content_title": row["title"],
                 "content_text": row["body"],
                 "content_language": language,
+                "content_tags": json.loads(tags) if tags else [],
                 "content_metadata": {},
             }
             response = requests.post(api_endpoint, json=payload, headers=headers)
