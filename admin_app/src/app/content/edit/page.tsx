@@ -7,7 +7,7 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import { AutocompleteRenderOptionState, Snackbar } from "@mui/material";
+import { Snackbar } from "@mui/material";
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
