@@ -8,7 +8,7 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
 <div class="grid cards" markdown>
 
-- ![typebot logo](./chat_managers/typebot_logo.svg){ width="20" } __Typebot (Recommended)__
+- ![typebot logo](./chat_managers/typebot_logo.svg){ width="15" } __Typebot (Recommended)__
 
     ---
 
@@ -16,7 +16,7 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
     [:octicons-arrow-right-24: More info](./chat_managers/typebot.md)
 
-- ![botpress logo](./chat_managers/botpress_logo.svg){ width="20" } __Botpress__
+- ![botpress logo](./chat_managers/botpress_logo.svg){ width="15" } __Botpress__
 
     ---
 
@@ -24,13 +24,21 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
     [:octicons-arrow-right-24: More info](./chat_managers/botpress_v12.md)
 
-- ![turn logo](./chat_managers/turn_logo.png){ width="20" } __Turn.io__
+- ![turn logo](./chat_managers/turn_logo.png){ width="50" }
 
     ---
 
     How to connect a Turn.io Journey to AAQ endpoints
 
     [:octicons-arrow-right-24: More info](./chat_managers/turn.md)
+
+- ![glific logo](./chat_managers/glific/glific_logo.png){ width="40" }
+
+    ---
+
+    How to connect a Glific flow to AAQ endpoints
+
+    [:octicons-arrow-right-24: More info](./chat_managers/glific/glific.md)
 
 </div>
 
@@ -40,7 +48,7 @@ The WhatsApp connector allows you to directly send and receive messages using th
 
 <div class="grid cards" markdown>
 
--   :octicons-gear-16:{ .lg .middle } __Setup__
+- :octicons-gear-16:{ .lg .middle } __Setup__
 
     ---
 
@@ -48,7 +56,7 @@ The WhatsApp connector allows you to directly send and receive messages using th
 
     [:octicons-arrow-right-24: More info](./whatsapp/setup.md)
 
--   :material-test-tube:{ .lg .middle } __Testing__
+- :material-test-tube:{ .lg .middle } __Testing__
 
     ---
 
