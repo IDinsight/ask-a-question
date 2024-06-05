@@ -7,12 +7,22 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import { Snackbar } from "@mui/material";
-import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Snackbar,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -33,10 +43,15 @@ interface EditContentBody {
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
-
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [openDiscardChangesModal, setOpenDiscardChangesModal] = React.useState(false);
+
+  const [isSaved, setIsSaved] = React.useState(true);
+
+  const router = useRouter();
   const { token } = useAuth();
+
   React.useEffect(() => {
     if (!content_id) {
       setIsLoading(false);
@@ -68,7 +83,12 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
-        <Header content_id={content_id} />
+        <Header
+          content_id={content_id}
+          onBack={() =>
+            isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
+          }
+        />
         <Layout.FlexBox
           flexDirection={"column"}
           sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
@@ -83,10 +103,21 @@ const AddEditContentPage = () => {
             addTag={(tag: string) => {
               return apiCalls.createTag(tag, token!);
             }}
+            isSaved={isSaved}
+            setIsSaved={setIsSaved}
           />
           <Layout.Spacer multiplier={1} />
         </Layout.FlexBox>
       </Layout.FlexBox>
+      <DiscardChangesModal
+        open={openDiscardChangesModal}
+        onClose={() => {
+          setOpenDiscardChangesModal(false);
+        }}
+        onConfirmDiscard={() => {
+          router.push("/content");
+        }}
+      />
     </FullAccessComponent>
   );
 };
@@ -96,13 +127,16 @@ const ContentBox = ({
   setContent,
   getTagList,
   addTag,
+  isSaved,
+  setIsSaved,
 }: {
   content: Content | null;
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   getTagList: () => Promise<Tag[]>;
   addTag: (tag: string) => Promise<Tag>;
+  isSaved: boolean;
+  setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const [isSaved, setIsSaved] = React.useState(true);
   const [saveError, setSaveError] = React.useState(false);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
@@ -112,6 +146,7 @@ const ContentBox = ({
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
+
   const { token } = useAuth();
   const [inputVal, setInputVal] = React.useState<string>("");
 
@@ -127,9 +162,7 @@ const ContentBox = ({
                 data.find((tag) => tag.tag_id === tag_id)
               )
             : [];
-        setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined)
-        );
+        setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
         console.error("Failed to fetch tags:", error);
@@ -283,18 +316,17 @@ const ContentBox = ({
           return filtered;
         }}
         renderOption={(props, option) => {
-          const { key, ...newProps } =
-            props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
+          const { key, ...newProps } = props as React.HTMLAttributes<HTMLLIElement> & {
+            key: React.Key;
+          };
           const { onKeyDown, ...rest } = newProps;
           if (
             option.tag_name &&
             !availableTags.some(
-              (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+              (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             ) &&
             !contentTags.some(
-              (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+              (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             )
           ) {
             return (
@@ -363,10 +395,7 @@ const ContentBox = ({
           value={content ? content.content_text : ""}
           onChange={(e) => handleChange(e, "content_text")}
         />
-        <Layout.FlexBox
-          flexDirection="row"
-          sx={{ justifyContent: "space-between" }}
-        >
+        <Layout.FlexBox flexDirection="row" sx={{ justifyContent: "space-between" }}>
           <Button
             variant="contained"
             disabled={isSaved}
@@ -425,15 +454,16 @@ const ContentBox = ({
   );
 };
 
-const Header = ({ content_id }: { content_id: number | null }) => {
-  const router = useRouter();
-
+const Header = ({
+  content_id,
+  onBack,
+}: {
+  content_id: number | null;
+  onBack: () => void;
+}) => {
   return (
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
-      <ChevronLeft
-        style={{ cursor: "pointer" }}
-        onClick={() => (content_id ? router.back() : router.push("/content"))}
-      />
+      <ChevronLeft style={{ cursor: "pointer" }} onClick={onBack} />
       <Layout.Spacer multiplier={1} horizontal />
       {content_id ? (
         <>
@@ -450,4 +480,37 @@ const Header = ({ content_id }: { content_id: number | null }) => {
   );
 };
 
+const DiscardChangesModal = ({
+  open,
+  onClose,
+  onConfirmDiscard,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirmDiscard: () => void;
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="alert-dialog-discard-change-title"
+      aria-describedby="alert-dialog-discard-change-description"
+    >
+      <DialogTitle id="alert-dialog-discard-change-title">Discard Changes</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-discard-change-description">
+          You have unsaved changes. Are you sure you want to discard them?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary" variant="contained">
+          Cancel
+        </Button>
+        <Button onClick={onConfirmDiscard} color="error" autoFocus>
+          Discard
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 export default AddEditContentPage;
