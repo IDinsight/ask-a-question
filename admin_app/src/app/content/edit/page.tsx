@@ -7,7 +7,7 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-
+import { AutocompleteRenderOptionState, Snackbar } from "@mui/material";
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -111,7 +111,7 @@ const ContentBox = ({
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
   const filter = createFilterOptions<Tag>();
-
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const { token } = useAuth();
 
   const router = useRouter();
@@ -213,23 +213,32 @@ const ContentBox = ({
     const match = tag.match(/"([^"]*)"/);
     if (match) {
       tag = match[1];
-      const data = addTag(tag).then((data: Tag) => {
-        handleTagsChange([...contentTags, data]);
-        setRefreshKey((prevKey) => prevKey + 1);
-      });
+      const isTagExists = tags.filter((t) => t.tag_name === tag);
+      if (isTagExists.length == 0) {
+        const data = addTag(tag).then((data: Tag) => {
+          handleTagsChange([...contentTags, data]);
+          setRefreshKey((prevKey) => prevKey + 1);
+        });
+      } else {
+        setSnackMessage(`Tag "${tag}" already exists`);
+      }
     }
   };
   return (
     <Layout.FlexBox>
       <Layout.Spacer multiplier={1} />
       <Autocomplete
+        autoSelect
+        selectOnFocus
+        clearOnBlur
+        handleHomeEndKeys
         multiple
         limitTags={3}
         id="tags-autocomplete"
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
         value={contentTags}
-        onChange={(event, updatedTags) => {
+        onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
           handleTagsChange(updatedTags);
         }}
         renderInput={(params) => (
@@ -242,28 +251,43 @@ const ContentBox = ({
         )}
         filterOptions={(options, params) => {
           const filtered = filter(options, params);
-
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue === option.tag_name
+            (option) => inputValue.toUpperCase() === option.tag_name
           );
-          if (inputValue !== "" && !isExisting) {
+
+          const isSelected = contentTags.some(
+            (tag) => inputValue.toUpperCase() === tag.tag_name
+          );
+
+          if (inputValue !== "" && !isExisting && !isSelected) {
             filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
           }
 
           return filtered;
         }}
         renderOption={(props, option) => {
+          const { key, ...newProps } =
+            props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
           if (option.tag_name) {
             return (
-              <li {...props} onClick={() => handleNewTag(option.tag_name)}>
+              <li key={key} {...newProps}>
+                <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
                   {option.tag_name}
+                </Button>
               </li>
             );
           }
-          return <li {...props}>{option.tag_name}</li>;
+          return (
+            <li key={option.tag_id} {...newProps}>
+              {option.tag_name}
+            </li>
+          );
         }}
         sx={{ width: "500px" }}
+        isOptionEqualToValue={(option, value) =>
+          value.tag_name === option.tag_name || value.tag_name === ""
+        }
       />
       <Layout.Spacer multiplier={2} />
       <Layout.FlexBox
@@ -350,6 +374,24 @@ const ContentBox = ({
               Failed to save content.
             </Alert>
           ) : null}
+          <Snackbar
+            open={snackMessage !== null}
+            autoHideDuration={6000}
+            onClose={() => {
+              setSnackMessage(null);
+            }}
+          >
+            <Alert
+              onClose={() => {
+                setSnackMessage(null);
+              }}
+              severity="error"
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {snackMessage}
+            </Alert>
+          </Snackbar>
         </Layout.FlexBox>
       </Layout.FlexBox>
     </Layout.FlexBox>

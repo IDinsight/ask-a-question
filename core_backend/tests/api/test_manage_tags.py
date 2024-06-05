@@ -70,8 +70,8 @@ class TestManageTags:
     @pytest.mark.parametrize(
         "tag_name",
         [
-            ("tag_first"),
-            ("tag_second"),
+            ("TAG_FIRST"),
+            ("TAG_SECOND"),
         ],
     )
     async def test_edit_and_retrieve_tag(
