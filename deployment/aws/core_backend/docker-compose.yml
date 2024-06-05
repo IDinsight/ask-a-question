@@ -12,6 +12,7 @@ services:
       - PROJECT_NAME=${PROJECT_NAME}
       - ENV=${ENV}
       - LITELLM_ENDPOINT=${LITELLM_ENDPOINT}
+      - LANGFUSE={LANGFUSE}
     ports:
       - 8000:8000
     deploy:
