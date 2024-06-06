@@ -14,6 +14,17 @@ model_list:
     litellm_params:
       model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
+      # model: gemini/gemini-1.5-pro-latest
+      # api_key: "os.environ/GEMINI_API_KEY"
+      # safety_settings:
+      #   - category: HARM_CATEGORY_HARASSMENT
+      #     threshold: BLOCK_NONE
+      #   - category: HARM_CATEGORY_HATE_SPEECH
+      #     threshold: BLOCK_NONE
+      #   - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+      #     threshold: BLOCK_NONE
+      #   - category: HARM_CATEGORY_DANGEROUS_CONTENT
+      #     threshold: BLOCK_NONE
   - model_name: detect-language
     litellm_params:
       model: gpt-4o
