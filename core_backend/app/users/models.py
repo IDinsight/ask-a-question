@@ -34,9 +34,9 @@ class UserDB(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    hashed_password: Mapped[str] = mapped_column(String(64), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
 
-    hashed_api_key: Mapped[str] = mapped_column(String(64), nullable=True, unique=True)
+    hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
 
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
