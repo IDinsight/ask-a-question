@@ -54,30 +54,40 @@ The admin app will be available on [https://localhost](https://localhost) and th
 
 3. Set required environment variables in your terminal using
 
-        export OPENAI_API_KEY=sk...  # required for model proxy server
         export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
-        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional
+        # API keys for LLM models used in litellm_proxy_config.yaml, for example
+        export OPENAI_API_KEY=sk... # if using OpenAI
+        export GEMINI_API_KEY=... # if using Gemini
 
-4. (optional) Set custom login credentials by setting the following environment variables. The defaults
+4. (optional) Set optional environment variables
+
+        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID> # optional, to enable Google login
+        # if you want to track using LANGFUSE
+        export LANGFUSE=True
+        export LANGFUSE_PUBLIC_KEY=pk-...
+        export LANGFUSE_SECRET_KEY=sk-...
+
+5. (optional) Set custom login credentials by setting the following environment variables. The defaults
 can be found in `core_backend/add_users_to_db.py`.
 
         # user 1
-        export USER1_USERNAME = "user1"
-        export USER1_PASSWORD = "fullaccess"
-        export USER1_API_KEY = "user1-key"
+        export USER1_USERNAME="user1"
+        export USER1_PASSWORD="fullaccess"
+        export USER1_API_KEY="user1-key"
 
         # user 2
-        export USER2_USERNAME = "user2"
-        export USER2_PASSWORD = "fullaccess"
-        export USER2_API_KEY = "user2-key"
+        export USER2_USERNAME="user2"
+        export USER2_PASSWORD="fullaccess"
+        export USER2_API_KEY="user2-key"
 
-5. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
-6. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
+6. (optional) Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+
+7. Run Make target to set up required Docker containers for the database and the LiteLLM proxy server.
 
         make setup-dev
 
-7. Run the app
+8. Run the app
 
         python core_backend/main.py
 
@@ -86,7 +96,7 @@ can be found in `core_backend/add_users_to_db.py`.
 
      You can test the endpoints by going to [http://localhost:8000/docs](http://localhost:8000/docs) (backend will be running on [http://localhost:8000](http://localhost:8000)).
 
-8. Once done, exit the running app process with `ctrl+c` and run
+9. Once done, exit the running app process with `ctrl+c` and run
 
         make teardown-dev
 
