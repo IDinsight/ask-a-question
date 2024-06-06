@@ -124,7 +124,7 @@ resource "aws_secretsmanager_secret_version" "openai_key_secret" {
   # The secret version is created for the OpenAI API key secret.
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.openai_key_secret.id
-  secret_string = "replace"
+  secret_string = "placeholder"
 
   lifecycle {
     ignore_changes = [secret_string]
@@ -135,7 +135,7 @@ resource "aws_secretsmanager_secret_version" "gemini_key_secret" {
   # The secret version is created for the Gemini API key secret.
   # The value will be added manually to the secret version.
   secret_id     = aws_secretsmanager_secret.gemini_key_secret.id
-  secret_string = "replace"
+  secret_string = "placeholder"
 
   lifecycle {
     ignore_changes = [secret_string]
