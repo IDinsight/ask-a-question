@@ -1,6 +1,5 @@
 import argparse
 import csv
-import json
 import os
 from getpass import getpass
 
