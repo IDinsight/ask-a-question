@@ -52,7 +52,13 @@ async def save_urgency_rule_to_db(
     """
     Save urgency rule to the database
     """
-    urgency_rule_vector = await embedding(urgency_rule.urgency_rule_text)
+    metadata = {
+        "trace_user_id": "user_id-" + str(user_id),
+        "generation_name": "save_urgency_rule_to_db",
+    }
+    urgency_rule_vector = await embedding(
+        urgency_rule.urgency_rule_text, metadata=metadata
+    )
     urgency_rule_db = UrgencyRuleDB(
         user_id=user_id,
         urgency_rule_text=urgency_rule.urgency_rule_text,
@@ -79,6 +85,7 @@ async def update_urgency_rule_in_db(
     """
     metadata = {
         "trace_user_id": "user_id-" + str(user_id),
+        "trace_id": "urgency_rule_id-" + str(urgency_rule_id),
         "generation_name": "update_urgency_rule_in_db",
     }
     urgency_rule_vector = await embedding(

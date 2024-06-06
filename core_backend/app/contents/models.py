@@ -82,8 +82,12 @@ async def save_content_to_db(
     """
     Vectorizes and saves a content in the database
     """
+    metadata = {
+        "trace_user_id": "user_id-" + str(user_id),
+        "generation_name": "save_content_to_db",
+    }
 
-    content_embedding = await _get_content_embeddings(content)
+    content_embedding = await _get_content_embeddings(content, metadata=metadata)
     content_db = ContentDB(
         user_id=user_id,
         content_embedding=content_embedding,
@@ -118,8 +122,13 @@ async def update_content_in_db(
     """
     Updates a content and vector in the database
     """
+    metadata = {
+        "trace_user_id": "user_id-" + str(user_id),
+        "trace_id": "content_id-" + str(content_id),
+        "generation_name": "update_content_in_db",
+    }
 
-    content_embedding = await _get_content_embeddings(content)
+    content_embedding = await _get_content_embeddings(content, metadata=metadata)
     content_db = ContentDB(
         content_id=content_id,
         user_id=user_id,
@@ -213,12 +222,13 @@ async def get_list_of_content_from_db(
 
 async def _get_content_embeddings(
     content: ContentCreate | ContentUpdate,
+    metadata: Optional[dict] = None,
 ) -> List[float]:
     """
     Vectorizes the content
     """
     text_to_embed = content.content_title + "\n" + content.content_text
-    return await embedding(text_to_embed)
+    return await embedding(text_to_embed, metadata=metadata)
 
 
 async def get_similar_content_async(
