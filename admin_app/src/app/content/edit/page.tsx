@@ -113,6 +113,7 @@ const ContentBox = ({
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const { token } = useAuth();
+  const [inputVal, setInputVal] = React.useState<string>("");
 
   const router = useRouter();
   React.useEffect(() => {
@@ -211,17 +212,16 @@ const ContentBox = ({
   };
   const handleNewTag = (tag: string) => {
     const match = tag.match(/"([^"]*)"/);
-    if (match) {
-      tag = match[1];
-      const isTagExists = tags.filter((t) => t.tag_name === tag);
-      if (isTagExists.length == 0) {
-        const data = addTag(tag).then((data: Tag) => {
-          handleTagsChange([...contentTags, data]);
-          setRefreshKey((prevKey) => prevKey + 1);
-        });
-      } else {
-        setSnackMessage(`Tag "${tag}" already exists`);
-      }
+
+    tag = match ? match[1] : tag;
+    const isTagExists = tags.filter((t) => t.tag_name === tag);
+    if (isTagExists.length == 0) {
+      const data = addTag(tag).then((data: Tag) => {
+        handleTagsChange([...contentTags, data]);
+        setRefreshKey((prevKey) => prevKey + 1);
+      });
+    } else {
+      setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
   return (
@@ -247,6 +247,22 @@ const ContentBox = ({
             variant="outlined"
             label="Tags"
             placeholder="Add Tags"
+            onChange={(event) => setInputVal(event.target.value)}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                inputVal &&
+                !availableTags.some(
+                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                ) &&
+                !contentTags.some(
+                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                )
+              ) {
+                event.preventDefault();
+                handleNewTag(inputVal);
+              }
+            }}
           />
         )}
         filterOptions={(options, params) => {
@@ -269,9 +285,20 @@ const ContentBox = ({
         renderOption={(props, option) => {
           const { key, ...newProps } =
             props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
-          if (option.tag_name) {
+          const { onKeyDown, ...rest } = newProps;
+          if (
+            option.tag_name &&
+            !availableTags.some(
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+            ) &&
+            !contentTags.some(
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+            )
+          ) {
             return (
-              <li key={key} {...newProps}>
+              <li key={key} {...rest}>
                 <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
                   {option.tag_name}
                 </Button>
@@ -279,7 +306,7 @@ const ContentBox = ({
             );
           }
           return (
-            <li key={option.tag_id} {...newProps}>
+            <li key={option.tag_id} {...rest}>
               {option.tag_name}
             </li>
           );

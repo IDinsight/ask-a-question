@@ -186,7 +186,7 @@ const CardsGrid = ({
               .includes(searchTerm.toLowerCase()) ||
             card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
-          const matchesAllTags = filterTags.every((fTag) =>
+          const matchesAllTags = filterTags.some((fTag) =>
             card.content_tags.includes(fTag.tag_id)
           );
 
