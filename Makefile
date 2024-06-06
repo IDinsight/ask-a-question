@@ -67,6 +67,7 @@ setup-llm-proxy:
 		--rm \
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		-e GEMINI_API_KEY=$(GEMINI_API_KEY) \
 		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
 		-e EMBEDDINGS_ENDPOINT=$(EMBEDDINGS_ENDPOINT) \
 		-p 4000:4000 \
@@ -89,7 +90,7 @@ setup-embeddings:
 		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
 		-e HUGGINGFACE_MODEL=$(HUGGINGFACE_MODEL) \
 		-p 8080:8080 \
-		-d embeddings 
+		-d embeddings
 
 teardown-embeddings:
 	@docker stop embeddings
