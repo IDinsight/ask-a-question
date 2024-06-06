@@ -27,6 +27,7 @@ Fill with `x` for completed.
 - [ ] I have reviewed my own code to ensure good quality
 - [ ] I have tested the functionality of my code to ensure it works as intended
 - [ ] I have resolved merge conflicts
+
 (Delete any items below that are not relevant)
 - [ ] I have updated the automated tests
 - [ ] I have updated the scripts in `scripts/`
