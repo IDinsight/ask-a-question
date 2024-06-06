@@ -21,7 +21,7 @@ from ..question_answer.schemas import (
 )
 from ..utils import get_http_client, setup_logger
 from .llm_prompts import AlignmentScore
-from .utils import _ask_llm_async
+from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger("OUTPUT RAILS")
 
@@ -148,7 +148,7 @@ async def _get_alignScore_score(
 
 
 async def _get_llm_align_score(
-    align_score_data: AlignScoreData, metadata: Optional[dict]
+    align_score_data: AlignScoreData, metadata: Optional[dict] = None
 ) -> AlignmentScore:
     """
     Get the alignment score from the LLM
@@ -159,9 +159,11 @@ async def _get_llm_align_score(
         prompt=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
+        json=True,
     )
 
     try:
+        result = remove_json_markdown(result)
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
         logger.error(f"LLM alignment score response is not valid json: {e}")
