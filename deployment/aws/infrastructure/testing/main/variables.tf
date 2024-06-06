@@ -213,6 +213,11 @@ variable "gemini_key_secret_name" {
   description = "value for the Gemini API key secret name"
 }
 
+variable "langfuse_keys_secret_name" {
+  type        = string
+  description = "value for the Langfuse keys secret name"
+}
+
 variable "whatsapp_verify_token_secret_name" {
   type        = string
   description = "value for the whatsapp verify token secret name"

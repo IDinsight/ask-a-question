@@ -141,3 +141,21 @@ resource "aws_secretsmanager_secret_version" "gemini_key_secret" {
     ignore_changes = [secret_string]
   }
 }
+
+# secret for Langfuse keys
+resource "aws_secretsmanager_secret" "langfuse_keys_secret" {
+  # AWS Secrets Manager is used to store the access secret.
+  name                    = var.langfuse_secret_name
+  tags                    = merge({ Name = var.langfuse_secret_name, Module = "Web" }, var.tags)
+  recovery_window_in_days = 0
+
+}
+
+resource "aws_secretsmanager_secret_version" "langfuse_keys_secret" {
+  # The secret version is created for the access secret.
+  secret_id = aws_secretsmanager_secret.langfuse_keys_secret.id
+  secret_string = jsonencode({
+    public_key = "placeholder",
+    secret_key = "placeholder",
+  })
+}
