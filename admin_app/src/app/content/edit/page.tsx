@@ -23,6 +23,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -45,7 +46,8 @@ const AddEditContentPage = () => {
   const content_id = Number(searchParams.get("content_id")) || null;
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [openDiscardChangesModal, setOpenDiscardChangesModal] = React.useState(false);
+  const [openDiscardChangesModal, setOpenDiscardChangesModal] =
+    React.useState(false);
 
   const [isSaved, setIsSaved] = React.useState(true);
 
@@ -151,6 +153,8 @@ const ContentBox = ({
   const [inputVal, setInputVal] = React.useState<string>("");
   const [highlightedOption, setHighlightedOption] =
     React.useState<Tag | null>();
+  const [isSaving, setIsSaving] = React.useState(false);
+
   const router = useRouter();
   React.useEffect(() => {
     const fetchTags = async () => {
@@ -160,10 +164,12 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id)
+                data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
-        setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
+        setContentTags(
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+        );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
         console.error("Failed to fetch tags:", error);
@@ -173,6 +179,7 @@ const ContentBox = ({
     fetchTags();
   }, [refreshKey]);
   const saveContent = async (content: Content) => {
+    setIsSaving(true);
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
@@ -196,6 +203,9 @@ const ContentBox = ({
         console.error("Error processing content:", error);
         setSaveError(true);
         return null;
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
 
     return await result;
@@ -216,7 +226,7 @@ const ContentBox = ({
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content
+    key: keyof Content,
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -313,11 +323,11 @@ const ContentBox = ({
           const filtered = filter(options, params);
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name
+            (option) => inputValue.toUpperCase() === option.tag_name,
           );
 
           const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name
+            (tag) => inputValue.toUpperCase() === tag.tag_name,
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
@@ -327,17 +337,20 @@ const ContentBox = ({
           return filtered;
         }}
         renderOption={(props, option) => {
-          const { key, ...newProps } = props as React.HTMLAttributes<HTMLLIElement> & {
-            key: React.Key;
-          };
+          const { key, ...newProps } =
+            props as React.HTMLAttributes<HTMLLIElement> & {
+              key: React.Key;
+            };
           const { onKeyDown, ...rest } = newProps;
           if (
             option.tag_name &&
             !availableTags.some(
-              (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
             ) &&
             !contentTags.some(
-              (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
             )
           ) {
             return (
@@ -406,12 +419,16 @@ const ContentBox = ({
           value={content ? content.content_text : ""}
           onChange={(e) => handleChange(e, "content_text")}
         />
-        <Layout.FlexBox flexDirection="row" sx={{ justifyContent: "space-between" }}>
-          <Button
+        <Layout.FlexBox
+          flexDirection="row"
+          sx={{ justifyContent: "space-between" }}
+        >
+          <LoadingButton
             variant="contained"
             disabled={isSaved}
             color="primary"
             sx={[{ width: "5%" }]}
+            loading={isSaving}
             onClick={() => {
               if (!content) {
                 setIsTitleEmpty(true);
@@ -426,7 +443,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`
+                      `/content/?content_id=${content_id}&action=${actionType}`,
                     );
                   }
                 };
@@ -435,7 +452,7 @@ const ContentBox = ({
             }}
           >
             Save
-          </Button>
+          </LoadingButton>
           {saveError ? (
             <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
               Failed to save content.
@@ -507,7 +524,9 @@ const DiscardChangesModal = ({
       aria-labelledby="alert-dialog-discard-change-title"
       aria-describedby="alert-dialog-discard-change-description"
     >
-      <DialogTitle id="alert-dialog-discard-change-title">Discard Changes</DialogTitle>
+      <DialogTitle id="alert-dialog-discard-change-title">
+        Discard Changes
+      </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-discard-change-description">
           You have unsaved changes. Are you sure you want to discard them?
