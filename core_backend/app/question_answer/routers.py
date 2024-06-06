@@ -114,12 +114,17 @@ async def get_llm_answer(
         )
 
     if not isinstance(response, QueryResponseError):
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+            "trace_user_id": "user_id-" + str(user_id),
+        }
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,
                 question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
+                metadata=metadata,
             )
         )
 
@@ -127,9 +132,10 @@ async def get_llm_answer(
         context = get_context_string_from_retrieved_contents(content_response)
 
         llm_response = await get_llm_rag_answer(
-            question.query_text,
-            context,
-            question.original_language,
+            question=question.query_text,
+            context=context,
+            response_language=question.original_language,
+            metadata=metadata,
         )
 
         if llm_response == ANSWER_FAILURE_MESSAGE:
@@ -223,12 +229,17 @@ async def get_semantic_matches(
     Get similar contents from content table
     """
     if not isinstance(response, QueryResponseError):
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+            "trace_user_id": "user_id-" + str(user_id),
+        }
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,
                 question=question.query_text,
                 n_similar=n_similar,
                 asession=asession,
+                metadata=metadata,
             )
         )
 

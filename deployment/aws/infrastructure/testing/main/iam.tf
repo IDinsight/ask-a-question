@@ -59,6 +59,7 @@ data "aws_iam_policy_document" "web_ec2_role_policy" {
       aws_secretsmanager_secret.whatsapp_token_secret.arn,
       aws_secretsmanager_secret.openai_key_secret.arn,
       aws_secretsmanager_secret.gemini_key_secret.arn,
+      aws_secretsmanager_secret.langfuse_keys_secret.arn,
       aws_secretsmanager_secret.whatsapp_verify_token_secret.arn,
     ]
   }

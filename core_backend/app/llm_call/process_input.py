@@ -3,7 +3,7 @@ These are functions that can be used to parse the input questions.
 """
 
 from functools import wraps
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 from ..config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
@@ -50,7 +50,16 @@ def identify_language__before(func: Callable) -> Callable:
         """
         Wrapper function to identify the language of the question.
         """
-        question, response = await _identify_language(question, response)
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+        }
+
+        if "user_id" in kwargs:
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+
+        question, response = await _identify_language(
+            question, response, metadata=metadata
+        )
         response = await func(question, response, *args, **kwargs)
         return response
 
@@ -58,7 +67,9 @@ def identify_language__before(func: Callable) -> Callable:
 
 
 async def _identify_language(
-    question: QueryRefined, response: QueryResponse | QueryResponseError
+    question: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
     Identifies the language of the question.
@@ -70,6 +81,7 @@ async def _identify_language(
         question=question.query_text,
         prompt=IdentifiedLanguage.get_prompt(),
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
+        metadata=metadata,
     )
 
     identified_lang = getattr(
@@ -143,7 +155,15 @@ def translate_question__before(func: Callable) -> Callable:
         """
         Wrapper function to translate the question.
         """
-        question, response = await _translate_question(question, response)
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+        }
+        if "user_id" in kwargs:
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+
+        question, response = await _translate_question(
+            question, response, metadata=metadata
+        )
         response = await func(question, response, *args, **kwargs)
 
         return response
@@ -152,13 +172,16 @@ def translate_question__before(func: Callable) -> Callable:
 
 
 async def _translate_question(
-    question: QueryRefined, response: QueryResponse | QueryResponseError
+    question: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
     Translates the question to English.
     """
 
     # skip if error or already in English
+
     if (
         isinstance(response, QueryResponseError)
         or question.original_language == IdentifiedLanguage.ENGLISH
@@ -177,6 +200,7 @@ async def _translate_question(
         question=question.query_text,
         prompt=TRANSLATE_PROMPT.format(language=question.original_language.value),
         litellm_model=LITELLM_MODEL_TRANSLATE,
+        metadata=metadata,
     )
     if translation_response != TRANSLATE_FAILED_MESSAGE:
         question.query_text = translation_response
@@ -209,7 +233,15 @@ def classify_safety__before(func: Callable) -> Callable:
         """
         Wrapper function to classify the safety of the question.
         """
-        question, response = await _classify_safety(question, response)
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+        }
+        if "user_id" in kwargs:
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+
+        question, response = await _classify_safety(
+            question, response, metadata=metadata
+        )
         response = await func(question, response, *args, **kwargs)
         return response
 
@@ -217,12 +249,16 @@ def classify_safety__before(func: Callable) -> Callable:
 
 
 async def _classify_safety(
-    question: QueryRefined, response: QueryResponse | QueryResponseError
+    question: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
     Classifies the safety of the question.
     """
 
+    if metadata is None:
+        metadata = {}
     if isinstance(response, QueryResponseError):
         return question, response
 
@@ -230,6 +266,7 @@ async def _classify_safety(
         question.query_text,
         SafetyClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_SAFETY,
+        metadata=metadata,
     )
     safety_classification = getattr(SafetyClassification, llm_classified_safety)
     if safety_classification == SafetyClassification.SAFE:
@@ -268,7 +305,15 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         """
         Wrapper function to check if the question is on-topic or off-topic.
         """
-        question, response = await _classify_on_off_topic(question, response)
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+        }
+        if "user_id" in kwargs:
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+
+        question, response = await _classify_on_off_topic(
+            question, response, metadata=metadata
+        )
         response = await func(question, response, *args, **kwargs)
         return response
 
@@ -276,7 +321,9 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
 
 
 async def _classify_on_off_topic(
-    user_query: QueryRefined, response: QueryResponse | QueryResponseError
+    user_query: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
     Checks if the user query is on-topic or off-topic.
@@ -288,6 +335,7 @@ async def _classify_on_off_topic(
         question=user_query.query_text,
         prompt=OnOffTopicClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
+        metadata=metadata,
     )
     label_cleaned = label.replace(" ", "_").upper()
     on_off_topic_label = getattr(
@@ -328,7 +376,14 @@ def paraphrase_question__before(func: Callable) -> Callable:
         """
         Wrapper function to paraphrase the question.
         """
-        question, response = await _paraphrase_question(question, response)
+        metadata = {
+            "trace_id": "query_id-" + str(response.query_id),
+        }
+        if "user_id" in kwargs:
+            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        question, response = await _paraphrase_question(
+            question, response, metadata=metadata
+        )
         response = await func(question, response, *args, **kwargs)
 
         return response
@@ -337,13 +392,17 @@ def paraphrase_question__before(func: Callable) -> Callable:
 
 
 async def _paraphrase_question(
-    question: QueryRefined, response: QueryResponse | QueryResponseError
+    question: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
     Paraphrases the question. If it is unable to identify the question,
     it will return the original sentence.
     """
 
+    if metadata is None:
+        metadata = {}
     if isinstance(response, QueryResponseError):
         return question, response
 
@@ -351,6 +410,7 @@ async def _paraphrase_question(
         question=question.query_text,
         prompt=PARAPHRASE_PROMPT,
         litellm_model=LITELLM_MODEL_PARAPHRASE,
+        metadata=metadata,
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
         question.query_text = paraphrase_response

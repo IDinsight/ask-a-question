@@ -2,7 +2,7 @@ import json
 import random
 from collections import namedtuple
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import httpx
 import numpy as np
@@ -240,12 +240,14 @@ async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
 
 
 async def mock_return_args(
-    question: QueryRefined, response: QueryResponse
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
 ) -> Tuple[QueryRefined, QueryResponse]:
     return question, response
 
 
-async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]:
+async def mock_detect_urgency(
+    urgency_rule: str, message: str, metadata: Optional[dict]
+) -> Dict[str, Any]:
     return {
         "statement": urgency_rule,
         "probability": 0.7,
@@ -254,7 +256,7 @@ async def mock_detect_urgency(urgency_rule: str, message: str) -> Dict[str, Any]
 
 
 async def mock_identify_language(
-    question: QueryRefined, response: QueryResponse
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
 ) -> Tuple[QueryRefined, QueryResponse]:
     """
     Monkeypatch call to LLM language identification service
@@ -266,7 +268,7 @@ async def mock_identify_language(
 
 
 async def mock_translate_question(
-    question: QueryRefined, response: QueryResponse
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
 ) -> Tuple[QueryRefined, QueryResponse]:
     """
     Monkeypatch call to LLM translation service

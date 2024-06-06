@@ -3,7 +3,7 @@ These are functions to check the LLM response
 """
 
 from functools import wraps
-from typing import Any, Callable, TypedDict
+from typing import Any, Callable, Optional, TypedDict
 
 from pydantic import ValidationError
 
@@ -97,7 +97,8 @@ async def _check_align_score(
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(align_score_data)
+        metadata = {"trace_id": "query_id-" + str(llm_response.query_id)}
+        align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
 
@@ -146,7 +147,9 @@ async def _get_alignScore_score(
     return alignment_score
 
 
-async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentScore:
+async def _get_llm_align_score(
+    align_score_data: AlignScoreData, metadata: Optional[dict]
+) -> AlignmentScore:
     """
     Get the alignment score from the LLM
     """
@@ -155,6 +158,7 @@ async def _get_llm_align_score(align_score_data: AlignScoreData) -> AlignmentSco
         question=align_score_data["claim"],
         prompt=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
+        metadata=metadata,
     )
 
     try:

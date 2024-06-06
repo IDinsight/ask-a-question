@@ -13,10 +13,13 @@ async def _ask_llm_async(
     prompt: str,
     litellm_model: Optional[str] = LITELLM_MODEL_DEFAULT,
     litellm_endpoint: Optional[str] = LITELLM_ENDPOINT,
+    metadata: Optional[dict] = None,
 ) -> str:
     """
     This is a generic function to ask the LLM model a question.
     """
+    if metadata is not None:
+        metadata["generation_name"] = litellm_model
 
     messages = [
         {
@@ -29,13 +32,14 @@ async def _ask_llm_async(
         },
     ]
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
+
     llm_response_raw = await acompletion(
         model=litellm_model,
         messages=messages,
         temperature=0,
         api_base=litellm_endpoint,
         api_key=LITELLM_API_KEY,
-        metadata={"generation_name": litellm_model},
+        metadata=metadata,
     )
     logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")
 

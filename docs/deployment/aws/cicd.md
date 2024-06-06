@@ -49,6 +49,13 @@ deployment environment:
 | REPO              | `aaq-demo-ecr-repository`                       | Name of the ECR repository created using Terraform                          |
 | ROLE              | `aaq-demo-github-actions-role`                  | Name of the GitHub Actions role for this environment created using Terraform |
 | TASK_ROLE_ARN     | `arn:aws:iam::000000000000:role/aaq-demo-web-task-role` | ARN of the ECS task role created using Terraform                            |
+| NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID | `00000000-abcde12345.apps.googleusercontent.com` | (Optional) Google Client ID if you want to use Google login |
+
+Optionally set the following environment variable(s):
+
+| Name              | Example                                      | Description                                                                 |
+|-------------------|----------------------------------------------|-----------------------------------------------------------------------------|
+| LANGFUSE          | `False`                                      | Set to `True` to enable Langfuse tracing. See more in [Tracing with Langfuse](../config-options.md#tracing-with-langfuse). |
 
 !!! note
     See Github Actions' ["Using environments for

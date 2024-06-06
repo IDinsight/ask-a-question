@@ -58,4 +58,3 @@ litellm_settings:
   request_timeout: 100 # raise Timeout error if call takes longer than 10s. Sets litellm.request_timeout
   # fallbacks: [{"paraphrase": ["default"]}] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
-  # success_callback: ["langfuse"]  # Optional, if you want to monitor with Langfuse

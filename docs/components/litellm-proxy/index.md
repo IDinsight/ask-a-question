@@ -55,27 +55,7 @@ litellm_settings:
 
 See the [Contributing Setup](../../develop/setup.md) and [Docker Compose Setup](../../deployment/quick-setup.md) for how this service is run in our stack.
 
-## Monitoring with Langfuse
-
-You can log all inputs and outputs of LiteLLM Proxy server via Langfuse.
-
-1. Add Langfuse to `litellm_proxy_config.yaml`
-
-    ```yaml
-    litellm_settings:
-      success_callback: ["langfuse"]
-    ```
-
-1. Include Langfuse credentials as environment variables in your deployment environment.
-   If you are using `docker compose`, add the following in your
-   `deployment/docker-compose/.env` file:
-
-    ```.env
-    LANGFUSE_PUBLIC_KEY=pk-...
-    LANGFUSE_SECRET_KEY=sk-...
-    ```
 
 ## Also see
 
 - [Latest Updates: Adding a model proxy server](../../blog/posts/move-to-litellm-proxy.md)
-- [LiteLLM's Langfuse Integration docs](https://docs.litellm.ai/docs/observability/langfuse_integration)

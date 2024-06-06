@@ -119,6 +119,7 @@ jobs:
           REPO: ${{ secrets.REPO }}
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
           ENV: ${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+          LANGFUSE: ${{ vars.LANGFUSE }}
       # We need this since deploy task definition action needs the task definition in json format
 
       - name: Task definition download

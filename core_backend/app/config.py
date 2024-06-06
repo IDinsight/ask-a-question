@@ -66,3 +66,6 @@ EMBEDDINGS_API_KEY = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
 EMBEDDINGS_ENDPOINT = os.environ.get(
     "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
 )
+
+# Logging
+LANGFUSE = os.environ.get("LANGFUSE", "False")
