@@ -36,6 +36,7 @@ async def _ask_llm_async(
         api_base=litellm_endpoint,
         api_key=LITELLM_API_KEY,
         metadata={"generation_name": litellm_model},
+        # override default safety settings for gemini
         safety_settings=[
             {
                 "category": "HARM_CATEGORY_HARASSMENT",
