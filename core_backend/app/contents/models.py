@@ -124,7 +124,6 @@ async def update_content_in_db(
     """
     metadata = {
         "trace_user_id": "user_id-" + str(user_id),
-        "trace_id": "content_id-" + str(content_id),
         "generation_name": "update_content_in_db",
     }
 

@@ -85,7 +85,6 @@ async def update_urgency_rule_in_db(
     """
     metadata = {
         "trace_user_id": "user_id-" + str(user_id),
-        "trace_id": "urgency_rule_id-" + str(urgency_rule_id),
         "generation_name": "update_urgency_rule_in_db",
     }
     urgency_rule_vector = await embedding(
