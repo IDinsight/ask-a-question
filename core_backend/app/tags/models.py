@@ -18,7 +18,7 @@ from ..models import Base
 from .schemas import TagCreate
 
 content_tags_table = Table(
-    "content_tags",
+    "content-tag",
     Base.metadata,
     Column("content_id", Integer, ForeignKey("content.content_id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tag.tag_id"), primary_key=True),
@@ -59,6 +59,7 @@ async def save_tag_to_db(
     tag_db = TagDB(
         tag_name=tag.tag_name,
         user_id=user_id,
+        contents=[],
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )

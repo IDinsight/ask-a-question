@@ -76,7 +76,6 @@ if __name__ == "__main__":
                 language = args.language
             else:
                 language = row["language"]
-
             payload = {
                 "content_title": row["title"],
                 "content_text": row["body"],

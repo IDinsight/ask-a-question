@@ -6,12 +6,13 @@ import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
-import { Autocomplete } from "@mui/material";
-
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
+import { Snackbar } from "@mui/material";
 import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
+import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -28,17 +29,13 @@ interface EditContentBody {
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
-interface Tag {
-  tag_id: number;
-  tag_name: string;
-}
+
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
   const content_id = Number(searchParams.get("content_id")) || null;
 
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-
   const { token } = useAuth();
   React.useEffect(() => {
     if (!content_id) {
@@ -83,6 +80,9 @@ const AddEditContentPage = () => {
             getTagList={() => {
               return apiCalls.getTagList(token!);
             }}
+            addTag={(tag: string) => {
+              return apiCalls.createTag(tag, token!);
+            }}
           />
           <Layout.Spacer multiplier={1} />
         </Layout.FlexBox>
@@ -95,21 +95,25 @@ const ContentBox = ({
   content,
   setContent,
   getTagList,
+  addTag,
 }: {
   content: Content | null;
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   getTagList: () => Promise<Tag[]>;
+  addTag: (tag: string) => Promise<Tag>;
 }) => {
   const [isSaved, setIsSaved] = React.useState(true);
   const [saveError, setSaveError] = React.useState(false);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
   const [tags, setTags] = React.useState<Tag[]>([]);
-
+  const [refreshKey, setRefreshKey] = React.useState(0);
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
-
+  const filter = createFilterOptions<Tag>();
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const { token } = useAuth();
+  const [inputVal, setInputVal] = React.useState<string>("");
 
   const router = useRouter();
   React.useEffect(() => {
@@ -120,11 +124,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id),
+                data.find((tag) => tag.tag_id === tag_id)
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+          defaultTags.filter((tag): tag is Tag => tag !== undefined)
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -133,7 +137,7 @@ const ContentBox = ({
     };
 
     fetchTags();
-  }, []);
+  }, [refreshKey]);
   const saveContent = async (content: Content) => {
     const body: EditContentBody = {
       content_title: content.content_title,
@@ -162,12 +166,8 @@ const ContentBox = ({
 
     return await result;
   };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content,
-  ) => {
-    const emptyContent: Content = {
+  function createEmptyContent(contentTags: Tag[]): Content {
+    return {
       content_id: null,
       created_datetime_utc: "",
       updated_datetime_utc: "",
@@ -179,6 +179,12 @@ const ContentBox = ({
       content_language: "ENGLISH",
       content_metadata: {},
     };
+  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    key: keyof Content
+  ) => {
+    const emptyContent = createEmptyContent(contentTags);
 
     setIsTitleEmpty(false);
     setIsContentEmpty(false);
@@ -188,10 +194,7 @@ const ContentBox = ({
       : setContent({ ...emptyContent, [key]: e.target.value });
     setIsSaved(false);
   };
-  const handleTagsChange = (
-    event: React.SyntheticEvent,
-    updatedTags: Tag[],
-  ) => {
+  const handleTagsChange = (updatedTags: Tag[]) => {
     setContentTags(updatedTags);
     setIsSaved(false);
     if (content) {
@@ -201,30 +204,117 @@ const ContentBox = ({
           content_tags: updatedTags.map((tag) => tag!.tag_id),
         };
       });
+    } else {
+      setContent(createEmptyContent(updatedTags));
     }
+
     setAvailableTags(tags.filter((tag) => !updatedTags.includes(tag)));
   };
+  const handleNewTag = (tag: string) => {
+    const match = tag.match(/"([^"]*)"/);
 
+    tag = match ? match[1] : tag;
+    const isTagExists = tags.filter((t) => t.tag_name === tag);
+    if (isTagExists.length == 0) {
+      const data = addTag(tag).then((data: Tag) => {
+        handleTagsChange([...contentTags, data]);
+        setRefreshKey((prevKey) => prevKey + 1);
+      });
+    } else {
+      setSnackMessage(`Tag "${tag}" already exists`);
+    }
+  };
   return (
     <Layout.FlexBox>
       <Layout.Spacer multiplier={1} />
       <Autocomplete
+        autoSelect
+        selectOnFocus
+        clearOnBlur
+        handleHomeEndKeys
         multiple
         limitTags={3}
         id="tags-autocomplete"
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
         value={contentTags}
-        onChange={handleTagsChange}
+        onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
+          handleTagsChange(updatedTags);
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
             variant="outlined"
             label="Tags"
             placeholder="Add Tags"
+            onChange={(event) => setInputVal(event.target.value)}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                inputVal &&
+                !availableTags.some(
+                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                ) &&
+                !contentTags.some(
+                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                )
+              ) {
+                event.preventDefault();
+                handleNewTag(inputVal);
+              }
+            }}
           />
         )}
+        filterOptions={(options, params) => {
+          const filtered = filter(options, params);
+          const { inputValue } = params;
+          const isExisting = options.some(
+            (option) => inputValue.toUpperCase() === option.tag_name
+          );
+
+          const isSelected = contentTags.some(
+            (tag) => inputValue.toUpperCase() === tag.tag_name
+          );
+
+          if (inputValue !== "" && !isExisting && !isSelected) {
+            filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
+          }
+
+          return filtered;
+        }}
+        renderOption={(props, option) => {
+          const { key, ...newProps } =
+            props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
+          const { onKeyDown, ...rest } = newProps;
+          if (
+            option.tag_name &&
+            !availableTags.some(
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+            ) &&
+            !contentTags.some(
+              (tag) =>
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+            )
+          ) {
+            return (
+              <li key={key} {...rest}>
+                <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
+                  {option.tag_name}
+                </Button>
+              </li>
+            );
+          }
+          return (
+            <li key={option.tag_id} {...rest}>
+              {option.tag_name}
+            </li>
+          );
+        }}
         sx={{ width: "500px" }}
+        isOptionEqualToValue={(option, value) =>
+          value.tag_name === option.tag_name || value.tag_name === ""
+        }
       />
       <Layout.Spacer multiplier={2} />
       <Layout.FlexBox
@@ -296,7 +386,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
+                      `/content/?content_id=${content_id}&action=${actionType}`
                     );
                   }
                 };
@@ -311,6 +401,24 @@ const ContentBox = ({
               Failed to save content.
             </Alert>
           ) : null}
+          <Snackbar
+            open={snackMessage !== null}
+            autoHideDuration={6000}
+            onClose={() => {
+              setSnackMessage(null);
+            }}
+          >
+            <Alert
+              onClose={() => {
+                setSnackMessage(null);
+              }}
+              severity="error"
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {snackMessage}
+            </Alert>
+          </Snackbar>
         </Layout.FlexBox>
       </Layout.FlexBox>
     </Layout.FlexBox>

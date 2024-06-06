@@ -6,7 +6,14 @@ import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
-import { Button, CircularProgress, Grid } from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import {
+  Autocomplete,
+  Button,
+  CircularProgress,
+  Grid,
+  TextField,
+} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
@@ -17,16 +24,26 @@ import { SearchBar } from "../../components/SearchBar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
-
+export interface Tag {
+  tag_id: number;
+  tag_name: string;
+}
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label,
+    LANGUAGE_OPTIONS[0].label
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
+  const [tags, setTags] = React.useState<Tag[]>([]);
+  const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel } = useAuth();
 
   React.useEffect(() => {
+    const fetchTags = async () => {
+      const data = await apiCalls.getTagList(token!);
+      setTags(data);
+    };
+    fetchTags();
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
 
@@ -42,11 +59,41 @@ const CardsPage = () => {
         }}
       >
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Layout.FlexBox
+          alignItems="center"
+          sx={{ flexDirection: "row", justifyContent: "center" }}
+          gap={sizes.smallGap}
+        >
+          <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
+
+          <Autocomplete
+            multiple
+            limitTags={3}
+            id="tags-autocomplete"
+            options={tags}
+            getOptionLabel={(option) => option.tag_name}
+            value={filterTags}
+            onChange={(event, updatedTags) => {
+              setFilterTags(updatedTags);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Tags"
+                placeholder="Add Tags"
+              />
+            )}
+            sx={{ width: "80%" }}
+          />
+        </Layout.FlexBox>
       </Layout.FlexBox>
       <CardsUtilityStrip editAccess={currAccessLevel === "fullaccess"} />
       <CardsGrid
         displayLanguage={displayLanguage}
         searchTerm={searchTerm}
+        tags={tags}
+        filterTags={filterTags}
         token={token}
         accessLevel={currAccessLevel}
       />
@@ -84,11 +131,15 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
 const CardsGrid = ({
   displayLanguage,
   searchTerm,
+  tags,
+  filterTags,
   token,
   accessLevel,
 }: {
   displayLanguage: string;
   searchTerm: string;
+  tags: Tag[];
+  filterTags: Tag[];
   token: string | null;
   accessLevel: string;
 }) => {
@@ -103,7 +154,7 @@ const CardsGrid = ({
 
   const getSnackMessage = (
     action: string | null,
-    content_id: number | null,
+    content_id: number | null
   ): string | null => {
     if (action === "edit") {
       return `Content #${content_id} updated`;
@@ -114,7 +165,7 @@ const CardsGrid = ({
   };
 
   const [snackMessage, setSnackMessage] = React.useState<string | null>(
-    getSnackMessage(action, content_id),
+    getSnackMessage(action, content_id)
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -128,13 +179,22 @@ const CardsGrid = ({
     apiCalls
       .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
       .then((data) => {
-        const filteredData = data.filter(
-          (card: Content) =>
+        const filteredData = data.filter((card: Content) => {
+          const matchesSearchTerm =
             card.content_title
               .toLowerCase()
               .includes(searchTerm.toLowerCase()) ||
-            card.content_text.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+            card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+
+          const matchesAllTags = filterTags.some((fTag) =>
+            card.content_tags.includes(fTag.tag_id)
+          );
+
+          return (
+            matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
+          );
+        });
+
         setCards(filteredData);
         setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
         setIsLoading(false);
@@ -143,7 +203,7 @@ const CardsGrid = ({
         console.error("Failed to fetch content:", error);
         setIsLoading(false);
       });
-  }, [refreshKey, searchTerm, token]);
+  }, [searchTerm, filterTags, token, refreshKey]);
 
   if (isLoading) {
     return (
@@ -208,7 +268,7 @@ const CardsGrid = ({
           {cards
             .slice(
               MAX_CARDS_PER_PAGE * (page - 1),
-              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
+              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE
             )
             .map((item) => {
               if (item.content_id !== null) {
@@ -227,12 +287,19 @@ const CardsGrid = ({
                       text={item.content_text}
                       content_id={item.content_id}
                       last_modified={item.updated_datetime_utc}
+                      tags={
+                        tags
+                          ? tags.filter((tag) =>
+                              item.content_tags.includes(tag.tag_id)
+                            )
+                          : []
+                      }
                       positive_votes={item.positive_votes}
                       negative_votes={item.negative_votes}
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
-                          `Failed to delete content #${content_id}`,
+                          `Failed to delete content #${content_id}`
                         );
                       }}
                       deleteContent={(content_id: number) => {

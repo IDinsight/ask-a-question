@@ -32,6 +32,7 @@ async def create_tag(
     """
     Create tag endpoint. Calls embedding model to upsert tag to PG database
     """
+    tag.tag_name = tag.tag_name.upper()
     if not await is_tag_name_unique(user_db.user_id, tag.tag_name, asession):
         raise HTTPException(
             status_code=400, detail=f"Tag name `{tag.tag_name}` already exists"
@@ -50,6 +51,7 @@ async def edit_tag(
     """
     Edit tag endpoint
     """
+    tag.tag_name = tag.tag_name.upper()
     old_tag = await get_tag_from_db(
         user_db.user_id,
         tag_id,

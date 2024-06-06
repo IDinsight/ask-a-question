@@ -4,16 +4,18 @@ import {
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Button, Card, IconButton, Typography } from "@mui/material";
+import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "./Layout";
+import { Tag } from "@/app/content/page";
 
 const ContentCard = ({
   title,
   text,
   content_id,
   last_modified,
+  tags,
   positive_votes,
   negative_votes,
   onSuccessfulDelete,
@@ -25,6 +27,7 @@ const ContentCard = ({
   text: string;
   content_id: number;
   last_modified: string;
+  tags: Tag[];
   positive_votes: number;
   negative_votes: number;
   onSuccessfulDelete: (content_id: number) => void;
@@ -52,10 +55,34 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox flexDirection="row">
+        <Layout.FlexBox
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ width: "100%" }}
+        >
           <Typography variant="overline" sx={{ letterSpacing: 2 }}>
             #{content_id}
           </Typography>
+          {tags && tags.length > 0 && (
+            <Box display="flex" flexDirection="row" alignItems="center">
+              <Chip
+                label={tags[0].tag_name}
+                size="small"
+                sx={{
+                  bgcolor: appColors.white,
+                  color: appColors.black,
+                  border: "1px solid",
+                  borderColor: appColors.darkGrey,
+                }}
+              />
+              {tags.length > 1 && (
+                <Typography variant="body2" sx={{ marginLeft: 1 }}>
+                  +{tags.length - 1}
+                </Typography>
+              )}
+            </Box>
+          )}
         </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
@@ -114,6 +141,7 @@ const ContentCard = ({
         text={text}
         content_id={content_id}
         last_modified={last_modified}
+        tags={tags}
         open={openReadModal}
         positive_votes={positive_votes}
         negative_votes={negative_votes}

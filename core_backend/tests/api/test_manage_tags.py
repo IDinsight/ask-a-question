@@ -70,8 +70,8 @@ class TestManageTags:
     @pytest.mark.parametrize(
         "tag_name",
         [
-            ("tag_first"),
-            ("tag_second"),
+            ("TAG_FIRST"),
+            ("TAG_SECOND"),
         ],
     )
     async def test_edit_and_retrieve_tag(
@@ -123,14 +123,25 @@ class TestManageTags:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
+    @pytest.mark.parametrize(
+        "tag_name_1,tag_name_2",
+        [
+            ("TAG1", "TAG1"),
+            ("Tag2", "TAG2"),
+        ],
+    )
     async def test_add_tag_same_name_fails(
-        self, client: TestClient, fullaccess_token: str
+        self,
+        client: TestClient,
+        tag_name_1: str,
+        tag_name_2: str,
+        fullaccess_token: str,
     ) -> None:
         response = client.post(
             "/tag",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "tag_name": "tag_unique_name",
+                "tag_name": tag_name_1,
             },
         )
         assert response.status_code == 200
@@ -138,7 +149,7 @@ class TestManageTags:
             "/tag",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "tag_name": "tag_unique_name",
+                "tag_name": tag_name_2,
             },
         )
         assert response.status_code == 400
