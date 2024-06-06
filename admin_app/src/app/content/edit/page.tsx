@@ -114,7 +114,8 @@ const ContentBox = ({
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const { token } = useAuth();
   const [inputVal, setInputVal] = React.useState<string>("");
-
+  const [highlightedOption, setHighlightedOption] =
+    React.useState<Tag | null>();
   const router = useRouter();
   React.useEffect(() => {
     const fetchTags = async () => {
@@ -241,6 +242,9 @@ const ContentBox = ({
         onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
           handleTagsChange(updatedTags);
         }}
+        onHighlightChange={(event, option) => {
+          setHighlightedOption(option);
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -250,17 +254,24 @@ const ContentBox = ({
             onChange={(event) => setInputVal(event.target.value)}
             onKeyDown={(event) => {
               if (
-                event.key === "Enter" &&
-                inputVal &&
-                !availableTags.some(
-                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
-                ) &&
-                !contentTags.some(
-                  (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase()
-                )
+                !highlightedOption ||
+                highlightedOption.tag_name.startsWith('Add "')
               ) {
-                event.preventDefault();
-                handleNewTag(inputVal);
+                if (
+                  event.key === "Enter" &&
+                  inputVal &&
+                  !availableTags.some(
+                    (tag) =>
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                  ) &&
+                  !contentTags.some(
+                    (tag) =>
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                  )
+                ) {
+                  event.preventDefault();
+                  handleNewTag(inputVal);
+                }
               }
             }}
           />
