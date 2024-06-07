@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Annotated, Dict, Optional, Union
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
     OAuth2PasswordBearer,
 )
-from jose import JWTError, jwt
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_sqlalchemy_async_engine
@@ -114,7 +115,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
                 return user_db
             except UserNotFoundError as err:
                 raise credentials_exception from err
-    except JWTError as err:
+    except InvalidTokenError as err:
         raise credentials_exception from err
 
 
