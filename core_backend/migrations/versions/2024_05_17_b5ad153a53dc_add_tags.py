@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("tag_id"),
     )
     op.create_table(
-        "content-tags",
+        "content_tags",
         sa.Column("content_id", sa.Integer(), nullable=False),
         sa.Column("tag_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
