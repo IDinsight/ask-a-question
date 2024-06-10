@@ -19,7 +19,7 @@ from ..question_answer.schemas import (
     QueryResponseError,
     ResultState,
 )
-from ..utils import get_http_client, setup_logger
+from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import AlignmentScore
 from .utils import _ask_llm_async
 
@@ -97,7 +97,7 @@ async def _check_align_score(
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        metadata = {"trace_id": "query_id-" + str(llm_response.query_id)}
+        metadata = create_langfuse_metadata(query_id=llm_response.query_id)
         align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")

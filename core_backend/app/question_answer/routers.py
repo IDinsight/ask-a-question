@@ -19,7 +19,7 @@ from ..llm_call.process_input import (
 )
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
-from ..utils import generate_secret_key, setup_logger
+from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -114,10 +114,7 @@ async def get_llm_answer(
         )
 
     if not isinstance(response, QueryResponseError):
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-            "trace_user_id": "user_id-" + str(user_id),
-        }
+        metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,
@@ -229,10 +226,7 @@ async def get_semantic_matches(
     Get similar contents from content table
     """
     if not isinstance(response, QueryResponseError):
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-            "trace_user_id": "user_id-" + str(user_id),
-        }
+        metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
         content_response = convert_search_results_to_schema(
             await get_similar_content_async(
                 user_id=user_id,
