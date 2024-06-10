@@ -7,8 +7,8 @@ from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
+import litellm
 from litellm import aembedding
-from litellm.utils import langFuseLogger
 
 from .config import (
     LANGFUSE,
@@ -67,7 +67,9 @@ def create_langfuse_metadata(query_id: int, user_id: int | None = None) -> dict:
 
     if LANGFUSE == "True":
         try:
-            project_name = langFuseLogger.Langfuse.client.projects.get().data[0].name
+            project_name = (
+                litellm.utils.langFuseLogger.Langfuse.client.projects.get().data[0].name
+            )
             prefix = project_name + "-"
         except Exception:
             prefix = get_random_string(8) + "-"
