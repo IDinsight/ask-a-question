@@ -20,7 +20,7 @@ from ..question_answer.schemas import (
     QueryResponseError,
     ResultState,
 )
-from ..utils import setup_logger
+from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import (
     PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_PROMPT,
@@ -50,12 +50,9 @@ def identify_language__before(func: Callable) -> Callable:
         """
         Wrapper function to identify the language of the question.
         """
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-        }
-
-        if "user_id" in kwargs:
-            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
 
         question, response = await _identify_language(
             question, response, metadata=metadata
@@ -155,11 +152,9 @@ def translate_question__before(func: Callable) -> Callable:
         """
         Wrapper function to translate the question.
         """
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-        }
-        if "user_id" in kwargs:
-            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
 
         question, response = await _translate_question(
             question, response, metadata=metadata
@@ -233,11 +228,9 @@ def classify_safety__before(func: Callable) -> Callable:
         """
         Wrapper function to classify the safety of the question.
         """
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-        }
-        if "user_id" in kwargs:
-            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
 
         question, response = await _classify_safety(
             question, response, metadata=metadata
@@ -305,11 +298,9 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         """
         Wrapper function to check if the question is on-topic or off-topic.
         """
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-        }
-        if "user_id" in kwargs:
-            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
 
         question, response = await _classify_on_off_topic(
             question, response, metadata=metadata
@@ -376,11 +367,10 @@ def paraphrase_question__before(func: Callable) -> Callable:
         """
         Wrapper function to paraphrase the question.
         """
-        metadata = {
-            "trace_id": "query_id-" + str(response.query_id),
-        }
-        if "user_id" in kwargs:
-            metadata["trace_user_id"] = "user_id-" + str(kwargs["user_id"])
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
+
         question, response = await _paraphrase_question(
             question, response, metadata=metadata
         )

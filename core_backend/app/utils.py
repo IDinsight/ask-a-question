@@ -7,9 +7,11 @@ from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
+import litellm
 from litellm import aembedding
 
 from .config import (
+    LANGFUSE,
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
@@ -51,11 +53,34 @@ def verify_password_salted_hash(key: str, stored_hash: str) -> bool:
     return hash_obj.hexdigest() == original_hash
 
 
-def get_random_password(size: int) -> str:
+def get_random_string(size: int) -> str:
+    """Generate a random string of fixed length."""
     import random
     import string
 
     return "".join(random.choices(string.ascii_letters + string.digits, k=size))
+
+
+def create_langfuse_metadata(query_id: int, user_id: int | None = None) -> dict:
+    """Create metadata for langfuse logging."""
+    prefix = ""
+
+    if LANGFUSE == "True":
+        try:
+            project_name = (
+                litellm.utils.langFuseLogger.Langfuse.client.projects.get().data[0].name
+            )
+            prefix = project_name + "-"
+        except Exception:
+            prefix = get_random_string(8) + "-"
+
+    metadata = {
+        "trace_id": prefix + "query_id-" + str(query_id),
+    }
+    if user_id is not None:
+        metadata["trace_user_id"] = "user_id-" + str(user_id)
+
+    return metadata
 
 
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:

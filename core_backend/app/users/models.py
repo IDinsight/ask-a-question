@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
-from ..utils import get_key_hash, get_password_salted_hash, get_random_password
+from ..utils import get_key_hash, get_password_salted_hash, get_random_string
 from .schemas import UserCreate, UserCreateWithPassword
 
 PASSWORD_LENGTH = 12
@@ -68,7 +68,7 @@ async def save_user_to_db(
     if isinstance(user, UserCreateWithPassword):
         hashed_password = get_password_salted_hash(user.password)
     else:
-        random_password = get_random_password(PASSWORD_LENGTH)
+        random_password = get_random_string(PASSWORD_LENGTH)
         hashed_password = get_password_salted_hash(random_password)
 
     content_db = UserDB(
