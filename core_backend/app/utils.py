@@ -22,6 +22,22 @@ from .config import (
 SECRET_KEY_N_BYTES = 32
 
 
+# To prefix trace_id with project name
+LANGFUSE_PROJECT_NAME = None
+
+if LANGFUSE == "True":
+    langFuseLogger = litellm.utils.langFuseLogger
+    if langFuseLogger is None:
+        langFuseLogger = litellm.integrations.langfuse.LangFuseLogger()
+        LANGFUSE_PROJECT_NAME = (
+            langFuseLogger.Langfuse.client.projects.get().data[0].name
+        )
+    elif isinstance(langFuseLogger, litellm.integrations.langfuse.LangFuseLogger):
+        LANGFUSE_PROJECT_NAME = (
+            langFuseLogger.Langfuse.client.projects.get().data[0].name
+        )
+
+
 def generate_key() -> str:
     """
     Generate API key (default 32 byte = 43 characters)
@@ -63,19 +79,13 @@ def get_random_string(size: int) -> str:
 
 def create_langfuse_metadata(query_id: int, user_id: int | None = None) -> dict:
     """Create metadata for langfuse logging."""
-    prefix = ""
+    trace_id_elements = ["query_id", str(query_id)]
 
-    if LANGFUSE == "True":
-        try:
-            project_name = (
-                litellm.utils.langFuseLogger.Langfuse.client.projects.get().data[0].name
-            )
-            prefix = project_name + "-"
-        except Exception:
-            prefix = get_random_string(8) + "-"
+    if LANGFUSE_PROJECT_NAME is not None:
+        trace_id_elements.insert(0, LANGFUSE_PROJECT_NAME)
 
     metadata = {
-        "trace_id": prefix + "query_id-" + str(query_id),
+        "trace_id": "-".join(trace_id_elements),
     }
     if user_id is not None:
         metadata["trace_user_id"] = "user_id-" + str(user_id)
