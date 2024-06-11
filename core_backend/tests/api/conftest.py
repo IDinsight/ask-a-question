@@ -2,7 +2,7 @@ import json
 import random
 from collections import namedtuple
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 import httpx
 import numpy as np
@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import Item
 from pytest_asyncio import is_async_test
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
@@ -21,7 +22,7 @@ from core_backend.app.config import (
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.database import get_session
+from core_backend.app.database import build_connection_string, get_session
 from core_backend.app.llm_call import process_input, process_output
 from core_backend.app.llm_call.llm_prompts import (
     RAG,
@@ -76,6 +77,26 @@ def db_session() -> Generator[Session, None, None]:
     finally:
         session.rollback()
         next(session_gen, None)
+
+
+# We recreate engine and session to ensure it is in the same
+# event loop as the test. Without this we get "Future attached to different loop" error.
+# See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
+@pytest.fixture(scope="function")
+async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
+    connection_string = build_connection_string()
+    engine = create_async_engine(connection_string, pool_size=20)
+    yield engine
+    await engine.dispose()
+
+
+@pytest.fixture(scope="function")
+async def asession(
+    async_engine: AsyncEngine,
+) -> AsyncGenerator[AsyncSession, None]:
+
+    async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
+        yield async_session
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -308,8 +329,8 @@ async def mock_dashboard_stats(*arg: str, **kwargs: str) -> QuestionDashBoard:
     statistics.
     """
     return QuestionDashBoard(
-        six_months_question=[random.randint(0, 100) for _ in range(6)],
-        sis_months_upvote=[random.randint(0, 100) for _ in range(6)],
+        six_months_questions=[random.randint(0, 100) for _ in range(6)],
+        six_months_upvotes=[random.randint(0, 100) for _ in range(6)],
     )
 
 

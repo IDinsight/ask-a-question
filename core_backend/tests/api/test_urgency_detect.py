@@ -1,10 +1,9 @@
-from typing import AsyncGenerator, Callable
+from typing import Callable
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.database import get_async_session
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.tests.api.conftest import (
@@ -76,12 +75,6 @@ class TestUrgencyDetectionToken:
 
 
 class TestUrgencyClassifiers:
-    @pytest.fixture(scope="function")
-    async def asession(self) -> AsyncGenerator[AsyncSession, None]:
-        async for session in get_async_session():
-            yield session
-
-        await session.close()
 
     @pytest.mark.parametrize("classifier", ALL_URGENCY_CLASSIFIERS.values())
     async def test_classifier(
