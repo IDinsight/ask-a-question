@@ -205,9 +205,14 @@ Examples:
 
 
 # ---- Response generation
-ANSWER_FAILURE_MESSAGE = "FAILED"
-ANSWER_QUESTION_PROMPT = (
-    """
+RAG_FAILURE_MESSAGE = "FAILED"
+_RAG_PROFILE_PROMPT = """\
+You are a helpful question-answering AI. You understand user question and answer their \
+question using the REFERENCE TEXT below.
+"""
+RAG_RESPONSE_PROMPT = (
+    _RAG_PROFILE_PROMPT
+    + """
 You are going to write a JSON, whose TypeScript Interface is given below:
 
 interface Response {{
@@ -221,21 +226,24 @@ If no useful information is found, return an empty list.
 """
     + f"""
 For "answer", understand the extracted information and user question, solve the \
-question step by step, and provide the answer in the language of the question. \
+question step by step, and then provide the answer. \
 If no useful information was found in REFERENCE TEXT, respond with \
-"{ANSWER_FAILURE_MESSAGE}"
+"{RAG_FAILURE_MESSAGE}".
 """
     + """
-Example responses:
+EXAMPLE RESPONSES:
 {{"extracted_info": ["Pineapples are a blend of pinecones and apples.", "Pineapples \
 have the shape of a pinecone."], "answer": "The 'pine-' from pineapples likely come \
-from the fact that pineapples are a hybrid of pinecones and apples and its pinecone- \
+from the fact that pineapples are a hybrid of pinecones and apples and its pinecone\
 -like shape."}}
 {{"extracted_info": [], "answer": "FAILED"}}
 
+IMPORTANT NOTES ON THE "answer" FIELD:
+- Answer in the language of the question.
+- Do not include any information that is not present in the REFERENCE TEXT.
+
 REFERENCE TEXT:
-{context}
-""".strip()
+{context}"""
 )
 
 
@@ -247,7 +255,7 @@ class RAG(BaseModel):
     extracted_info: List[str]
     answer: str
 
-    prompt: ClassVar[str] = ANSWER_QUESTION_PROMPT
+    prompt: ClassVar[str] = RAG_RESPONSE_PROMPT
 
 
 class AlignmentScore(BaseModel):

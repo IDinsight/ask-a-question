@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import authenticate_key
 from ..contents.models import get_similar_content_async, update_votes_in_db
 from ..database import get_async_session
-from ..llm_call.llm_prompts import ANSWER_FAILURE_MESSAGE
+from ..llm_call.llm_prompts import RAG_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.process_input import (
     classify_safety__before,
@@ -133,7 +133,7 @@ async def get_llm_answer(
             metadata=metadata,
         )
 
-        if rag_response.answer == ANSWER_FAILURE_MESSAGE:
+        if rag_response.answer == RAG_FAILURE_MESSAGE:
             response.state = ResultState.ERROR
             response.llm_response = None
         else:
