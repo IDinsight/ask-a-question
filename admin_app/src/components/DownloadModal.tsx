@@ -18,9 +18,11 @@ const MAX_CARDS_TO_FETCH = 200;
 const DownloadModal = ({
   open,
   onClose,
+  onFailedDownload,
 }: {
   open: boolean;
   onClose: () => void;
+  onFailedDownload: () => void;
 }) => {
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -56,6 +58,7 @@ const DownloadModal = ({
       downloadCSV(csv, "content.csv");
     } catch (error) {
       console.error("Failed to download content", error);
+      onFailedDownload();
     } finally {
       setLoading(false);
       onClose();

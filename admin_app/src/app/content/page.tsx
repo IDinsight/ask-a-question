@@ -105,42 +105,67 @@ const CardsPage = () => {
 const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
   const [openDownloadModal, setOpenDownloadModal] =
     React.useState<boolean>(false);
+  const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
+
   return (
-    <Layout.FlexBox
-      key={"utility-strip"}
-      flexDirection={"row"}
-      justifyContent={"flex-right"}
-      alignItems={"right"}
-      sx={{
-        display: "flex",
-        alignSelf: "flex-end",
-        px: sizes.baseGap,
-      }}
-      gap={sizes.smallGap}
-    >
-      <Button
-        variant="contained"
-        disabled={!editAccess}
-        component={Link}
-        href="/content/edit"
-        startIcon={<Add />}
-      >
-        New
-      </Button>
-      <Button
-        variant="contained"
-        disabled={!editAccess}
-        onClick={() => {
-          setOpenDownloadModal(true);
+    <>
+      <Snackbar
+        open={snackMessage !== null}
+        autoHideDuration={6000}
+        onClose={() => {
+          setSnackMessage(null);
         }}
       >
-        <FileDownloadIcon />
-      </Button>
-      <DownloadModal
-        open={openDownloadModal}
-        onClose={() => setOpenDownloadModal(false)}
-      />
-    </Layout.FlexBox>
+        <Alert
+          onClose={() => {
+            setSnackMessage(null);
+          }}
+          severity="error"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackMessage}
+        </Alert>
+      </Snackbar>
+      <Layout.FlexBox
+        key={"utility-strip"}
+        flexDirection={"row"}
+        justifyContent={"flex-right"}
+        alignItems={"right"}
+        sx={{
+          display: "flex",
+          alignSelf: "flex-end",
+          px: sizes.baseGap,
+        }}
+        gap={sizes.smallGap}
+      >
+        <Button
+          variant="contained"
+          disabled={!editAccess}
+          component={Link}
+          href="/content/edit"
+          startIcon={<Add />}
+        >
+          New
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!editAccess}
+          onClick={() => {
+            setOpenDownloadModal(true);
+          }}
+        >
+          <FileDownloadIcon />
+        </Button>
+        <DownloadModal
+          open={openDownloadModal}
+          onClose={() => setOpenDownloadModal(false)}
+          onFailedDownload={() => {
+            setSnackMessage(`Failed to download content`);
+          }}
+        />
+      </Layout.FlexBox>
+    </>
   );
 };
 
