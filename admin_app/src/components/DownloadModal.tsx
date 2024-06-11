@@ -10,6 +10,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import Papa from "papaparse";
+import { useState } from "react";
+import { LoadingButton } from "@mui/lab";
 
 const MAX_CARDS_TO_FETCH = 200;
 
@@ -21,6 +23,7 @@ const DownloadModal = ({
   onClose: () => void;
 }) => {
   const { token, accessLevel } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const downloadCSV = (csvData: string, fileName: string) => {
     const blob = new Blob([csvData], { type: "text/csv" });
@@ -34,6 +37,7 @@ const DownloadModal = ({
   };
 
   const handleDownloadContent = async () => {
+    setLoading(true);
     try {
       const raw_json_data = await apiCalls.getContentList({
         token: token!,
@@ -52,8 +56,12 @@ const DownloadModal = ({
       downloadCSV(csv, "content.csv");
     } catch (error) {
       console.error("Failed to download content", error);
+    } finally {
+      setLoading(false);
+      onClose();
     }
   };
+
   return (
     <Dialog
       open={open}
@@ -71,18 +79,16 @@ const DownloadModal = ({
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={() => {
-            handleDownloadContent();
-            onClose();
-          }}
-          autoFocus
+        <LoadingButton
           variant="contained"
-          color="primary"
+          autoFocus
           startIcon={<FileDownloadIcon />}
+          loading={loading}
+          loadingPosition="start"
+          onClick={handleDownloadContent}
         >
           Download
-        </Button>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
