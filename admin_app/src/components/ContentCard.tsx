@@ -59,7 +59,7 @@ const ContentCard = ({
           flexDirection="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ width: "100%" }}
+          sx={{ width: "98%" }}
         >
           <Typography variant="overline" sx={{ letterSpacing: 2 }}>
             #{content_id}
@@ -115,7 +115,6 @@ const ContentCard = ({
           gap={sizes.tinyGap}
           sx={{ alignItems: "center" }}
         >
-          <Layout.Spacer horizontal multiplier={0.2} />
           <Button
             disabled={!editAccess}
             component={Link}
