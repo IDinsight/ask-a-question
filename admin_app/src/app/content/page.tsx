@@ -7,6 +7,7 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import {
   Autocomplete,
   Button,
@@ -21,6 +22,7 @@ import { useSearchParams } from "next/navigation";
 import React from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
+import { DownloadModal } from "@/components/DownloadModal";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
@@ -30,7 +32,7 @@ export interface Tag {
 }
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -65,7 +67,6 @@ const CardsPage = () => {
           gap={sizes.smallGap}
         >
           <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
-
           <Autocomplete
             multiple
             limitTags={3}
@@ -102,6 +103,8 @@ const CardsPage = () => {
 };
 
 const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
+  const [openDownloadModal, setOpenDownloadModal] =
+    React.useState<boolean>(false);
   return (
     <Layout.FlexBox
       key={"utility-strip"}
@@ -113,17 +116,30 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
         alignSelf: "flex-end",
         px: sizes.baseGap,
       }}
-      gap={sizes.baseGap}
+      gap={sizes.smallGap}
     >
       <Button
         variant="contained"
         disabled={!editAccess}
         component={Link}
         href="/content/edit"
-        startIcon={<Add fontSize="small" />}
+        startIcon={<Add />}
       >
         New
       </Button>
+      <Button
+        variant="contained"
+        disabled={!editAccess}
+        onClick={() => {
+          setOpenDownloadModal(true);
+        }}
+      >
+        <FileDownloadIcon />
+      </Button>
+      <DownloadModal
+        open={openDownloadModal}
+        onClose={() => setOpenDownloadModal(false)}
+      />
     </Layout.FlexBox>
   );
 };
@@ -154,7 +170,7 @@ const CardsGrid = ({
 
   const getSnackMessage = (
     action: string | null,
-    content_id: number | null
+    content_id: number | null,
   ): string | null => {
     if (action === "edit") {
       return `Content #${content_id} updated`;
@@ -165,7 +181,7 @@ const CardsGrid = ({
   };
 
   const [snackMessage, setSnackMessage] = React.useState<string | null>(
-    getSnackMessage(action, content_id)
+    getSnackMessage(action, content_id),
   );
 
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -187,7 +203,7 @@ const CardsGrid = ({
             card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesAllTags = filterTags.some((fTag) =>
-            card.content_tags.includes(fTag.tag_id)
+            card.content_tags.includes(fTag.tag_id),
           );
 
           return (
@@ -268,7 +284,7 @@ const CardsGrid = ({
           {cards
             .slice(
               MAX_CARDS_PER_PAGE * (page - 1),
-              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE
+              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
             )
             .map((item) => {
               if (item.content_id !== null) {
@@ -290,7 +306,7 @@ const CardsGrid = ({
                       tags={
                         tags
                           ? tags.filter((tag) =>
-                              item.content_tags.includes(tag.tag_id)
+                              item.content_tags.includes(tag.tag_id),
                             )
                           : []
                       }
@@ -299,7 +315,7 @@ const CardsGrid = ({
                       onSuccessfulDelete={onSuccessfulDelete}
                       onFailedDelete={(content_id: number) => {
                         setSnackMessage(
-                          `Failed to delete content #${content_id}`
+                          `Failed to delete content #${content_id}`,
                         );
                       }}
                       deleteContent={(content_id: number) => {
