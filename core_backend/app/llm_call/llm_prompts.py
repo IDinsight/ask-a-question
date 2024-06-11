@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import textwrap
 from enum import Enum
-from typing import ClassVar
+from typing import ClassVar, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,9 +16,9 @@ class IdentifiedLanguage(str, Enum):
     """
 
     ENGLISH = "ENGLISH"
-    XHOSA = "XHOSA"
-    ZULU = "ZULU"
-    AFRIKAANS = "AFRIKAANS"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+    # AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
     UNINTELLIGIBLE = "UNINTELLIGIBLE"
     UNSUPPORTED = "UNSUPPORTED"
@@ -68,7 +68,6 @@ class IdentifiedLanguage(str, Enum):
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_PROMPT = f"""You are a high-performing translation bot. \
-You support a {SERVICE_IDENTITY}. \
 Translate the user's input from {{language}} to English.
 Do not answer the question, just translate it.
 If you are unable to translate the user's input, \
@@ -184,9 +183,8 @@ paraphrase_examples = [
         "output": "Pearson correlation",
     },
 ]
-PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot.
-
-You support a {SERVICE_IDENTITY}. The user has sent a message.
+PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot. \
+The user has sent a message.
 
 If the message is a question, do not answer it, \
 just paraphrase it to remove unecessary information and focus on the question. \
@@ -206,24 +204,50 @@ Examples:
 )
 
 
-# ----  Question answering bot
-ANSWER_FAILURE_MESSAGE = "Sorry, no relevant information found."
-ANSWER_QUESTION_PROMPT = f"""
-You are a question answering system that is constantly learning and improving.
-You can process and comprehend many pieces of text and utilize this knowledge to \
-provide concise, accurate, and informative answers to diverse queries.
+# ---- Response generation
+ANSWER_FAILURE_MESSAGE = "FAILED"
+ANSWER_QUESTION_PROMPT = (
+    """
+You are going to write a JSON, whose TypeScript Interface is given below:
+
+interface Response {{
+    extracted_info: string[];
+    answer: string;
+}}
+
+For "extracted_info", extract from the REFERENCE TEXT below the most useful \
+information related to the core question asked by the user, and list them one by one. \
+If no useful information is found, return an empty list.
+"""
+    + f"""
+For "answer", understand the extracted information and user question, solve the \
+question step by step, and provide the answer in the language of the question. \
+If no useful information was found in REFERENCE TEXT, respond with \
+"{ANSWER_FAILURE_MESSAGE}"
+"""
+    + """
+Example responses:
+{{"extracted_info": ["Pineapples are a blend of pinecones and apples.", "Pineapples \
+have the shape of a pinecone."], "answer": "The 'pine-' from pineapples likely come \
+from the fact that pineapples are a hybrid of pinecones and apples and its pinecone- \
+-like shape."}}
+{{"extracted_info": [], "answer": "FAILED"}}
 
 REFERENCE TEXT:
-{{content}}
+{context}
+""".strip()
+)
 
-Answer the user query using the information provided in the REFERENCE TEXT above. \
-DO NOT use any context not present in the REFERENCE TEXT. \
-Ignore any provided context that is not relevant to the query.
 
-IMPORTANT: Respond in {{response_language}}.
+class RAG(BaseModel):
+    """Generated response based on question and retrieved context"""
 
-If the REFERENCE TEXT does not contain any answer to the query, respond exactly with \
-"{ANSWER_FAILURE_MESSAGE}".""".strip()
+    model_config = ConfigDict(strict=True)
+
+    extracted_info: List[str]
+    answer: str
+
+    prompt: ClassVar[str] = ANSWER_QUESTION_PROMPT
 
 
 class AlignmentScore(BaseModel):

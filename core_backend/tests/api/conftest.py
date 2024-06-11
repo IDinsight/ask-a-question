@@ -23,7 +23,11 @@ from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
 from core_backend.app.llm_call import process_input, process_output
-from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
+from core_backend.app.llm_call.llm_prompts import (
+    RAG,
+    AlignmentScore,
+    IdentifiedLanguage,
+)
 from core_backend.app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
@@ -231,8 +235,8 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     )
 
 
-async def patched_llm_rag_answer(*args: Any, **kwargs: Any) -> str:
-    return "monkeypatched_llm_response"
+async def patched_llm_rag_answer(*args: Any, **kwargs: Any) -> RAG:
+    return RAG(answer="patched llm response", extracted_info=[])
 
 
 async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:

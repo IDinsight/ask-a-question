@@ -11,7 +11,6 @@ from ..database import get_async_session
 from ..llm_call.llm_prompts import ANSWER_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.process_input import (
-    classify_on_off_topic__before,
     classify_safety__before,
     identify_language__before,
     paraphrase_question__before,
@@ -93,7 +92,6 @@ async def llm_response(
 @identify_language__before
 @translate_question__before
 @classify_safety__before
-@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_llm_answer(
     question: QueryRefined,
@@ -128,20 +126,21 @@ async def get_llm_answer(
         response.content_response = content_response
         context = get_context_string_from_retrieved_contents(content_response)
 
-        llm_response = await get_llm_rag_answer(
+        rag_response = await get_llm_rag_answer(
             question=question.query_text,
             context=context,
             response_language=question.original_language,
             metadata=metadata,
         )
 
-        if llm_response == ANSWER_FAILURE_MESSAGE:
+        if rag_response.answer == ANSWER_FAILURE_MESSAGE:
             response.state = ResultState.ERROR
             response.llm_response = None
-            response.debug_info["reason"] = "Response generation failed"
         else:
             response.state = ResultState.FINAL
-            response.llm_response = llm_response
+            response.llm_response = rag_response.answer
+
+        response.debug_info["extracted_info"] = rag_response.extracted_info
 
     return response
 
@@ -213,7 +212,6 @@ async def embeddings_search(
 
 @identify_language__before
 @translate_question__before
-@classify_on_off_topic__before
 @paraphrase_question__before
 async def get_semantic_matches(
     question: QueryRefined,
