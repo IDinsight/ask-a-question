@@ -80,6 +80,9 @@ if __name__ == "__main__":
                 "tag_name": tag,
             }
             response = requests.post(tags_endpoint, json=payload, headers=headers)
+            if "tag_id" not in response.json():
+                print(f"Failed to create tag: {tag}")
+                continue
             response_json = response.json()
             tags_map[response_json["tag_name"]] = response_json["tag_id"]
             print(f"Status Code: {response.status_code}, Response: {response.text}")
