@@ -60,8 +60,8 @@ if __name__ == "__main__":
         print("Failed to authenticate:", response.text)
 
     # API endpoint
-    api_endpoint = f"https://{args.domain}/api/content/"
-
+    contents_endpoint = f"https://{args.domain}/api/content/"
+    tags_endpoint = f"https://{args.domain}/api/tag/"
     # Headers for the request
     headers = {
         "accept": "application/json",
@@ -71,16 +71,34 @@ if __name__ == "__main__":
 
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
+        tags = [val for row in reader for val in row["tags"].strip().split(" ")]
+        print(tags)
+        tags = set(tags)
+        tags_map = {}
+        for tag in tags:
+            payload = {
+                "tag_name": tag,
+            }
+            response = requests.post(tags_endpoint, json=payload, headers=headers)
+            response_json = response.json()
+            tags_map[response_json["tag_name"]] = response_json["tag_id"]
+            print(f"Status Code: {response.status_code}, Response: {response.text}")
+        file.seek(0)
+        reader = csv.DictReader(file)
         for row in reader:
             if args.language:
                 language = args.language
             else:
                 language = row["language"]
+            content_tags = [
+                tags_map[val] for val in row["tags"].strip().upper().split(" ")
+            ]
             payload = {
                 "content_title": row["title"],
                 "content_text": row["body"],
                 "content_language": language,
+                "content_tags": content_tags,
                 "content_metadata": {},
             }
-            response = requests.post(api_endpoint, json=payload, headers=headers)
+            response = requests.post(contents_endpoint, json=payload, headers=headers)
             print(f"Status Code: {response.status_code}, Response: {response.text}")
