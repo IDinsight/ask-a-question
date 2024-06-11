@@ -71,13 +71,16 @@ const ContentCard = ({
                 size="small"
                 sx={{
                   bgcolor: appColors.white,
-                  color: appColors.black,
+                  color: appColors.darkGrey,
                   border: "1px solid",
-                  borderColor: appColors.darkGrey,
+                  borderColor: appColors.lightGrey,
                 }}
               />
               {tags.length > 1 && (
-                <Typography variant="body2" sx={{ marginLeft: 1 }}>
+                <Typography
+                  variant="overline"
+                  sx={{ marginLeft: 0.3, color: appColors.darkGrey }}
+                >
                   +{tags.length - 1}
                 </Typography>
               )}
