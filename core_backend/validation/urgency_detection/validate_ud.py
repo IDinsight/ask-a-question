@@ -94,6 +94,11 @@ class TestUDPerformance:
             for row_idx, row in validation_data.iterrows()
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
+        for result in results:
+            if isinstance(result, Exception):
+                print("E", end="")
+            else:
+                print(".", end="")
 
         validation_data["predicted"] = results
         metrics = self._calculate_metrics(validation_data)
