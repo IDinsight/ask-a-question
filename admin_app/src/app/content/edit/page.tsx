@@ -385,7 +385,7 @@ const ContentBox = ({
           p: sizes.baseGap,
         }}
       >
-        <LanguageButtonBar expandable={true} />
+        {/* <LanguageButtonBar expandable={true} /> */}
         <Layout.Spacer multiplier={1} />
         <Typography variant="body2">Title</Typography>
         <Layout.Spacer multiplier={0.5} />

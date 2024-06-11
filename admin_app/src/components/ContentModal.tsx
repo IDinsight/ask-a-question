@@ -95,8 +95,7 @@ const ContentViewModal = ({
                 </Layout.FlexBox>
               </Layout.FlexBox>
             )}
-            <LanguageButtonBar expandable={false} />
-
+            {/* <LanguageButtonBar expandable={false} /> */}
             <Layout.FlexBox
               flex={1}
               flexDirection={"column"}
