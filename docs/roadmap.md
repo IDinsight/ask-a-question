@@ -1,27 +1,26 @@
 | Quarter     | Feature                                              | Status             | Description                                                                                                                                       |
 | ----------- | ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Q4 2023     | FastAPI Refactor                                     | :white_check_mark: | Refactored to an all-components-in-one-repo codebase                                                                                              |
-|             | LLM-powered search                                   | :white_check_mark: | Match user questions to content in the database using embeddings from LLMs (Open AI)                                                              |
-| **Q1 2024** | LLM responses                                        | :white_check_mark: | Craft a custom response to the question using LLM chat and the content in the database                                                            |
-|             | AI Guardrails                                        | :white_check_mark: | Keep LLM responses friendly and strictly context-based                                                                                            |
-|             | Multi-lingual content                                | :tools:            | Support storage and matching of multi-language variants of FAQs                                                                                   |
-| Q2 2024     | Support for low resource language                    | :construction:     | Support question-answering in regional languages. First targets: Xhosa, Zulu, Hindi, Igbo, Hausa                                                  |
-|             | Intent Classification & Message Triaging             | :construction:     | Tag user messages with intents & flag urgency                                                                                                     |
-|             | Admin app 2.0                                        | :construction:     | A new and better look for Admin App that supports multilingual content management                                                                 |
-| Q3 2024     | Content Management Dashboard & Engineering Dashboard | :pencil:           | Monitor uptime, response rates, throughput HTTP response codes. See content use, questions that receive poor feedback, missing content, and more. |
+|             | Embeddings-based search                              | :white_check_mark: | Match user questions to content in the database using embeddings                                                                                  |
+| Q1 2024     | RAG responses                                        | :white_check_mark: | Craft a custom response to the question using LLM based on retrieved content in the database                                                      |
+|             | Guardrails                                           | :white_check_mark: | Keep LLM responses friendly and strictly context-based                                                                                            |
+| **Q2 2024** | Message Triaging                                     | :white_check_mark: | Tag user messages with intents & flag urgency                                                                                                     |
+|             | Multi-user with Google log-in                        | :white_check_mark: | You can now have 1 AAQ deployment with multiple users, each with their own content DB                                                             |
+|             | Support for Turn.io, Glific integration              | :white_check_mark: | Add AAQ to popular chat flow builders in social sector, like Turn.io and Glific                                                                   |
+|             | Content Tags                                         | :white_check_mark: | Add tags to your content for easy browsing (and more to come!)                                                                                    |
+| Q3 2024     | Analytics for Feedback and Content                   | :tools:            |  See content use, questions that receive poor feedback, missing content, and more                                                                 |
+|             | Voice notes support                                  | :tools:            | Automatic Speech Recognition for audio message to content matching                                                                                |
 |             | Multi-turn chat                                      | :pencil:           | Refine or clarify user question through conversation.                                                                                             |
-|             | Document-based question answering                    | :pencil:           | Retrieve answers from a document set                                                                                                              |
-| Q4 2024     | Voice notes support                                  | :pencil:           | Automatic Speech Recognition for audio message to content matching                                                                                |
+|             | Engineering Dashboard                                | :pencil:           | Monitor uptime, response rates, throughput HTTP response codes                                                                                    |
+| Q4 2024     | Personalization and contextualization                | :pencil:           | Use contextual information to improve responses                                                                                                   |
 |             | Multimedia content                                   | :pencil:           | Respond with not just text but images and audio as well.                                                                                          |
 |             | A/B Testing                                          | :pencil:           | Test and decide content that works better for users                                                                                               |
 
-!!! info "Key <br> :white_check_mark: - Completed <br> :tools: - In active development <br> :construction: - Queued <br>:pencil: - Yet to be scoped"
+!!! info "Key <br> :white_check_mark:: Completed <br> :tools:: Under development <br> :construction:: Queued <br>:pencil:: Yet to be scoped"
 
 Beyond 2024
 
-- Privately hosted LLM modules
 - Multi-tenant architecture
 - User configurable Guardrails (in Admin app)
-- Answer contextualization by user demographic
 - Feedback-based model/LLM fine tuning
 - Safety tests, fairness reports and ethical reviews
