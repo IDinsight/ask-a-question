@@ -2,7 +2,7 @@ services:
   core_backend:
     image: idinsight/aaq-backend:latest
     build:
-      context: ../../core_backend
+      context: core_backend
       dockerfile: Dockerfile
     command: >
       /bin/sh startup.sh
@@ -12,12 +12,16 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: ../../core_backend
+          path: core_backend
+    depends_on:
+      - relational_db
+    environment:
+      - POSTGRES_HOST=relational_db
 
   admin_app:
     image: idinsight/aaq-admin-app:latest
     build:
-      context: ../../admin_app
+      context: admin_app
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
@@ -32,7 +36,7 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: ../../admin_app
+          path: admin_app
 
   caddy:
     image: caddy:2.7.6
@@ -58,13 +62,21 @@ services:
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 
+  relational_db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+
   alignScore:
     image: idinsight/alignscore-base:latest
     profiles:
       - alignScore
       - optional-components
     build:
-      context: ../../optional_components/alignScore
+      context: optional_components/alignScore
       dockerfile: Dockerfile
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
@@ -75,7 +87,7 @@ services:
       - embeddings
       - optional-components
     build:
-      context: ../../optional_components/embeddings
+      context: optional_components/embeddings
       dockerfile: Dockerfile
     restart: always
     env_file:
@@ -83,7 +95,8 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: ../../optional_components/embeddings
+          path: optional_components/embeddings
 volumes:
   caddy_data:
   caddy_config:
+  db_volume:
