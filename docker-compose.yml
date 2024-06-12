@@ -23,9 +23,9 @@ services:
     build:
       context: admin_app
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
-        NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
+      # args:
+      #   NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+      #   NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
     command: >
       node server.js
     depends_on:
@@ -46,7 +46,6 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     env_file:
@@ -57,8 +56,6 @@ services:
     restart: always
     env_file:
       - .env
-    volumes:
-      - ./litellm_proxy_config.yaml:/app/config.yaml
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 

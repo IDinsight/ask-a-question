@@ -1,0 +1,10 @@
+services:
+  caddy:
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+  litellm_proxy:
+    volumes:
+      - ./litellm_proxy_config.yaml:/app/config.yaml
+
+volumes:
+  db_volume:
