@@ -7,7 +7,8 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import DownloadIcon from "@mui/icons-material/Download";
+import Tooltip from "@mui/material/Tooltip";
 import {
   Autocomplete,
   Button,
@@ -139,24 +140,28 @@ const CardsUtilityStrip = ({ editAccess }: { editAccess: boolean }) => {
         }}
         gap={sizes.smallGap}
       >
-        <Button
-          variant="contained"
-          disabled={!editAccess}
-          component={Link}
-          href="/content/edit"
-          startIcon={<Add />}
-        >
-          New
-        </Button>
-        <Button
-          variant="contained"
-          disabled={!editAccess}
-          onClick={() => {
-            setOpenDownloadModal(true);
-          }}
-        >
-          <FileDownloadIcon />
-        </Button>
+        <Tooltip title="Download all contents">
+          <Button
+            variant="outlined"
+            disabled={!editAccess}
+            onClick={() => {
+              setOpenDownloadModal(true);
+            }}
+          >
+            <DownloadIcon />
+          </Button>
+        </Tooltip>
+        <Tooltip title="Add new content">
+          <Button
+            variant="contained"
+            disabled={!editAccess}
+            component={Link}
+            href="/content/edit"
+            startIcon={<Add />}
+          >
+            New
+          </Button>
+        </Tooltip>
         <DownloadModal
           open={openDownloadModal}
           onClose={() => setOpenDownloadModal(false)}
