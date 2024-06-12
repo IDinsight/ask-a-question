@@ -55,7 +55,7 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            height: "80%",
+            maxHeight: "80vh",
             width: "80%",
             minWidth: "600px",
             borderRadius: 2,
@@ -99,93 +99,87 @@ const ContentViewModal = ({
             </Layout.FlexBox>
           )}
           <Layout.Spacer multiplier={0.5} />
+          {/* <LanguageButtonBar expandable={false} /> */}
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
-              height: "77%",
+              maxHeight: "50vh",
+              p: sizes.baseGap,
+              mr: sizes.baseGap,
+              overflowY: "auto",
+              border: 1,
+              borderColor: appColors.lightGrey,
+              borderRadius: 3,
             }}
           >
-            {/* <LanguageButtonBar expandable={false} /> */}
-            <Layout.FlexBox
-              flexDirection={"column"}
+            <Typography variant="subtitle1" sx={{ mb: sizes.baseGap }}>
+              {title}
+            </Typography>
+            <Typography
+              variant="body2"
               sx={{
-                p: sizes.baseGap,
-                mr: sizes.baseGap,
-                overflowY: "auto",
-                border: 1,
-                borderColor: appColors.lightGrey,
-                borderRadius: 3,
+                overflowWrap: "break-word",
+                hyphens: "auto",
+                whiteSpace: "pre-wrap",
               }}
             >
-              <Typography variant="subtitle1" sx={{ mb: sizes.baseGap }}>
-                {title}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  overflowWrap: "break-word",
-                  hyphens: "auto",
-                  whiteSpace: "pre-wrap",
-                }}
+              {text}
+            </Typography>
+          </Layout.FlexBox>
+          <Layout.Spacer multiplier={2} />
+          <Layout.FlexBox
+            flexDirection={"row"}
+            gap={sizes.smallGap}
+            {...appStyles.justifyContentSpaceBetween}
+          >
+            <Layout.FlexBox
+              {...appStyles.alignItemsCenter}
+              flexDirection={"row"}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!editAccess}
+                component={Link}
+                href={`/content/edit?content_id=${content_id}`}
               >
-                {text}
+                <Edit />
+                <Layout.Spacer horizontal multiplier={0.4} />
+                Edit
+              </Button>
+              <Layout.Spacer horizontal multiplier={1} />
+            </Layout.FlexBox>
+            <Layout.FlexBox
+              {...appStyles.alignItemsCenter}
+              flexDirection={"row"}
+            >
+              <Typography variant="body2" color={appColors.darkGrey}>
+                Last modified on{" "}
+                {new Date(last_modified).toLocaleString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                  hour12: true,
+                })}
               </Typography>
             </Layout.FlexBox>
-            <Layout.Spacer multiplier={2} />
             <Layout.FlexBox
               flexDirection={"row"}
-              gap={sizes.smallGap}
-              {...appStyles.justifyContentSpaceBetween}
+              gap={sizes.baseGap}
+              {...appStyles.alignItemsCenter}
+              {...appStyles.justifyContentCenter}
+              sx={{ pr: sizes.baseGap }}
             >
-              <Layout.FlexBox
-                {...appStyles.alignItemsCenter}
-                flexDirection={"row"}
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={!editAccess}
-                  component={Link}
-                  href={`/content/edit?content_id=${content_id}`}
-                >
-                  <Edit />
-                  <Layout.Spacer horizontal multiplier={0.4} />
-                  Edit
-                </Button>
-                <Layout.Spacer horizontal multiplier={1} />
-              </Layout.FlexBox>
-              <Layout.FlexBox
-                {...appStyles.alignItemsCenter}
-                flexDirection={"row"}
-              >
-                <Typography variant="body2" color={appColors.darkGrey}>
-                  Last modified on{" "}
-                  {new Date(last_modified).toLocaleString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    hour12: true,
-                  })}
-                </Typography>
-              </Layout.FlexBox>
-              <Layout.FlexBox
-                flexDirection={"row"}
-                gap={sizes.baseGap}
-                {...appStyles.alignItemsCenter}
-                {...appStyles.justifyContentCenter}
-                sx={{ pr: sizes.baseGap }}
-              >
-                <ThumbUp fontSize="small" color="disabled" />
-                <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
-                  {positive_votes}
-                </Typography>
-                <ThumbDown fontSize="small" color="disabled" />
-                <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
-                  {negative_votes}
-                </Typography>
-              </Layout.FlexBox>
+              <ThumbUp fontSize="small" color="disabled" />
+              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
+                {positive_votes}
+              </Typography>
+              <ThumbDown fontSize="small" color="disabled" />
+              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
+                {negative_votes}
+              </Typography>
             </Layout.FlexBox>
           </Layout.FlexBox>
         </Box>
