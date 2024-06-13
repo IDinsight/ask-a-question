@@ -10,12 +10,12 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"username": "test_username_4", "password": "password"},
+            json={"username": "test_username_5", "password": "password"},
         )
 
         assert response.status_code == 200
         json_response = response.json()
-        assert json_response["username"] == "test_username_4"
+        assert json_response["username"] == "test_username_5"
         assert json_response["user_id"] is not None
 
     async def test_admin_create_user_existing_user(
@@ -24,7 +24,7 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"username": "test_username_4", "password": "password"},
+            json={"username": "test_username_5", "password": "password"},
         )
 
         assert response.status_code == 400
@@ -35,7 +35,7 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
-            json={"username": "test_username_5", "password": "password"},
+            json={"username": "test_username_6", "password": "password"},
         )
 
         assert response.status_code == 403
