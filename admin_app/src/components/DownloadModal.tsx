@@ -94,7 +94,16 @@ const DownloadModal = ({
       }
       // convert to csv
       const csv = Papa.unparse(processed_contents_json);
-      downloadCSV(csv, "content.csv");
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}_${String(
+        now.getMonth() + 1,
+      ).padStart(2, "0")}_${String(now.getDate()).padStart(2, "0")}_${String(
+        now.getHours(),
+      ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(
+        now.getSeconds(),
+      ).padStart(2, "0")}`;
+      const filename = `content_${timestamp}.csv`;
+      downloadCSV(csv, filename);
     } catch (error) {
       console.error("Failed to download content", error);
       onFailedDownload();
