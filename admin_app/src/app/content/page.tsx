@@ -312,10 +312,7 @@ const CardsGrid = ({
       >
         <Grid container>
           {cards
-            .slice(
-              MAX_CARDS_PER_PAGE * (page - 1),
-              MAX_CARDS_PER_PAGE * (page - 1) + MAX_CARDS_PER_PAGE,
-            )
+            .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
             .map((item) => {
               if (item.content_id !== null) {
                 return (
