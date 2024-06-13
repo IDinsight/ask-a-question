@@ -35,9 +35,8 @@ class UserDB(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
-
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
-
+    content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -73,6 +72,7 @@ async def save_user_to_db(
 
     user_db = UserDB(
         username=user.username,
+        content_quota=user.content_quota,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),

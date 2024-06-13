@@ -49,6 +49,8 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"
 )
+CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
+DEFAULT_CONTENT_QUOTA = os.environ.get("DEFAULT_CONTENT_QUOTA", 50)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
