@@ -56,7 +56,7 @@ async def create_content(
         )
     except ExceedsContentQuotaError as e:
         raise HTTPException(
-            status_code=400, detail="Exceeds content quota for user. {e}"
+            status_code=403, detail="Exceeds content quota for user. {e}"
         ) from e
     else:
         return _convert_record_to_schema(content_db)
