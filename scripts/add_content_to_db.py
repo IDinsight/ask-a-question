@@ -72,7 +72,6 @@ if __name__ == "__main__":
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         tags = [val for row in reader for val in row["tags"].strip().split(" ")]
-        print(tags)
         tags = set(tags)
         tags_map = {}
         for tag in tags:
