@@ -71,18 +71,18 @@ async def save_user_to_db(
         random_password = get_random_string(PASSWORD_LENGTH)
         hashed_password = get_password_salted_hash(random_password)
 
-    content_db = UserDB(
+    user_db = UserDB(
         username=user.username,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
 
-    asession.add(content_db)
+    asession.add(user_db)
     await asession.commit()
-    await asession.refresh(content_db)
+    await asession.refresh(user_db)
 
-    return content_db
+    return user_db
 
 
 async def update_user_api_key(
