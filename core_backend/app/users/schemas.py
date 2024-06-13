@@ -20,3 +20,14 @@ class UserCreateWithPassword(UserCreate):
     password: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserRetrieve(BaseModel):
+    """
+    Pydantic model for user retrieval
+    """
+
+    user_id: int
+    username: str
+
+    model_config = ConfigDict(from_attributes=True)

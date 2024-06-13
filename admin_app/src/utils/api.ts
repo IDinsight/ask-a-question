@@ -9,7 +9,7 @@ interface ContentBody {
 }
 
 const getNewAPIKey = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/key/`, {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/rotate-key`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
