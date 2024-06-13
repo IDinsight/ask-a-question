@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.contents.routers import _convert_record_to_schema
 
-from .conftest import async_fake_embedding
+from .conftest import TEST_CONTENT_QUOTA_2, async_fake_embedding
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
@@ -41,6 +41,40 @@ def existing_content_id(
         f"/content/{content_id}",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
+
+
+class TestContentQuota:
+    async def test_content_quota(
+        self,
+        client: TestClient,
+        fullaccess_token_user2: str,
+    ) -> None:
+        for i in range(TEST_CONTENT_QUOTA_2):
+            response = client.post(
+                "/content",
+                headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+                json={
+                    "content_title": f"test title {i}",
+                    "content_text": f"test content {i}",
+                    "content_language": "ENGLISH",
+                    "content_tags": [],
+                    "content_metadata": {},
+                },
+            )
+            assert response.status_code == 200
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "content_title": "test title",
+                "content_text": "test content",
+                "content_language": "ENGLISH",
+                "content_tags": [],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 403
 
 
 class TestManageContent:

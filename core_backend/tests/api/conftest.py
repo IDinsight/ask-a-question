@@ -56,7 +56,7 @@ TEST_CONTENT_QUOTA = 50
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
-TEST_CONTENT_QUOTA_2 = 50
+TEST_CONTENT_QUOTA_2 = 2
 
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
