@@ -19,10 +19,12 @@ const DownloadModal = ({
   open,
   onClose,
   onFailedDownload,
+  onNoDataFound,
 }: {
   open: boolean;
   onClose: () => void;
   onFailedDownload: () => void;
+  onNoDataFound: () => void;
 }) => {
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -34,8 +36,12 @@ const DownloadModal = ({
       skip: 0,
       limit: MAX_CARDS_TO_FETCH,
     });
+    if (raw_json_data.length === 0) {
+      return [];
+    }
     // convert to list of json objects
     const json_data_list = Object.values(raw_json_data);
+
     // move content_id to be frst and drop user_id
     const ordered_json_data_list = json_data_list.map((item) => {
       const { user_id, content_id, ...rest } = item;
@@ -82,6 +88,10 @@ const DownloadModal = ({
     setLoading(true);
     try {
       const processed_contents_json = await fetchAndCleanContents();
+      if (processed_contents_json.length === 0) {
+        onNoDataFound();
+        return;
+      }
       // convert to csv
       const csv = Papa.unparse(processed_contents_json);
       downloadCSV(csv, "content.csv");
