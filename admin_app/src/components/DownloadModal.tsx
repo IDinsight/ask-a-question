@@ -15,6 +15,19 @@ import { LoadingButton } from "@mui/lab";
 
 const MAX_CARDS_TO_FETCH = 200;
 
+interface Content {
+  user_id: string;
+  content_id: string;
+  content_metadata: Record<string, any>;
+  content_tags: number[];
+  content_tag_names?: string[];
+}
+
+interface Tag {
+  tag_id: string;
+  tag_name: string;
+}
+
 const DownloadModal = ({
   open,
   onClose,
@@ -43,29 +56,35 @@ const DownloadModal = ({
     const json_data_list = Object.values(raw_json_data);
 
     // move content_id to be frst and drop user_id
-    const ordered_json_data_list = json_data_list.map((item) => {
-      const { user_id, content_id, ...rest } = item;
-      return {
-        content_id,
-        ...rest,
-      };
-    });
+    const ordered_json_data_list = (json_data_list as Content[]).map(
+      (content: Content) => {
+        const { user_id, content_id, content_tags, ...rest } = content;
+        return {
+          content_id,
+          content_tags,
+          ...rest,
+        };
+      },
+    );
     // stringify json element
-    const processed_contents_json = ordered_json_data_list.map((item) => {
+    const processed_contents_json = ordered_json_data_list.map((content) => {
       return {
-        ...item,
-        content_metadata: JSON.stringify(item.content_metadata),
+        ...content,
+        content_metadata: JSON.stringify(content.content_metadata),
       };
     });
     // get list of tags and replace tag ids with tag names
     const tags_json = await apiCalls.getTagList(token!);
-    const tag_list = Object.values(tags_json);
-    const tag_dict = tag_list.reduce((acc, tag) => {
-      acc[tag.tag_id] = tag.tag_name;
-      return acc;
-    }, {});
-    processed_contents_json.forEach((item) => {
-      item.content_tags = item.content_tags.map(
+    const tag_list = Object.values<Tag>(tags_json);
+    const tag_dict = tag_list.reduce(
+      (acc: Record<string, string>, tag: Tag) => {
+        acc[tag.tag_id] = tag.tag_name;
+        return acc;
+      },
+      {},
+    );
+    processed_contents_json.forEach((content) => {
+      content.content_tag_names = content.content_tags.map(
         (tag_id: number) => tag_dict[tag_id],
       );
     });
