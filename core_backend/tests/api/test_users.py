@@ -1,9 +1,6 @@
-from typing import AsyncGenerator
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.database import get_async_session
 from core_backend.app.users.models import (
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -21,12 +18,6 @@ from core_backend.tests.api.conftest import (
 
 
 class TestUsers:
-    @pytest.fixture(scope="function")
-    async def asession(self) -> AsyncGenerator[AsyncSession, None]:
-        async for session in get_async_session():
-            yield session
-
-        await session.close()
 
     async def test_save_user_to_db(self, asession: AsyncSession) -> None:
         user = UserCreate(username="test_username_3")

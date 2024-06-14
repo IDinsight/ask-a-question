@@ -69,3 +69,6 @@ EMBEDDINGS_ENDPOINT = os.environ.get(
 
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
+
+# Database
+DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in the pool
