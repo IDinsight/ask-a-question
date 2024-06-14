@@ -192,7 +192,7 @@ const CardsUtilityStrip = ({
         }}
         onNoDataFound={() => {
           setSnackMessage({
-            message: `No data found to download`,
+            message: `No data to download`,
             color: "info",
           });
         }}
