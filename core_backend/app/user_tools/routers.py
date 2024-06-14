@@ -13,7 +13,7 @@ from ..users.models import (
     save_user_to_db,
     update_user_api_key,
 )
-from ..users.schemas import UserCreateWithPassword, UserRetrieve
+from ..users.schemas import UserCreate, UserCreateWithPassword
 from ..utils import generate_key, setup_logger
 from .schemas import KeyResponse
 
@@ -21,12 +21,12 @@ router = APIRouter(prefix="/user", tags=["User Tools"])
 logger = setup_logger()
 
 
-@router.post("/", response_model=UserRetrieve)
+@router.post("/", response_model=UserCreate)
 async def create_user(
     user: UserCreateWithPassword,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> UserRetrieve | None:
+) -> UserCreate | None:
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
@@ -42,8 +42,7 @@ async def create_user(
             user=user,
             asession=asession,
         )
-        return UserRetrieve(
-            user_id=user_db.user_id,
+        return UserCreate(
             username=user_db.username,
         )
     except UserAlreadyExistsError as e:

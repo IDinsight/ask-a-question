@@ -16,7 +16,6 @@ class TestUserCreation:
         assert response.status_code == 200
         json_response = response.json()
         assert json_response["username"] == "test_username_5"
-        assert json_response["user_id"] is not None
 
     async def test_admin_create_user_existing_user(
         self, client: TestClient, fullaccess_token: str
