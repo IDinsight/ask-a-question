@@ -305,11 +305,11 @@ const ContentBox = ({
                   inputVal &&
                   !availableTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                   ) &&
                   !contentTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                   )
                 ) {
                   event.preventDefault();
@@ -385,7 +385,7 @@ const ContentBox = ({
           p: sizes.baseGap,
         }}
       >
-        <LanguageButtonBar expandable={true} />
+        {/* <LanguageButtonBar expandable={true} /> */}
         <Layout.Spacer multiplier={1} />
         <Typography variant="body2">Title</Typography>
         <Layout.Spacer multiplier={0.5} />
@@ -532,7 +532,7 @@ const DiscardChangesModal = ({
           You have unsaved changes. Are you sure you want to discard them?
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary" variant="contained">
           Cancel
         </Button>

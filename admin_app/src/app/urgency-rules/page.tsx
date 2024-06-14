@@ -8,6 +8,7 @@ import {
   IconButton,
   InputAdornment,
   Button,
+  Tooltip,
 } from "@mui/material";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
@@ -177,14 +178,16 @@ const UrgencyRulesPage = () => {
             }}
             gap={sizes.baseGap}
           >
-            <Button
-              variant="contained"
-              disabled={currAccessLevel != "fullaccess" ? true : false}
-              onClick={() => createNewRecord()}
-              startIcon={<Add fontSize="small" />}
-            >
-              New
-            </Button>
+            <Tooltip title="Add new urgency rule">
+              <Button
+                variant="contained"
+                disabled={currAccessLevel != "fullaccess" ? true : false}
+                onClick={() => createNewRecord()}
+                startIcon={<Add fontSize="small" />}
+              >
+                New
+              </Button>
+            </Tooltip>
           </Layout.FlexBox>
           <List sx={{ width: "100%", pl: 1, bgcolor: "background.paper" }}>
             {items.map((urgencyRule: UrgencyRule, index: number) => {

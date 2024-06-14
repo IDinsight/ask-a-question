@@ -1,6 +1,14 @@
 import { appColors, appStyles, sizes } from "@/utils";
 import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
-import { Box, Button, Chip, Fade, Modal, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Fade,
+  IconButton,
+  Modal,
+  Typography,
+} from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -47,9 +55,10 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            height: "80%",
+            maxHeight: "80vh",
             width: "80%",
-            minWidth: "500px",
+            minWidth: "600px",
+            borderRadius: 2,
             backgroundColor: appColors.white,
             p: sizes.doubleBaseGap,
           }}
@@ -59,114 +68,118 @@ const ContentViewModal = ({
             {...appStyles.justifyContentSpaceBetween}
           >
             <Typography variant="h5">Content #{content_id}</Typography>
-            <Close onClick={onClose} />
+            <IconButton onClick={onClose}>
+              <Close />
+            </IconButton>
           </Layout.FlexBox>
-
-          <Layout.Spacer multiplier={1} />
-
+          <Layout.Spacer multiplier={0.5} />
+          {tags && tags.length > 0 && (
+            <Layout.FlexBox
+              flexDirection={"column"}
+              sx={{
+                my: sizes.smallGap,
+              }}
+            >
+              <Typography variant="subtitle1" gutterBottom>
+                Tags
+              </Typography>
+              <Layout.FlexBox
+                flexDirection={"row"}
+                gap={sizes.smallGap}
+                {...appStyles.alignItemsCenter}
+                sx={{
+                  overflowX: "auto",
+                  py: sizes.smallGap,
+                }}
+              >
+                {tags.map((tag) => (
+                  <Chip key={tag.tag_id} label={tag.tag_name} />
+                ))}
+              </Layout.FlexBox>
+            </Layout.FlexBox>
+          )}
+          <Layout.Spacer multiplier={0.5} />
+          {/* <LanguageButtonBar expandable={false} /> */}
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
-              height: "80%",
+              maxHeight: "50vh",
+              p: sizes.baseGap,
+              mr: sizes.baseGap,
+              overflowY: "auto",
+              border: 1,
+              borderColor: appColors.lightGrey,
+              borderRadius: 3,
             }}
           >
-            {tags && tags.length > 0 && (
-              <Layout.FlexBox
-                flexDirection={"column"}
-                sx={{
-                  my: sizes.smallGap,
-                }}
-              >
-                <Typography variant="subtitle1" gutterBottom>
-                  Tags
-                </Typography>
-                <Layout.FlexBox
-                  flexDirection={"row"}
-                  gap={sizes.smallGap}
-                  {...appStyles.alignItemsCenter}
-                  sx={{
-                    overflowX: "auto",
-                    py: sizes.smallGap,
-                  }}
-                >
-                  {tags.map((tag) => (
-                    <Chip key={tag.tag_id} label={tag.tag_name} />
-                  ))}
-                </Layout.FlexBox>
-              </Layout.FlexBox>
-            )}
-            <LanguageButtonBar expandable={false} />
-
-            <Layout.FlexBox
-              flex={1}
-              flexDirection={"column"}
+            <Typography variant="subtitle1" sx={{ mb: sizes.baseGap }}>
+              {title}
+            </Typography>
+            <Typography
+              variant="body2"
               sx={{
-                p: sizes.baseGap,
-                mr: sizes.baseGap,
-                overflowY: "auto",
-                border: 1,
-                borderColor: appColors.outline,
-                borderRadius: 1,
+                overflowWrap: "break-word",
+                hyphens: "auto",
+                whiteSpace: "pre-wrap",
               }}
             >
-              <Layout.Spacer multiplier={1} />
-              <Typography variant="subtitle1">{title}</Typography>
-              <Layout.Spacer multiplier={1} />
-              <Typography variant="body2">{text}</Typography>
+              {text}
+            </Typography>
+          </Layout.FlexBox>
+          <Layout.Spacer multiplier={2} />
+          <Layout.FlexBox
+            flexDirection={"row"}
+            gap={sizes.smallGap}
+            {...appStyles.justifyContentSpaceBetween}
+          >
+            <Layout.FlexBox
+              {...appStyles.alignItemsCenter}
+              flexDirection={"row"}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!editAccess}
+                component={Link}
+                href={`/content/edit?content_id=${content_id}`}
+              >
+                <Edit />
+                <Layout.Spacer horizontal multiplier={0.4} />
+                Edit
+              </Button>
+              <Layout.Spacer horizontal multiplier={1} />
             </Layout.FlexBox>
-            <Layout.Spacer multiplier={1} />
+            <Layout.FlexBox
+              {...appStyles.alignItemsCenter}
+              flexDirection={"row"}
+            >
+              <Typography variant="body2" color={appColors.darkGrey}>
+                Last modified on{" "}
+                {new Date(last_modified).toLocaleString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                  hour12: true,
+                })}
+              </Typography>
+            </Layout.FlexBox>
             <Layout.FlexBox
               flexDirection={"row"}
-              gap={sizes.smallGap}
-              {...appStyles.justifyContentSpaceBetween}
+              gap={sizes.baseGap}
+              {...appStyles.alignItemsCenter}
+              {...appStyles.justifyContentCenter}
+              sx={{ pr: sizes.baseGap }}
             >
-              <Layout.FlexBox
-                {...appStyles.alignItemsCenter}
-                flexDirection={"row"}
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={!editAccess}
-                  component={Link}
-                  href={`/content/edit?content_id=${content_id}`}
-                >
-                  <Edit />
-                  <Layout.Spacer horizontal multiplier={0.4} />
-                  Edit
-                </Button>
-                <Layout.Spacer horizontal multiplier={1} />
-              </Layout.FlexBox>
-              <Layout.FlexBox
-                {...appStyles.alignItemsCenter}
-                flexDirection={"row"}
-              >
-                <Typography variant="body2" color={appColors.darkGrey}>
-                  Last modified on{" "}
-                  {new Date(last_modified).toLocaleString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    hour12: true,
-                  })}
-                </Typography>
-              </Layout.FlexBox>
-              <Layout.FlexBox
-                flexDirection={"row"}
-                gap={sizes.baseGap}
-                {...appStyles.alignItemsCenter}
-                {...appStyles.justifyContentCenter}
-                sx={{ pr: sizes.baseGap }}
-              >
-                {/* <RemoveRedEye fontSize="small" color="disabled" /> */}
-                {/* <Typography variant="body2">_</Typography> */}
-                <ThumbUp fontSize="small" color="disabled" />
-                <Typography variant="body2">{positive_votes}</Typography>
-                <ThumbDown fontSize="small" color="disabled" />
-                <Typography variant="body2">{negative_votes}</Typography>
-              </Layout.FlexBox>
+              <ThumbUp fontSize="small" color="disabled" />
+              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
+                {positive_votes}
+              </Typography>
+              <ThumbDown fontSize="small" color="disabled" />
+              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
+                {negative_votes}
+              </Typography>
             </Layout.FlexBox>
           </Layout.FlexBox>
         </Box>
