@@ -16,10 +16,8 @@ sequenceDiagram
   User->>AAQ: User's question
   AAQ->>LLM: Identify language
   LLM->>AAQ: <Language>
-  AAQ->>LLM: Translate text
-  LLM->>AAQ: <Translated Text>
-  AAQ->>LLM: Paraphrase question
-  LLM->>AAQ: <Paraphrased Question>
+  AAQ->>LLM: Check for safety
+  LLM->>AAQ: <Safety Classification>
   AAQ->>Vector DB: Request N most similar contents in DB
   Vector DB->>AAQ: <N contents with similarity score>
   AAQ->>LLM: Given contents, construct response in user's language to question
@@ -44,10 +42,8 @@ sequenceDiagram
   User->>AAQ: User's question
   AAQ->>LLM: Identify language
   LLM->>AAQ: <Language>
-  AAQ->>LLM: Translate text
-  LLM->>AAQ: <Translated Text>
-  AAQ->>LLM: Paraphrase question
-  LLM->>AAQ: <Paraphrased Question>
+  AAQ->>LLM: Check for safety
+  LLM->>AAQ: <Safety Classification>
   AAQ->>Vector DB: Request N most similar contents in DB
   Vector DB->>AAQ: <N contents with similarity score>
   AAQ->>LLM: Construct response to question given contents

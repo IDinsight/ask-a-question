@@ -239,12 +239,13 @@ from the fact that pineapples are a hybrid of pinecones and apples and its pinec
 -like shape."}}
 {{"extracted_info": [], "answer": "FAILED"}}
 
+REFERENCE TEXT:
+{context}
+
 IMPORTANT NOTES ON THE "answer" FIELD:
 - Answer in the language of the question.
 - Do not include any information that is not present in the REFERENCE TEXT.
-
-REFERENCE TEXT:
-{context}"""
+"""
 )
 
 
