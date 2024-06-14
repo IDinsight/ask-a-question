@@ -12,7 +12,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: generate-response
     litellm_params:
-      model: gpt-4o
+      model: gpt-4-0125-preview
       api_key: "os.environ/OPENAI_API_KEY"
       # model: gemini/gemini-1.5-pro-latest
       # api_key: "os.environ/GEMINI_API_KEY"

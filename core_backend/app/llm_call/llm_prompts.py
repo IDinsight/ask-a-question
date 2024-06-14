@@ -16,6 +16,7 @@ class IdentifiedLanguage(str, Enum):
     """
 
     ENGLISH = "ENGLISH"
+    SWAHILI = "SWAHILI"
     # XHOSA = "XHOSA"
     # ZULU = "ZULU"
     # AFRIKAANS = "AFRIKAANS"
