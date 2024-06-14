@@ -19,7 +19,7 @@ interface Content {
   user_id: string;
   content_id: string;
   content_metadata: Record<string, any>;
-  content_tags: number[];
+  content_tags?: number[];
   content_tag_names?: string[];
 }
 
@@ -44,36 +44,26 @@ const DownloadModal = ({
 
   const fetchAndCleanContents = async () => {
     // fetch all contents
-    const raw_json_data = await apiCalls.getContentList({
+    const raw_json_contents = await apiCalls.getContentList({
       token: token!,
       skip: 0,
       limit: MAX_CARDS_TO_FETCH,
     });
-    if (raw_json_data.length === 0) {
+    if (raw_json_contents.length === 0) {
       return [];
     }
     // convert to list of json objects
-    const json_data_list = Object.values(raw_json_data);
-
-    // move content_id to be frst and drop user_id
-    const ordered_json_data_list = (json_data_list as Content[]).map(
+    const list_json_contents = Object.values(raw_json_contents);
+    // stringify json element
+    const cleaned_list_json_contents = (list_json_contents as Content[]).map(
       (content: Content) => {
-        const { user_id, content_id, content_tags, ...rest } = content;
         return {
-          content_id,
-          content_tags,
-          ...rest,
+          ...content,
+          content_metadata: JSON.stringify(content.content_metadata),
         };
       },
     );
-    // stringify json element
-    const processed_contents_json = ordered_json_data_list.map((content) => {
-      return {
-        ...content,
-        content_metadata: JSON.stringify(content.content_metadata),
-      };
-    });
-    // get list of tags and replace tag ids with tag names
+    // get list of tags and add content_tag_names
     const tags_json = await apiCalls.getTagList(token!);
     const tag_list = Object.values<Tag>(tags_json);
     const tag_dict = tag_list.reduce(
@@ -83,13 +73,22 @@ const DownloadModal = ({
       },
       {},
     );
-    processed_contents_json.forEach((content) => {
-      content.content_tag_names = content.content_tags.map(
+    cleaned_list_json_contents.forEach((content) => {
+      content.content_tag_names = content.content_tags!.map(
         (tag_id: number) => tag_dict[tag_id],
       );
     });
-
-    return processed_contents_json;
+    // drop "user_id" and "content_tags" and move "content_id" to first
+    const final_list_json_contents = cleaned_list_json_contents.map(
+      (content) => {
+        const { user_id, content_tags, content_id, ...rest } = content;
+        return {
+          content_id,
+          ...rest,
+        };
+      },
+    );
+    return final_list_json_contents;
   };
 
   const downloadCSV = (csvData: string, fileName: string) => {
@@ -112,12 +111,12 @@ const DownloadModal = ({
   ) => {
     setLoading(true);
     try {
-      const processed_contents_json = await fetchAndCleanContents();
-      if (processed_contents_json.length === 0) {
+      const cleaned_list_json_contents = await fetchAndCleanContents();
+      if (cleaned_list_json_contents.length === 0) {
         onNoDataFound();
         return;
       }
-      const csv = Papa.unparse(processed_contents_json);
+      const csv = Papa.unparse(cleaned_list_json_contents);
       const now = new Date();
       const timestamp = `${now.getFullYear()}_${String(
         now.getMonth() + 1,
