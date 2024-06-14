@@ -84,7 +84,13 @@ const DownloadModal = ({
     document.body.removeChild(link);
   };
 
-  const handleDownloadContent = async () => {
+  const handleDownloadContent = async (
+    fetchAndCleanContents: () => Promise<any[]>,
+    onNoDataFound: () => void,
+    onFailedDownload: () => void,
+    setLoading: (loading: boolean) => void,
+    onClose: () => void,
+  ) => {
     setLoading(true);
     try {
       const processed_contents_json = await fetchAndCleanContents();
@@ -92,7 +98,6 @@ const DownloadModal = ({
         onNoDataFound();
         return;
       }
-      // convert to csv
       const csv = Papa.unparse(processed_contents_json);
       const now = new Date();
       const timestamp = `${now.getFullYear()}_${String(
@@ -136,7 +141,15 @@ const DownloadModal = ({
           startIcon={<FileDownloadIcon />}
           loading={loading}
           loadingPosition="start"
-          onClick={handleDownloadContent}
+          onClick={() =>
+            handleDownloadContent(
+              fetchAndCleanContents,
+              onNoDataFound,
+              onFailedDownload,
+              setLoading,
+              onClose,
+            )
+          }
         >
           Download
         </LoadingButton>
