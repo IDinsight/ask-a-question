@@ -1,5 +1,4 @@
 import json
-import random
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
@@ -34,7 +33,6 @@ from core_backend.app.question_answer.schemas import (
     QueryResponse,
     ResultState,
 )
-from core_backend.app.question_dashboard.schemas import QuestionDashBoard
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
@@ -94,7 +92,6 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
 async def asession(
     async_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncSession, None]:
-
     async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
         yield async_session
 

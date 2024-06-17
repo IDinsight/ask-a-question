@@ -1,8 +1,10 @@
-from functools import partial
 import random
-from core_backend.app.question_dashboard.schemas import QuestionDashBoard
+from functools import partial
+
 import pytest
 from fastapi.testclient import TestClient
+
+from core_backend.app.question_dashboard.schemas import QuestionDashBoard
 
 
 async def mock_dashboard_stats(

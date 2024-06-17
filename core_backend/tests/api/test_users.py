@@ -18,7 +18,6 @@ from core_backend.tests.api.conftest import (
 
 
 class TestUsers:
-
     async def test_save_user_to_db(self, asession: AsyncSession) -> None:
         user = UserCreate(username="test_username_3")
         saved_user = await save_user_to_db(user, asession)

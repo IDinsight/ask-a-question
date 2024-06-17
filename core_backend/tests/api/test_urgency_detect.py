@@ -75,7 +75,6 @@ class TestUrgencyDetectionToken:
 
 
 class TestUrgencyClassifiers:
-
     @pytest.mark.parametrize("classifier", ALL_URGENCY_CLASSIFIERS.values())
     async def test_classifier(
         self, asession: AsyncSession, classifier: Callable
