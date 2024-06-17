@@ -106,7 +106,7 @@ const CardsPage = () => {
                   {...params}
                   variant="outlined"
                   label="Tags"
-                  placeholder="Find or create tags"
+                  placeholder="Filter by tags"
                 />
               )}
               sx={{ width: "80%" }}
