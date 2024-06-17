@@ -90,9 +90,7 @@ async def llm_response(
 
 @check_align_score__after
 @identify_language__before
-@translate_question__before
 @classify_safety__before
-@paraphrase_question__before
 async def get_llm_answer(
     question: QueryRefined,
     response: QueryResponse,
