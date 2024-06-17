@@ -292,29 +292,33 @@ class AlignmentScore(BaseModel):
     ).strip()
 
 
-def get_urgency_detection_prompt(condition: str, message: str) -> str:
+def get_urgency_detection_prompt(urgency_rules: List[str]) -> str:
     """
     Returns the prompt for the urgency detection bot.
     """
-
+    urgency_rules_str = "\n".join(
+        [f"{i+1}. {rule}" for i, rule in enumerate(urgency_rules)]
+    )
     return textwrap.dedent(
         (
-            """Given a [statement] and [comment], score the share of meaning
-            of [statement] covered by [comment].
-            Respond with a score between 0 and 1 with 0.1 increments.
+            """You are an urgency classification bot. Given a set of urgency rules
+            below, score if the user message is urgent or not. Respond with the
+            rule that is most consistent with the user message, the probability
+            between 0 and 1 with 0.1 of how closely the user message matches the rule,
+            and the reason for the probability.
             """
             """
             Respond in json string:
 
             \{
-               statement: str
+               best_matching_rule: str
                probability: float
                reason: str
             \}
             """
             f"""
-            statement: {condition}
-            comment: {message}
+            Urgency Rules:
+            {urgency_rules_str}
             """
         )
     ).strip()
