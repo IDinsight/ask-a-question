@@ -293,7 +293,7 @@ const ContentBox = ({
             {...params}
             variant="outlined"
             label="Tags"
-            placeholder="Add Tags"
+            placeholder="Find or create tags"
             onChange={(event) => setInputVal(event.target.value)}
             onKeyDown={(event) => {
               if (
@@ -331,7 +331,7 @@ const ContentBox = ({
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
-            filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
+            filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
           }
 
           return filtered;
