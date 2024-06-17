@@ -7,11 +7,12 @@ from .utils import get_gtts_lang_code
 
 logger = setup_logger("TTS")
 
+
 @identify_language__before
 async def generate_speech(
     question: QueryRefined,
     response: QueryResponse | QueryResponseError,
-    save_path: str = 'response.mp3'
+    save_path: str = "response.mp3",
 ) -> QueryResponse | QueryResponseError:
     """
     Converts the provided text to speech and saves it as an mp3 file.

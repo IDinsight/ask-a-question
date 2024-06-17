@@ -1,11 +1,12 @@
 from enum import Enum
 from gtts.lang import tts_langs
 
+
 class IdentifiedGttsLanguage(str, Enum):
     """
     Identified language of the user's input.
     """
-    
+
     ENGLISH = "en"
     SWAHILI = "sw"
     HINDI = "hi"
@@ -20,6 +21,7 @@ class IdentifiedGttsLanguage(str, Enum):
             for lang in cls._member_names_
             if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
         ]
+
 
 def get_gtts_lang_code(identified_lang: IdentifiedGttsLanguage) -> str:
     """
