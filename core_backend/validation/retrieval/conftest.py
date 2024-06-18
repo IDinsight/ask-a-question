@@ -1,28 +1,72 @@
+from datetime import datetime
+from typing import AsyncGenerator, List
+
 import pytest
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
+from pytest import Item
+from pytest_asyncio import is_async_test
 
 from core_backend.app import create_app
-from core_backend.app.database import get_session
+from core_backend.app.auth.dependencies import create_access_token
+from core_backend.app.database import get_session_context_manager
+from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash, get_password_salted_hash
+
+TEST_USERNAME = "test_username"
+TEST_PASSWORD = "test_password"
+TEST_USER_API_KEY = "test_api_key"
+
+
+def pytest_collection_modifyitems(items: List[Item]) -> None:
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
 
 
 @pytest.fixture(scope="session")
-def client() -> TestClient:
+async def client() -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
-    with TestClient(app) as c:
+    async with AsyncClient(app=app, base_url="http://test") as c:
         yield c
 
 
 @pytest.fixture(scope="session")
-def db_session() -> pytest.FixtureRequest:
-    """Create a test database session."""
-    session_gen = get_session()
-    session = next(session_gen)
+def user(client: TestClient) -> UserDB:
+    """
+    Returns a user dict
+    """
 
-    try:
-        yield session
-    finally:
-        session.rollback()
-        next(session_gen, None)
+    with get_session_context_manager() as db_session:
+        user1 = UserDB(
+            username=TEST_USERNAME,
+            hashed_password=get_password_salted_hash(TEST_PASSWORD),
+            hashed_api_key=get_key_hash(TEST_USER_API_KEY),
+            created_datetime_utc=datetime.utcnow(),
+            updated_datetime_utc=datetime.utcnow(),
+        )
+
+        db_session.add(user1)
+        db_session.commit()
+
+    return user1
+
+
+@pytest.fixture(scope="session")
+def api_key() -> str:
+    """
+    Returns an API key
+    """
+    return TEST_USER_API_KEY
+
+
+@pytest.fixture(scope="session")
+def fullaccess_token(user: UserDB) -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token(user.username)
 
 
 # create command line arguments for pytest as per https://stackoverflow.com/a/42145604/7664921
@@ -84,6 +128,6 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     for arg in args:
         option_value = metafunc.config.option.__getattribute__(arg)
         if arg in metafunc.fixturenames and option_value is not None:
-            metafunc.parametrize(arg, [option_value])
+            metafunc.parametrize(arg, [option_value], scope="session")
         else:
-            metafunc.parametrize(arg, [None])
+            metafunc.parametrize(arg, [None], scope="session")
