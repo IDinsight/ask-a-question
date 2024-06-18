@@ -46,33 +46,12 @@ An example content data will look like
     pip install -r core_backend/requirements.txt
     pip install -r core_backend/validation/requirements.txt
     ```
-3. Set environment variables.
-    1. You must export the required environment variables. They are defined with default values in
-        `core_backend/validation/validation.env`. To ensure that these env variables are
-        set every time you activate `aaq-validate`, you can run the
-        following command for each variable:
-        ```
-        conda env config vars set <VARIABLE>=<VALUE>
-        ```
+3. At repository root, run `make setup-llm-proxy`. Make sure your environment variables
+   are [set correctly](../deployment/config-options.md) for [LiteLLM Proxy
+   server](../components/litellm-proxy/index.md).
+4. Update the `Makefile` in `core_backend/validation/validation`:
 
-    2. For optional ones, check out the defaults in `core_backend/app/configs/app_config.py`
-        and modify as per your own requirements. For example:
-        ```
-        conda env config vars set LITELLM_MODEL_EMBEDDING=<...>
-        ```
-    3. If you are using an external LLM endpoint, e.g. OpenAI, make sure to export the
-        API key variable as well.
-        ```
-        conda env config vars set OPENAI_API_KEY=<Your OPENAI API key>
-        ```
-
-### Running retrieval validation
-
- In project root `aaq-core` run the following command. (Perform any necessary
-   authentication steps you need to do, e.g. for AWS login).
-    ```
-    cd aaq-core
-
+    ```shell
     python -m pytest core_backend/validation/validate_retrieval.py \
         --validation_data_path <path> \
         --content_data_path <path> \
@@ -84,11 +63,24 @@ An example content data will look like
         --aws_profile <aws SSO profile name, if required> \
         -n auto -s
     ```
+
+    The data paths need to be relative to project root.
+
     `-n auto` allows multiprocessing to speed up the test, and `-s` ensures logging by
     the test module is shown on your stdout.
 
     For details of the command line arguments, see the "Custom options" section of the
     output for the following command:
+
     ```shell
     python -m pytest core_backend/validation/validate_retrieval.py --help
     ```
+
+### Running retrieval validation
+
+After [setting up](#setting-up) as above, just run
+
+```shell
+cd core_backend/validation/retrieval  # if not there already
+make retrieval-validation
+```
