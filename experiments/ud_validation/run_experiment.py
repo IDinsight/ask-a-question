@@ -17,6 +17,19 @@ from core_backend.app.urgency_rules.schemas import UrgencyRuleCreate
 
 PATH_TO_MESSAGES = Path(__file__).parents[3] / "data/mc_urgency_message_data.csv"
 PATH_TO_RULES = Path(__file__).parents[3] / "data/mc_urgency_rules.csv"
+BATCH_SIZE = 50
+
+
+async def my_save_urgency_rule_to_db(
+    user_id: int, rule: UrgencyRuleCreate, session: AsyncSession
+) -> UrgencyRuleDB:
+    """
+    Save urgency rule to the database
+    """
+    result = await save_urgency_rule_to_db(user_id, rule, session)
+    await session.close()
+
+    return result
 
 
 async def load_urgency_rules(path_to_rules: Path) -> List[UrgencyRuleDB]:
@@ -30,10 +43,14 @@ async def load_urgency_rules(path_to_rules: Path) -> List[UrgencyRuleDB]:
     for _i, row in rules_df.iterrows():
         async for session in get_async_session():
             rule = UrgencyRuleCreate(urgency_rule_text=row.iloc[0])
-            tasks.append(save_urgency_rule_to_db(1, rule, session))
+            tasks.append(my_save_urgency_rule_to_db(1, rule, session))
 
     results = await asyncio.gather(*tasks)
+
     return results
+
+
+# --- Cosine scoring ---
 
 
 async def get_cosine_results_for_message(
@@ -52,7 +69,6 @@ async def get_cosine_results_for_message(
     }
 
 
-# --- Cosine scoring ---
 async def cosine_distance_scoring() -> List[Dict]:
     """
     Calculate cosine distances for all messages
@@ -100,26 +116,23 @@ def process_cosine_results(message_results_dict: dict) -> None:
 # --- LLM Scoring ---
 
 
-async def llm_scoring_for_message(row: pd.Series, rules: List[UrgencyRuleDB]) -> Dict:
+async def llm_scoring_for_message(row: pd.Series, rules: List[str]) -> Dict:
     """
     Calculate LLM scores for a message
     """
-    tasks = []
-    for rule in rules:
-        tasks.append(
-            detect_urgency(
-                urgency_rule=rule.urgency_rule_text,
-                message=row["Question"],
-                metadata={},
-            )
-        )
+    result = await detect_urgency(
+        urgency_rules=rules,
+        message=row["Question"],
+        metadata={},
+    )
 
-    results = await asyncio.gather(*tasks)
-    return {
-        "message": row["Question"],
-        "urgency_label": row["Urgent_bool"],
-        "results": results,
-    }
+    result.update(
+        {
+            "message": row["Question"],
+            "urgency_label": row["Urgent_bool"],
+        }
+    )
+    return result
 
 
 async def llm_scoring() -> List[Dict]:
@@ -131,13 +144,22 @@ async def llm_scoring() -> List[Dict]:
         lambda x: True if x == "Yes" else False
     )
 
-    tasks = []
     async for asession in get_async_session():
         rules = await get_urgency_rules_from_db(user_id=1, asession=asession)
-        for _i, row in messages_df.iterrows():
-            tasks.append(llm_scoring_for_message(row, rules))
+        rules_list = [rule.urgency_rule_text for rule in rules]
 
-    llm_results = await asyncio.gather(*tasks)
+        llm_results = []
+        for start in range(0, len(messages_df), BATCH_SIZE):
+            tasks = []
+            print(".", end="", sep="", flush=True)
+            end = min(start + BATCH_SIZE, len(messages_df))
+            sub_df = messages_df.iloc[start:end, :]
+            for _i, row in sub_df.iterrows():
+                tasks.append(llm_scoring_for_message(row, rules_list))
+
+            sub_llm_results = await asyncio.gather(*tasks)
+            llm_results.extend(sub_llm_results)
+
     return llm_results
 
 
@@ -145,25 +167,7 @@ def process_llm_results(llm_results: List[Dict]) -> None:
     """
     Process LLM results
     """
-    processed_results = []
-    for message_result in llm_results:
-        max_probability = 0
-        max_rule = ""
-        for rule_result in message_result["results"]:
-            if max_probability < rule_result["probability"]:
-                max_probability = rule_result["probability"]
-                max_rule = rule_result["statement"]
-
-        processed_results.append(
-            {
-                "message": message_result["message"],
-                "urgency_label": message_result["urgency_label"],
-                "max_rule": max_rule,
-                "max_probability": max_probability,
-            }
-        )
-
-    pd.DataFrame(processed_results).to_csv("processed_results-llm.csv")
+    pd.DataFrame(llm_results).to_csv("processed_results-llm.csv")
 
 
 if __name__ == "__main__":
