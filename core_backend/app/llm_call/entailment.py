@@ -1,9 +1,13 @@
 from json import loads
+from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Optional
 
 from ..config import LITELLM_MODEL_URGENCY_DETECT
+from ..utils import setup_logger
 from .llm_prompts import get_urgency_detection_prompt
 from .utils import _ask_llm_async
+
+logger = setup_logger()
 
 
 async def detect_urgency(
@@ -25,4 +29,17 @@ async def detect_urgency(
         metadata=metadata,
     )
     json = json.replace("```json", "").replace("```", "")
-    return loads(json)
+    json = json.replace("\{", "{").replace("\}", "}")
+
+    try:
+        parsed = loads(json)
+    except JSONDecodeError:
+
+        logger.warning(f"JSON Decode failed: {json}")
+
+        return {
+            "best_matching_rule": "",
+            "probability": 0.0,
+            "reason": "JSON Decode failed",
+        }
+    return parsed
