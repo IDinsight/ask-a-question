@@ -48,6 +48,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile
     env_file:
       - .env
 
@@ -58,6 +59,8 @@ services:
       - .env
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+    volumes:
+      - ./litellm_proxy_config.yaml:/app/config.yaml
 
   relational_db:
     image: pgvector/pgvector:pg16

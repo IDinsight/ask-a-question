@@ -3,15 +3,16 @@ FROM docker
 COPY core_backend core_backend
 COPY admin_app admin_app
 
-COPY deployment/docker-compose/Caddyfile /etc/caddy/Caddyfile
-COPY deployment/docker-compose/litellm_proxy_config.yaml /app/config.yaml
+RUN export DOMAIN=localhost
+COPY deployment/docker-compose/Caddyfile ./Caddyfile
+COPY deployment/docker-compose/litellm_proxy_config.yaml ./litellm_proxy_config.yaml
 COPY docker-compose.yml ./
 COPY .env ./
 # TODO: in cloudebuild inject secrets into .env file
 
 EXPOSE 80 443
 
-ENTRYPOINT ["docker", "compose", "-f", "docker-compose.yml", "-p", "aaq-stack", "up", "--build"]
+ENTRYPOINT ["docker", "compose", "-f", "docker-compose.yml","-p", "aaq-stack", "up", "--build"]
 
 # Build
 # docker build -t aaq .
