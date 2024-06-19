@@ -52,6 +52,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug file path
+        run: |
+          pwd
+          ls -la ${{ github.workspace }}/deployment/docker-compose/
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
