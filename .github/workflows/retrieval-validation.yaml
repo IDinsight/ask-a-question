@@ -101,7 +101,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
         run: |
-          python -m pytest core_backend/validation/validate_retrieval.py \
+          python -m pytest core_backend/validation/retrieval/validate_retrieval.py \
             --validation_data_path \
               ${{ secrets.VALIDATION_DATA_S3_PATH }} \
             --content_data_path \
