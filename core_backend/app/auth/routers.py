@@ -9,13 +9,15 @@ from .dependencies import (
     authenticate_or_create_google_user,
     create_access_token,
 )
-from .schemas import GoogleLoginData
+from .schemas import AuthenticationDetails, GoogleLoginData
 
 router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+) -> AuthenticationDetails:
     """
     Login route for users to authenticate and receive a JWT token.
     """
@@ -28,16 +30,16 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
             detail="Incorrect username or password",
         )
 
-    return {
-        "access_token": create_access_token(user.username),
-        "token_type": "bearer",
-        "access_level": user.access_level,
-        "username": user.username,
-    }
+    return AuthenticationDetails(
+        access_token=create_access_token(user.username),
+        token_type="bearer",
+        access_level=user.access_level,
+        username=user.username,
+    )
 
 
 @router.post("/login-google")
-async def login_google(login_data: GoogleLoginData) -> dict:
+async def login_google(login_data: GoogleLoginData) -> AuthenticationDetails:
     """
     Verify google token, check if user exists. If user does not exist, create user
     Return JWT token for user
@@ -61,9 +63,9 @@ async def login_google(login_data: GoogleLoginData) -> dict:
             detail="Unable to create new user",
         )
 
-    return {
-        "access_token": create_access_token(user.username),
-        "token_type": "bearer",
-        "access_level": user.access_level,
-        "username": user.username,
-    }
+    return AuthenticationDetails(
+        access_token=create_access_token(user.username),
+        token_type="bearer",
+        access_level=user.access_level,
+        username=user.username,
+    )

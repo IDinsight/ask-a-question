@@ -1,19 +1,22 @@
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from core_backend.app import create_app
 from core_backend.app.database import get_session
 
 
 @pytest.fixture(scope="session")
-def client() -> TestClient:
+def client() -> Generator[TestClient, None, None]:
     app = create_app()
     with TestClient(app) as c:
         yield c
 
 
 @pytest.fixture(scope="session")
-def db_session() -> pytest.FixtureRequest:
+def db_session() -> Generator[Session, None, None]:
     """Create a test database session."""
     session_gen = get_session()
     session = next(session_gen)
