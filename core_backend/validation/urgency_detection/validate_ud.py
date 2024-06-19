@@ -100,6 +100,8 @@ class TestUDPerformance:
             else:
                 print(".", end="")
 
+        print()
+
         validation_data["predicted"] = results
         metrics = self._calculate_metrics(validation_data)
 
