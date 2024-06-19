@@ -24,7 +24,8 @@ async def my_save_urgency_rule_to_db(
     user_id: int, rule: UrgencyRuleCreate, session: AsyncSession
 ) -> UrgencyRuleDB:
     """
-    Save urgency rule to the database
+    We create a wrapper since we are gathering the async tasks outside
+    of the context manager. This avoids connections being left open.
     """
     result = await save_urgency_rule_to_db(user_id, rule, session)
     await session.close()
@@ -88,12 +89,12 @@ async def cosine_distance_scoring() -> List[Dict]:
     return cosine_distance_results
 
 
-def process_cosine_results(message_results_dict: dict) -> None:
+def process_cosine_results(message_results_list: List[Dict]) -> None:
     """
     Process cosine distance results
     """
     processed_results = []
-    for message_result in message_results_dict:
+    for message_result in message_results_list:
         min_distance = 100
         min_rule = ""
         for rule_result in message_result["results"].values():
@@ -110,7 +111,9 @@ def process_cosine_results(message_results_dict: dict) -> None:
             }
         )
 
-    pd.DataFrame(processed_results).to_csv("processed_results.csv")
+    pd.DataFrame(processed_results).to_csv(
+        Path(__file__).parent / "processed_results-cosine.csv"
+    )
 
 
 # --- LLM Scoring ---
@@ -167,7 +170,9 @@ def process_llm_results(llm_results: List[Dict]) -> None:
     """
     Process LLM results
     """
-    pd.DataFrame(llm_results).to_csv("processed_results-llm.csv")
+    pd.DataFrame(llm_results).to_csv(
+        Path(__file__).parent / "processed_results-cosine.csv"
+    )
 
 
 if __name__ == "__main__":
@@ -177,15 +182,14 @@ if __name__ == "__main__":
     rules = loop.run_until_complete(load_urgency_rules(PATH_TO_RULES))
     print(f"Loaded {len(rules)} rules")
 
-    # print("Running cosine distance scoring")
-
-    # cosine_distance_results = loop.run_until_complete(cosine_distance_scoring())
-    # print(f"Calculated cosine distances for {len(cosine_distance_results)} messages")
-
-    # process_cosine_results(cosine_distance_results)
+    print("Running cosine distance scoring")
+    cosine_distance_results = loop.run_until_complete(cosine_distance_scoring())
+    print(f"Calculated cosine distances for {len(cosine_distance_results)} messages")
+    process_cosine_results(cosine_distance_results)
 
     print("Running LLM scoring")
     llm_results = loop.run_until_complete(llm_scoring())
     print(f"Calculated LLM scores for {len(llm_results)} messages")
     process_llm_results(llm_results)
+
     loop.close()
