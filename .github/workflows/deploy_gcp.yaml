@@ -16,6 +16,8 @@ jobs:
       contents: "read"
       id-token: "write"
 
+    environment: gcp-testing
+
     steps:
       - uses: "actions/checkout@v4"
 
