@@ -35,4 +35,4 @@ jobs:
           instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
-          script: ./deployment/docker-compose/redeploy.sh ${{ secrets.REPO_PATH }}
+          script: ${{ github.workspace }}/deployment/docker-compose/redeploy.sh
