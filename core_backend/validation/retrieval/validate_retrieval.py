@@ -30,7 +30,7 @@ class TestRetrievalPerformance:
         content_data_text_col: str,
         aws_profile: Union[str, None],
     ) -> AsyncGenerator[None, None]:
-        """Setup UD rules table"""
+        """Setup content DB"""
         content_df = self.prepare_content_data(
             content_data_path=content_data_path,
             content_data_label_col=content_data_label_col,
