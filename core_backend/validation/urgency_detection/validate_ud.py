@@ -30,9 +30,7 @@ class TestUDPerformance:
         aws_profile: Union[str, None],
     ) -> AsyncGenerator[None, None]:
         """Setup UD rules table"""
-        ud_rules_df = pd.read_csv(
-            ud_rules_path,
-        )
+        ud_rules_df = pd.read_csv(ud_rules_path)
         ud_rules = ud_rules_df.loc[:, ud_rules_col].to_list()
 
         urgency_rule_ids = []
