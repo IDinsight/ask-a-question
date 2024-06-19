@@ -96,7 +96,7 @@ jobs:
         env:
           N_TOP_CONTENT_FOR_SEARCH: 10
           PROMETHEUS_MULTIPROC_DIR: /tmp
-          LITELLM_ENDPOINT: http://litellm_proxy:4000
+          LITELLM_ENDPOINT: http://localhost:4000
           REPO: ${{ github.repository }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           HASH: ${{ github.sha }}
