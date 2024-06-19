@@ -1,0 +1,40 @@
+name: Retrieval validation
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+      - deploy-on-gcp-ga
+  workflow_dispatch:
+
+jobs:
+  DeployAAQOnGCP:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v1"
+        with:
+          create_credentials_file: true
+          workload_identity_provider: "principal://iam.googleapis.com/projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.POOL_ID }}/providers/${{ env.PROVIDER_ID }}"
+          service_account: "${{ secrets.GH_SERVICE_ACCOUNT_EMAIL }}"
+
+      - id: "compute-ssh"
+        uses: "google-github-actions/ssh-compute@v1"
+        with:
+          instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
+          zone: "${{ secrets.DEPLOYMENT_ZONE }}"
+          ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
+          command: |
+            cd ${{ secrets.REPO_PATH }}
+            git pull origin main
+            cd ./deployment/docker-compose
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up --build -d
