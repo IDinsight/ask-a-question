@@ -41,7 +41,7 @@ jobs:
         options: --name litellm_proxy
         volumes:
           # https://github.com/actions/runner/issues/2058
-          - /home/runner/work/aaq-core/aaq-core/deployment/docker-compose/litellm_proxy_config.yaml:/app/config.yaml
+          - /__w/aaq-core/aaq-core/deployment/docker-compose/litellm_proxy_config.yaml:/app/config.yaml
         ports:
           - 4000:4000
 
