@@ -55,13 +55,11 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Restart Litellm Proxy server
+      - name: Restart LiteLlm Proxy server
         # Restart LiteLLM Proxy server after volumes have been checked out
-        uses: docker://docker
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        with:
-          args: docker restart litellm_proxy
+        run: docker compose restart litellm_proxy
 
       - name: Configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
