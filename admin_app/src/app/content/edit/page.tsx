@@ -1,16 +1,11 @@
 "use client";
-import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft } from "@mui/icons-material";
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import Alert from "@mui/material/Alert";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { Tag } from "../page";
+import { LoadingButton } from "@mui/lab";
 import {
   Button,
   CircularProgress,
@@ -23,7 +18,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import Alert from "@mui/material/Alert";
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
+import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -164,11 +163,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id),
+                data.find((tag) => tag.tag_id === tag_id)
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+          defaultTags.filter((tag): tag is Tag => tag !== undefined)
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -226,7 +225,7 @@ const ContentBox = ({
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content,
+    key: keyof Content
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -281,6 +280,7 @@ const ContentBox = ({
         id="tags-autocomplete"
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
+        noOptionsText="No tags found. Start typing to create one."
         value={contentTags}
         onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
           handleTagsChange(updatedTags);
@@ -305,11 +305,11 @@ const ContentBox = ({
                   inputVal &&
                   !availableTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
                   ) &&
                   !contentTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
                   )
                 ) {
                   event.preventDefault();
@@ -323,11 +323,11 @@ const ContentBox = ({
           const filtered = filter(options, params);
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name,
+            (option) => inputValue.toUpperCase() === option.tag_name
           );
 
           const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name,
+            (tag) => inputValue.toUpperCase() === tag.tag_name
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
@@ -346,11 +346,11 @@ const ContentBox = ({
             option.tag_name &&
             !availableTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             ) &&
             !contentTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             )
           ) {
             return (
@@ -443,7 +443,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
+                      `/content/?content_id=${content_id}&action=${actionType}`
                     );
                   }
                 };
