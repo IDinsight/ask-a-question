@@ -201,10 +201,9 @@ class TestUDPerformance:
             "Message": message,
         }
 
-        if notification_topic is not None:
-            self.send_notification(
-                message_dict, topic=notification_topic, aws_profile=aws_profile
-            )
+        self.send_notification(
+            message_dict, topic=notification_topic, aws_profile=aws_profile
+        )
 
     def get_results_metadata(self) -> str:
 
