@@ -38,6 +38,7 @@ jobs:
         image: ghcr.io/berriai/litellm:main-v1.34.6
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        options: --name litellm_proxy
         volumes:
           - ${{ github.workspace }}/deployment/docker-compose/litellm_proxy_config.yaml:/app/config.yaml
         ports:
@@ -55,14 +56,14 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Restart LiteLlm Proxy server
+      - name: Restart LiteLLM Proxy server
         # https://github.com/orgs/community/discussions/42127#discussioncomment-7591609
         # Restart LiteLLM Proxy server after volumes have been checked out
         uses: docker://docker
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
-          args: compose restart litellm_proxy
+          args: docker restart litellm_proxy
 
       - name: Configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
