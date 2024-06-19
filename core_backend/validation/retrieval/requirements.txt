@@ -1,5 +1,6 @@
 pytest==7.4.2
+pytest-xdist==3.5.0
+pytest-asyncio==0.23.2
 pandas==2.1.4
 s3fs==2023.12.2
 boto3==1.33.13
-pytest-xdist==3.5.0
