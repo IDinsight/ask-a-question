@@ -15,9 +15,10 @@ from core_backend.app.urgency_rules.models import (
 )
 from core_backend.app.urgency_rules.schemas import UrgencyRuleCreate
 
-PATH_TO_MESSAGES = Path(__file__).parents[3] / "data/mc_urgency_message_data.csv"
+PATH_TO_MESSAGES = Path(__file__).parents[3] / "data/mc_urgency_message_data_fixed.csv"
 PATH_TO_RULES = Path(__file__).parents[3] / "data/mc_urgency_rules.csv"
 BATCH_SIZE = 50
+URGENCY_LABEL_COL = "Urgent_clean"
 
 
 async def my_save_urgency_rule_to_db(
@@ -75,16 +76,23 @@ async def cosine_distance_scoring() -> List[Dict]:
     Calculate cosine distances for all messages
     """
     messages_df = pd.read_csv(PATH_TO_MESSAGES)
-    messages_df.loc[:, "Urgent_bool"] = messages_df.loc[:, "Urgent"].map(
+    messages_df.loc[:, "Urgent_bool"] = messages_df.loc[:, URGENCY_LABEL_COL].map(
         lambda x: True if x == "Yes" else False
     )
 
-    tasks = []
-
     async for session in get_async_session():
-        for _i, row in messages_df.iterrows():
-            tasks.append(get_cosine_results_for_message(session, _i, row))
-        cosine_distance_results = await asyncio.gather(*tasks)
+
+        cosine_distance_results = []
+        for start in range(0, len(messages_df), BATCH_SIZE):
+            tasks = []
+            print(".", end="", sep="", flush=True)
+            end = min(start + BATCH_SIZE, len(messages_df))
+            sub_df = messages_df.iloc[start:end, :]
+            for _i, row in sub_df.iterrows():
+                tasks.append(get_cosine_results_for_message(session, _i, row))
+
+            sub_llm_results = await asyncio.gather(*tasks)
+            cosine_distance_results.extend(sub_llm_results)
 
     return cosine_distance_results
 
@@ -143,7 +151,7 @@ async def llm_scoring() -> List[Dict]:
     Calculate LLM scores for all messages
     """
     messages_df = pd.read_csv(PATH_TO_MESSAGES)
-    messages_df.loc[:, "Urgent_bool"] = messages_df.loc[:, "Urgent"].map(
+    messages_df.loc[:, "Urgent_bool"] = messages_df.loc[:, URGENCY_LABEL_COL].map(
         lambda x: True if x == "Yes" else False
     )
 
@@ -171,7 +179,7 @@ def process_llm_results(llm_results: List[Dict]) -> None:
     Process LLM results
     """
     pd.DataFrame(llm_results).to_csv(
-        Path(__file__).parent / "processed_results-cosine.csv"
+        Path(__file__).parent / "processed_results-llm.csv"
     )
 
 

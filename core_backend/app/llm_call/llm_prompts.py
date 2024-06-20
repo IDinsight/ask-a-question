@@ -309,8 +309,8 @@ class UrgencyDetectionEntailment:
     _urgency_rules: List[str]
     _prompt_base: str = textwrap.dedent(
         """
-        You are a highly sensitive urgency detector. Score if ANY part of the
-        user message corresponds to any part of the urgency rules provided below.
+        You are a highly sensitive urgency detector. Score if
+        user message corresponds to any of the urgency rules provided below.
         Ignore any part of the user message that does not correspond to the rules.
         Respond with (a) the rule that is most consistent with the user message,
         (b) the probability between 0 and 1 with increments of 0.1 that ANY part of

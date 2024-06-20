@@ -3,6 +3,9 @@
 **/data/certbot/
 **/data/nginx/app.conf
 
+# Local files
+.virtual_documents/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
