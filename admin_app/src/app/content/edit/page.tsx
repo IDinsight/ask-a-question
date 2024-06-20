@@ -5,7 +5,7 @@ import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ChevronLeft } from "@mui/icons-material";
+import { ChevronLeft, Delete } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Snackbar,
   TextField,
   Typography,
@@ -105,6 +106,9 @@ const AddEditContentPage = () => {
             addTag={(tag: string) => {
               return apiCalls.createTag(tag, token!);
             }}
+            deleteTag={(tag_id: number) => {
+              return apiCalls.deleteTag(tag_id, token!);
+            }}
             isSaved={isSaved}
             setIsSaved={setIsSaved}
           />
@@ -129,6 +133,7 @@ const ContentBox = ({
   setContent,
   getTagList,
   addTag,
+  deleteTag,
   isSaved,
   setIsSaved,
 }: {
@@ -136,6 +141,7 @@ const ContentBox = ({
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   getTagList: () => Promise<Tag[]>;
   addTag: (tag: string) => Promise<Tag>;
+  deleteTag: (tag_id: number) => Promise<[]>;
   isSaved: boolean;
   setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
@@ -146,6 +152,8 @@ const ContentBox = ({
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
+  const [tagToDelete, setTagToDelete] = React.useState<Tag | null>(null);
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
 
@@ -268,8 +276,48 @@ const ContentBox = ({
       setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
+  const openDeleteConfirmModal = (tag: Tag) => {
+    setTagToDelete(tag);
+    setOpenDeleteModal(true);
+  };
+  const handleDeleteTag = () => {
+    if (tagToDelete) {
+      deleteTag(tagToDelete.tag_id).then(() => {
+        setRefreshKey((prevKey) => prevKey + 1);
+        setOpenDeleteModal(false);
+        handleTagsChange(
+          contentTags.filter((tag) => tag.tag_id !== tagToDelete.tag_id),
+        );
+        setTagToDelete(null);
+      });
+    }
+  };
   return (
     <Layout.FlexBox>
+      <Dialog
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        aria-labelledby="confirm-delete-dialog-title"
+        aria-describedby="confirm-delete-dialog-description"
+      >
+        <DialogTitle id="confirm-delete-dialog-title">
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-delete-dialog-description">
+            Are you sure you want to delete the tag "{tagToDelete?.tag_name}"?
+            Deleting this tag will remove it from all content.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteModal(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={() => handleDeleteTag()} color="primary">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Layout.Spacer multiplier={1} />
       <Autocomplete
         autoSelect
@@ -313,6 +361,7 @@ const ContentBox = ({
                   )
                 ) {
                   event.preventDefault();
+
                   handleNewTag(inputVal);
                 }
               }
@@ -364,6 +413,15 @@ const ContentBox = ({
           return (
             <li key={option.tag_id} {...rest}>
               {option.tag_name}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDeleteConfirmModal(option);
+                  //handleDeleteTag(option.tag_id);
+                }}
+              >
+                <Delete fontSize="small" color="secondary" />
+              </IconButton>
             </li>
           );
         }}
