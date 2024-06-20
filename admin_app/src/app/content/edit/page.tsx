@@ -306,7 +306,7 @@ const ContentBox = ({
         <DialogContent>
           <DialogContentText id="confirm-delete-dialog-description">
             Are you sure you want to delete the tag "{tagToDelete?.tag_name}"?
-            Deleting this tag will remove it from all content.
+            Deleting this tag will remove it from all contents.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
