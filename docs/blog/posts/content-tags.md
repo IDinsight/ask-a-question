@@ -19,6 +19,6 @@ On the Admin App, it is now possible to add tags to contents to categorise them.
 
 The bar shown on the image below will allow to quickly manage tags.
 
-On the landing page, you can use the bar shown below to filter contents based on tags.
+On the landing page, you can use the tags bar to filter contents based on tags.
 
 ![old UI main screenshot](../images/tags-edit.png){: .blog-img }
