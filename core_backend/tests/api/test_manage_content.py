@@ -1,15 +1,22 @@
-import datetime
+from datetime import datetime
 from typing import Any, Dict, Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
+from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.contents.routers import _convert_record_to_schema
+from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
-from .conftest import TEST_CONTENT_QUOTA_2, async_fake_embedding
+from .conftest import async_fake_embedding
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+
+TEMP_USER_CONTENT_QUOTA = 2
+TEMP_USERNAME = "temp_username"
 
 
 @pytest.fixture(
@@ -43,16 +50,44 @@ def existing_content_id(
     )
 
 
+@pytest.fixture(scope="class")
+def temp_user(client: TestClient, db_session: Session) -> Generator[str, None, None]:
+    user3_db = UserDB(
+        username=TEMP_USERNAME,
+        hashed_password=get_password_salted_hash("temp_password"),
+        hashed_api_key=get_key_hash("temp_api_key"),
+        content_quota=TEMP_USER_CONTENT_QUOTA,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(user3_db)
+    db_session.commit()
+    yield user3_db.user_id
+    print("########### Deleting temp user")
+    db_session.delete(user3_db)
+    db_session.commit()
+
+
+@pytest.fixture(scope="class")
+def temp_user_token() -> str:
+    """
+    Returns a token for the temporary user
+    """
+    return create_access_token(TEMP_USERNAME)
+
+
 class TestContentQuota:
     async def test_content_quota(
         self,
         client: TestClient,
-        fullaccess_token_user2: str,
+        temp_user: str,
+        temp_user_token: str,
     ) -> None:
-        for i in range(TEST_CONTENT_QUOTA_2):
+        added_content_ids = []
+        for i in range(TEMP_USER_CONTENT_QUOTA):
             response = client.post(
                 "/content",
-                headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+                headers={"Authorization": f"Bearer {temp_user_token}"},
                 json={
                     "content_title": f"test title {i}",
                     "content_text": f"test content {i}",
@@ -62,10 +97,12 @@ class TestContentQuota:
                 },
             )
             assert response.status_code == 200
+            added_content_ids.append(response.json()["content_id"])
+        print("##########", added_content_ids)
 
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            headers={"Authorization": f"Bearer {temp_user_token}"},
             json={
                 "content_title": "test title",
                 "content_text": "test content",
@@ -75,6 +112,14 @@ class TestContentQuota:
             },
         )
         assert response.status_code == 403
+
+        for content_id in added_content_ids:
+            print("########## Deleting content", content_id)
+            response = client.delete(
+                f"/content/{content_id}",
+                headers={"Authorization": f"Bearer {temp_user_token}"},
+            )
+            assert response.status_code == 200
 
 
 class TestManageContent:
@@ -258,8 +303,8 @@ async def test_convert_record_to_schema() -> None:
         positive_votes=0,
         negative_votes=0,
         content_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.datetime.utcnow(),
-        updated_datetime_utc=datetime.datetime.utcnow(),
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id
