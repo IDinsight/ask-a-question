@@ -301,19 +301,25 @@ const ContentBox = ({
         aria-describedby="confirm-delete-dialog-description"
       >
         <DialogTitle id="confirm-delete-dialog-title">
-          Confirm Delete
+          Are you sure you want to delete tag {tagToDelete?.tag_name}?
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="confirm-delete-dialog-description">
-            Are you sure you want to delete the tag "{tagToDelete?.tag_name}"?
-            Deleting this tag will remove it from all contents.
+            This tag will be removed from all contents and will no longer be an
+            option. This action cannot be undone.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
           <Button onClick={() => setOpenDeleteModal(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={() => handleDeleteTag()} color="primary">
+          <Button
+            onClick={() => handleDeleteTag()}
+            autoFocus
+            variant="contained"
+            color="error"
+            startIcon={<Delete />}
+          >
             Delete
           </Button>
         </DialogActions>
