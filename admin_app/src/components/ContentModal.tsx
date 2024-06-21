@@ -211,7 +211,7 @@ const DeleteContentModal = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        {"Are you sure you want to delete this content?"}
+        Are you sure you want to delete this content?
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
