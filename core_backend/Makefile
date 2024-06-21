@@ -8,7 +8,6 @@ tests: setup-test-containers run-tests teardown-test-containers
 # Test runner
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
-	python -m alembic upgrade head && \
 	python -m pytest -rPQ -m "not rails" tests
 
 ## Helper targets
