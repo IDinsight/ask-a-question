@@ -100,18 +100,19 @@ async def save_content_to_db(
         user_db = (await asession.execute(stmt)).first()[0]
         content_quota = user_db.content_quota
 
-        # get the number of contents in the content db for this user
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        content_count = len(user_contents)
-
-        if content_count >= content_quota:
-            raise ExceedsContentQuotaError(
-                f"There are already {content_count} contents for this "
-                f"user and quota is {content_quota}."
-            )
-        else:
+        # if content_quota is None, then there is no limit
+        if content_quota is None:
             pass
+        else:
+            # get the number of contents this user has already added
+            stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+            user_contents = (await asession.execute(stmt)).all()
+            content_count = len(user_contents)
+            if content_count >= content_quota:
+                raise ExceedsContentQuotaError(
+                    f"There are already {content_count} contents for this "
+                    f"user and quota is {content_quota}."
+                )
 
     content_embedding = await _get_content_embeddings(content, metadata=metadata)
     content_db = ContentDB(
