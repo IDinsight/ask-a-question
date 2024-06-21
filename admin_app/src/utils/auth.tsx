@@ -67,7 +67,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setToken(access_token);
       setAccessLevel(access_level);
       router.push(sourcePage);
-    } catch (error) {
+    } catch (error: Error | any) {
       if (error.status === 401) {
         setLoginError("Invalid username or password");
         console.error("Login error:", error);
