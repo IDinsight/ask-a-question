@@ -138,6 +138,7 @@ const ContentBox = ({
   setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [saveError, setSaveError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -176,8 +177,9 @@ const ContentBox = ({
 
     fetchTags();
   }, [refreshKey]);
-  const saveContent = async (content: Content) => {
+  const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
+
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
@@ -185,27 +187,29 @@ const ContentBox = ({
       content_tags: content.content_tags,
     };
 
-    const promise =
-      content.content_id === null
-        ? apiCalls.createContent(body, token!)
-        : apiCalls.editContent(content.content_id, body, token!);
-
-    const result = promise
-      .then((data) => {
-        setIsSaved(true);
-        setSaveError(false);
-        return data.content_id;
-      })
-      .catch((error: Error) => {
-        console.error("Error processing content:", error);
+    try {
+      const result =
+        content.content_id === null
+          ? await apiCalls.createContent(body, token!)
+          : await apiCalls.editContent(content.content_id, body, token!);
+      setIsSaved(true);
+      setSaveError(false);
+      return result.content_id;
+    } catch (error) {
+      if (error.status === 403) {
+        console.error("Content quota reached.");
+        setErrorMessage("Unable to save content: Content limit reached");
         setSaveError(true);
         return null;
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
-
-    return await result;
+      } else {
+        console.error("Failed to save content:", error);
+        setErrorMessage("Failed to save content: Unexpected error occurred");
+        setSaveError(true);
+        return null;
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
   function createEmptyContent(contentTags: Tag[]): Content {
     return {
@@ -452,7 +456,7 @@ const ContentBox = ({
           </LoadingButton>
           {saveError ? (
             <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-              Failed to save content.
+              {errorMessage}
             </Alert>
           ) : null}
           <Snackbar
