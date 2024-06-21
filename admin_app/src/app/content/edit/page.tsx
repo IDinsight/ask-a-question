@@ -195,7 +195,7 @@ const ContentBox = ({
       setIsSaved(true);
       setSaveError(false);
       return result.content_id;
-    } catch (error) {
+    } catch (error: Error | any) {
       if (error.status === 403) {
         console.error("Content quota reached.");
         setErrorMessage("Unable to save content: Content limit reached");
