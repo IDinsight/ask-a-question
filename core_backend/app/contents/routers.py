@@ -165,12 +165,14 @@ async def upload_contents_in_bulk(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[ContentDB] | None:
+) -> List[ContentRetrieve] | None:
     """
     Upload and process contents in bulk from a CSV file.
     """
 
     # TODO: deal with tags!
+    if file is None:
+        raise HTTPException(status_code=400, detail="No file uploaded")
 
     # Ensure the file is a CSV
     if not file.filename.endswith(".csv"):
