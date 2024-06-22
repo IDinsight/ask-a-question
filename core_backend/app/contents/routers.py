@@ -88,7 +88,7 @@ async def edit_content(
     return _convert_record_to_schema(updated_content)
 
 
-@router.get("/", response_model=list[ContentRetrieve])
+@router.get("/", response_model=List[ContentRetrieve])
 async def retrieve_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
@@ -160,12 +160,12 @@ async def retrieve_content_by_id(
     return _convert_record_to_schema(record)
 
 
-@router.post("/csv-upload", response_model=dict)
+@router.post("/csv-upload", response_model=List[ContentRetrieve])
 async def upload_contents_in_bulk(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> dict:
+) -> List[ContentDB] | None:
     """
     Upload and process contents in bulk from a CSV file.
     """
@@ -182,6 +182,7 @@ async def upload_contents_in_bulk(
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
     # Add each row to the content database
+    content_list = []
     for _, row in df.iterrows():
         content = ContentCreate(
             content_title=row["content_title"],
@@ -190,11 +191,13 @@ async def upload_contents_in_bulk(
             content_tags=[],
             content_metadata=row.get("content_metadata", {}),
         )
-        await save_content_to_db(
+        content_db = await save_content_to_db(
             user_id=user_db.user_id, content=content, asession=asession
         )
+        content_retrieve = _convert_record_to_schema(content_db)
+        content_list.append(content_retrieve)
 
-    return {"message": f"Added {len(df)} new contents."}
+    return content_list
 
 
 def _load_csv(file: UploadFile) -> pd.DataFrame:
@@ -206,7 +209,7 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
         df = pd.read_csv(file.file)
         return df
     except EmptyDataError as e:
-        raise HTTPException(status_code=400, detail="The CSV file is empty.") from e
+        raise HTTPException(status_code=400, detail="The CSV file is empty") from e
     except ParserError as e:
         raise HTTPException(
             status_code=400, detail="CSV is unreadable (parsing error)"
