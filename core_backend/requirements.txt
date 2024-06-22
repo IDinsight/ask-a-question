@@ -13,4 +13,4 @@ prometheus_client==0.19.0
 google-api-python-client==2.129.0
 google-api-python-client-stubs==1.25.0
 langfuse==2.27.3
-pandas=2.2.2
+pandas==2.2.2
