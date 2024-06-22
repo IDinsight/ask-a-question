@@ -171,11 +171,9 @@ async def upload_contents_in_bulk(
     """
 
     # TODO: deal with tags!
-    if file is None:
-        raise HTTPException(status_code=400, detail="No file uploaded")
 
     # Ensure the file is a CSV
-    if not file.filename.endswith(".csv"):
+    if file.filename is None or not file.filename.endswith(".csv"):
         raise HTTPException(
             status_code=400, detail="Invalid file format. Please upload a CSV file."
         )
