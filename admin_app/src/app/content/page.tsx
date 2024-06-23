@@ -28,6 +28,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
+import { ImportModal } from "../../components/ImportModal";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
@@ -203,13 +204,15 @@ const CardsUtilityStrip = ({
 function AddButtonWithDropdown() {
   const [editAccess, setEditAccess] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const openMenu = Boolean(anchorEl);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
     setAnchorEl(null);
+    setOpenModal(true);
   };
 
   return (
@@ -230,11 +233,12 @@ function AddButtonWithDropdown() {
       <Menu
         id="split-button-menu"
         anchorEl={anchorEl}
-        open={open}
+        open={openMenu}
         onClose={handleClose}
       >
         <MenuItem onClick={handleClose}>Bulk upload contents</MenuItem>
       </Menu>
+      <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
   );
 }

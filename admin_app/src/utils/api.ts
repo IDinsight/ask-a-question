@@ -126,6 +126,35 @@ const createContent = async (content: ContentBody, token: string) => {
   });
 };
 
+const bulkUploadContents = async (file: File, token: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_BACKEND_URL}/content/csv-upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      },
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return { status: response.status, data };
+    } else {
+      const errorResponse = await response.json();
+      const detail = errorResponse.detail || "An unknown error occurred";
+      return { status: response.status, detail: detail };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 const getUrgencyRuleList = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/urgency-rules/`, {
     method: "GET",
@@ -371,6 +400,7 @@ export const apiCalls = {
   deleteContent,
   editContent,
   createContent,
+  bulkUploadContents,
   getUrgencyRuleList,
   addUrgencyRule,
   updateUrgencyRule,
