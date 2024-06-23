@@ -54,8 +54,17 @@ def data_valid() -> BytesIO:
 
 
 @pytest.fixture
-def data_empty() -> BytesIO:
+def data_empty_csv() -> BytesIO:
     data: dict = {}
+    return _dict_to_csv_bytes(data)
+
+
+@pytest.fixture
+def data_no_rows() -> BytesIO:
+    data: dict = {
+        "content_title": [],
+        "content_text": [],
+    }
     return _dict_to_csv_bytes(data)
 
 
@@ -169,7 +178,11 @@ class TestImportContent:
         "mock_csv_data, expected_detail",
         [
             (
-                "data_empty",
+                "data_empty_csv",
+                "The CSV file is empty",
+            ),
+            (
+                "data_no_rows",
                 "The CSV file is empty",
             ),
             (

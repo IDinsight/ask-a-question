@@ -207,7 +207,6 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
 
     try:
         df = pd.read_csv(file.file)
-        return df
     except EmptyDataError as e:
         raise HTTPException(status_code=400, detail="The CSV file is empty") from e
     except ParserError as e:
@@ -218,6 +217,10 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
         raise HTTPException(
             status_code=400, detail="CSV is unreadable (encoding error)"
         ) from e
+    if df.empty:
+        raise HTTPException(status_code=400, detail="The CSV file is empty")
+
+    return df
 
 
 async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
