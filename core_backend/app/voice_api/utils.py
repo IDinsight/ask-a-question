@@ -1,34 +1,15 @@
-from enum import Enum
-from gtts.lang import tts_langs
+from ..llm_call.llm_prompts import IdentifiedLanguage
 
 
-class IdentifiedGttsLanguage(str, Enum):
+def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
     """
-    Identified language of the user's input.
+    Maps IdentifiedLanguage values to gTTS language codes.
     """
 
-    ENGLISH = "en"
-    SWAHILI = "sw"
-    HINDI = "hi"
-    BENGALI = "bn"
-    UNINTELLIGIBLE = "UNINTELLIGIBLE"
-    UNSUPPORTED = "UNSUPPORTED"
+    mapping = {
+        IdentifiedLanguage.ENGLISH: "en",
+        IdentifiedLanguage.SWAHILI: "sw",
+        IdentifiedLanguage.HINDI: "hi",
+    }
 
-    @classmethod
-    def get_supported_languages(cls) -> list[str]:
-        return [
-            lang
-            for lang in cls._member_names_
-            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
-        ]
-
-
-def get_gtts_lang_code(identified_lang: IdentifiedGttsLanguage) -> str:
-    """
-    Maps IdentifiedLanguage to gTTS language code.
-    """
-    gtts_langs = tts_langs()
-    if identified_lang.value in gtts_langs:
-        return identified_lang.value
-    else:
-        raise ValueError(f"Language {identified_lang.name} is not supported by gTTS")
+    return mapping.get(identified_language, "en")
