@@ -110,8 +110,6 @@ async def get_user_by_username(
     """
     Retrieves a user by username
     """
-
-    # Check if user with same username already exists
     stmt = select(UserDB).where(UserDB.username == username)
     result = await asession.execute(stmt)
     try:
@@ -121,6 +119,22 @@ async def get_user_by_username(
         raise UserNotFoundError(
             f"User with username {username} does not exist."
         ) from err
+
+
+async def get_user_by_userid(
+    user_id: int,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Retrieves a user by user_id
+    """
+    stmt = select(UserDB).where(UserDB.user_id == user_id)
+    result = await asession.execute(stmt)
+    try:
+        user = result.scalar_one()
+        return user
+    except NoResultFound as err:
+        raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
 
 
 async def get_user_by_token(

@@ -18,7 +18,7 @@ from ..config import CHECK_CONTENT_LIMIT
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
 from ..tags.models import content_tags_table
-from ..users.models import UserDB
+from ..users.models import get_user_by_userid
 from ..utils import embedding
 from .config import PGVECTOR_VECTOR_SIZE
 from .schemas import (
@@ -96,8 +96,7 @@ async def save_content_to_db(
 
     if CHECK_CONTENT_LIMIT:
         # get content_quota value for this user from UserDB
-        stmt = select(UserDB).where(UserDB.user_id == user_id)
-        user_db = (await asession.execute(stmt)).first()[0]
+        user_db = await get_user_by_userid(user_id=user_id, asession=asession)
         content_quota = user_db.content_quota
 
         # if content_quota is None, then there is no limit
