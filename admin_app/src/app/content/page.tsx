@@ -29,7 +29,6 @@ import React, { MouseEvent, useState } from "react";
 import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { ImportModal } from "../../components/ImportModal";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
