@@ -1,36 +1,42 @@
 "use client";
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
+import { DownloadModal } from "@/components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
-import Tooltip from "@mui/material/Tooltip";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import {
+  Alert,
   Autocomplete,
   Button,
+  ButtonGroup,
   CircularProgress,
   Grid,
+  Menu,
+  MenuItem,
+  Snackbar,
   TextField,
+  Tooltip,
 } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Snackbar from "@mui/material/Snackbar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { DownloadModal } from "@/components/DownloadModal";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
+
 export interface Tag {
   tag_id: number;
   tag_name: string;
 }
+
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label
@@ -172,15 +178,7 @@ const CardsUtilityStrip = ({
         </Button>
       </Tooltip>
       <Tooltip title="Add new content">
-        <Button
-          variant="contained"
-          disabled={!editAccess}
-          component={Link}
-          href="/content/edit"
-          startIcon={<Add />}
-        >
-          New
-        </Button>
+        <AddButtonWithDropdown />
       </Tooltip>
       <DownloadModal
         open={openDownloadModal}
@@ -201,6 +199,45 @@ const CardsUtilityStrip = ({
     </Layout.FlexBox>
   );
 };
+
+function AddButtonWithDropdown() {
+  const [editAccess, setEditAccess] = useState(true);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <>
+      <ButtonGroup variant="contained" disabled={!editAccess}>
+        <Button
+          disabled={!editAccess}
+          component={Link}
+          href="/content/edit"
+          startIcon={<Add />}
+        >
+          New
+        </Button>
+        <Button size="small" disabled={!editAccess} onClick={handleClick}>
+          <ArrowDropDownIcon />
+        </Button>
+      </ButtonGroup>
+      <Menu
+        id="split-button-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={handleClose}>Bulk upload contents</MenuItem>
+      </Menu>
+    </>
+  );
+}
 
 const CardsGrid = ({
   displayLanguage,
