@@ -161,7 +161,7 @@ async def retrieve_content_by_id(
 
 
 @router.post("/csv-upload", response_model=List[ContentRetrieve])
-async def upload_contents_in_bulk(
+async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
