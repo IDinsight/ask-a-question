@@ -25,10 +25,10 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { MouseEvent, useState } from "react";
+import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { ImportModal } from "../../components/ImportModal";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
@@ -203,11 +203,11 @@ const CardsUtilityStrip = ({
 
 function AddButtonWithDropdown() {
   const [editAccess, setEditAccess] = useState(true);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
 
-  const handleClick = (event) => {
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
