@@ -42,63 +42,69 @@ const Sidebar: React.FC<SideBarProps> = ({
           width: 240,
           boxSizing: "border-box",
           zIndex: 1000,
-          borderRightColor: "grey.300",
-          borderRight: {
-            borderStyle: "solid",
-            borderWidth: 1,
-          },
+          borderRight: "1px solid",
+          borderRightColor: "divider",
         },
       }}
     >
       <List sx={{ pt: 8 }}>
-        <Typography
-          variant="overline"
-          sx={{ padding: 2, mx: 1, color: "grey.500" }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
         >
-          MAIN MENU
-        </Typography>
-        {menuItems.map((item: MenuItem, i: number) => (
-          <Box
-            key={i}
-            bgcolor={
-              item.name === selectedDashboardPage
-                ? "selected.main"
-                : "background.paper"
-            }
-            sx={{
-              display: "flex",
-              ml: 2,
-              alignContent: "stretch",
-              width: "90%",
-              border: 0,
-              borderRadius: 2,
-            }}
+          <Typography
+            variant="overline"
+            sx={{ padding: 2, mx: 1, py: 1, color: "grey.500" }}
           >
+            MAIN MENU
+          </Typography>
+          {menuItems.map((item: MenuItem, i: number) => (
             <Box
+              key={`menu-item=${i}`}
               bgcolor={
                 item.name === selectedDashboardPage
-                  ? "primary.main"
+                  ? "selected.main"
                   : "background.paper"
               }
               sx={{
-                width: 6,
-                borderRadius: 3,
+                display: "flex",
+                ml: 2,
+                alignContent: "stretch",
+                width: "90%",
+                borderRadius: 2,
               }}
-            />
-            <Box sx={{ width: "100%" }}>
-              <ListItem sx={{ padding: 0.5 }}>
-                <ListItemButton
-                  sx={{ px: 1 }}
-                  onClick={() => setDashboardPage(item.name)}
-                  dense
-                >
-                  <ListItemIcon sx={{ minWidth: 30 }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.name} color="red" />
-                </ListItemButton>
-              </ListItem>
+            >
+              <Box
+                bgcolor={
+                  item.name === selectedDashboardPage
+                    ? "primary.main"
+                    : "background.paper"
+                }
+                sx={{
+                  width: 6,
+                  borderRadius: 3,
+                }}
+              />
+              <Box sx={{ width: "100%" }}>
+                <ListItem sx={{ padding: 0.5 }}>
+                  <ListItemButton
+                    sx={{ px: 1 }}
+                    onClick={() => setDashboardPage(item.name)}
+                    dense
+                  >
+                    <ListItemIcon sx={{ minWidth: 30 }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={item.name} />
+                  </ListItemButton>
+                </ListItem>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ))}
+        </Box>
       </List>
     </Drawer>
   );
