@@ -12,8 +12,6 @@ import {
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { LoadingButton } from "@mui/lab";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
-import CheckIcon from "@mui/icons-material/Check";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { Layout } from "./Layout";
 import { appColors, sizes } from "@/utils";
@@ -114,8 +112,9 @@ const ImportModal = ({
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          You can use this feature to import new contents from a CSV file. The
-          CSV file must include "content_title" and "content_text" as columns.
+          You can use this feature to import new contents from a CSV file into
+          AAQ. The CSV file must include "content_title" and "content_text" as
+          columns.
           <br />
           <br />
           ⚠️ Be careful not to upload duplicates of what's already in the
@@ -142,11 +141,11 @@ const ImportModal = ({
               component="span"
               startIcon={<CloudUploadIcon />}
             >
-              Upload
+              Attach File
             </Button>
           </label>
           <Typography variant="body1" fontSize={14} color={appColors.primary}>
-            {selectedFile ? selectedFile.name : "Select a new file"}
+            {selectedFile ? selectedFile.name : "Attach new file"}
           </Typography>
           <Layout.Spacer horizontal />
         </Layout.FlexBox>
@@ -178,9 +177,7 @@ const ImportModal = ({
           variant="contained"
           disabled={!selectedFile || loading}
           autoFocus
-          startIcon={importSuccess ? <CheckIcon /> : <FileUploadIcon />}
           loading={loading}
-          loadingPosition="start"
           onClick={handleImportClick}
         >
           {importSuccess ? "Imported" : "Check and import"}

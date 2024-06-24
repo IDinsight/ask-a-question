@@ -245,7 +245,7 @@ function AddButtonWithDropdown() {
             setOpenModal(true);
           }}
         >
-          Bulk upload contents
+          Import contents from file
         </MenuItem>
       </Menu>
       <ImportModal open={openModal} onClose={() => setOpenModal(false)} />

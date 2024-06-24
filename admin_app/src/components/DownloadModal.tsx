@@ -144,7 +144,7 @@ const DownloadModal = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title" sx={{ minWidth: "800px" }}>
-        {"Download all contents?"}
+        Download all contents?
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
