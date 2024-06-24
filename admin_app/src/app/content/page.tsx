@@ -214,9 +214,8 @@ function AddButtonWithDropdown() {
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handleMenuClose = () => {
     setAnchorEl(null);
-    setOpenModal(true);
   };
 
   return (
@@ -238,9 +237,16 @@ function AddButtonWithDropdown() {
         id="split-button-menu"
         anchorEl={anchorEl}
         open={openMenu}
-        onClose={handleClose}
+        onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleClose}>Bulk upload contents</MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setOpenModal(true);
+          }}
+        >
+          Bulk upload contents
+        </MenuItem>
       </Menu>
       <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
