@@ -201,9 +201,9 @@ async def bulk_upload_contents(
         content = ContentCreate(
             content_title=row["content_title"],
             content_text=row["content_text"],
-            content_language=row.get("content_language", "ENGLISH"),
+            content_language="ENGLISH",
             content_tags=[],
-            content_metadata=row.get("content_metadata", {}),
+            content_metadata={},
         )
         content_db = await save_content_to_db(
             user_id=user_db.user_id, content=content, asession=asession
