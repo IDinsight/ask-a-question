@@ -216,7 +216,6 @@ function AddButtonWithDropdown() {
   };
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setOpenModal(true);
   };
 
   return (
