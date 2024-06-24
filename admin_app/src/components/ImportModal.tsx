@@ -166,7 +166,7 @@ const ImportModal = ({
         {importSuccess && (
           <>
             <Layout.Spacer multiplier={2} />
-            <Alert variant="outlined" severity="success" sx={{ px: 3, py: 0 }}>
+            <Alert variant="standard" severity="success">
               File uploaded successfully!
             </Alert>
           </>
