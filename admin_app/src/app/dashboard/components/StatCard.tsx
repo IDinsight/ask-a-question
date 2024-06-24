@@ -99,7 +99,6 @@ const StatCard: React.FC<StatCardProps> = ({
                   style: "percent",
                   minimumFractionDigits: 1,
                 })}
-                %
               </Typography>
             </Box>
             <Typography
