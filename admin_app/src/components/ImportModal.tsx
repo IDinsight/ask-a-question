@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Button,
@@ -10,13 +11,17 @@ import {
 } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { useState, useEffect } from "react";
 import { LoadingButton } from "@mui/lab";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import CheckIcon from "@mui/icons-material/Check";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { Layout } from "./Layout";
 import { appColors, sizes } from "@/utils";
+
+interface CustomError {
+  type: string;
+  description: string;
+}
 
 const ImportModal = ({
   open,
@@ -28,15 +33,15 @@ const ImportModal = ({
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importErrorMessage, setImportErrorMessage] = useState<string | null>(
-    null,
+  const [importErrorMessages, setImportErrorMessages] = useState<CustomError[]>(
+    [],
   );
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
 
   const handleClose = () => {
     onClose();
     setSelectedFile(null);
-    setImportErrorMessage(null);
+    setImportErrorMessages([]);
     setImportSuccess(false);
   };
 
@@ -45,7 +50,43 @@ const ImportModal = ({
     setSelectedFile(file);
   };
 
-  // Set a 3s timer to close the modal after a successful import
+  const handleImportClick = async () => {
+    if (selectedFile) {
+      setLoading(true);
+      try {
+        const response = await apiCalls.bulkUploadContents(
+          selectedFile,
+          token!,
+        );
+        if (response.status === 200) {
+          setImportSuccess(true);
+          setSelectedFile(null);
+        } else {
+          console.error("Error uploading file:", response.detail);
+          if (response.detail && response.detail.errors) {
+            setImportErrorMessages(response.detail.errors);
+          } else {
+            setImportErrorMessages([
+              { type: "Error", description: "Unknown error occurred" },
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error("Error during import:", error);
+        setImportErrorMessages([
+          { type: "Exception", description: "An unexpected error occurred" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      console.error("No file selected");
+      setImportErrorMessages([
+        { type: "Error", description: "No file selected" },
+      ]);
+    }
+  };
+
   useEffect(() => {
     let timerId: NodeJS.Timeout;
     if (importSuccess) {
@@ -104,22 +145,27 @@ const ImportModal = ({
           </Typography>
           <Layout.Spacer horizontal />
         </Layout.FlexBox>
-        {importErrorMessage ? (
+        {importErrorMessages.length > 0 && (
           <>
             <Layout.Spacer multiplier={2} />
-            <Alert variant="outlined" severity="error">
-              {importErrorMessage}
-            </Alert>
+            {importErrorMessages.map((error, index) => (
+              <>
+                <Alert key={index} variant="outlined" severity="error">
+                  {error.description}
+                </Alert>
+                <Layout.Spacer multiplier={1} />
+              </>
+            ))}
           </>
-        ) : null}
-        {importSuccess ? (
+        )}
+        {importSuccess && (
           <>
             <Layout.Spacer multiplier={2} />
             <Alert variant="outlined" severity="success" sx={{ px: 3, py: 0 }}>
               File uploaded successfully!
             </Alert>
           </>
-        ) : null}
+        )}
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={handleClose}>Cancel</Button>
@@ -130,28 +176,7 @@ const ImportModal = ({
           startIcon={importSuccess ? <CheckIcon /> : <FileUploadIcon />}
           loading={loading}
           loadingPosition="start"
-          onClick={async () => {
-            if (selectedFile) {
-              setLoading(true);
-              const response = await apiCalls.bulkUploadContents(
-                selectedFile,
-                token!,
-              );
-              if (response.status === 200) {
-                setLoading(false);
-                setImportSuccess(true);
-                setSelectedFile(null);
-              } else {
-                console.error("Error uploading file:", response.detail);
-                setImportErrorMessage(response.detail);
-                setLoading(false);
-              }
-            } else {
-              console.error("No file selected");
-              setImportErrorMessage("No file selected");
-              setLoading(false);
-            }
-          }}
+          onClick={handleImportClick}
         >
           {importSuccess ? "Imported" : "Check and import"}
         </LoadingButton>
