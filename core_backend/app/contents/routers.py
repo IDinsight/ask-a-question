@@ -323,6 +323,8 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
             )
 
         # check if there are duplicates in either column
+        df["content_title"] = df["content_title"].str.strip()
+        df["content_text"] = df["content_text"].str.strip()
         if df.duplicated(subset=["content_title"]).any():
             error_list.append(
                 CustomError(
@@ -342,8 +344,8 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         contents_in_db = await get_list_of_content_from_db(
             user_id, offset=0, limit=None, asession=asession
         )
-        content_titles_in_db = [c.content_title for c in contents_in_db]
-        content_texts_in_db = [c.content_text for c in contents_in_db]
+        content_titles_in_db = [c.content_title.strip() for c in contents_in_db]
+        content_texts_in_db = [c.content_text.strip() for c in contents_in_db]
         if df["content_title"].isin(content_titles_in_db).any():
             error_list.append(
                 CustomError(
