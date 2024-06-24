@@ -286,6 +286,13 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         error_list_model = CustomErrorList(errors=error_list)
         raise HTTPException(status_code=400, detail=error_list_model.dict())
     else:
+        # strip columns to catch duplicates better and empty cells
+        df["content_title"] = df["content_title"].str.strip()
+        df["content_text"] = df["content_text"].str.strip()
+
+        # set any empty strings to None
+        df = df.replace("", None)
+
         # check if there are any empty values in either column
         if df["content_title"].isnull().any():
             error_list.append(
@@ -323,8 +330,6 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
             )
 
         # check if there are duplicates in either column
-        df["content_title"] = df["content_title"].str.strip()
-        df["content_text"] = df["content_text"].str.strip()
         if df.duplicated(subset=["content_title"]).any():
             error_list.append(
                 CustomError(
