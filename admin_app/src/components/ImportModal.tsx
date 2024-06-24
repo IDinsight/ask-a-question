@@ -84,13 +84,14 @@ const ImportModal = ({
     }
   };
 
+  // modal auto-close after successful import
   useEffect(() => {
     let timerId: NodeJS.Timeout;
     if (importSuccess) {
       timerId = setTimeout(() => {
         handleClose();
         window.location.reload();
-      }, 1500);
+      }, 1000);
     }
     return () => clearTimeout(timerId);
   }, [importSuccess]);
