@@ -1,5 +1,49 @@
 import React from "react";
 import { Box } from "@mui/material";
+import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
+import ForumIcon from "@mui/icons-material/Forum";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+
+const statCardData: StatCardProps[] = [
+  {
+    title: "Total Queries",
+    value: 303031,
+    percentageChange: 0.22,
+    Icon: ForumIcon,
+    period: "week",
+  },
+  {
+    title: "Total Escalated Queries",
+    value: 32332,
+    percentageChange: -0.055,
+    Icon: SupportAgentIcon,
+    period: "week",
+  },
+  {
+    title: "Total Urgent Queries",
+    value: 125556,
+    percentageChange: 0.292,
+    Icon: NewReleasesOutlinedIcon,
+    period: "week",
+  },
+  {
+    title: "Total Upvotes",
+    value: 1291,
+    percentageChange: 0.022,
+    Icon: ThumbUpIcon,
+    period: "week",
+  },
+  {
+    title: "Total Downvotes",
+    value: 985,
+    percentageChange: -0.108,
+    Icon: ThumbDownIcon,
+    period: "week",
+  },
+];
 
 const Overview: React.FC = () => {
   return (
@@ -10,38 +54,12 @@ const Overview: React.FC = () => {
           flexDirection: "row",
           alignItems: "stretch",
           gap: 2,
+          maxWidth: 1387,
         }}
       >
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, height: 100, borderRadius: 1, maxWidth: 250 }}
-        >
-          Box 1
-        </Box>
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, height: 100, borderRadius: 1, maxWidth: 250 }}
-        >
-          Box 2
-        </Box>
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, height: 100, borderRadius: 1, maxWidth: 250 }}
-        >
-          Box 3
-        </Box>
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, height: 100, borderRadius: 1, maxWidth: 250 }}
-        >
-          Box 4
-        </Box>
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, height: 100, borderRadius: 1, maxWidth: 250 }}
-        >
-          Box 5
-        </Box>
+        {statCardData.map((data) => (
+          <StatCard {...data} />
+        ))}
       </Box>
       <Box
         sx={{
@@ -50,7 +68,7 @@ const Overview: React.FC = () => {
           alignItems: "stretch",
           gap: 2,
           pt: 2,
-          maxWidth: 1315,
+          maxWidth: 1387,
         }}
       >
         <Box
