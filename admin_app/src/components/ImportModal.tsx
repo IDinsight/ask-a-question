@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
 } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
@@ -13,7 +14,9 @@ import { useState, useEffect } from "react";
 import { LoadingButton } from "@mui/lab";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import CheckIcon from "@mui/icons-material/Check";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { Layout } from "./Layout";
+import { appColors, sizes } from "@/utils";
 
 const ImportModal = ({
   open,
@@ -35,6 +38,11 @@ const ImportModal = ({
     setSelectedFile(null);
     setImportErrorMessage(null);
     setImportSuccess(false);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files ? event.target.files[0] : null;
+    setSelectedFile(file);
   };
 
   // Set a 3s timer to close the modal after a successful import
@@ -69,22 +77,37 @@ const ImportModal = ({
         </DialogContentText>
         <Layout.Spacer multiplier={2} />
         <Layout.FlexBox
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
+          flexDirection="row"
+          justifyContent="left"
+          alignItems="center"
+          gap={sizes.baseGap}
         >
+          <Layout.Spacer horizontal />
           <input
+            id="choose-file"
             type="file"
             accept=".csv"
-            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            hidden
+            onChange={handleFileChange}
           />
+          <label htmlFor="choose-file">
+            <Button
+              variant="outlined"
+              component="span"
+              startIcon={<CloudUploadIcon />}
+            >
+              Upload
+            </Button>
+          </label>
+          <Typography variant="body1" fontSize={14} color={appColors.primary}>
+            {selectedFile ? selectedFile.name : "No file chosen"}
+          </Typography>
+          <Layout.Spacer horizontal />
         </Layout.FlexBox>
         {importErrorMessage ? (
           <>
             <Layout.Spacer multiplier={2} />
-            <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
+            <Alert variant="outlined" severity="error">
               {importErrorMessage}
             </Alert>
           </>
