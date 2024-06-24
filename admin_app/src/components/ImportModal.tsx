@@ -46,11 +46,14 @@ const ImportModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files ? event.target.files[0] : null;
     setSelectedFile(file);
+    // clear input so that the same file can be selected again
+    event.target.value = "";
   };
 
   const handleImportClick = async () => {
     if (selectedFile) {
       setLoading(true);
+      setImportErrorMessages([]);
       // add artifical delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
       try {
@@ -74,9 +77,12 @@ const ImportModal = ({
         }
       } catch (error) {
         console.error("Error during import:", error);
-        setImportErrorMessages(["An unexpected error occurred"]);
+        setImportErrorMessages([
+          "An unexpected error occurred. Please try again later.",
+        ]);
       } finally {
         setLoading(false);
+        setSelectedFile(null);
       }
     } else {
       console.error("No file selected");
@@ -140,7 +146,7 @@ const ImportModal = ({
             </Button>
           </label>
           <Typography variant="body1" fontSize={14} color={appColors.primary}>
-            {selectedFile ? selectedFile.name : "No file chosen"}
+            {selectedFile ? selectedFile.name : "Select a new file"}
           </Typography>
           <Layout.Spacer horizontal />
         </Layout.FlexBox>
