@@ -51,6 +51,8 @@ const ImportModal = ({
   const handleImportClick = async () => {
     if (selectedFile) {
       setLoading(true);
+      // add artifical delay to show loading spinner (for UX)
+      await new Promise((resolve) => setTimeout(resolve, 500));
       try {
         const response = await apiCalls.bulkUploadContents(
           selectedFile,
