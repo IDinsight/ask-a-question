@@ -4,6 +4,9 @@ from typing import Generator
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
+
+from core_backend.app.contents.schemas import CustomError, CustomErrorList
 
 
 # to be used for the DB duplicate checks later
@@ -69,6 +72,15 @@ def data_no_rows() -> BytesIO:
 
 
 @pytest.fixture
+def data_missing_columns() -> BytesIO:
+    data = {
+        "wrong_column_1": ["Value 1", "Value 2"],
+        "wrong_column_2": ["Value 3", "Value 4"],
+    }
+    return _dict_to_csv_bytes(data)
+
+
+@pytest.fixture
 def data_title_missing() -> BytesIO:
     data = {
         "content_title": ["", "csv text 1"],
@@ -123,15 +135,6 @@ def data_duplicate_texts() -> BytesIO:
 
 
 @pytest.fixture
-def data_missing_columns() -> BytesIO:
-    data = {
-        "wrong_column_1": ["Value 1", "Value 2"],
-        "wrong_column_2": ["Value 3", "Value 4"],
-    }
-    return _dict_to_csv_bytes(data)
-
-
-@pytest.fixture
 def data_title_in_db() -> BytesIO:
     # Assuming "Title in DB" is a title that exists in the database
     data = {
@@ -175,43 +178,43 @@ class TestImportContent:
             assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "mock_csv_data, expected_detail",
+        "mock_csv_data, expected_error_type",
         [
             (
                 "data_empty_csv",
-                "The CSV file is empty",
+                "empty_data",
             ),
             (
                 "data_no_rows",
-                "The CSV file is empty",
-            ),
-            (
-                "data_title_missing",
-                "One or more empty content titles found in the CSV file.",
-            ),
-            (
-                "data_text_missing",
-                "One or more empty content texts found in the CSV file.",
-            ),
-            (
-                "data_long_title",
-                "One or more content titles exceed 150 characters.",
-            ),
-            (
-                "data_long_text",
-                "One or more content texts exceed 2000 characters.",
-            ),
-            (
-                "data_duplicate_titles",
-                "Duplicate content titles found in the CSV file.",
-            ),
-            (
-                "data_duplicate_texts",
-                "Duplicate content text found in the CSV file.",
+                "no_rows_csv",
             ),
             (
                 "data_missing_columns",
-                "File must have 'content_title' and 'content_text' columns.",
+                "missing_columns",
+            ),
+            (
+                "data_title_missing",
+                "empty_title",
+            ),
+            (
+                "data_text_missing",
+                "empty_text",
+            ),
+            (
+                "data_long_title",
+                "title_too_long",
+            ),
+            (
+                "data_long_text",
+                "texts_too_long",
+            ),
+            (
+                "data_duplicate_titles",
+                "duplicate_titles",
+            ),
+            (
+                "data_duplicate_texts",
+                "duplicate_texts",
             ),
         ],
     )
@@ -219,7 +222,7 @@ class TestImportContent:
         self,
         client: TestClient,
         mock_csv_data: BytesIO,
-        expected_detail: str,
+        expected_error_type: str,
         request: pytest.FixtureRequest,
         fullaccess_token: str,
     ) -> None:
@@ -232,17 +235,18 @@ class TestImportContent:
             files={"file": ("test.csv", mock_csv_file, "text/csv")},
         )
         assert response.status_code == 400
-        assert response.json()["detail"] == expected_detail
+        assert response.json()["detail"]["errors"][0]["type"] == expected_error_type
 
     @pytest.mark.parametrize(
-        "mock_csv_data",
-        ["data_title_in_db", "data_text_in_db"],
+        "mock_csv_data, expected_error_type",
+        [("data_title_in_db", "title_in_db"), ("data_text_in_db", "text_in_db")],
     )
     async def test_csv_import_db_duplicates(
         self,
         client: TestClient,
         fullaccess_token: str,
         mock_csv_data: BytesIO,
+        expected_error_type: str,
         request: pytest.FixtureRequest,
         existing_content_id: str,
     ) -> None:
@@ -258,3 +262,35 @@ class TestImportContent:
             files={"file": ("test.csv", mock_csv_file, "text/csv")},
         )
         assert response_text_dupe.status_code == 400
+        assert (
+            response_text_dupe.json()["detail"]["errors"][0]["type"]
+            == expected_error_type
+        )
+
+
+def test_custom_error() -> None:
+    error = CustomError(type="test_error", description="test error description")
+    assert error.type == "test_error"
+    assert error.description == "test error description"
+
+    # also test failure case
+    with pytest.raises(ValidationError):
+        error = CustomError()
+
+
+def test_custom_error_list() -> None:
+    # Test creating a CustomErrorList instance with valid data
+    errors = [
+        {"type": "test_error1", "description": "test error description 1"},
+        {"type": "test_error2", "description": "test error description 2"},
+    ]
+    error_list = CustomErrorList(errors=[CustomError(**error) for error in errors])
+    assert len(error_list.errors) == 2
+    assert error_list.errors[0].type == "test_error1"
+    assert error_list.errors[1].type == "test_error2"
+
+    # also test failure case
+    with pytest.raises(ValidationError):
+        error_list = CustomErrorList(
+            errors=[{"type": "test error without description"}]
+        )
