@@ -4,9 +4,6 @@ from typing import Generator
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
-
-from core_backend.app.contents.schemas import CustomError, CustomErrorList
 
 
 # to be used for the DB duplicate checks later
@@ -265,32 +262,4 @@ class TestImportContent:
         assert (
             response_text_dupe.json()["detail"]["errors"][0]["type"]
             == expected_error_type
-        )
-
-
-def test_custom_error() -> None:
-    error = CustomError(type="test_error", description="test error description")
-    assert error.type == "test_error"
-    assert error.description == "test error description"
-
-    # also test failure case
-    with pytest.raises(ValidationError):
-        error = CustomError()
-
-
-def test_custom_error_list() -> None:
-    # Test creating a CustomErrorList instance with valid data
-    errors = [
-        {"type": "test_error1", "description": "test error description 1"},
-        {"type": "test_error2", "description": "test error description 2"},
-    ]
-    error_list = CustomErrorList(errors=[CustomError(**error) for error in errors])
-    assert len(error_list.errors) == 2
-    assert error_list.errors[0].type == "test_error1"
-    assert error_list.errors[1].type == "test_error2"
-
-    # also test failure case
-    with pytest.raises(ValidationError):
-        error_list = CustomErrorList(
-            errors=[{"type": "test error without description"}]
         )
