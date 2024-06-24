@@ -33,9 +33,7 @@ const ImportModal = ({
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importErrorMessages, setImportErrorMessages] = useState<CustomError[]>(
-    [],
-  );
+  const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
 
   const handleClose = () => {
@@ -63,27 +61,24 @@ const ImportModal = ({
           setSelectedFile(null);
         } else {
           console.error("Error uploading file:", response.detail);
-          if (response.detail && response.detail.errors) {
-            setImportErrorMessages(response.detail.errors);
+          if (response.detail.errors) {
+            const errorDescriptions = response.detail.errors.map(
+              (error: CustomError) => error.description,
+            );
+            setImportErrorMessages(errorDescriptions);
           } else {
-            setImportErrorMessages([
-              { type: "Error", description: "Unknown error occurred" },
-            ]);
+            setImportErrorMessages(["An unknown error occurred"]);
           }
         }
       } catch (error) {
         console.error("Error during import:", error);
-        setImportErrorMessages([
-          { type: "Exception", description: "An unexpected error occurred" },
-        ]);
+        setImportErrorMessages(["An unexpected error occurred"]);
       } finally {
         setLoading(false);
       }
     } else {
       console.error("No file selected");
-      setImportErrorMessages([
-        { type: "Error", description: "No file selected" },
-      ]);
+      setImportErrorMessages(["No file selected"]);
     }
   };
 
@@ -112,7 +107,8 @@ const ImportModal = ({
         <DialogContentText id="alert-dialog-description">
           You can use this feature to import new contents from a CSV file. The
           CSV file must include "content_title" and "content_text" as columns.
-          <Layout.Spacer />
+          <br />
+          <br />
           ⚠️ Be careful not to upload duplicates of what's already in the
           database.
         </DialogContentText>
@@ -149,12 +145,12 @@ const ImportModal = ({
           <>
             <Layout.Spacer multiplier={2} />
             {importErrorMessages.map((error, index) => (
-              <>
-                <Alert key={index} variant="outlined" severity="error">
-                  {error.description}
+              <React.Fragment key={index}>
+                <Alert variant="outlined" severity="error">
+                  {error}
                 </Alert>
                 <Layout.Spacer multiplier={1} />
-              </>
+              </React.Fragment>
             ))}
           </>
         )}
