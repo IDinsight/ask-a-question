@@ -168,18 +168,22 @@ const CardsUtilityStrip = ({
       gap={sizes.smallGap}
     >
       <Tooltip title="Download all contents">
-        <Button
-          variant="outlined"
-          disabled={!editAccess}
-          onClick={() => {
-            setOpenDownloadModal(true);
-          }}
-        >
-          <DownloadIcon />
-        </Button>
+        <>
+          <Button
+            variant="outlined"
+            disabled={!editAccess}
+            onClick={() => {
+              setOpenDownloadModal(true);
+            }}
+          >
+            <DownloadIcon />
+          </Button>
+        </>
       </Tooltip>
       <Tooltip title="Add new content">
-        <AddButtonWithDropdown />
+        <>
+          <AddButtonWithDropdown />
+        </>
       </Tooltip>
       <DownloadModal
         open={openDownloadModal}
