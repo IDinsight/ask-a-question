@@ -57,8 +57,8 @@ const Overview: React.FC = () => {
           maxWidth: 1387,
         }}
       >
-        {statCardData.map((data) => (
-          <StatCard {...data} />
+        {statCardData.map((data, index) => (
+          <StatCard {...data} key={index} />
         ))}
       </Box>
       <Box

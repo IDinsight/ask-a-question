@@ -32,7 +32,7 @@ const StatCard: React.FC<StatCardProps> = ({
         boxShadow: 1,
         backgroundColor: "white",
         display: "flex",
-        flexGrow: 1,
+        flex: 1,
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column" }}>
