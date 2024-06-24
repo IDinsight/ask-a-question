@@ -28,12 +28,13 @@ const settings = ["Logout"];
 const NavBar = () => {
   return (
     <AppBar
-      position="static"
+      position="fixed"
       sx={[
         {
           flexDirection: "row",
           paddingLeft: sizes.baseGap,
           paddingRight: sizes.baseGap,
+          zIndex: 1200,
         },
         appStyles.alignItemsCenter,
       ]}

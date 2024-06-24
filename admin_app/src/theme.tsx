@@ -11,10 +11,12 @@ const inter = Inter({
 declare module "@mui/material/styles" {
   interface Palette {
     lightgray: Palette["primary"];
+    selected: Palette["secondary"];
   }
 
   interface PaletteOptions {
     lightgray?: PaletteOptions["primary"];
+    selected?: PaletteOptions["secondary"];
   }
 }
 
@@ -30,6 +32,9 @@ const theme = createTheme({
     },
     secondary: {
       main: "#C0C6DC",
+    },
+    selected: {
+      main: "#DEE5F7",
     },
     background: {
       default: "#E2E2E9",

@@ -163,7 +163,12 @@ const UrgencyRulesPage = () => {
             minWidth: "sm",
           }}
         >
-          <Typography sx={{ pl: 1 }} variant="h4" align="left" color="primary">
+          <Typography
+            sx={{ pl: 1, pt: 2 }}
+            variant="h4"
+            align="left"
+            color="primary"
+          >
             Urgency Rules
           </Typography>
           <Layout.FlexBox
