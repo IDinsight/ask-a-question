@@ -7,7 +7,6 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemButton,
-  Toolbar,
   Typography,
 } from "@mui/material";
 
