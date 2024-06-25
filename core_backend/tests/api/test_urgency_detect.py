@@ -67,7 +67,6 @@ class TestUrgencyDetectionToken:
 
         if response.status_code == 200:
             is_urgent = response.json()["is_urgent"]
-            print(response.json())
             if expect_found:
                 # the breathing query should flag as urgent for user1. See
                 # data/urgency_rules.json which is loaded by the urgency_rules fixture.
