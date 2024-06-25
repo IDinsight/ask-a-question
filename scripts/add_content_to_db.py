@@ -51,13 +51,13 @@ if __name__ == "__main__":
 
     # Make a request to get the JWT
     response = requests.post(
-        auth_url, data={"username": username, "password": password}, verify=False
+        auth_url, data={"username": username, "password": password}
     )
     if response.status_code == 200:
         jwt_token = response.json()["access_token"]
         print("JWT Token obtained")
     else:
-        print("Failed to authenticate:", response.text)
+        raise ValueError("Failed to authenticate:", response.text)
 
     # API endpoint
     contents_endpoint = f"https://{args.domain}/api/content/"
@@ -72,11 +72,7 @@ if __name__ == "__main__":
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         tags = [val.upper() for row in reader for val in eval(row["faq_tags"])]
-        tags_db = requests.get(
-            tags_endpoint,
-            headers=headers,
-            verify=False,
-        )
+        tags_db = requests.get(tags_endpoint, headers=headers)
         tags_map = {val["tag_name"]: val["tag_id"] for val in tags_db.json()}
 
         tags_db = [val["tag_name"] for val in tags_db.json()]
@@ -91,6 +87,7 @@ if __name__ == "__main__":
                 tags_endpoint, json=payload, headers=headers, verify=False
             )
             print(f"Status Code: {response.status_code}, Response: {response.text}")
+
             if "tag_id" not in response.json():
                 raise ValueError("Could not create tag: {tag}.")
             response_json = response.json()
@@ -112,7 +109,5 @@ if __name__ == "__main__":
                 "content_tags": content_tags,
                 "content_metadata": {},
             }
-            response = requests.post(
-                contents_endpoint, json=payload, headers=headers, verify=False
-            )
+            response = requests.post(contents_endpoint, json=payload, headers=headers)
             print(f"Status Code: {response.status_code}, Response: {response.text}")

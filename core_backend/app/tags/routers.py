@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
@@ -80,7 +80,7 @@ async def edit_tag(
 async def retrieve_tag(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
-    limit: int = None,
+    limit: Optional[int] = None,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[TagRetrieve]:
     """
