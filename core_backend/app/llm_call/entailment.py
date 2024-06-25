@@ -17,7 +17,6 @@ async def detect_urgency(
     Detects the urgency of a message based on a set of urgency rules.
     """
 
-    "\n".join([f"{i+1}. {rule}" for i, rule in enumerate(urgency_rules)])
 
     ud_entailment = UrgencyDetectionEntailment(urgency_rules=urgency_rules)
     prompt = ud_entailment.get_prompt()
