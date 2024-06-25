@@ -268,10 +268,10 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(
-    urgency_rule: str, message: str, metadata: Optional[dict]
+    urgency_rules: List[str], message: str, metadata: Optional[dict]
 ) -> Dict[str, Any]:
     return {
-        "statement": urgency_rule,
+        "best_matching_rule": "made up rule",
         "probability": 0.7,
         "reason": "this is a mocked response",
     }

@@ -40,8 +40,10 @@ class TestUrgencyDetectionToken:
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_content_response = response.json()["details"]
-            assert len(json_content_response.keys()) == urgency_rules
+            json_content_response = response.json()
+            assert isinstance(json_content_response["is_urgent"], bool)
+            probability = json_content_response["details"]["probability"]
+            assert probability >= 0.0 and probability <= 1.0
 
     @pytest.mark.parametrize(
         "token, expect_found",

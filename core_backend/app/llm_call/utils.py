@@ -54,4 +54,8 @@ async def _ask_llm_async(
 
 def remove_json_markdown(text: str) -> str:
     """Remove json markdown from text."""
-    return text.removeprefix("```json").removesuffix("```").strip()
+
+    json_str = text.removeprefix("```json").removesuffix("```").strip()
+    json_str = json_str.replace("\{", "{").replace("\}", "}")
+
+    return json_str

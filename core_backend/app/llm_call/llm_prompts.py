@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import re
 import textwrap
 from enum import Enum
-from typing import ClassVar, List
+from typing import ClassVar, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import SERVICE_IDENTITY
+from .utils import remove_json_markdown
 
 
 # ----  Language identification bot
@@ -292,29 +294,105 @@ class AlignmentScore(BaseModel):
     ).strip()
 
 
-def get_urgency_detection_prompt(condition: str, message: str) -> str:
+class UrgencyDetectionEntailment:
     """
-    Returns the prompt for the urgency detection bot.
+    Urgency detection using entailment.
     """
 
-    return textwrap.dedent(
-        (
-            """Given a [statement] and [comment], score the share of meaning
-            of [statement] covered by [comment].
-            Respond with a score between 0 and 1 with 0.1 increments.
-            """
-            """
-            Respond in json string:
+    class UrgencyDetectionEntailmentResult(BaseModel):
+        """
+        Pydantic model for the output of the urgency detection entailment task.
+        """
 
-            \{
-               statement: str
-               probability: float
-               reason: str
-            \}
-            """
-            f"""
-            statement: {condition}
-            comment: {message}
-            """
-        )
+        best_matching_rule: str
+        probability: float = Field(ge=0, le=1)
+        reason: str
+
+    _urgency_rules: List[str]
+    _prompt_base: str = textwrap.dedent(
+        """
+        You are a highly sensitive urgency detector. Score if ANY part of the
+        user message corresponds to any part of the urgency rules provided below.
+        Ignore any part of the user message that does not correspond to the rules.
+        Respond with (a) the rule that is most consistent with the user message,
+        (b) the probability between 0 and 1 with increments of 0.1 that ANY part of
+        the user message matches the rule, and (c) the reason for the probability.
+
+
+        Respond in json string:
+
+        {
+           best_matching_rule: str
+           probability: float
+           reason: str
+        }
+        """
     ).strip()
+
+    _prompt_rules: str = textwrap.dedent(
+        """
+        Urgency Rules:
+        {urgency_rules}
+        """
+    ).strip()
+
+    default_json: Dict = {
+        "best_matching_rule": "",
+        "probability": 0.0,
+        "reason": "",
+    }
+
+    def __init__(self, urgency_rules: List[str]) -> None:
+        """
+        Initialize the urgency detection entailment task with urgency rules.
+        """
+        self._urgency_rules = urgency_rules
+
+    def parse_json(self, json_str: str) -> Dict:
+        """
+        Validates the output of the urgency detection entailment task.
+        """
+
+        json_str = remove_json_markdown(json_str)
+
+        # fmt: off
+        ud_entailment_result = (
+            UrgencyDetectionEntailment
+                .UrgencyDetectionEntailmentResult
+                .model_validate_json(
+                    json_str
+                )
+            )
+        # fmt: on
+
+        # TODO: This is a temporary fix to remove the number and the dot from the rule
+        # returned by the LLM.
+        ud_entailment_result.best_matching_rule = re.sub(
+            r"^\d+\.\s", "", ud_entailment_result.best_matching_rule
+        )
+
+        if ud_entailment_result.best_matching_rule not in self._urgency_rules:
+            raise ValueError(
+                (
+                    f"Best_matching_rule {ud_entailment_result.best_matching_rule} is "
+                    f"not in the urgency rules provided."
+                )
+            )
+
+        return ud_entailment_result.model_dump()
+
+    def get_prompt(self) -> str:
+        """
+        Returns the prompt for the urgency detection entailment task.
+        """
+        urgency_rules_str = "\n".join(
+            [f"{i+1}. {rule}" for i, rule in enumerate(self._urgency_rules)]
+        )
+
+        prompt = (
+            self._prompt_base
+            + "\n\n"
+            + self._prompt_rules.format(urgency_rules=urgency_rules_str)
+        )
+
+        return prompt
