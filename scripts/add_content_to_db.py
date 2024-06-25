@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
-        tags = [val.upper() for row in reader for val in eval(row["faq_tags"])]
+        tags = [val.upper() for row in reader for val in eval(row["tags"])]
         tags_db = requests.get(tags_endpoint, headers=headers)
         tags_map = {val["tag_name"]: val["tag_id"] for val in tags_db.json()}
 
@@ -101,10 +101,10 @@ if __name__ == "__main__":
                 language = args.language
             else:
                 language = row["language"]
-            content_tags = [tags_map[val.upper()] for val in eval(row["faq_tags"])]
+            content_tags = [tags_map[val.upper()] for val in eval(row["tags"])]
             payload = {
-                "content_title": row["faq_title"],
-                "content_text": row["faq_content_to_send"],
+                "content_title": row["title"],
+                "content_text": row["body"],
                 "content_language": language,
                 "content_tags": content_tags,
                 "content_metadata": {},
