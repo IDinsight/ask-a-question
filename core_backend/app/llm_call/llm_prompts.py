@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import textwrap
 from enum import Enum
 from typing import ClassVar, Dict, List
@@ -7,6 +8,7 @@ from typing import ClassVar, Dict, List
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import SERVICE_IDENTITY
+from .utils import remove_json_markdown
 
 
 # ----  Language identification bot
@@ -351,11 +353,10 @@ class UrgencyDetectionEntailment:
         Validates the output of the urgency detection entailment task.
         """
 
-        json_str = json_str.replace("```json", "").replace("```", "")
-        json_str = json_str.replace("\{", "{").replace("\}", "}")
+        json_str = remove_json_markdown(json_str)
 
         # fmt: off
-        json = (
+        ud_entailment_result = (
             UrgencyDetectionEntailment
                 .UrgencyDetectionEntailmentResult
                 .model_validate_json(
@@ -364,15 +365,23 @@ class UrgencyDetectionEntailment:
             )
         # fmt: on
 
-        if json.best_matching_rule not in self._urgency_rules:
+        # TODO: This is a temporary fix to remove the number and the dot from the rule
+        # returned by the LLM.
+        ud_entailment_result.best_matching_rule = re.sub(
+            r"^\d+\.\s", "", ud_entailment_result.best_matching_rule
+        )
+
+        if ud_entailment_result.best_matching_rule not in self._urgency_rules:
+            # use regex to strip the number and the dot from the rule
+
             raise ValueError(
                 (
-                    f"Best_matching_rule {json.best_matching_rule} is "
+                    f"Best_matching_rule {ud_entailment_result.best_matching_rule} is "
                     f"not in the urgency rules provided."
                 )
             )
 
-        return json.model_dump()
+        return ud_entailment_result.model_dump()
 
     def get_prompt(self) -> str:
         """
