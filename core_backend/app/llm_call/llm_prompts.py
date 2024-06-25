@@ -372,8 +372,6 @@ class UrgencyDetectionEntailment:
         )
 
         if ud_entailment_result.best_matching_rule not in self._urgency_rules:
-            # use regex to strip the number and the dot from the rule
-
             raise ValueError(
                 (
                     f"Best_matching_rule {ud_entailment_result.best_matching_rule} is "
