@@ -1,7 +1,9 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends
+import pandas as pd
+from fastapi import APIRouter, Depends, UploadFile
 from fastapi.exceptions import HTTPException
+from pandas.errors import EmptyDataError, ParserError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -17,7 +19,12 @@ from .models import (
     save_content_to_db,
     update_content_in_db,
 )
-from .schemas import ContentCreate, ContentRetrieve
+from .schemas import (
+    ContentCreate,
+    ContentRetrieve,
+    CustomError,
+    CustomErrorList,
+)
 
 router = APIRouter(prefix="/content", tags=["Content Management"])
 logger = setup_logger()
@@ -86,7 +93,7 @@ async def edit_content(
     return _convert_record_to_schema(updated_content)
 
 
-@router.get("/", response_model=list[ContentRetrieve])
+@router.get("/", response_model=List[ContentRetrieve])
 async def retrieve_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
@@ -156,6 +163,216 @@ async def retrieve_content_by_id(
         )
 
     return _convert_record_to_schema(record)
+
+
+@router.post("/csv-upload", response_model=List[ContentRetrieve])
+async def bulk_upload_contents(
+    file: UploadFile,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> List[ContentRetrieve] | None:
+    """
+    Upload, check, and ingest contents in bulk from a CSV file.
+
+    Note: If there are any issues with the CSV, the endpoint will return a 400 error
+    with the list of issues under detail in the response body.
+    """
+
+    # TODO: deal with tags!
+
+    # Ensure the file is a CSV
+    if file.filename is None or not file.filename.endswith(".csv"):
+        error_list_model = CustomErrorList(
+            errors=[
+                CustomError(
+                    type="invalid_format",
+                    description="Please upload a CSV file.",
+                )
+            ]
+        )
+        raise HTTPException(status_code=400, detail=error_list_model.dict())
+
+    df = _load_csv(file)
+    await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
+
+    # Add each row to the content database
+    content_list = []
+    for _, row in df.iterrows():
+        content = ContentCreate(
+            content_title=row["content_title"],
+            content_text=row["content_text"],
+            content_language="ENGLISH",
+            content_tags=[],
+            content_metadata={},
+        )
+        content_db = await save_content_to_db(
+            user_id=user_db.user_id, content=content, asession=asession
+        )
+        content_retrieve = _convert_record_to_schema(content_db)
+        content_list.append(content_retrieve)
+
+    return content_list
+
+
+def _load_csv(file: UploadFile) -> pd.DataFrame:
+    """
+    Load the CSV file into a pandas DataFrame
+    """
+
+    try:
+        df = pd.read_csv(file.file, dtype=str)
+    except EmptyDataError as e:
+        error_list_model = CustomErrorList(
+            errors=[
+                CustomError(
+                    type="empty_data",
+                    description="The CSV file is empty",
+                )
+            ]
+        )
+        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
+    except ParserError as e:
+        error_list_model = CustomErrorList(
+            errors=[
+                CustomError(
+                    type="parse_error",
+                    description="CSV is unreadable (parsing error)",
+                )
+            ]
+        )
+        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
+    except UnicodeDecodeError as e:
+        error_list_model = CustomErrorList(
+            errors=[
+                CustomError(
+                    type="encoding_error",
+                    description="CSV is unreadable (encoding error)",
+                )
+            ]
+        )
+        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
+    if df.empty:
+        error_list_model = CustomErrorList(
+            errors=[
+                CustomError(
+                    type="no_rows_csv",
+                    description="The CSV file is empty",
+                )
+            ]
+        )
+        raise HTTPException(status_code=400, detail=error_list_model.dict())
+
+    return df
+
+
+async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
+    """
+    Perform checks on the CSV file to ensure it meets the requirements
+    """
+
+    # check if content_title and content_text columns are present
+    cols = df.columns
+    error_list = []
+    if "content_title" not in cols or "content_text" not in cols:
+        error_list.append(
+            CustomError(
+                type="missing_columns",
+                description=(
+                    "File must have 'content_title' and 'content_text' columns."
+                ),
+            )
+        )
+        # if either of these columns are missing, skip further checks
+        error_list_model = CustomErrorList(errors=error_list)
+        raise HTTPException(status_code=400, detail=error_list_model.dict())
+    else:
+        # strip columns to catch duplicates better and empty cells
+        df["content_title"] = df["content_title"].str.strip()
+        df["content_text"] = df["content_text"].str.strip()
+
+        # set any empty strings to None
+        df = df.replace("", None)
+
+        # check if there are any empty values in either column
+        if df["content_title"].isnull().any():
+            error_list.append(
+                CustomError(
+                    type="empty_title",
+                    description=(
+                        "One or more empty content titles found in the CSV file."
+                    ),
+                )
+            )
+        if df["content_text"].isnull().any():
+            error_list.append(
+                CustomError(
+                    type="empty_text",
+                    description=(
+                        "One or more empty content texts found in the CSV file."
+                    ),
+                )
+            )
+        # check if any title exceeds 150 characters
+        if df["content_title"].str.len().max() > 150:
+            error_list.append(
+                CustomError(
+                    type="title_too_long",
+                    description="One or more content titles exceed 150 characters.",
+                )
+            )
+        # check if any text exceeds 2000 characters
+        if df["content_text"].str.len().max() > 2000:
+            error_list.append(
+                CustomError(
+                    type="texts_too_long",
+                    description="One or more content texts exceed 150 characters.",
+                )
+            )
+
+        # check if there are duplicates in either column
+        if df.duplicated(subset=["content_title"]).any():
+            error_list.append(
+                CustomError(
+                    type="duplicate_titles",
+                    description="Duplicate content titles found in the CSV file.",
+                )
+            )
+        if df.duplicated(subset=["content_text"]).any():
+            error_list.append(
+                CustomError(
+                    type="duplicate_texts",
+                    description="Duplicate content texts found in the CSV file.",
+                )
+            )
+
+        # check for duplicate titles and texts between the CSV and the database
+        contents_in_db = await get_list_of_content_from_db(
+            user_id, offset=0, limit=None, asession=asession
+        )
+        content_titles_in_db = [c.content_title.strip() for c in contents_in_db]
+        content_texts_in_db = [c.content_text.strip() for c in contents_in_db]
+        if df["content_title"].isin(content_titles_in_db).any():
+            error_list.append(
+                CustomError(
+                    type="title_in_db",
+                    description=(
+                        "One or more content titles already exist in the database."
+                    ),
+                )
+            )
+        if df["content_text"].isin(content_texts_in_db).any():
+            error_list.append(
+                CustomError(
+                    type="text_in_db",
+                    description=(
+                        "One or more content texts already exist in the database."
+                    ),
+                )
+            )
+
+        if error_list:
+            error_list_model = CustomErrorList(errors=error_list)
+            raise HTTPException(status_code=400, detail=error_list_model.dict())
 
 
 def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:

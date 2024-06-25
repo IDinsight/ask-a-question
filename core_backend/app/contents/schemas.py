@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, List
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, validator
 
@@ -59,3 +59,20 @@ class ContentDelete(BaseModel):
     """
 
     content_id: int
+
+
+class CustomError(BaseModel):
+    """
+    Pydantic model for custom error
+    """
+
+    type: str
+    description: str
+
+
+class CustomErrorList(BaseModel):
+    """
+    Pydantic model for list of custom errors
+    """
+
+    errors: List[CustomError]
