@@ -172,7 +172,7 @@ class TestImportContent:
 
 class TestDBDuplicates:
     @pytest.fixture(scope="function")
-    def existing_content_id(
+    def existing_content_in_db(
         self,
         client: TestClient,
         fullaccess_token: str,
@@ -224,10 +224,10 @@ class TestDBDuplicates:
         mock_csv_data: BytesIO,
         expected_error_type: str,
         request: pytest.FixtureRequest,
-        existing_content_id: str,
+        existing_content_in_db: str,
     ) -> None:
         """
-        This test uses the existing_content_id fixture to create a content in the
+        This test uses the existing_content_in_db fixture to create a content in the
         database and then tries to import a CSV file with a title or text that already
         exists in the database.
         """
