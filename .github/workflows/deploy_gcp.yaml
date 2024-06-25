@@ -35,4 +35,10 @@ jobs:
           instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
-          script: ${{ github.workspace }}/deployment/docker-compose/redeploy.sh
+          command: |
+            cd /home/suzinyou/aaq-core
+            git pull origin main
+            git switch main
+            cd ./deployment/docker-compose
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack up --build -d
+            docker system prune --volumes -f
