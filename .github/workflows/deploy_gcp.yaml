@@ -26,8 +26,8 @@ jobs:
         uses: "google-github-actions/auth@v1"
         with:
           create_credentials_file: true
-          workload_identity_provider: "projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.POOL_ID }}/providers/${{ env.PROVIDER_ID }}"
-          service_account: "${{ secrets.GH_SERVICE_ACCOUNT_EMAIL }}"
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.POOL_ID }}/providers/${{ env.PROVIDER_ID }}
+          service_account: ${{ secrets.GH_SERVICE_ACCOUNT_EMAIL }}
 
       - id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
