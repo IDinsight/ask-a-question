@@ -25,6 +25,7 @@ async def detect_urgency(
         prompt=prompt,
         litellm_model=LITELLM_MODEL_URGENCY_DETECT,
         metadata=metadata,
+        json=True,
     )
 
     try:
