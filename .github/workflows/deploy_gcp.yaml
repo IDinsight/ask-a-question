@@ -26,7 +26,7 @@ jobs:
         uses: "google-github-actions/auth@v2"
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.POOL_ID }}/providers/${{ env.PROVIDER_ID }}
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
 
       - id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
