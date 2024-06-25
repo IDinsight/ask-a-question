@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser(
     "See also the --language option.)",
     usage="""
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
-
+    
     (example)
     python add_content_to_db.py \\
         --csv content.csv \\
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     # Make a request to get the JWT
     response = requests.post(
-        auth_url, data={"username": username, "password": password}
+        auth_url, data={"username": username, "password": password}, verify=False
     )
     if response.status_code == 200:
         jwt_token = response.json()["access_token"]
@@ -71,20 +71,32 @@ if __name__ == "__main__":
 
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
-        tags = [val for row in reader for val in row["tags"].strip().split(" ")]
-        tags = set(tags)
-        tags_map = {}
+        tags = [val.upper() for row in reader for val in eval(row["faq_tags"])]
+        tags_db = requests.get(
+            tags_endpoint,
+            headers=headers,
+            verify=False,
+        )
+        tags_map = {val["tag_name"]: val["tag_id"] for val in tags_db.json()}
+
+        tags_db = [val["tag_name"] for val in tags_db.json()]
+        tags = set(tags) - set(tags_db)
+        if len(tags) > 0:
+            print(f"Adding new tags: {tags}")
         for tag in tags:
             payload = {
                 "tag_name": tag,
             }
-            response = requests.post(tags_endpoint, json=payload, headers=headers)
+            response = requests.post(
+                tags_endpoint, json=payload, headers=headers, verify=False
+            )
+            print(f"Status Code: {response.status_code}, Response: {response.text}")
             if "tag_id" not in response.json():
-                print(f"Failed to create tag: {tag}")
-                continue
+                raise ValueError("Could not create tag: {tag}.")
             response_json = response.json()
             tags_map[response_json["tag_name"]] = response_json["tag_id"]
-            print(f"Status Code: {response.status_code}, Response: {response.text}")
+        else:
+            print("No new tags to add.")
         file.seek(0)
         reader = csv.DictReader(file)
         for row in reader:
@@ -92,15 +104,15 @@ if __name__ == "__main__":
                 language = args.language
             else:
                 language = row["language"]
-            content_tags = [
-                tags_map[val] for val in row["tags"].strip().upper().split(" ")
-            ]
+            content_tags = [tags_map[val.upper()] for val in eval(row["faq_tags"])]
             payload = {
-                "content_title": row["title"],
-                "content_text": row["body"],
+                "content_title": row["faq_title"],
+                "content_text": row["faq_content_to_send"],
                 "content_language": language,
                 "content_tags": content_tags,
                 "content_metadata": {},
             }
-            response = requests.post(contents_endpoint, json=payload, headers=headers)
+            response = requests.post(
+                contents_endpoint, json=payload, headers=headers, verify=False
+            )
             print(f"Status Code: {response.status_code}, Response: {response.text}")

@@ -80,7 +80,7 @@ async def edit_tag(
 async def retrieve_tag(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
-    limit: int = 50,
+    limit: int = None,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[TagRetrieve]:
     """
