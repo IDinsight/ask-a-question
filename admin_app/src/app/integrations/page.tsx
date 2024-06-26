@@ -11,7 +11,10 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
 import ChatManagerCard from "./components/ChatManagerCard";
-import ChatManagerModal from "./components/ChatManagerModal";
+import {
+  ChatManagerContentExample,
+  ChatManagerModalWrapper,
+} from "./components/ChatManagerModals";
 import glificLogo from "./images/glific_logo.png";
 import turnLogo from "./images/turn_logo.png";
 import typebotLogo from "./images/typebot_logo.svg";
@@ -19,7 +22,7 @@ import typebotLogo from "./images/typebot_logo.svg";
 interface ChatManagerInfo {
   logo_src: string;
   name: string;
-  text: string;
+  ModalContent: React.FC;
 }
 
 const IntegrationsPage = () => {
@@ -155,17 +158,17 @@ const ChatManagersGrid = () => {
     {
       logo_src: typebotLogo.src,
       name: "Typebot",
-      text: "Typebot is a chat manager.",
+      ModalContent: ChatManagerContentExample,
     },
     {
       logo_src: turnLogo.src,
       name: "Turn",
-      text: "Turn is a chat manager.",
+      ModalContent: ChatManagerContentExample,
     },
     {
       logo_src: glificLogo.src,
       name: "Glific",
-      text: "Glific is a chat manager.",
+      ModalContent: ChatManagerContentExample,
     },
   ];
 
@@ -190,10 +193,9 @@ const ChatManagersGrid = () => {
         ))}
       </Grid>
       {modalItem && (
-        <ChatManagerModal
+        <ChatManagerModalWrapper
           logo_src={modalItem.logo_src}
-          title={modalItem.name}
-          text={modalItem.text}
+          ModalContent={modalItem.ModalContent}
           open={Boolean(modalItem)}
           onClose={() => setModalItem(null)}
         />

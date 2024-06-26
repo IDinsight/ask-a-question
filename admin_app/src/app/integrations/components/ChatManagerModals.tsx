@@ -12,16 +12,14 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 import { Layout } from "@/components/Layout";
 
-const ChatManagerModal = ({
+const ChatManagerModalWrapper = ({
   logo_src,
-  title,
-  text,
+  ModalContent,
   open,
   onClose,
 }: {
   logo_src: string;
-  title: string;
-  text: string;
+  ModalContent: React.FC;
   open: boolean;
   onClose: () => void;
 }) => {
@@ -57,37 +55,44 @@ const ChatManagerModal = ({
             </IconButton>
           </Layout.FlexBox>
           <Layout.Spacer />
-          <Layout.FlexBox
-            flexDirection={"column"}
-            padding={sizes.baseGap}
-            gap={sizes.doubleBaseGap}
-          >
-            <Typography variant="subtitle1">{title}</Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                overflowWrap: "break-word",
-                hyphens: "auto",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {text}
-            </Typography>
-            <Box display="flex" justifyContent="start">
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<DownloadIcon />}
-                sx={{ mb: sizes.baseGap }}
-              >
-                Download Template
-              </Button>
-            </Box>
-          </Layout.FlexBox>
+          <ModalContent />
         </Box>
       </Fade>
     </Modal>
   );
 };
 
-export default ChatManagerModal;
+// make one of these for each chat manager and use it to populate the modal
+const ChatManagerContentExample: React.FC = () => {
+  return (
+    <Layout.FlexBox
+      flexDirection={"column"}
+      padding={sizes.baseGap}
+      gap={sizes.doubleBaseGap}
+    >
+      <Typography variant="subtitle1">Example Title</Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          overflowWrap: "break-word",
+          hyphens: "auto",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        Example Text
+      </Typography>
+      <Box display="flex" justifyContent="start">
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<DownloadIcon />}
+          sx={{ mb: sizes.baseGap }}
+        >
+          Download Template
+        </Button>
+      </Box>
+    </Layout.FlexBox>
+  );
+};
+
+export { ChatManagerModalWrapper, ChatManagerContentExample };
