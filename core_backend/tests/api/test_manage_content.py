@@ -31,7 +31,6 @@ def existing_content_id(
         json={
             "content_title": request.param[0],
             "content_text": request.param[1],
-            "content_language": "ENGLISH",
             "content_tags": [],
             "content_metadata": request.param[2],
         },
@@ -68,7 +67,6 @@ class TestManageContent:
             json={
                 "content_title": content_title,
                 "content_text": content_text,
-                "content_language": "ENGLISH",
                 "content_tags": content_tags,
                 "content_metadata": content_metadata,
             },
@@ -115,7 +113,6 @@ class TestManageContent:
                 "content_title": content_title,
                 "content_text": content_text,
                 "content_tags": [existing_tag_id],
-                "content_language": "ENGLISH",
                 "content_metadata": content_metadata,
             },
         )
@@ -143,7 +140,6 @@ class TestManageContent:
             json={
                 "content_title": "title",
                 "content_text": "sample text",
-                "content_language": "ENGLISH",
                 "content_metadata": {"key": "value"},
             },
         )
@@ -198,7 +194,6 @@ class TestMultUserManageContent:
             json={
                 "content_title": "user2 title 3",
                 "content_text": "user2 test content 3",
-                "content_language": "ENGLISH",
                 "content_metadata": {},
             },
         )
@@ -226,7 +221,6 @@ async def test_convert_record_to_schema() -> None:
         content_title="sample title for content",
         content_text="sample text",
         content_embedding=await async_fake_embedding(),
-        content_language="ENGLISH",
         positive_votes=0,
         negative_votes=0,
         content_metadata={"extra_field": "extra value"},

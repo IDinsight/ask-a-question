@@ -35,7 +35,6 @@ export interface Content extends EditContentBody {
 interface EditContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
@@ -163,11 +162,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id)
+                data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined)
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -182,7 +181,6 @@ const ContentBox = ({
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
-      content_language: content.content_language,
       content_metadata: content.content_metadata,
       content_tags: content.content_tags,
     };
@@ -219,13 +217,12 @@ const ContentBox = ({
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
-      content_language: "ENGLISH",
       content_metadata: {},
     };
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content
+    key: keyof Content,
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -305,11 +302,11 @@ const ContentBox = ({
                   inputVal &&
                   !availableTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                   ) &&
                   !contentTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                   )
                 ) {
                   event.preventDefault();
@@ -323,11 +320,11 @@ const ContentBox = ({
           const filtered = filter(options, params);
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name
+            (option) => inputValue.toUpperCase() === option.tag_name,
           );
 
           const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name
+            (tag) => inputValue.toUpperCase() === tag.tag_name,
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
@@ -346,11 +343,11 @@ const ContentBox = ({
             option.tag_name &&
             !availableTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
             ) &&
             !contentTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
             )
           ) {
             return (
@@ -443,7 +440,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`
+                      `/content/?content_id=${content_id}&action=${actionType}`,
                     );
                   }
                 };

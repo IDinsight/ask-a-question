@@ -123,7 +123,6 @@ class TestRetrievalPerformance:
                 content_embedding=content_embedding,
                 content_title=content_title,
                 content_text=content_text,
-                content_language="ENGLISH",
                 content_metadata={},
                 created_datetime_utc=datetime.utcnow(),
                 updated_datetime_utc=datetime.utcnow(),
