@@ -1,4 +1,4 @@
-from gtts import gTTS
+from gtts import gTTS  # type: ignore
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger

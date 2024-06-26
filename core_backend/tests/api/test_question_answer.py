@@ -331,7 +331,7 @@ class TestGenerateResponse:
             (f"{TEST_USER_API_KEY}_incorrect", {"use_tts": True}, 401, False),
         ],
     )
-    def test_llm_response_with_tts_option(
+    async def test_llm_response_with_tts_option(
         self,
         token: str,
         query_metadata: dict,
