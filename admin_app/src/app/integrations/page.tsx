@@ -10,6 +10,9 @@ import { useAuth } from "@/utils/auth";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button, Card, CardContent, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
+import typebotLogo from "./images/typebot_logo.svg";
+import turnLogo from "./images/turn_logo.png";
+import glificLogo from "./images/glific_logo.png";
 
 interface CardImageProps {
   src: string;
@@ -146,9 +149,9 @@ const ChatManagersSection = () => {
 
 const ChatManagersGrid = () => {
   const gridItems = [
-    { src: "https://path-to-typebot-logo.png", alt: "typebot" },
-    { src: "https://path-to-turn-logo.png", alt: "turn" },
-    { src: "https://path-to-glific-logo.png", alt: "Glific" },
+    { src: typebotLogo.src, alt: "typebot" },
+    { src: turnLogo.src, alt: "turn" },
+    { src: glificLogo.src, alt: "Glific" },
   ];
   return (
     <Grid container spacing={sizes.baseGap} style={{ minWidth: 220 }}>
@@ -162,9 +165,26 @@ const ChatManagersGrid = () => {
 };
 
 const CardImageComponent: React.FC<CardImageProps> = ({ src, alt }) => (
-  <Card>
-    <CardContent>
-      <img src={src} alt={alt} style={{ width: "100%" }} />
+  <Card
+    style={{
+      justifyContent: "center",
+      alignItems: "center",
+      display: "flex",
+    }}
+  >
+    <CardContent
+      style={{
+        height: "200px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{ height: "50%", padding: 15, display: "block" }}
+      />
     </CardContent>
   </Card>
 );
