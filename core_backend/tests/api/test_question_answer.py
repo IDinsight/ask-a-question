@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -250,6 +251,14 @@ class TestEmbeddingsSearch:
         assert response.status_code == response_code
 
 
+@pytest.fixture
+def mock_gtts() -> MagicMock:
+    mock_gTTS = MagicMock()
+    mock_gTTS_instance = mock_gTTS.return_value
+    mock_gTTS_instance.save = MagicMock()
+    return mock_gTTS
+
+
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
@@ -313,6 +322,51 @@ class TestGenerateResponse:
             else:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
+
+    @pytest.mark.parametrize(
+        "token, query_metadata, expected_status_code, expect_tts_file",
+        [
+            (TEST_USER_API_KEY, {"use_tts": True}, 200, True),
+            (TEST_USER_API_KEY, {"use_tts": False}, 200, False),
+            (f"{TEST_USER_API_KEY}_incorrect", {"use_tts": True}, 401, False),
+        ],
+    )
+    def test_llm_response_with_tts_option(
+        self,
+        token: str,
+        query_metadata: dict,
+        expected_status_code: int,
+        expect_tts_file: bool,
+        client: TestClient,
+        mock_gtts: MagicMock,
+    ) -> None:
+        user_query = {
+            "query_text": "What is the capital of France?",
+            "query_metadata": query_metadata,
+        }
+
+        with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):
+            response = client.post(
+                "/llm-response",
+                headers={"Authorization": f"Bearer {token}"},
+                json=user_query,
+            )
+
+            assert response.status_code == expected_status_code
+
+            if expected_status_code == 200:
+                json_response = response.json()
+                print(f"JSON response: {json_response}")
+
+                if "tts_file" in json_response:
+                    if expect_tts_file:
+                        assert json_response["tts_file"] is not None
+                    else:
+                        assert json_response["tts_file"] is None
+                else:
+                    assert (
+                        not expect_tts_file
+                    ), "Expected 'tts_file' but it was not found"
 
 
 class TestErrorResponses:

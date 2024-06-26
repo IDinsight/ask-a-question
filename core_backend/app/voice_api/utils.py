@@ -5,11 +5,14 @@ def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
     """
     Maps IdentifiedLanguage values to gTTS language codes.
     """
-
     mapping = {
         IdentifiedLanguage.ENGLISH: "en",
         IdentifiedLanguage.SWAHILI: "sw",
         IdentifiedLanguage.HINDI: "hi",
     }
 
-    return mapping.get(identified_language, "en")
+    lang_code = mapping.get(identified_language)
+    if lang_code is None:
+        raise ValueError(f"Unsupported language: {identified_language}")
+
+    return lang_code

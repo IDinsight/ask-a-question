@@ -1,4 +1,6 @@
 from gtts import gTTS
+
+from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger
 from .utils import get_gtts_lang_code
 
@@ -7,7 +9,7 @@ logger = setup_logger("TTS")
 
 async def generate_speech(
     text: str,
-    language: str,
+    language: IdentifiedLanguage,
     save_path: str = "response.mp3",
 ) -> str:
     """
@@ -24,4 +26,4 @@ async def generate_speech(
     except Exception as e:
         error_msg = f"Failed to generate speech: {str(e)}"
         logger.error(error_msg)
-        raise ValueError(error_msg)
+        raise ValueError(error_msg) from e

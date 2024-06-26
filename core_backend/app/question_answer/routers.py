@@ -17,9 +17,9 @@ from ..llm_call.process_input import (
     translate_question__before,
 )
 from ..llm_call.process_output import check_align_score__after
-from ..voice_api.text_to_speech import generate_speech
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
+from ..voice_api.text_to_speech import generate_speech
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -32,13 +32,13 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    ErrorType,
     QueryBase,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
     ResponseFeedbackBase,
     ResultState,
-    ErrorType
 )
 from .utils import (
     convert_search_results_to_schema,
@@ -148,7 +148,7 @@ async def get_llm_answer(
             try:
                 tts_file_path = await generate_speech(
                     text=rag_response.answer,
-                    language=question.original_language.value,
+                    language=question.original_language,
                     save_path=tts_save_path,
                 )
                 response.tts_file = tts_file_path
