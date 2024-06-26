@@ -246,7 +246,6 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     monkeysession.setattr(
         "core_backend.app.urgency_detection.routers.detect_urgency", mock_detect_urgency
     )
-
     monkeysession.setattr(
         "core_backend.app.question_answer.routers.get_llm_rag_answer",
         patched_llm_rag_answer,
