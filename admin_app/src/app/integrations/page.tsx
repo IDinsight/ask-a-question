@@ -13,6 +13,13 @@ import React, { useState } from "react";
 import typebotLogo from "./images/typebot_logo.svg";
 import turnLogo from "./images/turn_logo.png";
 import glificLogo from "./images/glific_logo.png";
+import ChatManagerModal from "./components/ChatManagerModal";
+
+interface ChatManagerInfo {
+  logo_src: string;
+  name: string;
+  text: string;
+}
 
 interface CardImageProps {
   src: string;
@@ -148,19 +155,54 @@ const ChatManagersSection = () => {
 };
 
 const ChatManagersGrid = () => {
-  const gridItems = [
-    { src: typebotLogo.src, alt: "typebot" },
-    { src: turnLogo.src, alt: "turn" },
-    { src: glificLogo.src, alt: "Glific" },
+  const chatManagers: ChatManagerInfo[] = [
+    {
+      logo_src: typebotLogo.src,
+      name: "Typebot",
+      text: "Typebot is a chat manager.",
+    },
+    {
+      logo_src: turnLogo.src,
+      name: "Turn",
+      text: "Turn is a chat manager.",
+    },
+    {
+      logo_src: glificLogo.src,
+      name: "Glific",
+      text: "Glific is a chat manager.",
+    },
   ];
+
+  const [modalItem, setModalItem] = useState<ChatManagerInfo | null>(null);
+  const handleItemClick = (item: ChatManagerInfo) => {
+    setModalItem(item);
+  };
+
   return (
-    <Grid container spacing={sizes.baseGap} style={{ minWidth: 220 }}>
-      {gridItems.map((item, index) => (
-        <Grid item xs={12} md={6} key={index}>
-          <CardImageComponent src={item.src} alt={item.alt} />
-        </Grid>
-      ))}
-    </Grid>
+    <>
+      <Grid container spacing={sizes.baseGap} style={{ minWidth: 220 }}>
+        {chatManagers.map((item, index) => (
+          <Grid
+            item
+            xs={12}
+            md={6}
+            key={index}
+            onClick={() => handleItemClick(item)}
+          >
+            <CardImageComponent src={item.logo_src} alt={item.name} />
+          </Grid>
+        ))}
+      </Grid>
+      {modalItem && (
+        <ChatManagerModal
+          logo_src={modalItem.logo_src}
+          title={modalItem.name}
+          text={modalItem.text}
+          open={Boolean(modalItem)}
+          onClose={() => setModalItem(null)}
+        />
+      )}
+    </>
   );
 };
 
