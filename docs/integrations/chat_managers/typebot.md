@@ -1,4 +1,4 @@
-# ![typebot logo](./typebot_logo.svg){ width="25" } Typebot
+# ![typebot logo](./typebot_logo.svg){ width="150" } <br/> Setup Instructions
 
 Below is a guide on how to connect to AAQ endpoints using a provided demo flow.
 
