@@ -4,7 +4,6 @@ const NEXT_PUBLIC_BACKEND_URL: string =
 interface ContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_metadata: Record<string, unknown>;
 }
 
