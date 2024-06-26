@@ -1,4 +1,4 @@
-import { appColors, appStyles, sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
 import {
   Box,
@@ -46,17 +46,17 @@ const ContentViewModal = ({
     <Modal
       open={open as boolean}
       onClose={onClose}
-      sx={[
-        { display: "flex" },
-        appStyles.alignItemsCenter,
-        appStyles.justifyContentCenter,
-      ]}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
       <Fade in={!!open}>
         <Box
           sx={{
             maxHeight: "80vh",
-            width: "80%",
+            width: "60%",
             minWidth: "600px",
             borderRadius: 2,
             backgroundColor: appColors.white,
@@ -65,7 +65,7 @@ const ContentViewModal = ({
         >
           <Layout.FlexBox
             flexDirection={"row"}
-            {...appStyles.justifyContentSpaceBetween}
+            justifyContent={"space-between"}
           >
             <Typography variant="h5">Content #{content_id}</Typography>
             <IconButton onClick={onClose}>
@@ -86,10 +86,10 @@ const ContentViewModal = ({
               <Layout.FlexBox
                 flexDirection={"row"}
                 gap={sizes.smallGap}
-                {...appStyles.alignItemsCenter}
                 sx={{
                   overflowX: "auto",
                   py: sizes.smallGap,
+                  alignItems: "center",
                 }}
               >
                 {tags.map((tag) => (
@@ -129,13 +129,10 @@ const ContentViewModal = ({
           <Layout.Spacer multiplier={2} />
           <Layout.FlexBox
             flexDirection={"row"}
+            justifyContent={"space-between"}
             gap={sizes.smallGap}
-            {...appStyles.justifyContentSpaceBetween}
           >
-            <Layout.FlexBox
-              {...appStyles.alignItemsCenter}
-              flexDirection={"row"}
-            >
+            <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
               <Button
                 variant="contained"
                 color="primary"
@@ -150,8 +147,8 @@ const ContentViewModal = ({
               <Layout.Spacer horizontal multiplier={1} />
             </Layout.FlexBox>
             <Layout.FlexBox
-              {...appStyles.alignItemsCenter}
               flexDirection={"row"}
+              justifyContent={"space-between"}
             >
               <Typography variant="body2" color={appColors.darkGrey}>
                 Last modified on{" "}
@@ -168,9 +165,11 @@ const ContentViewModal = ({
             <Layout.FlexBox
               flexDirection={"row"}
               gap={sizes.baseGap}
-              {...appStyles.alignItemsCenter}
-              {...appStyles.justifyContentCenter}
-              sx={{ pr: sizes.baseGap }}
+              sx={{
+                pr: sizes.baseGap,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
               <ThumbUp fontSize="small" color="disabled" />
               <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
