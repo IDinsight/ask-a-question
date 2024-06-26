@@ -23,5 +23,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.add_column("content", sa.Column("content_language", sa.String(), nullable=False))
+    op.add_column("content", sa.Column("content_language", sa.String(), nullable=True))
     op.execute("UPDATE content SET content_language = 'ENGLISH'")
+    op.alter_column("content", "content_language", nullable=False)
