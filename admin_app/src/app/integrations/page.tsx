@@ -8,22 +8,18 @@ import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Button, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
-import typebotLogo from "./images/typebot_logo.svg";
-import turnLogo from "./images/turn_logo.png";
-import glificLogo from "./images/glific_logo.png";
+import ChatManagerCard from "./components/ChatManagerCard";
 import ChatManagerModal from "./components/ChatManagerModal";
+import glificLogo from "./images/glific_logo.png";
+import turnLogo from "./images/turn_logo.png";
+import typebotLogo from "./images/typebot_logo.svg";
 
 interface ChatManagerInfo {
   logo_src: string;
   name: string;
   text: string;
-}
-
-interface CardImageProps {
-  src: string;
-  alt: string;
 }
 
 const IntegrationsPage = () => {
@@ -189,7 +185,7 @@ const ChatManagersGrid = () => {
             key={index}
             onClick={() => handleItemClick(item)}
           >
-            <CardImageComponent src={item.logo_src} alt={item.name} />
+            <ChatManagerCard logo_src={item.logo_src} name={item.name} />
           </Grid>
         ))}
       </Grid>
@@ -205,30 +201,5 @@ const ChatManagersGrid = () => {
     </>
   );
 };
-
-const CardImageComponent: React.FC<CardImageProps> = ({ src, alt }) => (
-  <Card
-    style={{
-      justifyContent: "center",
-      alignItems: "center",
-      display: "flex",
-    }}
-  >
-    <CardContent
-      style={{
-        height: "200px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <img
-        src={src}
-        alt={alt}
-        style={{ height: "50%", padding: 15, display: "block" }}
-      />
-    </CardContent>
-  </Card>
-);
 
 export default IntegrationsPage;
