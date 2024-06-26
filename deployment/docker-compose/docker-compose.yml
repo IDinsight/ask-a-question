@@ -42,7 +42,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     env_file:
@@ -54,7 +54,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./litellm_proxy_config.yaml:/app/config.yaml
+      - ./litellm_proxy/litellm_proxy_config.yaml:/app/config.yaml
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 
