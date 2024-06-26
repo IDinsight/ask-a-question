@@ -43,7 +43,6 @@ class TestUrgencyDetectionToken:
         if expected_status_code == 200:
             json_content_response = response.json()
             assert isinstance(json_content_response["is_urgent"], bool)
-            print(json_content_response["details"])
             if URGENCY_CLASSIFIER == "cosine_distance_classifier":
                 distance = json_content_response["details"]["0"]["distance"]
                 assert distance >= 0.0 and distance <= 1.0
