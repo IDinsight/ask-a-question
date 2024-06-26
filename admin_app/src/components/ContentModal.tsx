@@ -55,7 +55,6 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            maxHeight: "80vh",
             width: "60%",
             minWidth: "600px",
             borderRadius: 2,
@@ -103,7 +102,7 @@ const ContentViewModal = ({
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
-              maxHeight: "50vh",
+              maxHeight: "60vh", // this controls overall modal height too
               p: sizes.baseGap,
               mr: sizes.baseGap,
               overflowY: "auto",
