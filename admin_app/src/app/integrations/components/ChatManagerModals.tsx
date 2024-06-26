@@ -27,16 +27,15 @@ const ChatManagerModalWrapper = ({
     <Modal
       open={open as boolean}
       onClose={onClose}
-      sx={[
-        { display: "flex" },
-        appStyles.alignItemsCenter,
-        appStyles.justifyContentCenter,
-      ]}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
       <Fade in={!!open}>
         <Box
           sx={{
-            maxHeight: "80vh",
             width: "50%",
             minWidth: "300px",
             borderRadius: 2,
@@ -54,8 +53,21 @@ const ChatManagerModalWrapper = ({
               <CloseIcon />
             </IconButton>
           </Layout.FlexBox>
-          <Layout.Spacer />
-          <ModalContent />
+          <Layout.Spacer multiplier={2} />
+          <Layout.FlexBox
+            flexDirection={"column"}
+            sx={{
+              maxHeight: "70vh",
+              p: sizes.baseGap,
+              mr: sizes.baseGap,
+              overflowY: "auto",
+              border: 1,
+              borderColor: appColors.lightGrey,
+              borderRadius: 3,
+            }}
+          >
+            <ModalContent />
+          </Layout.FlexBox>
         </Box>
       </Fade>
     </Modal>
