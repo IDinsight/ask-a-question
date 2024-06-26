@@ -42,7 +42,6 @@ class ContentDB(Base):
     )
     content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
     content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-    content_language: Mapped[str] = mapped_column(String, nullable=False)
 
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
@@ -66,7 +65,6 @@ class ContentDB(Base):
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
-            f"content_language={self.content_language}, "
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
@@ -93,7 +91,6 @@ async def save_content_to_db(
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
-        content_language=content.content_language,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
         created_datetime_utc=datetime.utcnow(),
@@ -134,7 +131,6 @@ async def update_content_in_db(
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
-        content_language=content.content_language,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
         created_datetime_utc=datetime.utcnow(),

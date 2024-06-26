@@ -201,7 +201,6 @@ async def bulk_upload_contents(
         content = ContentCreate(
             content_title=row["content_title"],
             content_text=row["content_text"],
-            content_language="ENGLISH",
             content_tags=[],
             content_metadata={},
         )
@@ -385,7 +384,6 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         user_id=record.user_id,
         content_title=record.content_title,
         content_text=record.content_text,
-        content_language=record.content_language,
         content_tags=[tag.tag_id for tag in record.content_tags],
         positive_votes=record.positive_votes,
         negative_votes=record.negative_votes,

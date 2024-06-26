@@ -141,7 +141,6 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
-            content_language="ENGLISH",
             content_metadata=content.get("content_metadata", {}),
             created_datetime_utc=datetime.utcnow(),
             updated_datetime_utc=datetime.utcnow(),
