@@ -1,5 +1,7 @@
+import contextlib
 import os
 from collections.abc import AsyncGenerator, Generator
+from typing import ContextManager
 
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -56,6 +58,11 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(connection_string, pool_size=DB_POOL_SIZE)
     return _ASYNC_ENGINE
+
+
+def get_session_context_manager() -> ContextManager[Session]:
+    """Return a SQLAlchemy session context manager."""
+    return contextlib.contextmanager(get_session)()
 
 
 def get_session() -> Generator[Session, None, None]:

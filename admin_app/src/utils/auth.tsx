@@ -56,20 +56,26 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/";
 
-    apiCalls
-      .getLoginToken(username, password)
-      .then(({ access_token, access_level }) => {
-        localStorage.setItem("token", access_token);
-        localStorage.setItem("accessLevel", access_level);
-        setUser(username);
-        setToken(access_token);
-        setAccessLevel(access_level);
-        router.push(sourcePage);
-      })
-      .catch((error) => {
+    try {
+      const { access_token, access_level } = await apiCalls.getLoginToken(
+        username,
+        password,
+      );
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("accessLevel", access_level);
+      setUser(username);
+      setToken(access_token);
+      setAccessLevel(access_level);
+      router.push(sourcePage);
+    } catch (error: Error | any) {
+      if (error.status === 401) {
         setLoginError("Invalid username or password");
         console.error("Login error:", error);
-      });
+      } else {
+        console.error("Login error:", error);
+        setLoginError("An unexpected error occurred. Please try again later.");
+      }
+    }
   };
 
   const loginGoogle = async ({

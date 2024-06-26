@@ -1,5 +1,4 @@
 import json
-import random
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
@@ -34,7 +33,6 @@ from core_backend.app.question_answer.schemas import (
     QueryResponse,
     ResultState,
 )
-from core_backend.app.question_dashboard.schemas import QuestionDashBoard
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
@@ -94,7 +92,6 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
 async def asession(
     async_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncSession, None]:
-
     async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
         yield async_session
 
@@ -249,7 +246,6 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
     monkeysession.setattr(
         "core_backend.app.urgency_detection.routers.detect_urgency", mock_detect_urgency
     )
-
     monkeysession.setattr(
         "core_backend.app.question_answer.routers.get_llm_rag_answer",
         patched_llm_rag_answer,
@@ -271,10 +267,10 @@ async def mock_return_args(
 
 
 async def mock_detect_urgency(
-    urgency_rule: str, message: str, metadata: Optional[dict]
+    urgency_rules: List[str], message: str, metadata: Optional[dict]
 ) -> Dict[str, Any]:
     return {
-        "statement": urgency_rule,
+        "best_matching_rule": "made up rule",
         "probability": 0.7,
         "reason": "this is a mocked response",
     }
@@ -321,17 +317,6 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
         np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
     )
     return embedding_list
-
-
-async def mock_dashboard_stats(*arg: str, **kwargs: str) -> QuestionDashBoard:
-    """
-    Replicates question_dashboard.models.get_dashboard_stats but generates random
-    statistics.
-    """
-    return QuestionDashBoard(
-        six_months_questions=[random.randint(0, 100) for _ in range(6)],
-        six_months_upvotes=[random.randint(0, 100) for _ in range(6)],
-    )
 
 
 @pytest.fixture(scope="session")

@@ -24,13 +24,13 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
     [:octicons-arrow-right-24: More info](./chat_managers/botpress_v12.md)
 
-- ![turn logo](./chat_managers/turn_logo.png){ width="50" }
+- ![turn logo](./chat_managers/turn.io/turn_logo.png){ width="50" }
 
     ---
 
     How to connect a Turn.io Journey to AAQ endpoints
 
-    [:octicons-arrow-right-24: More info](./chat_managers/turn.md)
+    [:octicons-arrow-right-24: More info](./chat_managers/turn.io/turn.md)
 
 - ![glific logo](./chat_managers/glific/glific_logo.png){ width="40" }
 
