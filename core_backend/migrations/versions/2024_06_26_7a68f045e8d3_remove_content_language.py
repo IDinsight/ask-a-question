@@ -1,4 +1,4 @@
-"""empty message
+"""remove content_language
 
 Revision ID: 7a68f045e8d3
 Revises: 29b5ffa97758
