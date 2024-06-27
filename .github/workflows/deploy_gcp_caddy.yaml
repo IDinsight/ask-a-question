@@ -40,7 +40,8 @@ jobs:
       - name: Build and push caddy image
         working-directory: deployment/docker-compose/caddy
         env:
-          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}
+          # TODO: change deploy-on-gcp-ga to main
         run: |
           gcloud builds submit --config=../../gcp/cloudbuild_caddy.yaml \
             --substitutions \
@@ -49,7 +50,8 @@ jobs:
       - name: Get docker repository prefix
         id: "docker_repository"
         run: |
-          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
+        # TODO: change deploy-on-gcp-ga to main
 
       - name: Deploy Caddy container
         id: "compute-ssh"
@@ -62,3 +64,4 @@ jobs:
             docker-credential-gcr configure-docker --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
             docker run -d -v caddy_data:/data -v caddy_config:/config -p 80:80 -p 443:443 -p 443:443/udp --log-driver=gcplogs --name caddy ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+            docker system prune --volumes -f
