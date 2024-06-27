@@ -71,7 +71,7 @@ jobs:
                 -p 443:443 \
                 -p 443:443/udp \
                 --log-driver=gcplogs \
-                --restart unless-stopped \
+                --restart always \
                 --network aaq-network \
                 --name caddy_tmp \
                 ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
