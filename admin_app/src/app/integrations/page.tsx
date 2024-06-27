@@ -31,6 +31,7 @@ const IntegrationsPage = () => {
       />
       <Layout.Spacer multiplier={4} />
       <ChatManagersSection />
+      <Layout.Spacer multiplier={6} />
     </Layout.FlexBox>
   );
 };
