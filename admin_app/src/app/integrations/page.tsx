@@ -25,18 +25,18 @@ const IntegrationsPage = () => {
   return (
     <Layout.FlexBox alignItems="center">
       <Layout.Spacer multiplier={5} />
-      <KeyManagementSection
+      <KeyManagement
         token={token}
         editAccess={currAccessLevel === "fullaccess"}
       />
       <Layout.Spacer multiplier={4} />
-      <ChatManagersSection />
+      <ChatManagers />
       <Layout.Spacer multiplier={6} />
     </Layout.FlexBox>
   );
 };
 
-const KeyManagementSection = ({
+const KeyManagement = ({
   token,
   editAccess,
 }: {
@@ -95,7 +95,8 @@ const KeyManagementSection = ({
       >
         <Typography variant="body1">
           You will need your API key to interact with AAQ from your chat
-          manager. You can generate or re-generate your key here.
+          manager. You can generate a new key here, but keep in mind that any
+          old key is invalidated if a new key is created.
         </Typography>
         <Button
           variant="contained"
@@ -123,7 +124,7 @@ const KeyManagementSection = ({
   );
 };
 
-const ChatManagersSection = () => {
+const ChatManagers = () => {
   return (
     <Layout.FlexBox
       key={"chat-managers"}
