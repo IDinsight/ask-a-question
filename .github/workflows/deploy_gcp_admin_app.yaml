@@ -1,4 +1,4 @@
-name: Deploy Caddy to GCP
+name: Deploy admin_app to GCP
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
       - testing
       - deploy-on-gcp-ga
     paths:
-      - "deployment/docker-compose/caddy/**"
-      - "deployment/gcp/cloudbuild_caddy.yaml"
-      - ".github/workflows/deploy_gcp_caddy.yaml"
+      - "admin_app/**"
+      - "deployment/gcp/cloudbuild_admin_app.yaml"
+      - ".github/workflows/deploy_gcp_admin_app.yaml"
   workflow_dispatch:
 
 jobs:
-  DeployCaddyToGCP:
+  DeployAdminAppToGCP:
     runs-on: ubuntu-latest
 
     permissions:
@@ -37,14 +37,15 @@ jobs:
         run: |
           gcloud auth configure-docker asia-south2-docker.pkg.dev
 
-      - name: Build and push caddy image
-        working-directory: deployment/docker-compose/caddy
+      - name: Build and push admin_app image
+        working-directory: admin_app
         env:
           RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}
           # TODO: change deploy-on-gcp-ga to main
         run: |
-          gcloud builds submit --config=../../gcp/cloudbuild_caddy.yaml \
-            --substitutions \
+          gcloud builds submit \
+              --config=../deployment/gcp/cloudbuild_admin_app.yaml \
+              --substitutions \
               _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
 
       - name: Get docker repository prefix
@@ -53,7 +54,7 @@ jobs:
           echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
         # TODO: change deploy-on-gcp-ga to main
 
-      - name: Deploy Caddy container
+      - name: Deploy admin_app container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
         with:
@@ -62,15 +63,11 @@ jobs:
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
             docker-credential-gcr configure-docker \
-                --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
-            docker pull ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+              --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
+            docker pull \
+              ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
             docker run -d \
-                -v caddy_data:/data \
-                -v caddy_config:/config \
-                -p 80:80 \
-                -p 443:443 \
-                -p 443:443/udp \
-                --log-driver=gcplogs \
-                --name caddy \
-                ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+              --log-driver=gcplogs \
+              --name admin_app \
+              ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
             docker system prune --volumes -f

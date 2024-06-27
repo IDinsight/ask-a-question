@@ -1,4 +1,4 @@
-name: Deploy Caddy to GCP
+name: Deploy core_backend to GCP
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
       - testing
       - deploy-on-gcp-ga
     paths:
-      - "deployment/docker-compose/caddy/**"
-      - "deployment/gcp/cloudbuild_caddy.yaml"
-      - ".github/workflows/deploy_gcp_caddy.yaml"
+      - "core_backend/**"
+      - "deployment/gcp/cloudbuild_core_backend.yaml"
+      - ".github/workflows/deploy_gcp_core_backend.yaml"
   workflow_dispatch:
 
 jobs:
-  DeployCaddyToGCP:
+  DeployCoreBackendToGCP:
     runs-on: ubuntu-latest
 
     permissions:
@@ -37,14 +37,15 @@ jobs:
         run: |
           gcloud auth configure-docker asia-south2-docker.pkg.dev
 
-      - name: Build and push caddy image
-        working-directory: deployment/docker-compose/caddy
+      - name: Build and push core_backend image
+        working-directory: core_backend
         env:
           RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}
           # TODO: change deploy-on-gcp-ga to main
         run: |
-          gcloud builds submit --config=../../gcp/cloudbuild_caddy.yaml \
-            --substitutions \
+          gcloud builds submit \
+              --config=../deployment/gcp/cloudbuild_core_backend.yaml \
+              --substitutions \
               _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
 
       - name: Get docker repository prefix
@@ -53,7 +54,7 @@ jobs:
           echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
         # TODO: change deploy-on-gcp-ga to main
 
-      - name: Deploy Caddy container
+      - name: Deploy core_backend container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
         with:
@@ -62,15 +63,11 @@ jobs:
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
             docker-credential-gcr configure-docker \
-                --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
-            docker pull ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+              --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
+            docker pull \
+              ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
             docker run -d \
-                -v caddy_data:/data \
-                -v caddy_config:/config \
-                -p 80:80 \
-                -p 443:443 \
-                -p 443:443/udp \
-                --log-driver=gcplogs \
-                --name caddy \
-                ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+              --log-driver=gcplogs \
+              --name core_backend \
+              ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
             docker system prune --volumes -f
