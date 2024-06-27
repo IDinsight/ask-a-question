@@ -1,10 +1,9 @@
 import contextlib
 import os
-import urllib.parse
 from collections.abc import AsyncGenerator, Generator
 from typing import ContextManager
 
-from sqlalchemy.engine import Engine, create_engine
+from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -30,7 +29,7 @@ _SYNC_ENGINE: Engine | None = None
 _ASYNC_ENGINE: AsyncEngine | None = None
 
 
-def build_connection_string(
+def get_connection_url(
     *,
     db_api: str = ASYNC_DB_API,
     user: str = POSTGRES_USER,
@@ -38,17 +37,24 @@ def build_connection_string(
     host: str = POSTGRES_HOST,
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
-) -> str:
+    render_as_string: bool = False,
+) -> URL:
     """Return a connection string for the given database."""
-    encoded_password = urllib.parse.quote_plus(password)
-    return f"postgresql+{db_api}://{user}:{encoded_password}@{host}:{port}/{db}"
+    return URL.create(
+        drivername="postgresql+" + db_api,
+        username=user,
+        host=host,
+        password=password,
+        port=port,
+        database=db,
+    )
 
 
 def get_sqlalchemy_engine() -> Engine:
     """Return a SQLAlchemy engine."""
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
-        connection_string = build_connection_string(db_api=SYNC_DB_API)
+        connection_string = get_connection_url(db_api=SYNC_DB_API)
         _SYNC_ENGINE = create_engine(connection_string)
     return _SYNC_ENGINE
 
@@ -57,7 +63,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     """Return a SQLAlchemy async engine generator."""
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
-        connection_string = build_connection_string()
+        connection_string = get_connection_url()
         _ASYNC_ENGINE = create_async_engine(connection_string, pool_size=DB_POOL_SIZE)
     return _ASYNC_ENGINE
 

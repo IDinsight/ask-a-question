@@ -21,7 +21,7 @@ from core_backend.app.config import (
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.database import build_connection_string, get_session
+from core_backend.app.database import get_connection_url, get_session
 from core_backend.app.llm_call import process_input, process_output
 from core_backend.app.llm_call.llm_prompts import (
     RAG,
@@ -84,7 +84,7 @@ def db_session() -> Generator[Session, None, None]:
 # See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
 @pytest.fixture(scope="function")
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
-    connection_string = build_connection_string()
+    connection_string = get_connection_url()
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
     await engine.dispose()
