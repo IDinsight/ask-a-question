@@ -1,4 +1,4 @@
-import { appColors, appStyles, sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import {
   Box,
   Button,

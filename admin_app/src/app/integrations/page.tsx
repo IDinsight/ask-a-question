@@ -1,29 +1,18 @@
 "use client";
-import {
-  KeyRenewConfirmationModal,
-  NewKeyModal,
-} from "@/components/APIKeyModals";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import { Button, Typography } from "@mui/material";
+import React, { useState } from "react";
+
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, Grid, Typography } from "@mui/material";
-import React, { useState } from "react";
-import ChatManagerCard from "./components/ChatManagerCard";
-import {
-  ChatManagerContentExample,
-  ChatManagerModalWrapper,
-} from "./components/ChatManagerModals";
-import glificLogo from "./images/glific_logo.png";
-import turnLogo from "./images/turn_logo.png";
-import typebotLogo from "./images/typebot_logo.svg";
 
-interface ChatManagerInfo {
-  logo_src: string;
-  name: string;
-  ModalContent: React.FC;
-}
+import {
+  KeyRenewConfirmationModal,
+  NewKeyModal,
+} from "@/components/APIKeyModals";
+import ChatManagersGrid from "./components/ChatManagerGrid";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -36,7 +25,7 @@ const IntegrationsPage = () => {
   return (
     <Layout.FlexBox alignItems="center">
       <Layout.Spacer multiplier={5} />
-      <KeyManagement
+      <KeyManagementSection
         token={token}
         editAccess={currAccessLevel === "fullaccess"}
       />
@@ -46,7 +35,7 @@ const IntegrationsPage = () => {
   );
 };
 
-const KeyManagement = ({
+const KeyManagementSection = ({
   token,
   editAccess,
 }: {
@@ -150,57 +139,6 @@ const ChatManagersSection = () => {
       </Typography>
       <ChatManagersGrid />
     </Layout.FlexBox>
-  );
-};
-
-const ChatManagersGrid = () => {
-  const chatManagers: ChatManagerInfo[] = [
-    {
-      logo_src: typebotLogo.src,
-      name: "Typebot",
-      ModalContent: ChatManagerContentExample,
-    },
-    {
-      logo_src: turnLogo.src,
-      name: "Turn",
-      ModalContent: ChatManagerContentExample,
-    },
-    {
-      logo_src: glificLogo.src,
-      name: "Glific",
-      ModalContent: ChatManagerContentExample,
-    },
-  ];
-
-  const [modalItem, setModalItem] = useState<ChatManagerInfo | null>(null);
-  const handleItemClick = (item: ChatManagerInfo) => {
-    setModalItem(item);
-  };
-
-  return (
-    <>
-      <Grid container spacing={sizes.baseGap} style={{ minWidth: 220 }}>
-        {chatManagers.map((item, index) => (
-          <Grid
-            item
-            xs={12}
-            md={6}
-            key={index}
-            onClick={() => handleItemClick(item)}
-          >
-            <ChatManagerCard logo_src={item.logo_src} name={item.name} />
-          </Grid>
-        ))}
-      </Grid>
-      {modalItem && (
-        <ChatManagerModalWrapper
-          logo_src={modalItem.logo_src}
-          ModalContent={modalItem.ModalContent}
-          open={Boolean(modalItem)}
-          onClose={() => setModalItem(null)}
-        />
-      )}
-    </>
   );
 };
 
