@@ -10,7 +10,6 @@ import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
-import { ChevronLeft } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import {
   Button,
@@ -25,11 +24,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
