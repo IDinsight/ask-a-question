@@ -52,7 +52,7 @@ class StatsCards(BaseModel):
     urgency_stats: UrgencyStats
 
 
-class DashboardOverview(StatsCards):
+class DashboardOverview(BaseModel):
     """
     This class is used to define the schema for the dashboard overview
     """
