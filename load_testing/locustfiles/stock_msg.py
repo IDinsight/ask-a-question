@@ -1,5 +1,6 @@
 import os
 import json
+
 from locust import HttpUser, task
 
 
@@ -15,7 +16,8 @@ class APIUser(HttpUser):
 
         This task sends the same question repeatedly.
 
-        The endpoint is the API endpoint to send the question to. Default is "llm-response".
+        The endpoint is the API endpoint to send the question to. 
+        Default is "llm-response".
         """
         headers = {
             "accept": "application/json",

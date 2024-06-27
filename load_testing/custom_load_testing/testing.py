@@ -135,7 +135,8 @@ def run_tests(experiment_configs, output_folder):
             logging.info(f"{test_name} load-test completed.")
 
     logging.info(
-        f"\n\n### ALL TESTS COMPLETE. Raw results and HTML reports saved to {output_folder} ###\n"
+        f"\n\n### ALL TESTS COMPLETE. Raw results and HTML reports saved \
+            to {output_folder} ###\n"
     )
 
 

@@ -1,6 +1,7 @@
 """
-This script loads a config file, runs multiple locust load tests, plots and writes results to file.
-Functionality based on: github.com/mohsenSy/locust-tests-runner/blob/master/locust_run_tests.py
+This script loads a config file, runs multiple locust load tests, plots and writes
+results to file. Functionality based on: github.com/mohsenSy/locust-tests-runner/
+blob/master/locust_run_tests.py
 """
 
 import argparse
