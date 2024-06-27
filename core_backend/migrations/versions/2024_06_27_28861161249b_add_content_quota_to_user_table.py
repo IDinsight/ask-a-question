@@ -1,8 +1,8 @@
 """add content_quota to user table
 
 Revision ID: 28861161249b
-Revises: 29b5ffa97758
-Create Date: 2024-06-13 12:01:07.418461
+Revises: 7a68f045e8d3
+Create Date: 2024-06-27 12:01:07.418461
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "28861161249b"
-down_revision: Union[str, None] = "29b5ffa97758"
+down_revision: Union[str, None] = "7a68f045e8d3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
