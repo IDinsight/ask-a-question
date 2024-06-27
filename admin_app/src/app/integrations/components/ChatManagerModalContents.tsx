@@ -3,6 +3,7 @@ import React from "react";
 
 import DownloadIcon from "@mui/icons-material/Download";
 import { Box, Button, Typography } from "@mui/material";
+import Link from "next/link";
 
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
@@ -22,16 +23,6 @@ const ChatManagerContentExample: React.FC = () => {
       >
         Example Text
       </Typography>
-      <Box display="flex" justifyContent="start">
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<DownloadIcon />}
-          sx={{ mb: sizes.baseGap }}
-        >
-          Download Template
-        </Button>
-      </Box>
     </Layout.FlexBox>
   );
 };
@@ -79,4 +70,61 @@ const TypebotModalContent: React.FC = () => {
   );
 };
 
-export { ChatManagerContentExample, TypebotModalContent };
+const TurnModalContent: React.FC = () => {
+  return (
+    <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
+      <Typography variant="subtitle1">Under Construction...</Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          overflowWrap: "break-word",
+          hyphens: "auto",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        For now, please refer to our{" "}
+        <Link
+          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/turn.io/turn/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          documentation
+        </Link>{" "}
+        for instructions on how to connect Turn to AAQ.
+      </Typography>
+    </Layout.FlexBox>
+  );
+};
+
+const GlificModalContent: React.FC = () => {
+  return (
+    <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
+      <Typography variant="subtitle1">Under Construction...</Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          overflowWrap: "break-word",
+          hyphens: "auto",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        For now, please refer to our{" "}
+        <Link
+          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/glific/glific/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          documentation
+        </Link>{" "}
+        for instructions on how to connect Glific to AAQ.
+      </Typography>
+    </Layout.FlexBox>
+  );
+};
+
+export {
+  ChatManagerContentExample,
+  GlificModalContent,
+  TurnModalContent,
+  TypebotModalContent,
+};

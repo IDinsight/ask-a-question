@@ -11,6 +11,8 @@ import ChatManagerModal from "./ChatManagerModal";
 import {
   ChatManagerContentExample,
   TypebotModalContent,
+  TurnModalContent,
+  GlificModalContent,
 } from "./ChatManagerModalContents";
 
 interface ChatManagerInfo {
@@ -29,12 +31,12 @@ const ChatManagerGrid = () => {
     {
       logo_src: turnLogo.src,
       name: "Turn",
-      ModalContent: ChatManagerContentExample,
+      ModalContent: TurnModalContent,
     },
     {
       logo_src: glificLogo.src,
       name: "Glific",
-      ModalContent: ChatManagerContentExample,
+      ModalContent: GlificModalContent,
     },
   ];
 
