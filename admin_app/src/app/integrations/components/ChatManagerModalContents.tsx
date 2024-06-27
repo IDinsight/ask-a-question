@@ -10,11 +10,7 @@ import { sizes } from "@/utils";
 // make one of these for each chat manager and use it to populate the modal
 const ChatManagerContentExample: React.FC = () => {
   return (
-    <Layout.FlexBox
-      flexDirection={"column"}
-      padding={sizes.baseGap}
-      gap={sizes.doubleBaseGap}
-    >
+    <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
       <Typography variant="subtitle1">Example Title</Typography>
       <Typography
         variant="body2"
@@ -43,22 +39,17 @@ const ChatManagerContentExample: React.FC = () => {
 const TypebotModalContent: React.FC = () => {
   // const videoId = 'typebot-video-id';
   return (
-    <Layout.FlexBox
-      flexDirection={"column"}
-      padding={sizes.baseGap}
-      gap={sizes.baseGap}
-    >
+    <Layout.FlexBox flexDirection={"column"} gap={sizes.baseGap}>
       <Typography variant="body1">
         In Typebot, you can use the "HTTPS request" card to call AAQ and receive
         its response.
       </Typography>
-      <Typography variant="body2">
+      <Typography variant="body2" mb={sizes.baseGap}>
         To get a head start, you can download either of our templates below and
         load them into Typebot by going to "Create a typebot &gt; Import a file"
         and loading the downloaded template.
       </Typography>
 
-      <Layout.Spacer />
       <Box display="flex" justifyContent="center">
         <Button variant="outlined" color="primary" startIcon={<DownloadIcon />}>
           AI RESPONSE WITH FEEDBACK
@@ -69,14 +60,14 @@ const TypebotModalContent: React.FC = () => {
           FAQ RESPONSE WITH FEEDBACK
         </Button>
       </Box>
-      <Layout.Spacer />
 
-      <Typography variant="body2" component="p" mt={2}>
-        Once loaded, you need to update the "API_KEY" field inside the "HTTP
+      <Typography variant="body2" mt={sizes.doubleBaseGap}>
+        Once loaded, you need to update the{" "}
+        <code style={{ color: "tomato" }}>API_KEY</code> field inside the "HTTP
         request" card with your own API key before trying the flow.
       </Typography>
 
-      {/* <Typography variant="body2" component="p" mt={2}>
+      {/* <Typography variant="body2">
         The video below walks you through how to set up Typebot with AAQ:
       </Typography>
       <Card variant="outlined" sx={{ mt: 2 }}>
