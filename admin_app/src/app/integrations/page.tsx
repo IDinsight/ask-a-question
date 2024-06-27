@@ -11,7 +11,7 @@ import { useAuth } from "@/utils/auth";
 import {
   KeyRenewConfirmationModal,
   NewKeyModal,
-} from "@/components/APIKeyModals";
+} from "./components/APIKeyModals";
 import ChatManagersGrid from "./components/ChatManagerGrid";
 
 const IntegrationsPage = () => {
