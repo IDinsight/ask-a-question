@@ -66,13 +66,12 @@ jobs:
               --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull \
               ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
+            docker stop admin_app
+            docker rm admin_app
             docker run -d \
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \
-              --name admin_app_tmp \
+              --name admin_app \
               ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
-            docker stop admin_app
-            docker rm admin_app
-            docker rename admin_app_tmp admin_app
             docker system prune --volumes -f

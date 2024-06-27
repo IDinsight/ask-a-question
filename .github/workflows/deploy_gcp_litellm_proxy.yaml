@@ -65,13 +65,12 @@ jobs:
               --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull \
               ${{ steps.docker_repository.outputs.docker_repository }}/litellm_proxy:latest
+            docker stop litellm_proxy
+            docker rm litellm_proxy
             docker run -d \
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \
-              --name litellm_proxy_tmp \
+              --name litellm_proxy \
               ${{ steps.docker_repository.outputs.docker_repository }}/litellm_proxy:latest
-            docker stop litellm_proxy
-            docker rm litellm_proxy
-            docker rename litellm_proxy_tmp litellm_proxy
             docker system prune --volumes -f

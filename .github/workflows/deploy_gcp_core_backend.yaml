@@ -66,13 +66,12 @@ jobs:
               --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull \
               ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
+            docker stop core_backend
+            docker rm core_backend
             docker run -d \
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \
-              --name core_backend_tmp \
+              --name core_backend \
               ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
-            docker stop core_backend
-            docker rm core_backend
-            docker rename core_backend_tmp core_backend
             docker system prune --volumes -f

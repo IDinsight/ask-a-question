@@ -64,6 +64,8 @@ jobs:
             docker-credential-gcr configure-docker \
                 --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+            docker stop caddy
+            docker rm caady
             docker run -d \
                 -v caddy_data:/data \
                 -v caddy_config:/config \
@@ -73,9 +75,6 @@ jobs:
                 --log-driver=gcplogs \
                 --restart always \
                 --network aaq-network \
-                --name caddy_tmp \
+                --name caddy \
                 ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
-            docker stop caddy
-            docker rm caady
-            docker rename caddy_tmp caddy
             docker system prune --volumes -f
