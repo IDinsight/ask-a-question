@@ -14,15 +14,24 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
+from ..config import CHECK_CONTENT_LIMIT
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
 from ..tags.models import content_tags_table
+from ..users.models import get_content_quota_by_userid
 from ..utils import embedding
 from .config import PGVECTOR_VECTOR_SIZE
 from .schemas import (
     ContentCreate,
     ContentUpdate,
 )
+
+
+class ExceedsContentQuotaError(Exception):
+    """
+    Exception raised when a user is attempting to add
+    more content that their quota allows.
+    """
 
 
 class ContentDB(Base):
@@ -84,6 +93,26 @@ async def save_content_to_db(
         "trace_user_id": "user_id-" + str(user_id),
         "generation_name": "save_content_to_db",
     }
+
+    if CHECK_CONTENT_LIMIT:
+        # get content_quota value for this user from UserDB
+        content_quota = await get_content_quota_by_userid(
+            user_id=user_id, asession=asession
+        )
+
+        # if content_quota is None, then there is no limit
+        if content_quota is None:
+            pass
+        else:
+            # get the number of contents this user has already added
+            stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+            user_contents = (await asession.execute(stmt)).all()
+            content_count = len(user_contents)
+            if content_count >= content_quota:
+                raise ExceedsContentQuotaError(
+                    f"There are already {content_count} contents for this "
+                    f"user and quota is {content_quota}."
+                )
 
     content_embedding = await _get_content_embeddings(content, metadata=metadata)
     content_db = ContentDB(

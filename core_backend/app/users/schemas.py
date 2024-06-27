@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     """
 
     username: str
+    content_quota: int
 
     model_config = ConfigDict(from_attributes=True)
 

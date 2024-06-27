@@ -19,12 +19,12 @@ from core_backend.tests.api.conftest import (
 
 class TestUsers:
     async def test_save_user_to_db(self, asession: AsyncSession) -> None:
-        user = UserCreate(username="test_username_3")
+        user = UserCreate(username="test_username_3", content_quota=50)
         saved_user = await save_user_to_db(user, asession)
         assert saved_user.username == "test_username_3"
 
     async def test_save_user_to_db_existing_user(self, asession: AsyncSession) -> None:
-        user = UserCreate(username=TEST_USERNAME)
+        user = UserCreate(username=TEST_USERNAME, content_quota=50)
         with pytest.raises(UserAlreadyExistsError):
             await save_user_to_db(user, asession)
 
@@ -45,7 +45,7 @@ class TestUsers:
             await get_user_by_token("nonexistent", asession)
 
     async def test_update_user_api_key(self, asession: AsyncSession) -> None:
-        user = UserCreate(username="test_username_4")
+        user = UserCreate(username="test_username_4", content_quota=50)
         saved_user = await save_user_to_db(user, asession)
         assert saved_user.hashed_api_key is None
 

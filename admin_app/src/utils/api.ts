@@ -109,21 +109,24 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(content),
+    });
+
+    if (!response.ok) {
+      throw response;
     }
-  });
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getUrgencyRuleList = async (token: string) => {
