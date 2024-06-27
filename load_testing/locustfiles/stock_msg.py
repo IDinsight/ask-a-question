@@ -3,7 +3,6 @@ import json
 
 from locust import HttpUser, task
 
-
 class APIUser(HttpUser):
     @task
     def ask_a_question(
