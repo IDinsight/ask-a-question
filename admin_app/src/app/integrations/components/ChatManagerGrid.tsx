@@ -1,14 +1,17 @@
-import { sizes } from "@/utils";
-import { Grid } from "@mui/material";
 import React, { useState } from "react";
-import ChatManagerCard from "./ChatManagerCard";
-import {
-  ChatManagerContentExample,
-  ChatManagerModalWrapper,
-} from "./ChatManagerModals";
+
+import { Grid } from "@mui/material";
+
+import { sizes } from "@/utils";
 import glificLogo from "../images/glific_logo.png";
 import turnLogo from "../images/turn_logo.png";
 import typebotLogo from "../images/typebot_logo.svg";
+import ChatManagerCard from "./ChatManagerCard";
+import ChatManagerModal from "./ChatManagerModal";
+import {
+  ChatManagerContentExample,
+  TypebotModalContent,
+} from "./ChatManagerModalContents";
 
 interface ChatManagerInfo {
   logo_src: string;
@@ -21,7 +24,7 @@ const ChatManagerGrid = () => {
     {
       logo_src: typebotLogo.src,
       name: "Typebot",
-      ModalContent: ChatManagerContentExample,
+      ModalContent: TypebotModalContent,
     },
     {
       logo_src: turnLogo.src,
@@ -56,7 +59,7 @@ const ChatManagerGrid = () => {
         ))}
       </Grid>
       {modalItem && (
-        <ChatManagerModalWrapper
+        <ChatManagerModal
           logo_src={modalItem.logo_src}
           ModalContent={modalItem.ModalContent}
           open={Boolean(modalItem)}

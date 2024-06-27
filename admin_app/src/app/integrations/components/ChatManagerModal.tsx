@@ -1,18 +1,12 @@
-import { appColors, sizes } from "@/utils";
-import {
-  Box,
-  Button,
-  Fade,
-  IconButton,
-  Modal,
-  Typography,
-} from "@mui/material";
+import React from "react";
+
 import CloseIcon from "@mui/icons-material/Close";
-import DownloadIcon from "@mui/icons-material/Download";
+import { Box, Fade, IconButton, Modal } from "@mui/material";
 
 import { Layout } from "@/components/Layout";
+import { appColors, sizes } from "@/utils";
 
-const ChatManagerModalWrapper = ({
+const ChatManagerModal = ({
   logo_src,
   ModalContent,
   open,
@@ -36,7 +30,7 @@ const ChatManagerModalWrapper = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            width: "50%",
+            width: "60%",
             minWidth: "300px",
             borderRadius: 2,
             backgroundColor: appColors.white,
@@ -61,9 +55,6 @@ const ChatManagerModalWrapper = ({
               p: sizes.baseGap,
               mr: sizes.baseGap,
               overflowY: "auto",
-              border: 1,
-              borderColor: appColors.lightGrey,
-              borderRadius: 3,
             }}
           >
             <ModalContent />
@@ -74,37 +65,4 @@ const ChatManagerModalWrapper = ({
   );
 };
 
-// make one of these for each chat manager and use it to populate the modal
-const ChatManagerContentExample: React.FC = () => {
-  return (
-    <Layout.FlexBox
-      flexDirection={"column"}
-      padding={sizes.baseGap}
-      gap={sizes.doubleBaseGap}
-    >
-      <Typography variant="subtitle1">Example Title</Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          overflowWrap: "break-word",
-          hyphens: "auto",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        Example Text
-      </Typography>
-      <Box display="flex" justifyContent="start">
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<DownloadIcon />}
-          sx={{ mb: sizes.baseGap }}
-        >
-          Download Template
-        </Button>
-      </Box>
-    </Layout.FlexBox>
-  );
-};
-
-export { ChatManagerModalWrapper, ChatManagerContentExample };
+export default ChatManagerModal;
