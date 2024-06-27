@@ -2,11 +2,12 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
-      - "-c"
+      - -c
       - >
-        "docker build "
-        "-t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/caddy:latest "
-        "--build-arg DOMAIN=$$DOMAIN ."
+        docker build \
+          -t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/caddy:latest \
+          --build-arg DOMAIN=$$DOMAIN \
+          .
     secretEnv: ["DOMAIN"]
 availableSecrets:
   secretManager:

@@ -2,11 +2,12 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
-      - "-c"
+      - -c
       - >
-        "docker build "
-        "-t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/litellm_proxy:latest  "
-        "--build-arg OPENAI_API_KEY=$$OPENAI_API_KEY ."
+        docker build \
+          -t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/litellm_proxy:latest \
+          --build-arg OPENAI_API_KEY=$$OPENAI_API_KEY \
+          .
     secretEnv: ["OPENAI_API_KEY"]
 availableSecrets:
   secretManager:

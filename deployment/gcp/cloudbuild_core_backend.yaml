@@ -2,22 +2,22 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
-      - "-c"
+      - -c
       - >
-        "docker build "
-        "-t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/core_backend:latest "
-        "-f Dockerfile.cloudbuild "
-        "--build-arg JWT_SECRET=$$JWT_SECRET "
-        "--build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=$$NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID "
-        "--build-arg DOMAIN=$$DOMAIN "
-        "--build-arg LANGFUSE_SECRET_KEY=$$LANGFUSE_SECRET_KEY "
-        "--build-arg LANGFUSE_PUBLIC_KEY=$$LANGFUSE_PUBLIC_KEY "
-        "--build-arg POSTGRES_HOST=$$POSTGRES_HOST "
-        "--build-arg POSTGRES_PASSWORD=$$POSTGRES_PASSWORD "
-        "--build-arg ADMIN_USERNAME=$$ADMIN_USERNAME "
-        "--build-arg ADMIN_PASSWORD=$$ADMIN_PASSWORD "
-        "--build-arg ADMIN_API_KEY=$$ADMIN_API_KEY
-        "."
+        docker build \
+          -t ${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/core_backend:latest \
+          -f Dockerfile.cloudbuild \
+          --build-arg JWT_SECRET=$$JWT_SECRET \
+          --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=$$NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID \
+          --build-arg DOMAIN=$$DOMAIN \
+          --build-arg LANGFUSE_SECRET_KEY=$$LANGFUSE_SECRET_KEY \
+          --build-arg LANGFUSE_PUBLIC_KEY=$$LANGFUSE_PUBLIC_KEY \
+          --build-arg POSTGRES_HOST=$$POSTGRES_HOST \
+          --build-arg POSTGRES_PASSWORD=$$POSTGRES_PASSWORD \
+          --build-arg ADMIN_USERNAME=$$ADMIN_USERNAME \
+          --build-arg ADMIN_PASSWORD=$$ADMIN_PASSWORD \
+          --build-arg ADMIN_API_KEY=$$ADMIN_API_KEY \
+          .
     secretEnv:
       - "ADMIN_USERNAME"
       - "ADMIN_PASSWORD"
