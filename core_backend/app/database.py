@@ -1,7 +1,7 @@
 import contextlib
 import os
 from collections.abc import AsyncGenerator, Generator
-from typing import ContextManager
+from typing import ContextManager, Union
 
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -35,7 +35,7 @@ def get_connection_url(
     user: str = POSTGRES_USER,
     password: str = POSTGRES_PASSWORD,
     host: str = POSTGRES_HOST,
-    port: str = POSTGRES_PORT,
+    port: Union[int, str] = POSTGRES_PORT,
     db: str = POSTGRES_DB,
     render_as_string: bool = False,
 ) -> URL:
@@ -45,7 +45,7 @@ def get_connection_url(
         username=user,
         host=host,
         password=password,
-        port=port,
+        port=int(port),
         database=db,
     )
 
