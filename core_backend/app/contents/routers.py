@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
-from ..tags.models import validate_tags
+from ..tags.models import get_list_of_tag_from_db, save_tag_to_db, validate_tags
+from ..tags.schemas import TagCreate
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
@@ -202,6 +203,21 @@ async def bulk_upload_contents(
     df = _load_csv(file)
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
+    tags_to_create = await get_tags_not_in_db(
+        df,
+        tags_col="content_tag_names",
+        user_id=user_db.user_id,
+        asession=asession,
+    )
+
+    for tag in tags_to_create:
+        tag = TagCreate(tag_name=tag)
+        await save_tag_to_db(
+            user_id=user_db.user_id,
+            tag=tag,
+            asession=asession,
+        )
+
     # Add each row to the content database
     content_list = []
     for _, row in df.iterrows():
@@ -218,6 +234,32 @@ async def bulk_upload_contents(
         content_list.append(content_retrieve)
 
     return content_list
+
+
+async def get_tags_not_in_db(
+    df: pd.DataFrame, tags_col: str, user_id: int, asession: AsyncSession
+) -> List[str]:
+    """
+    Get a clean list of the tags from a given DataFrame, then fetch all tags
+    pre-existing in the DB, then finally find which tags are not present in DB already.
+    """
+
+    incoming_tags = extract_all_tags(df=df, tags_col=tags_col)
+    tags_in_db_json = await get_list_of_tag_from_db(user_id=user_id, asession=asession)
+    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db_json]
+    tags_not_in_db_list = list(set(tags_in_db_list) - set(incoming_tags))
+
+    return tags_not_in_db_list
+
+
+def extract_all_tags(df: pd.DataFrame, tags_col: str) -> List[str]:
+    """
+    Get unique tags from a DataFrame column (comma-separated within column)
+    """
+
+    tags_series_str = df[tags_col].dropna().astype(str)
+    tags = tags_series_str.str.split(",").explode().str.strip().unique()
+    return tags.tolist()
 
 
 def _load_csv(file: UploadFile) -> pd.DataFrame:
