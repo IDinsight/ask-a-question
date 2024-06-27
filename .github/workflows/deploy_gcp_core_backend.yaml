@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - testing
-      - deploy-on-gcp-ga
     paths:
       - "core_backend/**"
       - "deployment/gcp/cloudbuild_core_backend.yaml"
@@ -40,7 +39,7 @@ jobs:
       - name: Build and push core_backend image
         working-directory: core_backend
         env:
-          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}
+          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
           # TODO: change deploy-on-gcp-ga to main
         run: |
           gcloud builds submit \
@@ -51,7 +50,7 @@ jobs:
       - name: Get docker repository prefix
         id: "docker_repository"
         run: |
-          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
         # TODO: change deploy-on-gcp-ga to main
 
       - name: Deploy core_backend container
