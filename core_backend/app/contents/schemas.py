@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, List
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, validator
-
-from ..llm_call.llm_prompts import IdentifiedLanguage
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 
 class ContentCreate(BaseModel):
@@ -14,22 +12,10 @@ class ContentCreate(BaseModel):
     # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
-    content_language: str = "ENGLISH"
     content_tags: list = []
     content_metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
-
-    @validator("content_language")
-    def validate_language(cls, v: str) -> str:
-        """
-        Validator for language
-        """
-
-        if v not in IdentifiedLanguage.get_supported_languages():
-            raise ValueError(f"Language {v} is not supported")
-
-        return v
 
 
 class ContentRetrieve(ContentCreate):
@@ -59,3 +45,20 @@ class ContentDelete(BaseModel):
     """
 
     content_id: int
+
+
+class CustomError(BaseModel):
+    """
+    Pydantic model for custom error
+    """
+
+    type: str
+    description: str
+
+
+class CustomErrorList(BaseModel):
+    """
+    Pydantic model for list of custom errors
+    """
+
+    errors: List[CustomError]

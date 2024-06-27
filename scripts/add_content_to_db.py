@@ -14,27 +14,20 @@ except ImportError:
 
 parser = argparse.ArgumentParser(
     description="Bulk add content to the database from a CSV file. "
-    "Expects the CSV file to have columns: title, body. (Optionally, language. "
-    "See also the --language option.)",
+    "Expects the CSV file to have columns: title, body.",
     usage="""
-    python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
+    python add_content_to_db.py [-h] --csv CSV --domain DOMAIN
 
     (example)
     python add_content_to_db.py \\
         --csv content.csv \\
-        --domain aaq.idinsight.com \\
-        --language ENGLISH
+        --domain aaq.idinsight.com
 """,
 )
 parser.add_argument(
     "--csv", help="Path to the CSV file with columns: title, body", required=True
 )
 parser.add_argument("--domain", help="Your AAQ domain", required=True)
-parser.add_argument(
-    "--language",
-    help="Language of the content, if it is the same for the whole file.",
-    required=False,
-)
 args = parser.parse_args()
 
 
@@ -72,14 +65,9 @@ if __name__ == "__main__":
     with open(args.csv, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if args.language:
-                language = args.language
-            else:
-                language = row["language"]
             payload = {
                 "content_title": row["title"],
                 "content_text": row["body"],
-                "content_language": language,
                 "content_metadata": {},
             }
             response = requests.post(api_endpoint, json=payload, headers=headers)

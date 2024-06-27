@@ -14,15 +14,24 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
+from ..config import CHECK_CONTENT_LIMIT
 from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment
 from ..tags.models import content_tags_table
+from ..users.models import get_content_quota_by_userid
 from ..utils import embedding
 from .config import PGVECTOR_VECTOR_SIZE
 from .schemas import (
     ContentCreate,
     ContentUpdate,
 )
+
+
+class ExceedsContentQuotaError(Exception):
+    """
+    Exception raised when a user is attempting to add
+    more content that their quota allows.
+    """
 
 
 class ContentDB(Base):
@@ -42,7 +51,6 @@ class ContentDB(Base):
     )
     content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
     content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-    content_language: Mapped[str] = mapped_column(String, nullable=False)
 
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
@@ -66,7 +74,6 @@ class ContentDB(Base):
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
-            f"content_language={self.content_language}, "
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
@@ -87,13 +94,32 @@ async def save_content_to_db(
         "generation_name": "save_content_to_db",
     }
 
+    if CHECK_CONTENT_LIMIT:
+        # get content_quota value for this user from UserDB
+        content_quota = await get_content_quota_by_userid(
+            user_id=user_id, asession=asession
+        )
+
+        # if content_quota is None, then there is no limit
+        if content_quota is None:
+            pass
+        else:
+            # get the number of contents this user has already added
+            stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+            user_contents = (await asession.execute(stmt)).all()
+            content_count = len(user_contents)
+            if content_count >= content_quota:
+                raise ExceedsContentQuotaError(
+                    f"There are already {content_count} contents for this "
+                    f"user and quota is {content_quota}."
+                )
+
     content_embedding = await _get_content_embeddings(content, metadata=metadata)
     content_db = ContentDB(
         user_id=user_id,
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
-        content_language=content.content_language,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
         created_datetime_utc=datetime.utcnow(),
@@ -134,7 +160,6 @@ async def update_content_in_db(
         content_embedding=content_embedding,
         content_title=content.content_title,
         content_text=content.content_text,
-        content_language=content.content_language,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
         created_datetime_utc=datetime.utcnow(),

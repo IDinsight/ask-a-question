@@ -8,12 +8,11 @@ tests: setup-test-containers run-tests teardown-test-containers
 # Test runner
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
-	python -m alembic upgrade head && \
 	python -m pytest -rPQ -m "not rails" tests
 
 ## Helper targets
 setup-test-containers: setup-test-db
-teardown-test-containers: stop-test-db
+teardown-test-containers: teardown-test-db
 
 setup-test-db:
 	-@docker stop testdb
@@ -30,7 +29,7 @@ setup-test-db:
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 
-stop-test-db:
+teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
 
@@ -43,6 +42,6 @@ setup-alignscore-container:
 		-d alignscore-base:latest
 	@sleep 10
 
-stop-alignscore-container:
+teardown-alignscore-container:
 	@docker stop testalignscore
 	@docker rm testalignscore

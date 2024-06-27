@@ -1,5 +1,4 @@
 "use client";
-import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
@@ -11,6 +10,8 @@ import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
+import { ChevronLeft } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
 import {
   Button,
   CircularProgress,
@@ -24,7 +25,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import Alert from "@mui/material/Alert";
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
+import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -37,7 +42,6 @@ export interface Content extends EditContentBody {
 interface EditContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
@@ -146,6 +150,7 @@ const ContentBox = ({
   setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [saveError, setSaveError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -186,37 +191,39 @@ const ContentBox = ({
 
     fetchTags();
   }, [refreshKey]);
-  const saveContent = async (content: Content) => {
+  const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
+
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
-      content_language: content.content_language,
       content_metadata: content.content_metadata,
       content_tags: content.content_tags,
     };
 
-    const promise =
-      content.content_id === null
-        ? apiCalls.createContent(body, token!)
-        : apiCalls.editContent(content.content_id, body, token!);
-
-    const result = promise
-      .then((data) => {
-        setIsSaved(true);
-        setSaveError(false);
-        return data.content_id;
-      })
-      .catch((error: Error) => {
-        console.error("Error processing content:", error);
+    try {
+      const result =
+        content.content_id === null
+          ? await apiCalls.createContent(body, token!)
+          : await apiCalls.editContent(content.content_id, body, token!);
+      setIsSaved(true);
+      setSaveError(false);
+      return result.content_id;
+    } catch (error: Error | any) {
+      if (error.status === 403) {
+        console.error("Content quota reached.");
+        setErrorMessage("Unable to save content: Content limit reached");
         setSaveError(true);
         return null;
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
-
-    return await result;
+      } else {
+        console.error("Failed to save content:", error);
+        setErrorMessage("Failed to save content: Unexpected error occurred");
+        setSaveError(true);
+        return null;
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
   function createEmptyContent(contentTags: Tag[]): Content {
     return {
@@ -228,7 +235,6 @@ const ContentBox = ({
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
-      content_language: "ENGLISH",
       content_metadata: {},
     };
   }
@@ -336,6 +342,7 @@ const ContentBox = ({
         id="tags-autocomplete"
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
+        noOptionsText="No tags found. Start typing to create one."
         value={contentTags}
         onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
           handleTagsChange(updatedTags);
@@ -348,7 +355,7 @@ const ContentBox = ({
             {...params}
             variant="outlined"
             label="Tags"
-            placeholder="Add Tags"
+            placeholder="Find or create tags"
             onChange={(event) => setInputVal(event.target.value)}
             onKeyDown={(event) => {
               if (
@@ -387,7 +394,7 @@ const ContentBox = ({
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
-            filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
+            filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
           }
 
           return filtered;
@@ -525,7 +532,7 @@ const ContentBox = ({
           </LoadingButton>
           {saveError ? (
             <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-              Failed to save content.
+              {errorMessage}
             </Alert>
           ) : null}
           <Snackbar

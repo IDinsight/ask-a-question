@@ -1,4 +1,4 @@
-# ![botpress logo](./botpress_logo.svg){ width="23" } Botpress v12
+# ![botpress logo](./botpress_logo.svg){ width="23" } Botpress v12 <br/> Setup Instructions
 
 Below is an example of how to get Botpress v12 (OSS) running and connected to AAQ endpoints using a provided demo flow.
 

@@ -4,7 +4,6 @@ const NEXT_PUBLIC_BACKEND_URL: string =
 interface ContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_metadata: Record<string, unknown>;
 }
 
@@ -110,21 +109,24 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(content),
+    });
+
+    if (!response.ok) {
+      throw response;
     }
-  });
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getUrgencyRuleList = async (token: string) => {
@@ -205,17 +207,18 @@ const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
   formData.append("password", password);
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/login`, {
+  const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/login`, {
     method: "POST",
     body: formData,
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error fetching login token");
-    }
   });
+
+  if (response.ok) {
+    let response_json = await response.json();
+    return response_json;
+  } else {
+    console.log("Error fetching login token", response);
+    throw response;
+  }
 };
 
 const getGoogleLoginToken = async (idToken: {

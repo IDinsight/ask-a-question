@@ -1,4 +1,3 @@
-import asyncio
 from typing import Callable
 
 from fastapi import APIRouter, Depends
@@ -111,31 +110,23 @@ async def llm_entailment_classifier(
     Classify the urgency of a text message using LLM entailment
     """
     rules = await get_urgency_rules_from_db(user_id=user_id, asession=asession)
-    tasks = []
     metadata = {
         "trace_user_id": "user_id-" + str(user_id),
     }
-    for rule in rules:
-        tasks.append(
-            detect_urgency(
-                urgency_rule=rule.urgency_rule_text,
-                message=urgency_query.message_text,
-                metadata=metadata,
-            )
-        )
+    urgency_rules = [rule.urgency_rule_text for rule in rules]
 
-    results = await asyncio.gather(*tasks)
-    results_dict = {str(i): result for i, result in enumerate(results)}
-    failed_rules = []
-    for result in results:
-        if float(result["probability"]) > float(URGENCY_DETECTION_MIN_PROBABILITY):
-            failed_rules.append(str(result["statement"]))
+    if len(urgency_rules) == 0:
+        return UrgencyResponse(is_urgent=False, failed_rules=[], details={})
 
-    if failed_rules:
-        return UrgencyResponse(
-            is_urgent=True, failed_rules=failed_rules, details=results_dict
-        )
-
-    return UrgencyResponse(
-        is_urgent=False, failed_rules=failed_rules, details=results_dict
+    result = await detect_urgency(
+        urgency_rules=urgency_rules,
+        message=urgency_query.message_text,
+        metadata=metadata,
     )
+
+    if result["probability"] > float(URGENCY_DETECTION_MIN_PROBABILITY):
+        return UrgencyResponse(
+            is_urgent=True, failed_rules=[result["best_matching_rule"]], details=result
+        )
+
+    return UrgencyResponse(is_urgent=False, failed_rules=[], details=result)

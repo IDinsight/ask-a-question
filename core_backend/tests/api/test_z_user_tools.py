@@ -10,7 +10,11 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"username": "test_username_5", "password": "password"},
+            json={
+                "username": "test_username_5",
+                "password": "password",
+                "content_quota": 50,
+            },
         )
 
         assert response.status_code == 200
@@ -23,7 +27,11 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            json={"username": "test_username_5", "password": "password"},
+            json={
+                "username": "test_username_5",
+                "password": "password",
+                "content_quota": 50,
+            },
         )
 
         assert response.status_code == 400
@@ -34,7 +42,11 @@ class TestUserCreation:
         response = client.post(
             "/user/",
             headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
-            json={"username": "test_username_6", "password": "password"},
+            json={
+                "username": "test_username_6",
+                "password": "password",
+                "content_quota": 50,
+            },
         )
 
         assert response.status_code == 403

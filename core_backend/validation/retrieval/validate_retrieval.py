@@ -5,10 +5,10 @@ from typing import Dict, List, Union
 
 import boto3
 import pandas as pd
-import pytest
 from dateutil import tz
 from fastapi.testclient import TestClient
 from litellm import embedding
+from sqlalchemy.orm import Session
 
 from core_backend.add_users_to_db import USER1_API_KEY  # temp
 from core_backend.app.config import (
@@ -36,7 +36,7 @@ class TestRetrievalPerformance:
         content_data_text_col: str,
         notification_topic: Union[str, None],
         aws_profile: Union[str, None],
-        db_session: pytest.FixtureRequest,
+        db_session: Session,
     ) -> None:
         """Test retrieval performance of the system"""
         content_df = self.prepare_content_data(
@@ -102,7 +102,7 @@ class TestRetrievalPerformance:
         return df
 
     def load_content_to_db(
-        self, content_dataframe: pd.DataFrame, db_session: pytest.FixtureRequest
+        self, content_dataframe: pd.DataFrame, db_session: Session
     ) -> None:
         """Load content to content table"""
         # TODO: Update to use a batch upsert API once created
@@ -123,7 +123,6 @@ class TestRetrievalPerformance:
                 content_embedding=content_embedding,
                 content_title=content_title,
                 content_text=content_text,
-                content_language="ENGLISH",
                 content_metadata={},
                 created_datetime_utc=datetime.utcnow(),
                 updated_datetime_utc=datetime.utcnow(),
