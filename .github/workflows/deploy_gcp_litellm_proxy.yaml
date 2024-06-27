@@ -43,7 +43,7 @@ jobs:
           RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'deploy-on-gcp-ga' && 'testing') || github.ref_name }}
           # TODO: change deploy-on-gcp-ga to main
         run: |
-          gcloud builds submit --config=../../cloudbuild_litellm_proxy.yaml \
+          gcloud builds submit --config=../../gcp/cloudbuild_litellm_proxy.yaml \
             --substitutions \
               _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
 
