@@ -8,7 +8,7 @@ You can use the AAQ endpoints through various chat managers. Below are some exam
 
 <div class="grid cards" markdown>
 
-- ![typebot logo](./chat_managers/typebot_logo.svg){ width="15" } __Typebot (Recommended)__
+- ![typebot logo](./chat_managers/typebot_logo.svg){ width="80" style="pointer-events: none;"}
 
     ---
 

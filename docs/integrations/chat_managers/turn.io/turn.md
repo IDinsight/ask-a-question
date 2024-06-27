@@ -1,4 +1,4 @@
-# ![turn logo](./turn_logo.png){ width="50" } Turn.io
+# ![turn logo](./turn_logo.png){ width="100" } <br/> Setup Instructions
 
 Below is an example of how to connect a [Turn.io Journey](https://whatsapp.turn.io/docs/build/journeys_overview) to AAQ endpoints.
 
@@ -13,7 +13,6 @@ Below is an example of how to connect a [Turn.io Journey](https://whatsapp.turn.
 2. Select "From Scratch" -> "Code".
 
     ![Select From Scratch and then Code](./tutorial/03_From_scratch_code.png){ width="250" }
-
 
 3. Type in your journey title and click "Next".
 

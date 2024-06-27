@@ -1,4 +1,4 @@
-# ![glific logo](./glific_logo.png){ width="40" } Glific
+# ![glific logo](./glific_logo.png){ width="90" } <br/> Setup Instructions
 
 Below is a tutorial for how to load our FAQ template flow into Glific and connect it to your own AAQ endpoint.
 
