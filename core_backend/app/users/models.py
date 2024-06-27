@@ -121,18 +121,18 @@ async def get_user_by_username(
         ) from err
 
 
-async def get_user_by_userid(
+async def get_content_quota_by_userid(
     user_id: int,
     asession: AsyncSession,
-) -> UserDB:
+) -> int:
     """
-    Retrieves a user by user_id
+    Retrieves a user's content quota by user_id
     """
     stmt = select(UserDB).where(UserDB.user_id == user_id)
     result = await asession.execute(stmt)
     try:
-        user = result.scalar_one()
-        return user
+        content_quota = result.scalar_one().content_quota
+        return content_quota
     except NoResultFound as err:
         raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
 
