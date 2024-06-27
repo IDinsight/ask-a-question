@@ -1,5 +1,6 @@
 import contextlib
 import os
+import urllib.parse
 from collections.abc import AsyncGenerator, Generator
 from typing import ContextManager
 
@@ -39,7 +40,8 @@ def build_connection_string(
     db: str = POSTGRES_DB,
 ) -> str:
     """Return a connection string for the given database."""
-    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
+    encoded_password = urllib.parse.quote_plus(password)
+    return f"postgresql+{db_api}://{user}:{encoded_password}@{host}:{port}/{db}"
 
 
 def get_sqlalchemy_engine() -> Engine:
