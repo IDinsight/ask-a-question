@@ -11,8 +11,8 @@ steps:
     secretEnv: ["OPENAI_API_KEY"]
 availableSecrets:
   secretManager:
-    - version_name: "projects/$PROJECT_ID/secrets/${ _RESOURCE_PREFIX}-openai-api-key/versions/latest"
+    - version_name: "projects/$PROJECT_ID/secrets/${_RESOURCE_PREFIX}-openai-api-key/versions/latest"
       env: OPENAI_API_KEY
 
 images:
-  - "${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${ _RESOURCE_PREFIX}/litellm_proxy:latest"
+  - "${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/litellm_proxy:latest"

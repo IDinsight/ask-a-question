@@ -12,10 +12,10 @@ steps:
     secretEnv: ["NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID", "DOMAIN"]
 availableSecrets:
   secretManager:
-    - version_name: projects/$PROJECT_ID/secrets/${ _RESOURCE_PREFIX}-google-login-client-id/versions/latest
+    - version_name: projects/$PROJECT_ID/secrets/${_RESOURCE_PREFIX}-google-login-client-id/versions/latest
       env: "NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID"
-    - version_name: projects/$PROJECT_ID/secrets/${ _RESOURCE_PREFIX}-domain/versions/latest
+    - version_name: projects/$PROJECT_ID/secrets/${_RESOURCE_PREFIX}-domain/versions/latest
       env: "DOMAIN"
 
 images:
-  - "${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${ _RESOURCE_PREFIX}/admin_app:latest"
+  - "${_DOCKER_REGISTRY_DOMAIN}/$PROJECT_ID/${_RESOURCE_PREFIX}/admin_app:latest"
