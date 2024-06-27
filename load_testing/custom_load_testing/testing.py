@@ -102,8 +102,12 @@ def run_tests(experiment_configs, output_folder):
             spawn_rate = spawn_rate_list[users_id]
 
             locustfile_path = "locustfiles/" + locustfile
-            test_name = f"{users}_user_{locustfile[:-3]}"  # [:-3] removes .py extension
-            test_html_filpath = f"{output_folder}/html_reports/{test_name}_report.html"
+            test_name = (
+                f"{users}_user_{locustfile[:-3]}"  # [:-3] removes .py extension
+            )
+            test_html_filpath = (
+                f"{output_folder}/html_reports/{test_name}_report.html"
+            )
             output_subfolder = f"{output_folder}/raw/{test_name}/"
             os.makedirs(output_subfolder, exist_ok=True)
 
@@ -161,5 +165,5 @@ def run_all_experiments(configs, args):
         experiment_output_folder = f"{args.output}/{experiment_name}"
         run_tests(
             experiment_configs=experiment_configs,
-            output_folder=experiment_output_folder
+            output_folder=experiment_output_folder,
         )
