@@ -44,6 +44,7 @@ async def create_user(
         )
         return UserCreate(
             username=user_db.username,
+            content_quota=user_db.content_quota,
         )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")
