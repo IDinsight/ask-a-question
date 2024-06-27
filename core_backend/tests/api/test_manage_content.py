@@ -63,7 +63,6 @@ def temp_user(client: TestClient, db_session: Session) -> Generator[str, None, N
     db_session.add(user3_db)
     db_session.commit()
     yield user3_db.user_id
-    print("########### Deleting temp user")
     db_session.delete(user3_db)
     db_session.commit()
 
@@ -98,7 +97,6 @@ class TestContentQuota:
             )
             assert response.status_code == 200
             added_content_ids.append(response.json()["content_id"])
-        print("##########", added_content_ids)
 
         response = client.post(
             "/content",
@@ -114,7 +112,6 @@ class TestContentQuota:
         assert response.status_code == 403
 
         for content_id in added_content_ids:
-            print("########## Deleting content", content_id)
             response = client.delete(
                 f"/content/{content_id}",
                 headers={"Authorization": f"Bearer {temp_user_token}"},
