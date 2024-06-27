@@ -15,9 +15,6 @@ from .conftest import async_fake_embedding
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
-TEMP_USER_CONTENT_QUOTA = 2
-TEMP_USERNAME = "temp_username"
-
 
 @pytest.fixture(
     scope="function",
@@ -51,39 +48,46 @@ def existing_content_id(
 
 
 @pytest.fixture(scope="class")
-def temp_user(client: TestClient, db_session: Session) -> Generator[str, None, None]:
-    user3_db = UserDB(
-        username=TEMP_USERNAME,
+def temp_user_token_and_quota(
+    request: pytest.FixtureRequest, client: TestClient, db_session: Session
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    content_quota = request.param["content_quota"]
+
+    temp_user_db = UserDB(
+        username=username,
         hashed_password=get_password_salted_hash("temp_password"),
         hashed_api_key=get_key_hash("temp_api_key"),
-        content_quota=TEMP_USER_CONTENT_QUOTA,
+        content_quota=content_quota,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
-    db_session.add(user3_db)
+    db_session.add(temp_user_db)
     db_session.commit()
-    yield user3_db.user_id
-    db_session.delete(user3_db)
+    yield (create_access_token(username), content_quota)
+    db_session.delete(temp_user_db)
     db_session.commit()
-
-
-@pytest.fixture(scope="class")
-def temp_user_token() -> str:
-    """
-    Returns a token for the temporary user
-    """
-    return create_access_token(TEMP_USERNAME)
 
 
 class TestContentQuota:
-    async def test_content_quota(
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_0", "content_quota": 0},
+            {"username": "temp_user_limit_1", "content_quota": 1},
+            {"username": "temp_user_limit_5", "content_quota": 5},
+        ],
+        indirect=True,
+    )
+    async def test_content_quota_integer(
         self,
         client: TestClient,
-        temp_user: str,
-        temp_user_token: str,
+        temp_user_token_and_quota: tuple[str, int],
     ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+
         added_content_ids = []
-        for i in range(TEMP_USER_CONTENT_QUOTA):
+        for i in range(content_quota):
             response = client.post(
                 "/content",
                 headers={"Authorization": f"Bearer {temp_user_token}"},
@@ -117,6 +121,39 @@ class TestContentQuota:
                 headers={"Authorization": f"Bearer {temp_user_token}"},
             )
             assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [{"username": "temp_user_unlimited", "content_quota": None}],
+        indirect=True,
+    )
+    async def test_content_quota_unlimited(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+
+        # in this case we need to just be able to add content
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            json={
+                "content_title": "test title",
+                "content_text": "test content",
+                "content_language": "ENGLISH",
+                "content_tags": [],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 200
+
+        content_id = response.json()["content_id"]
+        response = client.delete(
+            f"/content/{content_id}",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+        )
+        assert response.status_code == 200
 
 
 class TestManageContent:
