@@ -5,7 +5,11 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ..question_answer.models import ContentFeedbackDB, QueryDB, ResponseFeedbackDB
+from ..question_answer.models import (
+    ContentFeedbackDB,
+    QueryDB,
+    ResponseFeedbackDB,
+)
 from ..urgency_detection.models import UrgencyResponseDB
 from .schemas import (
     ContentFeedbackStats,
@@ -32,6 +36,7 @@ async def get_stats_cards(
     )
     urgency_stats = await get_urgency_stats(user_id, asession, start_date, end_date)
 
+    print("query_stats", query_stats)
     return StatsCards(
         query_stats=query_stats,
         response_feedback_stats=response_feedback_stats,
@@ -86,8 +91,9 @@ async def get_response_feedback_stats(
         select(
             func.count(ResponseFeedbackDB.feedback_id),
         )
+        .join(ResponseFeedbackDB.query)
         .where(
-            ResponseFeedbackDB.query.user_id == user_id,
+            ResponseFeedbackDB.query.has(user_id=user_id),
             ResponseFeedbackDB.feedback_datetime_utc <= end_date,
             ResponseFeedbackDB.feedback_datetime_utc > start_date,
         )
@@ -99,8 +105,9 @@ async def get_response_feedback_stats(
 
     statement_previous = (
         select(func.count(ResponseFeedbackDB.feedback_id))
+        .join(ResponseFeedbackDB.query)
         .where(
-            ResponseFeedbackDB.query.user_id == user_id,
+            ResponseFeedbackDB.query.has(user_id=user_id),
             ResponseFeedbackDB.feedback_datetime_utc <= start_date,
             ResponseFeedbackDB.feedback_datetime_utc
             > start_date - (end_date - start_date),
@@ -128,8 +135,9 @@ async def get_content_feedback_stats(
         select(
             func.count(ContentFeedbackDB.feedback_id),
         )
+        .join(ContentFeedbackDB.content)
         .where(
-            ContentFeedbackDB.content.user_id == user_id,
+            ContentFeedbackDB.content.has(user_id=user_id),
             ContentFeedbackDB.feedback_datetime_utc <= end_date,
             ContentFeedbackDB.feedback_datetime_utc > start_date,
         )
@@ -141,8 +149,9 @@ async def get_content_feedback_stats(
 
     statement_previous = (
         select(func.count(ContentFeedbackDB.feedback_id))
+        .join(ContentFeedbackDB.content)
         .where(
-            ContentFeedbackDB.content.user_id == user_id,
+            ContentFeedbackDB.content.has(user_id=user_id),
             ContentFeedbackDB.feedback_datetime_utc <= start_date,
             ContentFeedbackDB.feedback_datetime_utc
             > start_date - (end_date - start_date),
@@ -200,24 +209,29 @@ async def get_urgency_stats(
     Retrieve statistics for urgency
     """
 
-    statement_curr = select(
-        func.count(UrgencyResponseDB.urgency_response_id),
-    ).where(
-        UrgencyResponseDB.query.user_id == user_id,
-        UrgencyResponseDB.response_datetime_utc <= end_date,
-        UrgencyResponseDB.response_datetime_utc > start_date,
-        UrgencyResponseDB.is_urgent == True,  # noqa
+    statement_curr = (
+        select(func.count(UrgencyResponseDB.urgency_response_id))
+        .join(UrgencyResponseDB.query)
+        .where(
+            UrgencyResponseDB.query.has(user_id=user_id),
+            UrgencyResponseDB.response_datetime_utc <= end_date,
+            UrgencyResponseDB.response_datetime_utc > start_date,
+            UrgencyResponseDB.is_urgent == True,  # noqa
+        )
     )
 
     n_urgency_curr_period = (await asession.execute(statement_curr)).scalar() or 0
 
-    statement_previous = select(
-        func.count(UrgencyResponseDB.urgency_response_id)
-    ).where(
-        UrgencyResponseDB.query.user_id == user_id,
-        UrgencyResponseDB.response_datetime_utc <= start_date,
-        UrgencyResponseDB.response_datetime_utc > start_date - (end_date - start_date),
-        UrgencyResponseDB.is_urgent == True,  # noqa
+    statement_previous = (
+        select(func.count(UrgencyResponseDB.urgency_response_id))
+        .join(UrgencyResponseDB.query)
+        .where(
+            UrgencyResponseDB.query.has(user_id=user_id),
+            UrgencyResponseDB.response_datetime_utc <= start_date,
+            UrgencyResponseDB.response_datetime_utc
+            > start_date - (end_date - start_date),
+            UrgencyResponseDB.is_urgent == True,  # noqa
+        )
     )
 
     n_urgency_prev_period = (await asession.execute(statement_previous)).scalar() or 0
