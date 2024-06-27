@@ -73,6 +73,9 @@ jobs:
                 --log-driver=gcplogs \
                 --restart unless-stopped \
                 --network aaq-network \
-                --name caddy \
+                --name caddy_tmp \
                 ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+            docker stop caddy
+            docker rm caady
+            docker rename caddy_tmp caddy
             docker system prune --volumes -f

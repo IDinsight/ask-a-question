@@ -70,6 +70,9 @@ jobs:
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \
-              --name core_backend \
+              --name core_backend_tmp \
               ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
+            docker stop core_backend
+            docker rm core_backend
+            docker rename core_backend_tmp core_backend
             docker system prune --volumes -f
