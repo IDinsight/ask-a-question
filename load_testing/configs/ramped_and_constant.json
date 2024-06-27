@@ -1,0 +1,29 @@
+{
+    "staging_constant_multi": {
+        "locustfile_list": [
+            "stock_msg.py"
+        ],
+        "users_list": [
+            1,
+            10
+        ],
+        "run_time_list": [
+            "30s",
+            "30s"
+        ]
+    },
+    "staging_ramped": {
+        "locustfile_list": [
+            "stock_msg.py"
+        ],
+        "users_list": [
+            100
+        ],
+        "spawn_rate_list": [
+            2
+        ],
+        "run_time_list": [
+            "1m"
+        ]
+    }
+}

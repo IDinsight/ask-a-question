@@ -1,0 +1,13 @@
+{
+    "staging_single_user": {
+        "locustfile_list": [
+            "stock_msg.py"
+        ],
+        "users_list": [
+            1
+        ],
+        "run_time_list": [
+            "30s"
+        ]
+    }
+}
