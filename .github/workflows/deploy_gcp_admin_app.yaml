@@ -68,6 +68,8 @@ jobs:
               ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
             docker run -d \
               --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
               --name admin_app \
               ${{ steps.docker_repository.outputs.docker_repository }}/admin_app:latest
             docker system prune --volumes -f

@@ -67,6 +67,8 @@ jobs:
               ${{ steps.docker_repository.outputs.docker_repository }}/litellm_proxy:latest
             docker run -d \
               --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
               --name litellm_proxy \
               ${{ steps.docker_repository.outputs.docker_repository }}/litellm_proxy:latest
             docker system prune --volumes -f

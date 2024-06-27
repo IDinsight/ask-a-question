@@ -68,6 +68,8 @@ jobs:
               ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
             docker run -d \
               --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
               --name core_backend \
               ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
             docker system prune --volumes -f

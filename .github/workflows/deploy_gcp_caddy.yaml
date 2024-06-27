@@ -71,6 +71,8 @@ jobs:
                 -p 443:443 \
                 -p 443:443/udp \
                 --log-driver=gcplogs \
+                --restart unless-stopped \
+                --network aaq-network \
                 --name caddy \
                 ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
             docker system prune --volumes -f
