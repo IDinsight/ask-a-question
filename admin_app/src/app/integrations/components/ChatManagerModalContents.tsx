@@ -28,44 +28,35 @@ const ChatManagerContentExample: React.FC = () => {
 };
 
 const TypebotModalContent: React.FC = () => {
-  // const videoId = 'typebot-video-id';
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.baseGap}>
       <Typography variant="body1">
         In Typebot, you can use the "HTTPS request" card to call AAQ and receive
         its response.
       </Typography>
-      <Typography variant="body2" mb={sizes.baseGap}>
-        To get a head start, you can download either of our templates below and
-        load them into Typebot by going to "Create a typebot &gt; Import a file"
-        and loading the downloaded template.
+      <Typography variant="body1" mb={sizes.baseGap}>
+        To get a head start, you can download our template below and load it
+        into Typebot by going to "Create a typebot &gt; Import a file".
       </Typography>
 
       <Box display="flex" justifyContent="center">
-        <Button variant="outlined" color="primary" startIcon={<DownloadIcon />}>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<DownloadIcon />}
+          href="https://github.com/IDinsight/aaq-core/blob/e75c7fec20373a8db5f5c8771b069aa7fac576a8/chat_managers/typebot/llm_response_flow.json"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           AI RESPONSE WITH FEEDBACK
         </Button>
       </Box>
-      <Box display="flex" justifyContent="center">
-        <Button variant="outlined" color="primary" startIcon={<DownloadIcon />}>
-          FAQ RESPONSE WITH FEEDBACK
-        </Button>
-      </Box>
 
-      <Typography variant="body2" mt={sizes.doubleBaseGap}>
+      <Typography variant="body1" mt={sizes.doubleBaseGap}>
         Once loaded, you need to update the{" "}
         <code style={{ color: "tomato" }}>API_KEY</code> field inside the "HTTP
         request" card with your own API key before trying the flow.
       </Typography>
-
-      {/* <Typography variant="body2">
-        The video below walks you through how to set up Typebot with AAQ:
-      </Typography>
-      <Card variant="outlined" sx={{ mt: 2 }}>
-        <CardContent>
-          <YouTube videoId={videoId} />
-        </CardContent>
-      </Card> */}
     </Layout.FlexBox>
   );
 };
