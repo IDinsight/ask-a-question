@@ -1,7 +1,8 @@
-import os
 import json
+import os
 
 from locust import HttpUser, task
+
 
 class APIUser(HttpUser):
     @task
