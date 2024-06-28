@@ -24,7 +24,7 @@ async def retrieve_overview_day(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.now().date()
+    today = datetime.utcnow()
     day_ago = today - timedelta(days=1)
 
     stats = await retrieve_overview(
@@ -42,7 +42,7 @@ async def retrieve_overview_week(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.now().date()
+    today = datetime.utcnow()
     week_ago = today - timedelta(days=7)
 
     stats = await retrieve_overview(
@@ -60,7 +60,7 @@ async def retrieve_overview_month(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.now().date()
+    today = datetime.utcnow()
     month_ago = today + relativedelta(months=-1)
 
     stats = await retrieve_overview(
@@ -78,7 +78,7 @@ async def retrieve_overview_year(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.now().date()
+    today = datetime.utcnow()
     year_ago = today + relativedelta(years=-1)
 
     stats = await retrieve_overview(
