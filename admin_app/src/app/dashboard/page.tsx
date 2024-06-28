@@ -4,22 +4,24 @@ import React from "react";
 import { Box, Container, Grid, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
+import { Period } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
 import { Global, css } from "@emotion/react";
+import { useEffect } from "react";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
-  const [tabValue, setTabValue] = useState(1);
+  const [timePeriod, setTimePeriod] = useState<Period>("week" as Period);
 
-  const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
-    setTabValue(newValue);
+  const handleTabChange = (event: React.ChangeEvent<{}>, newValue: Period) => {
+    setTimePeriod(newValue);
   };
 
   const showPage = () => {
     switch (dashboardPage) {
       case "Overview":
-        return <Overview />;
+        return <Overview timePeriod={timePeriod} />;
       case "Performance":
         return <div>Users</div>;
       case "Insights":
@@ -68,7 +70,7 @@ const Dashboard: React.FC = () => {
             >
               <Typography variant="h4">{dashboardPage}</Typography>
             </Box>
-            <TabPanel tabValue={tabValue} handleChange={handleTabChange} />
+            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
             <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
           </Box>
         </Box>

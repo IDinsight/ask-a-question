@@ -6,46 +6,90 @@ import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import { Period } from "../types";
+import { useAuth } from "@/utils/auth";
+import { getStatsCardData } from "@/app/dashboard/api";
+import { useEffect } from "react";
 
-const statCardData: StatCardProps[] = [
-  {
-    title: "Total Queries",
-    value: 303031,
-    percentageChange: 0.22,
-    Icon: ForumIcon,
-    period: "week",
-  },
-  {
-    title: "Total Escalated Queries",
-    value: 32332,
-    percentageChange: -0.055,
-    Icon: SupportAgentIcon,
-    period: "week",
-  },
-  {
-    title: "Total Urgent Queries",
-    value: 125556,
-    percentageChange: 0.292,
-    Icon: NewReleasesOutlinedIcon,
-    period: "week",
-  },
-  {
-    title: "Total Upvotes",
-    value: 1291,
-    percentageChange: 0.022,
-    Icon: ThumbUpIcon,
-    period: "week",
-  },
-  {
-    title: "Total Downvotes",
-    value: 985,
-    percentageChange: -0.108,
-    Icon: ThumbDownIcon,
-    period: "week",
-  },
-];
+interface OverviewProps {
+  timePeriod: Period;
+}
 
-const Overview: React.FC = () => {
+const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
+  const { token } = useAuth();
+  const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
+  useEffect(() => {
+    getStatsCardData(timePeriod, token!).then((data) => {
+      const {
+        content_feedback_stats,
+        query_stats,
+        response_feedback_stats,
+        urgency_stats,
+      } = data.stats_cards;
+
+      console.log(data.stats_cards);
+
+      parseCardData(data, timePeriod);
+      // Total Queries
+    });
+  }, [timePeriod, token]);
+
+  const parseCardData = (data: Record<string, any>, timePeriod: Period) => {
+    const {
+      content_feedback_stats,
+      query_stats,
+      response_feedback_stats,
+      urgency_stats,
+    } = data.stats_cards;
+
+    const statCardData: StatCardProps[] = [];
+    statCardData.push({
+      title: "Total Queries",
+      value: query_stats.n_questions,
+      percentageChange: query_stats.percentage_increase,
+      Icon: ForumIcon,
+      period: timePeriod,
+    });
+
+    // Total Escalated Queries
+    statCardData.push({
+      title: "Total Escalated Queries",
+      value: response_feedback_stats.n_negative,
+      percentageChange: response_feedback_stats.percentage_negative_increase,
+      Icon: SupportAgentIcon,
+      period: timePeriod,
+    });
+
+    // Total Urgent Queries
+    statCardData.push({
+      title: "Total Urgent Queries",
+      value: urgency_stats.n_urgent,
+      percentageChange: urgency_stats.percentage_increase,
+      Icon: NewReleasesOutlinedIcon,
+      period: timePeriod,
+    });
+
+    // Total Upvotes
+    statCardData.push({
+      title: "Total Upvotes",
+      value: content_feedback_stats.n_positive,
+      percentageChange: content_feedback_stats.percentage_positive_increase,
+      Icon: ThumbUpIcon,
+      period: timePeriod,
+    });
+
+    // Total Downvotes
+    statCardData.push({
+      title: "Total Downvotes",
+      value: content_feedback_stats.n_negative,
+      percentageChange: content_feedback_stats.percentage_negative_increase,
+      Icon: ThumbDownIcon,
+      period: timePeriod,
+    });
+
+    setStatCardData(statCardData);
+  };
+
   return (
     <>
       <Box
