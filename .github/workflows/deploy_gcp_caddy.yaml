@@ -20,6 +20,10 @@ jobs:
       id-token: "write"
 
     environment: gcp-testing
+    # TODO: update Github env and change to github.ref_name
+
+    env:
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -34,27 +38,20 @@ jobs:
 
       - name: Configure Docker to use gcloud as a credential helper
         run: |
-          gcloud auth configure-docker asia-south2-docker.pkg.dev
+          gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
       - name: Build and push caddy image
         working-directory: deployment/docker-compose/caddy
-        env:
-          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
-          # TODO: change deploy-on-gcp-ga to main
         run: |
           gcloud builds submit --config=../../gcp/cloudbuild_caddy.yaml \
             --substitutions \
               _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
 
-      - name: Get docker repository prefix
-        id: "docker_repository"
-        run: |
-          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
-        # TODO: change deploy-on-gcp-ga to main
-
       - name: Deploy Caddy container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
+        env:
+          REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}
         with:
           instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
@@ -62,7 +59,7 @@ jobs:
           command: |
             docker-credential-gcr configure-docker \
                 --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
-            docker pull ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+            docker pull ${{ env.REPO }}/caddy:latest
             docker stop caddy
             docker rm caady
             docker run -d \
@@ -75,5 +72,24 @@ jobs:
                 --restart always \
                 --network aaq-network \
                 --name caddy \
-                ${{ steps.docker_repository.outputs.docker_repository }}/caddy:latest
+                ${{ env.REPO }}/caddy:latest
             docker system prune --volumes -f
+
+      - name: Wait for Application to start
+        id: wait-for-app
+        run: sleep 1m
+        shell: bash
+
+      - name: Retrieve domain from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          curl -X 'GET' \
+            'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
+            -H 'accept: application/json'

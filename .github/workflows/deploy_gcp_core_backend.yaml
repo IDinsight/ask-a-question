@@ -20,6 +20,10 @@ jobs:
       id-token: "write"
 
     environment: gcp-testing
+    # TODO: update Github env and change to github.ref_name
+
+    env:
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -34,28 +38,21 @@ jobs:
 
       - name: Configure Docker to use gcloud as a credential helper
         run: |
-          gcloud auth configure-docker asia-south2-docker.pkg.dev
+          gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
       - name: Build and push core_backend image
         working-directory: core_backend
-        env:
-          RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
-          # TODO: change deploy-on-gcp-ga to main
         run: |
           gcloud builds submit \
               --config=../deployment/gcp/cloudbuild_core_backend.yaml \
               --substitutions \
               _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
 
-      - name: Get docker repository prefix
-        id: "docker_repository"
-        run: |
-          echo "docker_repository=${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}" >> $GITHUB_OUTPUT
-        # TODO: change deploy-on-gcp-ga to main
-
       - name: Deploy core_backend container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
+        env:
+          REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}
         with:
           instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
@@ -64,7 +61,7 @@ jobs:
             docker-credential-gcr configure-docker \
               --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull \
-              ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
+              ${{ env.REPO }}/core_backend:latest
             docker stop core_backend
             docker rm core_backend
             docker run -d \
@@ -72,5 +69,5 @@ jobs:
               --restart always \
               --network aaq-network \
               --name core_backend \
-              ${{ steps.docker_repository.outputs.docker_repository }}/core_backend:latest
-            docker system prune --volumes -f
+              ${{ env.REPO }}/core_backend:latest
+            docker system prune -f
