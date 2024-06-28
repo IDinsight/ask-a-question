@@ -22,7 +22,7 @@ class TestUrgencyDetectionToken:
             (TEST_USER_API_KEY, 200),
         ],
     )
-    async def test_ud_response(
+    def test_ud_response(
         self,
         token: str,
         expected_status_code: int,
@@ -61,7 +61,7 @@ class TestUrgencyDetectionToken:
             (TEST_USER_API_KEY_2, False),
         ],
     )
-    async def test_user2_access_user1_rules(
+    def test_user2_access_user1_rules(
         self,
         client: TestClient,
         token: str,

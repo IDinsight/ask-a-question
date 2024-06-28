@@ -26,15 +26,6 @@ from core_backend.app.question_answer.schemas import (
     ResponseFeedbackBase,
 )
 from core_backend.app.schemas import FeedbackSentiment
-
-# Question Answer Scenarios to test
-# 1. Test with no data
-# 2. Test with data but no feedback
-# 3. Test with data and feedback
-# Urgency Detection Scenarios to test
-# 1. Test with no ud data
-# 2. Test with ud data but not urgent
-# 3. Test with ud data and some urgent
 from core_backend.app.urgency_detection.models import (
     UrgencyQueryDB,
     UrgencyResponseDB,
