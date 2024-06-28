@@ -113,8 +113,11 @@ const ImportModal = ({
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
           You can use this feature to import new contents from a CSV file into
-          AAQ. The CSV file must include "content_title" and "content_text" as
-          columns.
+          AAQ.
+          <br />
+          <br />
+          The CSV file must include "title" and "text" as columns. If you have
+          tags, they must be in a column named "tags" and separated by commas.
           <br />
           <br />
           ⚠️ Be careful not to upload duplicates of what's already in the

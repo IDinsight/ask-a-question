@@ -212,10 +212,10 @@ async def bulk_upload_contents(
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
     # Create each new tag in the database
-    tags_col = "content_tag_names"
-    if "content_tag_names" not in df.columns:
+    tags_col = "tags"
+    if "tags" not in df.columns:
         skip_tags = True
-    elif df["content_tag_names"].isnull().all():
+    elif df["tags"].isnull().all():
         skip_tags = True
     else:
         skip_tags = False
@@ -265,8 +265,8 @@ async def bulk_upload_contents(
                 )
 
         content = ContentCreate(
-            content_title=row["content_title"],
-            content_text=row["content_text"],
+            content_title=row["title"],
+            content_text=row["text"],
             content_tags=content_tags,
             content_metadata={},
         )
@@ -364,16 +364,14 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
     Perform checks on the CSV file to ensure it meets the requirements
     """
 
-    # check if content_title and content_text columns are present
+    # check if title and text columns are present
     cols = df.columns
     error_list = []
-    if "content_title" not in cols or "content_text" not in cols:
+    if "title" not in cols or "text" not in cols:
         error_list.append(
             CustomError(
                 type="missing_columns",
-                description=(
-                    "File must have 'content_title' and 'content_text' columns."
-                ),
+                description=("File must have 'title' and 'text' columns."),
             )
         )
         # if either of these columns are missing, skip further checks
@@ -381,14 +379,14 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         raise HTTPException(status_code=400, detail=error_list_model.dict())
     else:
         # strip columns to catch duplicates better and empty cells
-        df["content_title"] = df["content_title"].str.strip()
-        df["content_text"] = df["content_text"].str.strip()
+        df["title"] = df["title"].str.strip()
+        df["text"] = df["text"].str.strip()
 
         # set any empty strings to None
         df = df.replace("", None)
 
         # check if there are any empty values in either column
-        if df["content_title"].isnull().any():
+        if df["title"].isnull().any():
             error_list.append(
                 CustomError(
                     type="empty_title",
@@ -397,7 +395,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
                     ),
                 )
             )
-        if df["content_text"].isnull().any():
+        if df["text"].isnull().any():
             error_list.append(
                 CustomError(
                     type="empty_text",
@@ -407,7 +405,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
                 )
             )
         # check if any title exceeds 150 characters
-        if df["content_title"].str.len().max() > 150:
+        if df["title"].str.len().max() > 150:
             error_list.append(
                 CustomError(
                     type="title_too_long",
@@ -415,7 +413,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
                 )
             )
         # check if any text exceeds 2000 characters
-        if df["content_text"].str.len().max() > 2000:
+        if df["text"].str.len().max() > 2000:
             error_list.append(
                 CustomError(
                     type="texts_too_long",
@@ -424,14 +422,14 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
             )
 
         # check if there are duplicates in either column
-        if df.duplicated(subset=["content_title"]).any():
+        if df.duplicated(subset=["title"]).any():
             error_list.append(
                 CustomError(
                     type="duplicate_titles",
                     description="Duplicate content titles found in the CSV file.",
                 )
             )
-        if df.duplicated(subset=["content_text"]).any():
+        if df.duplicated(subset=["text"]).any():
             error_list.append(
                 CustomError(
                     type="duplicate_texts",
@@ -445,7 +443,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         )
         content_titles_in_db = [c.content_title.strip() for c in contents_in_db]
         content_texts_in_db = [c.content_text.strip() for c in contents_in_db]
-        if df["content_title"].isin(content_titles_in_db).any():
+        if df["title"].isin(content_titles_in_db).any():
             error_list.append(
                 CustomError(
                     type="title_in_db",
@@ -454,7 +452,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
                     ),
                 )
             )
-        if df["content_text"].isin(content_texts_in_db).any():
+        if df["text"].isin(content_texts_in_db).any():
             error_list.append(
                 CustomError(
                     type="text_in_db",

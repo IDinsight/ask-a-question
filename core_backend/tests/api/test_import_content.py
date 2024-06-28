@@ -23,8 +23,8 @@ class TestImportContent:
     @pytest.fixture
     def data_valid(self) -> BytesIO:
         data = {
-            "content_title": ["csv title 1", "csv title 2"],
-            "content_text": ["csv text 1", "csv text 2"],
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["csv text 1", "csv text 2"],
         }
         return _dict_to_csv_bytes(data)
 
@@ -36,24 +36,24 @@ class TestImportContent:
     @pytest.fixture
     def data_no_rows(self) -> BytesIO:
         data: dict = {
-            "content_title": [],
-            "content_text": [],
+            "title": [],
+            "text": [],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_title_spaces_only(self) -> BytesIO:
         data: dict = {
-            "content_title": ["  "],
-            "content_text": ["csv text 1"],
+            "title": ["  "],
+            "text": ["csv text 1"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_text_spaces_only(self) -> BytesIO:
         data: dict = {
-            "content_title": ["csv title 1"],
-            "content_text": ["  "],
+            "title": ["csv title 1"],
+            "text": ["  "],
         }
         return _dict_to_csv_bytes(data)
 
@@ -68,48 +68,48 @@ class TestImportContent:
     @pytest.fixture
     def data_title_missing(self) -> BytesIO:
         data = {
-            "content_title": ["", "csv text 1"],
-            "content_text": ["csv title 2", "csv text 2"],
+            "title": ["", "csv text 1"],
+            "text": ["csv title 2", "csv text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_text_missing(self) -> BytesIO:
         data = {
-            "content_title": ["csv title 1", "csv title 2"],
-            "content_text": ["", "csv text 2"],
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["", "csv text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_long_title(self) -> BytesIO:
         data = {
-            "content_title": ["a" * 151],
-            "content_text": ["Valid text"],
+            "title": ["a" * 151],
+            "text": ["Valid text"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_long_text(self) -> BytesIO:
         data = {
-            "content_title": ["Valid title"],
-            "content_text": ["a" * 2001],
+            "title": ["Valid title"],
+            "text": ["a" * 2001],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_duplicate_titles(self) -> BytesIO:
         data = {
-            "content_title": ["Duplicate title", "Duplicate title"],
-            "content_text": ["Text 1", "Text 2"],
+            "title": ["Duplicate title", "Duplicate title"],
+            "text": ["Text 1", "Text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_duplicate_texts(self) -> BytesIO:
         data = {
-            "content_title": ["Title 1", "Title 2"],
-            "content_text": ["Duplicate text", "Duplicate text"],
+            "title": ["Title 1", "Title 2"],
+            "text": ["Duplicate text", "Duplicate text"],
         }
         return _dict_to_csv_bytes(data)
 
@@ -199,8 +199,8 @@ class TestDBDuplicates:
     def data_title_in_db(self) -> BytesIO:
         # Assuming "Title in DB" is a title that exists in the database
         data = {
-            "content_title": ["Title in DB"],
-            "content_text": ["New text"],
+            "title": ["Title in DB"],
+            "text": ["New text"],
         }
         return _dict_to_csv_bytes(data)
 
@@ -208,8 +208,8 @@ class TestDBDuplicates:
     def data_text_in_db(self) -> BytesIO:
         # Assuming "Text in DB" is a text that exists in the database
         data = {
-            "content_title": ["New title"],
-            "content_text": ["Text in DB"],
+            "title": ["New title"],
+            "text": ["Text in DB"],
         }
         return _dict_to_csv_bytes(data)
 
