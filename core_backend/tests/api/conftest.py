@@ -2,10 +2,10 @@ import json
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
-import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ from core_backend.app.llm_call.llm_prompts import (
     AlignmentScore,
     IdentifiedLanguage,
 )
+from core_backend.app.question_answer.models import ContentFeedbackDB
 from core_backend.app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
@@ -108,8 +109,8 @@ def user(db_session: Session) -> Generator[int, None, None]:
     # db_session.commit()
 
 
-@pytest.fixture(scope="session")
-async def faq_contents(db_session: Session) -> AsyncGenerator[None, None]:
+@pytest.fixture(scope="function")
+async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None]:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -133,14 +134,20 @@ async def faq_contents(db_session: Session) -> AsyncGenerator[None, None]:
         )
         contents.append(content_db)
 
-    db_session.add_all(contents)
-    db_session.commit()
+    asession.add_all(contents)
+    await asession.commit()
+    # db_session.add_all(contents)
+    # db_session.commit()
 
-    yield
+    yield [content.content_id for content in contents]
 
     for content in contents:
-        db_session.delete(content)
-    db_session.commit()
+        deleteFeedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        await asession.execute(deleteFeedback)
+        await asession.delete(content)
+    await asession.commit()
 
 
 @pytest.fixture(
@@ -336,22 +343,3 @@ def fullaccess_token_user2() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME_2)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
-    """
-    Monkeypatch call to httpx service
-    """
-
-    class MockClient:
-        async def __aenter__(self) -> "MockClient":
-            return self
-
-        async def __aexit__(self, exc_type: str, exc: str, tb: str) -> None:
-            pass
-
-        async def post(self, *args: str, **kwargs: str) -> httpx.Response:
-            return httpx.Response(200, json={"status": "success"})
-
-    monkeysession.setattr(httpx, "AsyncClient", MockClient)
