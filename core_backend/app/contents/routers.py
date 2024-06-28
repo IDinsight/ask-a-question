@@ -1,15 +1,16 @@
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, Depends, UploadFile
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
-from ..tags.models import get_list_of_tag_from_db, save_tag_to_db, validate_tags
-from ..tags.schemas import TagCreate
+from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
+from ..tags.schemas import TagCreate, TagRetrieve
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
@@ -32,12 +33,21 @@ router = APIRouter(prefix="/content", tags=["Content Management"])
 logger = setup_logger()
 
 
+class BulkUploadResponse(BaseModel):
+    """
+    Pydantic model for the csv-upload response
+    """
+
+    tags: List[TagRetrieve]
+    contents: List[ContentRetrieve]
+
+
 @router.post("/", response_model=ContentRetrieve)
 async def create_content(
     content: ContentCreate,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> ContentRetrieve | None:
+) -> Optional[ContentRetrieve]:
     """
     Create content endpoint. Calls embedding model to get content embedding and
     inserts it to PG database
@@ -173,20 +183,18 @@ async def retrieve_content_by_id(
     return _convert_record_to_schema(record)
 
 
-@router.post("/csv-upload", response_model=List[ContentRetrieve])
+@router.post("/csv-upload", response_model=BulkUploadResponse)
 async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[ContentRetrieve] | None:
+) -> Optional[BulkUploadResponse]:
     """
     Upload, check, and ingest contents in bulk from a CSV file.
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
     with the list of issues under detail in the response body.
     """
-
-    # TODO: deal with tags!
 
     # Ensure the file is a CSV
     if file.filename is None or not file.filename.endswith(".csv"):
@@ -203,23 +211,29 @@ async def bulk_upload_contents(
     df = _load_csv(file)
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
-    tags_to_create = await get_tags_not_in_db(
-        df,
-        tags_col="content_tag_names",
-        user_id=user_db.user_id,
-        asession=asession,
-    )
-
-    for tag in tags_to_create:
-        tag = TagCreate(tag_name=tag)
-        await save_tag_to_db(
+    # Create each new tag in the database
+    if "content_tag_names" not in df.columns:
+        created_tags: List[TagRetrieve] = []
+    else:
+        tags_to_create = await get_tags_not_in_db(
+            df,
+            tags_col="content_tag_names",
             user_id=user_db.user_id,
-            tag=tag,
             asession=asession,
         )
+        created_tags = []
+        for tag in tags_to_create:
+            tag_create = TagCreate(tag_name=tag)
+            tag_db = await save_tag_to_db(
+                user_id=user_db.user_id,
+                tag=tag_create,
+                asession=asession,
+            )
+            tag_retrieve = _convert_tag_record_to_schema(tag_db)
+            created_tags.append(tag_retrieve)
 
     # Add each row to the content database
-    content_list = []
+    created_contents = []
     for _, row in df.iterrows():
         content = ContentCreate(
             content_title=row["content_title"],
@@ -231,9 +245,9 @@ async def bulk_upload_contents(
             user_id=user_db.user_id, content=content, asession=asession
         )
         content_retrieve = _convert_record_to_schema(content_db)
-        content_list.append(content_retrieve)
+        created_contents.append(content_retrieve)
 
-    return content_list
+    return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
 async def get_tags_not_in_db(
@@ -442,3 +456,19 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     )
 
     return content_retrieve
+
+
+def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
+    """
+    Convert models.TagDB models to TagRetrieve schema
+    """
+
+    tag_retrieve = TagRetrieve(
+        tag_id=record.tag_id,
+        user_id=record.user_id,
+        tag_name=record.tag_name,
+        created_datetime_utc=record.created_datetime_utc,
+        updated_datetime_utc=record.updated_datetime_utc,
+    )
+
+    return tag_retrieve

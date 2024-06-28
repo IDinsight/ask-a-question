@@ -141,7 +141,8 @@ class TestImportContent:
         assert response.status_code == 200
 
         json_response = response.json()
-        for content in json_response:
+        contents_list = json_response["contents"]
+        for content in contents_list:
             content_id = content["content_id"]
             response = client.delete(
                 f"/content/{content_id}",
