@@ -212,16 +212,26 @@ async def bulk_upload_contents(
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
     # Create each new tag in the database
+    tags_col = "content_tag_names"
     if "content_tag_names" not in df.columns:
-        created_tags: List[TagRetrieve] = []
+        skip_tags = True
+    elif df["content_tag_names"].isnull().all():
+        skip_tags = True
     else:
-        tags_to_create = await get_tags_not_in_db(
-            df,
-            tags_col="content_tag_names",
-            user_id=user_db.user_id,
-            asession=asession,
+        skip_tags = False
+
+    created_tags: List[TagRetrieve] = []
+    if not skip_tags:
+        incoming_tags = extract_unique_tags(tags_col=df[tags_col])
+        logger.info(f"Tags in CSV: {incoming_tags}")
+        tags_in_db = await get_list_of_tag_from_db(
+            user_id=user_db.user_id, asession=asession
         )
-        created_tags = []
+        logger.info(f"Tags in DB: {tags_in_db}")
+        tags_to_create = get_tags_not_in_db(
+            tags_in_db=tags_in_db, incoming_tags=incoming_tags
+        )
+        logger.info(f"Tags to create: {tags_to_create}")
         for tag in tags_to_create:
             tag_create = TagCreate(tag_name=tag)
             tag_db = await save_tag_to_db(
@@ -229,16 +239,35 @@ async def bulk_upload_contents(
                 tag=tag_create,
                 asession=asession,
             )
+            tags_in_db.append(tag_db)
+
+            # Convert the tag record to a schema (for response)
             tag_retrieve = _convert_tag_record_to_schema(tag_db)
             created_tags.append(tag_retrieve)
+
+        # tag name to tag id mapping
+        tag_name_to_id_map = {tag.tag_name: tag.tag_id for tag in tags_in_db}
+        logger.info(f"Tag name to id map: {tag_name_to_id_map}")
 
     # Add each row to the content database
     created_contents = []
     for _, row in df.iterrows():
+        content_tags: List = []  # should be List[TagDB] but clashes with validate_tags
+        if not skip_tags:
+            if not pd.isna(row[tags_col]):
+                tag_names = [
+                    tag_name.strip().upper() for tag_name in row[tags_col].split(",")
+                ]
+                tag_ids = [tag_name_to_id_map[tag_name] for tag_name in tag_names]
+                logger.info(f"Tag names: {tag_names}, Tag ids: {tag_ids}")
+                is_tag_valid, content_tags = await validate_tags(
+                    user_db.user_id, tag_ids, asession
+                )
+
         content = ContentCreate(
             content_title=row["content_title"],
             content_text=row["content_text"],
-            content_tags=[],
+            content_tags=content_tags,
             content_metadata={},
         )
         content_db = await save_content_to_db(
@@ -250,30 +279,33 @@ async def bulk_upload_contents(
     return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
-async def get_tags_not_in_db(
-    df: pd.DataFrame, tags_col: str, user_id: int, asession: AsyncSession
+def get_tags_not_in_db(
+    tags_in_db: List[TagDB],
+    incoming_tags: List[str],
 ) -> List[str]:
     """
-    Get a clean list of the tags from a given DataFrame, then fetch all tags
-    pre-existing in the DB, then finally find which tags are not present in DB already.
+    Compare tags fetched from the DB with incoming tags and return tags not in the DB
     """
-
-    incoming_tags = extract_all_tags(df=df, tags_col=tags_col)
-    tags_in_db_json = await get_list_of_tag_from_db(user_id=user_id, asession=asession)
-    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db_json]
-    tags_not_in_db_list = list(set(tags_in_db_list) - set(incoming_tags))
+    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
+    tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
 
     return tags_not_in_db_list
 
 
-def extract_all_tags(df: pd.DataFrame, tags_col: str) -> List[str]:
+def extract_unique_tags(tags_col: pd.Series) -> List[str]:
     """
-    Get unique tags from a DataFrame column (comma-separated within column)
+    Get unique UPPERCASE tags from a DataFrame column (comma-separated within column)
     """
 
-    tags_series_str = df[tags_col].dropna().astype(str)
-    tags = tags_series_str.str.split(",").explode().str.strip().unique()
-    return tags.tolist()
+    # prep col
+    tags_col = tags_col.dropna().astype(str)
+    # split and explode to have one tag per row
+    tags_flat = tags_col.str.split(",").explode()
+    # strip and uppercase
+    tags_flat = tags_flat.str.strip().str.upper()
+    # get unique tags as a list
+    tags_unique_list = tags_flat.unique().tolist()
+    return tags_unique_list
 
 
 def _load_csv(file: UploadFile) -> pd.DataFrame:
