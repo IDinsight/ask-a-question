@@ -36,7 +36,6 @@ async def get_stats_cards(
     )
     urgency_stats = await get_urgency_stats(user_id, asession, start_date, end_date)
 
-    print("query_stats", query_stats)
     return StatsCards(
         query_stats=query_stats,
         response_feedback_stats=response_feedback_stats,
@@ -89,6 +88,7 @@ async def get_response_feedback_stats(
     """
     statement_curr = (
         select(
+            ResponseFeedbackDB.feedback_sentiment,
             func.count(ResponseFeedbackDB.feedback_id),
         )
         .join(ResponseFeedbackDB.query)
@@ -104,7 +104,10 @@ async def get_response_feedback_stats(
     feedback_curr_period_dict = {row[0]: row[1] for row in feedback_curr_period}
 
     statement_previous = (
-        select(func.count(ResponseFeedbackDB.feedback_id))
+        select(
+            ResponseFeedbackDB.feedback_sentiment,
+            func.count(ResponseFeedbackDB.feedback_id),
+        )
         .join(ResponseFeedbackDB.query)
         .where(
             ResponseFeedbackDB.query.has(user_id=user_id),
@@ -133,6 +136,7 @@ async def get_content_feedback_stats(
     """
     statement_curr = (
         select(
+            ContentFeedbackDB.feedback_sentiment,
             func.count(ContentFeedbackDB.feedback_id),
         )
         .join(ContentFeedbackDB.content)
@@ -148,7 +152,10 @@ async def get_content_feedback_stats(
     feedback_curr_period_dict = {row[0]: row[1] for row in feedback_curr_period}
 
     statement_previous = (
-        select(func.count(ContentFeedbackDB.feedback_id))
+        select(
+            ContentFeedbackDB.feedback_sentiment,
+            func.count(ContentFeedbackDB.feedback_id),
+        )
         .join(ContentFeedbackDB.content)
         .where(
             ContentFeedbackDB.content.has(user_id=user_id),
