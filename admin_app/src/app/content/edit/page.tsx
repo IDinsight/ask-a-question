@@ -4,7 +4,12 @@ import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ChevronLeft } from "@mui/icons-material";
+import { ChevronLeft, Delete } from "@mui/icons-material";
+import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
+import Alert from "@mui/material/Alert";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
+import { Tag } from "../page";
 import { LoadingButton } from "@mui/lab";
 import {
   Button,
@@ -14,15 +19,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { Tag } from "../page";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -103,6 +104,9 @@ const AddEditContentPage = () => {
             addTag={(tag: string) => {
               return apiCalls.createTag(tag, token!);
             }}
+            deleteTag={(tag_id: number) => {
+              return apiCalls.deleteTag(tag_id, token!);
+            }}
             isSaved={isSaved}
             setIsSaved={setIsSaved}
           />
@@ -127,6 +131,7 @@ const ContentBox = ({
   setContent,
   getTagList,
   addTag,
+  deleteTag,
   isSaved,
   setIsSaved,
 }: {
@@ -134,6 +139,7 @@ const ContentBox = ({
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   getTagList: () => Promise<Tag[]>;
   addTag: (tag: string) => Promise<Tag>;
+  deleteTag: (tag_id: number) => Promise<[]>;
   isSaved: boolean;
   setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
@@ -145,6 +151,8 @@ const ContentBox = ({
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
+  const [tagToDelete, setTagToDelete] = React.useState<Tag | null>(null);
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
 
@@ -163,11 +171,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id),
+                data.find((tag) => tag.tag_id === tag_id)
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+          defaultTags.filter((tag): tag is Tag => tag !== undefined)
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -226,7 +234,7 @@ const ContentBox = ({
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content,
+    key: keyof Content
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -268,8 +276,55 @@ const ContentBox = ({
       setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
+  const openDeleteConfirmModal = (tag: Tag) => {
+    setTagToDelete(tag);
+    setOpenDeleteModal(true);
+  };
+  const handleDeleteTag = () => {
+    if (tagToDelete) {
+      deleteTag(tagToDelete.tag_id).then(() => {
+        setRefreshKey((prevKey) => prevKey + 1);
+        setOpenDeleteModal(false);
+        handleTagsChange(
+          contentTags.filter((tag) => tag.tag_id !== tagToDelete.tag_id)
+        );
+        setSnackMessage(`Tag "${tagToDelete.tag_name}" deleted successfully`);
+        setTagToDelete(null);
+      });
+    }
+  };
   return (
     <Layout.FlexBox>
+      <Dialog
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        aria-labelledby="confirm-delete-dialog-title"
+        aria-describedby="confirm-delete-dialog-description"
+      >
+        <DialogTitle id="confirm-delete-dialog-title">
+          Are you sure you want to delete tag {tagToDelete?.tag_name}?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-delete-dialog-description">
+            This tag will be removed from all contents and will no longer be an
+            option. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+          <Button onClick={() => setOpenDeleteModal(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleDeleteTag()}
+            autoFocus
+            variant="contained"
+            color="error"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Layout.Spacer multiplier={1} />
       <Autocomplete
         autoSelect
@@ -306,14 +361,15 @@ const ContentBox = ({
                   inputVal &&
                   !availableTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
                   ) &&
                   !contentTags.some(
                     (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
                   )
                 ) {
                   event.preventDefault();
+
                   handleNewTag(inputVal);
                 }
               }
@@ -324,11 +380,11 @@ const ContentBox = ({
           const filtered = filter(options, params);
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name,
+            (option) => inputValue.toUpperCase() === option.tag_name
           );
 
           const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name,
+            (tag) => inputValue.toUpperCase() === tag.tag_name
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
@@ -347,11 +403,11 @@ const ContentBox = ({
             option.tag_name &&
             !availableTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             ) &&
             !contentTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             )
           ) {
             return (
@@ -363,8 +419,22 @@ const ContentBox = ({
             );
           }
           return (
-            <li key={option.tag_id} {...rest}>
+            <li
+              key={option.tag_id}
+              {...rest}
+              style={{
+                justifyContent: "space-between",
+              }}
+            >
               {option.tag_name}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDeleteConfirmModal(option);
+                }}
+              >
+                <Delete fontSize="small" color="secondary" />
+              </IconButton>
             </li>
           );
         }}
@@ -444,7 +514,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
+                      `/content/?content_id=${content_id}&action=${actionType}`
                     );
                   }
                 };
@@ -470,7 +540,11 @@ const ContentBox = ({
               onClose={() => {
                 setSnackMessage(null);
               }}
-              severity="error"
+              severity={
+                snackMessage?.toLowerCase().includes("successfully")
+                  ? "success"
+                  : "error"
+              }
               variant="filled"
               sx={{ width: "100%" }}
             >
