@@ -26,7 +26,7 @@ LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embe
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
     "LITELLM_MODEL_GENERATION",
-    "generate-gemini-response",
+    "vertex_ai_beta/generate-gemini-response",
     # "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
