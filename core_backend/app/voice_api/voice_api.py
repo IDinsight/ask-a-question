@@ -1,15 +1,15 @@
 import json
 import wave
 
-from config import (
-    ENGLISH_MODEL_PATH,
-    ENGLISH_MODEL_URL,
-)
 from gtts import gTTS  # type: ignore
 from vosk import KaldiRecognizer, Model
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger
+from .config import (
+    ENGLISH_MODEL_PATH,
+    ENGLISH_MODEL_URL,
+)
 from .utils import convert_mp3_to_wav, download_model, get_gtts_lang_code
 
 logger = setup_logger("Voice API")
