@@ -7,15 +7,53 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
-from ..users.models import UserDB, update_user_api_key
+from ..users.models import (
+    UserAlreadyExistsError,
+    UserDB,
+    save_user_to_db,
+    update_user_api_key,
+)
+from ..users.schemas import UserCreate, UserCreateWithPassword
 from ..utils import generate_key, setup_logger
 from .schemas import KeyResponse
 
-router = APIRouter(prefix="/key", tags=["API Key Management"])
+router = APIRouter(prefix="/user", tags=["User Tools"])
 logger = setup_logger()
 
 
-@router.put("/", response_model=KeyResponse)
+@router.post("/", response_model=UserCreate)
+async def create_user(
+    user: UserCreateWithPassword,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreate | None:
+    """
+    Create user endpoint. Can only be used by user with ID 1.
+    """
+
+    if user_db.user_id != 1:
+        raise HTTPException(
+            status_code=403,
+            detail="This user does not have permission to create new users.",
+        )
+
+    try:
+        user_db = await save_user_to_db(
+            user=user,
+            asession=asession,
+        )
+        return UserCreate(
+            username=user_db.username,
+            content_quota=user_db.content_quota,
+        )
+    except UserAlreadyExistsError as e:
+        logger.error(f"Error creating user: {e}")
+        raise HTTPException(
+            status_code=400, detail="User with that username already exists."
+        ) from e
+
+
+@router.put("/rotate-key", response_model=KeyResponse)
 async def get_new_api_key(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),

@@ -11,6 +11,7 @@ from fastapi.security import (
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
@@ -84,7 +85,9 @@ async def authenticate_or_create_google_user(
                 username=user_db.username, access_level="fullaccess"
             )
         except UserNotFoundError:
-            user = UserCreate(username=google_email)
+            user = UserCreate(
+                username=google_email, content_quota=DEFAULT_CONTENT_QUOTA
+            )
             user_db = await save_user_to_db(user, asession)
             return AuthenticatedUser(
                 username=user_db.username, access_level="fullaccess"

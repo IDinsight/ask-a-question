@@ -1,16 +1,16 @@
 "use client";
-import LanguageButtonBar from "@/components/LanguageButtonBar";
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ChevronLeft } from "@mui/icons-material";
+import { ChevronLeft, Delete } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
+import { LoadingButton } from "@mui/lab";
 import {
   Button,
   CircularProgress,
@@ -19,11 +19,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -36,7 +36,6 @@ export interface Content extends EditContentBody {
 interface EditContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_tags: number[];
   content_metadata: Record<string, unknown>;
 }
@@ -105,6 +104,9 @@ const AddEditContentPage = () => {
             addTag={(tag: string) => {
               return apiCalls.createTag(tag, token!);
             }}
+            deleteTag={(tag_id: number) => {
+              return apiCalls.deleteTag(tag_id, token!);
+            }}
             isSaved={isSaved}
             setIsSaved={setIsSaved}
           />
@@ -129,6 +131,7 @@ const ContentBox = ({
   setContent,
   getTagList,
   addTag,
+  deleteTag,
   isSaved,
   setIsSaved,
 }: {
@@ -136,16 +139,20 @@ const ContentBox = ({
   setContent: React.Dispatch<React.SetStateAction<Content | null>>;
   getTagList: () => Promise<Tag[]>;
   addTag: (tag: string) => Promise<Tag>;
+  deleteTag: (tag_id: number) => Promise<[]>;
   isSaved: boolean;
   setIsSaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [saveError, setSaveError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [isTitleEmpty, setIsTitleEmpty] = React.useState(false);
   const [isContentEmpty, setIsContentEmpty] = React.useState(false);
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
+  const [tagToDelete, setTagToDelete] = React.useState<Tag | null>(null);
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
 
@@ -164,11 +171,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id),
+                data.find((tag) => tag.tag_id === tag_id)
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined),
+          defaultTags.filter((tag): tag is Tag => tag !== undefined)
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -178,37 +185,39 @@ const ContentBox = ({
 
     fetchTags();
   }, [refreshKey]);
-  const saveContent = async (content: Content) => {
+  const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
+
     const body: EditContentBody = {
       content_title: content.content_title,
       content_text: content.content_text,
-      content_language: content.content_language,
       content_metadata: content.content_metadata,
       content_tags: content.content_tags,
     };
 
-    const promise =
-      content.content_id === null
-        ? apiCalls.createContent(body, token!)
-        : apiCalls.editContent(content.content_id, body, token!);
-
-    const result = promise
-      .then((data) => {
-        setIsSaved(true);
-        setSaveError(false);
-        return data.content_id;
-      })
-      .catch((error: Error) => {
-        console.error("Error processing content:", error);
+    try {
+      const result =
+        content.content_id === null
+          ? await apiCalls.createContent(body, token!)
+          : await apiCalls.editContent(content.content_id, body, token!);
+      setIsSaved(true);
+      setSaveError(false);
+      return result.content_id;
+    } catch (error: Error | any) {
+      if (error.status === 403) {
+        console.error("Content quota reached.");
+        setErrorMessage("Unable to save content: Content limit reached");
         setSaveError(true);
         return null;
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
-
-    return await result;
+      } else {
+        console.error("Failed to save content:", error);
+        setErrorMessage("Failed to save content: Unexpected error occurred");
+        setSaveError(true);
+        return null;
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
   function createEmptyContent(contentTags: Tag[]): Content {
     return {
@@ -220,13 +229,12 @@ const ContentBox = ({
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
-      content_language: "ENGLISH",
       content_metadata: {},
     };
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content,
+    key: keyof Content
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -268,8 +276,55 @@ const ContentBox = ({
       setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
+  const openDeleteConfirmModal = (tag: Tag) => {
+    setTagToDelete(tag);
+    setOpenDeleteModal(true);
+  };
+  const handleDeleteTag = () => {
+    if (tagToDelete) {
+      deleteTag(tagToDelete.tag_id).then(() => {
+        setRefreshKey((prevKey) => prevKey + 1);
+        setOpenDeleteModal(false);
+        handleTagsChange(
+          contentTags.filter((tag) => tag.tag_id !== tagToDelete.tag_id)
+        );
+        setSnackMessage(`Tag "${tagToDelete.tag_name}" deleted successfully`);
+        setTagToDelete(null);
+      });
+    }
+  };
   return (
     <Layout.FlexBox>
+      <Dialog
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        aria-labelledby="confirm-delete-dialog-title"
+        aria-describedby="confirm-delete-dialog-description"
+      >
+        <DialogTitle id="confirm-delete-dialog-title">
+          Are you sure you want to delete tag {tagToDelete?.tag_name}?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-delete-dialog-description">
+            This tag will be removed from all contents and will no longer be an
+            option. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+          <Button onClick={() => setOpenDeleteModal(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleDeleteTag()}
+            autoFocus
+            variant="contained"
+            color="error"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Layout.Spacer multiplier={1} />
       <Autocomplete
         autoSelect
@@ -281,6 +336,7 @@ const ContentBox = ({
         id="tags-autocomplete"
         options={availableTags}
         getOptionLabel={(option) => option!.tag_name}
+        noOptionsText="No tags found. Start typing to create one."
         value={contentTags}
         onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
           handleTagsChange(updatedTags);
@@ -293,7 +349,7 @@ const ContentBox = ({
             {...params}
             variant="outlined"
             label="Tags"
-            placeholder="Add Tags"
+            placeholder="Find or create tags"
             onChange={(event) => setInputVal(event.target.value)}
             onKeyDown={(event) => {
               if (
@@ -313,6 +369,7 @@ const ContentBox = ({
                   )
                 ) {
                   event.preventDefault();
+
                   handleNewTag(inputVal);
                 }
               }
@@ -323,15 +380,15 @@ const ContentBox = ({
           const filtered = filter(options, params);
           const { inputValue } = params;
           const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name,
+            (option) => inputValue.toUpperCase() === option.tag_name
           );
 
           const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name,
+            (tag) => inputValue.toUpperCase() === tag.tag_name
           );
 
           if (inputValue !== "" && !isExisting && !isSelected) {
-            filtered.push({ tag_id: 0, tag_name: `Add "${inputValue}"` });
+            filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
           }
 
           return filtered;
@@ -346,11 +403,11 @@ const ContentBox = ({
             option.tag_name &&
             !availableTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             ) &&
             !contentTags.some(
               (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
             )
           ) {
             return (
@@ -362,8 +419,22 @@ const ContentBox = ({
             );
           }
           return (
-            <li key={option.tag_id} {...rest}>
+            <li
+              key={option.tag_id}
+              {...rest}
+              style={{
+                justifyContent: "space-between",
+              }}
+            >
               {option.tag_name}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDeleteConfirmModal(option);
+                }}
+              >
+                <Delete fontSize="small" color="secondary" />
+              </IconButton>
             </li>
           );
         }}
@@ -385,7 +456,7 @@ const ContentBox = ({
           p: sizes.baseGap,
         }}
       >
-        <LanguageButtonBar expandable={true} />
+        {/* <LanguageButtonBar expandable={true} /> */}
         <Layout.Spacer multiplier={1} />
         <Typography variant="body2">Title</Typography>
         <Layout.Spacer multiplier={0.5} />
@@ -443,7 +514,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
+                      `/content/?content_id=${content_id}&action=${actionType}`
                     );
                   }
                 };
@@ -455,7 +526,7 @@ const ContentBox = ({
           </LoadingButton>
           {saveError ? (
             <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-              Failed to save content.
+              {errorMessage}
             </Alert>
           ) : null}
           <Snackbar
@@ -469,7 +540,11 @@ const ContentBox = ({
               onClose={() => {
                 setSnackMessage(null);
               }}
-              severity="error"
+              severity={
+                snackMessage?.toLowerCase().includes("successfully")
+                  ? "success"
+                  : "error"
+              }
               variant="filled"
               sx={{ width: "100%" }}
             >
@@ -532,7 +607,7 @@ const DiscardChangesModal = ({
           You have unsaved changes. Are you sure you want to discard them?
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary" variant="contained">
           Cancel
         </Button>

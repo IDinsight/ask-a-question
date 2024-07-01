@@ -24,8 +24,8 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 # for all of its endpoints.
 LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
-LITELLM_MODEL_SUMMARIZATION = os.environ.get(
-    "LITELLM_MODEL_SUMMARIZATION", "openai/generate-response"
+LITELLM_MODEL_GENERATION = os.environ.get(
+    "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
@@ -49,6 +49,8 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"
 )
+CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
+DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
@@ -69,3 +71,6 @@ EMBEDDINGS_ENDPOINT = os.environ.get(
 
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
+
+# Database
+DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in the pool

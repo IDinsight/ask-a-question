@@ -5,7 +5,7 @@ ARG NAME=aaq_backend
 ARG PORT=8000
 ARG HOME_DIR=/usr/src/${NAME}
 RUN apt-get update && apt-get install -y \
-    gcc libpq-dev python3-dev
+    gcc libpq-dev python3-dev dos2unix
 
 COPY add_users_to_db.py /add_users_to_db.py
 
@@ -23,6 +23,9 @@ ENV PORT ${PORT}
 COPY . ${HOME_DIR}
 
 WORKDIR ${HOME_DIR}
+
+RUN find ${HOME_DIR} -type f -print0 | xargs -0 dos2unix
+
 RUN ["chmod", "+x", "startup.sh"]
 
 EXPOSE ${PORT}

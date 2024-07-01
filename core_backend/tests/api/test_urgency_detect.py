@@ -1,10 +1,10 @@
-from typing import AsyncGenerator, Callable
+from typing import Callable
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.database import get_async_session
+from core_backend.app.urgency_detection.config import URGENCY_CLASSIFIER
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.tests.api.conftest import (
@@ -41,8 +41,18 @@ class TestUrgencyDetectionToken:
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_content_response = response.json()["details"]
-            assert len(json_content_response.keys()) == urgency_rules
+            json_content_response = response.json()
+            assert isinstance(json_content_response["is_urgent"], bool)
+            if URGENCY_CLASSIFIER == "cosine_distance_classifier":
+                distance = json_content_response["details"]["0"]["distance"]
+                assert distance >= 0.0 and distance <= 1.0
+            elif URGENCY_CLASSIFIER == "llm_entailment_classifier":
+                probability = json_content_response["details"]["probability"]
+                assert probability >= 0.0 and probability <= 1.0
+            else:
+                raise ValueError(
+                    f"Unsupported urgency classifier: {URGENCY_CLASSIFIER}"
+                )
 
     @pytest.mark.parametrize(
         "token, expect_found",
@@ -76,13 +86,6 @@ class TestUrgencyDetectionToken:
 
 
 class TestUrgencyClassifiers:
-    @pytest.fixture(scope="function")
-    async def asession(self) -> AsyncGenerator[AsyncSession, None]:
-        async for session in get_async_session():
-            yield session
-
-        await session.close()
-
     @pytest.mark.parametrize("classifier", ALL_URGENCY_CLASSIFIERS.values())
     async def test_classifier(
         self, asession: AsyncSession, classifier: Callable

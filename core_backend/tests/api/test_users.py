@@ -1,9 +1,6 @@
-from typing import AsyncGenerator
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.database import get_async_session
 from core_backend.app.users.models import (
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -21,20 +18,13 @@ from core_backend.tests.api.conftest import (
 
 
 class TestUsers:
-    @pytest.fixture(scope="function")
-    async def asession(self) -> AsyncGenerator[AsyncSession, None]:
-        async for session in get_async_session():
-            yield session
-
-        await session.close()
-
     async def test_save_user_to_db(self, asession: AsyncSession) -> None:
-        user = UserCreate(username="test_username_3")
+        user = UserCreate(username="test_username_3", content_quota=50)
         saved_user = await save_user_to_db(user, asession)
         assert saved_user.username == "test_username_3"
 
     async def test_save_user_to_db_existing_user(self, asession: AsyncSession) -> None:
-        user = UserCreate(username=TEST_USERNAME)
+        user = UserCreate(username=TEST_USERNAME, content_quota=50)
         with pytest.raises(UserAlreadyExistsError):
             await save_user_to_db(user, asession)
 
@@ -55,7 +45,7 @@ class TestUsers:
             await get_user_by_token("nonexistent", asession)
 
     async def test_update_user_api_key(self, asession: AsyncSession) -> None:
-        user = UserCreate(username="test_username_4")
+        user = UserCreate(username="test_username_4", content_quota=50)
         saved_user = await save_user_to_db(user, asession)
         assert saved_user.hashed_api_key is None
 

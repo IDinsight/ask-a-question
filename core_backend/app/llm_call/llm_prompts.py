@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import re
 import textwrap
 from enum import Enum
-from typing import ClassVar
+from typing import ClassVar, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import SERVICE_IDENTITY
+from .utils import remove_json_markdown
 
 
 # ----  Language identification bot
@@ -16,9 +18,10 @@ class IdentifiedLanguage(str, Enum):
     """
 
     ENGLISH = "ENGLISH"
-    XHOSA = "XHOSA"
-    ZULU = "ZULU"
-    AFRIKAANS = "AFRIKAANS"
+    SWAHILI = "SWAHILI"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+    # AFRIKAANS = "AFRIKAANS"
     HINDI = "HINDI"
     UNINTELLIGIBLE = "UNINTELLIGIBLE"
     UNSUPPORTED = "UNSUPPORTED"
@@ -68,7 +71,6 @@ class IdentifiedLanguage(str, Enum):
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_PROMPT = f"""You are a high-performing translation bot. \
-You support a {SERVICE_IDENTITY}. \
 Translate the user's input from {{language}} to English.
 Do not answer the question, just translate it.
 If you are unable to translate the user's input, \
@@ -184,9 +186,8 @@ paraphrase_examples = [
         "output": "Pearson correlation",
     },
 ]
-PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot.
-
-You support a {SERVICE_IDENTITY}. The user has sent a message.
+PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot. \
+The user has sent a message.
 
 If the message is a question, do not answer it, \
 just paraphrase it to remove unecessary information and focus on the question. \
@@ -206,24 +207,59 @@ Examples:
 )
 
 
-# ----  Question answering bot
-ANSWER_FAILURE_MESSAGE = "Sorry, no relevant information found."
-ANSWER_QUESTION_PROMPT = f"""
-You are a question answering system that is constantly learning and improving.
-You can process and comprehend many pieces of text and utilize this knowledge to \
-provide concise, accurate, and informative answers to diverse queries.
+# ---- Response generation
+RAG_FAILURE_MESSAGE = "FAILED"
+_RAG_PROFILE_PROMPT = """\
+You are a helpful question-answering AI. You understand user question and answer their \
+question using the REFERENCE TEXT below.
+"""
+RAG_RESPONSE_PROMPT = (
+    _RAG_PROFILE_PROMPT
+    + """
+You are going to write a JSON, whose TypeScript Interface is given below:
+
+interface Response {{
+    extracted_info: string[];
+    answer: string;
+}}
+
+For "extracted_info", extract from the REFERENCE TEXT below the most useful \
+information related to the core question asked by the user, and list them one by one. \
+If no useful information is found, return an empty list.
+"""
+    + f"""
+For "answer", understand the extracted information and user question, solve the \
+question step by step, and then provide the answer. \
+If no useful information was found in REFERENCE TEXT, respond with \
+"{RAG_FAILURE_MESSAGE}".
+"""
+    + """
+EXAMPLE RESPONSES:
+{{"extracted_info": ["Pineapples are a blend of pinecones and apples.", "Pineapples \
+have the shape of a pinecone."], "answer": "The 'pine-' from pineapples likely come \
+from the fact that pineapples are a hybrid of pinecones and apples and its pinecone\
+-like shape."}}
+{{"extracted_info": [], "answer": "FAILED"}}
 
 REFERENCE TEXT:
-{{content}}
+{context}
 
-Answer the user query using the information provided in the REFERENCE TEXT above. \
-DO NOT use any context not present in the REFERENCE TEXT. \
-Ignore any provided context that is not relevant to the query.
+IMPORTANT NOTES ON THE "answer" FIELD:
+- Answer in the language of the question.
+- Do not include any information that is not present in the REFERENCE TEXT.
+"""
+)
 
-IMPORTANT: Respond in {{response_language}}.
 
-If the REFERENCE TEXT does not contain any answer to the query, respond exactly with \
-"{ANSWER_FAILURE_MESSAGE}".""".strip()
+class RAG(BaseModel):
+    """Generated response based on question and retrieved context"""
+
+    model_config = ConfigDict(strict=True)
+
+    extracted_info: List[str]
+    answer: str
+
+    prompt: ClassVar[str] = RAG_RESPONSE_PROMPT
 
 
 class AlignmentScore(BaseModel):
@@ -258,29 +294,105 @@ class AlignmentScore(BaseModel):
     ).strip()
 
 
-def get_urgency_detection_prompt(condition: str, message: str) -> str:
+class UrgencyDetectionEntailment:
     """
-    Returns the prompt for the urgency detection bot.
+    Urgency detection using entailment.
     """
 
-    return textwrap.dedent(
-        (
-            """Given a [statement] and [comment], score the share of meaning
-            of [statement] covered by [comment].
-            Respond with a score between 0 and 1 with 0.1 increments.
-            """
-            """
-            Respond in json string:
+    class UrgencyDetectionEntailmentResult(BaseModel):
+        """
+        Pydantic model for the output of the urgency detection entailment task.
+        """
 
-            \{
-               statement: str
-               probability: float
-               reason: str
-            \}
-            """
-            f"""
-            statement: {condition}
-            comment: {message}
-            """
-        )
+        best_matching_rule: str
+        probability: float = Field(ge=0, le=1)
+        reason: str
+
+    _urgency_rules: List[str]
+    _prompt_base: str = textwrap.dedent(
+        """
+        You are a highly sensitive urgency detector. Score if ANY part of the
+        user message corresponds to any part of the urgency rules provided below.
+        Ignore any part of the user message that does not correspond to the rules.
+        Respond with (a) the rule that is most consistent with the user message,
+        (b) the probability between 0 and 1 with increments of 0.1 that ANY part of
+        the user message matches the rule, and (c) the reason for the probability.
+
+
+        Respond in json string:
+
+        {
+           best_matching_rule: str
+           probability: float
+           reason: str
+        }
+        """
     ).strip()
+
+    _prompt_rules: str = textwrap.dedent(
+        """
+        Urgency Rules:
+        {urgency_rules}
+        """
+    ).strip()
+
+    default_json: Dict = {
+        "best_matching_rule": "",
+        "probability": 0.0,
+        "reason": "",
+    }
+
+    def __init__(self, urgency_rules: List[str]) -> None:
+        """
+        Initialize the urgency detection entailment task with urgency rules.
+        """
+        self._urgency_rules = urgency_rules
+
+    def parse_json(self, json_str: str) -> Dict:
+        """
+        Validates the output of the urgency detection entailment task.
+        """
+
+        json_str = remove_json_markdown(json_str)
+
+        # fmt: off
+        ud_entailment_result = (
+            UrgencyDetectionEntailment
+                .UrgencyDetectionEntailmentResult
+                .model_validate_json(
+                    json_str
+                )
+            )
+        # fmt: on
+
+        # TODO: This is a temporary fix to remove the number and the dot from the rule
+        # returned by the LLM.
+        ud_entailment_result.best_matching_rule = re.sub(
+            r"^\d+\.\s", "", ud_entailment_result.best_matching_rule
+        )
+
+        if ud_entailment_result.best_matching_rule not in self._urgency_rules:
+            raise ValueError(
+                (
+                    f"Best_matching_rule {ud_entailment_result.best_matching_rule} is "
+                    f"not in the urgency rules provided."
+                )
+            )
+
+        return ud_entailment_result.model_dump()
+
+    def get_prompt(self) -> str:
+        """
+        Returns the prompt for the urgency detection entailment task.
+        """
+        urgency_rules_str = "\n".join(
+            [f"{i+1}. {rule}" for i, rule in enumerate(self._urgency_rules)]
+        )
+
+        prompt = (
+            self._prompt_base
+            + "\n\n"
+            + self._prompt_rules.format(urgency_rules=urgency_rules_str)
+        )
+
+        return prompt

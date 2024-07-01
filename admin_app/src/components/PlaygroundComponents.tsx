@@ -452,7 +452,7 @@ const ApiKeyDialog = ({
           onChange={(e) => setApiKey(e.target.value)}
         />
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={handleClose}>Cancel</Button>
         <Button variant="contained" onClick={() => handleSave(apiKey)}>
           Save
