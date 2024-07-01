@@ -63,6 +63,7 @@ class ErrorType(str, Enum):
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
     ALIGNMENT_TOO_LOW = "alignment_too_low"
     TTS_ERROR = "tts_error"
+    STT_ERROR = "stt_error"
 
 
 class QueryResponse(BaseModel):

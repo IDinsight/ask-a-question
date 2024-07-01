@@ -1,7 +1,7 @@
 import json
 import wave
 
-from gtts import gTTS  # type: ignore
+from gtts import gTTS
 from vosk import KaldiRecognizer, Model
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
