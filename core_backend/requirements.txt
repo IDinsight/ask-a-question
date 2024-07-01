@@ -17,3 +17,4 @@ pandas==2.2.2
 pandas-stubs==2.2.2.240603
 types-openpyxl==3.1.4.20240621
 gTTS==2.5.1
+vosk==0.3.45
