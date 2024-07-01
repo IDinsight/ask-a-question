@@ -75,6 +75,11 @@ jobs:
                 ${{ env.REPO }}/caddy:latest
             docker system prune --volumes -f
 
+      - name: "Show Output"
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'
+
       - name: Wait for Application to start
         id: wait-for-app
         run: sleep 1m
