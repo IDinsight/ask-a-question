@@ -61,7 +61,7 @@ jobs:
                 --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
             docker pull ${{ env.REPO }}/caddy:latest
             docker stop caddy
-            docker rm caady
+            docker rm caddy
             docker run -d \
                 -v caddy_data:/data \
                 -v caddy_config:/config \
@@ -95,6 +95,6 @@ jobs:
       - name: Check if deployment was successful
         id: check-deployment
         run: |
-          curl -X 'GET' \
+          curl -f -X 'GET' \
             'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
             -H 'accept: application/json'

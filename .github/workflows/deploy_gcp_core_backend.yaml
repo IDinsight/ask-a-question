@@ -71,3 +71,27 @@ jobs:
               --name core_backend \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f
+
+      - name: "Show Output"
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'
+
+      - name: Wait for Application to start
+        id: wait-for-app
+        run: sleep 1m
+        shell: bash
+
+      - name: Retrieve domain from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          curl -f -X 'GET' \
+            'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
+            -H 'accept: application/json'
