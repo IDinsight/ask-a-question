@@ -37,4 +37,3 @@ const TabPanel: React.FC<TabPanelProps> = ({ tabValue, handleChange }) => {
 };
 
 export default TabPanel;
-export type { Period };

@@ -27,10 +27,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
         urgency_stats,
       } = data.stats_cards;
 
-      console.log(data.stats_cards);
-
       parseCardData(data, timePeriod);
-      // Total Queries
     });
   }, [timePeriod, token]);
 

@@ -1,14 +1,13 @@
 "use client";
 
 import React from "react";
-import { Box, Container, Grid, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
 import { Global, css } from "@emotion/react";
-import { useEffect } from "react";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
