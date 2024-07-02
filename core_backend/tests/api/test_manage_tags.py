@@ -74,7 +74,7 @@ class TestManageTags:
             ("TAG_SECOND"),
         ],
     )
-    async def test_edit_and_retrieve_tag(
+    def test_edit_and_retrieve_tag(
         self,
         client: TestClient,
         existing_tag_id: int,
@@ -98,7 +98,7 @@ class TestManageTags:
         assert response.status_code == 200
         assert response.json()["tag_name"] == tag_name
 
-    async def test_edit_tag_not_found(
+    def test_edit_tag_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
@@ -111,7 +111,7 @@ class TestManageTags:
 
         assert response.status_code == 404
 
-    async def test_list_tag(
+    def test_list_tag(
         self,
         client: TestClient,
         existing_tag_id: int,
@@ -130,7 +130,7 @@ class TestManageTags:
             ("Tag2", "TAG2"),
         ],
     )
-    async def test_add_tag_same_name_fails(
+    def test_add_tag_same_name_fails(
         self,
         client: TestClient,
         tag_name_1: str,
@@ -154,7 +154,7 @@ class TestManageTags:
         )
         assert response.status_code == 400
 
-    async def test_delete_tag(
+    def test_delete_tag(
         self, client: TestClient, existing_tag_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
@@ -163,7 +163,7 @@ class TestManageTags:
         )
         assert response.status_code == 200
 
-    async def test_user2_get_user1_tag_fails(
+    def test_user2_get_user1_tag_fails(
         self,
         client: TestClient,
         existing_tag_id: int,
@@ -175,7 +175,7 @@ class TestManageTags:
         )
         assert response.status_code == 404
 
-    async def test_add_tag_user1_edit_user2_fails(
+    def test_add_tag_user1_edit_user2_fails(
         self,
         client: TestClient,
         fullaccess_token: str,
@@ -200,7 +200,7 @@ class TestManageTags:
         assert response.status_code == 404
 
 
-async def test_convert_record_to_schema() -> None:
+def test_convert_record_to_schema() -> None:
     tag_id = 1
     user_id = 123
     record = TagDB(

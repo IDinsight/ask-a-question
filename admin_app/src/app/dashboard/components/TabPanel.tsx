@@ -3,20 +3,31 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 
+import { Period, TimeFrame } from "../types";
+
 interface TabPanelProps {
-  tabValue: number;
-  handleChange: (event: React.SyntheticEvent, newValue: number) => void;
+  tabValue: Period;
+  handleChange: (event: React.SyntheticEvent, newValue: Period) => void;
 }
 
+const tabLabels: Record<TimeFrame, Period> = {
+  "Last 24 hours": "day",
+  "Last week": "week",
+  "Last month": "month",
+  "Last year": "year",
+};
+
 const TabPanel: React.FC<TabPanelProps> = ({ tabValue, handleChange }) => {
-  const tabLabels = ["Last 24 hours", "Last week", "Last month", "Last year"];
+  const timePeriods: TimeFrame[] = Object.keys(tabLabels) as TimeFrame[];
+
   return (
     <Box sx={{ my: 1 }}>
       <Tabs value={tabValue} onChange={handleChange}>
-        {tabLabels.map((label, index) => (
+        {timePeriods.map((label: TimeFrame, index: number) => (
           <Tab
             label={label}
             key={`tab-label-${index}`}
+            value={tabLabels[label]}
             sx={{ textTransform: "none", mr: 6 }}
           />
         ))}
