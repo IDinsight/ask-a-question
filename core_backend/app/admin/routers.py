@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from aiohttp.client_exceptions import ClientConnectorError
@@ -7,11 +8,35 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import ALIGN_SCORE_API, ALIGN_SCORE_METHOD
+from ..config import ALIGN_SCORE_API, ALIGN_SCORE_METHOD, LITELLM_ENDPOINT
 from ..database import get_async_session
 from ..utils import get_http_client
 
 router = APIRouter()
+
+
+@dataclass
+class dependent_service:
+    """Dataclass for service to healthcheck"""
+
+    name: str
+    healthcheck_url: str
+
+
+services = [
+    dependent_service(
+        name="litellm_proxy", healthcheck_url=LITELLM_ENDPOINT + "/health/liveliness"
+    )
+]
+
+if ALIGN_SCORE_METHOD == "AlignScore":
+    url = urlparse(ALIGN_SCORE_API)
+    services.append(
+        dependent_service(
+            name="alignScore",
+            healthcheck_url=f"{url.scheme!r}://{url.netloc!r}/healthcheck",
+        )
+    )
 
 
 @router.get("/healthcheck")
@@ -28,19 +53,17 @@ async def healthcheck(
             status_code=500, content={"message": f"Failed database connection: {e}"}
         )
 
-    if ALIGN_SCORE_METHOD == "AlignScore":
-        url = urlparse(ALIGN_SCORE_API)
-        healthcheck_url = f"{url.scheme!r}://{url.netloc!r}/healthcheck"
-        http_client = get_http_client()
+    http_client = get_http_client()
+    for service in services:
         try:
-            resp = await http_client.get(healthcheck_url)
+            resp = await http_client.get(service.healthcheck_url)
         except ClientConnectorError as e:
             return JSONResponse(
                 status_code=500,
                 content={
                     "message": (
-                        "Failed to connect to alignScore "
-                        f"container at: {healthcheck_url}."
+                        f"Failed to connect to {service.name} "
+                        f"at: {service.healthcheck_url}."
                         f" Error: {e}"
                     )
                 },
@@ -50,8 +73,8 @@ async def healthcheck(
                 status_code=500,
                 content={
                     "message": (
-                        "Response is not 200 from alignScore "
-                        f"healthcheck at: {healthcheck_url}"
+                        f"Response is not 200 from {service.name} "
+                        f"healthcheck at: {service.healthcheck_url}"
                     )
                 },
             )
