@@ -91,7 +91,7 @@ class TestUrgencyDetectionStats:
     async def test_urgency_detection_stats(
         self, urgency_detection: Tuple[int, int], asession: AsyncSession
     ) -> None:
-        n_urgent, n_not_urgent = urgency_detection
+        n_urgent, _ = urgency_detection
 
         start_date = datetime.now() - relativedelta(months=1)
         end_date = datetime.now() + relativedelta(months=1)

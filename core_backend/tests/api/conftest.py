@@ -104,10 +104,6 @@ def user(db_session: Session) -> Generator[int, None, None]:
 
     yield user1_db.user_id
 
-    # db_session.delete(user1_db)
-    # db_session.delete(user2_db)
-    # db_session.commit()
-
 
 @pytest.fixture(scope="function")
 async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None]:
@@ -136,8 +132,6 @@ async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None
 
     asession.add_all(contents)
     await asession.commit()
-    # db_session.add_all(contents)
-    # db_session.commit()
 
     yield [content.content_id for content in contents]
 
