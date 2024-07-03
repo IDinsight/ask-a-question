@@ -54,6 +54,20 @@ model_list:
     litellm_params:
       model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: alignscore-gemini
+    litellm_params:
+      # Set VERTEXAI_ENDPOINT environment variable or direclty enter the value:
+      api_base: "os.environ/VERTEXAI_ENDPOINT"
+      model: vertex_ai/gemini-1.5-pro
+      safety_settings:
+        - category: HARM_CATEGORY_HARASSMENT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_HATE_SPEECH
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_DANGEROUS_CONTENT
+          threshold: BLOCK_ONLY_HIGH
   - model_name: urgency-detection
     litellm_params:
       model: gpt-3.5-turbo-1106
