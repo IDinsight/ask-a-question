@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
   const [timePeriod, setTimePeriod] = useState<Period>("week" as Period);
 
-  const handleTabChange = (event: React.ChangeEvent<{}>, newValue: Period) => {
+  const handleTabChange = (_: React.ChangeEvent<{}>, newValue: Period) => {
     setTimePeriod(newValue);
   };
 

@@ -6,6 +6,7 @@ import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import HeatMap from "@/app/dashboard/components/HeatMap";
 import { Period } from "../types";
 import { useAuth } from "@/utils/auth";
 import { getStatsCardData } from "@/app/dashboard/api";
@@ -18,15 +19,61 @@ interface OverviewProps {
 const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const { token } = useAuth();
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
+  // const [heatmapData, setHeatmapData] = React.useState<HeatMapProps>({});
+
+  const heatmapOptions = {
+    chart: {
+      id: "basic-bar",
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    colors: ["#008FFB"],
+  };
+
+  const generateData = (
+    count: number,
+    yrange: { min: number; max: number },
+  ) => {
+    // generate random `count` number of ints
+    // between `yrange.min` and `yrange.max`
+    let i = 0;
+    const series = [];
+    while (i < count) {
+      const y =
+        Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min;
+      series.push(y);
+      i++;
+    }
+    console.log(series);
+    return series;
+  };
+
+  const heatmapData = [
+    {
+      name: "Metric1",
+      data: [
+        { x: "x1", y: 1 },
+        { x: "x2", y: 2 },
+        { x: "x3", y: 3 },
+        { x: "x4", y: 4 },
+        { x: "x5", y: 5 },
+      ],
+    },
+    {
+      name: "Metric2",
+      data: [
+        { x: "x1", y: 1 },
+        { x: "x2", y: 2 },
+        { x: "x3", y: 3 },
+        { x: "x4", y: 4 },
+        { x: "x5", y: 5 },
+      ],
+    },
+  ];
+
   useEffect(() => {
     getStatsCardData(timePeriod, token!).then((data) => {
-      const {
-        content_feedback_stats,
-        query_stats,
-        response_feedback_stats,
-        urgency_stats,
-      } = data.stats_cards;
-
       parseCardData(data, timePeriod);
     });
   }, [timePeriod, token]);
@@ -132,7 +179,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
             height: 400,
           }}
         >
-          Heatmap
+          <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
       <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1315, height: 250 }}>

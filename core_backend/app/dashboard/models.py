@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Dict, Union
+from typing import Dict, Union, get_args
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +12,12 @@ from ..question_answer.models import (
 from ..urgency_detection.models import UrgencyResponseDB
 from .schemas import (
     ContentFeedbackStats,
+    Day,
+    Heatmap,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
+    Time,
     UrgencyStats,
 )
 
@@ -41,6 +44,52 @@ async def get_stats_cards(
         content_feedback_stats=content_feedback_stats,
         urgency_stats=urgency_stats,
     )
+
+
+async def get_heatmap(
+    user_id: int, asession: AsyncSession, start_date: date, end_date: date
+) -> Heatmap:
+    """
+    Retrieve queries per two hour blocks each weekday between start and end date
+    """
+    statement = (
+        select(
+            func.to_char(QueryDB.query_datetime_utc, "Dy").label("day_of_week"),
+            func.to_char(QueryDB.query_datetime_utc, "HH24").label("hour_of_day"),
+            func.count(QueryDB.query_id).label("n_questions"),
+        )
+        .where(
+            (QueryDB.user_id == user_id)
+            & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
+        )
+        .group_by("day_of_week", "hour_of_day")
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    heatmap = initilize_heatmap()
+    for row in rows:
+        day_of_week = row.day_of_week
+        hour_of_day = row.hour_of_day
+        n_questions = row.n_questions
+
+        if hour_of_day % 2 == 1:
+            hour_of_day_grp = hour_of_day - 1
+        else:
+            hour_of_day_grp = hour_of_day
+
+        heatmap[day_of_week][f"{hour_of_day_grp:02}:00"] += n_questions
+
+    return Heatmap.model_validate(heatmap)
+
+
+def initilize_heatmap() -> Dict[Day, Dict[str, int]]:
+    """
+    Initialize heatmap dictionary
+    """
+    return {d: {h: 0 for h in get_args(Time)} for d in get_args(Day)}
 
 
 async def get_query_count_stats(

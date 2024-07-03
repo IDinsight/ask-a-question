@@ -9,7 +9,7 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .models import get_stats_cards
+from .models import get_heatmap, get_stats_cards
 from .schemas import DashboardOverview
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -104,4 +104,11 @@ async def retrieve_overview(
         end_date=end_date,
     )
 
-    return DashboardOverview(stats_cards=stats)
+    heatmap = await get_heatmap(
+        user_id=user_id,
+        asession=asession,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    return DashboardOverview(stats_cards=stats, heatmap=heatmap)
