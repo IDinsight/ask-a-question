@@ -7,21 +7,6 @@ resource "google_compute_address" "vm_static_ip" {
   name   = "${var.project_name}-${var.environment}-static-ip"
 }
 
-# Firewall rule to allow incoming HTTPS traffic
-# resource "google_compute_firewall" "allow_https" {
-#   name    = "${var.project_name}-${var.environment}-allow-https"
-#   network = "default"
-
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["443"]
-#   }
-
-#   source_ranges = ["0.0.0.0/0"]
-
-#   target_tags = ["https-server"]
-# }
-
 # Compute Instance
 resource "google_compute_instance" "vm_instance" {
   name         = "${var.project_name}-${var.environment}"
