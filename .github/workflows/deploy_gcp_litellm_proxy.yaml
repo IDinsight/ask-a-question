@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - testing
+      - production
     paths:
       - "deployment/docker-compose/litellm_proxy/**"
       - "deployment/gcp/cloudbuild_litellm_proxy.yaml"
@@ -19,8 +20,7 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-testing
-    # TODO: update Github env and change to github.ref_name
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}

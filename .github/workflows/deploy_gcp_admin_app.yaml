@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - testing
+      - production
     paths:
       - "admin_app/**"
       - "deployment/gcp/cloudbuild_admin_app.yaml"
@@ -19,8 +20,7 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-testing
-    # TODO: update Github env and change to github.ref_name
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
