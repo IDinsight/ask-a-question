@@ -65,7 +65,7 @@ setup-llm-proxy:
 	@docker run \
 		--name litellm-proxy \
 		--rm \
-		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
+		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy/litellm_proxy_config.yaml":/app/config.yaml \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
 		-e GEMINI_API_KEY=$(GEMINI_API_KEY) \
 		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
@@ -73,7 +73,6 @@ setup-llm-proxy:
 		-p 4000:4000 \
 		-d ghcr.io/berriai/litellm:main-v1.34.6 \
 		--config /app/config.yaml --detailed_debug
-
 
 teardown-llm-proxy:
 	@docker stop litellm-proxy
