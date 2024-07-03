@@ -1,5 +1,6 @@
 from typing import Callable
 
+import aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
@@ -20,7 +21,7 @@ from . import (
     user_tools,
     whatsapp_qa,
 )
-from .config import DOMAIN, LANGFUSE
+from .config import DOMAIN, LANGFUSE, REDIS_HOST
 from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
@@ -74,8 +75,13 @@ def create_app() -> FastAPI:
     app.mount("/metrics", metrics_app)
 
     @app.on_event("startup")
-    def startup_event() -> None:
+    async def startup_event() -> None:
         """Startup event"""
+        app.state.redis = await aioredis.from_url(REDIS_HOST)
         logger.info("Application started")
+
+    @app.on_event("shutdown")
+    async def shutdown():
+        await app.state.redis.close()
 
     return app

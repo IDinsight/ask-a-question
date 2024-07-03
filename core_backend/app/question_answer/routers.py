@@ -1,9 +1,14 @@
 from typing import Tuple
 
+import aioredis
 from fastapi import APIRouter, Depends
+from fastapi.exceptions import HTTPException
+
 from fastapi.responses import JSONResponse
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from ..auth.dependencies import authenticate_key
 from ..contents.models import get_similar_content_async, update_votes_in_db
@@ -17,9 +22,9 @@ from ..llm_call.process_input import (
     translate_question__before,
 )
 from ..llm_call.process_output import check_align_score__after
-from ..users.models import UserDB
+from ..users.models import UserDB, get_user_by_token
 from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
-from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
+from .config import API_CALLS_LIMIT, N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -45,8 +50,28 @@ from .utils import (
 
 logger = setup_logger()
 
+
+async def rate_limiter(
+    request: Request,
+    user_db: UserDB = Depends(authenticate_key),
+):
+    user_id = user_db.user_id
+
+    redis = request.app.state.redis
+    call_count = await redis.get(f"api-count:{user_id}")
+    if call_count is None:
+        call_count = 0
+    else:
+        call_count = int(call_count)
+    if call_count >= API_CALLS_LIMIT:
+        raise HTTPException(status_code=429, detail="API call limit reached.")
+
+    await redis.set(f"api-count:{user_id}", call_count + 1, ex=86400)
+
+
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=["Question Answering"]
+    dependencies=[Depends(authenticate_key)],
+    tags=["Question Answering"],
 )
 
 
@@ -54,6 +79,7 @@ router = APIRouter(
     "/llm-response",
     response_model=QueryResponse,
     responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
+    dependencies=[Depends(rate_limiter)],
 )
 async def llm_response(
     user_query: QueryBase,
@@ -174,6 +200,7 @@ async def get_user_query_and_response(
     "/embeddings-search",
     response_model=QueryResponse,
     responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
+    dependencies=[Depends(rate_limiter)],
 )
 async def embeddings_search(
     user_query: QueryBase,
@@ -271,6 +298,45 @@ async def feedback(
             )
         },
     )
+
+
+async def rate_limiter(request: Request, asession: AsyncSession):
+    token = request.headers.get("Authorization")
+    if not token:
+        raise HTTPException(status_code=401, detail="API token missing.")
+
+    try:
+        redis = request.app.state.redis
+        call_count = await redis.get(f"api-count:{token}")
+
+        if not call_count:
+            user = get_user_by_token(token, asession)
+            if not user:
+                raise HTTPException(status_code=401, detail="Invalid API token.")
+            call_count = user.api_call_count
+            await redis.set(f"api-count:{token}", call_count)
+
+        call_count = int(call_count) if call_count else 0
+
+        if call_count >= 100:
+            raise HTTPException(status_code=429, detail="API call limit reached.")
+
+        await redis.set(f"api-count:{token}", call_count + 1)
+
+    except (aioredis.exceptions.ConnectionError, aioredis.exceptions.RedisError):
+        # Fallback to database if Redis is down
+        user = get_user_by_api_key(db, api_key)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid API key.")
+
+        if user.tier == "premium":
+            return
+
+        if user.api_call_count >= 100:
+            raise HTTPException(status_code=429, detail="API call limit reached.")
+
+        user.api_call_count += 1
+        db.commit()
 
 
 @router.post("/content-feedback")
