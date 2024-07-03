@@ -26,7 +26,14 @@ resource "google_compute_address" "vm_static_ip" {
 resource "google_compute_instance" "vm_instance" {
   name         = "${var.project_name}-${var.environment}"
   machine_type = var.gce_instance_type
+  can_ip_forward      = false
+  deletion_protection = false
+  enable_display      = false
+
   boot_disk {
+    auto_delete = true
+    device_name = "${var.project_name}-${var.environment}"
+
     initialize_params {
         image = "cos-cloud/cos-113-18244-85-49"
     }
@@ -37,6 +44,11 @@ resource "google_compute_instance" "vm_instance" {
     access_config {
       nat_ip = google_compute_address.vm_static_ip.address
     }
+  }
+
+  service_account {
+    email  = var.service_account_email
+    scopes = ["cloud-platform"]
   }
 
   tags = ["https-server"]

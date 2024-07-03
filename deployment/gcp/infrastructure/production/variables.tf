@@ -8,7 +8,6 @@ variable "environment" {
   type        = string
 }
 
-
 variable "gcp_project_id" {
     description = "GCP project ID"
     type        = string
@@ -37,6 +36,12 @@ variable "db_tier" {
 
 variable "admin_username" {
     description = "Admin username for AAQ."
+    type        = string
+    sensitive   = true
+}
+
+variable "service_account_email" {
+    description = "Service account email"
     type        = string
     sensitive   = true
 }
