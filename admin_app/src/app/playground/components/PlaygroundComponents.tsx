@@ -24,11 +24,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
-import ThumbUp from "@mui/icons-material/ThumbUp";
-import ThumbDown from "@mui/icons-material/ThumbDown";
-import { ThumbUpOffAlt } from "@mui/icons-material";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
+
+type FeedbackType = "positive" | "negative";
 
 interface ResponseSummary {
   index: string;
@@ -193,19 +196,39 @@ const TypingAnimation = () => {
 };
 
 // Feedback buttons
-const FeedbackButtons = () => (
-  <div style={{ marginTop: "10px" }}>
-    <button onClick={() => console.log("Thumbs up clicked")}>
-      <ThumbUp />
-    </button>
-    <button
-      onClick={() => console.log("Thumbs down clicked")}
-      style={{ marginLeft: "5px" }}
+const FeedbackButtons = () => {
+  const [isThumbsUpActive, setIsThumbsUpActive] = useState(false);
+  const [isThumbsDownActive, setIsThumbsDownActive] = useState(false);
+
+  const toggleThumbsUp = () => setIsThumbsUpActive(!isThumbsUpActive);
+  const toggleThumbsDown = () => setIsThumbsDownActive(!isThumbsDownActive);
+
+  return (
+    <div
+      style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end" }}
     >
-      <ThumbDown />
-    </button>
-  </div>
-);
+      <IconButton
+        aria-label="thumbs up"
+        onClick={toggleThumbsUp}
+        style={{
+          marginRight: "10px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        {isThumbsUpActive ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />}
+      </IconButton>
+      <IconButton
+        aria-label="thumbs down"
+        onClick={toggleThumbsDown}
+        style={{ background: "none", border: "none", cursor: "pointer" }}
+      >
+        {isThumbsDownActive ? <ThumbDownAltIcon /> : <ThumbDownOffAltIcon />}
+      </IconButton>
+    </div>
+  );
+};
 
 const MessageSkeleton = () => {
   return (
@@ -329,16 +352,17 @@ const MessageBox = (message: Message) => {
             : renderResults(message.content)}
         </Typography>
         {message.hasOwnProperty("json") && (
-            <Link
-              onClick={toggleJsonModal}
-              variant="caption"
-              align="right"
-              underline="hover"
-              sx={{ cursor: "pointer" }}
-            >
-              {"<json>"}
-            </Link>
-          ) && <FeedbackButtons />}
+          <Link
+            onClick={toggleJsonModal}
+            variant="caption"
+            align="right"
+            underline="hover"
+            sx={{ cursor: "pointer" }}
+          >
+            {"<json>"}
+          </Link>
+        )}
+        {message.type === "response" && <FeedbackButtons />}
       </Box>
 
       <Modal
