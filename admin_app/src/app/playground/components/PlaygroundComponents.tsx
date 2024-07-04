@@ -24,6 +24,9 @@ import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
+import ThumbUp from "@mui/icons-material/ThumbUp";
+import ThumbDown from "@mui/icons-material/ThumbDown";
+import { ThumbUpOffAlt } from "@mui/icons-material";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
 
@@ -189,6 +192,21 @@ const TypingAnimation = () => {
   );
 };
 
+// Feedback buttons
+const FeedbackButtons = () => (
+  <div style={{ marginTop: "10px" }}>
+    <button onClick={() => console.log("Thumbs up clicked")}>
+      <ThumbUp />
+    </button>
+    <button
+      onClick={() => console.log("Thumbs down clicked")}
+      style={{ marginLeft: "5px" }}
+    >
+      <ThumbDown />
+    </button>
+  </div>
+);
+
 const MessageSkeleton = () => {
   return (
     <Box
@@ -311,16 +329,16 @@ const MessageBox = (message: Message) => {
             : renderResults(message.content)}
         </Typography>
         {message.hasOwnProperty("json") && (
-          <Link
-            onClick={toggleJsonModal}
-            variant="caption"
-            align="right"
-            underline="hover"
-            sx={{ cursor: "pointer" }}
-          >
-            {"<json>"}
-          </Link>
-        )}
+            <Link
+              onClick={toggleJsonModal}
+              variant="caption"
+              align="right"
+              underline="hover"
+              sx={{ cursor: "pointer" }}
+            >
+              {"<json>"}
+            </Link>
+          ) && <FeedbackButtons />}
       </Box>
 
       <Modal
