@@ -53,8 +53,7 @@ jobs:
         working-directory: deployment/docker-compose
         run: gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
           ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~ \
-          --zone ${{ secrets.DEPLOYMENT_ZONE }} \
-          --ssh-key-file ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
       - name: Deploy Caddy container
         id: "compute-ssh"
