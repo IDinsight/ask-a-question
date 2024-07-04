@@ -6,6 +6,7 @@ on:
       - main
       - testing
       - production
+      - improve-gcp-deploy
     paths:
       - "admin_app/**"
       - ".github/workflows/deploy_gcp_admin_app.yaml"
