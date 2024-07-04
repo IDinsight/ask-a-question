@@ -205,7 +205,7 @@ const FeedbackButtons = () => {
 
   return (
     <div
-      style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end" }}
+      style={{ marginTop: "5px", display: "flex", justifyContent: "flex-end" }}
     >
       <IconButton
         aria-label="thumbs up"
