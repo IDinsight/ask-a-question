@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Dict, Union, get_args
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..question_answer.models import (
@@ -17,7 +17,9 @@ from .schemas import (
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
-    Time,
+    TimeFrequency,
+    TimeHours,
+    TimeSeries,
     UrgencyStats,
 )
 
@@ -72,10 +74,9 @@ async def get_heatmap(
     heatmap = initilize_heatmap()
     for row in rows:
         day_of_week = row.day_of_week
-        hour_of_day = row.hour_of_day
+        hour_of_day = int(row.hour_of_day)
         n_questions = row.n_questions
-
-        if hour_of_day % 2 == 1:
+        if int(hour_of_day) % 2 == 1:
             hour_grp = hour_of_day - 1
         else:
             hour_grp = hour_of_day
@@ -85,20 +86,131 @@ async def get_heatmap(
     return Heatmap.model_validate(heatmap)
 
 
-def get_linechart(
-    user_id: int, asession: AsyncSession, start_date: date, end_date: date
+async def get_timeseries(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> TimeSeries:
+    """
+    Retrieve count of queries over time for the user
+    """
+    query_ts = await get_timeseries_query(
+        user_id, asession, start_date, end_date, frequency
+    )
+    urgency_ts = await get_timeseries_urgency(
+        user_id, asession, start_date, end_date, frequency
+    )
+
+    return TimeSeries(
+        urgent=urgency_ts,
+        not_urgent_escalated=query_ts["escalated"],
+        not_urgent_not_escalated=query_ts["not_escalated"],
+    )
+
+    return dict()
+
+
+async def get_timeseries_query(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
 ) -> Dict[str, Dict[str, int]]:
     """
     Retrieve count of queries over time for the user
     """
+    match frequency:
+        case TimeFrequency.Day:
+            interval_str = "day"
+        case TimeFrequency.Week:
+            interval_str = "week"
+        case TimeFrequency.Hour:
+            interval_str = "hour"
+        case _:
+            raise ValueError("Invalid frequency")
+
+    ts_labels = (
+        select((literal_column("period_start")).label("time_period"))
+        .select_from(
+            text(
+                (
+                    f"generate_series('{start_date}', '{end_date}', '1 {interval_str}'"
+                    "::interval) AS period_start"
+                )
+            )
+        )
+        .alias("ts_labels")
+    )
+
+    statement = (
+        select(
+            ts_labels.c.time_period,
+            func.coalesce(
+                func.count(
+                    case(
+                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("negative_feedback_count"),
+            func.coalesce(
+                func.count(
+                    case(
+                        (ResponseFeedbackDB.feedback_sentiment != "negative", 1),
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("non_negative_feedback_count"),
+        )
+        .select_from(ts_labels)
+        .outerjoin(
+            ResponseFeedbackDB,
+            func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
+            == func.date_trunc(interval_str, ts_labels.c.time_period),
+        )
+        # .where(ResponseFeedbackDB.feedback_datetime_utc.between(start_date, end_date))
+        .group_by(ts_labels.c.time_period)
+        .order_by(ts_labels.c.time_period)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    escalated = dict()
+    not_escalated = dict()
+    for row in rows:
+        escalated[row.time_period.strftime("%m/%d/%Y, %H:%M:%S")] = (
+            row.negative_feedback_count
+        )
+        not_escalated[row.time_period.strftime("%m/%d/%Y, %H:%M:%S")] = (
+            row.non_negative_feedback_count
+        )
+
+    return dict(escalated=escalated, not_escalated=not_escalated)
+
+
+async def get_timeseries_urgency(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> Dict[str, int]:
+    """
+    Retrieve count of urgent queries over time for the user
+    """
     return dict()
 
 
-def initilize_heatmap() -> Dict[Time, Dict[Day, int]]:
+def initilize_heatmap() -> Dict[TimeHours, Dict[Day, int]]:
     """
     Initialize heatmap dictionary
     """
-    return {h: {d: 0 for d in get_args(Day)} for h in get_args(Time)}
+    return {h: {d: 0 for d in get_args(Day)} for h in get_args(TimeHours)}
 
 
 async def get_query_count_stats(

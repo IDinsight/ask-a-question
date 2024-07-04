@@ -1,0 +1,151 @@
+import os
+import random
+from datetime import datetime, timedelta
+
+from sqlalchemy.orm import Session
+
+from core_backend.app.database import get_session
+from core_backend.app.question_answer.models import QueryDB, ResponseFeedbackDB
+from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
+
+# admin user (first user is admin)
+USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
+USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
+
+N_DATAPOINTS = 10
+URGENCY_RATE = 0.1
+NEGATIVE_FEEDBACK_RATE = 0.1
+
+
+def add_year_data() -> None:
+    """
+    Add N_DATAPOINTS of data for each day in the past year.
+    """
+    now = datetime.now()
+    last_year = now - timedelta(days=365)
+    year_datetimes = [
+        last_year + timedelta(days=i)
+        for i in random.choices(range(365), k=N_DATAPOINTS)
+    ]
+
+    for dt in year_datetimes:
+        create_data(dt)
+
+
+def add_month_data() -> None:
+    """
+    Add N_DATAPOINTS of data for each hour in the past month.
+    """
+    now = datetime.now()
+    last_month = now - timedelta(days=30)
+    month_datetimes = [
+        last_month + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
+        for i in random.choices(range(30), k=N_DATAPOINTS)
+    ]
+
+    for dt in month_datetimes:
+        create_data(dt)
+
+
+def add_week_data() -> None:
+    """
+    Add N_DATAPOINTS of data for each hour in the past week.
+    """
+    now = datetime.now()
+    last_week = now - timedelta(days=7)
+    week_datetimes = [
+        last_week + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
+        for i in random.choices(range(7), k=N_DATAPOINTS)
+    ]
+
+    for dt in week_datetimes:
+        create_data(dt)
+
+
+def add_day_data() -> None:
+    """
+    Add N_DATAPOINTS of data for each hour in the past day.
+    """
+    now = datetime.now()
+    last_day = now - timedelta(hours=24)
+    hour_datetimes = [
+        last_day + timedelta(hours=i) for i in random.choices(range(24), k=N_DATAPOINTS)
+    ]
+
+    for dt in hour_datetimes:
+        create_data(dt)
+
+
+def create_data(dt: datetime) -> None:
+    """
+    Create a record for a given datetime.
+    """
+    is_urgent = random.random() < URGENCY_RATE
+    session = next(get_session())
+    create_urgency_record(dt, is_urgent, session)
+    if not is_urgent:
+        is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
+        query_id = create_query_record(dt, session)
+        create_feedback_record(dt, query_id, is_negative, session)
+    session.close()
+
+
+def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> None:
+    """
+    Create an urgency record for a given datetime.
+    """
+    urgency_db = UrgencyQueryDB(
+        user_id=1,
+        message_text="test message",
+        message_datetime_utc=dt,
+        feedback_secret_key="abc123",
+    )
+    session.add(urgency_db)
+    session.commit()
+    urgency_response = UrgencyResponseDB(
+        is_urgent=is_urgent,
+        details={"details": "test details"},
+        query_id=urgency_db.urgency_query_id,
+        response_datetime_utc=dt,
+    )
+    session.add(urgency_response)
+    session.commit()
+
+
+def create_query_record(dt: datetime, session: Session) -> int:
+    """
+    Create a query record for a given datetime.
+    """
+    query_db = QueryDB(
+        user_id=1,
+        feedback_secret_key="abc123",
+        query_text="test query",
+        query_metadata={},
+        query_datetime_utc=dt,
+    )
+    session.add(query_db)
+    session.commit()
+    return query_db.query_id
+
+
+def create_feedback_record(
+    dt: datetime, query_id: int, is_negative: bool, session: Session
+) -> None:
+    """
+    Create a feedback record for a given datetime.
+    """
+    sentiment = "negative" if is_negative else "positive"
+    feedback_db = ResponseFeedbackDB(
+        feedback_datetime_utc=dt,
+        query_id=query_id,
+        feedback_sentiment=sentiment,
+    )
+    session.add(feedback_db)
+    session.commit()
+
+
+if __name__ == "__main__":
+    add_year_data()
+    add_month_data()
+    add_week_data()
+    add_day_data()

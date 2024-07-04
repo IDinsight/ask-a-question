@@ -9,8 +9,8 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .models import get_heatmap, get_stats_cards
-from .schemas import DashboardOverview
+from .models import get_heatmap, get_stats_cards, get_timeseries
+from .schemas import DashboardOverview, TimeFrequency
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 logger = setup_logger()
@@ -28,7 +28,11 @@ async def retrieve_overview_day(
     day_ago = today - timedelta(days=1)
 
     stats = await retrieve_overview(
-        user_id=user_db.user_id, asession=asession, start_date=day_ago, end_date=today
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=day_ago,
+        end_date=today,
+        frequency=TimeFrequency.Hour,
     )
 
     return stats
@@ -46,7 +50,11 @@ async def retrieve_overview_week(
     week_ago = today - timedelta(days=7)
 
     stats = await retrieve_overview(
-        user_id=user_db.user_id, asession=asession, start_date=week_ago, end_date=today
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=week_ago,
+        end_date=today,
+        frequency=TimeFrequency.Day,
     )
 
     return stats
@@ -64,7 +72,11 @@ async def retrieve_overview_month(
     month_ago = today + relativedelta(months=-1)
 
     stats = await retrieve_overview(
-        user_id=user_db.user_id, asession=asession, start_date=month_ago, end_date=today
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=month_ago,
+        end_date=today,
+        frequency=TimeFrequency.Day,
     )
 
     return stats
@@ -82,7 +94,11 @@ async def retrieve_overview_year(
     year_ago = today + relativedelta(years=-1)
 
     stats = await retrieve_overview(
-        user_id=user_db.user_id, asession=asession, start_date=year_ago, end_date=today
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=year_ago,
+        end_date=today,
+        frequency=TimeFrequency.Week,
     )
 
     return stats
@@ -93,6 +109,7 @@ async def retrieve_overview(
     asession: AsyncSession,
     start_date: date,
     end_date: date,
+    frequency: TimeFrequency,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics
@@ -111,4 +128,14 @@ async def retrieve_overview(
         end_date=end_date,
     )
 
-    return DashboardOverview(stats_cards=stats, heatmap=heatmap)
+    time_series = await get_timeseries(
+        user_id=user_id,
+        asession=asession,
+        start_date=start_date,
+        end_date=end_date,
+        frequency=frequency,
+    )
+
+    return DashboardOverview(
+        stats_cards=stats, heatmap=heatmap, time_series=time_series
+    )

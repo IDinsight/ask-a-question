@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated, Dict, Literal, get_args
 
 from pydantic import BaseModel, Field
@@ -55,7 +56,7 @@ class StatsCards(BaseModel):
     urgency_stats: UrgencyStats
 
 
-Time = Literal[
+TimeHours = Literal[
     "00:00",
     "02:00",
     "04:00",
@@ -71,6 +72,16 @@ Time = Literal[
 ]
 
 Day = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+class TimeFrequency(str, Enum):
+    """
+    This class is used to define the schema for the time frequency
+    """
+
+    Day = "Day"
+    Week = "Week"
+    Hour = "Hour"
 
 
 def has_all_days(d: Dict[str, int]) -> Dict[str, int]:
@@ -103,6 +114,16 @@ class Heatmap(BaseModel):
     h22_00: DayCount = Field(..., alias="22:00")
 
 
+class TimeSeries(BaseModel):
+    """
+    This class is used to define the schema for the line chart
+    """
+
+    urgent: Dict[str, int]
+    not_urgent_escalated: Dict[str, int]
+    not_urgent_not_escalated: Dict[str, int]
+
+
 class DashboardOverview(BaseModel):
     """
     This class is used to define the schema for the dashboard overview
@@ -110,3 +131,4 @@ class DashboardOverview(BaseModel):
 
     stats_cards: StatsCards
     heatmap: Heatmap
+    time_series: TimeSeries
