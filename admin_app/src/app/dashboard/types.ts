@@ -7,9 +7,9 @@ interface DayHourUsageData {
   };
 }
 
-interface ApexDayHourUsageData {
+interface ApexData {
   name: string;
   data: { x: string; y: number }[];
 }
 
-export type { Period, TimeFrame, DayHourUsageData, ApexDayHourUsageData };
+export type { Period, TimeFrame, DayHourUsageData, ApexData };
