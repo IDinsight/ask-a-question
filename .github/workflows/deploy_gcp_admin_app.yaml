@@ -8,7 +8,6 @@ on:
       - production
     paths:
       - "admin_app/**"
-      - "deployment/gcp/cloudbuild_admin_app.yaml"
       - ".github/workflows/deploy_gcp_admin_app.yaml"
   workflow_dispatch:
 
