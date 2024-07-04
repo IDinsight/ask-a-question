@@ -38,7 +38,7 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Retrieve domain from Secret Manager
+      - name: Retrieve secrets from Secret Manager
         id: "secrets"
         uses: "google-github-actions/get-secretmanager-secrets@v2"
         with:
@@ -54,8 +54,8 @@ jobs:
         working-directory: admin_app
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_BACKEND_URL=https://${{ steps.secret.output.domain }}/api \
-            --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=${{ steps.secret.output.google_login_client_id }} \
+            --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.output.domain }}/api" \
+            --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.output.google_login_client_id }}"" \
             -t ${{ env.REPO }}/admin_app:latest \
             -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
             .
