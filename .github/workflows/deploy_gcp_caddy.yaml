@@ -52,7 +52,7 @@ jobs:
       - name: Copy Caddy deployment files
         working-directory: deployment/docker-compose
         run: |
-          gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
+          gcloud compute scp caddy/Caddyfile docker-compose.gcp.yml \
           ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~ \
           --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
@@ -67,7 +67,7 @@ jobs:
             export DOMAIN=${{ steps.secrets.outputs.domain }}
             docker-credential-gcr configure-docker \
                 --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
-            docker compose -f ~/docker-compose.gce.yml up --no-deps -d caddy
+            docker compose -f ~/docker-compose.gcp.yml up --no-deps -d caddy
             docker system prune --volumes -f
 
       - name: Show deployment command output
