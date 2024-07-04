@@ -314,6 +314,35 @@ const getLLMResponse = async (search: string, token: string) => {
     });
 };
 
+const postResponseFeedback = async (
+  feedback_sentiment: string,
+  feedback_secret_key: string,
+  token: string,
+) => {
+  const feedbackUrl = `${NEXT_PUBLIC_BACKEND_URL}/response-feedback`;
+  return fetch(feedbackUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      feedback_sentiment: feedback_sentiment,
+      feedback_secret_key: feedback_secret_key,
+    }),
+  })
+    .then((response) => {
+      return response.json().then((data) => {
+        const responseWithStatus = { status: response.status, ...data };
+        return responseWithStatus;
+      });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      throw error;
+    });
+};
+
 const getQuestionStats = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/question_stats`, {
     method: "GET",
