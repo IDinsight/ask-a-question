@@ -65,7 +65,7 @@ jobs:
             -t ${{ env.REPO }}/core_backend:latest \
             -t ${{ env.REPO }}/core_backend:${{ github.sha }} \
             .
-          docker push ${{ env.REPO }}/core_backend:latest ${{ env.REPO }}/core_backend:${{ github.sha }}
+          docker image push --all-tags ${{ env.REPO }}/core_backend
 
       - name: Deploy core_backend container
         id: "compute-ssh"
