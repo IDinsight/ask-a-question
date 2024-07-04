@@ -47,9 +47,10 @@ jobs:
 
       - name: Copy Caddy deployment files
         working-directory: deployment/docker-compose
-        run: gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
-          ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~ \
-          --zone ${{ secrets.DEPLOYMENT_ZONE }}
+        run: |
+          gcloud compute scp caddy/Caddyfile \
+              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/Caddyfile \
+              --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
       - name: Deploy Caddy container
         id: "compute-ssh"
@@ -68,7 +69,7 @@ jobs:
                 -p 80:80 \
                 -p 443:443 \
                 -p 443:443/udp \
-                -v ./Caddyfile:/etc/caddy/Caddyfile \
+                -v ~/Caddyfile:/etc/caddy/Caddyfile \
                 --log-driver=gcplogs \
                 --restart always \
                 --network aaq-network \
