@@ -51,7 +51,8 @@ jobs:
 
       - name: Copy Caddy deployment files
         working-directory: deployment/docker-compose
-        run: gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
+        run: |
+          gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
           ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~ \
           --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
