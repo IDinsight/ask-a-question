@@ -76,20 +76,29 @@ async def get_heatmap(
         n_questions = row.n_questions
 
         if hour_of_day % 2 == 1:
-            hour_of_day_grp = hour_of_day - 1
+            hour_grp = hour_of_day - 1
         else:
-            hour_of_day_grp = hour_of_day
-
-        heatmap[day_of_week][f"{hour_of_day_grp:02}:00"] += n_questions
+            hour_grp = hour_of_day
+        hour_grp_str = f"{hour_grp:02}:00"
+        heatmap[hour_grp_str][day_of_week] += n_questions  # type: ignore
 
     return Heatmap.model_validate(heatmap)
 
 
-def initilize_heatmap() -> Dict[Day, Dict[str, int]]:
+def get_linechart(
+    user_id: int, asession: AsyncSession, start_date: date, end_date: date
+) -> Dict[str, Dict[str, int]]:
+    """
+    Retrieve count of queries over time for the user
+    """
+    return dict()
+
+
+def initilize_heatmap() -> Dict[Time, Dict[Day, int]]:
     """
     Initialize heatmap dictionary
     """
-    return {d: {h: 0 for h in get_args(Time)} for d in get_args(Day)}
+    return {h: {d: 0 for d in get_args(Day)} for h in get_args(Time)}
 
 
 async def get_query_count_stats(
