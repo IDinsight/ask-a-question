@@ -20,10 +20,12 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    # TODO: replace improve-gcp-deploy with main
+    environment: gcp-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -36,6 +38,14 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
+      - name: Retrieve domain from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+            google_login_client_id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id
+
       - name: Configure Docker to use gcloud as a credential helper
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
@@ -43,10 +53,12 @@ jobs:
       - name: Build and push admin_app image
         working-directory: admin_app
         run: |
-          gcloud builds submit \
-              --config=../deployment/gcp/cloudbuild_admin_app.yaml \
-              --substitutions \
-              _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
+          docker build \
+            --build-arg NEXT_PUBLIC_BACKEND_URL=https://${{ steps.secret.output.domain }}/api \
+            --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=${{ steps.secret.output.google_login_client_id }} \
+            -t ${{ env.REPO }}/admin_app:latest \
+            -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
+            .
 
       - name: Deploy admin_app container
         id: "compute-ssh"
@@ -81,13 +93,6 @@ jobs:
         id: wait-for-app
         run: sleep 1m
         shell: bash
-
-      - name: Retrieve domain from Secret Manager
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v2"
-        with:
-          secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
 
       - name: Check if deployment was successful
         id: check-deployment
