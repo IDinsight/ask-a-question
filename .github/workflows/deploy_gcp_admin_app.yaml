@@ -59,6 +59,7 @@ jobs:
             -t ${{ env.REPO }}/admin_app:latest \
             -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
             .
+          docker push ${{ env.REPO }}/admin_app:latest ${{ env.REPO }}/admin_app:${{ github.sha }}
 
       - name: Deploy admin_app container
         id: "compute-ssh"
