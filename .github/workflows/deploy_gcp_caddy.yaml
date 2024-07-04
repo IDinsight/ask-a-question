@@ -6,9 +6,9 @@ on:
       - main
       - testing
       - production
+      - improve-gcp-deploy
     paths:
       - "deployment/docker-compose/caddy/**"
-      - "deployment/gcp/cloudbuild_caddy.yaml"
       - ".github/workflows/deploy_gcp_caddy.yaml"
   workflow_dispatch:
 
@@ -20,10 +20,12 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    # TODO: replace improve-gcp-deploy with main
+    environment: gcp-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -36,43 +38,36 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
+      - name: Retrieve secrets from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+
       - name: Configure Docker to use gcloud as a credential helper
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
-      - name: Build and push caddy image
-        working-directory: deployment/docker-compose/caddy
-        run: |
-          gcloud builds submit --config=../../gcp/cloudbuild_caddy.yaml \
-            --substitutions \
-              _RESOURCE_PREFIX=${{ env.RESOURCE_PREFIX }},_DOCKER_REGISTRY_DOMAIN=${{ secrets.DOCKER_REGISTRY_DOMAIN }}
+      - name: Copy Caddy deployment files
+        working-directory: deployment/docker-compose
+        run: gcloud compute scp caddy/Caddyfile docker-compose.gce.yml \
+          ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~ \
+          --zone ${{ secrets.DEPLOYMENT_ZONE }} \
+          --ssh-key-file ${{ secrets.GCP_SSH_PRIVATE_KEY }}
 
       - name: Deploy Caddy container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
-        env:
-          REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}
         with:
           instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
+            export DOMAIN=${{ steps.secrets.outputs.domain }}
             docker-credential-gcr configure-docker \
                 --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
-            docker pull ${{ env.REPO }}/caddy:latest
-            docker stop caddy
-            docker rm caddy
-            docker run -d \
-                -v caddy_data:/data \
-                -v caddy_config:/config \
-                -p 80:80 \
-                -p 443:443 \
-                -p 443:443/udp \
-                --log-driver=gcplogs \
-                --restart always \
-                --network aaq-network \
-                --name caddy \
-                ${{ env.REPO }}/caddy:latest
+            docker compose -f ~/docker-compose.gce.yml up --no-deps -d caddy
             docker system prune --volumes -f
 
       - name: Show deployment command output
@@ -84,13 +79,6 @@ jobs:
         id: wait-for-app
         run: sleep 1m
         shell: bash
-
-      - name: Retrieve domain from Secret Manager
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v2"
-        with:
-          secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
 
       - name: Check if deployment was successful
         id: check-deployment
