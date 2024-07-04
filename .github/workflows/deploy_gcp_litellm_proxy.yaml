@@ -64,7 +64,7 @@ jobs:
             docker rm litellm_proxy
             docker run -d \
               -v ~/litellm_proxy_config.yaml:/app/config.yaml \
-              -e OPENAI_API_KEY=${{ steps.secrets.outputs.openai-api-key }} \
+              -e OPENAI_API_KEY="${{ steps.secrets.outputs.openai-api-key }}" \
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \

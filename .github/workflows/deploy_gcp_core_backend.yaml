@@ -87,19 +87,19 @@ jobs:
               --restart always \
               --network aaq-network \
               --name core_backend \
-              -e JWT_SECRET=${{ steps.secrets.outputs.jwt-secret }} \
-              -e NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=${{ steps.secrets.outputs.google-login-client-id }} \
-              -e DOMAIN=${{ steps.secrets.outputs.domain }} \
-              -e POSTGRES_HOST=${{ steps.secrets.outputs.db-host }} \
-              -e POSTGRES_PASSWORD=${{ steps.secrets.outputs.db-password }} \
-              -e ADMIN_USERNAME=${{ steps.secrets.outputs.admin-username }} \
-              -e ADMIN_PASSWORD=${{ steps.secrets.outputs.admin-password }} \
-              -e ADMIN_API_KEY=${{ steps.secrets.outputs.admin-api-key }} \
+              -e JWT_SECRET="${{ steps.secrets.outputs.jwt-secret }}" \
+              -e NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google-login-client-id }}" \
+              -e DOMAIN="${{ steps.secrets.outputs.domain }}" \
+              -e POSTGRES_HOST="${{ steps.secrets.outputs.db-host }}" \
+              -e POSTGRES_PASSWORD="${{ steps.secrets.outputs.db-password }}" \
+              -e ADMIN_USERNAME="${{ steps.secrets.outputs.admin-username }}" \
+              -e ADMIN_PASSWORD="${{ steps.secrets.outputs.admin-password }}" \
+              -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
               -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
               -e LANGFUSE=True \
-              -e LANGFUSE_SECRET_KEY=${{ steps.secrets.outputs.langfuse-secret-key }} \
-              -e LANGFUSE_PUBLIC_KEY=${{ steps.secrets.outputs.langfuse-public-key }} \
+              -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
+              -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
               -e BACKEND_ROOT_PATH=/api \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f
