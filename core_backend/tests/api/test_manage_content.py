@@ -124,7 +124,7 @@ class TestContentQuota:
 
     @pytest.mark.parametrize(
         "temp_user_token_and_quota",
-        [{"username": "temp_user_unlimited", "content_quota": None}],
+        [{"username": "temp_user_unlimited", "content_quota": 10000}],
         indirect=True,
     )
     async def test_content_quota_unlimited(

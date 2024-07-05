@@ -22,17 +22,143 @@ from core_backend.app.question_answer.schemas import (
     ResultState,
 )
 from core_backend.tests.api.conftest import (
-    TEST_USER_API_KEY,
-    TEST_USER_API_KEY_2,
+    TEST_USERNAME,
+    TEST_USERNAME_2,
 )
+
+
+class TestApiCallQuota:
+
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [
+            {"username": "temp_user_llm_api_limit_0", "api_daily_quota": 0},
+            {"username": "temp_user_llm_api_limit_2", "api_daily_quota": 2},
+            {"username": "temp_user_llm_api_limit_5", "api_daily_quota": 5},
+        ],
+        indirect=True,
+    )
+    async def test_api_call_llm_quota_integer(
+        self,
+        client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ) -> None:
+        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
+
+        for _i in range(api_daily_limit):
+            response = client.post(
+                "/llm-response",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+            assert response.status_code == 200
+        response = client.post(
+            "/llm-response",
+            json={"query_text": "Test question"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 429
+
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [
+            {"username": "temp_user_emb_api_limit_0", "api_daily_quota": 0},
+            {"username": "temp_user_emb_api_limit_2", "api_daily_quota": 2},
+            {"username": "temp_user_emb_api_limit_5", "api_daily_quota": 5},
+        ],
+        indirect=True,
+    )
+    async def test_api_call_embeddings_quota_integer(
+        self,
+        client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ) -> None:
+        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
+
+        for _i in range(api_daily_limit):
+            response = client.post(
+                "/embeddings-search",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+            assert response.status_code == 200
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Test question"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 429
+
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [
+            {"username": "temp_user_mix_api_limit_0", "api_daily_quota": 0},
+            {"username": "temp_user_mix_api_limit_2", "api_daily_quota": 2},
+            {"username": "temp_user_mix_api_limit_5", "api_daily_quota": 5},
+        ],
+        indirect=True,
+    )
+    async def test_api_call_mix_quota_integer(
+        self,
+        client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ) -> None:
+        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
+
+        for i in range(api_daily_limit):
+            if i // 2 == 0:
+                response = client.post(
+                    "/llm-response",
+                    json={"query_text": "Test question"},
+                    headers={"Authorization": f"Bearer {temp_api_key}"},
+                )
+            else:
+                response = client.post(
+                    "/embeddings-search",
+                    json={"query_text": "Test question"},
+                    headers={"Authorization": f"Bearer {temp_api_key}"},
+                )
+            assert response.status_code == 200
+        if api_daily_limit % 2 == 0:
+            response = client.post(
+                "/llm-response",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+        else:
+            response = client.post(
+                "/embeddings-search",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+        assert response.status_code == 429
+
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [{"username": "temp_user_api_unlimited", "api_daily_quota": None}],
+        indirect=True,
+    )
+    async def test_api_quota_unlimited(
+        self,
+        client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ) -> None:
+        temp_api_key, _ = temp_user_api_key_and_api_quota
+
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 200
 
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(
         "token, expected_status_code",
         [
-            (f"{TEST_USER_API_KEY}_incorrect", 401),
-            (TEST_USER_API_KEY, 200),
+            ("api_key_incorrect", 401),
+            ("api_key_correct", 200),
         ],
     )
     async def test_content_response(
@@ -40,12 +166,14 @@ class TestEmbeddingsSearch:
         token: str,
         expected_status_code: int,
         client: TestClient,
+        api_key_user1: str,
         faq_contents: pytest.FixtureRequest,
     ) -> None:
+        request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
             "/embeddings-search",
             json={"query_text": "Tell me about a good sport to play"},
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"Authorization": f"Bearer {request_token}"},
         )
         assert response.status_code == expected_status_code
 
@@ -54,37 +182,40 @@ class TestEmbeddingsSearch:
             assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
-    def question_response(self, client: TestClient) -> QueryResponse:
+    def question_response(
+        self, client: TestClient, api_key_user1: str
+    ) -> QueryResponse:
         response = client.post(
             "/embeddings-search",
             json={
                 "query_text": "Tell me about a good sport to play",
             },
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         return response.json()
 
     @pytest.mark.parametrize(
-        "token, expected_status_code, endpoint",
+        "outcome, expected_status_code, endpoint",
         [
-            (f"{TEST_USER_API_KEY}_incorrect", 401, "/response-feedback"),
-            (TEST_USER_API_KEY, 200, "/response-feedback"),
-            (f"{TEST_USER_API_KEY}_incorrect", 401, "/content-feedback"),
-            (TEST_USER_API_KEY, 200, "/content-feedback"),
+            ("incorrect", 401, "/response-feedback"),
+            ("correct", 200, "/response-feedback"),
+            ("incorrect", 401, "/content-feedback"),
+            ("correct", 200, "/content-feedback"),
         ],
     )
     async def test_response_feedback_correct_token(
         self,
-        token: str,
+        outcome: str,
         expected_status_code: int,
         endpoint: str,
+        api_key_user1: str,
         client: TestClient,
         question_response: Dict[str, Any],
         faq_contents: Dict[str, Any],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
-
+        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
         json = {
             "feedback_text": "This is feedback",
             "query_id": query_id,
@@ -107,6 +238,7 @@ class TestEmbeddingsSearch:
         self,
         endpoint: str,
         client: TestClient,
+        api_key_user1: str,
         question_response: Dict[str, Any],
     ) -> None:
         query_id = question_response["query_id"]
@@ -123,13 +255,17 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
     async def test_response_feedback_incorrect_query_id(
-        self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
+        self,
+        endpoint: str,
+        client: TestClient,
+        api_key_user1: str,
+        question_response: Dict[str, Any],
     ) -> None:
         feedback_secret_key = question_response["feedback_secret_key"]
         json = {
@@ -143,13 +279,17 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
     async def test_response_feedback_incorrect_sentiment(
-        self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
+        self,
+        endpoint: str,
+        client: TestClient,
+        api_key_user1: str,
+        question_response: Dict[str, Any],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -167,13 +307,17 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         assert response.status_code == 422
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
     async def test_response_feedback_sentiment_only(
-        self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
+        self,
+        endpoint: str,
+        client: TestClient,
+        api_key_user1: str,
+        question_response: Dict[str, Any],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -189,23 +333,26 @@ class TestEmbeddingsSearch:
         response = client.post(
             endpoint,
             json=json,
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "token, expect_found",
+        "username, expect_found",
         [
-            (TEST_USER_API_KEY, True),
-            (TEST_USER_API_KEY_2, False),
+            (TEST_USERNAME, True),
+            (TEST_USERNAME_2, False),
         ],
     )
     async def test_user2_access_user1_content(
         self,
         client: TestClient,
-        token: str,
+        username: str,
+        api_key_user1: str,
+        api_key_user2: str,
         expect_found: bool,
     ) -> None:
+        token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
             "/embeddings-search",
             json={"query_text": "Tell me about camping"},
@@ -231,6 +378,7 @@ class TestEmbeddingsSearch:
         content_id: int,
         response_code: int,
         client: TestClient,
+        api_key_user1: str,
         question_response: Dict[str, Any],
         faq_contents: Dict[str, Any],
     ) -> None:
@@ -245,26 +393,28 @@ class TestEmbeddingsSearch:
                 "feedback_sentiment": "positive",
                 "feedback_secret_key": feedback_secret_key,
             },
-            headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
         )
         assert response.status_code == response_code
 
 
 class TestGenerateResponse:
     @pytest.mark.parametrize(
-        "token, expected_status_code",
+        "outcome, expected_status_code",
         [
-            (f"{TEST_USER_API_KEY}_incorrect", 401),
-            (TEST_USER_API_KEY, 200),
+            ("incorrect", 401),
+            ("correct", 200),
         ],
     )
     async def test_llm_response(
         self,
-        token: str,
+        outcome: str,
         expected_status_code: int,
         client: TestClient,
+        api_key_user1: str,
         faq_contents: pytest.FixtureRequest,
     ) -> None:
+        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
         response = client.post(
             "/llm-response",
             json={"query_text": "Tell me about a good sport to play"},
@@ -283,18 +433,21 @@ class TestGenerateResponse:
             assert result_state == ResultState.FINAL
 
     @pytest.mark.parametrize(
-        "token, expect_found",
+        "username, expect_found",
         [
-            (TEST_USER_API_KEY, True),
-            (TEST_USER_API_KEY_2, False),
+            (TEST_USERNAME, True),
+            (TEST_USERNAME_2, False),
         ],
     )
     async def test_user2_access_user1_content(
         self,
         client: TestClient,
-        token: str,
+        username: str,
+        api_key_user1: str,
+        api_key_user2: str,
         expect_found: bool,
     ) -> None:
+        token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
             "/llm-response",
             json={"query_text": "Tell me about camping"},

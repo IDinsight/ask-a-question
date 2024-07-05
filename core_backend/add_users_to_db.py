@@ -14,12 +14,15 @@ USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
 USER1_API_KEY = os.environ.get("USER1_API_KEY", "admin-key")
 USER1_CONTENT_QUOTA = os.environ.get("USER1_CONTENT_QUOTA", None)
+USER1_API_QUOTA = os.environ.get("USER1_API_QUOTA", None)
+
 
 user_db = UserDB(
     username=USER1_USERNAME,
     hashed_password=get_password_salted_hash(USER1_PASSWORD),
     hashed_api_key=get_key_hash(USER1_API_KEY),
     content_quota=USER1_CONTENT_QUOTA,
+    api_daily_quota=USER1_API_QUOTA,
     created_datetime_utc=datetime.utcnow(),
     updated_datetime_utc=datetime.utcnow(),
 )

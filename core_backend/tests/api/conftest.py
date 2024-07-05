@@ -46,17 +46,23 @@ CompletionData = namedtuple("CompletionData", "choices")
 CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
 
+TEST_USER_ID = 0  # updated by "admin_user" fixture. Required for some tests.
+TEST_ADMIN_USERNAME = "admin"
+TEST_ADMIN_PASSWORD = "admin_password"
+TEST_ADMIN_API_KEY = "admin_api_key"
 
-TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
+
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
 TEST_CONTENT_QUOTA = 50
+TEST_API_QUOTA = 2000
 
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
 TEST_CONTENT_QUOTA_2 = 50
+TEST_API_QUOTA_2 = 2000
 
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
@@ -99,30 +105,80 @@ async def asession(
 
 
 @pytest.fixture(scope="session", autouse=True)
-def user(client: TestClient, db_session: Session) -> None:
+def admin_user(client: TestClient, db_session: Session) -> None:
     global TEST_USER_ID
-    user1_db = UserDB(
-        username=TEST_USERNAME,
-        hashed_password=get_password_salted_hash(TEST_PASSWORD),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY),
-        content_quota=TEST_CONTENT_QUOTA,
+    admin_user = UserDB(
+        username=TEST_ADMIN_USERNAME,
+        hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
+        hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
+        content_quota=None,
+        api_daily_quota=None,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
-    user2_db = UserDB(
-        username=TEST_USERNAME_2,
-        hashed_password=get_key_hash(TEST_PASSWORD_2),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
-        content_quota=TEST_CONTENT_QUOTA_2,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
-    )
-    db_session.add(user1_db)
-    db_session.add(user2_db)
+
+    db_session.add(admin_user)
     db_session.commit()
+    yield admin_user.user_id
+
+
+@pytest.fixture(scope="session", autouse=True)
+def user(
+    client: TestClient, db_session: Session, admin_user, fullaccess_token_admin: str
+) -> None:
+    global TEST_USER_ID
+    client.post(
+        "/user",
+        json={
+            "username": TEST_USERNAME,
+            "password": TEST_PASSWORD,
+            "content_quota": TEST_CONTENT_QUOTA,
+            "api_daily_quota": TEST_API_QUOTA,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+    client.post(
+        "/user",
+        json={
+            "username": TEST_USERNAME_2,
+            "password": TEST_PASSWORD_2,
+            "content_quota": TEST_CONTENT_QUOTA_2,
+            "api_daily_quota": TEST_API_QUOTA_2,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
 
     # update the TEST_USER_ID global variable
-    TEST_USER_ID = user1_db.user_id
+    TEST_USER_ID = 2
+
+
+# @pytest.fixture(scope="session", autouse=True)
+# def user(client: TestClient, db_session: Session) -> None:
+#     global TEST_USER_ID
+#     user1_db = UserDB(
+#         username=TEST_USERNAME,
+#         hashed_password=get_password_salted_hash(TEST_PASSWORD),
+#         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
+#         content_quota=TEST_CONTENT_QUOTA,
+#         api_daily_quota=TEST_API_QUOTA,
+#         created_datetime_utc=datetime.utcnow(),
+#         updated_datetime_utc=datetime.utcnow(),
+#     )
+#     user2_db = UserDB(
+#         username=TEST_USERNAME_2,
+#         hashed_password=get_key_hash(TEST_PASSWORD_2),
+#         hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
+#         content_quota=TEST_CONTENT_QUOTA_2,
+#         api_daily_quota=TEST_API_QUOTA_2,
+#         created_datetime_utc=datetime.utcnow(),
+#         updated_datetime_utc=datetime.utcnow(),
+#     )
+#     db_session.add(user1_db)
+#     db_session.add(user2_db)
+#     db_session.commit()
+
+#     # update the TEST_USER_ID global variable
+#     TEST_USER_ID = user1_db.user_id
 
 
 @pytest.fixture(scope="session")
@@ -213,9 +269,49 @@ async def urgency_rules(client: TestClient, db_session: Session) -> int:
 
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
-    app = create_app()
+    redis_url = "redis://localhost:6397"
+    app = create_app(redis_url)
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(scope="module")
+def temp_user_api_key_and_api_quota(
+    request: pytest.FixtureRequest,
+    fullaccess_token_admin: str,
+    client: TestClient,
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    api_daily_quota = request.param["api_daily_quota"]
+
+    if api_daily_quota is not None:
+        json = {
+            "username": username,
+            "password": "temp_password",
+            "content_quota": 50,
+            "api_daily_quota": api_daily_quota,
+        }
+    else:
+        json = {
+            "username": username,
+            "password": "temp_password",
+            "content_quota": 50,
+        }
+
+    client.post(
+        "/user",
+        json=json,
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+
+    access_token = create_access_token(username)
+    response_key = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    api_key = response_key.json()["new_api_key"]
+
+    yield (api_key, api_daily_quota)
 
 
 @pytest.fixture(scope="session")
@@ -323,6 +419,14 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
 
 
 @pytest.fixture(scope="session")
+def fullaccess_token_admin() -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token(TEST_ADMIN_USERNAME)
+
+
+@pytest.fixture(scope="session")
 def fullaccess_token() -> str:
     """
     Returns a token with full access
@@ -336,6 +440,30 @@ def fullaccess_token_user2() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME_2)
+
+
+@pytest.fixture(scope="session")
+def api_key_user1(client, fullaccess_token: str) -> str:
+    """
+    Returns a token with full access
+    """
+    response = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
+    return response.json()["new_api_key"]
+
+
+@pytest.fixture(scope="session")
+def api_key_user2(client, fullaccess_token_user2: str) -> str:
+    """
+    Returns a token with full access
+    """
+    response = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+    )
+    return response.json()["new_api_key"]
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import (
     DateTime,
@@ -37,6 +38,7 @@ class UserDB(Base):
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -73,6 +75,7 @@ async def save_user_to_db(
     user_db = UserDB(
         username=user.username,
         content_quota=user.content_quota,
+        api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
@@ -83,6 +86,17 @@ async def save_user_to_db(
     await asession.refresh(user_db)
 
     return user_db
+
+
+async def get_all_users(
+    asession: AsyncSession,
+) -> List[UserDB]:
+    """
+    Retrieves all users
+    """
+    stmt = select(UserDB)
+    result = (await asession.execute(stmt)).all()
+    return [c[0] for c in result] if result else []
 
 
 async def update_user_api_key(

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
+
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..tags.models import validate_tags
@@ -35,7 +35,6 @@ logger = setup_logger()
 async def create_content(
     content: ContentCreate,
     user_db: Annotated[UserDB, Depends(get_current_user)],
-    request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve | None:
     """
@@ -171,18 +170,6 @@ async def retrieve_content_by_id(
         )
 
     return _convert_record_to_schema(record)
-
-
-@router.get("/redis")
-async def read_root(
-    request: Request,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-) -> dict[str, str] | None:
-    await request.app.state.redis.set("my-key", "value")
-    print("set key")
-    value = await request.app.state.redis.get("my-key", encoding="utf-8")
-    print(value)
-    return {"my-key": value}
 
 
 @router.post("/csv-upload", response_model=List[ContentRetrieve])

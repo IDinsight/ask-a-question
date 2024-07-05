@@ -10,6 +10,7 @@ from fastapi.security import (
 )
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from ..config import DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
@@ -39,7 +40,6 @@ async def authenticate_key(
     the question-answering endpoints
     """
     token = credentials.credentials
-
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
@@ -135,3 +135,22 @@ def create_access_token(username: str) -> str:
     payload["type"] = "access_token"
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+async def rate_limiter(
+    request: Request,
+    user_db: UserDB = Depends(authenticate_key),
+) -> None:
+    username = user_db.username
+
+    redis = request.app.state.redis
+    nb_remaining = await redis.get(f"remaining-calls:{username}")
+
+    if nb_remaining != b"None":
+        nb_remaining = int(nb_remaining)
+        if nb_remaining <= 0:
+            raise HTTPException(status_code=429, detail="API call limit reached.")
+        await redis.set(
+            f"remaining-calls:{username}",
+            nb_remaining - 1,
+        )

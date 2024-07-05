@@ -12,6 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..contents.models import ContentDB
 from ..models import Base, JSONDict
 from .schemas import (
     ContentFeedback,

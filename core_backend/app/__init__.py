@@ -1,6 +1,7 @@
 from typing import Callable
 
 import aioredis
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
@@ -21,9 +22,11 @@ from . import (
     user_tools,
     whatsapp_qa,
 )
-from .config import DOMAIN, LANGFUSE, REDIS_HOST
+from .config import DOMAIN, LANGFUSE
+from .database import get_async_session
 from .prometheus_middleware import PrometheusMiddleware
-from .utils import setup_logger
+from .users.models import get_all_users
+from .utils import encode_api_limit, setup_logger
 
 logger = setup_logger()
 
@@ -43,7 +46,7 @@ def create_metrics_app() -> Callable:
     return make_asgi_app(registry=registry)
 
 
-def create_app() -> FastAPI:
+def create_app(redis_host: str) -> FastAPI:
     """Application Factory"""
     app = FastAPI(title="Question Answering Service", debug=True)
     app.include_router(admin.routers.router)
@@ -74,14 +77,35 @@ def create_app() -> FastAPI:
     metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
 
+    async def reset_quota() -> None:
+        redis = app.state.redis
+        async for asession in get_async_session():
+            try:
+                users = await get_all_users(asession)
+                for user in users:
+                    api_daily_quota = encode_api_limit(user.api_daily_quota)
+                    await redis.set(
+                        f"remaining-calls:{user.username}",
+                        api_daily_quota,
+                    )
+                logger.info("Successfully Synced Redis to database")
+            except Exception as e:
+                logger.info(f"Redis sync failed: {e}")
+
     @app.on_event("startup")
     async def startup_event() -> None:
         """Startup event"""
-        app.state.redis = await aioredis.from_url(REDIS_HOST)
+        app.state.redis = await aioredis.from_url(redis_host)
         logger.info("Application started")
+        scheduler = AsyncIOScheduler()
+        await reset_quota()
+        scheduler.add_job(reset_quota, "interval", minutes=1440)
+        scheduler.start()
+        app.state.scheduler = scheduler
 
     @app.on_event("shutdown")
-    async def shutdown():
+    async def shutdown() -> None:
         await app.state.redis.close()
+        app.state.scheduler.shutdown()
 
     return app

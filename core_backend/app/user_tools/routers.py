@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
@@ -14,7 +15,7 @@ from ..users.models import (
     update_user_api_key,
 )
 from ..users.schemas import UserCreate, UserCreateWithPassword
-from ..utils import generate_key, setup_logger
+from ..utils import encode_api_limit, generate_key, setup_logger
 from .schemas import KeyResponse
 
 router = APIRouter(prefix="/user", tags=["User Tools"])
@@ -25,12 +26,12 @@ logger = setup_logger()
 async def create_user(
     user: UserCreateWithPassword,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreate | None:
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
-
     if user_db.user_id != 1:
         raise HTTPException(
             status_code=403,
@@ -42,9 +43,14 @@ async def create_user(
             user=user,
             asession=asession,
         )
+        await request.app.state.redis.set(
+            f"remaining-calls:{user_db.username}",
+            encode_api_limit(user_db.api_daily_quota),
+        )
         return UserCreate(
             username=user_db.username,
             content_quota=user_db.content_quota,
+            api_daily_quota=user_db.api_daily_quota,
         )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")

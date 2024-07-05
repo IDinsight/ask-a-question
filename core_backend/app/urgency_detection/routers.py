@@ -3,7 +3,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_key
+from ..auth.dependencies import authenticate_key, rate_limiter
 from ..database import get_async_session
 from ..llm_call.entailment import detect_urgency
 from ..urgency_rules.models import (
@@ -21,7 +21,10 @@ from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
 logger = setup_logger()
-router = APIRouter(dependencies=[Depends(authenticate_key)], tags=["Urgency Detection"])
+router = APIRouter(
+    dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
+    tags=["Urgency Detection"],
+)
 
 ALL_URGENCY_CLASSIFIERS = {}
 

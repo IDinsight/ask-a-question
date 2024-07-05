@@ -204,3 +204,11 @@ def get_http_client() -> aiohttp.ClientSession:
         http_client.start()
         _HTTP_CLIENT = http_client()
     return _HTTP_CLIENT
+
+
+def encode_api_limit(api_limit: int | None) -> int | str:
+    """
+    Encode the api limit for redis
+    """
+
+    return int(api_limit) if api_limit is not None else "None"

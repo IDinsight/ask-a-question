@@ -2,11 +2,11 @@ import logging
 
 import uvicorn
 from app import create_app
-from app.config import BACKEND_ROOT_PATH
+from app.config import BACKEND_ROOT_PATH, REDIS_HOST
 from fastapi.logger import logger
 from uvicorn.workers import UvicornWorker
 
-app = create_app()
+app = create_app(REDIS_HOST)
 
 
 class Worker(UvicornWorker):

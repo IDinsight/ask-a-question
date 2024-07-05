@@ -5,15 +5,16 @@ from core_backend.tests.api.conftest import TEST_USER_API_KEY_2
 
 class TestUserCreation:
     async def test_admin_create_user(
-        self, client: TestClient, fullaccess_token: str
+        self, client: TestClient, fullaccess_token_admin: str
     ) -> None:
         response = client.post(
             "/user/",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
             json={
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
+                "api_daily_quota": 200,
             },
         )
 
@@ -22,15 +23,16 @@ class TestUserCreation:
         assert json_response["username"] == "test_username_5"
 
     async def test_admin_create_user_existing_user(
-        self, client: TestClient, fullaccess_token: str
+        self, client: TestClient, fullaccess_token_admin: str
     ) -> None:
         response = client.post(
             "/user/",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
             json={
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
+                "api_daily_quota": 200,
             },
         )
 
@@ -46,6 +48,7 @@ class TestUserCreation:
                 "username": "test_username_6",
                 "password": "password",
                 "content_quota": 50,
+                "api_daily_quota": 200,
             },
         )
 
@@ -53,8 +56,9 @@ class TestUserCreation:
 
 
 class TestKeyManagement:
+
     async def test_get_new_api_key(
-        self, client: TestClient, fullaccess_token_user2: str
+        self, client: TestClient, api_key_user2: str, fullaccess_token_user2: str
     ) -> None:
         response = client.put(
             "/user/rotate-key",
