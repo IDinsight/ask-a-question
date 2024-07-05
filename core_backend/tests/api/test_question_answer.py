@@ -316,7 +316,7 @@ class TestGenerateResponse:
                 assert len(all_retrieved_content_ids) == 0
 
     @pytest.mark.parametrize(
-        "token, use_tts, expected_status_code, expect_tts_file",
+        "token, generate_tts, expected_status_code, expect_tts_file",
         [
             (TEST_USER_API_KEY, True, 200, True),
             (TEST_USER_API_KEY, False, 200, False),
@@ -326,7 +326,7 @@ class TestGenerateResponse:
     async def test_llm_response_with_tts_option(
         self,
         token: str,
-        use_tts: bool,
+        generate_tts: bool,
         expected_status_code: int,
         expect_tts_file: bool,
         client: TestClient,
@@ -334,7 +334,7 @@ class TestGenerateResponse:
     ) -> None:
         user_query = {
             "query_text": "What is the capital of France?",
-            "use_tts": use_tts,
+            "generate_tts": generate_tts,
         }
 
         with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):
@@ -350,10 +350,9 @@ class TestGenerateResponse:
                 json_response = response.json()
 
                 if expect_tts_file:
-                    assert "tts_file" in json_response
                     assert json_response["tts_file"] is not None
                 else:
-                    assert "tts_file" not in json_response
+                    assert json_response["tts_file"] is None
 
 
 class TestErrorResponses:

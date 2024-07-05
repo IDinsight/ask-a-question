@@ -41,7 +41,7 @@ class QueryDB(Base):
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=True)
 
     response_feedback: Mapped[List["ResponseFeedbackDB"]] = relationship(
         "ResponseFeedbackDB", back_populates="query", lazy=True
@@ -137,9 +137,8 @@ async def save_query_response_to_db(
 
     tts_file = response.model_dump().get("tts_file")
     if tts_file:
-        user_query_responses_db["tts_file"] = tts_file
+        user_query_responses_db.tts_file = tts_file
 
-    user_query_responses_db = QueryResponseDB(**user_query_responses_db)
     asession.add(user_query_responses_db)
     await asession.commit()
     await asession.refresh(user_query_responses_db)
