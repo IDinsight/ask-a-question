@@ -11,6 +11,7 @@ env:
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
   ALIGN_SCORE_API: http://alignscore:5001/alignscore_base
+  REDIS_HOST: redis://redis:6379
 jobs:
   container-job:
     runs-on: ubuntu-20.04
@@ -68,5 +69,6 @@ jobs:
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
             ALIGN_SCORE_API=$ALIGN_SCORE_API
+          export REDIS_HOST=$REDIS_HOST
           python -m alembic upgrade head
           python -m pytest -m "not rails" tests

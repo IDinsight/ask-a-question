@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
 from datetime import datetime
+import os
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 import httpx
@@ -243,7 +244,7 @@ async def urgency_rules(client: TestClient, user1: int, db_session: Session) -> 
 
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
-    redis_url = "redis://redis:6379"
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6397")
     app = create_app(redis_url)
     with TestClient(app) as c:
         yield c
