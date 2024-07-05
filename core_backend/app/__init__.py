@@ -106,6 +106,7 @@ def create_app(redis_host: str) -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown() -> None:
+        """Shutdown event"""
         await app.state.redis.close()
         app.state.scheduler.shutdown()
 
