@@ -251,14 +251,6 @@ class TestEmbeddingsSearch:
         assert response.status_code == response_code
 
 
-@pytest.fixture
-def mock_gtts() -> MagicMock:
-    mock_gTTS = MagicMock()
-    mock_gTTS_instance = mock_gTTS.return_value
-    mock_gTTS_instance.save = MagicMock()
-    return mock_gTTS
-
-
 class TestGenerateResponse:
     @pytest.mark.parametrize(
         "token, expected_status_code",
@@ -312,29 +304,29 @@ class TestGenerateResponse:
         assert response.status_code == 200
 
         if response.status_code == 200:
-            all_retireved_content_ids = [
+            all_retrieved_content_ids = [
                 value["retrieved_content_id"]
                 for value in response.json()["content_response"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
-                assert len(all_retireved_content_ids) > 0
+                assert len(all_retrieved_content_ids) > 0
             else:
                 # user2 should not have any content
-                assert len(all_retireved_content_ids) == 0
+                assert len(all_retrieved_content_ids) == 0
 
     @pytest.mark.parametrize(
-        "token, query_metadata, expected_status_code, expect_tts_file",
+        "token, use_tts, expected_status_code, expect_tts_file",
         [
-            (TEST_USER_API_KEY, {"use_tts": True}, 200, True),
-            (TEST_USER_API_KEY, {"use_tts": False}, 200, False),
-            (f"{TEST_USER_API_KEY}_incorrect", {"use_tts": True}, 401, False),
+            (TEST_USER_API_KEY, True, 200, True),
+            (TEST_USER_API_KEY, False, 200, False),
+            (f"{TEST_USER_API_KEY}_incorrect", True, 401, False),
         ],
     )
     async def test_llm_response_with_tts_option(
         self,
         token: str,
-        query_metadata: dict,
+        use_tts: bool,
         expected_status_code: int,
         expect_tts_file: bool,
         client: TestClient,
@@ -342,7 +334,7 @@ class TestGenerateResponse:
     ) -> None:
         user_query = {
             "query_text": "What is the capital of France?",
-            "query_metadata": query_metadata,
+            "use_tts": use_tts,
         }
 
         with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):
@@ -356,17 +348,12 @@ class TestGenerateResponse:
 
             if expected_status_code == 200:
                 json_response = response.json()
-                print(f"JSON response: {json_response}")
 
-                if "tts_file" in json_response:
-                    if expect_tts_file:
-                        assert json_response["tts_file"] is not None
-                    else:
-                        assert json_response["tts_file"] is None
+                if expect_tts_file:
+                    assert "tts_file" in json_response
+                    assert json_response["tts_file"] is not None
                 else:
-                    assert (
-                        not expect_tts_file
-                    ), "Expected 'tts_file' but it was not found"
+                    assert "tts_file" not in json_response
 
 
 class TestErrorResponses:

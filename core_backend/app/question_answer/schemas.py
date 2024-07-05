@@ -14,6 +14,7 @@ class QueryBase(BaseModel):
 
     query_text: str
     query_metadata: dict = {}
+    generate_tts: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
