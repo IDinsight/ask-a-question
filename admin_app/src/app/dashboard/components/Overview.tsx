@@ -27,6 +27,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const heatmapOptions: ApexOptions = {
     chart: {
       id: "usage-heatmap",
+      width: "100%",
     },
     dataLabels: {
       enabled: false,
@@ -41,6 +42,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     },
     dataLabels: {
       enabled: false,
+    },
+    xaxis: {
+      type: "datetime",
     },
     colors: ["#E91E63", "#546E7A", "#2E93FA"],
   };
@@ -94,6 +98,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       { name: "Total Queries", data: total_queries },
     ];
 
+    console.log(seriesData);
     setTimeseriesData(seriesData);
   };
 

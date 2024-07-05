@@ -1,8 +1,9 @@
 from datetime import date
-from typing import Dict, Union, get_args
+from typing import Dict, Tuple, Union, get_args
 
 from sqlalchemy import case, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import Subquery
 
 from ..question_answer.models import (
     ContentFeedbackDB,
@@ -109,7 +110,37 @@ async def get_timeseries(
         not_urgent_not_escalated=query_ts["not_escalated"],
     )
 
-    return dict()
+
+def get_time_labels_query(
+    frequency: TimeFrequency, start_date: date, end_date: date
+) -> Tuple[str, Subquery]:
+    """
+    Get time labels for the query time series
+    """
+    match frequency:
+        case TimeFrequency.Day:
+            interval_str = "day"
+        case TimeFrequency.Week:
+            interval_str = "week"
+        case TimeFrequency.Hour:
+            interval_str = "hour"
+        case _:
+            raise ValueError("Invalid frequency")
+
+    return interval_str, (
+        select(
+            func.date_trunc(interval_str, literal_column("period_start")).label(
+                "time_period"
+            )
+        )
+        .select_from(
+            text(
+                f"generate_series('{start_date}', '{end_date}', '1 {interval_str}'"
+                "::interval) AS period_start"
+            )
+        )
+        .alias("ts_labels")
+    )
 
 
 async def get_timeseries_query(
@@ -122,28 +153,7 @@ async def get_timeseries_query(
     """
     Retrieve count of queries over time for the user
     """
-    match frequency:
-        case TimeFrequency.Day:
-            interval_str = "day"
-        case TimeFrequency.Week:
-            interval_str = "week"
-        case TimeFrequency.Hour:
-            interval_str = "hour"
-        case _:
-            raise ValueError("Invalid frequency")
-
-    ts_labels = (
-        select((literal_column("period_start")).label("time_period"))
-        .select_from(
-            text(
-                (
-                    f"generate_series('{start_date}', '{end_date}', '1 {interval_str}'"
-                    "::interval) AS period_start"
-                )
-            )
-        )
-        .alias("ts_labels")
-    )
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
     statement = (
         select(
@@ -173,7 +183,6 @@ async def get_timeseries_query(
             func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
-        # .where(ResponseFeedbackDB.feedback_datetime_utc.between(start_date, end_date))
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
@@ -182,11 +191,10 @@ async def get_timeseries_query(
     rows = result.fetchall()
     escalated = dict()
     not_escalated = dict()
+    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
     for row in rows:
-        escalated[row.time_period.strftime("%m/%d/%Y, %H:%M:%S")] = (
-            row.negative_feedback_count
-        )
-        not_escalated[row.time_period.strftime("%m/%d/%Y, %H:%M:%S")] = (
+        escalated[row.time_period.strftime(format_str)] = row.negative_feedback_count
+        not_escalated[row.time_period.strftime(format_str)] = (
             row.non_negative_feedback_count
         )
 
@@ -203,7 +211,38 @@ async def get_timeseries_urgency(
     """
     Retrieve count of urgent queries over time for the user
     """
-    return dict()
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+
+    statement = (
+        select(
+            ts_labels.c.time_period,
+            func.coalesce(
+                func.count(
+                    case(
+                        (UrgencyResponseDB.is_urgent == True, 1),  # noqa
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("n_urgent"),
+        )
+        .select_from(ts_labels)
+        .outerjoin(
+            UrgencyResponseDB,
+            func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
+            == func.date_trunc(interval_str, ts_labels.c.time_period),
+        )
+        .group_by(ts_labels.c.time_period)
+        .order_by(ts_labels.c.time_period)
+    )
+
+    await asession.execute(statement)
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
+
+    return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
 
 
 def initilize_heatmap() -> Dict[TimeHours, Dict[Day, int]]:
