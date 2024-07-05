@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Dict, List, Literal, get_args
 
@@ -133,7 +134,7 @@ class TopContent(BaseModel):
     query_count: int
     positive_votes: int
     negative_votes: int
-    last_updated: str
+    last_updated: datetime
 
 
 class DashboardOverview(BaseModel):

@@ -1,3 +1,7 @@
+# This script is useful if you want to test the dashboard with dummy data.
+# Run it using the following command:
+#    > PYTHON_PATH="../../../" python add_dummy_data_to_db.py
+
 import os
 import random
 from datetime import datetime, timedelta

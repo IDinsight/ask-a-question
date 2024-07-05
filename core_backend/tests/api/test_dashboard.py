@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
-from typing import AsyncGenerator, Dict, Tuple
+from typing import AsyncGenerator, Dict, List, Tuple
 
+import numpy as np
 import pytest
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
+from core_backend.app.contents.models import ContentDB
 from core_backend.app.dashboard.models import (
     get_content_feedback_stats,
     get_heatmap,
@@ -13,6 +16,7 @@ from core_backend.app.dashboard.models import (
     get_response_feedback_stats,
     get_timeseries_query,
     get_timeseries_urgency,
+    get_top_content,
     get_urgency_stats,
 )
 from core_backend.app.dashboard.schemas import TimeFrequency
@@ -613,4 +617,82 @@ def get_previous_date_and_frequency(period: str) -> Tuple[datetime, TimeFrequenc
 
 
 class TestTopContent:
-    pass
+    content: List[Dict[str, str | int]] = [
+        {
+            "title": "Ways to manage back pain during pregnancy",
+            "query_count": 100,
+            "positive_votes": 50,
+            "negative_votes": 10,
+        },
+        {
+            "title": "Headache during pregnancy is normal ‚except after 20 weeks",
+            "query_count": 200,
+            "positive_votes": 100,
+            "negative_votes": 20,
+        },
+        {
+            "title": "Yes, pregnancy can cause TOOTHACHE",
+            "query_count": 300,
+            "positive_votes": 150,
+            "negative_votes": 30,
+        },
+        {
+            "title": "Ways to manage HEARTBURN in pregnancy",
+            "query_count": 400,
+            "positive_votes": 200,
+            "negative_votes": 40,
+        },
+        {
+            "title": "Some LEG cramps are normal during pregnancy",
+            "query_count": 500,
+            "positive_votes": 250,
+            "negative_votes": 50,
+        },
+    ]
+
+    @pytest.fixture(scope="function")
+    async def content_data(self, asession: AsyncSession) -> AsyncGenerator[None, None]:
+        """
+        Add N_DATAPOINTS of data for each day in the past year.
+        """
+
+        for _i, c in enumerate(self.content):
+            content_db = ContentDB(
+                user_id=1,
+                content_embedding=np.random.rand(int(PGVECTOR_VECTOR_SIZE))
+                .astype(np.float32)
+                .tolist(),
+                content_title=c["title"],
+                content_text="Test content #{i}",
+                content_metadata={},
+                created_datetime_utc=datetime.now(),
+                updated_datetime_utc=datetime.now(),
+                query_count=c["query_count"],
+                positive_votes=c["positive_votes"],
+                negative_votes=c["negative_votes"],
+            )
+            asession.add(content_db)
+
+        await asession.commit()
+        yield
+        delete_content = delete(ContentDB).where(ContentDB.content_id > 0)
+        await asession.execute(delete_content)
+
+    async def test_top_content(
+        self, content_data: pytest.FixtureRequest, asession: AsyncSession
+    ) -> None:
+
+        N_TOP_CONTENT = 4
+
+        top_content = await get_top_content(1, asession, N_TOP_CONTENT)
+
+        assert len(top_content) == N_TOP_CONTENT
+        # Sort self.content by query count
+        content_sorted = sorted(
+            self.content, key=lambda x: x["query_count"], reverse=True
+        )
+        for i, c in enumerate(content_sorted[:N_TOP_CONTENT]):
+            assert top_content[i].title == c["title"]
+            assert top_content[i].query_count == c["query_count"]
+            assert top_content[i].positive_votes == c["positive_votes"]
+            assert top_content[i].negative_votes == c["negative_votes"]
