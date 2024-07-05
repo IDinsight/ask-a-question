@@ -1,11 +1,15 @@
-import datetime
+from datetime import datetime
 from typing import Any, Dict, Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
+from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.contents.routers import _convert_record_to_schema
+from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
 from .conftest import async_fake_embedding
 
@@ -31,7 +35,6 @@ def existing_content_id(
         json={
             "content_title": request.param[0],
             "content_text": request.param[1],
-            "content_language": "ENGLISH",
             "content_tags": [],
             "content_metadata": request.param[2],
         },
@@ -42,6 +45,115 @@ def existing_content_id(
         f"/content/{content_id}",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
     )
+
+
+@pytest.fixture(scope="class")
+def temp_user_token_and_quota(
+    request: pytest.FixtureRequest, client: TestClient, db_session: Session
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    content_quota = request.param["content_quota"]
+
+    temp_user_db = UserDB(
+        username=username,
+        hashed_password=get_password_salted_hash("temp_password"),
+        hashed_api_key=get_key_hash("temp_api_key"),
+        content_quota=content_quota,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(temp_user_db)
+    db_session.commit()
+    yield (create_access_token(username), content_quota)
+    db_session.delete(temp_user_db)
+    db_session.commit()
+
+
+class TestContentQuota:
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_0", "content_quota": 0},
+            {"username": "temp_user_limit_1", "content_quota": 1},
+            {"username": "temp_user_limit_5", "content_quota": 5},
+        ],
+        indirect=True,
+    )
+    async def test_content_quota_integer(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+
+        added_content_ids = []
+        for i in range(content_quota):
+            response = client.post(
+                "/content",
+                headers={"Authorization": f"Bearer {temp_user_token}"},
+                json={
+                    "content_title": f"test title {i}",
+                    "content_text": f"test content {i}",
+                    "content_language": "ENGLISH",
+                    "content_tags": [],
+                    "content_metadata": {},
+                },
+            )
+            assert response.status_code == 200
+            added_content_ids.append(response.json()["content_id"])
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            json={
+                "content_title": "test title",
+                "content_text": "test content",
+                "content_language": "ENGLISH",
+                "content_tags": [],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 403
+
+        for content_id in added_content_ids:
+            response = client.delete(
+                f"/content/{content_id}",
+                headers={"Authorization": f"Bearer {temp_user_token}"},
+            )
+            assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [{"username": "temp_user_unlimited", "content_quota": None}],
+        indirect=True,
+    )
+    async def test_content_quota_unlimited(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+
+        # in this case we need to just be able to add content
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            json={
+                "content_title": "test title",
+                "content_text": "test content",
+                "content_language": "ENGLISH",
+                "content_tags": [],
+                "content_metadata": {},
+            },
+        )
+        assert response.status_code == 200
+
+        content_id = response.json()["content_id"]
+        response = client.delete(
+            f"/content/{content_id}",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+        )
+        assert response.status_code == 200
 
 
 class TestManageContent:
@@ -68,7 +180,6 @@ class TestManageContent:
             json={
                 "content_title": content_title,
                 "content_text": content_text,
-                "content_language": "ENGLISH",
                 "content_tags": content_tags,
                 "content_metadata": content_metadata,
             },
@@ -115,7 +226,6 @@ class TestManageContent:
                 "content_title": content_title,
                 "content_text": content_text,
                 "content_tags": [existing_tag_id],
-                "content_language": "ENGLISH",
                 "content_metadata": content_metadata,
             },
         )
@@ -143,7 +253,6 @@ class TestManageContent:
             json={
                 "content_title": "title",
                 "content_text": "sample text",
-                "content_language": "ENGLISH",
                 "content_metadata": {"key": "value"},
             },
         )
@@ -198,7 +307,6 @@ class TestMultUserManageContent:
             json={
                 "content_title": "user2 title 3",
                 "content_text": "user2 test content 3",
-                "content_language": "ENGLISH",
                 "content_metadata": {},
             },
         )
@@ -226,12 +334,11 @@ async def test_convert_record_to_schema() -> None:
         content_title="sample title for content",
         content_text="sample text",
         content_embedding=await async_fake_embedding(),
-        content_language="ENGLISH",
         positive_votes=0,
         negative_votes=0,
         content_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.datetime.utcnow(),
-        updated_datetime_utc=datetime.datetime.utcnow(),
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id

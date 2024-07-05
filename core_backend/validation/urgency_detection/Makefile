@@ -1,6 +1,6 @@
 #!make
 
-.PHONY : help ud-validation setup-test-containers teardown-test-containers setup-test-db stop-test-db
+.PHONY : help ud-validation setup-test-containers teardown-test-containers setup-test-db teardown-test-db
 
 # Main test target
 ud-validation: setup-test-containers run-ud-validation teardown-test-containers
@@ -20,7 +20,7 @@ run-ud-validation:
 
 ## Helper targets
 setup-test-containers: setup-test-db
-teardown-test-containers: stop-test-db
+teardown-test-containers: teardown-test-db
 
 setup-test-db:
 	-@docker stop testdb
@@ -38,6 +38,6 @@ setup-test-db:
 	cd "../../" && \
 	python -m alembic upgrade head
 
-stop-test-db:
+teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb

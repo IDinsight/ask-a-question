@@ -35,9 +35,8 @@ class UserDB(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
-
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
-
+    content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -71,18 +70,19 @@ async def save_user_to_db(
         random_password = get_random_string(PASSWORD_LENGTH)
         hashed_password = get_password_salted_hash(random_password)
 
-    content_db = UserDB(
+    user_db = UserDB(
         username=user.username,
+        content_quota=user.content_quota,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
 
-    asession.add(content_db)
+    asession.add(user_db)
     await asession.commit()
-    await asession.refresh(content_db)
+    await asession.refresh(user_db)
 
-    return content_db
+    return user_db
 
 
 async def update_user_api_key(
@@ -110,8 +110,6 @@ async def get_user_by_username(
     """
     Retrieves a user by username
     """
-
-    # Check if user with same username already exists
     stmt = select(UserDB).where(UserDB.username == username)
     result = await asession.execute(stmt)
     try:
@@ -121,6 +119,22 @@ async def get_user_by_username(
         raise UserNotFoundError(
             f"User with username {username} does not exist."
         ) from err
+
+
+async def get_content_quota_by_userid(
+    user_id: int,
+    asession: AsyncSession,
+) -> int:
+    """
+    Retrieves a user's content quota by user_id
+    """
+    stmt = select(UserDB).where(UserDB.user_id == user_id)
+    result = await asession.execute(stmt)
+    try:
+        content_quota = result.scalar_one().content_quota
+        return content_quota
+    except NoResultFound as err:
+        raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
 
 
 async def get_user_by_token(

@@ -13,6 +13,7 @@ from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
     ContentDB,
+    ExceedsContentQuotaError,
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
@@ -47,12 +48,18 @@ async def create_content(
         raise HTTPException(status_code=400, detail=f"Invalid tag ids: {content_tags}")
     content.content_tags = content_tags
 
-    content_db = await save_content_to_db(
-        user_id=user_db.user_id,
-        content=content,
-        asession=asession,
-    )
-    return _convert_record_to_schema(content_db)
+    try:
+        content_db = await save_content_to_db(
+            user_id=user_db.user_id,
+            content=content,
+            asession=asession,
+        )
+    except ExceedsContentQuotaError as e:
+        raise HTTPException(
+            status_code=403, detail="Exceeds content quota for user. {e}"
+        ) from e
+    else:
+        return _convert_record_to_schema(content_db)
 
 
 @router.put("/{content_id}", response_model=ContentRetrieve)
@@ -201,7 +208,6 @@ async def bulk_upload_contents(
         content = ContentCreate(
             content_title=row["content_title"],
             content_text=row["content_text"],
-            content_language="ENGLISH",
             content_tags=[],
             content_metadata={},
         )
@@ -385,7 +391,6 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         user_id=record.user_id,
         content_title=record.content_title,
         content_text=record.content_text,
-        content_language=record.content_language,
         content_tags=[tag.tag_id for tag in record.content_tags],
         positive_votes=record.positive_votes,
         negative_votes=record.negative_votes,

@@ -4,7 +4,6 @@ const NEXT_PUBLIC_BACKEND_URL: string =
 interface ContentBody {
   content_title: string;
   content_text: string;
-  content_language: string;
   content_metadata: Record<string, unknown>;
 }
 
@@ -110,21 +109,24 @@ const editContent = async (
 };
 
 const createContent = async (content: ContentBody, token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(content),
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error creating content");
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(content),
+    });
+
+    if (!response.ok) {
+      throw response;
     }
-  });
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getUrgencyRuleList = async (token: string) => {
@@ -365,6 +367,22 @@ const getTagList = async (token: string) => {
   });
 };
 
+const deleteTag = async (tag_id: number, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/tag/${tag_id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error deleting tag");
+    }
+  });
+};
 export const apiCalls = {
   getNewAPIKey,
   getContentList,
@@ -384,4 +402,5 @@ export const apiCalls = {
   getUrgencyDetection,
   createTag,
   getTagList,
+  deleteTag,
 };

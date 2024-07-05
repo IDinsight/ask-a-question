@@ -52,10 +52,12 @@ TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
+TEST_CONTENT_QUOTA = 50
 
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
+TEST_CONTENT_QUOTA_2 = 50
 
 
 def pytest_collection_modifyitems(items: List[Item]) -> None:
@@ -104,6 +106,7 @@ def user(client: TestClient, db_session: Session) -> None:
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
+        content_quota=TEST_CONTENT_QUOTA,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -111,6 +114,7 @@ def user(client: TestClient, db_session: Session) -> None:
         username=TEST_USERNAME_2,
         hashed_password=get_key_hash(TEST_PASSWORD_2),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
+        content_quota=TEST_CONTENT_QUOTA_2,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -142,7 +146,6 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
-            content_language="ENGLISH",
             content_metadata=content.get("content_metadata", {}),
             created_datetime_utc=datetime.utcnow(),
             updated_datetime_utc=datetime.utcnow(),

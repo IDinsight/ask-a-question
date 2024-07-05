@@ -183,7 +183,6 @@ class TestDBDuplicates:
             json={
                 "content_title": "Title in DB",
                 "content_text": "Text in DB",
-                "content_language": "ENGLISH",
                 "content_tags": [],
                 "content_metadata": {},
             },
