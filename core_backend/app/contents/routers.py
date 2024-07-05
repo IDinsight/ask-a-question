@@ -294,33 +294,33 @@ async def bulk_upload_contents(
     return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
-def _get_tags_not_in_db(
-    tags_in_db: List[TagDB],
-    incoming_tags: List[str],
-) -> List[str]:
+async def _check_content_quota_availability(
+    user_id: int,
+    n_contents_to_add: int,
+    asession: AsyncSession,
+) -> None:
     """
-    Compare tags fetched from the DB with incoming tags and return tags not in the DB
-    """
-    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
-    tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
-
-    return tags_not_in_db_list
-
-
-def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
-    """
-    Get unique UPPERCASE tags from a DataFrame column (comma-separated within column)
+    Raise an error if user would reach their content quota given n new contents.
     """
 
-    # prep col
-    tags_col = tags_col.dropna().astype(str)
-    # split and explode to have one tag per row
-    tags_flat = tags_col.str.split(",").explode()
-    # strip and uppercase
-    tags_flat = tags_flat.str.strip().str.upper()
-    # get unique tags as a list
-    tags_unique_list = tags_flat.unique().tolist()
-    return tags_unique_list
+    # get content_quota value for this user from UserDB
+    content_quota = await get_content_quota_by_userid(
+        user_id=user_id, asession=asession
+    )
+
+    # if content_quota is None, then there is no limit
+    if content_quota is not None:
+        # get the number of contents this user has already added
+        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+        user_contents = (await asession.execute(stmt)).all()
+        content_count_in_db = len(user_contents)
+
+        # error if total of existing and new contents exceeds the quota
+        if (content_count_in_db + n_contents_to_add) > content_quota:
+            raise ExceedsContentQuotaError(
+                f"There are already {content_count_in_db} contents for this user. "
+                f"Adding {n_contents_to_add} would exceed the {content_quota} limit."
+            )
 
 
 def _load_csv(file: UploadFile) -> pd.DataFrame:
@@ -482,33 +482,33 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
             raise HTTPException(status_code=400, detail=error_list_model.dict())
 
 
-async def _check_content_quota_availability(
-    user_id: int,
-    asession: AsyncSession,
-    n_contents_to_add: int = 1,
-) -> None:
+def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     """
-    Raise an error if user would reach their content quota given n new contents.
+    Get unique UPPERCASE tags from a DataFrame column (comma-separated within column)
     """
 
-    # get content_quota value for this user from UserDB
-    content_quota = await get_content_quota_by_userid(
-        user_id=user_id, asession=asession
-    )
+    # prep col
+    tags_col = tags_col.dropna().astype(str)
+    # split and explode to have one tag per row
+    tags_flat = tags_col.str.split(",").explode()
+    # strip and uppercase
+    tags_flat = tags_flat.str.strip().str.upper()
+    # get unique tags as a list
+    tags_unique_list = tags_flat.unique().tolist()
+    return tags_unique_list
 
-    # if content_quota is None, then there is no limit
-    if content_quota is not None:
-        # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        content_count_in_db = len(user_contents)
 
-        # error if total of existing and new contents exceeds the quota
-        if (content_count_in_db + n_contents_to_add) > content_quota:
-            raise ExceedsContentQuotaError(
-                f"There are already {content_count_in_db} contents for this user. "
-                f"Adding {n_contents_to_add} would exceed the {content_quota} limit."
-            )
+def _get_tags_not_in_db(
+    tags_in_db: List[TagDB],
+    incoming_tags: List[str],
+) -> List[str]:
+    """
+    Compare tags fetched from the DB with incoming tags and return tags not in the DB
+    """
+    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
+    tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
+
+    return tags_not_in_db_list
 
 
 def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
