@@ -294,35 +294,6 @@ async def bulk_upload_contents(
     return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
-async def _check_content_quota_availability(
-    user_id: int,
-    n_contents_to_add: int,
-    asession: AsyncSession,
-) -> None:
-    """
-    Raise an error if user would reach their content quota given n new contents.
-    """
-
-    # get content_quota value for this user from UserDB
-    content_quota = await get_content_quota_by_userid(
-        user_id=user_id, asession=asession
-    )
-
-    # if content_quota is None, then there is no limit
-    if content_quota is not None:
-        # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        content_count_in_db = len(user_contents)
-
-        # error if total of existing and new contents exceeds the quota
-        if (content_count_in_db + n_contents_to_add) > content_quota:
-            raise ExceedsContentQuotaError(
-                f"There are already {content_count_in_db} contents for this user. "
-                f"Adding {n_contents_to_add} would exceed the {content_quota} limit."
-            )
-
-
 def _load_csv(file: UploadFile) -> pd.DataFrame:
     """
     Load the CSV file into a pandas DataFrame
@@ -393,6 +364,18 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         error_list_model = CustomErrorList(errors=error_list)
         raise HTTPException(status_code=400, detail=error_list_model.dict())
     else:
+        try:
+            await _check_content_quota_availability(
+                user_id=user_id, n_contents_to_add=len(df), asession=asession
+            )
+        except ExceedsContentQuotaError as e:
+            error_list.append(
+                CustomError(
+                    type="exceeds_quota",
+                    description=str(e),
+                )
+            )
+
         # strip columns to catch duplicates better and empty cells
         df["title"] = df["title"].str.strip()
         df["text"] = df["text"].str.strip()
@@ -480,6 +463,36 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         if error_list:
             error_list_model = CustomErrorList(errors=error_list)
             raise HTTPException(status_code=400, detail=error_list_model.dict())
+
+
+async def _check_content_quota_availability(
+    user_id: int,
+    n_contents_to_add: int,
+    asession: AsyncSession,
+) -> None:
+    """
+    Raise an error if user would reach their content quota given n new contents.
+    """
+
+    # get content_quota value for this user from UserDB
+    content_quota = await get_content_quota_by_userid(
+        user_id=user_id, asession=asession
+    )
+
+    # if content_quota is None, then there is no limit
+    if content_quota is not None:
+        # get the number of contents this user has already added
+        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+        user_contents = (await asession.execute(stmt)).all()
+        n_contents_in_db = len(user_contents)
+
+        # error if total of existing and new contents exceeds the quota
+        if (n_contents_in_db + n_contents_to_add) > content_quota:
+            raise ExceedsContentQuotaError(
+                f"Adding {n_contents_to_add} new contents to the already existing "
+                f"{n_contents_in_db} in the database would exceed the allowed limit "
+                f"of {content_quota} contents."
+            )
 
 
 def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
