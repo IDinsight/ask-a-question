@@ -29,6 +29,15 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:6.0-alpine
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6397:6379
       alignscore:
         image: public.ecr.aws/j3r7b4k0/alignscore-base:latest
         ports:
