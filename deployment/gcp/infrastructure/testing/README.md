@@ -1,7 +1,7 @@
-# Instructions for production deployment
+# Instructions for testing deployment
 
 0. Set up terraform backend as per `tf_backend/README.md`
-1. Update `production.auto.tfvars` file
+1. Update `testing.auto.tfvars` file
 2. Initialize with `terraform init -backend-config=backend.conf`
 3. `terraform apply`
 
