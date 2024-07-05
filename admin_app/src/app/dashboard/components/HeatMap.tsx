@@ -12,8 +12,8 @@ const HeatMap = ({ data, options }: { data: any; options: ApexOptions }) => {
     <div>
       <ReactApexcharts
         type="heatmap"
-        height={400}
-        width={350}
+        height={450}
+        width="100%"
         options={options}
         series={data}
       />

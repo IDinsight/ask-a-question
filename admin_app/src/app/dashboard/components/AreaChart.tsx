@@ -13,7 +13,7 @@ const AreaChart = ({ data, options }: { data: any; options: ApexOptions }) => {
       <ReactApexcharts
         type="area"
         width="100%"
-        height={400}
+        height={450}
         options={options}
         series={data}
       />

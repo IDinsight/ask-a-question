@@ -28,11 +28,30 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     chart: {
       id: "usage-heatmap",
       width: "100%",
+      height: "100%",
     },
     dataLabels: {
       enabled: false,
     },
+    title: {
+      text: "Usage Frequency",
+      margin: 2,
+      offsetX: 6,
+      offsetY: 8,
+      floating: false,
+      style: {
+        fontSize: "16px",
+        fontWeight: "bold",
+        fontFamily: undefined,
+        color: "#263238",
+      },
+    },
     colors: ["#008FFB"],
+    plotOptions: {
+      heatmap: {
+        radius: 1,
+      },
+    },
   };
 
   const timeseriesOptions: ApexOptions = {
@@ -45,6 +64,10 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     },
     xaxis: {
       type: "datetime",
+    },
+    legend: {
+      position: "top",
+      horizontalAlign: "left",
     },
     colors: ["#E91E63", "#546E7A", "#2E93FA"],
   };
@@ -181,8 +204,8 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           display: "flex",
           flexDirection: "row",
           alignItems: "stretch",
-          gap: 2,
-          pt: 2,
+          gap: 3,
+          pt: 3,
           maxWidth: 1387,
         }}
       >
@@ -192,7 +215,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
             flexGrow: 1,
             borderRadius: 1,
             minWidth: 250,
-            height: 400,
+            height: 450,
           }}
         >
           <AreaChart data={timeseriesData} options={timeseriesOptions} />
@@ -202,8 +225,8 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           sx={{
             flexGrow: 0,
             borderRadius: 1,
-            width: 350,
-            height: 400,
+            width: 300,
+            height: 450,
           }}
         >
           <HeatMap data={heatmapData} options={heatmapOptions} />
