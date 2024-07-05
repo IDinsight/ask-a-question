@@ -141,6 +141,9 @@ async def rate_limiter(
     request: Request,
     user_db: UserDB = Depends(authenticate_key),
 ) -> None:
+    """
+    Rate limiter for the API calls. Gets daily quota and decrement it
+    """
     username = user_db.username
 
     redis = request.app.state.redis

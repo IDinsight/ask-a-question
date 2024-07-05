@@ -78,6 +78,7 @@ def create_app(redis_host: str) -> FastAPI:
     app.mount("/metrics", metrics_app)
 
     async def reset_quota() -> None:
+        """Reset api daily quota for all users in redis"""
         redis = app.state.redis
         async for asession in get_async_session():
             try:
