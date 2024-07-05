@@ -5,17 +5,18 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
+from ..config import CHECK_CONTENT_LIMIT
 from ..database import get_async_session
 from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate, TagRetrieve
-from ..users.models import UserDB
+from ..users.models import UserDB, get_content_quota_by_userid
 from ..utils import setup_logger
 from .models import (
     ContentDB,
-    ExceedsContentQuotaError,
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
@@ -42,6 +43,13 @@ class BulkUploadResponse(BaseModel):
     contents: List[ContentRetrieve]
 
 
+class ExceedsContentQuotaError(Exception):
+    """
+    Exception raised when a user is attempting to add
+    more content that their quota allows.
+    """
+
+
 @router.post("/", response_model=ContentRetrieve)
 async def create_content(
     content: ContentCreate,
@@ -59,18 +67,25 @@ async def create_content(
         raise HTTPException(status_code=400, detail=f"Invalid tag ids: {content_tags}")
     content.content_tags = content_tags
 
-    try:
-        content_db = await save_content_to_db(
-            user_id=user_db.user_id,
-            content=content,
-            asession=asession,
-        )
-    except ExceedsContentQuotaError as e:
-        raise HTTPException(
-            status_code=403, detail="Exceeds content quota for user. {e}"
-        ) from e
-    else:
-        return _convert_record_to_schema(content_db)
+    # Check if the user would exceed their content quota
+    if CHECK_CONTENT_LIMIT:
+        try:
+            await _check_content_quota_availability(
+                user_id=user_db.user_id,
+                n_contents_to_add=1,
+                asession=asession,
+            )
+        except ExceedsContentQuotaError as e:
+            raise HTTPException(
+                status_code=403, detail="Exceeds content quota for user. {e}"
+            ) from e
+
+    content_db = await save_content_to_db(
+        user_id=user_db.user_id,
+        content=content,
+        asession=asession,
+    )
+    return _convert_record_to_schema(content_db)
 
 
 @router.put("/{content_id}", response_model=ContentRetrieve)
@@ -222,13 +237,13 @@ async def bulk_upload_contents(
 
     created_tags: List[TagRetrieve] = []
     if not skip_tags:
-        incoming_tags = extract_unique_tags(tags_col=df[tags_col])
+        incoming_tags = _extract_unique_tags(tags_col=df[tags_col])
         logger.info(f"Tags in CSV: {incoming_tags}")
         tags_in_db = await get_list_of_tag_from_db(
             user_id=user_db.user_id, asession=asession
         )
         logger.info(f"Tags in DB: {tags_in_db}")
-        tags_to_create = get_tags_not_in_db(
+        tags_to_create = _get_tags_not_in_db(
             tags_in_db=tags_in_db, incoming_tags=incoming_tags
         )
         logger.info(f"Tags to create: {tags_to_create}")
@@ -279,7 +294,7 @@ async def bulk_upload_contents(
     return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
-def get_tags_not_in_db(
+def _get_tags_not_in_db(
     tags_in_db: List[TagDB],
     incoming_tags: List[str],
 ) -> List[str]:
@@ -292,7 +307,7 @@ def get_tags_not_in_db(
     return tags_not_in_db_list
 
 
-def extract_unique_tags(tags_col: pd.Series) -> List[str]:
+def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     """
     Get unique UPPERCASE tags from a DataFrame column (comma-separated within column)
     """
@@ -465,6 +480,35 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         if error_list:
             error_list_model = CustomErrorList(errors=error_list)
             raise HTTPException(status_code=400, detail=error_list_model.dict())
+
+
+async def _check_content_quota_availability(
+    user_id: int,
+    asession: AsyncSession,
+    n_contents_to_add: int = 1,
+) -> None:
+    """
+    Raise an error if user would reach their content quota given n new contents.
+    """
+
+    # get content_quota value for this user from UserDB
+    content_quota = await get_content_quota_by_userid(
+        user_id=user_id, asession=asession
+    )
+
+    # if content_quota is None, then there is no limit
+    if content_quota is not None:
+        # get the number of contents this user has already added
+        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
+        user_contents = (await asession.execute(stmt)).all()
+        content_count_in_db = len(user_contents)
+
+        # error if total of existing and new contents exceeds the quota
+        if (content_count_in_db + n_contents_to_add) > content_quota:
+            raise ExceedsContentQuotaError(
+                f"There are already {content_count_in_db} contents for this user. "
+                f"Adding {n_contents_to_add} would exceed the {content_quota} limit."
+            )
 
 
 def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
