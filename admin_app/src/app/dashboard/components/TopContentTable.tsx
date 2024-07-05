@@ -107,7 +107,7 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
         variant="h6"
         gutterBottom
         component="div"
-        sx={{ p: 3, fontWeight: "bold" }}
+        sx={{ p: 3, py: 2, fontWeight: "bold" }}
       >
         Top Content
       </Typography>

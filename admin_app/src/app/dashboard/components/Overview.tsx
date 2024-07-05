@@ -237,7 +237,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387, height: 250 }}>
+      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387, height: 260 }}>
         <TopContentTable rows={topContentData} />
       </Box>
     </>
