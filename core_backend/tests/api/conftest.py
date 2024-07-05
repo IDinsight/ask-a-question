@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import Item
 from pytest_asyncio import is_async_test
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -46,7 +47,6 @@ CompletionData = namedtuple("CompletionData", "choices")
 CompletionChoice = namedtuple("CompletionChoice", "message")
 CompletionMessage = namedtuple("CompletionMessage", "content")
 
-TEST_USER_ID = 0  # updated by "admin_user" fixture. Required for some tests.
 TEST_ADMIN_USERNAME = "admin"
 TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_API_KEY = "admin_api_key"
@@ -106,7 +106,6 @@ async def asession(
 
 @pytest.fixture(scope="session", autouse=True)
 def admin_user(client: TestClient, db_session: Session) -> None:
-    global TEST_USER_ID
     admin_user = UserDB(
         username=TEST_ADMIN_USERNAME,
         hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
@@ -122,11 +121,18 @@ def admin_user(client: TestClient, db_session: Session) -> None:
     yield admin_user.user_id
 
 
+@pytest.fixture(scope="session")
+def user1(client: TestClient, db_session: Session) -> None:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id
+
+
 @pytest.fixture(scope="session", autouse=True)
 def user(
     client: TestClient, db_session: Session, admin_user, fullaccess_token_admin: str
 ) -> None:
-    global TEST_USER_ID
     client.post(
         "/user",
         json={
@@ -148,41 +154,9 @@ def user(
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
 
-    # update the TEST_USER_ID global variable
-    TEST_USER_ID = 2
-
-
-# @pytest.fixture(scope="session", autouse=True)
-# def user(client: TestClient, db_session: Session) -> None:
-#     global TEST_USER_ID
-#     user1_db = UserDB(
-#         username=TEST_USERNAME,
-#         hashed_password=get_password_salted_hash(TEST_PASSWORD),
-#         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
-#         content_quota=TEST_CONTENT_QUOTA,
-#         api_daily_quota=TEST_API_QUOTA,
-#         created_datetime_utc=datetime.utcnow(),
-#         updated_datetime_utc=datetime.utcnow(),
-#     )
-#     user2_db = UserDB(
-#         username=TEST_USERNAME_2,
-#         hashed_password=get_key_hash(TEST_PASSWORD_2),
-#         hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
-#         content_quota=TEST_CONTENT_QUOTA_2,
-#         api_daily_quota=TEST_API_QUOTA_2,
-#         created_datetime_utc=datetime.utcnow(),
-#         updated_datetime_utc=datetime.utcnow(),
-#     )
-#     db_session.add(user1_db)
-#     db_session.add(user2_db)
-#     db_session.commit()
-
-#     # update the TEST_USER_ID global variable
-#     TEST_USER_ID = user1_db.user_id
-
 
 @pytest.fixture(scope="session")
-async def faq_contents(client: TestClient, db_session: Session) -> None:
+async def faq_contents(client: TestClient, user1: int, db_session: Session) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -197,7 +171,7 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
         )
         content_db = ContentDB(
             content_id=i,
-            user_id=TEST_USER_ID,
+            user_id=user1,
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
@@ -237,7 +211,7 @@ def existing_tag_id(
 
 
 @pytest.fixture(scope="session")
-async def urgency_rules(client: TestClient, db_session: Session) -> int:
+async def urgency_rules(client: TestClient, user1: int, db_session: Session) -> int:
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
@@ -252,7 +226,7 @@ async def urgency_rules(client: TestClient, db_session: Session) -> int:
 
         rule_db = UrgencyRuleDB(
             urgency_rule_id=i,
-            user_id=TEST_USER_ID,
+            user_id=user1,
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),

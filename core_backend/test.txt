@@ -1,0 +1,117 @@
+Total reclaimed space: 0B
+cf6907b912e70f21b08963afda9c2fa8db8448fe71163e8b160c631211c34062
+Total reclaimed space: 0B
+64e0d248fd56bb7a6723b610e653bfda24e38840541f2faaed0fe335731490d3
+============================= test session starts ==============================
+platform darwin -- Python 3.10.13, pytest-7.4.2, pluggy-1.4.0
+rootdir: /Users/carlossamey/Documents/IdInsight/projects/google/temp/aaq-core
+configfile: pyproject.toml
+plugins: anyio-4.3.0, asyncio-0.23.2, xdist-3.5.0
+asyncio: mode=auto
+collected 372 items / 211 deselected / 161 selected
+
+tests/api/test_admin.py .                                                [  0%]
+tests/api/test_import_content.py ..............                          [  9%]
+tests/api/test_manage_content.py ......................................  [ 32%]
+tests/api/test_manage_tags.py .................                          [ 43%]
+tests/api/test_manage_ud_rules.py ............                           [ 50%]
+tests/api/test_question_answer.py ...................................... [ 74%]
+.................                                                        [ 85%]
+tests/api/test_question_dashboard.py ....                                [ 87%]
+tests/api/test_urgency_detect.py .........                               [ 93%]
+tests/api/test_users.py .......                                          [ 97%]
+tests/api/test_z_user_tools.py ....                                      [100%]
+
+=============================== warnings summary ===============================
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[Tag1-existing_content_id0-test content 3 title - edited-test content 3 - edited-content_metadata0]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[Tag1-existing_content_id0-test content 4 title - edited-test content 4 - edited-content_metadata1]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[Tag1-existing_content_id1-test content 3 title - edited-test content 3 - edited-content_metadata0]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[Tag1-existing_content_id1-test content 4 title - edited-test content 4 - edited-content_metadata1]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[existing_tag_id1-existing_content_id0-test content 3 title - edited-test content 3 - edited-content_metadata0]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[existing_tag_id1-existing_content_id0-test content 4 title - edited-test content 4 - edited-content_metadata1]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[existing_tag_id1-existing_content_id1-test content 3 title - edited-test content 3 - edited-content_metadata0]
+core_backend/tests/api/test_manage_content.py::TestManageContent::test_edit_and_retrieve_content[existing_tag_id1-existing_content_id1-test content 4 title - edited-test content 4 - edited-content_metadata1]
+  sys:1: SAWarning: Object of type <ContentDB> not in session, add operation along 'TagDB.contents' won't proceed (This warning originated from the Session 'autoflush' process, which was invoked automatically in response to a user-initiated operation.)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+_______________________________ test_healthcheck _______________________________
+---------------------------- Captured stderr setup -----------------------------
+07/05/2024 07:26:12 PM          __init__.py  99 : Application started
+07/05/2024 07:26:12 PM          __init__.py  91 : Successfully Synced Redis to database
+------------------------------ Captured log setup ------------------------------
+INFO     core_backend.app.utils:__init__.py:99 Application started
+INFO     core_backend.app.utils:__init__.py:91 Successfully Synced Redis to database
+______ TestEmbeddingsSearch.test_content_response[api_key_incorrect-401] _______
+---------------------------- Captured stdout setup -----------------------------
+retrieved user 2
+_ TestErrorResponses.test_language_identify_error[UNINTELLIGIBLE-True-unintelligible_input] _
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 132 : LANGUAGE IDENTIFICATION FAILED due to UNINTELLIGIBLE language on query id: 124
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:132 LANGUAGE IDENTIFICATION FAILED due to UNINTELLIGIBLE language on query id: 124
+_ TestErrorResponses.test_language_identify_error[GIBBERISH-True-unsupported_language] _
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 132 : LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:132 LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+_ TestErrorResponses.test_language_identify_error[UNSUPPORTED-True-unsupported_language] _
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 132 : LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:132 LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+_ TestErrorResponses.test_language_identify_error[SOME_UNSUPPORTED_LANG-True-unsupported_language] _
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 132 : LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:132 LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+_ TestErrorResponses.test_language_identify_error[don't kow-True-unsupported_language] _
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 132 : LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:132 LANGUAGE IDENTIFICATION FAILED due to UNSUPPORTED language on query id: 124
+___ TestErrorResponses.test_unsafe_query_error[INAPPROPRIATE_LANGUAGE-True] ____
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 277 : SAFETY CHECK failed on query id: 124 for query text: This is a basic query
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:277 SAFETY CHECK failed on query id: 124 for query text: This is a basic query
+______ TestErrorResponses.test_unsafe_query_error[PROMPT_INJECTION-True] _______
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 277 : SAFETY CHECK failed on query id: 124 for query text: This is a basic query
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:277 SAFETY CHECK failed on query id: 124 for query text: This is a basic query
+________ TestErrorResponses.test_off_topic_query_error[OFF_TOPIC-True] _________
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 346 : OFF-TOPIC query found on query id: 124 for query text This is a basic query
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:346 OFF-TOPIC query found on query id: 124 for query text This is a basic query
+________ TestErrorResponses.test_off_topic_query_error[Off_Topic-True] _________
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM     process_input.py 346 : OFF-TOPIC query found on query id: 124 for query text This is a basic query
+------------------------------ Captured log call -------------------------------
+INFO     INPUT RAILS:process_input.py:346 OFF-TOPIC query found on query id: 124 for query text This is a basic query
+________________ TestAlignScore.test_score_less_than_threshold _________________
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM    process_output.py 113 : Alignment score 0.2 is below the threshold 0.7.
+Reason: test - low score
+Claim: This is a response
+Evidence: hello world
+goodbye universe
+
+
+------------------------------ Captured log call -------------------------------
+INFO     OUTPUT RAILS:process_output.py:113 Alignment score 0.2 is below the threshold 0.7.
+Reason: test - low score
+Claim: This is a response
+Evidence: hello world
+goodbye universe
+____________ TestUserCreation.test_admin_create_user_existing_user _____________
+----------------------------- Captured stderr call -----------------------------
+07/05/2024 07:26:16 PM           routers.py  56 : Error creating user: User with username test_username_5 already exists.
+------------------------------ Captured log call -------------------------------
+ERROR    core_backend.app.utils:routers.py:56 Error creating user: User with username test_username_5 already exists.
+=============== 161 passed, 211 deselected, 8 warnings in 6.62s ================
+testdb
+testdb
+redis-test
+redis-test
