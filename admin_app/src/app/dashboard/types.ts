@@ -12,4 +12,12 @@ interface ApexData {
   data: { x: string; y: number }[];
 }
 
-export type { Period, TimeFrame, DayHourUsageData, ApexData };
+interface TopContentData {
+  title: string;
+  last_updated: string;
+  query_count: number;
+  positive_votes: number;
+  negative_votes: number;
+}
+
+export type { Period, TimeFrame, DayHourUsageData, ApexData, TopContentData };

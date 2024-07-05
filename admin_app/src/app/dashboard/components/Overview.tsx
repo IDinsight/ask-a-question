@@ -7,11 +7,12 @@ import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import HeatMap from "@/app/dashboard/components/HeatMap";
-import { Period, DayHourUsageData, ApexData } from "../types";
+import { Period, DayHourUsageData, ApexData, TopContentData } from "../types";
 import { useAuth } from "@/utils/auth";
 import { getOverviewPageData } from "@/app/dashboard/api";
 import { useEffect } from "react";
 import AreaChart from "@/app/dashboard/components/AreaChart";
+import TopContentTable from "@/app/dashboard/components/TopContentTable";
 import { ApexOptions } from "apexcharts";
 
 interface OverviewProps {
@@ -23,6 +24,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
   const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([]);
   const [timeseriesData, setTimeseriesData] = React.useState<ApexData[]>([]);
+  const [topContentData, setTopContentData] = React.useState<TopContentData[]>(
+    [],
+  );
 
   const heatmapOptions: ApexOptions = {
     chart: {
@@ -77,6 +81,8 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       parseCardData(data.stats_cards, timePeriod);
       parseHeatmapData(data.heatmap);
       parseTimeseriesData(data.time_series);
+      console.log(data.top_content);
+      setTopContentData(data.top_content);
     });
   }, [timePeriod, token]);
 
@@ -121,7 +127,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       { name: "Total Queries", data: total_queries },
     ];
 
-    console.log(seriesData);
     setTimeseriesData(seriesData);
   };
 
@@ -232,8 +237,8 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1315, height: 250 }}>
-        Top FAQs
+      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387, height: 250 }}>
+        <TopContentTable rows={topContentData} />
       </Box>
     </>
   );

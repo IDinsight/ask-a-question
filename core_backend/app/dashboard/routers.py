@@ -9,7 +9,7 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .models import get_heatmap, get_stats_cards, get_timeseries
+from .models import get_heatmap, get_stats_cards, get_timeseries, get_top_content
 from .schemas import DashboardOverview, TimeFrequency
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -136,6 +136,15 @@ async def retrieve_overview(
         frequency=frequency,
     )
 
+    top_content = await get_top_content(
+        user_id=user_id,
+        asession=asession,
+        top_n=4,
+    )
+
     return DashboardOverview(
-        stats_cards=stats, heatmap=heatmap, time_series=time_series
+        stats_cards=stats,
+        heatmap=heatmap,
+        time_series=time_series,
+        top_content=top_content,
     )

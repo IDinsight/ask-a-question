@@ -2,8 +2,11 @@ import os
 import random
 from datetime import datetime, timedelta
 
+import numpy as np
 from sqlalchemy.orm import Session
 
+from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
+from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
 from core_backend.app.question_answer.models import QueryDB, ResponseFeedbackDB
 from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
@@ -144,8 +147,45 @@ def create_feedback_record(
     session.commit()
 
 
+def add_content_data() -> None:
+    """
+    Add N_DATAPOINTS of data for each day in the past year.
+    """
+    content = [
+        "Ways to manage back pain during pregnancy",
+        "Headache during pregnancy is normal ‚except after 20 weeks",
+        "Yes, pregnancy can cause TOOTHACHE",
+        "Ways to manage HEARTBURN in pregnancy",
+        "Some LEG cramps are normal during pregnancy",
+    ]
+
+    for _i, c in enumerate(content):
+        session = next(get_session())
+        query_count = np.random.randint(100, 700)
+        positive_votes = np.random.randint(0, query_count)
+        negative_votes = np.random.randint(0, query_count - positive_votes)
+        content_db = ContentDB(
+            user_id=1,
+            content_embedding=np.random.rand(int(PGVECTOR_VECTOR_SIZE))
+            .astype(np.float32)
+            .tolist(),
+            content_title=c,
+            content_text="Test content #{i}",
+            content_metadata={},
+            created_datetime_utc=datetime.now(),
+            updated_datetime_utc=datetime.now(),
+            query_count=query_count,
+            positive_votes=positive_votes,
+            negative_votes=negative_votes,
+        )
+        session.add(content_db)
+        session.commit()
+        session.close()
+
+
 if __name__ == "__main__":
     add_year_data()
     add_month_data()
     add_week_data()
     add_day_data()
+    add_content_data()

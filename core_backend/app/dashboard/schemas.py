@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Dict, Literal, get_args
+from typing import Annotated, Dict, List, Literal, get_args
 
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
@@ -132,3 +132,4 @@ class DashboardOverview(BaseModel):
     stats_cards: StatsCards
     heatmap: Heatmap
     time_series: TimeSeries
+    top_content: List[Dict]

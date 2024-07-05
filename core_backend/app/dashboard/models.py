@@ -1,10 +1,11 @@
 from datetime import date
-from typing import Dict, Tuple, Union, get_args
+from typing import Dict, List, Tuple, Union, get_args
 
 from sqlalchemy import case, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Subquery
 
+from ..contents.models import ContentDB
 from ..question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -109,6 +110,35 @@ async def get_timeseries(
         not_urgent_escalated=query_ts["escalated"],
         not_urgent_not_escalated=query_ts["not_escalated"],
     )
+
+
+async def get_top_content(
+    user_id: int, asession: AsyncSession, top_n: int
+) -> List[Dict[str, Union[str, int]]]:
+    statement = (
+        select(
+            ContentDB.content_title,
+            ContentDB.query_count,
+            ContentDB.positive_votes,
+            ContentDB.negative_votes,
+            ContentDB.updated_datetime_utc,
+        )
+        .order_by(ContentDB.query_count.desc())
+        .limit(top_n)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    return [
+        {
+            "title": r.content_title,
+            "query_count": r.query_count,
+            "positive_votes": r.positive_votes,
+            "negative_votes": r.negative_votes,
+            "last_updated": r.updated_datetime_utc,
+        }
+        for r in rows
+    ]
 
 
 def get_time_labels_query(
