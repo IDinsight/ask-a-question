@@ -244,7 +244,7 @@ async def urgency_rules(client: TestClient, user1: int, db_session: Session) -> 
 
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6397")
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6397")
     app = create_app(redis_url)
     with TestClient(app) as c:
         yield c
