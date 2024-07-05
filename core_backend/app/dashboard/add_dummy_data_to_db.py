@@ -8,7 +8,11 @@ from sqlalchemy.orm import Session
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import get_session
-from core_backend.app.question_answer.models import QueryDB, ResponseFeedbackDB
+from core_backend.app.question_answer.models import (
+    ContentFeedbackDB,
+    QueryDB,
+    ResponseFeedbackDB,
+)
 from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 
 # admin user (first user is admin)
@@ -88,8 +92,10 @@ def create_data(dt: datetime) -> None:
     create_urgency_record(dt, is_urgent, session)
     if not is_urgent:
         is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
+        is_content_negative = random.random() < NEGATIVE_FEEDBACK_RATE
         query_id = create_query_record(dt, session)
         create_feedback_record(dt, query_id, is_negative, session)
+        create_content_feedback_record(dt, query_id, is_content_negative, session)
     session.close()
 
 
@@ -147,6 +153,26 @@ def create_feedback_record(
     session.commit()
 
 
+def create_content_feedback_record(
+    dt: datetime, query_id: int, is_negative: bool, session: Session
+) -> None:
+    """
+    Create a feedback record for a given datetime.
+    """
+    sentiment = "negative" if is_negative else "positive"
+    all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
+    content_ids = random.choices(all_content_ids, k=3)
+    for content_id in content_ids:
+        feedback_db = ContentFeedbackDB(
+            feedback_datetime_utc=dt,
+            query_id=query_id,
+            content_id=content_id,
+            feedback_sentiment=sentiment,
+        )
+        session.add(feedback_db)
+        session.commit()
+
+
 def add_content_data() -> None:
     """
     Add N_DATAPOINTS of data for each day in the past year.
@@ -184,8 +210,8 @@ def add_content_data() -> None:
 
 
 if __name__ == "__main__":
+    add_content_data()
     add_year_data()
     add_month_data()
     add_week_data()
     add_day_data()
-    add_content_data()

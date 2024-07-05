@@ -124,6 +124,18 @@ class TimeSeries(BaseModel):
     not_urgent_not_escalated: Dict[str, int]
 
 
+class TopContent(BaseModel):
+    """
+    This class is used to define the schema for the top content
+    """
+
+    title: str
+    query_count: int
+    positive_votes: int
+    negative_votes: int
+    last_updated: str
+
+
 class DashboardOverview(BaseModel):
     """
     This class is used to define the schema for the dashboard overview
@@ -132,4 +144,4 @@ class DashboardOverview(BaseModel):
     stats_cards: StatsCards
     heatmap: Heatmap
     time_series: TimeSeries
-    top_content: List[Dict]
+    top_content: List[TopContent]

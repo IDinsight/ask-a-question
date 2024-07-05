@@ -22,6 +22,7 @@ from .schemas import (
     TimeFrequency,
     TimeHours,
     TimeSeries,
+    TopContent,
     UrgencyStats,
 )
 
@@ -114,7 +115,7 @@ async def get_timeseries(
 
 async def get_top_content(
     user_id: int, asession: AsyncSession, top_n: int
-) -> List[Dict[str, Union[str, int]]]:
+) -> List[TopContent]:
     statement = (
         select(
             ContentDB.content_title,
@@ -129,14 +130,15 @@ async def get_top_content(
 
     result = await asession.execute(statement)
     rows = result.fetchall()
+
     return [
-        {
-            "title": r.content_title,
-            "query_count": r.query_count,
-            "positive_votes": r.positive_votes,
-            "negative_votes": r.negative_votes,
-            "last_updated": r.updated_datetime_utc,
-        }
+        TopContent(
+            title=r.content_title,
+            query_count=r.query_count,
+            positive_votes=r.positive_votes,
+            negative_votes=r.negative_votes,
+            last_updated=r.updated_datetime_utc,
+        )
         for r in rows
     ]
 
