@@ -30,7 +30,6 @@ const UpvoteDownvoteBarChart = ({
   positiveVotes: number;
   negativeVotes: number;
 }) => {
-  console.log(positiveVotes, negativeVotes);
   const positiveVotesPercentage = Math.round(
     (positiveVotes / (positiveVotes + negativeVotes)) * 100,
   );

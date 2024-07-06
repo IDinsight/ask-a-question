@@ -81,7 +81,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       parseCardData(data.stats_cards, timePeriod);
       parseHeatmapData(data.heatmap);
       parseTimeseriesData(data.time_series);
-      console.log(data.top_content);
       setTopContentData(data.top_content);
     });
   }, [timePeriod, token]);
