@@ -5,7 +5,6 @@ import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  ApiKeyDialog,
   ErrorSnackBar,
   Message,
   MessageBox,
@@ -14,14 +13,14 @@ import {
   QueryType,
   ResponseSummary,
   UserMessage,
-} from "@/components/PlaygroundComponents";
+} from "./components/PlaygroundComponents";
 import { Box } from "@mui/material";
-
+import { useAuth } from "@/utils/auth";
 const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const { token } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null); // Ref to scroll to bottom of chat
 
   useEffect(() => {
@@ -78,8 +77,8 @@ const Page = () => {
       isUrgent === null
         ? `No response. Reason:  See <json> for details.`
         : isUrgent
-        ? "Urgent 🚨"
-        : "Not Urgent 🟢";
+          ? "Urgent 🚨"
+          : "Not Urgent 🟢";
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -131,11 +130,7 @@ const Page = () => {
 
     setLoading(true);
 
-    if (currApiKey === null || currApiKey === "") {
-      setError("API Key not set. Please set the API key.");
-      setLoading(false);
-      return;
-    } else {
+    if (token) {
       const queryTypeDisplayName =
         queryTypeDisplayNameMapping[queryType] || queryType;
       setMessages((prevMessages) => [
@@ -149,7 +144,7 @@ const Page = () => {
       ]);
       if (queryType === "embeddings-search") {
         apiCalls
-          .getEmbeddingsSearch(queryText, currApiKey)
+          .getEmbeddingsSearch(queryText, token)
           .then((response) => {
             if (response.status === 200) {
               processEmbeddingsSearchResponse(response);
@@ -169,7 +164,7 @@ const Page = () => {
           });
       } else if (queryType === "llm-response") {
         apiCalls
-          .getLLMResponse(queryText, currApiKey)
+          .getLLMResponse(queryText, token)
           .then((response) => {
             if (response.status === 200) {
               processLLMSearchResponse(response);
@@ -189,7 +184,7 @@ const Page = () => {
           });
       } else if (queryType == "urgency-detection") {
         apiCalls
-          .getUrgencyDetection(queryText, currApiKey)
+          .getUrgencyDetection(queryText, token)
           .then((response) => {
             processUrgencyDetection(response);
           })
@@ -206,47 +201,15 @@ const Page = () => {
       }
     }
   };
-
-  const [openDialog, setOpenDialog] = useState(false);
-
-  const [currApiKey, setCurrApiKey] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem("apiToken") : null,
-  );
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
-
-  const handleDialogOpen = () => {
-    setOpenDialog(true);
-  };
-
-  const handleSaveToken = (token: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("apiToken", token);
-      setCurrApiKey(token);
-    }
-
-    handleDialogClose();
-  };
-
   const handleErrorClose = (
     event?: React.SyntheticEvent | Event,
-    reason?: string,
+    reason?: string
   ) => {
     if (reason === "clickaway") {
       return;
     }
     setError(null);
   };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (!localStorage.getItem("apiToken")) {
-        handleDialogOpen();
-      }
-    }
-  }, []);
-
   return (
     <>
       <Global
@@ -278,17 +241,8 @@ const Page = () => {
           <div ref={bottomRef} />
         </Box>
         <ErrorSnackBar message={error} onClose={handleErrorClose} />
-        <ApiKeyDialog
-          open={openDialog}
-          handleClose={handleDialogClose}
-          handleSave={handleSaveToken}
-          currApiKey={currApiKey}
-        />
         <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
-          <PersistentSearchBar
-            onSend={onSend}
-            openApiKeyDialog={handleDialogOpen}
-          />
+          <PersistentSearchBar onSend={onSend} />
         </Box>
       </Box>
     </>
