@@ -51,7 +51,7 @@ jobs:
           gcloud compute scp litellm_proxy_config.yaml \
               ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/litellm_proxy_config.yaml \
               --zone ${{ secrets.DEPLOYMENT_ZONE }}
-          echo "${{ secrets.gcp-credential-json }}" > .gcp_credentials.json
+          echo "${{ secrets.outputs.gcp-credential-json }}" > .gcp_credentials.json
           gcloud compute scp .gcp_credentials.json \
               ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/.gcp_credentials.json \
               --zone ${{ secrets.DEPLOYMENT_ZONE }}
