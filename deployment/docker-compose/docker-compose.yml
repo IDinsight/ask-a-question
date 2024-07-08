@@ -55,6 +55,7 @@ services:
       - .env
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
+      - ./.gcp_credentials.json:/app/credentials.json
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
 

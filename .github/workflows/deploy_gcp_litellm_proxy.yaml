@@ -43,12 +43,17 @@ jobs:
           secrets: |-
             domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
             openai-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-openai-api-key
+            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
 
       - name: Copy LiteLLM deployment files
         working-directory: deployment/docker-compose
         run: |
           gcloud compute scp litellm_proxy_config.yaml \
               ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/litellm_proxy_config.yaml \
+              --zone ${{ secrets.DEPLOYMENT_ZONE }}
+          echo ${{ secrets.gcp-credential-json}} > ~/.gcp_credentials.json
+          gcloud compute scp .gcp_credentials.json \
+              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/.gcp_credentials.json \
               --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
       - name: Deploy LiteLLM Proxy container
@@ -59,16 +64,11 @@ jobs:
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
-            gcloud secrets versions access latest \
-              --secret=${{ env.RESOURCE_PREFIX }}-gcp-credential-json \
-              --format='get(payload.data)' \
-              | tr '_-' '/+' \
-              | base64 -d \
-              > /app/credentials.json
             docker stop litellm_proxy
             docker rm litellm_proxy
             docker run -d \
               -v ~/litellm_proxy_config.yaml:/app/config.yaml \
+              -v ~/.gcp_credentials.json:/app/credentials.json \
               -e OPENAI_API_KEY="${{ steps.secrets.outputs.openai-api-key }}" \
               -e VERTEXAI_PROJECT=${{ secrets.GCP_PROJECT_ID }} \
               -e VERTEXAI_LOCATION=${{ vars.VERTEX_AI_LOCATION }} \
