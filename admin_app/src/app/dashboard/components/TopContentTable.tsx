@@ -10,19 +10,12 @@ import Paper from "@mui/material/Paper";
 import { TopContentData } from "../types";
 import { format } from "date-fns";
 import { Box, Typography } from "@mui/material";
-import Chart from "react-apexcharts";
 import { appColors } from "@/utils/index";
+import dynamic from "next/dynamic";
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.lightgray.main,
-    color: theme.palette.lightgray.dark,
-    fontWeight: "bold",
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
+const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 const UpvoteDownvoteBarChart = ({
   positiveVotes,
@@ -39,7 +32,7 @@ const UpvoteDownvoteBarChart = ({
   );
 
   return (
-    <Chart
+    <ReactApexcharts
       options={{
         chart: {
           type: "bar",
@@ -90,6 +83,18 @@ const UpvoteDownvoteBarChart = ({
     />
   );
 };
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.lightgray.main,
+    color: theme.palette.lightgray.dark,
+    fontWeight: "bold",
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
