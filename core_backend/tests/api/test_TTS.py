@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
-from core_backend.app.voice_api.voice_api import generate_speech
+from core_backend.app.voice_api.voice import generate_speech
 
 
 @pytest.fixture

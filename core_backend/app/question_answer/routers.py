@@ -1,3 +1,4 @@
+import os
 from typing import Tuple
 
 from fastapi import APIRouter, Depends
@@ -19,7 +20,8 @@ from ..llm_call.process_input import (
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
-from ..voice_api.voice_api import generate_speech
+from ..voice_api.schemas import AudioQuery, AudioQueryError
+from ..voice_api.voice import generate_speech, transcribe_audio
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -188,6 +190,68 @@ async def get_user_query_and_response(
     )
 
     return user_query_db, user_query_refined, response
+
+
+@router.post(
+    "/stt-llm-response",
+    response_model=QueryResponse,
+    responses={
+        400: {"model": QueryResponseError, "description": "Bad Request"},
+        500: {"model": AudioQueryError, "description": "Internal Server Error"},
+    },
+)
+async def stt_llm_response(
+    audio_file: AudioQuery,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+) -> QueryResponse | JSONResponse:
+    """
+    Transcribes the provided MP3 file to text using Vosk ASR,
+    then generates a custom response using LLM and returns it.
+    """
+    file_path = f"temp/{audio_file.file.filename}"
+    try:
+
+        with open(file_path, "wb") as f:
+            f.write(await audio_file.file.read())
+
+        transcription = await transcribe_audio(file_path)
+
+        user_query = QueryBase(
+            query_text=transcription, query_metadata=audio_file.audio_metadata
+        )
+        user_query_db, user_query_refined, response = await get_user_query_and_response(
+            user_id=user_db.user_id, user_query=user_query, asession=asession
+        )
+
+        response = await get_llm_answer(
+            question=user_query_refined,
+            response=response,
+            user_id=user_db.user_id,
+            n_similar=int(N_TOP_CONTENT_FOR_RAG),
+            asession=asession,
+        )
+
+        if isinstance(response, QueryResponseError):
+            await save_query_response_error_to_db(user_query_db, response, asession)
+            return JSONResponse(status_code=400, content=response.model_dump())
+        else:
+            await save_query_response_to_db(user_query_db, response, asession)
+            return response
+
+    except Exception as e:
+        error_msg = f"Failed to process request: {str(e)}"
+        logger.error(error_msg)
+        error_response = AudioQueryError(
+            error_message=error_msg,
+            error_type=ErrorType.STT_ERROR,
+            debug_info={},
+        )
+        return JSONResponse(status_code=500, content=error_response.model_dump())
+
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 
 @router.post(
