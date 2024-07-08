@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from app import models
-from app.database import SYNC_DB_API, build_connection_string
+from app.database import SYNC_DB_API, get_connection_url
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
@@ -10,7 +10,10 @@ from sqlalchemy import engine_from_config, pool
 config = context.config
 
 # this will overwrite the ini-file sqlalchemy.url path
-config.set_main_option("sqlalchemy.url", build_connection_string(db_api=SYNC_DB_API))
+connection_url = get_connection_url(db_api=SYNC_DB_API)
+connection_string = connection_url.render_as_string(hide_password=False)
+# Don't use '%' in password: https://stackoverflow.com/a/40837579/25741288
+config.set_main_option("sqlalchemy.url", connection_string)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
