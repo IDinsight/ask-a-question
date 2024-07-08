@@ -116,6 +116,9 @@ async def get_timeseries(
 async def get_top_content(
     user_id: int, asession: AsyncSession, top_n: int
 ) -> List[TopContent]:
+    """
+    Retrieve most frequently shared content
+    """
     statement = (
         select(
             ContentDB.content_title,

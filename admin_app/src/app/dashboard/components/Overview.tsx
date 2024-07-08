@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import AreaChart from "@/app/dashboard/components/AreaChart";
 import TopContentTable from "@/app/dashboard/components/TopContentTable";
 import { ApexOptions } from "apexcharts";
+import { appColors } from "@/utils/index";
 
 interface OverviewProps {
   timePeriod: Period;
@@ -73,7 +74,11 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       position: "top",
       horizontalAlign: "left",
     },
-    colors: ["#E91E63", "#546E7A", "#2E93FA"],
+    colors: [
+      appColors.dashboardUrgent,
+      appColors.dashboardSecondary,
+      appColors.dashboardPrimary,
+    ],
   };
 
   useEffect(() => {

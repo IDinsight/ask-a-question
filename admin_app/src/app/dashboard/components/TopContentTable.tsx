@@ -11,6 +11,7 @@ import { TopContentData } from "../types";
 import { format } from "date-fns";
 import { Box, Typography } from "@mui/material";
 import Chart from "react-apexcharts";
+import { appColors } from "@/utils/index";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -61,7 +62,7 @@ const UpvoteDownvoteBarChart = ({
           floating: true,
         },
         yaxis: { show: false, labels: { show: false } },
-        colors: ["#96E2C3", "#F69198"],
+        colors: [appColors.dashboardUpvote, appColors.dashboardDownvote],
         legend: { show: false },
         dataLabels: {
           enabled: true,
