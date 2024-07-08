@@ -315,6 +315,7 @@ const getLLMResponse = async (search: string, token: string) => {
 };
 
 const postResponseFeedback = async (
+  query_id: number,
   feedback_sentiment: string,
   feedback_secret_key: string,
   token: string,
@@ -327,20 +328,18 @@ const postResponseFeedback = async (
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
+      query_id: query_id,
       feedback_sentiment: feedback_sentiment,
       feedback_secret_key: feedback_secret_key,
     }),
-  })
-    .then((response) => {
-      return response.json().then((data) => {
-        const responseWithStatus = { status: response.status, ...data };
-        return responseWithStatus;
-      });
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      throw error;
-    });
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error sending response feedback");
+    }
+  });
 };
 
 const getQuestionStats = async (token: string) => {
@@ -457,6 +456,7 @@ export const apiCalls = {
   getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  postResponseFeedback,
   getQuestionStats,
   getUrgencyDetection,
   createTag,

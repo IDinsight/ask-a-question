@@ -31,7 +31,7 @@ import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
 
-type FeedbackType = "positive" | "negative";
+type FeedbackSentimentType = "positive" | "negative";
 
 interface ResponseSummary {
   index: string;
@@ -195,41 +195,6 @@ const TypingAnimation = () => {
   );
 };
 
-// Feedback buttons
-const FeedbackButtons = () => {
-  const [isThumbsUpActive, setIsThumbsUpActive] = useState(false);
-  const [isThumbsDownActive, setIsThumbsDownActive] = useState(false);
-
-  const toggleThumbsUp = () => setIsThumbsUpActive(!isThumbsUpActive);
-  const toggleThumbsDown = () => setIsThumbsDownActive(!isThumbsDownActive);
-
-  return (
-    <div
-      style={{ marginTop: "5px", display: "flex", justifyContent: "flex-end" }}
-    >
-      <IconButton
-        aria-label="thumbs up"
-        onClick={toggleThumbsUp}
-        style={{
-          marginRight: "10px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        {isThumbsUpActive ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />}
-      </IconButton>
-      <IconButton
-        aria-label="thumbs down"
-        onClick={toggleThumbsDown}
-        style={{ background: "none", border: "none", cursor: "pointer" }}
-      >
-        {isThumbsDownActive ? <ThumbDownAltIcon /> : <ThumbDownOffAltIcon />}
-      </IconButton>
-    </div>
-  );
-};
-
 const MessageSkeleton = () => {
   return (
     <Box
@@ -268,7 +233,14 @@ const MessageSkeleton = () => {
   );
 };
 
-const MessageBox = (message: Message) => {
+const MessageBox = (
+  message: Message,
+  onFeedbackSend: (
+    queryID: number,
+    feedbackSentiment: FeedbackSentimentType,
+    feedbackSecretKey: string,
+  ) => void,
+) => {
   const [open, setOpen] = useState(false);
 
   const renderResults = (content: ResponseSummary[]) => {
@@ -351,18 +323,64 @@ const MessageBox = (message: Message) => {
             ? message.content
             : renderResults(message.content)}
         </Typography>
-        {message.hasOwnProperty("json") && (
-          <Link
-            onClick={toggleJsonModal}
-            variant="caption"
-            align="right"
-            underline="hover"
-            sx={{ cursor: "pointer" }}
+        {message.type == "response" && (
+          <Box
+            style={{
+              marginTop: "5px",
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
           >
-            {"<json>"}
-          </Link>
+            {message.json.hasOwnProperty("feedback_secret_key") && (
+              <Box>
+                <IconButton
+                  aria-label="thumbs up"
+                  onClick={() =>
+                    onFeedbackSend(
+                      message.json["query_id"],
+                      "positive",
+                      message.json["feedback_secret_key"],
+                    )
+                  }
+                  style={{
+                    marginRight: "10px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ThumbUpAltIcon />
+                </IconButton>
+                <IconButton
+                  aria-label="thumbs down"
+                  onClick={() =>
+                    onFeedbackSend(
+                      message.json["query_id"],
+                      "negative",
+                      message.json["feedback_secret_key"],
+                    )
+                  }
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ThumbDownAltIcon />
+                </IconButton>
+              </Box>
+            )}
+            <Link
+              onClick={toggleJsonModal}
+              variant="caption"
+              align="right"
+              underline="hover"
+              sx={{ cursor: "pointer" }}
+            >
+              {"<json>"}
+            </Link>
+          </Box>
         )}
-        {message.type === "response" && <FeedbackButtons />}
       </Box>
 
       <Modal
@@ -435,6 +453,7 @@ export { ErrorSnackBar, MessageBox, MessageSkeleton, PersistentSearchBar };
 export type {
   Message,
   QueryType,
+  FeedbackSentimentType,
   ResponseMessage,
   ResponseSummary,
   UserMessage,
