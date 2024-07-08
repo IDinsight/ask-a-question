@@ -6,7 +6,6 @@ on:
       - main
       - testing
       - production
-      - improve-gcp-deploy
     paths:
       - "deployment/docker-compose/caddy/**"
       - ".github/workflows/deploy_gcp_caddy.yaml"
@@ -21,10 +20,10 @@ jobs:
       id-token: "write"
 
     # TODO: replace improve-gcp-deploy with main
-    environment: gcp-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'improve-gcp-deploy' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -47,7 +46,7 @@ jobs:
       - name: Copy Caddy deployment files
         working-directory: deployment/docker-compose
         run: |
-          gcloud compute scp caddy/Caddyfile \
+          gcloud compute scp Caddyfile \
               ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/Caddyfile \
               --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
