@@ -78,7 +78,7 @@ jobs:
               --restart always \
               --network aaq-network \
               --name litellm_proxy \
-              ghcr.io/berriai/litellm:main-v1.34.6 --config /app/config.yaml
+              ghcr.io/berriai/litellm:main-v1.40.10 --config /app/config.yaml
             docker system prune -f
 
       - name: Show deployment command output
