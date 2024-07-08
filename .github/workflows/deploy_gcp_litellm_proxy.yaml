@@ -43,7 +43,6 @@ jobs:
           secrets: |-
             domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
             openai-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-openai-api-key
-            gcp-credentials:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
 
       - name: Copy LiteLLM deployment files
         working-directory: deployment/docker-compose
