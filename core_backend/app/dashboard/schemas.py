@@ -1,4 +1,9 @@
-from pydantic import BaseModel
+from datetime import datetime
+from enum import Enum
+from typing import Annotated, Dict, List, Literal, get_args
+
+from pydantic import BaseModel, Field
+from pydantic.functional_validators import AfterValidator
 
 
 class QueryStats(BaseModel):
@@ -52,9 +57,92 @@ class StatsCards(BaseModel):
     urgency_stats: UrgencyStats
 
 
+TimeHours = Literal[
+    "00:00",
+    "02:00",
+    "04:00",
+    "06:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "20:00",
+    "22:00",
+]
+
+Day = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+class TimeFrequency(str, Enum):
+    """
+    This class is used to define the schema for the time frequency
+    """
+
+    Day = "Day"
+    Week = "Week"
+    Hour = "Hour"
+
+
+def has_all_days(d: Dict[str, int]) -> Dict[str, int]:
+    """
+    This function is used to validate that all days are present in the data
+    """
+    assert set(d.keys()) - set(get_args(Day)) == set(), "Missing some days in data"
+    return d
+
+
+DayCount = Annotated[Dict[Day, int], AfterValidator(has_all_days)]
+
+
+class Heatmap(BaseModel):
+    """
+    This class is used to define the schema for the heatmap
+    """
+
+    h00_00: DayCount = Field(..., alias="00:00")
+    h02_00: DayCount = Field(..., alias="02:00")
+    h04_00: DayCount = Field(..., alias="04:00")
+    h06_00: DayCount = Field(..., alias="06:00")
+    h08_00: DayCount = Field(..., alias="08:00")
+    h10_00: DayCount = Field(..., alias="10:00")
+    h12_00: DayCount = Field(..., alias="12:00")
+    h14_00: DayCount = Field(..., alias="14:00")
+    h16_00: DayCount = Field(..., alias="16:00")
+    h18_00: DayCount = Field(..., alias="18:00")
+    h20_00: DayCount = Field(..., alias="20:00")
+    h22_00: DayCount = Field(..., alias="22:00")
+
+
+class TimeSeries(BaseModel):
+    """
+    This class is used to define the schema for the line chart
+    """
+
+    urgent: Dict[str, int]
+    not_urgent_escalated: Dict[str, int]
+    not_urgent_not_escalated: Dict[str, int]
+
+
+class TopContent(BaseModel):
+    """
+    This class is used to define the schema for the top content
+    """
+
+    title: str
+    query_count: int
+    positive_votes: int
+    negative_votes: int
+    last_updated: datetime
+
+
 class DashboardOverview(BaseModel):
     """
     This class is used to define the schema for the dashboard overview
     """
 
     stats_cards: StatsCards
+    heatmap: Heatmap
+    time_series: TimeSeries
+    top_content: List[TopContent]

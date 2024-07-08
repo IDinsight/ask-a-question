@@ -1,9 +1,11 @@
 from datetime import date
-from typing import Dict, Union
+from typing import Dict, List, Tuple, Union, get_args
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import Subquery
 
+from ..contents.models import ContentDB
 from ..question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -12,9 +14,15 @@ from ..question_answer.models import (
 from ..urgency_detection.models import UrgencyResponseDB
 from .schemas import (
     ContentFeedbackStats,
+    Day,
+    Heatmap,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
+    TimeFrequency,
+    TimeHours,
+    TimeSeries,
+    TopContent,
     UrgencyStats,
 )
 
@@ -41,6 +49,242 @@ async def get_stats_cards(
         content_feedback_stats=content_feedback_stats,
         urgency_stats=urgency_stats,
     )
+
+
+async def get_heatmap(
+    user_id: int, asession: AsyncSession, start_date: date, end_date: date
+) -> Heatmap:
+    """
+    Retrieve queries per two hour blocks each weekday between start and end date
+    """
+    statement = (
+        select(
+            func.to_char(QueryDB.query_datetime_utc, "Dy").label("day_of_week"),
+            func.to_char(QueryDB.query_datetime_utc, "HH24").label("hour_of_day"),
+            func.count(QueryDB.query_id).label("n_questions"),
+        )
+        .where(
+            (QueryDB.user_id == user_id)
+            & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
+        )
+        .group_by("day_of_week", "hour_of_day")
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    heatmap = initilize_heatmap()
+    for row in rows:
+        day_of_week = row.day_of_week
+        hour_of_day = int(row.hour_of_day)
+        n_questions = row.n_questions
+        if int(hour_of_day) % 2 == 1:
+            hour_grp = hour_of_day - 1
+        else:
+            hour_grp = hour_of_day
+        hour_grp_str = f"{hour_grp:02}:00"
+        heatmap[hour_grp_str][day_of_week] += n_questions  # type: ignore
+
+    return Heatmap.model_validate(heatmap)
+
+
+async def get_timeseries(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> TimeSeries:
+    """
+    Retrieve count of queries over time for the user
+    """
+    query_ts = await get_timeseries_query(
+        user_id, asession, start_date, end_date, frequency
+    )
+    urgency_ts = await get_timeseries_urgency(
+        user_id, asession, start_date, end_date, frequency
+    )
+
+    return TimeSeries(
+        urgent=urgency_ts,
+        not_urgent_escalated=query_ts["escalated"],
+        not_urgent_not_escalated=query_ts["not_escalated"],
+    )
+
+
+async def get_top_content(
+    user_id: int, asession: AsyncSession, top_n: int
+) -> List[TopContent]:
+    """
+    Retrieve most frequently shared content
+    """
+    statement = (
+        select(
+            ContentDB.content_title,
+            ContentDB.query_count,
+            ContentDB.positive_votes,
+            ContentDB.negative_votes,
+            ContentDB.updated_datetime_utc,
+        )
+        .order_by(ContentDB.query_count.desc())
+        .limit(top_n)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    return [
+        TopContent(
+            title=r.content_title,
+            query_count=r.query_count,
+            positive_votes=r.positive_votes,
+            negative_votes=r.negative_votes,
+            last_updated=r.updated_datetime_utc,
+        )
+        for r in rows
+    ]
+
+
+def get_time_labels_query(
+    frequency: TimeFrequency, start_date: date, end_date: date
+) -> Tuple[str, Subquery]:
+    """
+    Get time labels for the query time series
+    """
+    match frequency:
+        case TimeFrequency.Day:
+            interval_str = "day"
+        case TimeFrequency.Week:
+            interval_str = "week"
+        case TimeFrequency.Hour:
+            interval_str = "hour"
+        case _:
+            raise ValueError("Invalid frequency")
+
+    return interval_str, (
+        select(
+            func.date_trunc(interval_str, literal_column("period_start")).label(
+                "time_period"
+            )
+        )
+        .select_from(
+            text(
+                f"generate_series('{start_date}', '{end_date}', '1 {interval_str}'"
+                "::interval) AS period_start"
+            )
+        )
+        .alias("ts_labels")
+    )
+
+
+async def get_timeseries_query(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> Dict[str, Dict[str, int]]:
+    """
+    Retrieve count of queries over time for the user
+    """
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+
+    statement = (
+        select(
+            ts_labels.c.time_period,
+            func.coalesce(
+                func.count(
+                    case(
+                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("negative_feedback_count"),
+            func.coalesce(
+                func.count(
+                    case(
+                        (ResponseFeedbackDB.feedback_sentiment != "negative", 1),
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("non_negative_feedback_count"),
+        )
+        .select_from(ts_labels)
+        .outerjoin(
+            ResponseFeedbackDB,
+            func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
+            == func.date_trunc(interval_str, ts_labels.c.time_period),
+        )
+        .group_by(ts_labels.c.time_period)
+        .order_by(ts_labels.c.time_period)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    escalated = dict()
+    not_escalated = dict()
+    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
+    for row in rows:
+        escalated[row.time_period.strftime(format_str)] = row.negative_feedback_count
+        not_escalated[row.time_period.strftime(format_str)] = (
+            row.non_negative_feedback_count
+        )
+
+    return dict(escalated=escalated, not_escalated=not_escalated)
+
+
+async def get_timeseries_urgency(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> Dict[str, int]:
+    """
+    Retrieve count of urgent queries over time for the user
+    """
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+
+    statement = (
+        select(
+            ts_labels.c.time_period,
+            func.coalesce(
+                func.count(
+                    case(
+                        (UrgencyResponseDB.is_urgent == True, 1),  # noqa
+                        else_=None,
+                    )
+                ),
+                0,
+            ).label("n_urgent"),
+        )
+        .select_from(ts_labels)
+        .outerjoin(
+            UrgencyResponseDB,
+            func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
+            == func.date_trunc(interval_str, ts_labels.c.time_period),
+        )
+        .group_by(ts_labels.c.time_period)
+        .order_by(ts_labels.c.time_period)
+    )
+
+    await asession.execute(statement)
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
+
+    return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
+
+
+def initilize_heatmap() -> Dict[TimeHours, Dict[Day, int]]:
+    """
+    Initialize heatmap dictionary
+    """
+    return {h: {d: 0 for d in get_args(Day)} for h in get_args(TimeHours)}
 
 
 async def get_query_count_stats(
