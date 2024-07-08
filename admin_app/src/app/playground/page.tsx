@@ -12,6 +12,7 @@ import {
   MessageSkeleton,
   PersistentSearchBar,
   QueryType,
+  FeedbackSentimentType,
   ResponseSummary,
   UserMessage,
 } from "./components/PlaygroundComponents";
@@ -202,6 +203,37 @@ const Page = () => {
       }
     }
   };
+
+  const onFeedbackSend = (
+    query_id: number,
+    feedback_sentiment: FeedbackSentimentType,
+    feedback_secret_key: string,
+  ) => {
+    if (token) {
+      apiCalls
+        .postResponseFeedback(
+          query_id,
+          feedback_sentiment,
+          feedback_secret_key,
+          token,
+        )
+        .then((response) => {
+          if (response.status === 200) {
+            console.log("Feedback sent successfully");
+          } else {
+            console.error(response);
+          }
+        })
+        .catch((error: Error) => {
+          setError("Failed to send response feedback.");
+          console.error(error);
+        })
+        .finally(() => {
+          // Any final logic
+        });
+    }
+  };
+
   const handleErrorClose = (
     event?: React.SyntheticEvent | Event,
     reason?: string,
@@ -211,6 +243,7 @@ const Page = () => {
     }
     setError(null);
   };
+  
   return (
     <>
       <Global
@@ -237,7 +270,11 @@ const Page = () => {
           }}
         >
           {messages.map((message, index) => (
-            <MessageBox key={index} {...message} />
+            <MessageBox
+              key={index}
+              {...message}
+              onFeedbackSend={onFeedbackSend}
+            />
           ))}
           {loading && <MessageSkeleton />}
           <div ref={bottomRef} />
