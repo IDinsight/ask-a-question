@@ -1,0 +1,122 @@
+name: Deploy core_backend to GCP
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+      - production
+    paths:
+      - "core_backend/**"
+      - ".github/workflows/deploy_gcp_core_backend.yaml"
+  workflow_dispatch:
+
+jobs:
+  DeployCoreBackendToGCP:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    # TODO: replace improve-gcp-deploy with main
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    env:
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Retrieve secrets from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+            jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret
+            google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id
+            langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key
+            langfuse-public-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-public-key
+            db-host:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-host
+            db-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-password
+            admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username
+            admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
+            admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
+
+      - name: Configure Docker to use gcloud as a credential helper
+        run: |
+          gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
+
+      - name: Build and push core_backend image
+        working-directory: core_backend
+        run: |
+          docker build \
+            -t ${{ env.REPO }}/core_backend:latest \
+            -t ${{ env.REPO }}/core_backend:${{ github.sha }} \
+            .
+          docker image push --all-tags ${{ env.REPO }}/core_backend
+
+      - name: Deploy core_backend container
+        id: "compute-ssh"
+        uses: "google-github-actions/ssh-compute@v1"
+        env:
+          REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}
+        with:
+          instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
+          zone: "${{ secrets.DEPLOYMENT_ZONE }}"
+          ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
+          command: |
+            docker-credential-gcr configure-docker \
+              --registries ${{ secrets.DOCKER_REGISTRY_DOMAIN }}
+            docker pull \
+              ${{ env.REPO }}/core_backend:latest
+            docker stop core_backend
+            docker rm core_backend
+            docker run -d \
+              --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
+              --name core_backend \
+              -e JWT_SECRET="${{ steps.secrets.outputs.jwt-secret }}" \
+              -e NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google-login-client-id }}" \
+              -e DOMAIN="${{ steps.secrets.outputs.domain }}" \
+              -e POSTGRES_HOST="${{ steps.secrets.outputs.db-host }}" \
+              -e POSTGRES_PASSWORD="${{ steps.secrets.outputs.db-password }}" \
+              -e ADMIN_USERNAME="${{ steps.secrets.outputs.admin-username }}" \
+              -e ADMIN_PASSWORD="${{ steps.secrets.outputs.admin-password }}" \
+              -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
+              -e PROMETHEUS_MULTIPROC_DIR=/tmp \
+              -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
+              -e LANGFUSE=True \
+              -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
+              -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
+              -e BACKEND_ROOT_PATH=/api \
+              ${{ env.REPO }}/core_backend:latest
+            docker system prune -f
+
+      - name: Show deployment command output
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'
+
+      - name: Wait for Application to start
+        id: wait-for-app
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          curl -f -X 'GET' \
+            'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
+            -H 'accept: application/json'

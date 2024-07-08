@@ -74,7 +74,6 @@ setup-llm-proxy:
 		-d ghcr.io/berriai/litellm:main-v1.34.6 \
 		--config /app/config.yaml --detailed_debug
 
-
 teardown-llm-proxy:
 	@docker stop litellm-proxy
 	@docker rm litellm-proxy
