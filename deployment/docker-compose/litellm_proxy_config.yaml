@@ -18,7 +18,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: generate-gemini-response
     litellm_params:
-      model: vertex_ai_beta/gemini-1.5-pro-latest
+      model: vertex_ai/gemini-1.5-pro-latest
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_NONE

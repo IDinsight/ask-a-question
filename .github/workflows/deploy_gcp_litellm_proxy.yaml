@@ -43,6 +43,7 @@ jobs:
           secrets: |-
             domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
             openai-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-openai-api-key
+            gcp-credentials:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
 
       - name: Copy LiteLLM deployment files
         working-directory: deployment/docker-compose
@@ -59,11 +60,21 @@ jobs:
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
+            gcloud secrets versions access latest \
+              --secret=${{ env.RESOURCE_PREFIX }}-gcp-credential-json \
+              --format='get(payload.data)' \
+              | tr '_-' '/+' \
+              | base64 -d \
+              > /app/credentials.json
             docker stop litellm_proxy
             docker rm litellm_proxy
             docker run -d \
               -v ~/litellm_proxy_config.yaml:/app/config.yaml \
               -e OPENAI_API_KEY="${{ steps.secrets.outputs.openai-api-key }}" \
+              -e VERTEXAI_PROJECT=${{ secrets.GCP_PROJECT_ID }} \
+              -e VERTEXAI_LOCATION=${{ vars.VERTEX_AI_LOCATION }} \
+              -e VERTEXAI_ENDPOINT=https://${{ vars.VERTEX_AI_LOCATION }}-aiplatform.googleapis.com/v1 \
+              -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
               --log-driver=gcplogs \
               --restart always \
               --network aaq-network \
