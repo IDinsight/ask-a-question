@@ -6,7 +6,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key
-from ..contents.models import get_similar_content_async, update_votes_in_db
+from ..contents.models import (
+    get_similar_content_async,
+    increment_query_count,
+    update_votes_in_db,
+)
 from ..database import get_async_session
 from ..llm_call.llm_prompts import RAG_FAILURE_MESSAGE
 from ..llm_call.llm_rag import get_llm_rag_answer
@@ -205,6 +209,9 @@ async def embeddings_search(
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
         await save_query_response_to_db(user_query_db, response, asession)
+        await increment_query_count(
+            user_db.user_id, response.content_response, asession
+        )
         return response
 
 

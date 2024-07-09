@@ -4,7 +4,7 @@ from typing import Dict, Optional
 from pydantic import BaseModel, ConfigDict
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
-from ..schemas import FeedbackSentiment
+from ..schemas import FeedbackSentiment, QuerySearchResult
 
 
 class QueryBase(BaseModel):
@@ -25,19 +25,6 @@ class QueryRefined(QueryBase):
 
     query_text_original: str
     original_language: IdentifiedLanguage | None = None
-
-
-class QuerySearchResult(BaseModel):
-    """
-    Pydantic model for each individual search result
-    """
-
-    retrieved_title: str
-    retrieved_text: str
-    retrieved_content_id: int
-    score: float
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ResultState(str, Enum):
