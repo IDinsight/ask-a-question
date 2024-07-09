@@ -16,7 +16,7 @@ from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
-    get_user_by_token,
+    get_user_by_api_key,
     get_user_by_username,
     save_user_to_db,
 )
@@ -36,7 +36,8 @@ async def authenticate_key(
 ) -> UserDB:
     """
     Authenticate using basic bearer token. Used for calling
-    the question-answering endpoints
+    the question-answering endpoints. In case the JWT token is
+    provided instead of the API key, it will fall back to JWT
     """
     token = credentials.credentials
 
@@ -44,10 +45,10 @@ async def authenticate_key(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
         try:
-            user_db = await get_user_by_token(token, asession)
+            user_db = await get_user_by_api_key(token, asession)
             return user_db
         except UserNotFoundError:
-
+            # Fall back to JWT token authentication if api key is not valid.
             user_db = await get_current_user(token)
             return user_db
 
