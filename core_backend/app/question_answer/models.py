@@ -132,12 +132,9 @@ async def save_query_response_to_db(
         query_id=user_query_db.query_id,
         content_response=response.model_dump()["content_response"],
         llm_response=response.model_dump()["llm_response"],
+        tts_file=response.model_dump()["tts_file"],
         response_datetime_utc=datetime.utcnow(),
     )
-
-    tts_file = response.model_dump().get("tts_file")
-    if tts_file:
-        user_query_responses_db.tts_file = tts_file
 
     asession.add(user_query_responses_db)
     await asession.commit()
