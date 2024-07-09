@@ -14,6 +14,7 @@ class QueryBase(BaseModel):
 
     query_text: str
     query_metadata: dict = {}
+    generate_tts: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,6 +63,7 @@ class ErrorType(str, Enum):
     UNABLE_TO_TRANSLATE = "unable_to_translate"
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
     ALIGNMENT_TOO_LOW = "alignment_too_low"
+    TTS_ERROR = "tts_error"
 
 
 class QueryResponse(BaseModel):
@@ -75,6 +77,7 @@ class QueryResponse(BaseModel):
     feedback_secret_key: str
     debug_info: dict = {}
     state: ResultState = ResultState.IN_PROGRESS
+    tts_file: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

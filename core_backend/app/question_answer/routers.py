@@ -19,6 +19,7 @@ from ..llm_call.process_input import (
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
+from ..voice_api.text_to_speech import generate_speech
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -31,6 +32,7 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    ErrorType,
     QueryBase,
     QueryRefined,
     QueryResponse,
@@ -139,6 +141,24 @@ async def get_llm_answer(
             response.llm_response = rag_response.answer
 
         response.debug_info["extracted_info"] = rag_response.extracted_info
+
+        tts_save_path = f"response_{response.query_id}.mp3"
+
+        if question.generate_tts:
+            try:
+                tts_file_path = await generate_speech(
+                    text=rag_response.answer,
+                    language=question.original_language,
+                    save_path=tts_save_path,
+                )
+                response.tts_file = tts_file_path
+            except ValueError as e:
+                return QueryResponseError(
+                    query_id=response.query_id,
+                    error_message=str(e),
+                    error_type=ErrorType.TTS_ERROR,
+                    debug_info=response.debug_info,
+                )
 
     return response
 

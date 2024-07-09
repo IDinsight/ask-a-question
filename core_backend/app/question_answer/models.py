@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -40,6 +41,7 @@ class QueryDB(Base):
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=True)
 
     response_feedback: Mapped[List["ResponseFeedbackDB"]] = relationship(
         "ResponseFeedbackDB", back_populates="query", lazy=True
@@ -107,6 +109,7 @@ class QueryResponseDB(Base):
     content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    tts_file: Mapped[str] = mapped_column(String, nullable=True)
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
@@ -129,8 +132,10 @@ async def save_query_response_to_db(
         query_id=user_query_db.query_id,
         content_response=response.model_dump()["content_response"],
         llm_response=response.model_dump()["llm_response"],
+        tts_file=response.model_dump()["tts_file"],
         response_datetime_utc=datetime.utcnow(),
     )
+
     asession.add(user_query_responses_db)
     await asession.commit()
     await asession.refresh(user_query_responses_db)
