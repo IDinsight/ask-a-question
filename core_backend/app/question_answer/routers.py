@@ -146,7 +146,7 @@ async def get_llm_answer(
 
         tts_save_path = f"response_{response.query_id}.mp3"
 
-        if question.query_metadata.get("use_tts", False):
+        if question.generate_tts:
             try:
                 tts_file_path = await generate_speech(
                     text=rag_response.answer,

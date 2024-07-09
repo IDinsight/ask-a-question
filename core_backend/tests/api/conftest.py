@@ -2,6 +2,7 @@ import json
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
+from unittest.mock import MagicMock
 
 import httpx
 import numpy as np
@@ -355,3 +356,11 @@ def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
             return httpx.Response(200, json={"status": "success"})
 
     monkeysession.setattr(httpx, "AsyncClient", MockClient)
+
+
+@pytest.fixture
+def mock_gtts() -> MagicMock:
+    mock_gTTS = MagicMock()
+    mock_gTTS_instance = mock_gTTS.return_value
+    mock_gTTS_instance.save = MagicMock()
+    return mock_gTTS
