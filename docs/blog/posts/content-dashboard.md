@@ -23,7 +23,7 @@ On the Admin App, you can now get statistics from your question answering servic
 - The number of questions with positive feedback
 - The number of questions asked during the past 6 months.
 
-The dashboard is in its first version and in the future we are planning on adding more information such as [Urgency Detection](../../components/urgency-detection/index.md) related statistics, and content related statistics.
+The dashboard is in its first version and we are planning on adding more information such as [Urgency Detection](../../components/urgency-detection/index.md) related statistics, and content related statistics.
 ![Urgency Detection Swagger](../images/dashboard-screenshot.png){: .blog-img }
 
 ## Doc references

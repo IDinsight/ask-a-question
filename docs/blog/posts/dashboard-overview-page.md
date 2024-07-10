@@ -11,7 +11,7 @@ date: 2024-07-10
 
 In the last month or so, we've had support from Google fellows to pinch hit on a few items.
 Ahn Mac, a UI/UX designer at Google, helped design a new dashboard that we are very excited about.
-The first page, "Overview" is now ready for you to check out.
+The first page, "Overview", is now ready for you to check out.
 
 <!-- more -->
 
