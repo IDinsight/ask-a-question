@@ -21,7 +21,7 @@ class TestGenerateSpeech:
     ) -> None:
         save_path = "test_audio.mp3"
 
-        with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):
+        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
             tts_file_path = await generate_speech(text, language, save_path)
             assert tts_file_path == save_path
 
