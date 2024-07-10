@@ -3,15 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
-from core_backend.app.voice_api.voice import generate_speech
-
-
-@pytest.fixture
-def mock_gtts() -> MagicMock:
-    mock_gTTS = MagicMock()
-    mock_gTTS_instance = mock_gTTS.return_value
-    mock_gTTS_instance.save = MagicMock()
-    return mock_gTTS
+from core_backend.app.voice_api.voice_components import generate_speech
 
 
 class TestGenerateSpeech:

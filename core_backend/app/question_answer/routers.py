@@ -21,7 +21,7 @@ from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
 from ..voice_api.schemas import AudioQuery, AudioQueryError
-from ..voice_api.voice import generate_speech, transcribe_audio
+from ..voice_api.voice_components import generate_speech, transcribe_audio
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,

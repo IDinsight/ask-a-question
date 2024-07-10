@@ -337,7 +337,7 @@ class TestGenerateResponse:
             "generate_tts": generate_tts,
         }
 
-        with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):
+        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
             response = client.post(
                 "/llm-response",
                 headers={"Authorization": f"Bearer {token}"},
