@@ -129,7 +129,7 @@ const Login = () => {
           <Box
             sx={{
               display: "flex",
-              flexDirection: "row",
+              flexDirection: { sm: "column", md: "row" },
               alignItems: "center",
               justifyContent: "center",
               maxWidth: "76%",
@@ -149,7 +149,7 @@ const Login = () => {
                 alignItems: "center",
 
                 backgroundColor: appColors.primary,
-                width: "27%",
+                width: { sm: "80%", md: "30%" },
               }}
             >
               <AddCardIcon
@@ -203,7 +203,7 @@ const Login = () => {
                 alignItems: "center",
 
                 backgroundColor: appColors.primary,
-                width: "27%",
+                width: { sm: "80%", md: "30%" },
               }}
             >
               <QuestionAnswerOutlinedIcon
@@ -258,7 +258,7 @@ const Login = () => {
                 alignItems: "center",
 
                 backgroundColor: appColors.primary,
-                width: "27%",
+                width: { sm: "80%", md: "30%" },
               }}
             >
               <PowerOutlinedIcon
