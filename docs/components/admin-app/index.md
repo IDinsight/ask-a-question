@@ -34,6 +34,8 @@
     Allows you to see statistices like which content is most frequently being
     used, or the feedback from users on responses provided by the service.
 
+    [:octicons-arrow-right-24: More info](./dashboard.md)
+
 - :material-monitor-dashboard: __Engineer's Dashboard (Coming Soon)__
 
     ---
