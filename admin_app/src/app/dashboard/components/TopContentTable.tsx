@@ -80,6 +80,7 @@ const UpvoteDownvoteBarChart = ({
       ]}
       type="bar"
       height={30}
+      width="100%"
     />
   );
 };
@@ -148,7 +149,7 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
                   <StyledTableCell align="right">
                     {row.query_count}
                   </StyledTableCell>
-                  <StyledTableCell align="right">
+                  <StyledTableCell align="right" sx={{ width: 500 }}>
                     <UpvoteDownvoteBarChart
                       positiveVotes={row.positive_votes}
                       negativeVotes={row.negative_votes}
