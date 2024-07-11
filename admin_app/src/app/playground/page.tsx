@@ -4,6 +4,7 @@ import { apiCalls } from "@/utils/api";
 import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
+import { Layout } from "@/components/Layout";
 import {
   ErrorSnackBar,
   Message,
@@ -77,8 +78,8 @@ const Page = () => {
       isUrgent === null
         ? `No response. Reason:  See <json> for details.`
         : isUrgent
-          ? "Urgent 🚨"
-          : "Not Urgent 🟢";
+        ? "Urgent 🚨"
+        : "Not Urgent 🟢";
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -203,7 +204,7 @@ const Page = () => {
   };
   const handleErrorClose = (
     event?: React.SyntheticEvent | Event,
-    reason?: string
+    reason?: string,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -219,6 +220,7 @@ const Page = () => {
           }
         `}
       />
+      <Layout.Spacer multiplier={4} />
       <Box
         display="flex"
         flexDirection="column"
