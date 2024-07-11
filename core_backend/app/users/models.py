@@ -137,7 +137,7 @@ async def get_content_quota_by_userid(
         raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
 
 
-async def get_user_by_token(
+async def get_user_by_api_key(
     token: str,
     asession: AsyncSession,
 ) -> UserDB:

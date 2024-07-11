@@ -7,11 +7,6 @@ import {
   Alert,
   Avatar,
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
   Fade,
   IconButton,
   InputAdornment,
@@ -25,7 +20,6 @@ import {
 
 import { appColors, sizes } from "@/utils";
 import CloseIcon from "@mui/icons-material/Close";
-import KeyIcon from "@mui/icons-material/Key";
 import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -60,10 +54,8 @@ type Message = UserMessage | ResponseMessage;
 
 const PersistentSearchBar = ({
   onSend,
-  openApiKeyDialog,
 }: {
   onSend: (queryText: string, queryType: QueryType) => void;
-  openApiKeyDialog: () => void;
 }) => {
   const [selectedOption, setSelectedOption] =
     useState<QueryType>("embeddings-search");
@@ -151,17 +143,6 @@ const PersistentSearchBar = ({
                     <Typography variant="caption">Urgency Detection</Typography>
                   </MenuItem>
                 </Select>
-
-                <IconButton
-                  aria-label="toggle password visibility"
-                  edge="start"
-                  sx={{
-                    mx: 0.3,
-                  }}
-                  onClick={openApiKeyDialog}
-                >
-                  <KeyIcon />
-                </IconButton>
               </InputAdornment>
             ),
             endAdornment: (
@@ -408,66 +389,7 @@ const ErrorSnackBar = ({
   );
 };
 
-const ApiKeyDialog = ({
-  open,
-  handleClose,
-  currApiKey,
-  handleSave,
-}: {
-  open: boolean;
-  handleClose: () => void;
-  currApiKey: string | null;
-  handleSave: (token: string) => void;
-}) => {
-  const [apiKey, setApiKey] = useState<string>(currApiKey ? currApiKey : "");
-
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="form-dialog-title"
-    >
-      <DialogContent>
-        <DialogContentText sx={{ my: 2 }}>
-          {
-            "Please enter the API key to access the retrieval APIs. If you don't have one yet, head to "
-          }
-          <Link
-            href="/integrations"
-            color="primary"
-            sx={{ fontWeight: "bold" }}
-          >
-            Integrations
-          </Link>
-          {" to generate one."}
-        </DialogContentText>
-        <TextField
-          autoFocus
-          margin="dense"
-          id="name"
-          label="API Key"
-          type="text"
-          fullWidth
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button variant="contained" onClick={() => handleSave(apiKey)}>
-          Save
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-export {
-  ApiKeyDialog,
-  ErrorSnackBar,
-  MessageBox,
-  MessageSkeleton,
-  PersistentSearchBar,
-};
+export { ErrorSnackBar, MessageBox, MessageSkeleton, PersistentSearchBar };
 export type {
   Message,
   QueryType,
