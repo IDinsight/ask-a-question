@@ -12,7 +12,7 @@ import {
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { LoadingButton } from "@mui/lab";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import { Layout } from "./Layout";
 import { appColors, sizes } from "@/utils";
 
@@ -142,7 +142,7 @@ const ImportModal = ({
             <Button
               variant="outlined"
               component="span"
-              startIcon={<CloudUploadIcon />}
+              startIcon={<NoteAddIcon />}
             >
               Attach File
             </Button>
