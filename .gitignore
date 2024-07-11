@@ -142,6 +142,7 @@ dmypy.json
 # Secrets
 *secrets*
 .pgpass
+**/*credentials.json
 
 # Mac artifacts and temp files
 .DS_Store
