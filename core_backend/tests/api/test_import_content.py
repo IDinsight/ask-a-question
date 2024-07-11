@@ -125,6 +125,15 @@ class TestImportContent:
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
+    def data_valid_with_tags(self) -> BytesIO:
+        data = {
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["csv text 1", "csv text 2"],
+            "tags": ["tag1, tag2", "tag1, tag4"],
+        }
+        return _dict_to_csv_bytes(data)
+
+    @pytest.fixture
     def data_empty_csv(self) -> BytesIO:
         data: dict = {}
         return _dict_to_csv_bytes(data)
@@ -209,34 +218,29 @@ class TestImportContent:
         }
         return _dict_to_csv_bytes(data)
 
-    test_data = [
-        ("data_empty_csv", "empty_data"),
-        ("data_no_rows", "no_rows_csv"),
-        ("data_title_spaces_only", "empty_title"),
-        ("data_text_spaces_only", "empty_text"),
-        ("data_missing_columns", "missing_columns"),
-        ("data_title_missing", "empty_title"),
-        ("data_text_missing", "empty_text"),
-        ("data_long_title", "title_too_long"),
-        ("data_long_text", "texts_too_long"),
-        ("data_duplicate_titles", "duplicate_titles"),
-        ("data_duplicate_texts", "duplicate_texts"),
-    ]
-
+    @pytest.mark.parametrize(
+        "mock_csv_data",
+        ["data_valid", "data_valid_with_tags"],
+    )
     async def test_csv_import_success(
         self,
         client: TestClient,
-        data_valid: BytesIO,
+        mock_csv_data: BytesIO,
+        request: pytest.FixtureRequest,
         fullaccess_token: str,
     ) -> None:
+        mock_csv_file = request.getfixturevalue(mock_csv_data)
+
         response = client.post(
             "/content/csv-upload",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            files={"file": ("test.csv", data_valid, "text/csv")},
+            files={"file": ("test.csv", mock_csv_file, "text/csv")},
         )
         assert response.status_code == 200
 
+        # cleanup
         json_response = response.json()
+        # delete contents
         contents_list = json_response["contents"]
         for content in contents_list:
             content_id = content["content_id"]
@@ -245,8 +249,32 @@ class TestImportContent:
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
             assert response.status_code == 200
+        # delete tags
+        tags_list = json_response["tags"]
+        for tag in tags_list:
+            tag_id = tag["tag_id"]
+            response = client.delete(
+                f"/tag/{tag_id}",
+                headers={"Authorization": f"Bearer {fullaccess_token}"},
+            )
+            assert response.status_code == 200
 
-    @pytest.mark.parametrize("mock_csv_data, expected_error_type", test_data)
+    @pytest.mark.parametrize(
+        "mock_csv_data, expected_error_type",
+        [
+            ("data_empty_csv", "empty_data"),
+            ("data_no_rows", "no_rows_csv"),
+            ("data_title_spaces_only", "empty_title"),
+            ("data_text_spaces_only", "empty_text"),
+            ("data_missing_columns", "missing_columns"),
+            ("data_title_missing", "empty_title"),
+            ("data_text_missing", "empty_text"),
+            ("data_long_title", "title_too_long"),
+            ("data_long_text", "texts_too_long"),
+            ("data_duplicate_titles", "duplicate_titles"),
+            ("data_duplicate_texts", "duplicate_texts"),
+        ],
+    )
     async def test_csv_import_checks(
         self,
         client: TestClient,
