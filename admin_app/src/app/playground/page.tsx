@@ -226,7 +226,7 @@ const Page = () => {
         flexDirection="column"
         alignItems="center"
         bgcolor="white"
-        sx={{ height: "100vh", width: "100%", pb: 10 }}
+        sx={{ height: "90vh", width: "100%", pb: 10, mt: 4 }}
       >
         <Box
           mb={10}
