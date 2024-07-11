@@ -1,9 +1,15 @@
+from datetime import datetime
 from io import BytesIO
 from typing import Generator
 
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from core_backend.app.auth.dependencies import create_access_token
+from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
 
 def _dict_to_csv_bytes(data: dict) -> BytesIO:
@@ -17,6 +23,96 @@ def _dict_to_csv_bytes(data: dict) -> BytesIO:
     csv_bytes.seek(0)
 
     return csv_bytes
+
+
+@pytest.fixture(scope="class")
+def temp_user_token_and_quota(
+    request: pytest.FixtureRequest, client: TestClient, db_session: Session
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    content_quota = request.param["content_quota"]
+
+    temp_user_db = UserDB(
+        username=username,
+        hashed_password=get_password_salted_hash("temp_password"),
+        hashed_api_key=get_key_hash("temp_api_key"),
+        content_quota=content_quota,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+    db_session.add(temp_user_db)
+    db_session.commit()
+    yield (create_access_token(username), content_quota)
+    db_session.delete(temp_user_db)
+    db_session.commit()
+
+
+class TestImportContentQuota:
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_10", "content_quota": 10},
+            {"username": "temp_user_limit_unlimited", "content_quota": None},
+        ],
+        indirect=True,
+    )
+    async def test_import_content_success(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "csv title 2"],
+                "text": ["csv text 1", "csv text 2"],
+            }
+        )
+
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            json_response = response.json()
+            contents_list = json_response["contents"]
+            for content in contents_list:
+                content_id = content["content_id"]
+                response = client.delete(
+                    f"/content/{content_id}",
+                    headers={"Authorization": f"Bearer {temp_user_token}"},
+                )
+                assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_10", "content_quota": 0},
+        ],
+        indirect=True,
+    )
+    async def test_import_content_failure(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "csv title 2"],
+                "text": ["csv text 1", "csv text 2"],
+            }
+        )
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"]["errors"][0]["type"] == "exceeds_quota"
 
 
 class TestImportContent:
