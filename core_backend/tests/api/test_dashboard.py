@@ -696,3 +696,11 @@ class TestTopContent:
             assert top_content[i].query_count == c["query_count"]
             assert top_content[i].positive_votes == c["positive_votes"]
             assert top_content[i].negative_votes == c["negative_votes"]
+
+    async def test_content_from_other_user_not_returned(
+        self, content_data: pytest.FixtureRequest, asession: AsyncSession
+    ) -> None:
+
+        top_content = await get_top_content(2, asession, 5)
+
+        assert len(top_content) == 0
