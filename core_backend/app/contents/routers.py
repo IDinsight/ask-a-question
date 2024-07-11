@@ -238,15 +238,12 @@ async def bulk_upload_contents(
     created_tags: List[TagRetrieve] = []
     if not skip_tags:
         incoming_tags = _extract_unique_tags(tags_col=df[tags_col])
-        logger.info(f"Tags in CSV: {incoming_tags}")
         tags_in_db = await get_list_of_tag_from_db(
             user_id=user_db.user_id, asession=asession
         )
-        logger.info(f"Tags in DB: {tags_in_db}")
         tags_to_create = _get_tags_not_in_db(
             tags_in_db=tags_in_db, incoming_tags=incoming_tags
         )
-        logger.info(f"Tags to create: {tags_to_create}")
         for tag in tags_to_create:
             tag_create = TagCreate(tag_name=tag)
             tag_db = await save_tag_to_db(
