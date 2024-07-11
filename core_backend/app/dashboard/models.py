@@ -128,6 +128,7 @@ async def get_top_content(
             ContentDB.updated_datetime_utc,
         )
         .order_by(ContentDB.query_count.desc())
+        .where(ContentDB.user_id == user_id)
         .limit(top_n)
     )
 
@@ -218,6 +219,7 @@ async def get_timeseries_query(
             func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
+        .where(ResponseFeedbackDB.query.has(user_id=user_id))
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
@@ -267,6 +269,7 @@ async def get_timeseries_urgency(
             func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
+        .where(ResponseFeedbackDB.query.has(user_id=user_id))
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
