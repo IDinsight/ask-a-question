@@ -2,7 +2,7 @@
 import { useAuth } from "@/utils/auth";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
-import AddCardIcon from "@mui/icons-material/AddCard";
+import PostAddIcon from "@mui/icons-material/PostAdd";
 import ExpandCircleDownOutlinedIcon from "@mui/icons-material/ExpandCircleDownOutlined";
 import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
 import Divider from "@mui/material/Divider";
@@ -96,31 +96,50 @@ const Login = () => {
             alignItems: "center",
           }}
         >
-          <img
-            src="../../logo-light.png"
-            alt="Logo"
-            style={{
-              maxWidth: "80%",
-              height: "auto",
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              marginY: { sm: 2, lg: 4 },
+              marginX: { sm: 0, lg: 4 },
             }}
-          />
+          >
+            <img
+              src="../../logo-light.png"
+              alt="Logo"
+              style={{
+                maxWidth: "80%",
+                height: "auto",
+                margin: "0 10%",
+              }}
+            />
+          </Box>
           <Divider
-            sx={{ width: "40%", bgcolor: "white", height: "2px", my: 2 }}
+            sx={{
+              width: "40%",
+              bgcolor: "white",
+              height: "1.5px",
+              my: { sm: 0, lg: 2 },
+            }}
           />
           <Box
             sx={{
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              margin: 4,
+              margin: { sm: 2, md: 4 },
             }}
           >
             <Typography
               textAlign="center"
               color={appColors.white}
               my={2}
-              fontSize={sizes.icons.medium}
-              fontWeight="bold"
+              fontSize={{
+                md: sizes.icons.small,
+                lg: sizes.icons.medium,
+              }}
+              fontWeight={{ sm: "600", md: "500" }}
             >
               Integrate Ask a Question into your chatbot in 3 simple steps:
             </Typography>
@@ -129,11 +148,11 @@ const Login = () => {
           <Box
             sx={{
               display: "flex",
-              flexDirection: { sm: "column", md: "row" },
+              flexDirection: { sm: "column", lg: "row" },
               alignItems: "center",
               justifyContent: "center",
               maxWidth: "76%",
-              margin: 4,
+              margin: { sm: 0, lg: 4 },
               mx: 8,
             }}
           >
@@ -149,22 +168,24 @@ const Login = () => {
                 alignItems: "center",
 
                 backgroundColor: appColors.primary,
-                width: { sm: "80%", md: "30%" },
+                width: { md: "80%", lg: "30%" },
               }}
             >
-              <AddCardIcon
+              <PostAddIcon
                 sx={{
                   color: appColors.white,
-                  width: "40%",
-                  height: "40%",
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
                   marginTop: 2,
                 }}
               />
-
               <Typography
                 textAlign="center"
-                fontSize={sizes.icons.medium}
-                fontWeight="bold"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
                 margin={1}
                 color={appColors.white}
               >
@@ -185,7 +206,8 @@ const Login = () => {
             <ExpandCircleDownOutlinedIcon
               sx={{
                 mx: 4,
-                transform: "rotate(270deg)",
+                my: 2,
+                transform: { lg: "rotate(270deg)" },
                 fontSize: sizes.icons.large,
                 color: appColors.white,
                 borderBlockColor: appColors.primary,
@@ -201,24 +223,26 @@ const Login = () => {
                 flexDirection: "column",
                 display: "flex",
                 alignItems: "center",
-
                 backgroundColor: appColors.primary,
-                width: { sm: "80%", md: "30%" },
+                width: { md: "80%", lg: "30%" },
               }}
             >
               <QuestionAnswerOutlinedIcon
                 sx={{
                   color: appColors.white,
-                  width: "40%",
-                  height: "40%",
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
                   marginTop: 2,
                 }}
               />
 
               <Typography
                 textAlign="center"
-                fontSize={sizes.icons.medium}
-                fontWeight="bold"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
                 margin={1}
                 mx={4}
                 color={appColors.white}
@@ -241,7 +265,8 @@ const Login = () => {
               sx={{
                 borderColor: appColors.white,
                 mx: 4,
-                transform: "rotate(270deg)",
+                my: 2,
+                transform: { lg: "rotate(270deg)" },
                 fontSize: sizes.icons.large,
                 color: appColors.white,
               }}
@@ -256,25 +281,27 @@ const Login = () => {
                 flexDirection: "column",
                 display: "flex",
                 alignItems: "center",
-
                 backgroundColor: appColors.primary,
-                width: { sm: "80%", md: "30%" },
+                width: { md: "80%", lg: "30%" },
               }}
             >
               <PowerOutlinedIcon
                 sx={{
                   color: appColors.white,
                   transform: "rotate(90deg)",
-                  width: "40%",
-                  height: "40%",
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
                   marginTop: 2,
                 }}
               />
 
               <Typography
                 textAlign="center"
-                fontSize={sizes.icons.medium}
-                fontWeight="bold"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
                 margin={1}
                 mx={4}
                 color={appColors.white}
