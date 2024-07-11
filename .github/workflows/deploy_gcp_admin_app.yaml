@@ -19,7 +19,6 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    # TODO: replace improve-gcp-deploy with main
     environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
 
     env:

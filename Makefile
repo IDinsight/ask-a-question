@@ -61,7 +61,7 @@ setup-llm-proxy:
 	-@docker rm litellm-proxy
 	@docker system prune -f
 	@sleep 2
-	@docker pull ghcr.io/berriai/litellm:main-v1.34.6
+	@docker pull ghcr.io/berriai/litellm:main-v1.40.10
 	@docker run \
 		--name litellm-proxy \
 		--rm \
@@ -71,7 +71,7 @@ setup-llm-proxy:
 		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
 		-e EMBEDDINGS_ENDPOINT=$(EMBEDDINGS_ENDPOINT) \
 		-p 4000:4000 \
-		-d ghcr.io/berriai/litellm:main-v1.34.6 \
+		-d ghcr.io/berriai/litellm:main-v1.40.10 \
 		--config /app/config.yaml --detailed_debug
 
 teardown-llm-proxy:
