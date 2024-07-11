@@ -1,6 +1,11 @@
 "use client";
 import { useAuth } from "@/utils/auth";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import PostAddIcon from "@mui/icons-material/PostAdd";
+import ExpandCircleDownOutlinedIcon from "@mui/icons-material/ExpandCircleDownOutlined";
+import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
+import Divider from "@mui/material/Divider";
 import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -12,6 +17,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
+import { appColors, sizes } from "@/utils";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "not-set";
@@ -73,12 +79,251 @@ const Login = () => {
         sm={4}
         md={7}
         sx={{
-          backgroundImage: "url(https://source.unsplash.com/random?wallpapers)",
+          backgroundColor: (theme) => theme.palette.primary.main,
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundPosition: "center",
+          display: { xs: "none", sm: "flex" },
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
+      >
+        <Box
+          component="div"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              marginY: { sm: 2, lg: 4 },
+              marginX: { sm: 0, lg: 4 },
+            }}
+          >
+            <img
+              src="../../logo-light.png"
+              alt="Logo"
+              style={{
+                maxWidth: "80%",
+                height: "auto",
+                margin: "0 10%",
+              }}
+            />
+          </Box>
+          <Divider
+            sx={{
+              width: "40%",
+              bgcolor: "white",
+              height: "1.5px",
+              my: { sm: 0, lg: 2 },
+            }}
+          />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              margin: { sm: 2, md: 4 },
+            }}
+          >
+            <Typography
+              textAlign="center"
+              color={appColors.white}
+              my={2}
+              fontSize={{
+                md: sizes.icons.small,
+                lg: sizes.icons.medium,
+              }}
+              fontWeight={{ sm: "600", md: "500" }}
+            >
+              Integrate Ask a Question into your chatbot in 3 simple steps:
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { sm: "column", lg: "row" },
+              alignItems: "center",
+              justifyContent: "center",
+              maxWidth: "76%",
+              margin: { sm: 0, lg: 4 },
+              mx: 8,
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                p: 0,
+                borderRadius: "16px",
+                border: 2,
+                borderColor: appColors.grey,
+                flexDirection: "column",
+                display: "flex",
+                alignItems: "center",
+
+                backgroundColor: appColors.primary,
+                width: { md: "80%", lg: "30%" },
+              }}
+            >
+              <PostAddIcon
+                sx={{
+                  color: appColors.white,
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
+                  marginTop: 2,
+                }}
+              />
+              <Typography
+                textAlign="center"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
+                margin={1}
+                color={appColors.white}
+              >
+                Create
+              </Typography>
+              <Typography
+                textAlign="center"
+                color={appColors.white}
+                sx={{
+                  width: "80%",
+                  maxWidth: 280,
+                  marginBottom: 4,
+                }}
+              >
+                Add your FAQs as easy-to-manage cards
+              </Typography>
+            </Box>
+            <ExpandCircleDownOutlinedIcon
+              sx={{
+                mx: 4,
+                my: 2,
+                transform: { lg: "rotate(270deg)" },
+                fontSize: sizes.icons.large,
+                color: appColors.white,
+                borderBlockColor: appColors.primary,
+              }}
+            />
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                p: 0,
+                borderRadius: "16px",
+                border: 2,
+                borderColor: appColors.grey,
+                flexDirection: "column",
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: appColors.primary,
+                width: { md: "80%", lg: "30%" },
+              }}
+            >
+              <QuestionAnswerOutlinedIcon
+                sx={{
+                  color: appColors.white,
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
+                  marginTop: 2,
+                }}
+              />
+
+              <Typography
+                textAlign="center"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
+                margin={1}
+                mx={4}
+                color={appColors.white}
+              >
+                Test
+              </Typography>
+              <Typography
+                textAlign="center"
+                color={appColors.white}
+                sx={{
+                  width: "80%",
+                  maxWidth: 280,
+                  marginBottom: 4,
+                }}
+              >
+                Check if the responses sound right
+              </Typography>
+            </Box>
+            <ExpandCircleDownOutlinedIcon
+              sx={{
+                borderColor: appColors.white,
+                mx: 4,
+                my: 2,
+                transform: { lg: "rotate(270deg)" },
+                fontSize: sizes.icons.large,
+                color: appColors.white,
+              }}
+            />
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                p: 0,
+                borderRadius: "16px",
+                border: 2,
+                borderColor: appColors.grey,
+                flexDirection: "column",
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: appColors.primary,
+                width: { md: "80%", lg: "30%" },
+              }}
+            >
+              <PowerOutlinedIcon
+                sx={{
+                  color: appColors.white,
+                  transform: "rotate(90deg)",
+                  width: { sm: "30%", lg: "40%" },
+                  height: { sm: "30%", lg: "40%" },
+                  marginTop: 2,
+                }}
+              />
+
+              <Typography
+                textAlign="center"
+                fontSize={{
+                  sm: sizes.icons.small,
+                  lg: sizes.icons.medium,
+                }}
+                fontWeight={{ sm: "600", md: "500" }}
+                margin={1}
+                mx={4}
+                color={appColors.white}
+              >
+                Integrate
+              </Typography>
+              <Typography
+                textAlign="center"
+                justifyContent={"center"}
+                color={appColors.white}
+                sx={{
+                  width: "80%",
+                  maxWidth: 280,
+                  marginBottom: 4,
+                }}
+              >
+                Connect to your chatbot using our APIs. You are all set
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Grid>
       <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
         <Box
           sx={{
