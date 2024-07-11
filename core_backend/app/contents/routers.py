@@ -259,7 +259,6 @@ async def bulk_upload_contents(
 
         # tag name to tag id mapping
         tag_name_to_id_map = {tag.tag_name: tag.tag_id for tag in tags_in_db}
-        logger.info(f"Tag name to id map: {tag_name_to_id_map}")
 
     # Add each row to the content database
     created_contents = []
@@ -271,7 +270,6 @@ async def bulk_upload_contents(
                     tag_name.strip().upper() for tag_name in row[tags_col].split(",")
                 ]
                 tag_ids = [tag_name_to_id_map[tag_name] for tag_name in tag_names]
-                logger.info(f"Tag names: {tag_names}, Tag ids: {tag_ids}")
                 is_tag_valid, content_tags = await validate_tags(
                     user_db.user_id, tag_ids, asession
                 )
