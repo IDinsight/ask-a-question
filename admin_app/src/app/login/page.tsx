@@ -26,13 +26,17 @@ const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
   const { login, loginGoogle, loginError } = useAuth();
-
+  const iconStyles = {
+    color: appColors.white,
+    width: { xs: "30%", lg: "40%" },
+    height: { xs: "30%", lg: "40%" },
+    marginTop: 2,
+  };
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const username = data.get("username") as string;
     const password = data.get("password") as string;
-
     if (
       username === "" ||
       password === "" ||
@@ -148,179 +152,85 @@ const Login = () => {
           <Box
             sx={{
               display: "flex",
-              flexDirection: { sm: "column", lg: "row" },
-              alignItems: "center",
+              flexDirection: { xs: "column", lg: "row" },
+              alignItems: { sm: "center", lg: "stretch" },
               justifyContent: "center",
-              maxWidth: "76%",
-              margin: { sm: 0, lg: 4 },
+              maxWidth: "80%",
+              margin: "auto",
               mx: 8,
             }}
           >
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                p: 0,
-                borderRadius: "16px",
-                border: 2,
-                borderColor: appColors.grey,
-                flexDirection: "column",
-                display: "flex",
-                alignItems: "center",
+            {["Create", "Test", "Integrate"].map((text, index) => (
+              <React.Fragment key={text}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    p: 0,
+                    borderRadius: "16px",
+                    border: 2,
+                    borderColor: appColors.grey,
+                    flexDirection: "column",
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: appColors.primary,
+                    minWidth: 200,
+                    width: { xs: "100%", md: "70%", lg: "30%" },
+                    marginBottom: 2,
+                    flexGrow: 1,
+                  }}
+                >
+                  {index === 0 && <PostAddIcon sx={iconStyles} />}
+                  {index === 1 && (
+                    <QuestionAnswerOutlinedIcon sx={iconStyles} />
+                  )}
+                  {index === 2 && (
+                    <PowerOutlinedIcon
+                      sx={{ ...iconStyles, transform: "rotate(90deg)" }}
+                    />
+                  )}
 
-                backgroundColor: appColors.primary,
-                width: { md: "80%", lg: "30%" },
-              }}
-            >
-              <PostAddIcon
-                sx={{
-                  color: appColors.white,
-                  width: { sm: "30%", lg: "40%" },
-                  height: { sm: "30%", lg: "40%" },
-                  marginTop: 2,
-                }}
-              />
-              <Typography
-                textAlign="center"
-                fontSize={{
-                  sm: sizes.icons.small,
-                  lg: sizes.icons.medium,
-                }}
-                fontWeight={{ sm: "600", md: "500" }}
-                margin={1}
-                color={appColors.white}
-              >
-                Create
-              </Typography>
-              <Typography
-                textAlign="center"
-                color={appColors.white}
-                sx={{
-                  width: "80%",
-                  maxWidth: 280,
-                  marginBottom: 4,
-                }}
-              >
-                Add your FAQs as easy-to-manage cards
-              </Typography>
-            </Box>
-            <ExpandCircleDownOutlinedIcon
-              sx={{
-                mx: 4,
-                my: 2,
-                transform: { lg: "rotate(270deg)" },
-                fontSize: sizes.icons.large,
-                color: appColors.white,
-                borderBlockColor: appColors.primary,
-              }}
-            />
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                p: 0,
-                borderRadius: "16px",
-                border: 2,
-                borderColor: appColors.grey,
-                flexDirection: "column",
-                display: "flex",
-                alignItems: "center",
-                backgroundColor: appColors.primary,
-                width: { md: "80%", lg: "30%" },
-              }}
-            >
-              <QuestionAnswerOutlinedIcon
-                sx={{
-                  color: appColors.white,
-                  width: { sm: "30%", lg: "40%" },
-                  height: { sm: "30%", lg: "40%" },
-                  marginTop: 2,
-                }}
-              />
-
-              <Typography
-                textAlign="center"
-                fontSize={{
-                  sm: sizes.icons.small,
-                  lg: sizes.icons.medium,
-                }}
-                fontWeight={{ sm: "600", md: "500" }}
-                margin={1}
-                mx={4}
-                color={appColors.white}
-              >
-                Test
-              </Typography>
-              <Typography
-                textAlign="center"
-                color={appColors.white}
-                sx={{
-                  width: "80%",
-                  maxWidth: 280,
-                  marginBottom: 4,
-                }}
-              >
-                Check if the responses sound right
-              </Typography>
-            </Box>
-            <ExpandCircleDownOutlinedIcon
-              sx={{
-                borderColor: appColors.white,
-                mx: 4,
-                my: 2,
-                transform: { lg: "rotate(270deg)" },
-                fontSize: sizes.icons.large,
-                color: appColors.white,
-              }}
-            />
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                p: 0,
-                borderRadius: "16px",
-                border: 2,
-                borderColor: appColors.grey,
-                flexDirection: "column",
-                display: "flex",
-                alignItems: "center",
-                backgroundColor: appColors.primary,
-                width: { md: "80%", lg: "30%" },
-              }}
-            >
-              <PowerOutlinedIcon
-                sx={{
-                  color: appColors.white,
-                  transform: "rotate(90deg)",
-                  width: { sm: "30%", lg: "40%" },
-                  height: { sm: "30%", lg: "40%" },
-                  marginTop: 2,
-                }}
-              />
-
-              <Typography
-                textAlign="center"
-                fontSize={{
-                  sm: sizes.icons.small,
-                  lg: sizes.icons.medium,
-                }}
-                fontWeight={{ sm: "600", md: "500" }}
-                margin={1}
-                mx={4}
-                color={appColors.white}
-              >
-                Integrate
-              </Typography>
-              <Typography
-                textAlign="center"
-                justifyContent={"center"}
-                color={appColors.white}
-                sx={{
-                  width: "80%",
-                  maxWidth: 280,
-                  marginBottom: 4,
-                }}
-              >
-                Connect to your chatbot using our APIs. You are all set
-              </Typography>
-            </Box>
+                  <Typography
+                    textAlign="center"
+                    fontSize={{ xs: sizes.icons.small, lg: sizes.icons.medium }}
+                    fontWeight={{ xs: "600", md: "500" }}
+                    margin={1}
+                    color={appColors.white}
+                  >
+                    {text}
+                  </Typography>
+                  <Typography
+                    textAlign="center"
+                    color={appColors.white}
+                    sx={{ width: "80%", maxWidth: 280, marginBottom: 4 }}
+                  >
+                    {index === 0 && "Add your FAQs as easy-to-manage cards"}
+                    {index === 1 && "Check if the responses sound right"}
+                    {index === 2 &&
+                      "Connect to your chatbot using our APIs. You are all set"}
+                  </Typography>
+                </Box>
+                {index < 2 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mx: 4,
+                      my: 2,
+                      minHeight: { xs: 48, lg: 0 },
+                    }}
+                  >
+                    <ExpandCircleDownOutlinedIcon
+                      sx={{
+                        transform: { lg: "rotate(270deg)" },
+                        fontSize: sizes.icons.large,
+                        color: appColors.white,
+                      }}
+                    />
+                  </Box>
+                )}
+              </React.Fragment>
+            ))}
           </Box>
         </Box>
       </Grid>
