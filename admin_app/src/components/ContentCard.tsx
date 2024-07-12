@@ -57,13 +57,9 @@ const ContentCard = ({
       >
         <Layout.FlexBox
           flexDirection="row"
-          justifyContent="space-between"
-          alignItems="center"
+          justifyContent="end"
           sx={{ width: "98%" }}
         >
-          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
-            #{content_id}
-          </Typography>
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
               <Chip
@@ -99,7 +95,7 @@ const ContentCard = ({
         </Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography variant="body2" color={appColors.darkGrey}>
-          Last updated on{" "}
+          Last updated{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
             month: "numeric",
