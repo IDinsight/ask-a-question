@@ -15,6 +15,7 @@ import {
   FeedbackSentimentType,
   ResponseSummary,
   UserMessage,
+  ResponseMessage,
 } from "./components/PlaygroundComponents";
 import { Box } from "@mui/material";
 import { useAuth } from "@/utils/auth";
@@ -204,17 +205,25 @@ const Page = () => {
     }
   };
 
-  const onFeedbackSend = (
-    query_id: number,
+  const sendResponseFeedback = (
+    message: ResponseMessage,
     feedback_sentiment: FeedbackSentimentType,
-    feedback_secret_key: string,
   ) => {
     if (token) {
+      // Assuming message.json is a JSON string. Parse it if necessary.
+      const jsonResponse =
+        typeof message.json === "string"
+          ? JSON.parse(message.json)
+          : message.json;
+
+      const queryID = jsonResponse.query_id;
+      const feedbackSecretKey = jsonResponse.feedback_secret_key;
+
       apiCalls
         .postResponseFeedback(
-          query_id,
+          queryID,
           feedback_sentiment,
-          feedback_secret_key,
+          feedbackSecretKey,
           token,
         )
         .then((response) => {
@@ -272,8 +281,8 @@ const Page = () => {
           {messages.map((message, index) => (
             <MessageBox
               key={index}
-              {...message}
-              onFeedbackSend={onFeedbackSend}
+              message={message}
+              onFeedbackSend={sendResponseFeedback}
             />
           ))}
           {loading && <MessageSkeleton />}

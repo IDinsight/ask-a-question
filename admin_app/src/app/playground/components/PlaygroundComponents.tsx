@@ -28,6 +28,7 @@ import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import { Feedback } from "@mui/icons-material";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
 
@@ -233,15 +234,19 @@ const MessageSkeleton = () => {
   );
 };
 
-const MessageBox = (
-  message: Message,
+const MessageBox = ({
+  message,
+  onFeedbackSend,
+}: {
+  message: Message;
   onFeedbackSend: (
-    queryID: number,
+    message: ResponseMessage,
     feedbackSentiment: FeedbackSentimentType,
-    feedbackSecretKey: string,
-  ) => void,
-) => {
+  ) => void;
+}) => {
   const [open, setOpen] = useState(false);
+  const [thumbsUp, setThumbsUp] = useState(false);
+  const [thumbsDown, setThumbsDown] = useState(false);
 
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
@@ -253,6 +258,38 @@ const MessageBox = (
       </Box>
     ));
   };
+  const handlePositiveFeedback = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    if (thumbsUp) {
+      console.log("Already sent positive feedback");
+    } else {
+      setThumbsUp(true);
+      return onFeedbackSend(
+        message as ResponseMessage,
+        "positive" as FeedbackSentimentType,
+      );
+    }
+  };
+  const handleNegativeFeedback = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    if (thumbsDown) {
+      console.log("Already sent negative feedback");
+    } else {
+      setThumbsDown(true);
+      return onFeedbackSend(
+        message as ResponseMessage,
+        "negative" as FeedbackSentimentType,
+      );
+    }
+  };
+  const feedbackButtonStyle = {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+  };
+
   const toggleJsonModal = () => setOpen(!open);
   const modalStyle = {
     position: "absolute",
@@ -268,6 +305,7 @@ const MessageBox = (
     overflow: "scroll",
     borderRadius: "10px",
   };
+
   return (
     <Box
       sx={{
@@ -329,44 +367,32 @@ const MessageBox = (
               marginTop: "5px",
               display: "flex",
               justifyContent: "flex-end",
+              alignItems: "center",
             }}
           >
             {message.json.hasOwnProperty("feedback_secret_key") && (
-              <Box>
+              <Box sx={{ marginRight: "8px" }}>
                 <IconButton
                   aria-label="thumbs up"
-                  onClick={() =>
-                    onFeedbackSend(
-                      message.json["query_id"],
-                      "positive",
-                      message.json["feedback_secret_key"],
-                    )
-                  }
-                  style={{
-                    marginRight: "10px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  onClick={handlePositiveFeedback}
+                  style={feedbackButtonStyle}
                 >
-                  <ThumbUpAltIcon />
+                  {thumbsUp ? (
+                    <ThumbUpAltIcon fontSize="small" />
+                  ) : (
+                    <ThumbUpOffAltIcon fontSize="small" />
+                  )}
                 </IconButton>
                 <IconButton
                   aria-label="thumbs down"
-                  onClick={() =>
-                    onFeedbackSend(
-                      message.json["query_id"],
-                      "negative",
-                      message.json["feedback_secret_key"],
-                    )
-                  }
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  onClick={handleNegativeFeedback}
+                  style={feedbackButtonStyle}
                 >
-                  <ThumbDownAltIcon />
+                  {thumbsDown ? (
+                    <ThumbDownAltIcon fontSize="small" />
+                  ) : (
+                    <ThumbDownOffAltIcon fontSize="small" />
+                  )}
                 </IconButton>
               </Box>
             )}
