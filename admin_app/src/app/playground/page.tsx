@@ -236,9 +236,6 @@ const Page = () => {
         .catch((error: Error) => {
           setError("Failed to send response feedback.");
           console.error(error);
-        })
-        .finally(() => {
-          // Any final logic
         });
     }
   };
@@ -252,7 +249,7 @@ const Page = () => {
     }
     setError(null);
   };
-  
+
   return (
     <>
       <Global
