@@ -152,6 +152,83 @@ class TestApiCallQuota:
         )
         assert response.status_code == 200
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [
+            {"username": "temp_user_reset_limit_2", "api_daily_quota": 2},
+        ],
+        indirect=True,
+    )
+    async def test_reset_api_quota_works(
+        self,
+        temp_client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ):
+
+        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
+
+        for _i in range(api_daily_limit):
+            response = temp_client.post(
+                "/embeddings-search",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+            assert response.status_code == 200
+        response = temp_client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 429
+        redis = temp_client.app.state.redis
+        # await redis.delete(f"reset_quota_executed")
+        await temp_client.app.state.reset_quota()
+        response = temp_client.post(
+            "/embeddings-search",
+            json={"query_text": "Test question"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "temp_user_api_key_and_api_quota",
+        [
+            {"username": "temp_user_reset_limit_3", "api_daily_quota": 3},
+        ],
+        indirect=True,
+    )
+    async def test_reset_api_quota_fail(
+        self,
+        client: TestClient,
+        temp_user_api_key_and_api_quota: tuple[str, int],
+    ):
+
+        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
+
+        for _i in range(api_daily_limit):
+            response = client.post(
+                "/embeddings-search",
+                json={"query_text": "Test question"},
+                headers={"Authorization": f"Bearer {temp_api_key}"},
+            )
+            assert response.status_code == 200
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 429
+        redis = client.app.state.redis
+        await client.app.state.reset_quota()
+        response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Test question"},
+            headers={"Authorization": f"Bearer {temp_api_key}"},
+        )
+        assert response.status_code == 429
+
 
 class TestEmbeddingsSearch:
     @pytest.mark.parametrize(

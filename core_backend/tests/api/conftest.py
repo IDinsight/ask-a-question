@@ -1,5 +1,4 @@
 import json
-import os
 from collections import namedtuple
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
@@ -13,6 +12,7 @@ from pytest_asyncio import is_async_test
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
+
 
 from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
@@ -242,15 +242,33 @@ async def urgency_rules(client: TestClient, user1: int, db_session: Session) -> 
     return len(rules)
 
 
+@pytest.fixture(scope="function")
+def clear_registry():
+    # Iterate over list of collectors and unregister each to clear the registry
+    for collector in list(REGISTRY._collector_to_names.keys()):
+        REGISTRY.unregister(collector)
+
+
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
-    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6397")
-    app = create_app(redis_url)
+    collectors = list(REGISTRY._collector_to_names.keys())
+    for collector in collectors:
+        REGISTRY.unregister(collector)
+    app = create_app()
     with TestClient(app) as c:
         yield c
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
+def temp_client(
+    patch_llm_call: pytest.FixtureRequest, clear_registry
+) -> Generator[TestClient, None, None]:
+    app_temp = create_app()
+    with TestClient(app_temp) as co:
+        yield co
+
+
+@pytest.fixture(scope="function")
 def temp_user_api_key_and_api_quota(
     request: pytest.FixtureRequest,
     fullaccess_token_admin: str,
