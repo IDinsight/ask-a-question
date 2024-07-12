@@ -2,8 +2,9 @@
 import logowhite from "@/logo-light.png";
 import { appColors, appStyles, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
+import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
@@ -14,13 +15,17 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "./Layout";
-const pages = [
-  { title: "Manage Content", path: "/content" },
-  { title: "Urgency Rules", path: "/urgency-rules" },
-  { title: "Playground", path: "/playground" },
-  { title: "Dashboard", path: "/dashboard" },
-  { title: "Integrations", path: "/integrations" },
+
+interface Page {
+  title: string;
+  path: string;
+}
+
+const staticPages = [
+  { title: "Test", path: "/playground" },
+  { title: "Integrate", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
@@ -100,7 +105,7 @@ const SmallScreenNavMenu = () => {
           display: { xs: "block", md: "none" },
         }}
       >
-        {pages.map((page) => (
+        {staticPages.map((page) => (
           <Link
             href={page.path}
             key={page.title}
@@ -128,17 +133,75 @@ const SmallScreenNavMenu = () => {
 
 const LargeScreenNavMenu = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [selectedOption, setSelectedOption] = React.useState<string>(
+    localStorage.getItem("selectedOption") || "Configure",
+  );
+
+  useEffect(() => {
+    localStorage.setItem("selectedOption", selectedOption);
+  }, [selectedOption]);
+
+  const handleConfigureClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleConfigureClose = (page: Page | null) => {
+    setAnchorEl(null);
+    if (page) {
+      setSelectedOption(page.title);
+      router.push(`/${page.path}`);
+    }
+  };
+
   return (
     <Box
-      sx={[
-        {
-          flexGrow: 1,
-          display: { xs: "none", md: "flex" },
-        },
-        appStyles.justifyContentFlexEnd,
-      ]}
+      justifyContent="flex-end"
+      alignItems="center"
+      sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}
     >
-      {pages.map((page) => (
+      <Typography
+        onClick={handleConfigureClick}
+        sx={{
+          color:
+            pathname === "/content" || pathname === "/urgency-rules"
+              ? appColors.white
+              : appColors.outline,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {selectedOption} <ArrowDropDown />
+      </Typography>
+      <Menu
+        id="simple-menu"
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={() => handleConfigureClose(null)}
+      >
+        <MenuItem
+          onClick={() =>
+            handleConfigureClose({ title: "Content", path: "content" })
+          }
+        >
+          Content
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            handleConfigureClose({
+              title: "Urgency Rules",
+              path: "urgency-rules",
+            })
+          }
+        >
+          Urgency Rules
+        </MenuItem>
+      </Menu>
+      {staticPages.map((page) => (
         <Link
           href={page.path}
           key={page.title}
@@ -157,6 +220,20 @@ const LargeScreenNavMenu = () => {
           </Typography>
         </Link>
       ))}
+      <Button
+        variant="outlined"
+        onClick={() => router.push("/dashboard")}
+        style={{
+          color:
+            pathname === "/dashboard" ? appColors.white : appColors.outline,
+          borderColor:
+            pathname === "/dashboard" ? appColors.white : appColors.outline,
+          maxHeight: "30px",
+          marginLeft: 15,
+        }}
+      >
+        Dashboard
+      </Button>
       <Layout.Spacer horizontal multiplier={2} />
     </Box>
   );
