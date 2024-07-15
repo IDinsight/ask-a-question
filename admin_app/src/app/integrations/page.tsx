@@ -84,12 +84,11 @@ const KeyManagement = ({
       sx={{ maxWidth: 690, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
-      <Typography variant="h5" color="primary" style={{ fontWeight: "bold" }}>
+      <Typography variant="h4" color="primary">
         Your API Key
       </Typography>
       <Layout.FlexBox
         flexDirection="column"
-        // alignItems="center"
         justifyContent="space-between"
         gap={sizes.doubleBaseGap}
       >
@@ -132,7 +131,7 @@ const ChatManagers = () => {
       sx={{ maxWidth: 1000, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
-      <Typography variant="h5" color="primary" style={{ fontWeight: "bold" }}>
+      <Typography variant="h4" color="primary">
         Chat Managers
       </Typography>
       <Typography variant="body1">
