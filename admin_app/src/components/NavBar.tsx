@@ -15,13 +15,24 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Layout } from "./Layout";
 
 interface Page {
   title: string;
   path: string;
 }
+
+// Define the type for the map with an index signature
+type stringToStringDictType = {
+  [key: string]: string;
+};
+
+// Define the map with specific paths
+const pathToPageNameMap: stringToStringDictType = {
+  "/urgency-rules": "Manage Urgency Rules",
+  "/content": "Manage Content",
+};
 
 const staticPages = [
   { title: "Test", path: "/playground" },
@@ -137,12 +148,8 @@ const LargeScreenNavMenu = () => {
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedOption, setSelectedOption] = React.useState<string>(
-    localStorage.getItem("selectedOption") || "Configure",
+    pathToPageNameMap[pathname] || "Manage",
   );
-
-  useEffect(() => {
-    localStorage.setItem("selectedOption", selectedOption);
-  }, [selectedOption]);
 
   const handleConfigureClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -186,20 +193,23 @@ const LargeScreenNavMenu = () => {
       >
         <MenuItem
           onClick={() =>
-            handleConfigureClose({ title: "Content", path: "content" })
+            handleConfigureClose({
+              title: "Manage Content",
+              path: "content",
+            })
           }
         >
-          Content
+          Manage Content
         </MenuItem>
         <MenuItem
           onClick={() =>
             handleConfigureClose({
-              title: "Urgency Rules",
+              title: "Manage Urgency Rules",
               path: "urgency-rules",
             })
           }
         >
-          Urgency Rules
+          Manage Urgency Rules
         </MenuItem>
       </Menu>
       {staticPages.map((page) => (
