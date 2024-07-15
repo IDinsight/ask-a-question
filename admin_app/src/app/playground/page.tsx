@@ -213,19 +213,11 @@ const Page = () => {
   };
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: white;
-          }
-        `}
-      />
       <Layout.Spacer multiplier={4} />
       <Box
         display="flex"
         flexDirection="column"
         alignItems="center"
-        bgcolor="white"
         sx={{ height: "90vh", width: "100%", pb: 10, mt: 4 }}
       >
         <Box

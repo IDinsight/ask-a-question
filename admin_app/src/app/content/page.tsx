@@ -40,7 +40,7 @@ export interface Tag {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -293,7 +293,7 @@ const CardsGrid = ({
       }
       return null;
     },
-    []
+    [],
   );
 
   React.useEffect(() => {
@@ -327,7 +327,7 @@ const CardsGrid = ({
             card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesAllTags = filterTags.some((fTag) =>
-            card.content_tags.includes(fTag.tag_id)
+            card.content_tags.includes(fTag.tag_id),
           );
 
           return (
@@ -350,7 +350,6 @@ const CardsGrid = ({
     return (
       <>
         <Layout.FlexBox
-          bgcolor="lightgray.main"
           sx={{
             mx: sizes.baseGap,
             py: sizes.tinyGap,
@@ -379,7 +378,6 @@ const CardsGrid = ({
   return (
     <>
       <Layout.FlexBox
-        bgcolor="lightgray.main"
         sx={{
           mx: sizes.baseGap,
           py: sizes.tinyGap,
@@ -410,7 +408,7 @@ const CardsGrid = ({
                       tags={
                         tags
                           ? tags.filter((tag) =>
-                              item.content_tags.includes(tag.tag_id)
+                              item.content_tags.includes(tag.tag_id),
                             )
                           : []
                       }

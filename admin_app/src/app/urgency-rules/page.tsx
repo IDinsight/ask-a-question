@@ -140,25 +140,12 @@ const UrgencyRulesPage = () => {
 
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: white;
-          }
-        `}
-      />
-      <Layout.FlexBox
-        alignItems="center"
-        gap={sizes.baseGap}
-        py={5}
-        bgcolor="white"
-      >
+      <Layout.FlexBox alignItems="center" gap={sizes.baseGap} py={5}>
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             width: "100%",
-            bgcolor: "background.paper",
             maxWidth: "md",
             minWidth: "sm",
           }}
@@ -194,12 +181,17 @@ const UrgencyRulesPage = () => {
               </Button>
             </Tooltip>
           </Layout.FlexBox>
-          <List sx={{ width: "100%", pl: 1, bgcolor: "background.paper" }}>
+          <Layout.Spacer />
+          <List sx={{ width: "100%", pl: 1 }}>
             {items.map((urgencyRule: UrgencyRule, index: number) => {
               return (
                 <ListItem
                   key={index}
-                  sx={{ borderBottom: 1, borderColor: "divider" }}
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    marginBottom: 2,
+                  }}
                   secondaryAction={
                     index === hoveredIndex &&
                     currAccessLevel == "fullaccess" && (
@@ -245,8 +237,9 @@ const UrgencyRulesPage = () => {
                       onBlur={() => {
                         onBlur(index);
                       }}
-                      sx={{ pr: 12, pl: 0 }}
+                      sx={{ pr: 12, pl: 0, marginBottom: 1 }}
                       InputProps={{
+                        style: { backgroundColor: "white" },
                         endAdornment: (
                           <InputAdornment position="end" sx={{ pr: 2 }}>
                             <IconButton

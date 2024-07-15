@@ -32,13 +32,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: #fafafa;
-          }
-        `}
-      />
       <Box sx={{ display: "flex", mt: 4, flexDirection: "row" }}>
         <Box sx={{ width: 240, display: "flex" }}>
           <Sidebar

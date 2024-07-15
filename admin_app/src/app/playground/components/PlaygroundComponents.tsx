@@ -88,7 +88,7 @@ const PersistentSearchBar = ({
           display: "flex",
           background: "white",
           boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
-          borderRadius: "12px",
+          borderRadius: "10px",
         }}
       >
         <TextField
@@ -103,7 +103,7 @@ const PersistentSearchBar = ({
           }}
           InputProps={{
             style: {
-              borderRadius: "12px",
+              borderRadius: "10px",
             },
             startAdornment: (
               <InputAdornment position="start" sx={{ margin: 0 }}>
@@ -194,11 +194,10 @@ const MessageSkeleton = () => {
     <Box
       sx={{
         display: "flex",
-        alignItems: "top", // Ensures vertical alignment is centered
+        alignItems: "top",
         boxShadow: 0,
         py: 2,
         px: 2,
-        background: "white",
         width: "100%",
       }}
     >
@@ -249,7 +248,6 @@ const MessageBox = (message: Message) => {
     width: "80%",
     maxHeight: "80%",
     flexGrow: 1,
-    bgcolor: "background.paper",
     boxShadow: 24,
     p: 4,
     overflow: "scroll",
@@ -259,11 +257,10 @@ const MessageBox = (message: Message) => {
     <Box
       sx={{
         display: "flex",
-        alignItems: "top", // Ensures vertical alignment is centered
+        alignItems: "top",
         boxShadow: 0,
         py: 2,
         px: 2,
-        background: "white",
         width: "100%",
       }}
     >
@@ -284,10 +281,10 @@ const MessageBox = (message: Message) => {
         sx={{
           mx: 2,
           my: 1,
-          flexGrow: 1, // Allows this box to grow and fill available space
+          flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", // Vertically centers the content if there's extra space
+          justifyContent: "center",
         }}
       >
         {message.type === "question" && (
