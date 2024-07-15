@@ -3,7 +3,7 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { DownloadModal } from "@/components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
@@ -22,6 +22,7 @@ import {
   Snackbar,
   TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -378,58 +379,81 @@ const CardsGrid = ({
   return (
     <>
       <Layout.FlexBox
+        bgcolor="#fcfcfc"
         sx={{
           mx: sizes.baseGap,
           py: sizes.tinyGap,
           width: "98%",
           minHeight: "660px",
+          border: 1,
+          borderColor: appColors.lightGrey,
+          borderRadius: 2,
         }}
       >
         <Grid container>
-          {cards
-            .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
-            .map((item) => {
-              if (item.content_id !== null) {
-                return (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    lg={3}
-                    key={item.content_id}
-                    sx={{ display: "grid", alignItems: "stretch" }}
-                  >
-                    <ContentCard
-                      title={item.content_title}
-                      text={item.content_text}
-                      content_id={item.content_id}
-                      last_modified={item.updated_datetime_utc}
-                      tags={
-                        tags
-                          ? tags.filter((tag) =>
-                              item.content_tags.includes(tag.tag_id),
-                            )
-                          : []
-                      }
-                      positive_votes={item.positive_votes}
-                      negative_votes={item.negative_votes}
-                      onSuccessfulDelete={onSuccessfulDelete}
-                      onFailedDelete={(content_id: number) => {
-                        setSnackMessage({
-                          message: `Failed to delete content #${content_id}`,
-                          color: "error",
-                        });
-                      }}
-                      deleteContent={(content_id: number) => {
-                        return apiCalls.deleteContent(content_id, token!);
-                      }}
-                      editAccess={accessLevel === "fullaccess"}
-                    />
-                  </Grid>
-                );
-              }
-            })}
+          {cards.length === 0 ? (
+            <Layout.FlexBox
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "50vh",
+                width: "100%",
+              }}
+            >
+              <Typography variant="body1" color={appColors.darkGrey}>
+                No contents found.
+                <br />
+                Try changing your search or tag filters or adding new content.
+              </Typography>
+            </Layout.FlexBox>
+          ) : (
+            cards
+              .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
+              .map((item) => {
+                if (item.content_id !== null) {
+                  return (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      lg={3}
+                      key={item.content_id}
+                      sx={{ display: "grid", alignItems: "stretch" }}
+                    >
+                      <ContentCard
+                        title={item.content_title}
+                        text={item.content_text}
+                        content_id={item.content_id}
+                        last_modified={item.updated_datetime_utc}
+                        tags={
+                          tags
+                            ? tags.filter((tag) =>
+                                item.content_tags.includes(tag.tag_id),
+                              )
+                            : []
+                        }
+                        positive_votes={item.positive_votes}
+                        negative_votes={item.negative_votes}
+                        onSuccessfulDelete={onSuccessfulDelete}
+                        onFailedDelete={(content_id: number) => {
+                          setSnackMessage({
+                            message: `Failed to delete content #${content_id}`,
+                            color: "error",
+                          });
+                        }}
+                        deleteContent={(content_id: number) => {
+                          return apiCalls.deleteContent(content_id, token!);
+                        }}
+                        editAccess={accessLevel === "fullaccess"}
+                      />
+                    </Grid>
+                  );
+                }
+              })
+          )}
         </Grid>
       </Layout.FlexBox>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
