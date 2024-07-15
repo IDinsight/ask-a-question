@@ -106,6 +106,13 @@ const SmallScreenNavMenu = () => {
         onClose={() => setAnchorElNav(null)}
         sx={{
           display: { xs: "block", md: "none" },
+          "& .MuiPaper-root": {
+            backgroundColor: appColors.primary,
+            color: "white",
+          },
+          "& .Mui-selected, & .MuiMenuItem-root:hover": {
+            backgroundColor: appColors.deeperPrimary,
+          },
         }}
       >
         {smallScreenNavMenuPages.map((page) => (
@@ -121,8 +128,8 @@ const SmallScreenNavMenu = () => {
               sx={{
                 color:
                   pathname === page.path
-                    ? appColors.outline
-                    : appColors.primary,
+                    ? appColors.white
+                    : appColors.secondary,
               }}
             >
               {page.title}
