@@ -83,7 +83,10 @@ const AddEditContentPage = () => {
   }
   return (
     <FullAccessComponent>
-      <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
+      <Layout.FlexBox
+        flexDirection={"column"}
+        sx={{ p: sizes.doubleBaseGap, marginTop: 5 }}
+      >
         <Header
           content_id={content_id}
           onBack={() =>
