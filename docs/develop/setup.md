@@ -1,59 +1,89 @@
 # Setting up your development environment
 
-There are two ways to set up your development environment. You can view the [pros and
-cons of each method](#pros-and-cons-of-each-setup-method) at the bottom.
+There are two ways to set up your development environment for AAQ:
 
-## Set up using Docker Compose Watch
+1. [Docker Compose Watch](#set-up-using-docker-compose-watch)
+2. [Manual](#set-up-manually)
 
-### Step 0: Install prerequisites
+You can view the [pros and cons of each method](#pros-and-cons-of-each-setup-method) at
+the bottom.
 
-1. Install [Docker](https://docs.docker.com/get-docker/).
-2. If you are not using Docker Desktop, install [Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use the `watch` command.
+Before you get started, please fork the
+[project repository](https://github.com/IDinsight/aaq-core) by clicking on the
+"Fork" button and then clone the repo using:
 
-### Step 1: Configure
-
-1. Go to `deployment/docker-compose`
-
-2. Copy `template.env` to a new file `.env` within the same directory, and set the
-   necessary variables. For local setup, you just need to set your own `OPENAI_API_KEY`
-   as the app can use default values for other environment variables (check out the various
-   `config.py` under `core_backend/app/` and its subdirectories.)
-
-3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`
-
-### Step 2: Run `docker compose watch`
-
-In `deployment/docker-compose`, run
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
-```
-
-The app will now run and update with any changes made to the `core_backend` or `admin_app` folders.
-
-The admin app will be available on [https://localhost](https://localhost) and the backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
-
-## Set up manually
+    git clone git@github.com:<your GitHub handle>/aaq-core.git
 
 ---
 **Note**
 
-For questions related to manual setup, please contact:
+For questions related to setup, please contact:
 
-1. [Tony Zhao](mailto:tony.zhao@idinsight.org?Subject=AAQ%20Local%20Setup%20Help)
+- [Tony Zhao](mailto:tony.zhao@idinsight.org?Subject=AAQ%20Local%20Setup%20Help)
 
 ---
 
+## Set up using [Docker Compose Watch](https://docs.docker.com/compose/file-watch/)
+
 ### Step 0: Install prerequisites
 
-1. Clone the `main` branch of the repository and navigate to the project directory.
+1. Install [Docker](https://docs.docker.com/get-docker/).
+2. If you are not using
+[Docker Desktop](https://www.docker.com/products/docker-desktop/), install
+[Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use
+the `watch` command.
 
-        git clone https: github.com/idinsight/aaq-core.git
-        cd ~/aaq-core
+### Step 1: Configure environment variables
 
-2. Install
+1. Navigate to the `deployment/docker-compose` directory.
+
+        cd ~/aaq-core/deployment/docker-compose
+
+2. Copy `template.env` to a new file named `.env` within the same directory, and set
+   the necessary variables. For local setup, you just need to set your own
+   `OPENAI_API_KEY` as the app can use default values for other environment variables
+   (check out the various `config.py` under `core_backend/app/` and its subdirectories.)
+
+3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`.
+
+### Step 2: Run `docker compose watch`
+
+1. In the `deployment/docker-compose` directory, run
+
+    ```bash
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+    ```
+
+    ??? note "Here's what you should see if the above command executes successfully"
+            ✔ Network aaq-stack_default            Created
+            ✔ Volume "aaq-stack_db_volume"         Created
+            ✔ Volume "aaq-stack_caddy_data"        Created
+            ✔ Volume "aaq-stack_caddy_config"      Created
+            ✔ Container aaq-stack-caddy-1          Started
+            ✔ Container aaq-stack-litellm_proxy-1  Started
+            ✔ Container aaq-stack-relational_db-1  Started
+            ✔ Container aaq-stack-core_backend-1   Started
+            ✔ Container aaq-stack-admin_app-1      Started
+            Watch enabled
+
+    The app will now run and update with any changes made to the `core_backend` or
+    `admin_app` folders.
+
+    The admin app will be available on [https://localhost](https://localhost) and the
+    backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
+
+2. To stop the admin app, first exit the running app process in your terminal with
+`ctrl+c` and then run:
+
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down
+
+## Set up manually
+
+### Step 0: Install prerequisites
+
+1. Install
    [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
-3. Install [Node.js v19](https://nodejs.org/en/download).
+2. Install [Node.js v19](https://nodejs.org/en/download).
 
     ??? note "Setting up a different NodeJS version"
         If you have a different NodeJS version installed already, you can switch to a
@@ -65,9 +95,9 @@ For questions related to manual setup, please contact:
         nvm use 19
         ```
 
-4. Install [Docker](https://docs.docker.com/get-docker/).
-5. Install [PostgreSQL](https://www.postgresql.org/download/).
-6. (optional) Install [GNU Make](https://www.gnu.org/software/make/). `make` is used
+3. Install [Docker](https://docs.docker.com/get-docker/).
+4. Install [PostgreSQL](https://www.postgresql.org/download/).
+5. (optional) Install [GNU Make](https://www.gnu.org/software/make/). `make` is used
 to run commands (targets) in `Makefile`s and can be used to automate various setup
 procedures.
 
@@ -124,28 +154,28 @@ Ensure that you are in the `aaq-core` project directory before proceeding.
 
 3. Set required environment variables in your terminal.
 
-        export PROMETHEUS_MULTIPROC_DIR=/tmp  # required for core_backend
+        # 1. Required for core_backend
+        export PROMETHEUS_MULTIPROC_DIR=/tmp
 
-4. (optional) Set optional environment variables in your terminal.
+4. ??? note "Set up optional environment variables"
 
-        # To enable Google login
-        export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
+            1. To enable Google login
+            export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
 
-        # If you want to track using LANGFUSE
-        export LANGFUSE=True
-        export LANGFUSE_PUBLIC_KEY=pk-...
-        export LANGFUSE_SECRET_KEY=sk-...
+            2. If you want to track using LANGFUSE
+            export LANGFUSE=True
+            export LANGFUSE_PUBLIC_KEY=pk-...
+            export LANGFUSE_SECRET_KEY=sk-...
 
-5. (optional) Set API keys for LLM models in your terminal. This step is only required
-if you are using aspects of Ask-A-Question that require the use of API providers.
+            3. API keys for LLM models used in litellm_proxy_config.yaml. This step is only required if you are using aspects of AAQ that require calls to API providers.
+            export OPENAI_API_KEY=sk... # if using OpenAI
+            export GEMINI_API_KEY=... # if using Gemini
 
-        # API keys for LLM models used in litellm_proxy_config.yaml, for example
-        export OPENAI_API_KEY=sk... # if using OpenAI
-        export GEMINI_API_KEY=... # if using Gemini
+            4. Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
 
-6. <a name="optional-login-credentials"></a> (optional) Set custom login credentials
-for the front end admin app by setting the following environment variables. The
-defaults can be found in `/core_backend/add_users_to_db.py`.
+5. <a name="optional-login-credentials"></a> You can set custom login credentials for
+the frontend admin app by setting the following environment variables. The defaults can
+be found in `/core_backend/add_users_to_db.py`.
 
         # user 1
         export USER1_USERNAME="user1"
@@ -157,10 +187,7 @@ defaults can be found in `/core_backend/add_users_to_db.py`.
         export USER2_PASSWORD="fullaccess"
         export USER2_API_KEY="user2-key"
 
-7. (optional) Edit which LLMs are used in the
-`deployment/docker-compose/litellm_proxy_config.yaml`.
-
-8. Set up the required Docker containers for the `PostgreSQL` database and the
+6. Set up the required Docker containers for the `PostgreSQL` database and the
 `LiteLLM` proxy server using `make`.
 
         make setup-dev
@@ -202,19 +229,18 @@ defaults can be found in `/core_backend/add_users_to_db.py`.
 
                 make teardown-llm-proxy
 
-9. Start the backend app.
+7. Start the backend app.
 
         python core_backend/main.py
 
-    If successful, you should see output similar to the following in your terminal:
-
-        INFO:     Will watch for changes in these directories: ['~/aaq-core']
-        INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-        INFO:     Started reloader process [73855] using StatReload
-        INFO:     Started server process [73858]
-        INFO:     Waiting for application startup.
-        07/15/2024 12:29:08 PM          __init__.py  79 : Application started
-        INFO:     Application startup complete.
+    ??? note "Here's what you should see if the above command executes successfully"
+            INFO:     Will watch for changes in these directories: ['~/aaq-core']
+            INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+            INFO:     Started reloader process [73855] using StatReload
+            INFO:     Started server process [73858]
+            INFO:     Waiting for application startup.
+            07/15/2024 12:29:08 PM          __init__.py  79 : Application started
+            INFO:     Application startup complete.
 
     This will launch the application in "reload" mode (i.e., the app will automatically
     refresh everytime you make a change to one of the files).
@@ -223,12 +249,12 @@ defaults can be found in `/core_backend/add_users_to_db.py`.
     [http://localhost:8000/docs](http://localhost:8000/docs) (the backend itself runs
     on [http://localhost:8000](http://localhost:8000)).
 
-10. To stop the backend app, first exit the running app process in your terminal with
+8. To stop the backend app, first exit the running app process in your terminal with
 `ctrl+c` and then run:
 
         make teardown-dev
 
-### Step 2: Set up the front end
+### Step 2: Set up the frontend
 
 ---
 **NB**
@@ -245,15 +271,14 @@ Ensure that you are in the `aaq-core` project directory and that you have activa
         npm install
         npm run dev
 
-    If successful, you should see the following output in your terminal:
+    ??? note "Here's what you should see if the above commands execute successfully"
+            > admin-app@0.2.0 dev
+            > next dev
 
-        > admin-app@0.2.0 dev
-        > next dev
+            ▲ Next.js 14.1.3
+            - Local:        http://localhost:3000
 
-           ▲ Next.js 14.1.3
-           - Local:        http://localhost:3000
-
-           ✓ Ready in 1233ms
+            ✓ Ready in 1233ms
 
     This will install the required NodeJS packages for the admin app and start the
     admin app in `dev` (i.e., autoreload) mode. The admin app will now be accessible on
@@ -262,6 +287,9 @@ Ensure that you are in the `aaq-core` project directory and that you have activa
     You can login with either the default credentials
     (username: `user1`, password: `fullaccess`) or the ones you specified
     [when setting up the login credentials](#optional-login-credentials).
+
+2. To stop the admin app, exit the running app process in your terminal with
+`ctrl+c`.
 
 ## Set up docs
 
