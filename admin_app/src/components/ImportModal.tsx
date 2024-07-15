@@ -123,13 +123,13 @@ const ImportModal = ({
                 <strong>
                   <code>title</code>
                 </strong>
-                : content title under 150 characters
+                : content title, up to 150 characters
               </li>
               <li>
                 <strong>
                   <code>text</code>
                 </strong>
-                : content text under 200 characters
+                : content text, up to 2000 characters
               </li>
               <li>
                 (Optional){" "}
