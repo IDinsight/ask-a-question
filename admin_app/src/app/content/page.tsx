@@ -83,7 +83,7 @@ const CardsPage = () => {
         </Alert>
       </Snackbar>
       <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
-        <Layout.Spacer multiplier={3} />
+        <Layout.Spacer multiplier={5} />
         <Layout.FlexBox
           gap={sizes.smallGap}
           sx={{
@@ -98,7 +98,7 @@ const CardsPage = () => {
             sx={{ flexDirection: "row", justifyContent: "center" }}
             gap={sizes.smallGap}
           >
-            <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
+            {/* <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} /> */}
             <Autocomplete
               multiple
               limitTags={3}
@@ -113,12 +113,11 @@ const CardsPage = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  variant="outlined"
-                  label="Tags"
-                  placeholder="Filter by tags"
+                  variant="standard"
+                  label="Filter by tags"
                 />
               )}
-              sx={{ width: "80%" }}
+              sx={{ width: "80%", color: appColors.white }}
             />
           </Layout.FlexBox>
         </Layout.FlexBox>
