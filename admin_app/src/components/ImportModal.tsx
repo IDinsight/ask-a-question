@@ -112,18 +112,37 @@ const ImportModal = ({
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          You can use this feature to import new contents from a CSV file into
-          AAQ.
-          <br />
-          <br />
-          The CSV file must include "title" and "text" as columns. If you have
-          tags, they must be in a column named "tags" and separated by commas.
-          <br />
-          <br />
-          ⚠️ Be careful not to upload duplicates of what's already in the
-          database.
+          <p>
+            You can use this feature to import new contents from a CSV file into
+            AAQ.
+          </p>
+          <p>
+            The CSV file should have the following columns:
+            <ul>
+              <li>
+                <strong>
+                  <code>title</code>
+                </strong>
+                : content title under 150 characters
+              </li>
+              <li>
+                <strong>
+                  <code>text</code>
+                </strong>
+                : content text under 200 characters
+              </li>
+              <li>
+                (Optional){" "}
+                <strong>
+                  <code>tags</code>
+                </strong>
+                : content tags, e.g. "tag1, tag2, tag3"
+              </li>
+            </ul>
+          </p>
+          <p>⚠️ Duplicate titles or texts will be rejected.</p>
         </DialogContentText>
-        <Layout.Spacer multiplier={2} />
+        <Layout.Spacer multiplier={1} />
         <Layout.FlexBox
           flexDirection="row"
           justifyContent="left"
