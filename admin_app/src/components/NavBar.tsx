@@ -158,7 +158,6 @@ const LargeScreenNavMenu = () => {
   const handleConfigureClose = (page: Page | null) => {
     setAnchorEl(null);
     if (page) {
-      setSelectedOption(page.title);
       router.push(`/${page.path}`);
     }
   };
@@ -190,6 +189,15 @@ const LargeScreenNavMenu = () => {
         keepMounted
         open={Boolean(anchorEl)}
         onClose={() => handleConfigureClose(null)}
+        sx={{
+          "& .MuiPaper-root": {
+            backgroundColor: appColors.primary,
+            color: "white",
+          },
+          "& .Mui-selected, & .MuiMenuItem-root:hover": {
+            backgroundColor: appColors.deeperPrimary,
+          },
+        }}
       >
         <MenuItem
           onClick={() =>
@@ -198,6 +206,7 @@ const LargeScreenNavMenu = () => {
               path: "content",
             })
           }
+          style={{ color: "white" }}
         >
           Manage Content
         </MenuItem>
