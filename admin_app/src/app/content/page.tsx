@@ -318,41 +318,37 @@ const CardsGrid = ({
   };
 
   React.useEffect(() => {
-    if (token) {
-      apiCalls
-        .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
-        .then((data) => {
-          const filteredData = data.filter((card: Content) => {
-            const matchesSearchTerm =
-              card.content_title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              card.content_text
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+    apiCalls
+      .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
+      .then((data) => {
+        const filteredData = data.filter((card: Content) => {
+          const matchesSearchTerm =
+            card.content_title
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesAllTags = filterTags.some((fTag) =>
             card.content_tags.includes(fTag.tag_id),
           );
 
-            return (
-              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
-            );
-          });
-
-          setCards(filteredData);
-          setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch content:", error);
-          setSnackMessage({
-            message: `Failed to fetch content`,
-            color: "error",
-          });
-          setIsLoading(false);
+          return (
+            matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
+          );
         });
-    }
+
+        setCards(filteredData);
+        setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch content:", error);
+        setSnackMessage({
+          message: `Failed to fetch content`,
+          color: "error",
+        });
+        setIsLoading(false);
+      });
   }, [searchTerm, filterTags, token, refreshKey]);
 
   if (isLoading) {
