@@ -119,8 +119,8 @@ const Page = () => {
   };
 
   const queryTypeDisplayNameMapping = {
-    "embeddings-search": "Embedding Search",
-    "llm-response": "LLM Search",
+    "embeddings-search": "Content Search",
+    "llm-response": "AI Response",
     "urgency-detection": "Urgency Detection",
   };
 
