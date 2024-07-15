@@ -172,6 +172,7 @@ const LargeScreenNavMenu = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          cursor: "pointer",
         }}
       >
         {selectedOption} <ArrowDropDown />
