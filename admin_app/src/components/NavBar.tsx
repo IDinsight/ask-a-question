@@ -151,7 +151,7 @@ const LargeScreenNavMenu = () => {
     pathToPageNameMap[pathname] || "Manage",
   );
 
-  const handleConfigureClick = (event) => {
+  const handleConfigureClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
