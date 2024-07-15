@@ -23,20 +23,12 @@ interface Page {
   path: string;
 }
 
-// Define the type for the map with an index signature
-type stringToStringDictType = {
-  [key: string]: string;
-};
-
-// Define the map with specific paths
-const pathToPageNameMap: stringToStringDictType = {
-  "/urgency-rules": "Manage Urgency Rules",
-  "/content": "Manage Content",
-};
-
-const staticPages = [
+const smallScreenNavMenuPages = [
+  { title: "Manage Content", path: "/content" },
+  { title: "Manage Urgency Rules", path: "/urgency-rules" },
   { title: "Test", path: "/playground" },
   { title: "Integrate", path: "/integrations" },
+  { title: "Dashboard", path: "/dashboard" },
 ];
 
 const settings = ["Logout"];
@@ -116,7 +108,7 @@ const SmallScreenNavMenu = () => {
           display: { xs: "block", md: "none" },
         }}
       >
-        {staticPages.map((page) => (
+        {smallScreenNavMenuPages.map((page) => (
           <Link
             href={page.path}
             key={page.title}
@@ -145,6 +137,19 @@ const SmallScreenNavMenu = () => {
 const LargeScreenNavMenu = () => {
   const pathname = usePathname();
   const router = useRouter();
+
+  type stringToStringDictType = {
+    [key: string]: string;
+  };
+  const pathToPageNameMap: stringToStringDictType = {
+    "/urgency-rules": "Manage Urgency Rules",
+    "/content": "Manage Content",
+  };
+
+  const staticPages = [
+    { title: "Test", path: "/playground" },
+    { title: "Integrate", path: "/integrations" },
+  ];
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedOption, setSelectedOption] = React.useState<string>(
