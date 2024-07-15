@@ -117,6 +117,7 @@ Ensure that you are in the `aaq-core` project directory before proceeding.
     This command will remove any existing `aaq` conda environment and create a new
     `aaq` conda environment with the required Python packages.
 
+    <a name="psycopg2"></a>
     ??? warning "Errors with `psycopg2`?"
         `psycopg2` vs `psycopg2-binary`: For production use cases we should use
         `psycopg2` but for local development, `psycopg2-binary` suffices and is often
@@ -130,6 +131,7 @@ Ensure that you are in the `aaq-core` project directory before proceeding.
         See [here](https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary)
         for more details.
 
+    <a name="manual-python-setup"></a>
     ??? note "Setting up the Python environment manually"
         **Create virtual environment**
 
