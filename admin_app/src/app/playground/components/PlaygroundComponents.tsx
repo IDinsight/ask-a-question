@@ -87,7 +87,7 @@ const PersistentSearchBar = ({
         sx={{
           display: "flex",
           background: "white",
-          boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
+          boxShadow: "0 0px 5px rgba(0,0,0,0.2)",
           borderRadius: "10px",
         }}
       >
