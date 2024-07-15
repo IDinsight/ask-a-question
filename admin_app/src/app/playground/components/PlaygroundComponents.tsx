@@ -240,19 +240,6 @@ const MessageBox = (message: Message) => {
     ));
   };
   const toggleJsonModal = () => setOpen(!open);
-  const modalStyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "80%",
-    maxHeight: "80%",
-    flexGrow: 1,
-    boxShadow: 24,
-    p: 4,
-    overflow: "scroll",
-    borderRadius: "10px",
-  };
   return (
     <Box
       sx={{
@@ -327,7 +314,22 @@ const MessageBox = (message: Message) => {
         aria-describedby="modal-modal-description"
       >
         <Fade in={!!open}>
-          <Box sx={modalStyle}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              maxHeight: "80%",
+              flexGrow: 1,
+              p: 4,
+              boxShadow: 24,
+              overflow: "scroll",
+              borderRadius: "10px",
+              bgcolor: "background.paper",
+            }}
+          >
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <IconButton onClick={toggleJsonModal}>
                 <CloseIcon />

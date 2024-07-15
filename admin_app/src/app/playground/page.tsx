@@ -1,7 +1,6 @@
 "use client";
 
 import { apiCalls } from "@/utils/api";
-import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { Layout } from "@/components/Layout";
