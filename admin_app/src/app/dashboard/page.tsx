@@ -7,7 +7,7 @@ import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
-import { Global, css } from "@emotion/react";
+import { appColors } from "@/utils";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
@@ -32,13 +32,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: #fafafa;
-          }
-        `}
-      />
       <Box sx={{ display: "flex", mt: 4, flexDirection: "row" }}>
         <Box sx={{ width: 240, display: "flex" }}>
           <Sidebar
@@ -67,7 +60,9 @@ const Dashboard: React.FC = () => {
                 borderBottomColor: "divider",
               }}
             >
-              <Typography variant="h4">{dashboardPage}</Typography>
+              <Typography variant="h4" color={appColors.primary}>
+                {dashboardPage}
+              </Typography>
             </Box>
             <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
             <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
