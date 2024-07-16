@@ -18,7 +18,12 @@ from .models import (
 )
 from .schemas import UrgencyRuleCreate, UrgencyRuleRetrieve
 
-router = APIRouter(prefix="/urgency-rules", tags=["Urgency Rules"])
+TAG_METADATA = {
+    "name": "Urgency rules management",
+    "description": "Manage urgency rules for urgency detection",
+}
+
+router = APIRouter(prefix="/urgency-rules", tags=[TAG_METADATA["name"]])
 logger = setup_logger(__name__)
 
 

@@ -20,8 +20,15 @@ from .config import (
 from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
+TAG_METADATA = {
+    "name": "Urgency detection",
+    "description": "Detect urgent messages according to urgency rules",
+}
+
 logger = setup_logger()
-router = APIRouter(dependencies=[Depends(authenticate_key)], tags=["Urgency Detection"])
+router = APIRouter(
+    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
+)
 
 ALL_URGENCY_CLASSIFIERS = {}
 

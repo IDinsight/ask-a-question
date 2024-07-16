@@ -15,7 +15,17 @@ class ContentCreate(BaseModel):
     content_tags: list = []
     content_metadata: dict = {}
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "content_title": "An example content title",
+                    "content_text": "And an example content text!",
+                },
+            ]
+        },
+    )
 
 
 class ContentRetrieve(ContentCreate):
@@ -37,6 +47,18 @@ class ContentUpdate(ContentCreate):
     """
 
     content_id: int
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "content_id": 1,
+                    "content_title": "A new content title",
+                    "content_text": "A new content text!",
+                },
+            ]
+        },
+    )
 
 
 class ContentDelete(BaseModel):

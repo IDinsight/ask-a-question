@@ -11,7 +11,19 @@ class TagCreate(BaseModel):
 
     tag_name: Annotated[str, StringConstraints(max_length=50)]
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "tag_name": "example-tag",
+                },
+                {
+                    "tag_name": "ABC",
+                },
+            ]
+        },
+    )
 
 
 class TagRetrieve(TagCreate):
@@ -24,18 +36,23 @@ class TagRetrieve(TagCreate):
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
-
-class TagUpdate(TagCreate):
-    """
-    Pydantic model for tag edit
-    """
-
-    content_id: int
-
-
-class TagDelete(BaseModel):
-    """
-    Pydantic model for tag deletion
-    """
-
-    content_id: int
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "tag_id": 1,
+                    "tag_name": "example-tag",
+                    "user_id": 1,
+                    "created_datetime_utc": "2024-01-01T00:00:00",
+                    "updated_datetime_utc": "2024-01-01T00:00:00",
+                },
+                {
+                    "tag_id": 2,
+                    "tag_name": "ABC",
+                    "user_id": 1,
+                    "created_datetime_utc": "2024-01-01T00:00:00",
+                    "updated_datetime_utc": "2024-01-01T00:00:00",
+                },
+            ]
+        },
+    )
