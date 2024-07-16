@@ -227,11 +227,7 @@ const Page = () => {
           token,
         )
         .then((response) => {
-          if (response.status === 200) {
-            console.log("Feedback sent successfully");
-          } else {
-            console.error(response);
-          }
+          console.log("Feedback sent successfully: ", response.message);
         })
         .catch((error: Error) => {
           setError("Failed to send response feedback.");
