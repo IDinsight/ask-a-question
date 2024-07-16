@@ -50,6 +50,7 @@ const NavBar = () => {
       <Logo />
       <SmallScreenNavMenu />
       <LargeScreenNavMenu />
+      <Layout.Spacer horizontal multiplier={1.5} />
       <UserDropdown />
     </AppBar>
   );
@@ -178,7 +179,7 @@ const LargeScreenNavMenu = () => {
     <Box
       justifyContent="flex-end"
       alignItems="center"
-      sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}
+      sx={{ flexGrow: 1, display: { xs: "none", md: "flex", gap: 15 } }}
     >
       <Typography
         onClick={handleConfigureClick}
@@ -202,6 +203,7 @@ const LargeScreenNavMenu = () => {
         open={Boolean(anchorEl)}
         onClose={() => handleConfigureClose(null)}
         sx={{
+          marginTop: "14px",
           "& .MuiPaper-root": {
             backgroundColor: appColors.primary,
             color: "white",
@@ -243,7 +245,7 @@ const LargeScreenNavMenu = () => {
           <Typography
             key={page.title}
             sx={{
-              m: sizes.baseGap,
+              margin: sizes.baseGap,
               color:
                 pathname === page.path ? appColors.white : appColors.outline,
             }}
@@ -261,12 +263,11 @@ const LargeScreenNavMenu = () => {
           borderColor:
             pathname === "/dashboard" ? appColors.white : appColors.outline,
           maxHeight: "30px",
-          marginLeft: 15,
+          marginInline: 5,
         }}
       >
         Dashboard
       </Button>
-      <Layout.Spacer horizontal multiplier={2} />
     </Box>
   );
 };
@@ -289,7 +290,7 @@ const UserDropdown = () => {
   return (
     <Box>
       <Tooltip title="Open settings">
-        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+        <IconButton onClick={handleOpenUserMenu}>
           <Avatar
             alt="Full access"
             sx={{ width: sizes.icons.medium, height: sizes.icons.medium }}
@@ -297,7 +298,7 @@ const UserDropdown = () => {
         </IconButton>
       </Tooltip>
       <Menu
-        sx={{ mt: "45px" }}
+        sx={{ marginTop: "40px" }}
         id="menu-appbar"
         anchorEl={anchorElUser}
         anchorOrigin={{
