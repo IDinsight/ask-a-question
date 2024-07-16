@@ -24,14 +24,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
-import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
-
-type FeedbackSentimentType = "positive" | "negative";
 
 interface ResponseSummary {
   index: string;
@@ -233,19 +227,8 @@ const MessageSkeleton = () => {
   );
 };
 
-const MessageBox = ({
-  message,
-  onFeedbackSend,
-}: {
-  message: Message;
-  onFeedbackSend: (
-    message: ResponseMessage,
-    feedbackSentiment: FeedbackSentimentType,
-  ) => void;
-}) => {
+const MessageBox = (message: Message) => {
   const [open, setOpen] = useState(false);
-  const [thumbsUp, setThumbsUp] = useState(false);
-  const [thumbsDown, setThumbsDown] = useState(false);
 
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
@@ -257,38 +240,6 @@ const MessageBox = ({
       </Box>
     ));
   };
-  const handlePositiveFeedback = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    if (thumbsUp) {
-      console.log("Already sent positive feedback");
-    } else {
-      setThumbsUp(true);
-      return onFeedbackSend(
-        message as ResponseMessage,
-        "positive" as FeedbackSentimentType,
-      );
-    }
-  };
-  const handleNegativeFeedback = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    if (thumbsDown) {
-      console.log("Already sent negative feedback");
-    } else {
-      setThumbsDown(true);
-      return onFeedbackSend(
-        message as ResponseMessage,
-        "negative" as FeedbackSentimentType,
-      );
-    }
-  };
-  const feedbackButtonStyle = {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  };
-
   const toggleJsonModal = () => setOpen(!open);
   const modalStyle = {
     position: "absolute",
@@ -304,7 +255,6 @@ const MessageBox = ({
     overflow: "scroll",
     borderRadius: "10px",
   };
-
   return (
     <Box
       sx={{
@@ -360,51 +310,16 @@ const MessageBox = ({
             ? message.content
             : renderResults(message.content)}
         </Typography>
-        {message.type == "response" && (
-          <Box
-            style={{
-              marginTop: "5px",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
+        {message.hasOwnProperty("json") && (
+          <Link
+            onClick={toggleJsonModal}
+            variant="caption"
+            align="right"
+            underline="hover"
+            sx={{ cursor: "pointer" }}
           >
-            {message.json.hasOwnProperty("feedback_secret_key") && (
-              <Box sx={{ marginRight: "8px" }}>
-                <IconButton
-                  aria-label="thumbs up"
-                  onClick={handlePositiveFeedback}
-                  style={feedbackButtonStyle}
-                >
-                  {thumbsUp ? (
-                    <ThumbUpAltIcon fontSize="small" />
-                  ) : (
-                    <ThumbUpOffAltIcon fontSize="small" />
-                  )}
-                </IconButton>
-                <IconButton
-                  aria-label="thumbs down"
-                  onClick={handleNegativeFeedback}
-                  style={feedbackButtonStyle}
-                >
-                  {thumbsDown ? (
-                    <ThumbDownAltIcon fontSize="small" />
-                  ) : (
-                    <ThumbDownOffAltIcon fontSize="small" />
-                  )}
-                </IconButton>
-              </Box>
-            )}
-            <Link
-              onClick={toggleJsonModal}
-              variant="caption"
-              align="right"
-              underline="hover"
-              sx={{ cursor: "pointer" }}
-            >
-              {"<json>"}
-            </Link>
-          </Box>
+            {"<json>"}
+          </Link>
         )}
       </Box>
 
@@ -478,7 +393,6 @@ export { ErrorSnackBar, MessageBox, MessageSkeleton, PersistentSearchBar };
 export type {
   Message,
   QueryType,
-  FeedbackSentimentType,
   ResponseMessage,
   ResponseSummary,
   UserMessage,

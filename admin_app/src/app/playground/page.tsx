@@ -12,10 +12,8 @@ import {
   MessageSkeleton,
   PersistentSearchBar,
   QueryType,
-  FeedbackSentimentType,
   ResponseSummary,
   UserMessage,
-  ResponseMessage,
 } from "./components/PlaygroundComponents";
 import { Box } from "@mui/material";
 import { useAuth } from "@/utils/auth";
@@ -204,42 +202,6 @@ const Page = () => {
       }
     }
   };
-
-  const sendResponseFeedback = (
-    message: ResponseMessage,
-    feedback_sentiment: FeedbackSentimentType,
-  ) => {
-    if (token) {
-      // Assuming message.json is a JSON string. Parse it if necessary.
-      const jsonResponse =
-        typeof message.json === "string"
-          ? JSON.parse(message.json)
-          : message.json;
-
-      const queryID = jsonResponse.query_id;
-      const feedbackSecretKey = jsonResponse.feedback_secret_key;
-
-      apiCalls
-        .postResponseFeedback(
-          queryID,
-          feedback_sentiment,
-          feedbackSecretKey,
-          token,
-        )
-        .then((response) => {
-          if (response.status === 200) {
-            console.log("Feedback sent successfully");
-          } else {
-            console.error(response);
-          }
-        })
-        .catch((error: Error) => {
-          setError("Failed to send response feedback.");
-          console.error(error);
-        });
-    }
-  };
-
   const handleErrorClose = (
     event?: React.SyntheticEvent | Event,
     reason?: string,
@@ -249,7 +211,6 @@ const Page = () => {
     }
     setError(null);
   };
-
   return (
     <>
       <Global
@@ -276,11 +237,7 @@ const Page = () => {
           }}
         >
           {messages.map((message, index) => (
-            <MessageBox
-              key={index}
-              message={message}
-              onFeedbackSend={sendResponseFeedback}
-            />
+            <MessageBox key={index} {...message} />
           ))}
           {loading && <MessageSkeleton />}
           <div ref={bottomRef} />
