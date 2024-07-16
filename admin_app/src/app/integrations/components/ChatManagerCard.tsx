@@ -12,7 +12,6 @@ const ChatManagerCard: React.FC<ChatManagerCardInfo> = ({ logo_src, name }) => (
       justifyContent: "center",
       alignItems: "center",
       display: "flex",
-      cursor: "pointer",
     }}
   >
     <CardContent
