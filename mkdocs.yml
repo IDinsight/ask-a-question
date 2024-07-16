@@ -69,6 +69,10 @@ nav:
   - Contact us:
       - Team: contact_us.md
 
+  - Try it out: https://app.ask-a-question.com
+
+  - API docs: https://app.ask-a-question.com/api/docs#/Question%20Answering
+
 # Themes and extensions
 theme:
   name: material
