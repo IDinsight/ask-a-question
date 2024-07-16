@@ -140,9 +140,9 @@ const UrgencyRulesPage = () => {
   return (
     <Layout.FlexBox
       alignItems="center"
+      marginTop={6}
+      padding={5}
       gap={sizes.baseGap}
-      py={5}
-      marginTop={3}
     >
       <Box
         sx={{
@@ -185,7 +185,7 @@ const UrgencyRulesPage = () => {
           </Tooltip>
         </Layout.FlexBox>
         <Layout.Spacer />
-        <List sx={{ width: "100%", pl: 1 }}>
+        <List sx={{ width: "100%" }}>
           {items.map((urgencyRule: UrgencyRule, index: number) => {
             return (
               <ListItem
@@ -194,6 +194,9 @@ const UrgencyRulesPage = () => {
                   borderBottom: 1,
                   borderColor: "divider",
                   marginBottom: 2,
+                  overflowWrap: "break-word",
+                  hyphens: "auto",
+                  whiteSpace: "pre-wrap",
                 }}
                 secondaryAction={
                   index === hoveredIndex &&
@@ -202,13 +205,13 @@ const UrgencyRulesPage = () => {
                       <IconButton
                         edge="end"
                         aria-label="delete"
-                        sx={{ mx: 0.5 }}
+                        sx={{ marginRight: 0.5 }}
                         onClick={deleteItem(index)}
                       >
-                        <Delete fontSize="small" color="secondary" />
+                        <Delete fontSize="small" color="primary" />
                       </IconButton>
                       <IconButton aria-label="edit" onClick={handleEdit(index)}>
-                        <Edit fontSize="small" color="secondary" />
+                        <Edit fontSize="small" color="primary" />
                       </IconButton>
                     </>
                   )
@@ -272,9 +275,9 @@ const UrgencyRulesPage = () => {
                       )
                     }
                     sx={{
-                      pt: 0.3,
-                      pb: 0.3,
-                      pr: 5,
+                      paddingTop: 0.3,
+                      paddingBottom: 0.3,
+                      paddingRight: 12,
                       ".MuiListItemText-secondary": {
                         fontSize: "0.75rem",
                       },
