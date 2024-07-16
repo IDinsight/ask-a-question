@@ -69,8 +69,10 @@ const Login = () => {
     if (signinDiv) {
       window.google.accounts.id.renderButton(signinDiv, {
         type: "standard",
+        shape: "pill",
         theme: "outline",
         size: "large",
+        width: 275,
       });
     }
   }, []);
@@ -370,12 +372,7 @@ const Login = () => {
               }}
             />
             <Layout.Spacer multiplier={0.5} />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ width: "200px" }}
-            >
+            <Button type="submit" variant="contained" sx={{ width: "120px" }}>
               Sign In
             </Button>
           </Box>
