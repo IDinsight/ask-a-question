@@ -17,7 +17,12 @@ from ..users.schemas import UserCreate, UserCreateWithPassword
 from ..utils import generate_key, setup_logger
 from .schemas import KeyResponse
 
-router = APIRouter(prefix="/user", tags=["User Tools"])
+TAG_METADATA = {
+    "name": "Admin",
+    "description": "Admin operations -- only administrator user can access",
+}
+
+router = APIRouter(prefix="/user", tags=["Admin"])
 logger = setup_logger()
 
 

@@ -49,8 +49,16 @@ from .utils import (
 
 logger = setup_logger()
 
+
+TAG_METADATA = {
+    "name": "Question-answering",
+    "description": "LLM-powered question answering based on your own content "
+    "and feedback collection",
+}
+
+
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=["Question Answering"]
+    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
 )
 
 

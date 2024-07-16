@@ -11,7 +11,12 @@ from .dependencies import (
 )
 from .schemas import AuthenticationDetails, GoogleLoginData
 
-router = APIRouter(tags=["Authentication"])
+TAG_METADATA = {
+    "name": "Authentication",
+    "description": "",
+}
+
+router = APIRouter(tags=[TAG_METADATA["name"]])
 
 
 @router.post("/login")

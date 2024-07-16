@@ -30,7 +30,12 @@ from .schemas import (
     CustomErrorList,
 )
 
-router = APIRouter(prefix="/content", tags=["Content Management"])
+TAG_METADATA = {
+    "name": "Question-answering content management",
+    "description": "Manage content and tags to be used for question answering",
+}
+
+router = APIRouter(prefix="/content", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
@@ -58,7 +63,9 @@ async def create_content(
 ) -> Optional[ContentRetrieve]:
     """
     Create content endpoint. Calls embedding model to get content embedding and
-    inserts it to PG database
+    inserts it to the content table in the database.
+
+    ⚠️ To add tags, use the tags endpoint to create tags first.
     """
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession

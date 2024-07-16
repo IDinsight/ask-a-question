@@ -19,7 +19,12 @@ from .models import (
 )
 from .schemas import TagCreate, TagRetrieve
 
-router = APIRouter(prefix="/tag", tags=["Tag Management"])
+TAG_METADATA = {
+    "name": "Question-answering content tags management",
+    "description": "Manage tags for content used for question answering",
+}
+
+router = APIRouter(prefix="/tag", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
@@ -30,7 +35,7 @@ async def create_tag(
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve | None:
     """
-    Create tag endpoint. Calls embedding model to upsert tag to PG database
+    Create tag endpoint. Calls embedding model to upsert tag to database.
     """
     tag.tag_name = tag.tag_name.upper()
     if not await is_tag_name_unique(user_db.user_id, tag.tag_name, asession):

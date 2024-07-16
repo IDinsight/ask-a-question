@@ -26,6 +26,16 @@ from .utils import setup_logger
 
 logger = setup_logger()
 
+tags_metadata = [
+    contents.TAG_METADATA,
+    tags.TAG_METADATA,
+    question_answer.TAG_METADATA,
+    urgency_rules.TAG_METADATA,
+    urgency_detection.TAG_METADATA,
+    auth.TAG_METADATA,
+    dashboard.TAG_METADATA,
+    user_tools.TAG_METADATA,
+]
 
 if LANGFUSE == "True":
     logger.info("Setting up langfuse callbacks")
@@ -66,16 +76,22 @@ def create_app() -> FastAPI:
         app: FastAPI application instance.
     """
 
-    app = FastAPI(title="Question Answering Service", debug=True, lifespan=lifespan)
-    app.include_router(admin.routers.router)
-    app.include_router(question_answer.router)
+    app = FastAPI(
+        title="Ask A Question APIs",
+        debug=True,
+        openapi_tags=tags_metadata,
+        lifespan=lifespan,
+    )
     app.include_router(contents.router)
-    app.include_router(dashboard.router)
-    app.include_router(auth.router)
-    app.include_router(user_tools.router)
-    app.include_router(urgency_detection.router)
+    app.include_router(question_answer.router)
     app.include_router(urgency_rules.router)
+    app.include_router(urgency_detection.router)
+    app.include_router(auth.router)
     app.include_router(tags.router)
+    app.include_router(dashboard.router)
+    app.include_router(admin.routers.router)
+    app.include_router(user_tools.router)
+    app.include_router(whatsapp_qa.router)
 
     origins = [
         f"http://{DOMAIN}",
