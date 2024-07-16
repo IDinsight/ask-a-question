@@ -58,6 +58,8 @@ const CardsPage = () => {
       if (token) {
         const data = await apiCalls.getTagList(token!);
         setTags(data);
+      } else {
+        setTags([]);
       }
     };
     fetchTags();
@@ -352,6 +354,10 @@ const CardsGrid = ({
           });
           setIsLoading(false);
         });
+    } else {
+      setCards([]);
+      setMaxPages(1);
+      setIsLoading(false);
     }
   }, [searchTerm, filterTags, token, refreshKey]);
 
