@@ -1,6 +1,6 @@
 # Contributing to AAQ
 
-Thank you for being interested in contributing to AAQ!
+Thank you for your interest in contributing to AAQ!
 
 AAQ is an open source project started by data scientists at IDinsight and sponsored by
 Google.org. Everyone is welcome to contribute! :handshake_dark_skin_tone:
