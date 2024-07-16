@@ -1,4 +1,5 @@
-from typing import Callable
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Callable
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,6 +36,18 @@ if LANGFUSE == "True":
     litellm.failure_callback = ["langfuse"]
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Lifespan events for the FastAPI application.
+
+    :param app: FastAPI application instance.
+    """
+
+    logger.info("Application started")
+    yield
+    logger.info("Application finished")
+
+
 def create_metrics_app() -> Callable:
     """Create prometheus metrics app"""
     registry = CollectorRegistry()
@@ -43,8 +56,18 @@ def create_metrics_app() -> Callable:
 
 
 def create_app() -> FastAPI:
-    """Application Factory"""
-    app = FastAPI(title="Question Answering Service", debug=True)
+    """Create the FastAPI application for the backend. The process is as follows:
+
+    1. Include routers for all the endpoints.
+    2. Add CORS middleware for cross-origin requests.
+    3. Add Prometheus middleware for metrics.
+    4. Mount the metrics app on /metrics as an independent application.
+
+    :returns:
+        app: FastAPI application instance.
+    """
+
+    app = FastAPI(title="Question Answering Service", debug=True, lifespan=lifespan)
     app.include_router(admin.routers.router)
     app.include_router(question_answer.router)
     app.include_router(contents.router)
@@ -72,10 +95,5 @@ def create_app() -> FastAPI:
     app.add_middleware(PrometheusMiddleware)
     metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
-
-    @app.on_event("startup")
-    def startup_event() -> None:
-        """Startup event"""
-        logger.info("Application started")
 
     return app
