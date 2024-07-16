@@ -14,13 +14,8 @@ Before you get started, please fork the
 
     git clone git@github.com:<your GitHub handle>/aaq-core.git
 
----
-**Note**
-
 For questions related to setup, please contact
 [AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
-
----
 
 ## Set up using [Docker Compose Watch](https://docs.docker.com/compose/file-watch/)
 
