@@ -106,7 +106,10 @@ const PersistentSearchBar = ({
               borderRadius: "10px",
             },
             startAdornment: (
-              <InputAdornment position="start" sx={{ margin: 0 }}>
+              <InputAdornment
+                position="start"
+                sx={{ margin: 0, marginRight: 1 }}
+              >
                 <Select
                   value={selectedOption}
                   onChange={handleSelectChange}
@@ -118,7 +121,7 @@ const PersistentSearchBar = ({
                     marginTop: 2,
                     marginBottom: 2,
                     marginLeft: 0,
-                    minWidth: 160,
+                    width: 170,
                     background: "paper",
                     "& .MuiOutlinedInput-notchedOutline": {
                       borderRight: 1,
@@ -134,13 +137,13 @@ const PersistentSearchBar = ({
                   }}
                 >
                   <MenuItem value="embeddings-search" autoFocus={true}>
-                    <Typography variant="caption">Content Search</Typography>
+                    <Typography variant="body2">Content Search</Typography>
                   </MenuItem>
                   <MenuItem value="llm-response">
-                    <Typography variant="caption">AI Response</Typography>
+                    <Typography variant="body2">AI Response</Typography>
                   </MenuItem>
                   <MenuItem value="urgency-detection">
-                    <Typography variant="caption">Urgency Detection</Typography>
+                    <Typography variant="body2">Urgency Detection</Typography>
                   </MenuItem>
                 </Select>
               </InputAdornment>

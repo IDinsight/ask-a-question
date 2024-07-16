@@ -394,18 +394,23 @@ const CardsGrid = ({
             <Layout.FlexBox
               sx={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
                 height: "50vh",
                 width: "100%",
               }}
             >
-              <Typography variant="body1" color={appColors.darkGrey}>
-                No contents found.
-                <br />
-                Try changing your search or tag filters or adding new content.
-              </Typography>
+              <p>
+                <Typography variant="h6" color={appColors.darkGrey}>
+                  No content found.
+                </Typography>
+              </p>
+              <p>
+                <Typography variant="body1" color={appColors.darkGrey}>
+                  Try adding new content or changing your search or tag filters.
+                </Typography>
+              </p>
             </Layout.FlexBox>
           ) : (
             cards
