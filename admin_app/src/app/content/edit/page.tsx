@@ -83,7 +83,10 @@ const AddEditContentPage = () => {
   }
   return (
     <FullAccessComponent>
-      <Layout.FlexBox flexDirection={"column"} sx={{ p: sizes.doubleBaseGap }}>
+      <Layout.FlexBox
+        flexDirection={"column"}
+        sx={{ p: sizes.doubleBaseGap, marginTop: 5 }}
+      >
         <Header
           content_id={content_id}
           onBack={() =>
@@ -171,11 +174,11 @@ const ContentBox = ({
         const defaultTags =
           content && content.content_tags.length > 0
             ? content.content_tags.map((tag_id) =>
-                data.find((tag) => tag.tag_id === tag_id)
+                data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
         setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined)
+          defaultTags.filter((tag): tag is Tag => tag !== undefined),
         );
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
@@ -234,7 +237,7 @@ const ContentBox = ({
   }
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    key: keyof Content
+    key: keyof Content,
   ) => {
     const emptyContent = createEmptyContent(contentTags);
 
@@ -286,7 +289,7 @@ const ContentBox = ({
         setRefreshKey((prevKey) => prevKey + 1);
         setOpenDeleteModal(false);
         handleTagsChange(
-          contentTags.filter((tag) => tag.tag_id !== tagToDelete.tag_id)
+          contentTags.filter((tag) => tag.tag_id !== tagToDelete.tag_id),
         );
         setSnackMessage(`Tag "${tagToDelete.tag_name}" deleted successfully`);
         setTagToDelete(null);
@@ -325,140 +328,19 @@ const ContentBox = ({
           </Button>
         </DialogActions>
       </Dialog>
-      <Layout.Spacer multiplier={1} />
-      <Autocomplete
-        autoSelect
-        selectOnFocus
-        clearOnBlur
-        handleHomeEndKeys
-        multiple
-        limitTags={3}
-        id="tags-autocomplete"
-        options={availableTags}
-        getOptionLabel={(option) => option!.tag_name}
-        noOptionsText="No tags found. Start typing to create one."
-        value={contentTags}
-        onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
-          handleTagsChange(updatedTags);
-        }}
-        onHighlightChange={(event, option) => {
-          setHighlightedOption(option);
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            variant="outlined"
-            label="Tags"
-            placeholder="Find or create tags"
-            onChange={(event) => setInputVal(event.target.value)}
-            onKeyDown={(event) => {
-              if (
-                !highlightedOption ||
-                highlightedOption.tag_name.startsWith('Add "')
-              ) {
-                if (
-                  event.key === "Enter" &&
-                  inputVal &&
-                  !availableTags.some(
-                    (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
-                  ) &&
-                  !contentTags.some(
-                    (tag) =>
-                      tag.tag_name.toUpperCase() === inputVal.toUpperCase()
-                  )
-                ) {
-                  event.preventDefault();
-
-                  handleNewTag(inputVal);
-                }
-              }
-            }}
-          />
-        )}
-        filterOptions={(options, params) => {
-          const filtered = filter(options, params);
-          const { inputValue } = params;
-          const isExisting = options.some(
-            (option) => inputValue.toUpperCase() === option.tag_name
-          );
-
-          const isSelected = contentTags.some(
-            (tag) => inputValue.toUpperCase() === tag.tag_name
-          );
-
-          if (inputValue !== "" && !isExisting && !isSelected) {
-            filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
-          }
-
-          return filtered;
-        }}
-        renderOption={(props, option) => {
-          const { key, ...newProps } =
-            props as React.HTMLAttributes<HTMLLIElement> & {
-              key: React.Key;
-            };
-          const { onKeyDown, ...rest } = newProps;
-          if (
-            option.tag_name &&
-            !availableTags.some(
-              (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
-            ) &&
-            !contentTags.some(
-              (tag) =>
-                tag.tag_name.toUpperCase() === option.tag_name.toUpperCase()
-            )
-          ) {
-            return (
-              <li key={key} {...rest}>
-                <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
-                  {option.tag_name}
-                </Button>
-              </li>
-            );
-          }
-          return (
-            <li
-              key={option.tag_id}
-              {...rest}
-              style={{
-                justifyContent: "space-between",
-              }}
-            >
-              {option.tag_name}
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDeleteConfirmModal(option);
-                }}
-              >
-                <Delete fontSize="small" color="secondary" />
-              </IconButton>
-            </li>
-          );
-        }}
-        sx={{ width: "500px" }}
-        isOptionEqualToValue={(option, value) =>
-          value.tag_name === option.tag_name || value.tag_name === ""
-        }
-      />
-      <Layout.Spacer multiplier={2} />
+      <Layout.Spacer />
       <Layout.FlexBox
-        flexDirection={"column"}
         sx={{
           maxWidth: "800px",
           minWidth: "300px",
-          border: 1,
-          borderColor: appColors.darkGrey,
-          backgroundColor: appColors.lightGrey,
+          border: 0.5,
+          borderColor: appColors.outline,
           borderRadius: 2,
           p: sizes.baseGap,
         }}
       >
-        {/* <LanguageButtonBar expandable={true} /> */}
-        <Layout.Spacer multiplier={1} />
-        <Typography variant="body2">Title</Typography>
+        <Layout.Spacer multiplier={0.5} />
+        <Typography variant="body1">Title</Typography>
         <Layout.Spacer multiplier={0.5} />
         <TextField
           required
@@ -473,7 +355,7 @@ const ContentBox = ({
           value={content ? content.content_title : ""}
           onChange={(e) => handleChange(e, "content_title")}
         />
-        <Typography variant="body2">Content</Typography>
+        <Typography variant="body1">Content</Typography>
         <Layout.Spacer multiplier={0.5} />
         <TextField
           required
@@ -490,6 +372,132 @@ const ContentBox = ({
           value={content ? content.content_text : ""}
           onChange={(e) => handleChange(e, "content_text")}
         />
+        <Layout.Spacer multiplier={0.25} />
+        <Autocomplete
+          autoSelect
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
+          multiple
+          limitTags={3}
+          id="tags-autocomplete"
+          options={availableTags}
+          getOptionLabel={(option) => option!.tag_name}
+          noOptionsText="No tags found. Start typing to create one."
+          value={contentTags}
+          onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
+            handleTagsChange(updatedTags);
+          }}
+          onHighlightChange={(event, option) => {
+            setHighlightedOption(option);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Tags (optional)"
+              placeholder="Find or create tags"
+              onChange={(event) => setInputVal(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  !highlightedOption ||
+                  highlightedOption.tag_name.startsWith('Add "')
+                ) {
+                  if (
+                    event.key === "Enter" &&
+                    inputVal &&
+                    !availableTags.some(
+                      (tag) =>
+                        tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                    ) &&
+                    !contentTags.some(
+                      (tag) =>
+                        tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                    )
+                  ) {
+                    event.preventDefault();
+
+                    handleNewTag(inputVal);
+                  }
+                }
+              }}
+              InputProps={{
+                ...params.InputProps,
+                style: { backgroundColor: "white" },
+              }}
+            />
+          )}
+          filterOptions={(options, params) => {
+            const filtered = filter(options, params);
+            const { inputValue } = params;
+            const isExisting = options.some(
+              (option) => inputValue.toUpperCase() === option.tag_name,
+            );
+
+            const isSelected = contentTags.some(
+              (tag) => inputValue.toUpperCase() === tag.tag_name,
+            );
+
+            if (inputValue !== "" && !isExisting && !isSelected) {
+              filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
+            }
+
+            return filtered;
+          }}
+          renderOption={(props, option) => {
+            const { key, ...newProps } =
+              props as React.HTMLAttributes<HTMLLIElement> & {
+                key: React.Key;
+              };
+            const { onKeyDown, ...rest } = newProps;
+            if (
+              option.tag_name &&
+              !availableTags.some(
+                (tag) =>
+                  tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+              ) &&
+              !contentTags.some(
+                (tag) =>
+                  tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+              )
+            ) {
+              return (
+                <li key={key} {...rest}>
+                  <Button
+                    fullWidth
+                    onClick={() => handleNewTag(option.tag_name)}
+                  >
+                    {option.tag_name}
+                  </Button>
+                </li>
+              );
+            }
+            return (
+              <li
+                key={option.tag_id}
+                {...rest}
+                style={{
+                  justifyContent: "space-between",
+                }}
+              >
+                {option.tag_name}
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDeleteConfirmModal(option);
+                  }}
+                >
+                  <Delete fontSize="small" color="secondary" />
+                </IconButton>
+              </li>
+            );
+          }}
+          sx={{ width: "500px" }}
+          isOptionEqualToValue={(option, value) =>
+            value.tag_name === option.tag_name || value.tag_name === ""
+          }
+        />
+        <Layout.Spacer multiplier={1.5} />
         <Layout.FlexBox
           flexDirection="row"
           sx={{ justifyContent: "space-between" }}
@@ -514,7 +522,7 @@ const ContentBox = ({
                   if (content_id) {
                     const actionType = content.content_id ? "edit" : "add";
                     router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`
+                      `/content/?content_id=${content_id}&action=${actionType}`,
                     );
                   }
                 };

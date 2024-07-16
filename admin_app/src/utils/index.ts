@@ -33,6 +33,7 @@ export const appColors = {
   success: theme.palette.success.main,
   warning: theme.palette.warning.main,
   info: theme.palette.info.main,
+  deeperPrimary: "#0e1e3f",
   white: "#FFFFFF",
   black: "#000000",
   grey: "#C0C6DC",

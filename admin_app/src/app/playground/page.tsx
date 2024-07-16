@@ -1,7 +1,6 @@
 "use client";
 
 import { apiCalls } from "@/utils/api";
-import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { Layout } from "@/components/Layout";
@@ -119,8 +118,8 @@ const Page = () => {
   };
 
   const queryTypeDisplayNameMapping = {
-    "embeddings-search": "Embedding Search",
-    "llm-response": "LLM Search",
+    "embeddings-search": "Content Search",
+    "llm-response": "AI Response",
     "urgency-detection": "Urgency Detection",
   };
 
@@ -213,19 +212,11 @@ const Page = () => {
   };
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: white;
-          }
-        `}
-      />
       <Layout.Spacer multiplier={4} />
       <Box
         display="flex"
         flexDirection="column"
         alignItems="center"
-        bgcolor="white"
         sx={{ height: "90vh", width: "100%", pb: 10, mt: 4 }}
       >
         <Box

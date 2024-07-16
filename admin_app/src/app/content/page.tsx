@@ -3,7 +3,7 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { DownloadModal } from "@/components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
@@ -22,6 +22,7 @@ import {
   Snackbar,
   TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -40,7 +41,7 @@ export interface Tag {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
@@ -82,7 +83,7 @@ const CardsPage = () => {
         </Alert>
       </Snackbar>
       <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
-        <Layout.Spacer multiplier={3} />
+        <Layout.Spacer multiplier={5} />
         <Layout.FlexBox
           gap={sizes.smallGap}
           sx={{
@@ -97,7 +98,7 @@ const CardsPage = () => {
             sx={{ flexDirection: "row", justifyContent: "center" }}
             gap={sizes.smallGap}
           >
-            <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} />
+            {/* <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} /> */}
             <Autocomplete
               multiple
               limitTags={3}
@@ -112,12 +113,11 @@ const CardsPage = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  variant="outlined"
-                  label="Tags"
-                  placeholder="Filter by tags"
+                  variant="standard"
+                  label="Filter by tags"
                 />
               )}
-              sx={{ width: "80%" }}
+              sx={{ width: "80%", color: appColors.white }}
             />
           </Layout.FlexBox>
         </Layout.FlexBox>
@@ -293,7 +293,7 @@ const CardsGrid = ({
       }
       return null;
     },
-    []
+    [],
   );
 
   React.useEffect(() => {
@@ -327,7 +327,7 @@ const CardsGrid = ({
             card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesAllTags = filterTags.some((fTag) =>
-            card.content_tags.includes(fTag.tag_id)
+            card.content_tags.includes(fTag.tag_id),
           );
 
           return (
@@ -350,7 +350,6 @@ const CardsGrid = ({
     return (
       <>
         <Layout.FlexBox
-          bgcolor="lightgray.main"
           sx={{
             mx: sizes.baseGap,
             py: sizes.tinyGap,
@@ -379,59 +378,86 @@ const CardsGrid = ({
   return (
     <>
       <Layout.FlexBox
-        bgcolor="lightgray.main"
+        bgcolor="#fcfcfc"
         sx={{
           mx: sizes.baseGap,
           py: sizes.tinyGap,
           width: "98%",
           minHeight: "660px",
+          border: 1,
+          borderColor: appColors.lightGrey,
+          borderRadius: 2,
         }}
       >
         <Grid container>
-          {cards
-            .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
-            .map((item) => {
-              if (item.content_id !== null) {
-                return (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    lg={3}
-                    key={item.content_id}
-                    sx={{ display: "grid", alignItems: "stretch" }}
-                  >
-                    <ContentCard
-                      title={item.content_title}
-                      text={item.content_text}
-                      content_id={item.content_id}
-                      last_modified={item.updated_datetime_utc}
-                      tags={
-                        tags
-                          ? tags.filter((tag) =>
-                              item.content_tags.includes(tag.tag_id)
-                            )
-                          : []
-                      }
-                      positive_votes={item.positive_votes}
-                      negative_votes={item.negative_votes}
-                      onSuccessfulDelete={onSuccessfulDelete}
-                      onFailedDelete={(content_id: number) => {
-                        setSnackMessage({
-                          message: `Failed to delete content #${content_id}`,
-                          color: "error",
-                        });
-                      }}
-                      deleteContent={(content_id: number) => {
-                        return apiCalls.deleteContent(content_id, token!);
-                      }}
-                      editAccess={accessLevel === "fullaccess"}
-                    />
-                  </Grid>
-                );
-              }
-            })}
+          {cards.length === 0 ? (
+            <Layout.FlexBox
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "50vh",
+                width: "100%",
+              }}
+            >
+              <p>
+                <Typography variant="h6" color={appColors.darkGrey}>
+                  No content found.
+                </Typography>
+              </p>
+              <p>
+                <Typography variant="body1" color={appColors.darkGrey}>
+                  Try adding new content or changing your search or tag filters.
+                </Typography>
+              </p>
+            </Layout.FlexBox>
+          ) : (
+            cards
+              .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
+              .map((item) => {
+                if (item.content_id !== null) {
+                  return (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      lg={3}
+                      key={item.content_id}
+                      sx={{ display: "grid", alignItems: "stretch" }}
+                    >
+                      <ContentCard
+                        title={item.content_title}
+                        text={item.content_text}
+                        content_id={item.content_id}
+                        last_modified={item.updated_datetime_utc}
+                        tags={
+                          tags
+                            ? tags.filter((tag) =>
+                                item.content_tags.includes(tag.tag_id),
+                              )
+                            : []
+                        }
+                        positive_votes={item.positive_votes}
+                        negative_votes={item.negative_votes}
+                        onSuccessfulDelete={onSuccessfulDelete}
+                        onFailedDelete={(content_id: number) => {
+                          setSnackMessage({
+                            message: `Failed to delete content #${content_id}`,
+                            color: "error",
+                          });
+                        }}
+                        deleteContent={(content_id: number) => {
+                          return apiCalls.deleteContent(content_id, token!);
+                        }}
+                        editAccess={accessLevel === "fullaccess"}
+                      />
+                    </Grid>
+                  );
+                }
+              })
+          )}
         </Grid>
       </Layout.FlexBox>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />

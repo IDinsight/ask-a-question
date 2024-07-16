@@ -87,8 +87,8 @@ const PersistentSearchBar = ({
         sx={{
           display: "flex",
           background: "white",
-          boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
-          borderRadius: "12px",
+          boxShadow: "0 0px 5px rgba(0,0,0,0.2)",
+          borderRadius: "10px",
         }}
       >
         <TextField
@@ -103,10 +103,13 @@ const PersistentSearchBar = ({
           }}
           InputProps={{
             style: {
-              borderRadius: "12px",
+              borderRadius: "10px",
             },
             startAdornment: (
-              <InputAdornment position="start" sx={{ margin: 0 }}>
+              <InputAdornment
+                position="start"
+                sx={{ margin: 0, marginRight: 1 }}
+              >
                 <Select
                   value={selectedOption}
                   onChange={handleSelectChange}
@@ -118,7 +121,7 @@ const PersistentSearchBar = ({
                     marginTop: 2,
                     marginBottom: 2,
                     marginLeft: 0,
-                    minWidth: 160,
+                    width: 170,
                     background: "paper",
                     "& .MuiOutlinedInput-notchedOutline": {
                       borderRight: 1,
@@ -134,13 +137,13 @@ const PersistentSearchBar = ({
                   }}
                 >
                   <MenuItem value="embeddings-search" autoFocus={true}>
-                    <Typography variant="caption">Embedding Search</Typography>
+                    <Typography variant="body2">Content Search</Typography>
                   </MenuItem>
                   <MenuItem value="llm-response">
-                    <Typography variant="caption">LLM Search</Typography>
+                    <Typography variant="body2">AI Response</Typography>
                   </MenuItem>
                   <MenuItem value="urgency-detection">
-                    <Typography variant="caption">Urgency Detection</Typography>
+                    <Typography variant="body2">Urgency Detection</Typography>
                   </MenuItem>
                 </Select>
               </InputAdornment>
@@ -194,11 +197,10 @@ const MessageSkeleton = () => {
     <Box
       sx={{
         display: "flex",
-        alignItems: "top", // Ensures vertical alignment is centered
+        alignItems: "top",
         boxShadow: 0,
         py: 2,
         px: 2,
-        background: "white",
         width: "100%",
       }}
     >
@@ -241,29 +243,14 @@ const MessageBox = (message: Message) => {
     ));
   };
   const toggleJsonModal = () => setOpen(!open);
-  const modalStyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "80%",
-    maxHeight: "80%",
-    flexGrow: 1,
-    bgcolor: "background.paper",
-    boxShadow: 24,
-    p: 4,
-    overflow: "scroll",
-    borderRadius: "10px",
-  };
   return (
     <Box
       sx={{
         display: "flex",
-        alignItems: "top", // Ensures vertical alignment is centered
+        alignItems: "top",
         boxShadow: 0,
         py: 2,
         px: 2,
-        background: "white",
         width: "100%",
       }}
     >
@@ -284,10 +271,10 @@ const MessageBox = (message: Message) => {
         sx={{
           mx: 2,
           my: 1,
-          flexGrow: 1, // Allows this box to grow and fill available space
+          flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", // Vertically centers the content if there's extra space
+          justifyContent: "center",
         }}
       >
         {message.type === "question" && (
@@ -330,7 +317,22 @@ const MessageBox = (message: Message) => {
         aria-describedby="modal-modal-description"
       >
         <Fade in={!!open}>
-          <Box sx={modalStyle}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              maxHeight: "80%",
+              flexGrow: 1,
+              p: 4,
+              boxShadow: 24,
+              overflow: "scroll",
+              borderRadius: "10px",
+              bgcolor: "background.paper",
+            }}
+          >
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <IconButton onClick={toggleJsonModal}>
                 <CloseIcon />
