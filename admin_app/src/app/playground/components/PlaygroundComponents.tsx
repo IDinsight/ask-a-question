@@ -247,6 +247,38 @@ const MessageBox = ({
   const [thumbsUp, setThumbsUp] = useState(false);
   const [thumbsDown, setThumbsDown] = useState(false);
 
+  const feedbackMapping = {
+    positive: {
+      state: thumbsUp,
+      setState: setThumbsUp,
+      onIcon: <ThumbUpAltIcon fontSize="small" />,
+      offIcon: <ThumbUpOffAltIcon fontSize="small" />,
+    },
+    negative: {
+      state: thumbsDown,
+      setState: setThumbsDown,
+      onIcon: <ThumbDownAltIcon fontSize="small" />,
+      offIcon: <ThumbDownOffAltIcon fontSize="small" />,
+    },
+  };
+
+  const handleFeedback = (feedbackType: FeedbackSentimentType) => {
+    const { state, setState } = feedbackMapping[feedbackType];
+
+    if (state) {
+      console.log(`Already sent ${feedbackType} feedback`);
+    } else {
+      setState(true);
+      return onFeedbackSend(message as ResponseMessage, feedbackType);
+    }
+  };
+
+  const feedbackButtonStyle = {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+  };
+
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
       <Box sx={{ pb: sizes.smallGap }} key={c.index}>
@@ -257,38 +289,6 @@ const MessageBox = ({
       </Box>
     ));
   };
-  const handlePositiveFeedback = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    if (thumbsUp) {
-      console.log("Already sent positive feedback");
-    } else {
-      setThumbsUp(true);
-      return onFeedbackSend(
-        message as ResponseMessage,
-        "positive" as FeedbackSentimentType,
-      );
-    }
-  };
-  const handleNegativeFeedback = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    if (thumbsDown) {
-      console.log("Already sent negative feedback");
-    } else {
-      setThumbsDown(true);
-      return onFeedbackSend(
-        message as ResponseMessage,
-        "negative" as FeedbackSentimentType,
-      );
-    }
-  };
-  const feedbackButtonStyle = {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  };
-
   const toggleJsonModal = () => setOpen(!open);
   const modalStyle = {
     position: "absolute",
@@ -360,7 +360,7 @@ const MessageBox = ({
             ? message.content
             : renderResults(message.content)}
         </Typography>
-        {message.type == "response" && (
+        {message.type == "response" ? (
           <Box
             style={{
               marginTop: "5px",
@@ -369,32 +369,28 @@ const MessageBox = ({
               alignItems: "center",
             }}
           >
-            {message.json.hasOwnProperty("feedback_secret_key") && (
+            {message.json.hasOwnProperty("feedback_secret_key") ? (
               <Box sx={{ marginRight: "8px" }}>
                 <IconButton
                   aria-label="thumbs up"
-                  onClick={handlePositiveFeedback}
+                  onClick={() => handleFeedback("positive")}
                   style={feedbackButtonStyle}
                 >
-                  {thumbsUp ? (
-                    <ThumbUpAltIcon fontSize="small" />
-                  ) : (
-                    <ThumbUpOffAltIcon fontSize="small" />
-                  )}
+                  {feedbackMapping.positive.state == true
+                    ? feedbackMapping.positive.onIcon
+                    : feedbackMapping.positive.offIcon}
                 </IconButton>
                 <IconButton
                   aria-label="thumbs down"
-                  onClick={handleNegativeFeedback}
+                  onClick={() => handleFeedback("negative")}
                   style={feedbackButtonStyle}
                 >
-                  {thumbsDown ? (
-                    <ThumbDownAltIcon fontSize="small" />
-                  ) : (
-                    <ThumbDownOffAltIcon fontSize="small" />
-                  )}
+                  {feedbackMapping.negative.state == true
+                    ? feedbackMapping.negative.onIcon
+                    : feedbackMapping.negative.offIcon}
                 </IconButton>
               </Box>
-            )}
+            ) : null}
             <Link
               onClick={toggleJsonModal}
               variant="caption"
@@ -405,7 +401,7 @@ const MessageBox = ({
               {"<json>"}
             </Link>
           </Box>
-        )}
+        ) : null}
       </Box>
 
       <Modal
