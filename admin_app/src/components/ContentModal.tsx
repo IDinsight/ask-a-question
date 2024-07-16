@@ -129,6 +129,7 @@ const ContentViewModal = ({
           <Layout.FlexBox
             flexDirection={"row"}
             justifyContent={"space-between"}
+            alignItems={"center"}
             gap={sizes.smallGap}
           >
             <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
@@ -150,7 +151,7 @@ const ContentViewModal = ({
               justifyContent={"space-between"}
             >
               <Typography variant="body2" color={appColors.darkGrey}>
-                Last modified on{" "}
+                Last modified{" "}
                 {new Date(last_modified).toLocaleString(undefined, {
                   day: "numeric",
                   month: "short",
