@@ -17,9 +17,8 @@ Before you get started, please fork the
 ---
 **Note**
 
-For questions related to setup, please contact:
-
-- [Tony Zhao](mailto:tony.zhao@idinsight.org?Subject=AAQ%20Local%20Setup%20Help)
+For questions related to setup, please contact
+[AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
 
 ---
 
@@ -104,7 +103,7 @@ procedures.
 ### Step 1: Set up the backend
 
 ---
-**NB**
+**Note**
 
 Ensure that you are in the `aaq-core` project directory before proceeding.
 
@@ -287,11 +286,11 @@ Ensure that you are in the `aaq-core` project directory and that you have activa
     [http://localhost:3000/](http://localhost:3000/).
 
     You can login with either the default credentials
-    (username: `user1`, password: `fullaccess`) or the ones you specified
+    (username: `admin`, password: `fullaccess`) or the ones you specified
     [when setting up the login credentials](#optional-login-credentials).
 
 2. To stop the admin app, exit the running app process in your terminal with
-`ctrl+c`.
+`ctrl`+`c`.
 
 ## Set up docs
 
@@ -304,8 +303,8 @@ Ensure that you are in the `aaq-core` project directory and that you have activa
 ---
 
 1. To host docs offline so that you can see documentation changes in real-time, run the
-following from `~/aaq-core` with an altered port (so that it doesn't interfere with the
-app's server):
+following from `aaq-core` repository root with an altered port (so that it doesn't
+interfere with the app's server):
 
         mkdocs serve -a localhost:8080
 
