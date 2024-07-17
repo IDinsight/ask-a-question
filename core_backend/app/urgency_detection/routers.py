@@ -90,19 +90,19 @@ async def cosine_distance_classifier(
         message_text=urgency_query.message_text,
         asession=asession,
     )
-    failed_rules = []
+    matched_rules = []
     for _, rule in cosine_distances.items():
         if float(rule.distance) < float(URGENCY_DETECTION_MAX_DISTANCE):
-            failed_rules.append(str(rule.urgency_rule))
+            matched_rules.append(str(rule.urgency_rule))
 
-    if failed_rules:
+    if matched_rules:
         return UrgencyResponse(
-            is_urgent=True, matched_rules=failed_rules, details=cosine_distances
+            is_urgent=True, matched_rules=matched_rules, details=cosine_distances
         )
 
     return UrgencyResponse(
         is_urgent=False,
-        matched_rules=failed_rules,
+        matched_rules=matched_rules,
         details=cosine_distances,
     )
 
