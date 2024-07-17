@@ -82,7 +82,7 @@ class UrgencyResponseDB(Base):
         Integer, primary_key=True, index=True, nullable=False
     )
     is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    failed_rules: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
+    matched_rules: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
     details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("urgency-query.urgency_query_id")
@@ -113,7 +113,7 @@ async def save_urgency_response_to_db(
         query_id=urgency_query_db.urgency_query_id,
         is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
-        failed_rules=response.flagged_rules,
+        matched_rules=response.matched_rules,
         response_datetime_utc=datetime.utcnow(),
     )
     asession.add(urgency_query_responses_db)

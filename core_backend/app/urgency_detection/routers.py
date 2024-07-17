@@ -97,12 +97,12 @@ async def cosine_distance_classifier(
 
     if failed_rules:
         return UrgencyResponse(
-            is_urgent=True, flagged_rules=failed_rules, details=cosine_distances
+            is_urgent=True, matched_rules=failed_rules, details=cosine_distances
         )
 
     return UrgencyResponse(
         is_urgent=False,
-        flagged_rules=failed_rules,
+        matched_rules=failed_rules,
         details=cosine_distances,
     )
 
@@ -123,7 +123,7 @@ async def llm_entailment_classifier(
     urgency_rules = [rule.urgency_rule_text for rule in rules]
 
     if len(urgency_rules) == 0:
-        return UrgencyResponse(is_urgent=False, flagged_rules=[], details={})
+        return UrgencyResponse(is_urgent=False, matched_rules=[], details={})
 
     result = await detect_urgency(
         urgency_rules=urgency_rules,
@@ -133,7 +133,7 @@ async def llm_entailment_classifier(
 
     if result.probability > float(URGENCY_DETECTION_MIN_PROBABILITY):
         return UrgencyResponse(
-            is_urgent=True, flagged_rules=[result.best_matching_rule], details=result
+            is_urgent=True, matched_rules=[result.best_matching_rule], details=result
         )
 
-    return UrgencyResponse(is_urgent=False, flagged_rules=[], details=result)
+    return UrgencyResponse(is_urgent=False, matched_rules=[], details=result)

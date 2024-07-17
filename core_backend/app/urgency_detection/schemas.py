@@ -32,7 +32,7 @@ class UrgencyResponse(BaseModel):
     """
 
     is_urgent: bool
-    flagged_rules: List[str]
+    matched_rules: List[str]
     details: (
         Dict[int, UrgencyRuleCosineDistance]
         | UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult
@@ -44,7 +44,7 @@ class UrgencyResponse(BaseModel):
             "examples": [
                 {  # Cosine distance classifier example
                     "is_urgent": True,
-                    "flagged_rules": [
+                    "matched_rules": [
                         "Blurry vision and dizziness",
                         "Nausea that lasts for 3 days",
                     ],
@@ -61,7 +61,7 @@ class UrgencyResponse(BaseModel):
                 },
                 {  # LLM entailment classifier example
                     "is_urgent": True,
-                    "flagged_rules": [
+                    "matched_rules": [
                         "Blurry vision and dizziness",
                         "Nausea that lasts for 3 days",
                     ],
