@@ -314,6 +314,34 @@ const getLLMResponse = async (search: string, token: string) => {
     });
 };
 
+const postResponseFeedback = async (
+  query_id: number,
+  feedback_sentiment: string,
+  feedback_secret_key: string,
+  token: string,
+) => {
+  const feedbackUrl = `${NEXT_PUBLIC_BACKEND_URL}/response-feedback`;
+  return fetch(feedbackUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      query_id: query_id,
+      feedback_sentiment: feedback_sentiment,
+      feedback_secret_key: feedback_secret_key,
+    }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error sending response feedback");
+    }
+  });
+};
+
 const getQuestionStats = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/question_stats`, {
     method: "GET",
@@ -428,6 +456,7 @@ export const apiCalls = {
   getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  postResponseFeedback,
   getQuestionStats,
   getUrgencyDetection,
   createTag,

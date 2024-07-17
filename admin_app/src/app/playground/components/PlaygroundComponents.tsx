@@ -24,8 +24,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TextField from "@mui/material/TextField";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
+
+type FeedbackSentimentType = "positive" | "negative";
 
 interface ResponseSummary {
   index: string;
@@ -229,8 +235,51 @@ const MessageSkeleton = () => {
   );
 };
 
-const MessageBox = (message: Message) => {
+const MessageBox = ({
+  message,
+  onFeedbackSend,
+}: {
+  message: Message;
+  onFeedbackSend: (
+    message: ResponseMessage,
+    feedbackSentiment: FeedbackSentimentType,
+  ) => void;
+}) => {
   const [open, setOpen] = useState(false);
+  const [thumbsUp, setThumbsUp] = useState(false);
+  const [thumbsDown, setThumbsDown] = useState(false);
+
+  const feedbackMapping = {
+    positive: {
+      state: thumbsUp,
+      setState: setThumbsUp,
+      onIcon: <ThumbUpAltIcon fontSize="small" />,
+      offIcon: <ThumbUpOffAltIcon fontSize="small" />,
+    },
+    negative: {
+      state: thumbsDown,
+      setState: setThumbsDown,
+      onIcon: <ThumbDownAltIcon fontSize="small" />,
+      offIcon: <ThumbDownOffAltIcon fontSize="small" />,
+    },
+  };
+
+  const handleFeedback = (feedbackType: FeedbackSentimentType) => {
+    const { state, setState } = feedbackMapping[feedbackType];
+
+    if (state) {
+      console.log(`Already sent ${feedbackType} feedback`);
+    } else {
+      setState(true);
+      return onFeedbackSend(message as ResponseMessage, feedbackType);
+    }
+  };
+
+  const feedbackButtonStyle = {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+  };
 
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
@@ -243,6 +292,7 @@ const MessageBox = (message: Message) => {
     ));
   };
   const toggleJsonModal = () => setOpen(!open);
+
   return (
     <Box
       sx={{
@@ -297,17 +347,48 @@ const MessageBox = (message: Message) => {
             ? message.content
             : renderResults(message.content)}
         </Typography>
-        {message.hasOwnProperty("json") && (
-          <Link
-            onClick={toggleJsonModal}
-            variant="caption"
-            align="right"
-            underline="hover"
-            sx={{ cursor: "pointer" }}
+        {message.type == "response" ? (
+          <Box
+            style={{
+              marginTop: "5px",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
           >
-            {"<json>"}
-          </Link>
-        )}
+            {message.json.hasOwnProperty("feedback_secret_key") ? (
+              <Box sx={{ marginRight: "8px" }}>
+                <IconButton
+                  aria-label="thumbs up"
+                  onClick={() => handleFeedback("positive")}
+                  style={feedbackButtonStyle}
+                >
+                  {feedbackMapping.positive.state == true
+                    ? feedbackMapping.positive.onIcon
+                    : feedbackMapping.positive.offIcon}
+                </IconButton>
+                <IconButton
+                  aria-label="thumbs down"
+                  onClick={() => handleFeedback("negative")}
+                  style={feedbackButtonStyle}
+                >
+                  {feedbackMapping.negative.state == true
+                    ? feedbackMapping.negative.onIcon
+                    : feedbackMapping.negative.offIcon}
+                </IconButton>
+              </Box>
+            ) : null}
+            <Link
+              onClick={toggleJsonModal}
+              variant="caption"
+              align="right"
+              underline="hover"
+              sx={{ cursor: "pointer" }}
+            >
+              {"<json>"}
+            </Link>
+          </Box>
+        ) : null}
       </Box>
 
       <Modal
@@ -395,6 +476,7 @@ export { ErrorSnackBar, MessageBox, MessageSkeleton, PersistentSearchBar };
 export type {
   Message,
   QueryType,
+  FeedbackSentimentType,
   ResponseMessage,
   ResponseSummary,
   UserMessage,
