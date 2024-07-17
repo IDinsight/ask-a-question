@@ -113,7 +113,7 @@ async def save_urgency_response_to_db(
         query_id=urgency_query_db.urgency_query_id,
         is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
-        failed_rules=response.failed_rules,
+        failed_rules=response.flagged_rules,
         response_datetime_utc=datetime.utcnow(),
     )
     asession.add(urgency_query_responses_db)
