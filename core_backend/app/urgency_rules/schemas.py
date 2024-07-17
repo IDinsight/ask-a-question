@@ -51,3 +51,19 @@ class UrgencyRuleRetrieve(UrgencyRuleCreate):
             ]
         },
     )
+
+
+class UrgencyRuleCosineDistance(BaseModel):
+    urgency_rule: str
+    distance: float
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "urgency_rule": "Blurry vision and dizziness",
+                    "distance": 0.1,
+                },
+            ]
+        },
+    )

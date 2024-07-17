@@ -80,19 +80,21 @@ class QueryResponse(BaseModel):
                 {
                     "query_id": 1,
                     "content_response": {
-                        0: {
+                        "0": {
                             "retrieved_title": "Example content title",
                             "retrieved_text": "Example content text",
                             "retrieved_content_id": 23,
+                            "distance": 0.1,
                         },
-                        1: {
-                            "content_id": 1,
+                        "1": {
                             "retrieved_title": "Another example content title",
                             "retrieved_text": "Another example content text",
                             "retrieved_content_id": 12,
+                            "distance": 0.2,
                         },
                     },
-                    "llm_response": "Example LLM response",
+                    "llm_response": "Example LLM response"
+                    "(not applicable for /embeddings-search)",
                     "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
                     "state": "final",

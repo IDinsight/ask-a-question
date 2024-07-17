@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 
 class ContentCreate(BaseModel):
     """
-    Pydantic model for content creation
+    Pydantic model for content creation request
     """
 
     # Ensure len("*{title}*\n\n{text}") <= 1600
@@ -30,7 +30,7 @@ class ContentCreate(BaseModel):
 
 class ContentRetrieve(ContentCreate):
     """
-    Pydantic model for content retrieval
+    Retrieved content class
     """
 
     content_id: int
@@ -43,7 +43,7 @@ class ContentRetrieve(ContentCreate):
 
 class ContentUpdate(ContentCreate):
     """
-    Pydantic model for content edit
+    Pydantic model for content edit request
     """
 
     content_id: int

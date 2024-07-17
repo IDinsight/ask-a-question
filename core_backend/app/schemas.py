@@ -21,6 +21,6 @@ class QuerySearchResult(BaseModel):
     retrieved_title: str
     retrieved_text: str
     retrieved_content_id: int
-    score: float
+    distance: float
 
     model_config = ConfigDict(from_attributes=True)

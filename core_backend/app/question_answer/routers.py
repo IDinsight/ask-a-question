@@ -43,7 +43,6 @@ from .schemas import (
     ResultState,
 )
 from .utils import (
-    convert_search_results_to_schema,
     get_context_string_from_retrieved_contents,
 )
 
@@ -123,14 +122,12 @@ async def get_llm_answer(
 
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = convert_search_results_to_schema(
-            await get_similar_content_async(
-                user_id=user_id,
-                question=question.query_text,
-                n_similar=n_similar,
-                asession=asession,
-                metadata=metadata,
-            )
+        content_response = await get_similar_content_async(
+            user_id=user_id,
+            question=question.query_text,
+            n_similar=n_similar,
+            asession=asession,
+            metadata=metadata,
         )
 
         response.content_response = content_response
@@ -238,14 +235,12 @@ async def get_semantic_matches(
     """
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = convert_search_results_to_schema(
-            await get_similar_content_async(
-                user_id=user_id,
-                question=question.query_text,
-                n_similar=n_similar,
-                asession=asession,
-                metadata=metadata,
-            )
+        content_response = await get_similar_content_async(
+            user_id=user_id,
+            question=question.query_text,
+            n_similar=n_similar,
+            asession=asession,
+            metadata=metadata,
         )
 
         response.content_response = content_response
