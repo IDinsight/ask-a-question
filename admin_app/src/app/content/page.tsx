@@ -56,7 +56,7 @@ const CardsPage = () => {
   React.useEffect(() => {
     const fetchTags = async () => {
       if (token) {
-        const data = await apiCalls.getTagList(token!);
+        const data = await apiCalls.getTagList(token);
         setTags(data);
       } else {
         setTags([]);
@@ -322,7 +322,7 @@ const CardsGrid = ({
   React.useEffect(() => {
     if (token) {
       apiCalls
-        .getContentList({ token: token!, skip: 0, limit: MAX_CARDS_TO_FETCH })
+        .getContentList({ token: token, skip: 0, limit: MAX_CARDS_TO_FETCH })
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =

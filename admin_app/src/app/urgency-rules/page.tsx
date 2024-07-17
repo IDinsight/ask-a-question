@@ -130,7 +130,7 @@ const UrgencyRulesPage = () => {
   useEffect(() => {
     if (token) {
       apiCalls
-        .getUrgencyRuleList(token!)
+        .getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
           console.error(error);

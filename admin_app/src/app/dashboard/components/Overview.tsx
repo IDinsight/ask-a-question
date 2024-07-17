@@ -83,7 +83,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
 
   useEffect(() => {
     if (token) {
-      getOverviewPageData(timePeriod, token!).then((data) => {
+      getOverviewPageData(timePeriod, token).then((data) => {
         parseCardData(data.stats_cards, timePeriod);
         parseHeatmapData(data.heatmap);
         parseTimeseriesData(data.time_series);
