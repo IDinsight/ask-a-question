@@ -19,7 +19,6 @@ from . import (
     urgency_detection,
     urgency_rules,
     user_tools,
-    whatsapp_qa,
 )
 from .config import DOMAIN, LANGFUSE
 from .prometheus_middleware import PrometheusMiddleware
@@ -73,7 +72,6 @@ def create_app() -> FastAPI:
     app.include_router(contents.router)
     app.include_router(dashboard.router)
     app.include_router(auth.router)
-    app.include_router(whatsapp_qa.router)
     app.include_router(user_tools.router)
     app.include_router(urgency_detection.router)
     app.include_router(urgency_rules.router)
