@@ -62,10 +62,6 @@ nav:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-      - AWS:
-          - deployment/aws/index.md
-          - Infrastructure: deployment/aws/infrastructure.md
-          - CI/CD: deployment/aws/cicd.md
 
   - Contribute:
       - Guidelines: develop/contributing.md
