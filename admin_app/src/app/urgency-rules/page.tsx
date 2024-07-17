@@ -128,13 +128,17 @@ const UrgencyRulesPage = () => {
   };
 
   useEffect(() => {
-    apiCalls
-      .getUrgencyRuleList(token!)
-      .then((data) => setItems(data))
-      .catch((error) => {
-        console.error(error);
-      });
-    setCurrAccessLevel(accessLevel);
+    if (token) {
+      apiCalls
+        .getUrgencyRuleList(token)
+        .then((data) => setItems(data))
+        .catch((error) => {
+          console.error(error);
+        });
+      setCurrAccessLevel(accessLevel);
+    } else {
+      setItems([]);
+    }
   }, [token, accessLevel]);
 
   return (

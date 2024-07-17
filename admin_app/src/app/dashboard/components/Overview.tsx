@@ -82,12 +82,19 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   };
 
   useEffect(() => {
-    getOverviewPageData(timePeriod, token!).then((data) => {
-      parseCardData(data.stats_cards, timePeriod);
-      parseHeatmapData(data.heatmap);
-      parseTimeseriesData(data.time_series);
-      setTopContentData(data.top_content);
-    });
+    if (token) {
+      getOverviewPageData(timePeriod, token).then((data) => {
+        parseCardData(data.stats_cards, timePeriod);
+        parseHeatmapData(data.heatmap);
+        parseTimeseriesData(data.time_series);
+        setTopContentData(data.top_content);
+      });
+    } else {
+      parseCardData([], timePeriod);
+      parseHeatmapData({});
+      parseTimeseriesData({});
+      setTopContentData([]);
+    }
   }, [timePeriod, token]);
 
   const parseHeatmapData = (heatmapData: DayHourUsageData) => {
