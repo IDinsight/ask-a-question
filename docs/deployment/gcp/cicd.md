@@ -29,7 +29,7 @@ each deployment branch if any changes to the following files get merged:
 1. To deploy AAQ via Github Actions, first [create a deployment
 environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment)
 in your copy/fork of the
-AAQ repository, [aaq-core](https://github.com/IDinsight/aaq-core). The environment name
+AAQ repository, [ask-a-question](https://github.com/IDinsight/ask-a-question). The environment name
 should be the same as the environment name used in your infrastructure configuration
 (`infrastructure/<environment>/<environment>.auto.tfvars`).
 
