@@ -21,8 +21,7 @@ For example, you set a different LLM to be used for each guardrail step.
 
 You can find parameters than control the behaviour of the app at [`core_backend/app/config.py`](https://github.com/IDinsight/aaq-core/blob/main/core_backend/app/config.py)
 
-For a number of optional components like the WhatsApp connector or offline models, you will
-need to update the parameters in this file.
+For a number of optional components like offline models, you will need to update the parameters in this file.
 
 See instructions for setting these in the documentation for the specific optional component.
 
