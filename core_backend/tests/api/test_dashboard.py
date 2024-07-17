@@ -65,7 +65,7 @@ class TestUrgencyDetectionStats:
             )
 
             urgency_response = UrgencyResponse(
-                is_urgent=is_urgent, flagged_rules=[], details={}
+                is_urgent=is_urgent, matched_rules=[], details={}
             )
             await save_urgency_response_to_db(
                 urgency_query_db, urgency_response, asession
