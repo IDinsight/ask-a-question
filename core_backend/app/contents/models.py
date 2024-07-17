@@ -1,9 +1,14 @@
+"""This module contains the ORM for managing content in the `ContentDB` database and
+database helper functions such as saving, updating, deleting, and retrieving content.
+"""
+
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -26,8 +31,10 @@ from .schemas import (
 
 
 class ContentDB(Base):
-    """
-    SQL Alchemy data model for content
+    """ORM for managing content.
+
+    This database ties into the Admin app and allows the user to view, add, edit,
+    and delete content in the `content` table.
     """
 
     __tablename__ = "content"
@@ -53,6 +60,8 @@ class ContentDB(Base):
 
     query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     content_tags = relationship(
         "TagDB",
         secondary=content_tags_table,
@@ -60,7 +69,12 @@ class ContentDB(Base):
     )
 
     def __repr__(self) -> str:
-        """Pretty Print"""
+        """Construct the string representation of the `ContentDB` object.
+
+        :returns:
+            A string representation of the `ContentDB` object.
+        """
+
         return (
             f"ContentDB(content_id={self.content_id}, "
             f"user_id={self.user_id}, "
@@ -70,7 +84,8 @@ class ContentDB(Base):
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
-            f"updated_datetime_utc={self.updated_datetime_utc})"
+            f"updated_datetime_utc={self.updated_datetime_utc}), "
+            f"is_archived={self.is_archived})"
         )
 
 
