@@ -1,6 +1,9 @@
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from pydantic import BaseModel, ConfigDict
+
+from ..llm_call.entailment import UrgencyDetectionEntailment
+from ..urgency_rules.schemas import UrgencyRuleCosineDistance
 
 
 class UrgencyQuery(BaseModel):
@@ -30,24 +33,44 @@ class UrgencyResponse(BaseModel):
 
     is_urgent: bool
     flagged_rules: List[str]
-    details: Dict[Any, Any]
+    details: (
+        Dict[int, UrgencyRuleCosineDistance]
+        | UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "examples": [
-                {
+                {  # Cosine distance classifier example
                     "is_urgent": True,
                     "flagged_rules": [
                         "Blurry vision and dizziness",
                         "Nausea that lasts for 3 days",
                     ],
                     "details": {
-                        0: {
+                        "0": {
                             "urgency_rule": "Blurry vision and dizziness",
                             "distance": 0.1,
                         },
-                        1: {
+                        "1": {
+                            "urgency_rule": "Nausea that lasts for 3 days",
+                            "distance": 0.2,
+                        },
+                    },
+                },
+                {  # LLM entailment classifier example
+                    "is_urgent": True,
+                    "flagged_rules": [
+                        "Blurry vision and dizziness",
+                        "Nausea that lasts for 3 days",
+                    ],
+                    "details": {
+                        "0": {
+                            "urgency_rule": "Blurry vision and dizziness",
+                            "distance": 0.1,
+                        },
+                        "1": {
                             "urgency_rule": "Nausea that lasts for 3 days",
                             "distance": 0.2,
                         },
