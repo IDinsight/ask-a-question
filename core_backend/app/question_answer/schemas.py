@@ -132,8 +132,8 @@ class ResponseFeedbackBase(BaseModel):
             "examples": [
                 {
                     "query_id": 1,
-                    "feedback_sentiment": "positive",
-                    "feedback_text": "Great job!",
+                    "feedback_sentiment": "negative",
+                    "feedback_text": "Not helpful",
                     "feedback_secret_key": "secret-key-12345-abcde",
                 }
             ]
@@ -157,7 +157,7 @@ class ContentFeedback(ResponseFeedbackBase):
                     "content_id": 1,
                     "query_id": 1,
                     "feedback_sentiment": "positive",
-                    "feedback_text": "Great job!",
+                    "feedback_text": "This content is very helpful",
                     "feedback_secret_key": "secret-key-12345-abcde",
                 }
             ]
