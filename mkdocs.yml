@@ -69,9 +69,9 @@ nav:
   - Contact us:
       - Team: contact_us.md
 
-  - Try it out: https://app.ask-a-question.com
+  - Try it out ↗︎: https://app.ask-a-question.com
 
-  - API docs: https://app.ask-a-question.com/api/docs
+  - API docs ↗︎: https://app.ask-a-question.com/api/docs
 
 # Themes and extensions
 theme:
@@ -132,3 +132,4 @@ plugins:
   - search
   - blog:
       post_excerpt: required
+  - open-in-new-tab
