@@ -2,6 +2,7 @@
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button, CircularProgress, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
+import { format } from "date-fns";
 
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
@@ -57,7 +58,11 @@ const KeyManagement = ({
       try {
         const data = await apiCalls.getUser(token!);
         setCurrentKey(data.api_key_first_characters);
-        setCurrentKeyLastUpdated(data.api_key_updated_datetime_utc);
+        const formatted_api_update_date = format(
+          data.api_key_updated_datetime_utc,
+          "HH:mm, dd-MM-yyyy",
+        );
+        setCurrentKeyLastUpdated(formatted_api_update_date);
         setKeyInfoFetchIsLoading(false);
       } catch (error) {
         console.error(error);
@@ -115,51 +120,41 @@ const KeyManagement = ({
           manager. You can generate a new key here, but keep in mind that any
           old key is invalidated if a new key is created.
         </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            {keyInfoFetchIsLoading ? (
-              <>
-                <Typography variant="body1">
-                  Current API Key: <CircularProgress size={10} />
-                </Typography>
-                <Typography variant="body1">
-                  Last Updated: <CircularProgress size={10} />
-                </Typography>
-              </>
-            ) : (
-              <>
-                <Typography variant="body1">
-                  Current API Key: {currentKey ? `${currentKey}...` : "None"}
-                </Typography>
-                <Typography variant="body1">
-                  Last Updated: {currentKeyLastUpdated || "Never"}
-                </Typography>
-              </>
-            )}
-          </Grid>
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            style={{ display: "flex", justifyContent: "center" }}
+        <Layout.FlexBox
+          flexDirection="column"
+          alignItems={"center"}
+          gap={sizes.baseGap}
+        >
+          {keyInfoFetchIsLoading ? (
+            <Typography variant="body1">
+              Checking for current API key <CircularProgress size={10} />
+            </Typography>
+          ) : currentKey ? (
+            <Typography variant="body1">
+              Active API key snippet:{" "}
+              <span style={{ fontWeight: "bold" }}>{`${currentKey}...`}</span>
+              <br />
+              Last updated: {currentKeyLastUpdated}
+            </Typography>
+          ) : (
+            <Typography variant="body1">
+              Generate your first API key:
+            </Typography>
+          )}
+          <Button
+            variant="contained"
+            onClick={handleConfirmationModalOpen}
+            disabled={!editAccess}
+            startIcon={<AutorenewIcon />}
+            style={{
+              width: "200px",
+              alignSelf: "center",
+              backgroundColor: currentKey ? appColors.error : appColors.primary,
+            }}
           >
-            <Button
-              variant="contained"
-              onClick={handleConfirmationModalOpen}
-              disabled={!editAccess}
-              startIcon={<AutorenewIcon />}
-              style={{
-                width: "200px",
-                alignSelf: "center",
-                backgroundColor: currentKey
-                  ? appColors.error
-                  : appColors.primary,
-              }}
-            >
-              {currentKey ? `Regenerate Key` : "Generate Key"}
-            </Button>
-          </Grid>
-        </Grid>
+            {currentKey ? `Regenerate Key` : "Generate Key"}
+          </Button>
+        </Layout.FlexBox>
         <KeyRenewConfirmationModal
           open={confirmationModalOpen}
           onClose={handleConfirmationModalClose}
