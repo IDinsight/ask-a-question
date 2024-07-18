@@ -54,23 +54,27 @@ const KeyManagement = ({
   const [keyGenerationIsLoading, setKeyGenerationIsLoading] = useState(false);
 
   React.useEffect(() => {
-    const setApiKeyInfo = async () => {
-      setKeyInfoFetchIsLoading(true);
-      try {
-        const data = await apiCalls.getUser(token!);
-        setCurrentKey(data.api_key_first_characters);
-        const formatted_api_update_date = format(
-          data.api_key_updated_datetime_utc,
-          "HH:mm, dd-MM-yyyy",
-        );
-        setCurrentKeyLastUpdated(formatted_api_update_date);
-        setKeyInfoFetchIsLoading(false);
-      } catch (error) {
-        console.error(error);
-        setKeyInfoFetchIsLoading(false);
-      }
-    };
-    setApiKeyInfo();
+    if (token) {
+      const setApiKeyInfo = async () => {
+        setKeyInfoFetchIsLoading(true);
+        try {
+          const data = await apiCalls.getUser(token!);
+          setCurrentKey(data.api_key_first_characters);
+          const formatted_api_update_date = format(
+            data.api_key_updated_datetime_utc,
+            "HH:mm, dd-MM-yyyy",
+          );
+          setCurrentKeyLastUpdated(formatted_api_update_date);
+          setKeyInfoFetchIsLoading(false);
+        } catch (error) {
+          console.error(error);
+          setKeyInfoFetchIsLoading(false);
+        }
+      };
+      setApiKeyInfo();
+    } else {
+      setKeyInfoFetchIsLoading(false);
+    }
   }, [token, newKey]);
 
   const handleNewKeyCopy = () => {
@@ -140,9 +144,7 @@ const KeyManagement = ({
               Last updated: {currentKeyLastUpdated}
             </Typography>
           ) : (
-            <Typography variant="body1">
-              Generate your first API key:
-            </Typography>
+            <Typography variant="body1">Generate your first API key</Typography>
           )}
           <LoadingButton
             variant="contained"

@@ -53,16 +53,21 @@ const CardsPage = () => {
   }>({ message: null, color: undefined });
 
   React.useEffect(() => {
-    const fetchTags = async () => {
-      if (token) {
-        const data = await apiCalls.getTagList(token);
-        setTags(data);
-      } else {
-        setTags([]);
-      }
-    };
-    fetchTags();
-    setCurrAccessLevel(accessLevel);
+    if (token) {
+      const fetchTags = async () => {
+        if (token) {
+          const data = await apiCalls.getTagList(token);
+          setTags(data);
+        } else {
+          setTags([]);
+        }
+      };
+      fetchTags();
+      setCurrAccessLevel(accessLevel);
+    } else {
+      setTags([]);
+      setCurrAccessLevel("readonly");
+    }
   }, [accessLevel, token]);
 
   return (
