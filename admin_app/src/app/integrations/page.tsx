@@ -14,6 +14,7 @@ import {
   NewKeyModal,
 } from "./components/APIKeyModals";
 import ChatManagersGrid from "./components/ChatManagerGrid";
+import { LoadingButton } from "@mui/lab";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -88,6 +89,7 @@ const KeyManagement = ({
   };
   const handleRenew = async () => {
     setKeyGenerationIsLoading(true);
+    setKeyInfoFetchIsLoading(true);
     try {
       const data = await apiCalls.createNewApiKey(token!);
       setNewKey(data.new_api_key);
@@ -97,6 +99,7 @@ const KeyManagement = ({
       console.error(error);
     } finally {
       setKeyGenerationIsLoading(false);
+      setKeyInfoFetchIsLoading(false);
     }
   };
 
@@ -131,7 +134,7 @@ const KeyManagement = ({
             </Typography>
           ) : currentKey ? (
             <Typography variant="body1">
-              Active API key snippet:{" "}
+              Active API key reminder:{" "}
               <span style={{ fontWeight: "bold" }}>{`${currentKey}...`}</span>
               <br />
               Last updated: {currentKeyLastUpdated}
@@ -141,22 +144,29 @@ const KeyManagement = ({
               Generate your first API key:
             </Typography>
           )}
-          <Button
+          <LoadingButton
             variant="contained"
-            onClick={handleConfirmationModalOpen}
+            onClick={currentKey ? handleConfirmationModalOpen : handleRenew}
             disabled={!editAccess}
+            loading={keyGenerationIsLoading}
+            loadingPosition="start"
             startIcon={<AutorenewIcon />}
             style={{
-              width: "200px",
+              width: "180px",
               alignSelf: "center",
-              backgroundColor: currentKey ? appColors.error : appColors.primary,
+              backgroundColor: keyGenerationIsLoading
+                ? appColors.lightGrey
+                : currentKey
+                ? appColors.error
+                : appColors.primary,
             }}
           >
             {currentKey ? `Regenerate Key` : "Generate Key"}
-          </Button>
+          </LoadingButton>
         </Layout.FlexBox>
         <KeyRenewConfirmationModal
           open={confirmationModalOpen}
+          currentKey={currentKey}
           onClose={handleConfirmationModalClose}
           onRenew={handleRenew}
           isLoading={keyGenerationIsLoading}
