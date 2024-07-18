@@ -50,6 +50,28 @@ class TestUserCreation:
         assert response.status_code == 403
 
 
+class TestUserFetching:
+    def test_get_user(self, client: TestClient, fullaccess_token: str) -> None:
+        response = client.get(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+
+        assert response.status_code == 200
+        json_response = response.json()
+        expected_keys = [
+            "user_id",
+            "username",
+            "content_quota",
+            "api_key_first_characters",
+            "api_key_updated_datetime_utc",
+            "created_datetime_utc",
+            "updated_datetime_utc",
+        ]
+        for key in expected_keys:
+            assert key in json_response
+
+
 class TestKeyManagement:
     def test_get_new_api_key(
         self, client: TestClient, fullaccess_token_user2: str
