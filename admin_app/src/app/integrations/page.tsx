@@ -1,12 +1,13 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { format } from "date-fns";
 
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
+import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
 import {
@@ -95,7 +96,7 @@ const KeyManagement = ({
     setKeyGenerationIsLoading(true);
     setKeyInfoFetchIsLoading(true);
     try {
-      const data = await apiCalls.createNewApiKey(token!);
+      const data = await createNewApiKey(token!);
       setNewKey(data.new_api_key);
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
@@ -134,6 +135,7 @@ const KeyManagement = ({
         >
           {keyInfoFetchIsLoading ? (
             <Typography variant="body1">
+              <br />
               Checking for current API key <CircularProgress size={10} />
             </Typography>
           ) : currentKey ? (

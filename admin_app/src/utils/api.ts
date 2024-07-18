@@ -27,23 +27,6 @@ const getUser = async (token: string) => {
   }
 };
 
-const createNewApiKey = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/rotate-key`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error rotating API key");
-    }
-  });
-};
-
 const getContentList = async ({
   token,
   skip = 0,
@@ -462,7 +445,6 @@ const deleteTag = async (tag_id: number, token: string) => {
 };
 export const apiCalls = {
   getUser,
-  createNewApiKey,
   getContentList,
   getContent,
   deleteContent,
