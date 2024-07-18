@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..contents.models import ContentDB
 from ..models import Base, JSONDict
+from ..utils import generate_secret_key
 from .schemas import (
     ContentFeedback,
     QueryBase,
@@ -61,13 +62,14 @@ class QueryDB(Base):
 
 async def save_user_query_to_db(
     user_id: int,
-    feedback_secret_key: str,
     user_query: QueryBase,
     asession: AsyncSession,
 ) -> QueryDB:
     """
-    Saves a user query to the database.
+    Saves a user query to the database alongside generated
+    query_id and feedback secret key.
     """
+    feedback_secret_key = generate_secret_key()
     user_query_db = QueryDB(
         user_id=user_id,
         feedback_secret_key=feedback_secret_key,

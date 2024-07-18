@@ -22,7 +22,7 @@ from ..llm_call.process_input import (
 )
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
-from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
+from ..utils import create_langfuse_metadata, setup_logger
 from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
@@ -156,13 +156,11 @@ async def get_user_query_and_response(
     user_id: int, user_query: QueryBase, asession: AsyncSession
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """
-    Get the user query from the request and save it to the db.
-    Construct an object for user query and a default response object.
+    Save the user query to the db and construct placeholder query and response objects
+    to pass on.
     """
-    feedback_secret_key = generate_secret_key()
     user_query_db = await save_user_query_to_db(
         user_id=user_id,
-        feedback_secret_key=feedback_secret_key,
         user_query=user_query,
         asession=asession,
     )
@@ -173,7 +171,7 @@ async def get_user_query_and_response(
         query_id=user_query_db.query_id,
         search_results=None,
         llm_response=None,
-        feedback_secret_key=feedback_secret_key,
+        feedback_secret_key=user_query_db.feedback_secret_key,
     )
 
     return user_query_db, user_query_refined, response
