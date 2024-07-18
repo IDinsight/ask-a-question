@@ -91,7 +91,6 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(admin.routers.router)
     app.include_router(user_tools.router)
-    app.include_router(whatsapp_qa.router)
 
     origins = [
         f"http://{DOMAIN}",
