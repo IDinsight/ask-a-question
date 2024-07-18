@@ -187,9 +187,7 @@ class TestRetrievalPerformance:
             content_titles = []
         else:
             retrieved = response.json()["content_response"]
-            content_titles = [
-                retrieved[str(i)]["retrieved_title"] for i in range(len(retrieved))
-            ]
+            content_titles = [retrieved[str(i)]["title"] for i in range(len(retrieved))]
         return content_titles
 
     async def retrieve_results(

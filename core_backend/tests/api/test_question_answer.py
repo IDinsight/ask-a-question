@@ -220,8 +220,7 @@ class TestEmbeddingsSearch:
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["content_response"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -319,8 +318,7 @@ class TestGenerateResponse:
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["content_response"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -535,15 +533,15 @@ class TestAlignScore:
             query_id=124,
             content_response={
                 1: QuerySearchResult(
-                    retrieved_title="World",
-                    retrieved_text="hello world",
-                    retrieved_content_id=1,
+                    title="World",
+                    text="hello world",
+                    id=1,
                     distance=0.2,
                 ),
                 2: QuerySearchResult(
-                    retrieved_title="Universe",
-                    retrieved_text="goodbye universe",
-                    retrieved_content_id=2,
+                    title="Universe",
+                    text="goodbye universe",
+                    id=2,
                     distance=0.2,
                 ),
             },

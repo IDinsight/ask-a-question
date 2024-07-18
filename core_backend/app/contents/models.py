@@ -226,7 +226,7 @@ async def increment_query_count(
         return
     for _, content in contents.items():
         content_db = await get_content_from_db(
-            user_id=user_id, content_id=content.retrieved_content_id, asession=asession
+            user_id=user_id, content_id=content.id, asession=asession
         )
         if content_db:
             content_db.query_count = content_db.query_count + 1

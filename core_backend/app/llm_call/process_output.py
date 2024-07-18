@@ -184,5 +184,5 @@ def _build_evidence(llm_response: QueryResponse) -> str:
     evidence = ""
     if llm_response.content_response is not None:
         for _, result in llm_response.content_response.items():
-            evidence += result.retrieved_text + "\n"
+            evidence += result.text + "\n"
     return evidence

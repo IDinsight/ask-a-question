@@ -38,8 +38,8 @@ const Page = () => {
         const item = contentResponse[key];
         summaries.push({
           index: key,
-          title: item.retrieved_title,
-          text: item.retrieved_text,
+          title: item.title,
+          text: item.text,
         });
       }
     }
