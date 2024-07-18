@@ -146,6 +146,7 @@ def create_query_record(dt: datetime, session: Session) -> int:
         user_id=1,
         feedback_secret_key="abc123",
         query_text="test query",
+        query_generate_llm_response=False,
         query_metadata={},
         query_datetime_utc=dt,
     )

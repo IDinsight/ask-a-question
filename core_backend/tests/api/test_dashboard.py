@@ -285,6 +285,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{day}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"day": day},
                     query_datetime_utc=previous_date,
                 )
@@ -317,6 +318,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{hour}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"hour": hour},
                     query_datetime_utc=previous_date,
                 )
@@ -505,6 +507,7 @@ class TestTimeSeries:
                 user_id=user_id,
                 feedback_secret_key="abc123",
                 query_text="test message",
+                query_generate_llm_response=False,
                 query_metadata={"details": "test details"},
                 query_datetime_utc=created_datetime,
             )
