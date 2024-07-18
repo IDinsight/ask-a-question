@@ -84,3 +84,48 @@ class TestKeyManagement:
         assert response.status_code == 200
         json_response = response.json()
         assert json_response["new_api_key"] != TEST_USER_API_KEY_2
+
+    def test_get_new_api_key_query_with_old_key(
+        self, client: TestClient, fullaccess_token_user2: str
+    ) -> None:
+        # get new api key (first time)
+        rotate_key_response = client.put(
+            "/user/rotate-key",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert rotate_key_response.status_code == 200
+        json_response = rotate_key_response.json()
+        first_api_key = json_response["new_api_key"]
+
+        # make a QA call with this first key
+        search_response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {first_api_key}"},
+        )
+        assert search_response.status_code == 200
+
+        # get new api key (second time)
+        rotate_key_response = client.put(
+            "/user/rotate-key",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+        assert rotate_key_response.status_code == 200
+        json_response = rotate_key_response.json()
+        second_api_key = json_response["new_api_key"]
+
+        # make a QA call with the second key
+        search_response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {second_api_key}"},
+        )
+        assert search_response.status_code == 200
+
+        # make a QA call with the first key again
+        search_response = client.post(
+            "/embeddings-search",
+            json={"query_text": "Tell me about a good sport to play"},
+            headers={"Authorization": f"Bearer {first_api_key}"},
+        )
+        assert search_response.status_code == 401
