@@ -1,6 +1,6 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, CircularProgress, Typography } from "@mui/material";
+import { Button, CircularProgress, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
 
 import { Layout } from "@/components/Layout";
@@ -115,12 +115,8 @@ const KeyManagement = ({
           manager. You can generate a new key here, but keep in mind that any
           old key is invalidated if a new key is created.
         </Typography>
-        <Layout.FlexBox
-          flexDirection={"row"}
-          justifyContent={"space-between"}
-          sx={{ maxWidth: "620px" }}
-        >
-          <Layout.FlexBox>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
             {keyInfoFetchIsLoading ? (
               <>
                 <Typography variant="body1">
@@ -140,21 +136,30 @@ const KeyManagement = ({
                 </Typography>
               </>
             )}
-          </Layout.FlexBox>
-          <Button
-            variant="contained"
-            onClick={handleConfirmationModalOpen}
-            disabled={!editAccess}
-            startIcon={<AutorenewIcon />}
-            style={{
-              width: "200px",
-              alignSelf: "center",
-              backgroundColor: currentKey ? appColors.error : appColors.primary,
-            }}
+          </Grid>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            style={{ display: "flex", justifyContent: "center" }}
           >
-            {currentKey ? `Regenerate Key` : "Generate Key"}
-          </Button>
-        </Layout.FlexBox>
+            <Button
+              variant="contained"
+              onClick={handleConfirmationModalOpen}
+              disabled={!editAccess}
+              startIcon={<AutorenewIcon />}
+              style={{
+                width: "200px",
+                alignSelf: "center",
+                backgroundColor: currentKey
+                  ? appColors.error
+                  : appColors.primary,
+              }}
+            >
+              {currentKey ? `Regenerate Key` : "Generate Key"}
+            </Button>
+          </Grid>
+        </Grid>
         <KeyRenewConfirmationModal
           open={confirmationModalOpen}
           onClose={handleConfirmationModalClose}
