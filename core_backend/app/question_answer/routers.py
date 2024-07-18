@@ -188,8 +188,9 @@ async def search_without_llm_response(
             asession=asession,
             metadata=metadata,
         )
-
+        response.state = ResultState.FINAL
         response.search_results = search_results
+
     return response
 
 
