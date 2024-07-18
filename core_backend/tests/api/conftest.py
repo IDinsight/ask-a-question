@@ -5,7 +5,9 @@ from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from pytest_alembic.config import Config
 from sqlalchemy import delete
+from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,7 @@ from core_backend.app.config import (
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
+    SYNC_DB_API,
     get_connection_url,
     get_session_context_manager,
 )
@@ -337,3 +340,30 @@ def fullaccess_token_user2() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME_2)
+
+
+@pytest.fixture(scope="session")
+def alembic_config() -> Config:
+    """`alembic_config` is the primary point of entry for configurable options for the
+    alembic runner for `pytest-alembic`.
+
+    :returns:
+        Config: A configuration object used by `pytest-alembic`.
+    """
+
+    return Config({"file": "alembic.ini"})
+
+
+@pytest.fixture(scope="function")
+def alembic_engine() -> Engine:
+    """`alembic_engine` is where you specify the engine with which the alembic_runner
+    should execute your tests.
+
+    NB: The engine should point to a database that must be empty. It is out of scope
+    for `pytest-alembic` to manage the database state.
+
+    :returns:
+        A SQLAlchemy engine object.
+    """
+
+    return create_engine(get_connection_url(db_api=SYNC_DB_API))

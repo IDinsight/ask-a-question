@@ -6,6 +6,7 @@ from sqlalchemy import (
     JSON,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     delete,
@@ -18,7 +19,12 @@ from ..models import Base, JSONDict
 from ..schemas import FeedbackSentiment, QuerySearchResult
 from ..tags.models import content_tags_table
 from ..utils import embedding
-from .config import PGVECTOR_VECTOR_SIZE
+from .config import (
+    PGVECTOR_DISTANCE,
+    PGVECTOR_EF_CONSTRUCTION,
+    PGVECTOR_M,
+    PGVECTOR_VECTOR_SIZE,
+)
 from .schemas import (
     ContentCreate,
     ContentUpdate,
@@ -31,6 +37,19 @@ class ContentDB(Base):
     """
 
     __tablename__ = "content"
+
+    __table_args__ = (
+        Index(
+            "content_idx",
+            "content_embedding",
+            postgresql_using="hnsw",
+            postgresql_with={
+                "M": {PGVECTOR_M},
+                "ef_construction": {PGVECTOR_EF_CONSTRUCTION},
+            },
+            postgresql_ops={"embedding": {PGVECTOR_DISTANCE}},
+        ),
+    )
 
     content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     user_id: Mapped[int] = mapped_column(
