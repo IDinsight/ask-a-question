@@ -30,7 +30,7 @@ On the right, there are Generations associated with this trace. In
 AAQ, each generation is each call to the [LiteLLM Proxy Server](../../components/litellm-proxy/index.md).
 You can view the series of input checks, RAG ("get_similar_content_async" and
 "openai/generate-response") and one output check we perform (you can learn more about
-our Guardrails [here](../../components/qa-service/llm-response.md#process-flow)). The generation names come
+our Guardrails [here](../../components/qa-service/search.md)). The generation names come
 from the model names used in your [LiteLLM Proxy Server Config](../../components/litellm-proxy/index.md#example-config).
 
 ## Why does AAQ need observability?

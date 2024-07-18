@@ -26,9 +26,8 @@ make it easy to grasp the content in section in a glance.
 
 ## Process Flow Diagrams
 
-[Semantic search](../../components/qa-service/semantic-search.md#process-flow) and
-[LLM Response](../../components/qa-service/llm-response.md#process-flow)
-pages both now show process flow diagrams. It should make it a lot easier to understand
-what is happening under the hood when you call either of these endopints.
+[Search](../../components/qa-service/search.md) page now shows process flow diagrams.
+It should make it a lot easier to understand what is happening under the hood when
+you call either of these endopints.
 
 ![LLM Process Flow](../images/llm-response-processflow.png){: .blog-img }

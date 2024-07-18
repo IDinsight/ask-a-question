@@ -1,27 +1,17 @@
 # Question-Answering Service
 
-There are two major endpoints that your application can integrate with:
-
+`/search` is the flagship endpoint that your application can integrate with:
 
 <div class="grid cards" markdown>
 
--   :material-api:{ .lg .middle } __Semantic Search__
+- :material-api:{ .lg .middle } __Search__
 
     ---
 
-    Allows searching through the content database. Use similarity between
-    embeddings of questions and the content to return the best matches
+    Allows searching through the content database using embeddings similarity and
+    optionally creates an LLM-generated answer to the user's question.
 
-    [:octicons-arrow-right-24: More info](./semantic-search.md)
-
--   :material-api:{ .lg .middle } __LLM Response__
-
-    ---
-
-    Constructs an answer to the user's questions using an LLM and the most similar
-    content in the database.
-
-    [:octicons-arrow-right-24: More info](./llm-response.md)
+    [:octicons-arrow-right-24: More info](./search.md)
 
 </div>
 
@@ -33,10 +23,9 @@ feedback for the response returned and the other for the content items retrieved
 For both of these, you can provide feedback as sentiment ("positive", "negative"),
 as text, or as both.
 
-
 <div class="grid cards" markdown>
 
--   :material-api:{ .lg .middle } __Response Feedback__
+- :material-api:{ .lg .middle } __Response Feedback__
 
     ---
 
@@ -44,7 +33,7 @@ as text, or as both.
 
     [:octicons-arrow-right-24: More info](./response-feedback.md)
 
--   :material-api:{ .lg .middle } __Content Feedback__
+- :material-api:{ .lg .middle } __Content Feedback__
 
     ---
 
@@ -54,7 +43,6 @@ as text, or as both.
 
 </div>
 
-
 ## SwaggerUI
 
 <img src="./swagger-ui-screenshot.png" alt="swagger-ui-screenshot" style="border: 1px solid  lightgray;">
@@ -62,15 +50,11 @@ as text, or as both.
 If you have the [application running](../../deployment/quick-setup.md), you can access
 the SwaggerUI at
 
-
     https://[DOMAIN]/api/docs
 
 or if you are using the [dev](../../develop/setup.md) setup:
 
     http://localhost:8000/docs
-
-
-
 
 ## Upcoming
 
