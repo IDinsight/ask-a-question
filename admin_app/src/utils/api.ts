@@ -7,7 +7,27 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getNewAPIKey = async (token: string) => {
+const getUser = async (token: string) => {
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error fetching user info");
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+const createNewApiKey = async (token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/rotate-key`, {
     method: "PUT",
     headers: {
@@ -441,7 +461,8 @@ const deleteTag = async (tag_id: number, token: string) => {
   });
 };
 export const apiCalls = {
-  getNewAPIKey,
+  getUser,
+  createNewApiKey,
   getContentList,
   getContent,
   deleteContent,

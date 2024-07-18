@@ -1,10 +1,10 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, Typography } from "@mui/material";
+import { Button, CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 
 import { Layout } from "@/components/Layout";
-import { sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
@@ -43,11 +43,29 @@ const KeyManagement = ({
   token: string | null;
   editAccess: boolean;
 }) => {
-  // const [currentKey, setCurrentKey] = useState("qwerty...");
+  const [keyInfoFetchIsLoading, setKeyInfoFetchIsLoading] = useState(true);
+  const [currentKey, setCurrentKey] = useState("");
+  const [currentKeyLastUpdated, setCurrentKeyLastUpdated] = useState("");
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [newKeyModalOpen, setNewKeyModalOpen] = useState(false);
   const [newKey, setNewKey] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [keyGenerationIsLoading, setKeyGenerationIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    const setApiKeyInfo = async () => {
+      setKeyInfoFetchIsLoading(true);
+      try {
+        const data = await apiCalls.getUser(token!);
+        setCurrentKey(data.api_key_first_characters);
+        setCurrentKeyLastUpdated(data.api_key_updated_datetime_utc);
+        setKeyInfoFetchIsLoading(false);
+      } catch (error) {
+        console.error(error);
+        setKeyInfoFetchIsLoading(false);
+      }
+    };
+    setApiKeyInfo();
+  }, [token, newKey]);
 
   const handleNewKeyCopy = () => {
     navigator.clipboard.writeText(newKey);
@@ -64,16 +82,16 @@ const KeyManagement = ({
     setNewKeyModalOpen(false);
   };
   const handleRenew = async () => {
-    setIsLoading(true);
+    setKeyGenerationIsLoading(true);
     try {
-      const data = await apiCalls.getNewAPIKey(token!);
+      const data = await apiCalls.createNewApiKey(token!);
       setNewKey(data.new_api_key);
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false);
+      setKeyGenerationIsLoading(false);
     }
   };
 
@@ -97,20 +115,51 @@ const KeyManagement = ({
           manager. You can generate a new key here, but keep in mind that any
           old key is invalidated if a new key is created.
         </Typography>
-        <Button
-          variant="contained"
-          onClick={handleConfirmationModalOpen}
-          disabled={!editAccess}
-          startIcon={<AutorenewIcon />}
-          style={{ width: "220px", alignSelf: "center" }}
+        <Layout.FlexBox
+          flexDirection={"row"}
+          justifyContent={"space-between"}
+          sx={{ maxWidth: "620px" }}
         >
-          Generate New Key
-        </Button>
+          <Layout.FlexBox>
+            {keyInfoFetchIsLoading ? (
+              <>
+                <Typography variant="body1">
+                  Current API Key: <CircularProgress size={10} />
+                </Typography>
+                <Typography variant="body1">
+                  Last Updated: <CircularProgress size={10} />
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Typography variant="body1">
+                  Current API Key: {currentKey ? `${currentKey}...` : "None"}
+                </Typography>
+                <Typography variant="body1">
+                  Last Updated: {currentKeyLastUpdated || "Never"}
+                </Typography>
+              </>
+            )}
+          </Layout.FlexBox>
+          <Button
+            variant="contained"
+            onClick={handleConfirmationModalOpen}
+            disabled={!editAccess}
+            startIcon={<AutorenewIcon />}
+            style={{
+              width: "200px",
+              alignSelf: "center",
+              backgroundColor: currentKey ? appColors.error : appColors.primary,
+            }}
+          >
+            {currentKey ? `Regenerate Key` : "Generate Key"}
+          </Button>
+        </Layout.FlexBox>
         <KeyRenewConfirmationModal
           open={confirmationModalOpen}
           onClose={handleConfirmationModalClose}
           onRenew={handleRenew}
-          isLoading={isLoading}
+          isLoading={keyGenerationIsLoading}
         />
         <NewKeyModal
           newKey={newKey}

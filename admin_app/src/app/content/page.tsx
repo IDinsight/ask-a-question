@@ -9,7 +9,6 @@ import { useAuth } from "@/utils/auth";
 import { Add } from "@mui/icons-material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import {
   Alert,
   Autocomplete,
