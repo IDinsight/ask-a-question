@@ -1,17 +1,17 @@
 # Running validation
-
-
-!!! note "Currently, there is validation only for retrieval, i.e. `POST /embeddings-search` endpoint."
+ƒ
+!!! note "Currently, there is validation only for retrieval, i.e. `POST /search` endpoint."
 
 To evaluate the performance of your model (along with your own configurations and
 guardrails), run the validation test(s) in `core_backend/validation`.
 
-## Retrieval (`/embeddings-search`) validation
+## Retrieval (`/search`) validation
 
 We evaluate the "performance" of retrieval by computing "Top K Accuracy", which is
 defined as proportion of times the best matching answer was present in top K retrieved contents.
 
 ### Preparing the data
+
 The test assumes the validation data contains a single label representing the best
 matching content, rather than a ranked list of all relevant content.
 

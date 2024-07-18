@@ -13,6 +13,7 @@ class QueryBase(BaseModel):
     """
 
     query_text: str
+    generate_llm_response: bool = False
     query_metadata: dict = {}
 
     model_config = ConfigDict(

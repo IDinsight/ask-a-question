@@ -209,8 +209,8 @@
                   "value": "application/json"
                 }
               ],
-              "url": "https://aaq-dev.idinsight.io/api/llm-response",
-              "body": "{\n  \"query_text\": \"{{question}}\",\n  \"query_metadata\": {}\n}"
+              "url": "https://app.ask-a-question.com/api/search",
+              "body": "{\n  \"query_text\": \"{{question}}\",\n \"generate_llm_response\": false,\n  \"query_metadata\": {}\n}"
             },
             "timeout": 30
           }

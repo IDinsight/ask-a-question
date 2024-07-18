@@ -5,23 +5,24 @@ There are two ways to interact with the service:
 
 ## API endpoints
 
-There are two major endpoints for Question-Answering:
+To get answers from your database of contents, you can use the `/search` endpoint. This endpoint returns the following:
 
-- **Embeddings search:** Finds the most similar content in the database using cosine similarity between embeddings.
-- **LLM response:** Crafts a custom response using LLM chat using the most similar content.
+- Search results: Finds the most similar content in the database using cosine distance between embeddings.
+- (Optionally) LLM generated response: Crafts a custom response using LLM chat using the most similar content.
 
-See [docs](https://idinsight.github.io/aaq-core/) or SwaggerUI at `https://<DOMAIN>/api/docs` or `https://<DOMAIN>/docs` for more details and other API endpoints.
+You can also add your contents programatically using API endpoints. See [docs](https://idinsight.github.io/aaq-core/) or SwaggerUI at `https://<DOMAIN>/api/docs` or `https://<DOMAIN>/docs` for more details and other API endpoints.
 
 ### :question: Embeddings search
 
 ```
 curl -X 'POST' \
-  'https://[DOMAIN]/api/embeddings-search' \
+  'https://[DOMAIN]/api/search' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
   "query_text": "how are you?",
+  "generate_llm_response": false,
   "query_metadata": {}
 }'
 ```
@@ -30,12 +31,13 @@ curl -X 'POST' \
 
 ```
 curl -X 'POST' \
-  'https://[DOMAIN]/api/llm-response' \
+  'https://[DOMAIN]/api/search' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
   "query_text": "this is my question",
+  "generate_llm_response": true,
   "query_metadata": {}
 }'
 ```

@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -39,6 +40,7 @@ class QueryDB(Base):
     )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
+    query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -57,7 +59,11 @@ class QueryDB(Base):
 
     def __repr__(self) -> str:
         """Pretty Print"""
-        return f"<Query #{self.query_id}> {self.query_text}>"
+        return (
+            f"<Query #{self.query_id}>, "
+            f"LLM response requested: {self.query_generate_llm_response}, "
+            f"Query text: {self.query_text}>"
+        )
 
 
 async def save_user_query_to_db(
@@ -73,8 +79,10 @@ async def save_user_query_to_db(
     user_query_db = QueryDB(
         user_id=user_id,
         feedback_secret_key=feedback_secret_key,
+        query_text=user_query.query_text,
+        query_generate_llm_response=user_query.generate_llm_response,
+        query_metadata=user_query.query_metadata,
         query_datetime_utc=datetime.utcnow(),
-        **user_query.model_dump(),
     )
     asession.add(user_query_db)
     await asession.commit()

@@ -177,10 +177,12 @@ class TestRetrievalPerformance:
         query_text: str,
         client: TestClient,
     ) -> List[str]:
-        """Single POST /embeddings-search request"""
-        request_json = QueryBase(query_text=query_text).model_dump()
+        """Single POST /search request"""
+        request_json = QueryBase(
+            query_text=query_text, generate_llm_response=False
+        ).model_dump()
         headers = {"Authorization": f"Bearer {USER1_API_KEY}"}
-        response = client.post("/embeddings-search", json=request_json, headers=headers)
+        response = client.post("/search", json=request_json, headers=headers)
 
         if response.status_code != 200:
             logger.warning("Failed to retrieve content")

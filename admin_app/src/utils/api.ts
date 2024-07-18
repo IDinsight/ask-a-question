@@ -274,14 +274,14 @@ const getGoogleLoginToken = async (idToken: {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
+  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: false }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -296,14 +296,14 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/llm-response`;
+  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: true }),
   })
     .then((response) => {
       return response.json().then((data) => {

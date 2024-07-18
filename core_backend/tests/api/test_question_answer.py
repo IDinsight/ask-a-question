@@ -43,8 +43,11 @@ class TestEmbeddingsSearch:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
@@ -56,9 +59,10 @@ class TestEmbeddingsSearch:
     @pytest.fixture
     def question_response(self, client: TestClient) -> QueryResponse:
         response = client.post(
-            "/embeddings-search",
+            "/search",
             json={
                 "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
             },
             headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
@@ -212,8 +216,11 @@ class TestEmbeddingsSearch:
         faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={
+                "query_text": "Tell me about camping",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
@@ -279,8 +286,11 @@ class TestGenerateResponse:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": True,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
@@ -310,8 +320,8 @@ class TestGenerateResponse:
         faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={"query_text": "Tell me about camping", "generate_llm_response": True},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
