@@ -28,7 +28,10 @@ def upgrade() -> None:
     # collect this info yet).
     op.execute("UPDATE query SET query_generate_llm_response = False")
     op.alter_column(
-        "query", sa.Column("query_generate_llm_response", sa.BOOLEAN(), nullable=False)
+        "query",
+        "query_generate_llm_response",
+        existing_type=sa.BOOLEAN(),
+        nullable=False,
     )
     # ### end Alembic commands ###
 
