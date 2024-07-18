@@ -20,7 +20,7 @@ config.set_main_option("sqlalchemy.url", connection_string)
 # See: https://pytest-alembic.readthedocs.io/en/latest/setup.html#caplog-issues for
 # more info on fileConfig for `pytest-alembic`.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name, disable_existing_loggers=True)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
