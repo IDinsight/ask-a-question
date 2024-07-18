@@ -1,11 +1,13 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, Typography } from "@mui/material";
+import { CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
+import { format } from "date-fns";
 
 import { Layout } from "@/components/Layout";
-import { sizes } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
+import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
 import {
@@ -13,6 +15,7 @@ import {
   NewKeyModal,
 } from "./components/APIKeyModals";
 import ChatManagersGrid from "./components/ChatManagerGrid";
+import { LoadingButton } from "@mui/lab";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -43,11 +46,37 @@ const KeyManagement = ({
   token: string | null;
   editAccess: boolean;
 }) => {
-  // const [currentKey, setCurrentKey] = useState("qwerty...");
+  const [keyInfoFetchIsLoading, setKeyInfoFetchIsLoading] = useState(true);
+  const [currentKey, setCurrentKey] = useState("");
+  const [currentKeyLastUpdated, setCurrentKeyLastUpdated] = useState("");
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [newKeyModalOpen, setNewKeyModalOpen] = useState(false);
   const [newKey, setNewKey] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [keyGenerationIsLoading, setKeyGenerationIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (token) {
+      const setApiKeyInfo = async () => {
+        setKeyInfoFetchIsLoading(true);
+        try {
+          const data = await apiCalls.getUser(token!);
+          setCurrentKey(data.api_key_first_characters);
+          const formatted_api_update_date = format(
+            data.api_key_updated_datetime_utc,
+            "HH:mm, dd-MM-yyyy",
+          );
+          setCurrentKeyLastUpdated(formatted_api_update_date);
+          setKeyInfoFetchIsLoading(false);
+        } catch (error) {
+          console.error(error);
+          setKeyInfoFetchIsLoading(false);
+        }
+      };
+      setApiKeyInfo();
+    } else {
+      setKeyInfoFetchIsLoading(false);
+    }
+  }, [token, newKey]);
 
   const handleNewKeyCopy = () => {
     navigator.clipboard.writeText(newKey);
@@ -64,16 +93,18 @@ const KeyManagement = ({
     setNewKeyModalOpen(false);
   };
   const handleRenew = async () => {
-    setIsLoading(true);
+    setKeyGenerationIsLoading(true);
+    setKeyInfoFetchIsLoading(true);
     try {
-      const data = await apiCalls.getNewAPIKey(token!);
+      const data = await createNewApiKey(token!);
       setNewKey(data.new_api_key);
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false);
+      setKeyGenerationIsLoading(false);
+      setKeyInfoFetchIsLoading(false);
     }
   };
 
@@ -97,20 +128,52 @@ const KeyManagement = ({
           manager. You can generate a new key here, but keep in mind that any
           old key is invalidated if a new key is created.
         </Typography>
-        <Button
-          variant="contained"
-          onClick={handleConfirmationModalOpen}
-          disabled={!editAccess}
-          startIcon={<AutorenewIcon />}
-          style={{ width: "220px", alignSelf: "center" }}
+        <Layout.FlexBox
+          flexDirection="column"
+          alignItems={"center"}
+          gap={sizes.baseGap}
         >
-          Generate New Key
-        </Button>
+          {keyInfoFetchIsLoading ? (
+            <Typography variant="body1">
+              <br />
+              Checking for current API key <CircularProgress size={10} />
+            </Typography>
+          ) : currentKey ? (
+            <Typography variant="body1">
+              Active API key reminder:{" "}
+              <span style={{ fontWeight: "bold" }}>{`${currentKey}...`}</span>
+              <br />
+              Last updated: {currentKeyLastUpdated}
+            </Typography>
+          ) : (
+            <Typography variant="body1">Generate your first API key</Typography>
+          )}
+          <LoadingButton
+            variant="contained"
+            onClick={currentKey ? handleConfirmationModalOpen : handleRenew}
+            disabled={!editAccess}
+            loading={keyGenerationIsLoading}
+            loadingPosition="start"
+            startIcon={<AutorenewIcon />}
+            style={{
+              width: "180px",
+              alignSelf: "center",
+              backgroundColor: keyGenerationIsLoading
+                ? appColors.lightGrey
+                : currentKey
+                ? appColors.error
+                : appColors.primary,
+            }}
+          >
+            {currentKey ? `Regenerate Key` : "Generate Key"}
+          </LoadingButton>
+        </Layout.FlexBox>
         <KeyRenewConfirmationModal
           open={confirmationModalOpen}
+          currentKey={currentKey}
           onClose={handleConfirmationModalClose}
           onRenew={handleRenew}
-          isLoading={isLoading}
+          isLoading={keyGenerationIsLoading}
         />
         <NewKeyModal
           newKey={newKey}
