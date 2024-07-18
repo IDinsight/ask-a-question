@@ -349,7 +349,7 @@
               {
                 "uuid": "51607b79-2c50-43a9-ac47-f0e17af0b58f",
                 "type": "send_msg",
-                "text": "Top FAQs:\n\n1. @results.response.content_response.0.title\n2. @results.response.content_response.1.title\n3. @results.response.content_response.2.title",
+                "text": "Top FAQs:\n\n1. @results.response.search_results.0.title\n2. @results.response.search_results.1.title\n3. @results.response.search_results.2.title",
                 "quick_replies": [],
                 "labels": [],
                 "attachments": []
@@ -597,7 +597,7 @@
               {
                 "uuid": "973b2dfc-336b-4904-8175-daef79cd7f95",
                 "type": "send_msg",
-                "text": "*@results.response.content_response.0.title*\n\n@results.response.content_response.0.text",
+                "text": "*@results.response.search_results.0.title*\n\n@results.response.search_results.0.text",
                 "quick_replies": [],
                 "labels": [],
                 "attachments": []
@@ -616,7 +616,7 @@
               {
                 "uuid": "a66baa0a-56e3-4ab5-8475-e7df9f8ad47f",
                 "type": "send_msg",
-                "text": "*@results.response.content_response.1.title*\n\n@results.response.content_response.1.text",
+                "text": "*@results.response.search_results.1.title*\n\n@results.response.search_results.1.text",
                 "quick_replies": [],
                 "labels": [],
                 "attachments": []
@@ -635,7 +635,7 @@
               {
                 "uuid": "ff1274ca-779a-48d1-932d-1a6161af243f",
                 "type": "send_msg",
-                "text": "*@results.response.content_response.2.title*\n\n@results.response.content_response.2.text",
+                "text": "*@results.response.search_results.2.title*\n\n@results.response.search_results.2.text",
                 "quick_replies": [],
                 "labels": [],
                 "attachments": []

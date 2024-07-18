@@ -122,7 +122,7 @@ async def get_llm_answer(
 
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = await get_similar_content_async(
+        search_results = await get_similar_content_async(
             user_id=user_id,
             question=question.query_text,
             n_similar=n_similar,
@@ -130,8 +130,8 @@ async def get_llm_answer(
             metadata=metadata,
         )
 
-        response.content_response = content_response
-        context = get_context_string_from_retrieved_contents(content_response)
+        response.search_results = search_results
+        context = get_context_string_from_retrieved_contents(search_results)
 
         rag_response = await get_llm_rag_answer(
             question=question.query_text,
@@ -171,7 +171,7 @@ async def get_user_query_and_response(
     )
     response = QueryResponse(
         query_id=user_query_db.query_id,
-        content_response=None,
+        search_results=None,
         llm_response=None,
         feedback_secret_key=feedback_secret_key,
     )
@@ -214,9 +214,7 @@ async def embeddings_search(
         return JSONResponse(status_code=400, content=response.model_dump())
     else:
         await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(
-            user_db.user_id, response.content_response, asession
-        )
+        await increment_query_count(user_db.user_id, response.search_results, asession)
         return response
 
 
@@ -235,7 +233,7 @@ async def get_semantic_matches(
     """
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = await get_similar_content_async(
+        search_results = await get_similar_content_async(
             user_id=user_id,
             question=question.query_text,
             n_similar=n_similar,
@@ -243,7 +241,7 @@ async def get_semantic_matches(
             metadata=metadata,
         )
 
-        response.content_response = content_response
+        response.search_results = search_results
     return response
 
 

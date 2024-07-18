@@ -67,8 +67,8 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int
-    content_response: Dict[int, QuerySearchResult] | None
     llm_response: Optional[str] = None
+    search_results: Dict[int, QuerySearchResult] | None
     feedback_secret_key: str
     debug_info: dict = {}
     state: ResultState = ResultState.IN_PROGRESS

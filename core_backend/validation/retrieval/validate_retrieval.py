@@ -186,7 +186,7 @@ class TestRetrievalPerformance:
             logger.warning("Failed to retrieve content")
             content_titles = []
         else:
-            retrieved = response.json()["content_response"]
+            retrieved = response.json()["search_results"]
             content_titles = [retrieved[str(i)]["title"] for i in range(len(retrieved))]
         return content_titles
 
