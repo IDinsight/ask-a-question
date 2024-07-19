@@ -1,7 +1,9 @@
+"""This module contains the FastAPI router for the content management endpoints."""
+
 from typing import Annotated, List, Optional
 
 import pandas as pd
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
@@ -56,15 +58,28 @@ async def create_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[ContentRetrieve]:
+    """Create content endpoint. Calls embedding model to get content embedding and
+    inserts it to PG database.
+
+    :param content: `ContentCreate` object containing content details.
+    :param user_db: `UserDB` object of the user making the request.
+    :param asession: AsyncSession object for database transactions.
+
+    :returns:
+        `ContentRetrieve` object of the created content.
+
+    :raises HTTPException: If the content tags are invalid or if the user would exceed
+        their content quota.
     """
-    Create content endpoint. Calls embedding model to get content embedding and
-    inserts it to PG database
-    """
+
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
     if not is_tag_valid:
-        raise HTTPException(status_code=400, detail=f"Invalid tag ids: {content_tags}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tag ids: {content_tags}",
+        )
     content.content_tags = content_tags
 
     # Check if the user would exceed their content quota
@@ -77,7 +92,8 @@ async def create_content(
             )
         except ExceedsContentQuotaError as e:
             raise HTTPException(
-                status_code=403, detail="Exceeds content quota for user. {e}"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Exceeds content quota for user. {e}",
             ) from e
 
     content_db = await save_content_to_db(
@@ -95,8 +111,22 @@ async def edit_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """
-    Edit content endpoint
+    """Edit content by ID endpoint.
+
+    NB: Currently, we retrieve the content to be updated from the database even if it
+    is archived and then check if it is archived. This allows us to return a 400 error
+    informing the user that the content is archived and cannot be updated.
+
+    :param content_id: The ID of the content to edit.
+    :param content: `ContentCreate` object containing content details.
+    :param user_db: `UserDB` object of the user making the request.
+    :param asession: AsyncSession object for database transactions.
+
+    :returns:
+        `ContentRetrieve` object of the edited content.
+
+    :raises HTTPException: If the content ID is not found in the database, if the
+        content tags are invalid, or if the content to be updated is archived.
     """
 
     old_content = await get_content_from_db(
@@ -107,14 +137,18 @@ async def edit_content(
 
     if not old_content:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
         )
 
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
     if not is_tag_valid:
-        raise HTTPException(status_code=400, detail=f"Invalid tag ids: {content_tags}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tag ids: {content_tags}",
+        )
     content.content_tags = content_tags
     updated_content = await update_content_in_db(
         user_id=user_db.user_id,
@@ -133,8 +167,15 @@ async def retrieve_content(
     limit: int = 50,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
-    """
-    Retrieve all content endpoint
+    """Retrieve all content endpoint.
+
+    :param user_db: `UserDB` object of the user making the request.
+    :param skip: Number of records to skip.
+    :param limit: Number of records to retrieve.
+    :param asession: AsyncSession object for database transactions.
+
+    :returns:
+        contents: List of `ContentRetrieve` objects.
     """
 
     records = await get_list_of_content_from_db(
@@ -153,8 +194,13 @@ async def delete_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
-    """
-    Delete content endpoint
+    """Delete content by ID endpoint.
+
+    :param content_id: The ID of the content to delete.
+    :param user_db: `UserDB` object of the user making the request.
+    :param asession: AsyncSession object for database transactions.
+
+    :raises HTTPException: If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -165,7 +211,8 @@ async def delete_content(
 
     if not record:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
         )
     await delete_content_from_db(
         user_id=user_db.user_id,
@@ -180,8 +227,16 @@ async def retrieve_content_by_id(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """
-    Retrieve content by id endpoint
+    """Retrieve content by ID endpoint.
+
+    :param content_id: The ID of the content to retrieve.
+    :param user_db: `UserDB` object of the user making the request.
+    :param asession: AsyncSession object for database transactions.
+
+    :returns:
+        `ContentRetrieve` object of the retrieved content.
+
+    :raises HTTPException: If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -192,7 +247,8 @@ async def retrieve_content_by_id(
 
     if not record:
         raise HTTPException(
-            status_code=404, detail=f"Content id `{content_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
         )
 
     return _convert_record_to_schema(record)
@@ -204,11 +260,19 @@ async def bulk_upload_contents(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[BulkUploadResponse]:
-    """
-    Upload, check, and ingest contents in bulk from a CSV file.
+    """Upload, check, and ingest contents in bulk from a CSV file.
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
     with the list of issues under detail in the response body.
+
+    :param file: The CSV file to upload.
+    :param user_db: `UserDB` object of the user making the request.
+    :param asession: AsyncSession object for database transactions.
+
+    :returns:
+        `BulkUploadResponse` object containing the tags and contents created.
+
+    :raises HTTPException: If `file` is not a valid CSV file.
     """
 
     # Ensure the file is a CSV
@@ -221,21 +285,19 @@ async def bulk_upload_contents(
                 )
             ]
         )
-        raise HTTPException(status_code=400, detail=error_list_model.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_list_model.model_dump(),
+        )
 
     df = _load_csv(file)
     await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
 
     # Create each new tag in the database
     tags_col = "tags"
-    if "tags" not in df.columns:
-        skip_tags = True
-    elif df["tags"].isnull().all():
-        skip_tags = True
-    else:
-        skip_tags = False
-
     created_tags: List[TagRetrieve] = []
+    tag_name_to_id_map: dict[str, int] = {}
+    skip_tags = tags_col not in df.columns or df[tags_col].isnull().all()
     if not skip_tags:
         incoming_tags = _extract_unique_tags(tags_col=df[tags_col])
         tags_in_db = await get_list_of_tag_from_db(
@@ -264,15 +326,12 @@ async def bulk_upload_contents(
     created_contents = []
     for _, row in df.iterrows():
         content_tags: List = []  # should be List[TagDB] but clashes with validate_tags
-        if not skip_tags:
-            if not pd.isna(row[tags_col]):
-                tag_names = [
-                    tag_name.strip().upper() for tag_name in row[tags_col].split(",")
-                ]
-                tag_ids = [tag_name_to_id_map[tag_name] for tag_name in tag_names]
-                is_tag_valid, content_tags = await validate_tags(
-                    user_db.user_id, tag_ids, asession
-                )
+        if tag_name_to_id_map and not pd.isna(row[tags_col]):
+            tag_names = [
+                tag_name.strip().upper() for tag_name in row[tags_col].split(",")
+            ]
+            tag_ids = [tag_name_to_id_map[tag_name] for tag_name in tag_names]
+            _, content_tags = await validate_tags(user_db.user_id, tag_ids, asession)
 
         content = ContentCreate(
             content_title=row["title"],
@@ -290,42 +349,36 @@ async def bulk_upload_contents(
 
 
 def _load_csv(file: UploadFile) -> pd.DataFrame:
-    """
-    Load the CSV file into a pandas DataFrame
+    """Load the CSV file into a pandas DataFrame.
+
+    :param file: The CSV file to load.
+
+    :returns:
+        df: The loaded DataFrame.
+
+    :raises HTTPException: If the CSV file is empty or unreadable.
     """
 
     try:
         df = pd.read_csv(file.file, dtype=str)
-    except EmptyDataError as e:
+    except (EmptyDataError, ParserError, UnicodeDecodeError) as e:
+        error_type = {
+            EmptyDataError: "empty_data",
+            ParserError: "parse_error",
+            UnicodeDecodeError: "encoding_error",
+        }.get(type(e), "unknown_error")
+        error_description = {
+            "empty_data": "The CSV file is empty",
+            "parse_error": "CSV is unreadable (parsing error)",
+            "encoding_error": "CSV is unreadable (encoding error)",
+        }.get(error_type, "An unknown error occurred")
         error_list_model = CustomErrorList(
-            errors=[
-                CustomError(
-                    type="empty_data",
-                    description="The CSV file is empty",
-                )
-            ]
+            errors=[CustomError(type=error_type, description=error_description)]
         )
-        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
-    except ParserError as e:
-        error_list_model = CustomErrorList(
-            errors=[
-                CustomError(
-                    type="parse_error",
-                    description="CSV is unreadable (parsing error)",
-                )
-            ]
-        )
-        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
-    except UnicodeDecodeError as e:
-        error_list_model = CustomErrorList(
-            errors=[
-                CustomError(
-                    type="encoding_error",
-                    description="CSV is unreadable (encoding error)",
-                )
-            ]
-        )
-        raise HTTPException(status_code=400, detail=error_list_model.dict()) from e
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_list_model.model_dump(),
+        ) from e
     if df.empty:
         error_list_model = CustomErrorList(
             errors=[
@@ -340,124 +393,191 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
     return df
 
 
-async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
-    """
-    Perform checks on the CSV file to ensure it meets the requirements
+async def check_content_quota(
+    user_id: int,
+    n_contents_to_add: int,
+    asession: AsyncSession,
+    error_list: List[CustomError],
+) -> None:
+    """Check if the user would exceed their content quota given the number of new
+    contents to add.
+
+    :param user_id: The user ID to check the content quota for.
+    :param n_contents_to_add: The number of new contents to add.
+    :param asession: The AsyncSession object for database transactions.
+    :param error_list: The list of errors to append to.
     """
 
-    # check if title and text columns are present
-    cols = df.columns
-    error_list = []
-    if "title" not in cols or "text" not in cols:
+    try:
+        await _check_content_quota_availability(
+            user_id=user_id, n_contents_to_add=n_contents_to_add, asession=asession
+        )
+    except ExceedsContentQuotaError as e:
+        error_list.append(CustomError(type="exceeds_quota", description=str(e)))
+
+
+async def check_db_duplicates(
+    df: pd.DataFrame,
+    user_id: int,
+    asession: AsyncSession,
+    error_list: List[CustomError],
+) -> None:
+    """Check for duplicates between the CSV and the database.
+
+    :param df: The DataFrame to check.
+    :param user_id: The user ID to check the content duplicates for.
+    :param asession: The AsyncSession object for database transactions.
+    :param error_list: The list of errors to append to.
+    """
+
+    contents_in_db = await get_list_of_content_from_db(
+        user_id=user_id, offset=0, limit=None, asession=asession
+    )
+    content_titles_in_db = {c.content_title.strip() for c in contents_in_db}
+    content_texts_in_db = {c.content_text.strip() for c in contents_in_db}
+
+    if df["title"].isin(content_titles_in_db).any():
+        error_list.append(
+            CustomError(
+                type="title_in_db",
+                description="One or more content titles already exist in the database.",
+            )
+        )
+    if df["text"].isin(content_texts_in_db).any():
+        error_list.append(
+            CustomError(
+                type="text_in_db",
+                description="One or more content texts already exist in the database.",
+            )
+        )
+
+
+async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
+    """Perform checks on the CSV file to ensure it meets the requirements.
+
+    :param df: The DataFrame to check.
+    :param user_id: The user ID to check the content quota for.
+    :param asession: The AsyncSession object for database transactions.
+
+    :raises HTTPException: If the CSV file does not meet the requirements.
+    """
+
+    error_list: List[CustomError] = []
+    check_required_columns(df, error_list)
+    await check_content_quota(user_id, len(df), asession, error_list)
+    clean_dataframe(df)
+    check_empty_values(df, error_list)
+    check_length_constraints(df, error_list)
+    check_duplicates(df, error_list)
+    await check_db_duplicates(df, user_id, asession, error_list)
+
+    if error_list:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=CustomErrorList(errors=error_list).model_dump(),
+        )
+
+
+def check_duplicates(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+    """Check for duplicates in the DataFrame.
+
+    :param df: The DataFrame to check.
+    :param error_list: The list of errors to append to.
+    """
+
+    if df.duplicated(subset=["title"]).any():
+        error_list.append(
+            CustomError(
+                type="duplicate_titles",
+                description="Duplicate content titles found in the CSV file.",
+            )
+        )
+    if df.duplicated(subset=["text"]).any():
+        error_list.append(
+            CustomError(
+                type="duplicate_texts",
+                description="Duplicate content texts found in the CSV file.",
+            )
+        )
+
+
+def check_empty_values(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+    """Check for empty values in the DataFrame.
+
+    :param df: The DataFrame to check.
+    :param error_list: The list of errors to append to.
+    """
+    if df["title"].isnull().any():
+        error_list.append(
+            CustomError(
+                type="empty_title",
+                description="One or more empty content titles found in the CSV file.",
+            )
+        )
+    if df["text"].isnull().any():
+        error_list.append(
+            CustomError(
+                type="empty_text",
+                description="One or more empty content texts found in the CSV file.",
+            )
+        )
+
+
+def check_length_constraints(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+    """Check for length constraints in the DataFrame.
+
+    :param df: The DataFrame to check.
+    :param error_list: The list of errors to append to.
+    """
+
+    if df["title"].str.len().max() > 150:
+        error_list.append(
+            CustomError(
+                type="title_too_long",
+                description="One or more content titles exceed 150 characters.",
+            )
+        )
+    if df["text"].str.len().max() > 2000:
+        error_list.append(
+            CustomError(
+                type="texts_too_long",
+                description="One or more content texts exceed 2000 characters.",
+            )
+        )
+
+
+def check_required_columns(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+    """Check if the CSV file has the required columns.
+
+    :param df: The DataFrame to check.
+    :param error_list: The list of errors to append to.
+
+    :raises HTTPException: If the CSV file does not have the required columns.
+    """
+
+    required_columns = {"title", "text"}
+    if not required_columns.issubset(df.columns):
         error_list.append(
             CustomError(
                 type="missing_columns",
-                description=("File must have 'title' and 'text' columns."),
+                description="File must have 'title' and 'text' columns.",
             )
         )
-        # if either of these columns are missing, skip further checks
-        error_list_model = CustomErrorList(errors=error_list)
-        raise HTTPException(status_code=400, detail=error_list_model.dict())
-    else:
-        try:
-            await _check_content_quota_availability(
-                user_id=user_id, n_contents_to_add=len(df), asession=asession
-            )
-        except ExceedsContentQuotaError as e:
-            error_list.append(
-                CustomError(
-                    type="exceeds_quota",
-                    description=str(e),
-                )
-            )
-
-        # strip columns to catch duplicates better and empty cells
-        df["title"] = df["title"].str.strip()
-        df["text"] = df["text"].str.strip()
-
-        # set any empty strings to None
-        df = df.replace("", None)
-
-        # check if there are any empty values in either column
-        if df["title"].isnull().any():
-            error_list.append(
-                CustomError(
-                    type="empty_title",
-                    description=(
-                        "One or more empty content titles found in the CSV file."
-                    ),
-                )
-            )
-        if df["text"].isnull().any():
-            error_list.append(
-                CustomError(
-                    type="empty_text",
-                    description=(
-                        "One or more empty content texts found in the CSV file."
-                    ),
-                )
-            )
-        # check if any title exceeds 150 characters
-        if df["title"].str.len().max() > 150:
-            error_list.append(
-                CustomError(
-                    type="title_too_long",
-                    description="One or more content titles exceed 150 characters.",
-                )
-            )
-        # check if any text exceeds 2000 characters
-        if df["text"].str.len().max() > 2000:
-            error_list.append(
-                CustomError(
-                    type="texts_too_long",
-                    description="One or more content texts exceed 150 characters.",
-                )
-            )
-
-        # check if there are duplicates in either column
-        if df.duplicated(subset=["title"]).any():
-            error_list.append(
-                CustomError(
-                    type="duplicate_titles",
-                    description="Duplicate content titles found in the CSV file.",
-                )
-            )
-        if df.duplicated(subset=["text"]).any():
-            error_list.append(
-                CustomError(
-                    type="duplicate_texts",
-                    description="Duplicate content texts found in the CSV file.",
-                )
-            )
-
-        # check for duplicate titles and texts between the CSV and the database
-        contents_in_db = await get_list_of_content_from_db(
-            user_id, offset=0, limit=None, asession=asession
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=CustomErrorList(errors=error_list).model_dump(),
         )
-        content_titles_in_db = [c.content_title.strip() for c in contents_in_db]
-        content_texts_in_db = [c.content_text.strip() for c in contents_in_db]
-        if df["title"].isin(content_titles_in_db).any():
-            error_list.append(
-                CustomError(
-                    type="title_in_db",
-                    description=(
-                        "One or more content titles already exist in the database."
-                    ),
-                )
-            )
-        if df["text"].isin(content_texts_in_db).any():
-            error_list.append(
-                CustomError(
-                    type="text_in_db",
-                    description=(
-                        "One or more content texts already exist in the database."
-                    ),
-                )
-            )
 
-        if error_list:
-            error_list_model = CustomErrorList(errors=error_list)
-            raise HTTPException(status_code=400, detail=error_list_model.dict())
+
+def clean_dataframe(df: pd.DataFrame) -> None:
+    """Clean the DataFrame by stripping whitespace and replacing empty strings.
+
+    :param df: The DataFrame to clean.
+    """
+
+    df["title"] = df["title"].str.strip()
+    df["text"] = df["text"].str.strip()
+    df.replace("", None, inplace=True)
 
 
 async def _check_content_quota_availability(
@@ -465,8 +585,13 @@ async def _check_content_quota_availability(
     n_contents_to_add: int,
     asession: AsyncSession,
 ) -> None:
-    """
-    Raise an error if user would reach their content quota given n new contents.
+    """Raise an error if user would reach their content quota given n new contents.
+
+    :param user_id: The user ID to check the content quota for.
+    :param n_contents_to_add: The number of new contents to add.
+    :param asession: The AsyncSession object for database transactions.
+
+    :raises ExceedsContentQuotaError: If the user would exceed their content quota.
     """
 
     # get content_quota value for this user from UserDB
@@ -491,8 +616,13 @@ async def _check_content_quota_availability(
 
 
 def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
-    """
-    Get unique UPPERCASE tags from a DataFrame column (comma-separated within column)
+    """Get unique UPPERCASE tags from a DataFrame column (comma-separated within
+    column).
+
+    :param tags_col: The column containing tags.
+
+    :returns:
+        tags_unique_list: A list of unique tags.
     """
 
     # prep col
@@ -510,9 +640,16 @@ def _get_tags_not_in_db(
     tags_in_db: List[TagDB],
     incoming_tags: List[str],
 ) -> List[str]:
+    """Compare tags fetched from the DB with incoming tags and return tags not in the
+    DB.
+
+    :param tags_in_db: List of `TagDB` objects fetched from the database.
+    :param incoming_tags: List of incoming tags.
+
+    :returns:
+        tags_not_in_db_list: List of tags not in the database.
     """
-    Compare tags fetched from the DB with incoming tags and return tags not in the DB
-    """
+
     tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
     tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
 
@@ -520,8 +657,12 @@ def _get_tags_not_in_db(
 
 
 def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
-    """
-    Convert models.ContentDB models to ContentRetrieve schema
+    """Convert `models.ContentDB` models to `ContentRetrieve` schema.
+
+    :param record: `ContentDB` object to convert.
+
+    :returns:
+        `ContentRetrieve` object of the converted record.
     """
 
     content_retrieve = ContentRetrieve(
@@ -541,8 +682,12 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
 
 
 def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
-    """
-    Convert models.TagDB models to TagRetrieve schema
+    """Convert `models.TagDB` models to `TagRetrieve` schema.
+
+    :param record: `TagDB` object to convert.
+
+    :returns:
+        tag_retrieve: `TagRetrieve` object of the converted record.
     """
 
     tag_retrieve = TagRetrieve(
