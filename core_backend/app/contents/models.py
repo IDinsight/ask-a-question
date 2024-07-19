@@ -146,7 +146,10 @@ async def save_content_to_db(
     await asession.refresh(content_db)
 
     result = await get_content_from_db(
-        content_db.user_id, content_db.content_id, asession
+        user_id=content_db.user_id,
+        content_id=content_db.content_id,
+        exclude_archived=False,  # Don't exclude for newly saved content!
+        asession=asession,
     )
     return result or content_db
 
@@ -158,6 +161,8 @@ async def update_content_in_db(
     asession: AsyncSession,
 ) -> ContentDB:
     """Update content and content embedding in the database.
+
+    NB: We do not allow archived content to be updated.
 
     :param user_id: The ID of the user requesting the update.
     :param content_id: The ID of the content to update.
@@ -190,7 +195,7 @@ async def update_content_in_db(
     await asession.commit()
     await asession.refresh(content_db)
     result = await get_content_from_db(
-        content_db.user_id, content_db.content_id, asession
+        user_id=content_db.user_id, content_id=content_db.content_id, asession=asession
     )
     return result or content_db
 
@@ -199,6 +204,9 @@ async def increment_query_count(
     user_id: int, contents: Dict[int, QuerySearchResult] | None, asession: AsyncSession
 ) -> None:
     """Increment the query count for the content.
+
+    NB: Archived content is not retrieved by default and thus, not included in the
+    query count increment.
 
     :param user_id: The ID of the user requesting the query count increment.
     :param contents: The content to increment the query count for.
@@ -245,16 +253,21 @@ async def delete_content_from_db(
 
 
 async def get_content_from_db(
+    *,
     user_id: int,
     content_id: int,
+    exclude_archived: bool = True,
     asession: AsyncSession,
 ) -> Optional[ContentDB]:
     """Retrieve content from the database.
 
-    NB: Database content is only retrieved if the `is_archived` attribute is `False`.
+    NB: By default, we exclude archived content from retrieval. Scenarios where we
+    would want to fetch archived content include:
+        1. When we are retrieving content that was just saved to the database.
 
     :param user_id: The ID of the user requesting the content.
     :param content_id: The ID of the content to retrieve.
+    :param exclude_archived: Specifies whether to exclude archived content.
     :param asession: The `AsyncSession` object to use for the database transaction.
 
     :returns:
@@ -266,27 +279,29 @@ async def get_content_from_db(
         .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.user_id == user_id)
         .where(ContentDB.content_id == content_id)
-        .where(ContentDB.is_archived == false())
     )
+    if exclude_archived:
+        stmt = stmt.where(ContentDB.is_archived == false())
     content_row = (await asession.execute(stmt)).first()
     return content_row[0] if content_row else None
 
 
 async def get_list_of_content_from_db(
+    *,
     user_id: int,
-    asession: AsyncSession,
     offset: int = 0,
     limit: Optional[int] = None,
+    exclude_archived: bool = True,
+    asession: AsyncSession,
 ) -> List[ContentDB]:
     """Retrieve all content from the database.
 
-    NB: Database content is only retrieved if the `is_archived` attribute is `False`.
-
     :param user_id: The ID of the user requesting the content.
-    :param asession: The `AsyncSession` object to use for the database transaction.
     :param offset: The number of content items to skip.
     :param limit: The maximum number of content items to retrieve. If not specified,
         then all content items are retrieved.
+    :param exclude_archived: Specifies whether to exclude archived content.
+    :param asession: The `AsyncSession` object to use for the database transaction.
 
     :returns:
         A list of content objects if they exist, otherwise an empty list.
@@ -296,9 +311,10 @@ async def get_list_of_content_from_db(
         select(ContentDB)
         .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.user_id == user_id)
-        .where(ContentDB.is_archived == false())
         .order_by(ContentDB.content_id)
     )
+    if exclude_archived:
+        stmt = stmt.where(ContentDB.is_archived == false())
     if offset > 0:
         stmt = stmt.offset(offset)
     if isinstance(limit, int) and limit > 0:
@@ -326,19 +342,22 @@ async def _get_content_embeddings(
 
 
 async def get_similar_content_async(
+    *,
     user_id: int,
     question: str,
     n_similar: int,
-    asession: AsyncSession,
     metadata: Optional[dict] = None,
+    exclude_archived: bool = True,
+    asession: AsyncSession,
 ) -> Dict[int, tuple[str, str, int, float]]:
     """Get the most similar points in the vector table.
 
     :param user_id: The ID of the user requesting the similar content.
     :param question: The question to search for similar content.
     :param n_similar: The number of similar content items to retrieve.
-    :param asession: The `AsyncSession` object to use for the database transaction.
     :param metadata: The metadata to use for the embedding generation.
+    :param exclude_archived: Specifies whether to exclude archived content.
+    :param asession: The `AsyncSession` object to use for the database transaction.
 
     :returns:
         A dictionary of similar content items if they exist, otherwise an empty
@@ -354,23 +373,25 @@ async def get_similar_content_async(
         user_id=user_id,
         question_embedding=question_embedding,
         n_similar=n_similar,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
 
 async def get_search_results(
+    *,
     user_id: int,
     question_embedding: List[float],
     n_similar: int,
+    exclude_archived: bool,
     asession: AsyncSession,
 ) -> Dict[int, tuple[str, str, int, float]]:
     """Get similar content to given embedding and return search results.
 
-    NB: Database content is only retrieved if the `is_archived` attribute is `False`.
-
     :param user_id: The ID of the user requesting the content.
     :param question_embedding: The embedding vector of the question to search for.
     :param n_similar: The number of similar content items to retrieve.
+    :param exclude_archived: Specifies whether to exclude archived content.
     :param asession: The `AsyncSession` object to use for the database transaction.
 
     :returns:
@@ -386,10 +407,11 @@ async def get_search_results(
             ),
         )
         .where(ContentDB.user_id == user_id)
-        .where(ContentDB.is_archived == false())
         .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
         .limit(n_similar)
     )
+    if exclude_archived:
+        query = query.where(ContentDB.is_archived == false())
     search_result = (await asession.execute(query)).all()
 
     results_dict = {}
