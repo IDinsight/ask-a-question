@@ -12,7 +12,7 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 3. Create an AAQ account, retrieve an API key.
 
-4. Set both the AAQ URL (e.g.https://aaq-testing.idinsight.io/api/) and AAQ_API_KEY in .env file as 
+4. Set both the AAQ URL (e.g.https://app.ask-a-question.com/api/) and AAQ_API_KEY in .env file as 
 `TARGET_URL` and `AAQ_API_KEY` respectively.
 
 5. Run the main script.
