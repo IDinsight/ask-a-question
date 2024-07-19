@@ -217,7 +217,7 @@ def set_global_http_client(http_client: HttpClient) -> None:
     _HTTP_CLIENT = http_client()
 
 
-def get_http_client() -> aiohttp.ClientSession:
+def get_http_client() -> Optional[aiohttp.ClientSession]:
     """
     Get HTTP client
     """
