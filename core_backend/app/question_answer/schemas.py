@@ -93,8 +93,8 @@ class QueryResponse(BaseModel):
                             "distance": 0.2,
                         },
                     },
-                    "llm_response": "Example LLM response"
-                    "(not applicable for /embeddings-search)",
+                    "llm_response": "Example LLM response "
+                    "(null for /embeddings-search)",
                     "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
                     "state": "final",
