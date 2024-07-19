@@ -1,3 +1,7 @@
+"""
+Handles the parsing of the config file and running of load tests via Locust commands.
+"""
+
 import logging
 import os
 import shlex
@@ -7,14 +11,14 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_single_test(
-    host,
-    locustfile,
-    users,
-    spawn_rate,
-    run_time,
-    output_subfolder,
-    test_html_filpath,
-):
+    host: str,
+    locustfile: str,
+    users: int,
+    spawn_rate: int,
+    run_time: int,
+    output_subfolder: str,
+    test_html_filpath: str,
+) -> None:
     """Runs a single locust test.
 
     This function takes locust parameters and runs a locust load test,
@@ -37,7 +41,7 @@ def run_single_test(
         number of users to spawn per second
     run_time : str
         time to run the test for
-    output_folder : str
+    output_subfolder : str
         Path to output folder
     test_name : str
         The name of test
@@ -57,11 +61,10 @@ def run_single_test(
          --csv {output_files_root} --html {test_html_filpath}
         """
     )
-    print(host)
     subprocess.run(locust_command)
 
 
-def run_tests(experiment_configs, output_folder):
+def run_tests(experiment_configs: dict, output_folder: str) -> None:
     """Runs a load test for each test configuration.
 
     Takes a dict of experiment parameters and cycles through all values for
@@ -81,10 +84,10 @@ def run_tests(experiment_configs, output_folder):
     None
 
     """
-    host = os.getenv("TARGET_URL")
-    locustfile_list = experiment_configs.get("locustfile_list")
-    users_list = experiment_configs.get("users_list")
-    run_time_list = experiment_configs.get("run_time_list")
+    host = os.getenv("TARGET_URL", "localhost")
+    locustfile_list: list = experiment_configs.get("locustfile_list", [])
+    users_list: list = experiment_configs.get("users_list", [])
+    run_time_list = experiment_configs.get("run_time_list", [])
     # Note: default spawn-rate = n users, up to max 100 users/sec
     # as per locust's recommendations.
     spawn_rate_list = experiment_configs.get(
@@ -138,33 +141,3 @@ def run_tests(experiment_configs, output_folder):
         f"\n\n### ALL TESTS COMPLETE. Raw results and HTML reports saved \
             to {output_folder} ###\n"
     )
-
-
-def run_all_experiments(configs, args):
-    """Runs experiments specified in configs and saves results to file.
-
-    Parameters
-    ----------
-    configs : list of dicts
-        List of dicts containing experiment configs
-    args : dict
-        Arguments from argparse
-
-    Returns
-    -------
-    None
-
-    """
-    for experiment_name, experiment_configs in configs.items():
-        logging.info(
-            f"""
-            #
-            # Running experiment {experiment_name}
-            #
-            """
-        )
-        experiment_output_folder = f"{args.output}/{experiment_name}"
-        run_tests(
-            experiment_configs=experiment_configs,
-            output_folder=experiment_output_folder,
-        )
