@@ -19,6 +19,8 @@ nav:
       - Usage: usage.md
       - Roadmap: roadmap.md
 
+  - Try it out ↗︎: https://app.ask-a-question.com
+
   - Latest Updates:
       - blog/index.md
 
@@ -68,8 +70,6 @@ nav:
 
   - Contact us:
       - Team: contact_us.md
-
-  - Try it out ↗︎: https://app.ask-a-question.com
 
   - API docs ↗︎: https://app.ask-a-question.com/api/docs
 
