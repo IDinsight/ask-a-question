@@ -1,6 +1,6 @@
 """add extra api_key columns to user table
 
-Revision ID: f562cf512c90
+Revision ID: 9400641b16d3
 Revises: 30549f0b428a
 Create Date: 2024-07-18 17:33:08.655320
 
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "9400641b16d3"
-down_revision: Union[str, None] = "f562cf512c90"
+down_revision: Union[str, None] = "30549f0b428a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
