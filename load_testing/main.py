@@ -7,7 +7,7 @@ blob/master/locust_run_tests.py
 import argparse
 import json
 
-from custom_load_testing import reporting
+from custom_load_testing import reporting, testing
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,9 +42,7 @@ def main() -> None:
     """Run main script function."""
     args = parse_args()
     config = json.load(open(args.config))
-    print(config)
-    # testing.run_tests(experiment_configs=config,
-    #   output_folder=args.output)
+    testing.run_tests(experiment_configs=config, output_folder=args.output)
     reporting.calculate_error_rates_and_codes(args.output)
 
 
