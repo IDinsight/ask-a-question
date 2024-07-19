@@ -13,7 +13,7 @@ from .schemas import AuthenticationDetails, GoogleLoginData
 
 TAG_METADATA = {
     "name": "Authentication",
-    "description": "",
+    "description": "Endpoints for authenticating user logins",
 }
 
 router = APIRouter(tags=[TAG_METADATA["name"]])

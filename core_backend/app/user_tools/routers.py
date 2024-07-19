@@ -19,7 +19,7 @@ from .schemas import KeyResponse
 
 TAG_METADATA = {
     "name": "Admin",
-    "description": "Admin operations -- only administrator user can access",
+    "description": "Only administrator user has access to these endpoints.",
 }
 
 router = APIRouter(prefix="/user", tags=["Admin"])

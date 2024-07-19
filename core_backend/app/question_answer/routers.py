@@ -50,9 +50,9 @@ logger = setup_logger()
 
 
 TAG_METADATA = {
-    "name": "Question-answering",
-    "description": "LLM-powered question answering based on your own content "
-    "and feedback collection",
+    "name": "Question-answering and feedback collection",
+    "description": "Authentication: API key. LLM-powered question answering based on "
+    "your content plus feedback collection.",
 }
 
 
@@ -254,10 +254,13 @@ async def feedback(
     user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
-    Feedback endpoint used to capture user feedback on the results returned.
-    <BR>
-    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
-    `feedback_sentiment` in the payload.
+    Feedback endpoint used to capture user feedback on the results returned by QA
+    endpoints.
+
+
+    <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
+    and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
+    include the other in the payload.
     """
 
     is_matched = await check_secret_key_match(
@@ -290,10 +293,13 @@ async def content_feedback(
     user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
-    Feedback endpoint used to capture user feedback on specific content
-    <BR>
-    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
-    `feedback_sentiment` in the payload.
+    Feedback endpoint used to capture user feedback on specific content after it has
+    been returned by the QA endpoints.
+
+
+    <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
+    and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
+    include the other in the payload.
     """
 
     is_matched = await check_secret_key_match(

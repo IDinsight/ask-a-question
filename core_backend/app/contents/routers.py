@@ -32,7 +32,8 @@ from .schemas import (
 
 TAG_METADATA = {
     "name": "Question-answering content management",
-    "description": "Manage content and tags to be used for question answering",
+    "description": "Authentication: User login. Manage content and tags to be used for "
+    "question answering",
 }
 
 router = APIRouter(prefix="/content", tags=[TAG_METADATA["name"]])
@@ -62,10 +63,9 @@ async def create_content(
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[ContentRetrieve]:
     """
-    Create content endpoint. Calls embedding model to get content embedding and
-    inserts it to the content table in the database.
+    Create new content.
 
-    ⚠️ To add tags, use the tags endpoint to create tags first.
+    ⚠️ To add tags, first use the tags endpoint to create tags.
     """
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
@@ -103,7 +103,7 @@ async def edit_content(
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
-    Edit content endpoint
+    Edit pre-existing content.
     """
 
     old_content = await get_content_from_db(
@@ -141,7 +141,7 @@ async def retrieve_content(
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
     """
-    Retrieve all content endpoint
+    Retrieve all contents
     """
 
     records = await get_list_of_content_from_db(
@@ -161,7 +161,7 @@ async def delete_content(
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
-    Delete content endpoint
+    Delete content by ID
     """
 
     record = await get_content_from_db(
@@ -188,7 +188,7 @@ async def retrieve_content_by_id(
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
-    Retrieve content by id endpoint
+    Retrieve content by ID
     """
 
     record = await get_content_from_db(
@@ -215,7 +215,7 @@ async def bulk_upload_contents(
     Upload, check, and ingest contents in bulk from a CSV file.
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
-    with the list of issues under detail in the response body.
+    with the list of issues under 'detail' in the response body.
     """
 
     # Ensure the file is a CSV
