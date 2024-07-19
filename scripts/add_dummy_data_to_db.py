@@ -220,6 +220,7 @@ def add_content_data() -> None:
             query_count=query_count,
             positive_votes=positive_votes,
             negative_votes=negative_votes,
+            is_archived=False,
         )
         session.add(content_db)
         session.commit()
