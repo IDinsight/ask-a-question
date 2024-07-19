@@ -6,6 +6,7 @@ import os
 import random
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 from sqlalchemy.orm import Session
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 # Append the framework path. NB: This is required if this script is invoked from the
 # command line. However, it is not necessary if it is imported from a pip install.
 if __name__ == "__main__":
-    PACKAGE_PATH = os.path.abspath(__file__)
+    PACKAGE_PATH = str(Path(__file__).resolve())
     PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("scripts"))
     PACKAGE_PATH = PACKAGE_PATH_SPLIT[0]
     if PACKAGE_PATH not in sys.path:
