@@ -1,7 +1,5 @@
 # Load Testing
 
-This is the readme for AAQ Load Testing.
-
 ## What is this?
 
 This submodule extends the core functionality of the `locust` load-testing library to run multiple load-tests in succession and collect and save results to file.
