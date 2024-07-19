@@ -1,6 +1,6 @@
 # This script is useful if you want to test the dashboard with dummy data.
-# Run it using the following command:
-#   > cd ~/aaq-core && python scripts/add_dummy_data_to_db.py
+# Navigate to the root directory of the project and run the following command:
+#   > python scripts/add_dummy_data_to_db.py
 
 import os
 import random
