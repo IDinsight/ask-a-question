@@ -197,7 +197,7 @@ class HttpClient:
 _HTTP_CLIENT: aiohttp.ClientSession | None = None
 
 
-def get_global_http_client() -> aiohttp.ClientSession:
+def get_global_http_client() -> Optional[aiohttp.ClientSession]:
     """Return the value for the global variable _HTTP_CLIENT.
 
     :returns:
