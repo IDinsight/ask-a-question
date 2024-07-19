@@ -1,13 +1,25 @@
 # This script is useful if you want to test the dashboard with dummy data.
 # Run it using the following command:
-#    > PYTHON_PATH="../../../" python add_dummy_data_to_db.py
+#   > cd ~/aaq-core && python scripts/add_dummy_data_to_db.py
 
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 
 import numpy as np
 from sqlalchemy.orm import Session
+
+# Append the framework path. NB: This is required if this script is invoked from the
+# command line. However, it is not necessary if it is imported from a pip install.
+if __name__ == "__main__":
+    PACKAGE_PATH = os.path.abspath(__file__)
+    PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("scripts"))
+    PACKAGE_PATH = PACKAGE_PATH_SPLIT[0]
+    if PACKAGE_PATH not in sys.path:
+        print(f"Appending '{PACKAGE_PATH}' to system path.")
+        sys.path.append(PACKAGE_PATH)
+
 
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
