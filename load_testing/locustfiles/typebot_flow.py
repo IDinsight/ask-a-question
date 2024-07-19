@@ -26,7 +26,8 @@ class TypeBotUser(HttpUser):
     def start_conversation(self) -> None:
         """
         Requests a session token from a given TypeBot.
-        List of TypeBot IDs can be found in the TypeBot dashboard here https://typebot.idinsight.io/typebots.
+        List of TypeBot IDs can be found in the TypeBot dashboard here:
+        https://typebot.idinsight.io/typebots.
         Then navigate to the TypeBot you want to use, go to "Share" and copy
         the ID from the API option.
         """

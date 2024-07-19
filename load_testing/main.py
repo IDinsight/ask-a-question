@@ -7,10 +7,10 @@ blob/master/locust_run_tests.py
 import argparse
 import json
 
-from custom_load_testing import testing
+from custom_load_testing import reporting
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parses arguments for the script."""
 
     parser = argparse.ArgumentParser()
@@ -18,7 +18,7 @@ def parse_args():
         "-c",
         "--config",
         action="store",
-        default="configs/constant_multi.json",
+        default="configs/1_50_ramp_config.json",
         help="JSON file containing configs for tests",
     )
     parser.add_argument(
@@ -38,11 +38,14 @@ def parse_args():
     return args
 
 
-def main():
+def main() -> None:
     """Run main script function."""
     args = parse_args()
-    configs = json.load(open(args.config))
-    testing.run_all_experiments(configs=configs, args=args)
+    config = json.load(open(args.config))
+    print(config)
+    # testing.run_tests(experiment_configs=config,
+    #   output_folder=args.output)
+    reporting.calculate_error_rates_and_codes(args.output)
 
 
 if __name__ == "__main__":

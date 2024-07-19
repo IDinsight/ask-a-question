@@ -6,6 +6,7 @@ import logging
 import os
 import shlex
 import subprocess
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -84,7 +85,7 @@ def run_tests(experiment_configs: dict, output_folder: str) -> None:
     None
 
     """
-    host = os.getenv("TARGET_URL", "localhost")
+    host = os.getenv("TARGET_AAQ_URL", "localhost")
     locustfile_list: list = experiment_configs.get("locustfile_list", [])
     users_list: list = experiment_configs.get("users_list", [])
     run_time_list = experiment_configs.get("run_time_list", [])
@@ -135,9 +136,13 @@ def run_tests(experiment_configs: dict, output_folder: str) -> None:
                 test_html_filpath=test_html_filpath,
             )
 
+            time.sleep(
+                30
+            )  # Sleep for 30 seconds between tests to let loads quiet down
+
             logging.info(f"{test_name} load-test completed.")
 
     logging.info(
         f"\n\n### ALL TESTS COMPLETE. Raw results and HTML reports saved \
-            to {output_folder} ###\n"
+to folder '{output_folder}' ###\n"
     )
