@@ -8,6 +8,7 @@ ignore_missing_imports = true
 [tool.ruff]
 select = ["E", "F", "B", "Q", "I"]
 line-length = 88
+ignore = ["B008"]  # Do not perform function calls in argument defaults.
 
 [tool.ruff.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]

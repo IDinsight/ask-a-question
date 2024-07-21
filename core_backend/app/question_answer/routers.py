@@ -1,7 +1,7 @@
 import os
 from typing import Tuple
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,10 +19,15 @@ from ..llm_call.process_input import (
 )
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
-from ..utils import create_langfuse_metadata, generate_secret_key, setup_logger
-from ..voice_api.schemas import AudioQuery, AudioQueryError
-from ..voice_api.voice_components import generate_speech, transcribe_audio
-from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
+from ..utils import (
+    create_langfuse_metadata,
+    generate_secret_key,
+    get_http_client,
+    setup_logger,
+)
+from ..voice_api.schemas import AudioQueryError
+from ..voice_api.voice_components import generate_speech
+from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH, SPEECH_ENDPOINT
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -201,25 +206,38 @@ async def get_user_query_and_response(
     },
 )
 async def stt_llm_response(
-    audio_file: AudioQuery,
+    generate_tts: bool = Form(...),
+    file: UploadFile = File(...),
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
     """
-    Transcribes the provided MP3 file to text using Vosk ASR,
+    Transcribes the provided MP3 file to text using Whisper,
     then generates a custom response using LLM and returns it.
     """
-    file_path = f"temp/{audio_file.file.filename}"
+
+    file_path = f"temp/{file.filename}"
     try:
-
         with open(file_path, "wb") as f:
-            f.write(await audio_file.file.read())
+            f.write(await file.read())
 
-        transcription = await transcribe_audio(file_path)
+        url = SPEECH_ENDPOINT
+        async with get_http_client() as client:
+            async with client.post(url, json={"file_path": f"{file_path}"}) as response:
+                if response.status != 200:
+                    error_content = await response.json()
+                    return JSONResponse(
+                        status_code=response.status, content=error_content
+                    )
+
+                transcription_result = await response.json()
 
         user_query = QueryBase(
-            query_text=transcription, query_metadata=audio_file.audio_metadata
+            query_text=transcription_result["text"],
+            query_metadata={},
+            generate_tts=generate_tts,
         )
+
         user_query_db, user_query_refined, response = await get_user_query_and_response(
             user_id=user_db.user_id, user_query=user_query, asession=asession
         )
