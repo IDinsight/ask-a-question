@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+import aiohttp
 from aiohttp.client_exceptions import ClientConnectorError
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -37,6 +38,7 @@ async def healthcheck(
         url = urlparse(ALIGN_SCORE_API)
         healthcheck_url = f"{url.scheme!r}://{url.netloc!r}/healthcheck"
         http_client = get_http_client()
+        assert isinstance(http_client, aiohttp.ClientSession)
         try:
             resp = await http_client.get(healthcheck_url)
         except ClientConnectorError as e:
