@@ -18,7 +18,7 @@ if __name__ == "__main__":
     PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("scripts"))
     PACKAGE_PATH = PACKAGE_PATH_SPLIT[0]
     if PACKAGE_PATH not in sys.path:
-        print(f"Appending '{PACKAGE_PATH}' to system path.")
+        print(f"Appending '{PACKAGE_PATH}' to system path...")
         sys.path.append(PACKAGE_PATH)
 
 
@@ -233,3 +233,4 @@ if __name__ == "__main__":
     add_month_data()
     add_week_data()
     add_day_data()
+    print("Added dummy data to DB")
