@@ -82,6 +82,8 @@ curl -X 'POST' \
 
 ### :robot: With LLM response
 
+The query looks the same as above, except `generate_llm_response` is set to `true`:
+
 ```shell
 curl -X 'POST' \
   'https://[DOMAIN]/api/search' \

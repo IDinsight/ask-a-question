@@ -11,7 +11,7 @@ end
 
 card AAQ_LLM_Call, then: Response do
   response =
-    post("https://<INSERT_AAQ_URL>/api/response",
+    post("https://app.ask-a-question.com/api/search",
       # milliseconds
       timeout: 20_000,
       body: """
