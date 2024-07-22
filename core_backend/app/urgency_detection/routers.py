@@ -22,8 +22,8 @@ from .schemas import UrgencyQuery, UrgencyResponse
 
 TAG_METADATA = {
     "name": "Urgency detection",
-    "description": "Authentication: API key. Detect urgent messages according to "
-    "urgency rules",
+    "description": "_Requires API key._ Detect urgent messages according to "
+    "urgency rules.",
 }
 
 logger = setup_logger()

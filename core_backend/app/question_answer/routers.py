@@ -50,8 +50,8 @@ logger = setup_logger()
 
 
 TAG_METADATA = {
-    "name": "Question-answering and feedback collection",
-    "description": "Authentication: API key. LLM-powered question answering based on "
+    "name": "Question-answering and feedback",
+    "description": "_Requires API key._ LLM-powered question answering based on "
     "your content plus feedback collection.",
 }
 

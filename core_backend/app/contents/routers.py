@@ -32,8 +32,8 @@ from .schemas import (
 
 TAG_METADATA = {
     "name": "Content management",
-    "description": "Authentication: User login. Manage content and tags to be used for "
-    "question answering",
+    "description": "_Requires user login._ Manage content and tags to be used for "
+    "question answering.",
 }
 
 router = APIRouter(prefix="/content", tags=[TAG_METADATA["name"]])

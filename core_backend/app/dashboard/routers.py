@@ -14,7 +14,7 @@ from .schemas import DashboardOverview, TimeFrequency
 
 TAG_METADATA = {
     "name": "Dashboard",
-    "description": "Dashboard data fetching operations",
+    "description": "_Requires user login._ Dashboard data fetching operations.",
 }
 
 router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])

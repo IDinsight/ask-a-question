@@ -21,8 +21,8 @@ from .schemas import TagCreate, TagRetrieve
 
 TAG_METADATA = {
     "name": "Content tag management",
-    "description": "Authentication: User login. Manage tags for content used "
-    "for question answering",
+    "description": "_Requires user login._ Manage tags for content used "
+    "for question answering.",
 }
 
 router = APIRouter(prefix="/tag", tags=[TAG_METADATA["name"]])

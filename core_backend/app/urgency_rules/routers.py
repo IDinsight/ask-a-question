@@ -20,7 +20,7 @@ from .schemas import UrgencyRuleCreate, UrgencyRuleRetrieve
 
 TAG_METADATA = {
     "name": "Urgency rules management",
-    "description": "Manage urgency rules for urgency detection",
+    "description": "_Requires user login._ Manage urgency rules for urgency detection.",
 }
 
 router = APIRouter(prefix="/urgency-rules", tags=[TAG_METADATA["name"]])
