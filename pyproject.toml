@@ -9,9 +9,6 @@ ignore_missing_imports = true
 lint.select = ["E", "F", "B", "Q", "I"]
 line-length = 88
 
-[tool.ruff.lint.isort]
-known-third-party = ["core_backend", "app"]
-
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
 
