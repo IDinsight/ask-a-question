@@ -69,6 +69,7 @@ async def create_content(
 
     ⚠️ To add tags, first use the tags endpoint to create tags.
     """
+
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
