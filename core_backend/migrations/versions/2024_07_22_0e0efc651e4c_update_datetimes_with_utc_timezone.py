@@ -1,7 +1,7 @@
 """Update datetimes with UTC timezone
 
 Revision ID: 0e0efc651e4c
-Revises: 9400641b16d3
+Revises: f562cf512c90
 Create Date: 2024-07-22 15:26:57.895504
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "0e0efc651e4c"
-down_revision: Union[str, None] = "9400641b16d3"
+down_revision: Union[str, None] = "f562cf512c90"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
