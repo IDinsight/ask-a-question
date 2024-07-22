@@ -5,7 +5,7 @@
 import os
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -45,7 +45,7 @@ def add_year_data() -> None:
     """
     Add N_DATAPOINTS of data for each day in the past year.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_year = now - timedelta(days=365)
     year_datetimes = [
         last_year + timedelta(days=i)
@@ -60,7 +60,7 @@ def add_month_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past month.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_month = now - timedelta(days=30)
     month_datetimes = [
         last_month + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
@@ -75,7 +75,7 @@ def add_week_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past week.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=7)
     week_datetimes = [
         last_week + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
@@ -90,7 +90,7 @@ def add_day_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past day.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_day = now - timedelta(hours=24)
     hour_datetimes = [
         last_day + timedelta(hours=i) for i in random.choices(range(24), k=N_DATAPOINTS)
@@ -216,8 +216,8 @@ def add_content_data() -> None:
             content_title=c,
             content_text="Test content #{i}",
             content_metadata={},
-            created_datetime_utc=datetime.now(),
-            updated_datetime_utc=datetime.now(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
             query_count=query_count,
             positive_votes=positive_votes,
             negative_votes=negative_votes,

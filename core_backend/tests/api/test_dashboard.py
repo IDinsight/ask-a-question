@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timedelta, timezone, tzinfo
 from typing import AsyncGenerator, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -100,8 +100,8 @@ class TestUrgencyDetectionStats:
     ) -> None:
         n_urgent, _ = urgency_detection
 
-        start_date = datetime.now() - relativedelta(months=1)
-        end_date = datetime.now() + relativedelta(months=1)
+        start_date = datetime.now(timezone.utc) - relativedelta(months=1)
+        end_date = datetime.now(timezone.utc) + relativedelta(months=1)
 
         stats = await get_urgency_stats(
             1,
@@ -132,7 +132,7 @@ class TestQueryStats:
         monkeypatch: pytest.MonkeyPatch,
         faq_contents: pytest.FixtureRequest,
     ) -> AsyncGenerator[None, None]:
-        dates = [datetime.now() - relativedelta(days=x) for x in range(16)]
+        dates = [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         for i, date in enumerate(dates):
             monkeypatch.setattr(
                 "core_backend.app.question_answer.models.datetime", MockDatetime(date)
@@ -180,10 +180,10 @@ class TestQueryStats:
         self, queries_and_feedbacks: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
         for _i, date in enumerate(
-            [datetime.now() - relativedelta(days=x) for x in range(16)]
+            [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         ):
             start_date = date
-            end_date = datetime.now()
+            end_date = datetime.now(timezone.utc)
             stats = await get_query_count_stats(
                 1,
                 asession,
@@ -262,7 +262,7 @@ class TestHeatmap:
     async def queries(
         self, asession: AsyncSession, request: pytest.FixtureRequest
     ) -> AsyncGenerator[None, None]:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         today_weekday = today.weekday()
         query_period = request.param
         queries = self.query_counts[query_period]
@@ -300,8 +300,8 @@ class TestHeatmap:
 
     @pytest.fixture(scope="function")
     async def queries_hour(self, asession: AsyncSession) -> AsyncGenerator[None, None]:
-        current_time = datetime.now().time()
-        today = datetime.now()
+        current_time = datetime.now(timezone.utc).time()
+        today = datetime.now(timezone.utc)
         for hour, count in self.query_counts["last_day"].items():
             int(hour[:2])
             time_diff_from_daystart = timedelta(
@@ -339,7 +339,7 @@ class TestHeatmap:
     async def test_heatmap_day(
         self, queries: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         if period == "week":
             previous_date = today - timedelta(days=7)
         elif period == "month":
@@ -358,7 +358,7 @@ class TestHeatmap:
     async def test_heatmap_hour(
         self, queries_hour: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date = today - timedelta(days=1)
         heatmap = await get_heatmap(
             1, asession, start_date=previous_date, end_date=today
@@ -420,15 +420,15 @@ class TestTimeSeries:
         n_negative = data_to_create["negative"]
 
         if period == "last_day":
-            dt = datetime.now() - timedelta(days=1)
+            dt = datetime.now(timezone.utc) - timedelta(days=1)
         elif period == "last_week":
-            dt = datetime.now() - timedelta(weeks=1)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=1)
         elif period == "last_month":
-            dt = datetime.now() - timedelta(weeks=4)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=4)
         elif period == "last_year":
-            dt = datetime.now() - timedelta(weeks=52)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=52)
 
-        dt_two_years = datetime.now() - timedelta(weeks=104)
+        dt_two_years = datetime.now(timezone.utc) - timedelta(weeks=104)
         urgent_two_years = self.data_to_create["last_2_years"]["urgent"]
         n_positive_two_years = self.data_to_create["last_2_years"]["positive"]
         n_negative_two_years = self.data_to_create["last_2_years"]["negative"]
@@ -551,7 +551,7 @@ class TestTimeSeries:
     async def test_time_series(
         self, create_data: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date, frequency = get_previous_date_and_frequency(period)
         n_escalated = self.data_to_create[period]["negative"]
         n_not_escalated = self.data_to_create[period]["positive"] + self.N_NEUTRAL
@@ -580,7 +580,7 @@ class TestTimeSeries:
     async def test_time_series_urgency(
         self, create_data: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date, frequency = get_previous_date_and_frequency(period)
 
         n_urgent = self.data_to_create[period]["urgent"]
@@ -597,16 +597,16 @@ class TestTimeSeries:
 
 def get_previous_date_and_frequency(period: str) -> Tuple[datetime, TimeFrequency]:
     if period == "last_day":
-        previous_date = datetime.now() - timedelta(days=1)
+        previous_date = datetime.now(timezone.utc) - timedelta(days=1)
         frequency = TimeFrequency.Hour
     elif period == "last_week":
-        previous_date = datetime.now() - timedelta(weeks=1)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=1)
         frequency = TimeFrequency.Day
     elif period == "last_month":
-        previous_date = datetime.now() - timedelta(weeks=4)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=4)
         frequency = TimeFrequency.Day
     elif period == "last_year":
-        previous_date = datetime.now() - timedelta(weeks=52)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=52)
         frequency = TimeFrequency.Week
     else:
         raise ValueError("Invalid query period")
@@ -662,8 +662,8 @@ class TestTopContent:
                 content_title=c["title"],
                 content_text="Test content #{i}",
                 content_metadata={},
-                created_datetime_utc=datetime.now(),
-                updated_datetime_utc=datetime.now(),
+                created_datetime_utc=datetime.now(timezone.utc),
+                updated_datetime_utc=datetime.now(timezone.utc),
                 query_count=c["query_count"],
                 positive_votes=c["positive_votes"],
                 negative_votes=c["negative_votes"],
