@@ -34,7 +34,7 @@ jobs:
 
       - name: Run ruff
         run: |
-          ruff --exclude "core_backend/migrations" .
+          ruff check --exclude "core_backend/migrations" .
 
       - name: Check code formatting with Black
         run: |

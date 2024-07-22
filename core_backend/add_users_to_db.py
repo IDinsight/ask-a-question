@@ -1,11 +1,12 @@
 import os
 from datetime import datetime
 
+from sqlalchemy import select
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+
 from app.database import get_session
 from app.users.models import UserDB
 from app.utils import get_key_hash, get_password_salted_hash, setup_logger
-from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 logger = setup_logger()
 
