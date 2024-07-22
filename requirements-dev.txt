@@ -1,7 +1,7 @@
 ruff==0.5.4
 pre-commit==3.4.0
 black==24.3.0
-ruff-lsp==0.0.39
+ruff-lsp==0.0.54
 mypy==1.8.0
 pylint==3.2.5
 pytest==7.4.2
