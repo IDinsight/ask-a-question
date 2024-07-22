@@ -141,8 +141,8 @@ async def edit_content(
     Raises
     ------
     HTTPException
-        If the content ID is not found in the database, if the content tags are invalid,
-        or if the content to be updated is archived.
+        If the content ID is not found in the database or if the content tags are
+        invalid.
     """
 
     old_content = await get_content_from_db(
