@@ -3,21 +3,6 @@ from typing import Dict
 from .schemas import QuerySearchResult
 
 
-def convert_search_results_to_schema(
-    results: Mapping[int, tuple]
-) -> Dict[int, QuerySearchResult]:
-    """Converts retrieval results to schema."""
-    return {
-        i: QuerySearchResult(
-            title=value[0],
-            text=value[1],
-            id=value[2],
-            score=value[3],
-        )
-        for i, value in results.items()
-    }
-
-
 def get_context_string_from_retrieved_contents(
     search_results: Dict[int, QuerySearchResult]
 ) -> str:
