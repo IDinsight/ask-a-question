@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Union
 
 import boto3
@@ -124,8 +124,8 @@ class TestRetrievalPerformance:
                 content_title=content_title,
                 content_text=content_text,
                 content_metadata={},
-                created_datetime_utc=datetime.utcnow(),
-                updated_datetime_utc=datetime.utcnow(),
+                created_datetime_utc=datetime.now(timezone.utc),
+                updated_datetime_utc=datetime.now(timezone.utc),
             )
             for content_id, content_embedding, content_title, content_text in zip(
                 content_dataframe["content_id"],

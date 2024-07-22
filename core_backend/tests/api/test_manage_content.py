@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generator
 
 import pytest
@@ -59,8 +59,8 @@ def temp_user_token_and_quota(
         hashed_password=get_password_salted_hash("temp_password"),
         hashed_api_key=get_key_hash("temp_api_key"),
         content_quota=content_quota,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     db_session.add(temp_user_db)
     db_session.commit()
@@ -337,8 +337,8 @@ async def test_convert_record_to_schema() -> None:
         positive_votes=0,
         negative_votes=0,
         content_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id

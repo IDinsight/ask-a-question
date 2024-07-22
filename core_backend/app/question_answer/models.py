@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from sqlalchemy import (
@@ -42,7 +42,9 @@ class QueryDB(Base):
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    query_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     response_feedback: Mapped[List["ResponseFeedbackDB"]] = relationship(
         "ResponseFeedbackDB", back_populates="query", lazy=True
@@ -82,7 +84,7 @@ async def save_user_query_to_db(
         query_text=user_query.query_text,
         query_generate_llm_response=user_query.generate_llm_response,
         query_metadata=user_query.query_metadata,
-        query_datetime_utc=datetime.utcnow(),
+        query_datetime_utc=datetime.now(timezone.utc),
     )
     asession.add(user_query_db)
     await asession.commit()
@@ -116,7 +118,9 @@ class QueryResponseDB(Base):
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
-    response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    response_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
@@ -139,7 +143,7 @@ async def save_query_response_to_db(
         query_id=user_query_db.query_id,
         search_results=response.model_dump()["search_results"],
         llm_response=response.model_dump()["llm_response"],
-        response_datetime_utc=datetime.utcnow(),
+        response_datetime_utc=datetime.now(timezone.utc),
     )
     asession.add(user_query_responses_db)
     await asession.commit()
@@ -158,7 +162,9 @@ class QueryResponseErrorDB(Base):
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     error_message: Mapped[str] = mapped_column(String, nullable=False)
     error_type: Mapped[str] = mapped_column(String, nullable=False)
-    error_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    error_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
     query: Mapped[QueryDB] = relationship(
@@ -185,7 +191,7 @@ async def save_query_response_error_to_db(
         query_id=user_query_db.query_id,
         error_message=error.error_message,
         error_type=error.error_type,
-        error_datetime_utc=datetime.utcnow(),
+        error_datetime_utc=datetime.now(timezone.utc),
         debug_info=error.debug_info,
     )
     asession.add(user_query_response_error_db)
@@ -207,7 +213,9 @@ class ResponseFeedbackDB(Base):
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
-    feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    feedback_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response_feedback", lazy=True
@@ -229,7 +237,7 @@ async def save_response_feedback_to_db(
     Saves feedback to the database.
     """
     response_feedback_db = ResponseFeedbackDB(
-        feedback_datetime_utc=datetime.utcnow(),
+        feedback_datetime_utc=datetime.now(timezone.utc),
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         feedback_text=feedback.feedback_text,
@@ -253,7 +261,9 @@ class ContentFeedbackDB(Base):
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
-    feedback_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    feedback_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
 
     query: Mapped[QueryDB] = relationship(
@@ -278,7 +288,7 @@ async def save_content_feedback_to_db(
     Saves feedback to the database.
     """
     content_feedback_db = ContentFeedbackDB(
-        feedback_datetime_utc=datetime.utcnow(),
+        feedback_datetime_utc=datetime.now(timezone.utc),
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         feedback_text=feedback.feedback_text,

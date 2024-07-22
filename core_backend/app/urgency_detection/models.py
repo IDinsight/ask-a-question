@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from sqlalchemy import JSON, Boolean, DateTime, Integer, String, select
@@ -25,7 +25,9 @@ class UrgencyQueryDB(Base):
         Integer, ForeignKey("user.user_id"), nullable=False
     )
     message_text: Mapped[str] = mapped_column(String, nullable=False)
-    message_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    message_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
 
     response: Mapped["UrgencyResponseDB"] = relationship(
@@ -45,7 +47,7 @@ async def save_urgency_query_to_db(
     urgency_query_db = UrgencyQueryDB(
         user_id=user_id,
         feedback_secret_key=feedback_secret_key,
-        message_datetime_utc=datetime.utcnow(),
+        message_datetime_utc=datetime.now(timezone.utc),
         **urgency_query.model_dump(),
     )
     asession.add(urgency_query_db)
@@ -87,7 +89,9 @@ class UrgencyResponseDB(Base):
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("urgency-query.urgency_query_id")
     )
-    response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    response_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     query: Mapped[UrgencyQueryDB] = relationship(
         "UrgencyQueryDB", back_populates="response", lazy=True
@@ -114,7 +118,7 @@ async def save_urgency_response_to_db(
         is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
         matched_rules=response.matched_rules,
-        response_datetime_utc=datetime.utcnow(),
+        response_datetime_utc=datetime.now(timezone.utc),
     )
     asession.add(urgency_query_responses_db)
     await asession.commit()

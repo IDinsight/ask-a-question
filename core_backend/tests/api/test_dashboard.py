@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from typing import AsyncGenerator, Dict, List, Tuple
+from datetime import datetime, timedelta, tzinfo
+from typing import AsyncGenerator, Dict, List, Optional, Tuple
 
 import numpy as np
 import pytest
@@ -118,7 +118,9 @@ class MockDatetime:
     def __init__(self, date: datetime):
         self.date = date
 
-    def utcnow(self) -> datetime:
+    def now(self, tz: Optional[tzinfo] = None) -> datetime:
+        if tz is not None:
+            return self.date.astimezone(tz)
         return self.date
 
 

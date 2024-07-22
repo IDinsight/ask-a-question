@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 import numpy as np
@@ -87,16 +87,16 @@ def user(db_session: Session) -> Generator[int, None, None]:
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
         content_quota=TEST_CONTENT_QUOTA,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     user2_db = UserDB(
         username=TEST_USERNAME_2,
         hashed_password=get_password_salted_hash(TEST_PASSWORD_2),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
         content_quota=TEST_CONTENT_QUOTA_2,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     db_session.add(user1_db)
     db_session.add(user2_db)
@@ -128,8 +128,8 @@ async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None
             content_title=content["content_title"],
             content_text=content["content_text"],
             content_metadata=content.get("content_metadata", {}),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
         contents.append(content_db)
 
@@ -192,8 +192,8 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
         rules.append(rule_db)
 

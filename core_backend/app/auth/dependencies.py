@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Dict, Optional, Union
 
 import jwt
@@ -130,10 +130,12 @@ def create_access_token(username: str) -> str:
     Create an access token for the user
     """
     payload: Dict[str, Union[str, datetime]] = {}
-    expire = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
 
     payload["exp"] = expire
-    payload["iat"] = datetime.utcnow()
+    payload["iat"] = datetime.now(timezone.utc)
     payload["sub"] = username
     payload["type"] = "access_token"
 

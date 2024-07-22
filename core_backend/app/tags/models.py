@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy import (
@@ -37,8 +37,12 @@ class TagDB(Base):
         Integer, ForeignKey("user.user_id"), nullable=False
     )
     tag_name: Mapped[str] = mapped_column(String(length=50), nullable=False)
-    created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     contents = relationship(
         "ContentDB", secondary=content_tags_table, back_populates="content_tags"
     )
@@ -60,8 +64,8 @@ async def save_tag_to_db(
         tag_name=tag.tag_name,
         user_id=user_id,
         contents=[],
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     asession.add(tag_db)
@@ -86,8 +90,8 @@ async def update_tag_in_db(
         tag_id=tag_id,
         user_id=user_id,
         tag_name=tag.tag_name,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     tag_db = await asession.merge(tag_db)
