@@ -3,17 +3,14 @@ from typing import AsyncIterator, Callable
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import (
-    CollectorRegistry,
-    make_asgi_app,
-    multiprocess,
-)
+from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess
 
 from . import (
     admin,
     auth,
     contents,
     dashboard,
+    data_api,
     question_answer,
     tags,
     urgency_detection,
@@ -130,6 +127,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(user_tools.router)
     app.include_router(admin.routers.router)
+    app.include_router(data_api.router)
 
     origins = [
         f"http://{DOMAIN}",
