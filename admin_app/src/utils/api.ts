@@ -72,6 +72,23 @@ const getContent = async (content_id: number, token: string) => {
   });
 };
 
+const archiveContent = async (content_id: number, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error archiving content");
+    }
+  });
+};
+
 const deleteContent = async (content_id: number, token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
     method: "DELETE",
@@ -447,6 +464,7 @@ export const apiCalls = {
   getUser,
   getContentList,
   getContent,
+  archiveContent,
   deleteContent,
   editContent,
   createContent,
