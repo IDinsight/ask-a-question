@@ -13,13 +13,13 @@ from ..users.models import (
     save_user_to_db,
     update_user_api_key,
 )
-from ..users.schemas import UserCreate, UserCreateWithPassword
+from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
 from ..utils import generate_key, setup_logger
 from .schemas import KeyResponse
 
 TAG_METADATA = {
     "name": "Admin",
-    "description": "Admin operations -- only administrator user can access",
+    "description": "Only administrator user has access to these endpoints.",
 }
 
 router = APIRouter(prefix="/user", tags=["Admin"])
@@ -56,6 +56,25 @@ async def create_user(
         raise HTTPException(
             status_code=400, detail="User with that username already exists."
         ) from e
+
+
+@router.get("/", response_model=UserRetrieve)
+async def get_user(
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+) -> UserRetrieve | None:
+    """
+    Get user endpoint. Returns the user object for the requester.
+    """
+
+    return UserRetrieve(
+        user_id=user_db.user_id,
+        username=user_db.username,
+        content_quota=user_db.content_quota,
+        api_key_first_characters=user_db.api_key_first_characters,
+        api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
+        created_datetime_utc=user_db.created_datetime_utc,
+        updated_datetime_utc=user_db.updated_datetime_utc,
+    )
 
 
 @router.put("/rotate-key", response_model=KeyResponse)

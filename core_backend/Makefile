@@ -6,9 +6,12 @@
 tests: setup-test-containers run-tests teardown-test-containers
 
 # Test runner
+# NB: `pytest-alembic` requires the DB engine to point an empty database. Thus, alembic
+# tests should be run first.
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
-	python -m pytest -rPQ -m "not rails" tests
+	python -m pytest -rPQ -m "not rails and alembic" tests/api/test_alembic_migrations.py && \
+	python -m pytest -rPQ -m "not rails and not alembic" tests
 
 ## Helper targets
 setup-test-containers: setup-test-db

@@ -54,6 +54,12 @@ class UrgencyRuleRetrieve(UrgencyRuleCreate):
 
 
 class UrgencyRuleCosineDistance(BaseModel):
+    """
+    Schema for urgency detection result when using the cosine
+    distance method (i.e. environment variable LLM_CLASSIFIER
+    is set to "cosine_distance_classifier")
+    """
+
     urgency_rule: str
     distance: float
 

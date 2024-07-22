@@ -9,7 +9,6 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation request
     """
 
-    # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     content_tags: list = []
@@ -63,7 +62,7 @@ class ContentUpdate(ContentCreate):
 
 class ContentDelete(BaseModel):
     """
-    Pydantic model for content deletiom
+    Pydantic model for content deletion
     """
 
     content_id: int
