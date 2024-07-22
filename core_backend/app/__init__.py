@@ -49,7 +49,7 @@ These APIs are used to interact with the Ask A Question application.
 The important endpoints here are divided into the following two groups:
 
 1. APIs to be called from your chat manager (authenticated via API key):
-    - **Question-answering and feedback**: LLM-powered question answering
+    - **Question-answering and feedback**: LLM-powered search and answer generation
       based on your content. Plus feedback collection for the answers.
     - **Urgency detection**: Detect urgent messages according to your urgency rules.
 

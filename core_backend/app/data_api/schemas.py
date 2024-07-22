@@ -10,7 +10,7 @@ class QueryResponseExtract(BaseModel):
     """
 
     response_id: int
-    content_response: Dict
+    search_results: Dict
     llm_response: str | None
     response_datetime_utc: datetime
 

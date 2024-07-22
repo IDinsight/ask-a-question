@@ -90,7 +90,7 @@ def convert_to_pydantic_model(query: QueryDB) -> QueryExtract:
         response=(
             QueryResponseExtract(
                 response_id=query.response[0].response_id,
-                content_response=query.response[0].content_response,
+                search_results=query.response[0].search_results,
                 llm_response=query.response[0].llm_response,
                 response_datetime_utc=query.response[0].response_datetime_utc,
             )

@@ -447,9 +447,9 @@ async def get_search_results(
     results_dict = {}
     for i, r in enumerate(search_result):
         results_dict[i] = QuerySearchResult(
-            retrieved_content_id=r[0].content_id,
-            retrieved_title=r[0].content_title,
-            retrieved_text=r[0].content_text,
+            id=r[0].content_id,
+            title=r[0].content_title,
+            text=r[0].content_text,
             distance=r[1],
         )
 

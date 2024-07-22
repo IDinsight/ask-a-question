@@ -56,21 +56,23 @@ class TestQueryDataAPI:
             )
             query = QueryBase(query_text=f"query {i}")
             query_db = await save_user_query_to_db(
-                1, "test_secret_key", query, asession
+                user_id=1,
+                user_query=query,
+                asession=asession,
             )
             all_orm_objects.append(query_db)
             if i % 2 == 0:
                 response = QueryResponse(
                     query_id=query_db.query_id,
-                    content_response={
+                    llm_response=None,
+                    search_results={
                         1: QuerySearchResult(
-                            retrieved_title="title",
-                            retrieved_text="text",
-                            retrieved_content_id=faq_contents[0],
+                            title="title",
+                            text="text",
+                            id=faq_contents[0],
                             distance=0.5,
                         )
                     },
-                    llm_response=None,
                     feedback_secret_key="test_secret_key",
                 )
                 response_db = await save_query_response_to_db(
@@ -126,14 +128,17 @@ class TestQueryDataAPI:
         asession: AsyncSession,
         faq_contents: List[int],
     ) -> AsyncGenerator[int, None]:
-
         days_ago = random.randrange(N_DAYS_HISTORY)
         date = datetime.utcnow() - relativedelta(days=days_ago)
         monkeypatch.setattr(
             "core_backend.app.question_answer.models.datetime", MockDatetime(date)
         )
         query = QueryBase(query_text="query")
-        query_db = await save_user_query_to_db(2, "test_secret_key", query, asession)
+        query_db = await save_user_query_to_db(
+            user_id=2,
+            user_query=query,
+            asession=asession,
+        )
         yield days_ago
         await asession.delete(query_db)
         await asession.commit()
@@ -143,7 +148,6 @@ class TestQueryDataAPI:
         user1_data: pytest.FixtureRequest,
         client: TestClient,
     ) -> None:
-
         response = client.get(
             "/data-api/queries",
             headers={"Authorization": "Bearer test_api_key"},
@@ -161,7 +165,6 @@ class TestQueryDataAPI:
         client: TestClient,
         user1_data: pytest.FixtureRequest,
     ) -> None:
-
         start_date = datetime.utcnow() - relativedelta(days=start_day)
         end_date = datetime.utcnow() - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
@@ -195,7 +198,6 @@ class TestQueryDataAPI:
         user1_data: pytest.FixtureRequest,
         user2_data: int,
     ) -> None:
-
         start_date = datetime.utcnow() - relativedelta(days=start_day)
         end_date = datetime.utcnow() - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"

@@ -22,6 +22,7 @@ class QueryBase(BaseModel):
             "examples": [
                 {
                     "query_text": "What is AAQ?",
+                    "generate_llm_response": False,
                     "query_metadata": {"source": "optinal-metadata-example"},
                 },
             ]
@@ -80,22 +81,22 @@ class QueryResponse(BaseModel):
             "examples": [
                 {
                     "query_id": 1,
-                    "content_response": {
+                    "search_results": {
                         "0": {
-                            "retrieved_title": "Example content title",
-                            "retrieved_text": "Example content text",
-                            "retrieved_content_id": 23,
+                            "title": "Example content title",
+                            "text": "Example content text",
+                            "id": 23,
                             "distance": 0.1,
                         },
                         "1": {
-                            "retrieved_title": "Another example content title",
-                            "retrieved_text": "Another example content text",
-                            "retrieved_content_id": 12,
+                            "title": "Another example content title",
+                            "text": "Another example content text",
+                            "id": 12,
                             "distance": 0.2,
                         },
                     },
                     "llm_response": "Example LLM response "
-                    "(null for /embeddings-search)",
+                    "(null if generate_llm_response is False)",
                     "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
                     "state": "final",

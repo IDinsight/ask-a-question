@@ -74,8 +74,6 @@ async def search(
     """
     Search endpoint finds the most similar content to the user query and optionally
     generates an LLM response.
-    <BR>
-    Authenticated with the API key.
     """
     (
         user_query_db,
