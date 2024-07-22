@@ -1,6 +1,6 @@
 import random
-from datetime import datetime
-from typing import Any, AsyncGenerator, List
+from datetime import datetime, timezone, tzinfo
+from typing import Any, AsyncGenerator, List, Optional
 
 import pytest
 from dateutil.relativedelta import relativedelta
@@ -33,7 +33,9 @@ class MockDatetime:
     def __init__(self, date: datetime):
         self.date = date
 
-    def utcnow(self) -> datetime:
+    def now(self, tz: Optional[tzinfo] = None) -> datetime:
+        if tz is not None:
+            return self.date.astimezone(tz)
         return self.date
 
 
@@ -46,7 +48,8 @@ class TestQueryDataAPI:
         faq_contents: List[int],
     ) -> AsyncGenerator[None, None]:
         dates = [
-            datetime.utcnow() - relativedelta(days=x) for x in range(N_DAYS_HISTORY)
+            datetime.now(timezone.utc) - relativedelta(days=x)
+            for x in range(N_DAYS_HISTORY)
         ]
         all_orm_objects: List[Any] = []
 
@@ -129,7 +132,7 @@ class TestQueryDataAPI:
         faq_contents: List[int],
     ) -> AsyncGenerator[int, None]:
         days_ago = random.randrange(N_DAYS_HISTORY)
-        date = datetime.utcnow() - relativedelta(days=days_ago)
+        date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
             "core_backend.app.question_answer.models.datetime", MockDatetime(date)
         )
@@ -165,8 +168,8 @@ class TestQueryDataAPI:
         client: TestClient,
         user1_data: pytest.FixtureRequest,
     ) -> None:
-        start_date = datetime.utcnow() - relativedelta(days=start_day)
-        end_date = datetime.utcnow() - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -198,8 +201,8 @@ class TestQueryDataAPI:
         user1_data: pytest.FixtureRequest,
         user2_data: int,
     ) -> None:
-        start_date = datetime.utcnow() - relativedelta(days=start_day)
-        end_date = datetime.utcnow() - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
