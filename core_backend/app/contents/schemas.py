@@ -13,6 +13,7 @@ class ContentCreate(BaseModel):
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     content_tags: list = []
     content_metadata: dict = {}
+    is_archived: bool = False
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -38,6 +39,7 @@ class ContentRetrieve(ContentCreate):
     updated_datetime_utc: datetime
     positive_votes: int
     negative_votes: int
+    is_archived: bool
 
 
 class ContentUpdate(ContentCreate):
