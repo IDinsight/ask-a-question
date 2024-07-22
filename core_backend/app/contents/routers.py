@@ -19,6 +19,7 @@ from ..users.models import UserDB, get_content_quota_by_userid
 from ..utils import setup_logger
 from .models import (
     ContentDB,
+    archive_content_from_db,
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
@@ -163,6 +164,34 @@ async def retrieve_content(
     )
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
+
+
+@router.patch("/{content_id}")
+async def archive_content(
+    content_id: int,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> None:
+    """
+    Archive content by ID.
+    """
+
+    record = await get_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
+        )
+    await archive_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
 
 
 @router.delete("/{content_id}")
