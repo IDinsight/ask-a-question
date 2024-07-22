@@ -70,6 +70,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     },
     xaxis: {
       type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      },
     },
     legend: {
       position: "top",
