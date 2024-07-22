@@ -12,7 +12,12 @@ from ..utils import setup_logger
 from .models import get_heatmap, get_stats_cards, get_timeseries, get_top_content
 from .schemas import DashboardOverview, TimeFrequency
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+TAG_METADATA = {
+    "name": "Dashboard",
+    "description": "_Requires user login._ Dashboard data fetching operations.",
+}
+
+router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 

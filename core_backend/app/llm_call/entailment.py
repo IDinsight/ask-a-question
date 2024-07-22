@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import ValidationError
 
@@ -12,7 +12,7 @@ logger = setup_logger()
 
 async def detect_urgency(
     urgency_rules: List[str], message: str, metadata: Optional[dict] = None
-) -> Dict[str, Any]:
+) -> UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult:
     """
     Detects the urgency of a message based on a set of urgency rules.
     """
@@ -34,4 +34,4 @@ async def detect_urgency(
         logger.warning(f"JSON Decode failed. json_str: {json_str}. Exception: {e}")
         parsed_json = ud_entailment.default_json
 
-    return parsed_json
+    return UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult(**parsed_json)

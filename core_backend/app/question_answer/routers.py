@@ -43,14 +43,21 @@ from .schemas import (
     ResultState,
 )
 from .utils import (
-    convert_search_results_to_schema,
     get_context_string_from_retrieved_contents,
 )
 
 logger = setup_logger()
 
+
+TAG_METADATA = {
+    "name": "Question-answering and feedback",
+    "description": "_Requires API key._ LLM-powered question answering based on "
+    "your content plus feedback collection.",
+}
+
+
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=["Question Answering"]
+    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
 )
 
 
@@ -115,14 +122,12 @@ async def get_llm_answer(
 
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = convert_search_results_to_schema(
-            await get_similar_content_async(
-                user_id=user_id,
-                question=question.query_text,
-                n_similar=n_similar,
-                asession=asession,
-                metadata=metadata,
-            )
+        content_response = await get_similar_content_async(
+            user_id=user_id,
+            question=question.query_text,
+            n_similar=n_similar,
+            asession=asession,
+            metadata=metadata,
         )
 
         response.content_response = content_response
@@ -230,14 +235,12 @@ async def get_semantic_matches(
     """
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        content_response = convert_search_results_to_schema(
-            await get_similar_content_async(
-                user_id=user_id,
-                question=question.query_text,
-                n_similar=n_similar,
-                asession=asession,
-                metadata=metadata,
-            )
+        content_response = await get_similar_content_async(
+            user_id=user_id,
+            question=question.query_text,
+            n_similar=n_similar,
+            asession=asession,
+            metadata=metadata,
         )
 
         response.content_response = content_response
@@ -251,10 +254,13 @@ async def feedback(
     user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
-    Feedback endpoint used to capture user feedback on the results returned.
-    <BR>
-    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
-    `feedback_sentiment` in the payload.
+    Feedback endpoint used to capture user feedback on the results returned by QA
+    endpoints.
+
+
+    <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
+    and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
+    include the other in the payload.
     """
 
     is_matched = await check_secret_key_match(
@@ -287,10 +293,13 @@ async def content_feedback(
     user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """
-    Feedback endpoint used to capture user feedback on specific content
-    <BR>
-    <B>Note</B>: If you wish to only provide `feedback_text`, don't include
-    `feedback_sentiment` in the payload.
+    Feedback endpoint used to capture user feedback on specific content after it has
+    been returned by the QA endpoints.
+
+
+    <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
+    and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
+    include the other in the payload.
     """
 
     is_matched = await check_secret_key_match(

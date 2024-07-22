@@ -12,7 +12,12 @@ from ..config import ALIGN_SCORE_API, ALIGN_SCORE_METHOD
 from ..database import get_async_session
 from ..utils import get_http_client
 
-router = APIRouter()
+TAG_METADATA = {
+    "name": "Healthcheck",
+    "description": "Healthcheck endpoint for the application",
+}
+
+router = APIRouter(tags=[TAG_METADATA["name"]])
 
 
 @router.get("/healthcheck")

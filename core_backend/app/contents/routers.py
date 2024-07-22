@@ -32,7 +32,13 @@ from .schemas import (
     CustomErrorList,
 )
 
-router = APIRouter(prefix="/content", tags=["Content Management"])
+TAG_METADATA = {
+    "name": "Content management",
+    "description": "_Requires user login._ Manage content and tags to be used for "
+    "question answering.",
+}
+
+router = APIRouter(prefix="/content", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
@@ -58,8 +64,11 @@ async def create_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[ContentRetrieve]:
-    """Create content endpoint. Calls embedding model to get content embedding and
-    inserts it to PG database.
+    """
+    Create new content.
+
+    ⚠️ To add tags, first use the tags endpoint to create tags.
+
 
     Parameters
     ----------
@@ -80,7 +89,6 @@ async def create_content(
     HTTPException
         If the content tags are invalid or if the user would exceed their content quota.
     """
-
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
@@ -120,7 +128,8 @@ async def edit_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """Edit content by ID endpoint.
+    """
+    Edit pre-existing content.
 
     Parameters
     ----------
@@ -183,7 +192,8 @@ async def retrieve_content(
     limit: int = 50,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
-    """Retrieve all content endpoint.
+    """
+    Retrieve all contents
 
     Parameters
     ----------
@@ -218,7 +228,8 @@ async def delete_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
-    """Delete content by ID endpoint.
+    """
+    Delete content by ID
 
     Parameters
     ----------
@@ -259,7 +270,8 @@ async def retrieve_content_by_id(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """Retrieve content by ID endpoint.
+    """
+    Retrieve content by ID
 
     Parameters
     ----------
@@ -305,7 +317,7 @@ async def bulk_upload_contents(
     """Upload, check, and ingest contents in bulk from a CSV file.
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
-    with the list of issues under detail in the response body.
+    with the list of issues under 'detail' in the response body.
 
     Parameters
     ----------

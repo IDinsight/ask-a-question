@@ -20,8 +20,16 @@ from .config import (
 from .models import save_urgency_query_to_db, save_urgency_response_to_db
 from .schemas import UrgencyQuery, UrgencyResponse
 
+TAG_METADATA = {
+    "name": "Urgency detection",
+    "description": "_Requires API key._ Detect urgent messages according to "
+    "urgency rules.",
+}
+
 logger = setup_logger()
-router = APIRouter(dependencies=[Depends(authenticate_key)], tags=["Urgency Detection"])
+router = APIRouter(
+    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
+)
 
 ALL_URGENCY_CLASSIFIERS = {}
 
@@ -83,19 +91,19 @@ async def cosine_distance_classifier(
         message_text=urgency_query.message_text,
         asession=asession,
     )
-    failed_rules = []
+    matched_rules = []
     for _, rule in cosine_distances.items():
-        if float(rule["distance"]) < float(URGENCY_DETECTION_MAX_DISTANCE):
-            failed_rules.append(str(rule["urgency_rule"]))
+        if float(rule.distance) < float(URGENCY_DETECTION_MAX_DISTANCE):
+            matched_rules.append(str(rule.urgency_rule))
 
-    if failed_rules:
+    if matched_rules:
         return UrgencyResponse(
-            is_urgent=True, failed_rules=failed_rules, details=cosine_distances
+            is_urgent=True, matched_rules=matched_rules, details=cosine_distances
         )
 
     return UrgencyResponse(
         is_urgent=False,
-        failed_rules=failed_rules,
+        matched_rules=matched_rules,
         details=cosine_distances,
     )
 
@@ -116,7 +124,7 @@ async def llm_entailment_classifier(
     urgency_rules = [rule.urgency_rule_text for rule in rules]
 
     if len(urgency_rules) == 0:
-        return UrgencyResponse(is_urgent=False, failed_rules=[], details={})
+        return UrgencyResponse(is_urgent=False, matched_rules=[], details={})
 
     result = await detect_urgency(
         urgency_rules=urgency_rules,
@@ -124,9 +132,9 @@ async def llm_entailment_classifier(
         metadata=metadata,
     )
 
-    if result["probability"] > float(URGENCY_DETECTION_MIN_PROBABILITY):
+    if result.probability > float(URGENCY_DETECTION_MIN_PROBABILITY):
         return UrgencyResponse(
-            is_urgent=True, failed_rules=[result["best_matching_rule"]], details=result
+            is_urgent=True, matched_rules=[result.best_matching_rule], details=result
         )
 
-    return UrgencyResponse(is_urgent=False, failed_rules=[], details=result)
+    return UrgencyResponse(is_urgent=False, matched_rules=[], details=result)
