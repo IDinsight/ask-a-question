@@ -17,6 +17,7 @@ from sqlalchemy import (
     delete,
     false,
     select,
+    update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
@@ -251,6 +252,33 @@ async def increment_query_count(
         if content_db:
             content_db.query_count = content_db.query_count + 1
             await asession.merge(content_db)
+    await asession.commit()
+
+
+async def archive_content_from_db(
+    user_id: int,
+    content_id: int,
+    asession: AsyncSession,
+) -> None:
+    """Archive content from the database.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the content to be archived.
+    content_id
+        The ID of the content to archived.
+    asession
+        `AsyncSession` object for database transactions.
+    """
+
+    stmt = (
+        update(ContentDB)
+        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.content_id == content_id)
+        .values(is_archived=True)
+    )
+    await asession.execute(stmt)
     await asession.commit()
 
 
