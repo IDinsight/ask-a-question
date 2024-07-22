@@ -217,7 +217,7 @@ def set_global_http_client(http_client: HttpClient) -> None:
     _HTTP_CLIENT = http_client()
 
 
-def get_http_client() -> Optional[aiohttp.ClientSession]:
+def get_http_client() -> aiohttp.ClientSession:
     """
     Get HTTP client
     """
@@ -227,4 +227,6 @@ def get_http_client() -> Optional[aiohttp.ClientSession]:
         http_client = HttpClient()
         http_client.start()
         set_global_http_client(http_client)
-    return get_global_http_client()
+    new_http_client = get_global_http_client()
+    assert isinstance(new_http_client, aiohttp.ClientSession)
+    return new_http_client
