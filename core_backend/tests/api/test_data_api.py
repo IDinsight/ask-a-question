@@ -216,7 +216,7 @@ class TestQueryDataAPI:
         assert response.status_code == 200
 
         print("user 2 date: ", user2_data)
-        if user2_data < start_day and user2_data >= end_day:
+        if end_day <= user2_data < start_day:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0

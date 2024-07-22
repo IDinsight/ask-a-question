@@ -43,4 +43,3 @@ if __name__ == "__main__":
         )
 
     db_session.commit()
-    db_session.close()
