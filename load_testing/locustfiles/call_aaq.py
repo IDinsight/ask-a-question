@@ -5,7 +5,10 @@ Uses Locust to load test the AAQ API for a given URL
 import json
 import os
 
+import urllib3
 from locust import HttpUser, between, task
+
+urllib3.disable_warnings()  # Disable SSL warnings for local testing
 
 
 class AAQUser(HttpUser):
