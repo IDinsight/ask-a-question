@@ -1,9 +1,11 @@
 import {
   ContentViewModal,
-  DeleteContentModal,
+  ArchiveContentModal,
+  // DeleteContentModal,
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
-import { Delete, Edit } from "@mui/icons-material";
+// import { Delete, Edit } from "@mui/icons-material";
+import { Archive, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
@@ -18,9 +20,12 @@ const ContentCard = ({
   tags,
   positive_votes,
   negative_votes,
-  onSuccessfulDelete,
-  onFailedDelete,
-  deleteContent,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
+  // onSuccessfulDelete,
+  // onFailedDelete,
+  // deleteContent,
   editAccess,
 }: {
   title: string;
@@ -30,13 +35,18 @@ const ContentCard = ({
   tags: Tag[];
   positive_votes: number;
   negative_votes: number;
-  onSuccessfulDelete: (content_id: number) => void;
-  onFailedDelete: (content_id: number) => void;
-  deleteContent: (content_id: number) => Promise<any>;
+  onSuccessfulArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number) => void;
+  archiveContent: (content_id: number) => Promise<any>;
+  // onSuccessfulDelete: (content_id: number) => void;
+  // onFailedDelete: (content_id: number) => void;
+  // deleteContent: (content_id: number) => Promise<any>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const [openArchiveModal, setOpenArchiveModal] =
+    React.useState<boolean>(false);
+  // const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
 
   return (
     <>
@@ -127,10 +137,11 @@ const ContentCard = ({
             size="small"
             onClick={(event) => {
               event.stopPropagation();
-              setOpenDeleteModal(true);
+              setOpenArchiveModal(true);
+              // setOpenDeleteModal(true);
             }}
           >
-            <Delete fontSize="inherit" />
+            <Archive fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>
@@ -146,14 +157,22 @@ const ContentCard = ({
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
       />
-      <DeleteContentModal
+      <ArchiveContentModal
         content_id={content_id}
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        onSuccessfulDelete={onSuccessfulDelete}
-        onFailedDelete={onFailedDelete}
-        deleteContent={deleteContent}
+        open={openArchiveModal}
+        onClose={() => setOpenArchiveModal(false)}
+        onSuccessfulArchive={onSuccessfulArchive}
+        onFailedArchive={onFailedArchive}
+        archiveContent={archiveContent}
       />
+      {/*<DeleteContentModal*/}
+      {/*  content_id={content_id}*/}
+      {/*  open={openDeleteModal}*/}
+      {/*  onClose={() => setOpenDeleteModal(false)}*/}
+      {/*  onSuccessfulDelete={onSuccessfulDelete}*/}
+      {/*  onFailedDelete={onFailedDelete}*/}
+      {/*  deleteContent={deleteContent}*/}
+      {/*/>*/}
     </>
   );
 };
