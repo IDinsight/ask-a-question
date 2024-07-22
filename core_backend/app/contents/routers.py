@@ -707,6 +707,7 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
+        is_archived=record.is_archived,
     )
 
     return content_retrieve
