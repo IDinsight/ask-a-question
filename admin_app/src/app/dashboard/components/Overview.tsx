@@ -134,23 +134,32 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     const { urgent, not_urgent_escalated, not_urgent_not_escalated } =
       timeseriesData;
 
-    const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => ({
-      x: period,
-      y: n_urgent as number,
-    }));
+    const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => {
+      const date = new Date(period);
+      return {
+        x: String(date),
+        y: n_urgent as number,
+      };
+    });
 
     const escalated_data = Object.entries(not_urgent_escalated).map(
-      ([period, n_urgent]) => ({
-        x: period,
-        y: n_urgent as number,
-      }),
+      ([period, n_urgent]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: n_urgent as number,
+        };
+      },
     );
 
     const total_queries = Object.entries(not_urgent_not_escalated).map(
-      ([period, n_urgent]) => ({
-        x: period,
-        y: n_urgent as number,
-      }),
+      ([period, n_urgent]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: n_urgent as number,
+        };
+      },
     );
 
     const seriesData = [
