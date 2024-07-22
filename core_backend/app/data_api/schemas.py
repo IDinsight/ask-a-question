@@ -4,7 +4,7 @@ from typing import Dict, List
 from pydantic import BaseModel
 
 
-class QueryResponseModel(BaseModel):
+class QueryResponseExtract(BaseModel):
     """
     Model when valid response is returned
     """
@@ -15,7 +15,7 @@ class QueryResponseModel(BaseModel):
     response_datetime_utc: datetime
 
 
-class QueryResponseErrorModel(BaseModel):
+class QueryResponseErrorExtract(BaseModel):
     """
     Model when error response is returned
     """
@@ -26,7 +26,7 @@ class QueryResponseErrorModel(BaseModel):
     error_datetime_utc: datetime
 
 
-class ResponseFeedbackModel(BaseModel):
+class ResponseFeedbackExtract(BaseModel):
     """
     Model for feedback on response
     """
@@ -37,7 +37,7 @@ class ResponseFeedbackModel(BaseModel):
     feedback_datetime_utc: datetime
 
 
-class ContentFeedbackModel(BaseModel):
+class ContentFeedbackExtract(BaseModel):
     """
     Model for feedback on content
     """
@@ -49,7 +49,7 @@ class ContentFeedbackModel(BaseModel):
     content_id: int
 
 
-class QueryModel(BaseModel):
+class QueryExtract(BaseModel):
     """
     Main model that is returned for a query.
     Contains all related child models
@@ -60,7 +60,7 @@ class QueryModel(BaseModel):
     query_text: str
     query_metadata: dict
     query_datetime_utc: datetime
-    response: QueryResponseModel | None
-    response_error: QueryResponseErrorModel | None
-    response_feedback: List[ResponseFeedbackModel]
-    content_feedback: List[ContentFeedbackModel]
+    response: QueryResponseExtract | None
+    response_error: QueryResponseErrorExtract | None
+    response_feedback: List[ResponseFeedbackExtract]
+    content_feedback: List[ContentFeedbackExtract]
