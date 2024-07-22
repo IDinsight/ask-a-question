@@ -12,9 +12,6 @@ line-length = 88
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
 
-[tool.ruff.lint.isort]
-known-local-folder = ["app"]
-
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::DeprecationWarning"
