@@ -61,15 +61,24 @@ async def create_content(
     """Create content endpoint. Calls embedding model to get content embedding and
     inserts it to PG database.
 
-    :param content: `ContentCreate` object containing content details.
-    :param user_db: `UserDB` object of the user making the request.
-    :param asession: AsyncSession object for database transactions.
+    Parameters
+    ----------
+    content
+        `ContentCreate` object containing content details.
+    user_db
+        `UserDB` object of the user making the request.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
-        `ContentRetrieve` object of the created content.
+    Returns
+    -------
+    ContentRetrieve
+        The created content.
 
-    :raises HTTPException: If the content tags are invalid or if the user would exceed
-        their content quota.
+    Raises
+    ------
+    HTTPException
+        If the content tags are invalid or if the user would exceed their content quota.
     """
 
     is_tag_valid, content_tags = await validate_tags(
@@ -113,20 +122,27 @@ async def edit_content(
 ) -> ContentRetrieve:
     """Edit content by ID endpoint.
 
-    NB: Currently, we retrieve the content to be updated from the database even if it
-    is archived and then check if it is archived. This allows us to return a 400 error
-    informing the user that the content is archived and cannot be updated.
+    Parameters
+    ----------
+    content_id
+        The ID of the content to edit.
+    content
+        `ContentCreate` object containing content details.
+    user_db
+        `UserDB` object of the user making the request.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :param content_id: The ID of the content to edit.
-    :param content: `ContentCreate` object containing content details.
-    :param user_db: `UserDB` object of the user making the request.
-    :param asession: AsyncSession object for database transactions.
+    Returns
+    -------
+    ContentRetrieve
+        The edited content.
 
-    :returns:
-        `ContentRetrieve` object of the edited content.
-
-    :raises HTTPException: If the content ID is not found in the database, if the
-        content tags are invalid, or if the content to be updated is archived.
+    Raises
+    ------
+    HTTPException
+        If the content ID is not found in the database, if the content tags are invalid,
+        or if the content to be updated is archived.
     """
 
     old_content = await get_content_from_db(
@@ -169,13 +185,21 @@ async def retrieve_content(
 ) -> List[ContentRetrieve]:
     """Retrieve all content endpoint.
 
-    :param user_db: `UserDB` object of the user making the request.
-    :param skip: Number of records to skip.
-    :param limit: Number of records to retrieve.
-    :param asession: AsyncSession object for database transactions.
+    Parameters
+    ----------
+    user_db
+        `UserDB` object of the user making the request.
+    skip
+        Number of records to skip.
+    limit
+        Number of records to retrieve.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
-        contents: List of `ContentRetrieve` objects.
+    Returns
+    -------
+    List[ContentRetrieve]
+        List of `ContentRetrieve` objects.
     """
 
     records = await get_list_of_content_from_db(
@@ -196,11 +220,19 @@ async def delete_content(
 ) -> None:
     """Delete content by ID endpoint.
 
-    :param content_id: The ID of the content to delete.
-    :param user_db: `UserDB` object of the user making the request.
-    :param asession: AsyncSession object for database transactions.
+    Parameters
+    ----------
+    content_id
+        The ID of the content to delete.
+    user_db
+        `UserDB` object of the user making the request.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :raises HTTPException: If the content ID is not found in the database.
+    Raises
+    ------
+    HTTPException
+        If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -229,14 +261,24 @@ async def retrieve_content_by_id(
 ) -> ContentRetrieve:
     """Retrieve content by ID endpoint.
 
-    :param content_id: The ID of the content to retrieve.
-    :param user_db: `UserDB` object of the user making the request.
-    :param asession: AsyncSession object for database transactions.
+    Parameters
+    ----------
+    content_id
+        The ID of the content to retrieve.
+    user_db
+        `UserDB` object of the user making the request.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
-        `ContentRetrieve` object of the retrieved content.
+    Returns
+    -------
+    ContentRetrieve
+        The retrieved content.
 
-    :raises HTTPException: If the content ID is not found in the database.
+    Raises
+    ------
+    HTTPException
+        If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -259,20 +301,30 @@ async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> Optional[BulkUploadResponse]:
+) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
     with the list of issues under detail in the response body.
 
-    :param file: The CSV file to upload.
-    :param user_db: `UserDB` object of the user making the request.
-    :param asession: AsyncSession object for database transactions.
+    Parameters
+    ----------
+    file
+        The CSV file to upload.
+    user_db
+        `UserDB` object of the user making the request.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
+    Returns
+    -------
+    BulkUploadResponse
         `BulkUploadResponse` object containing the tags and contents created.
 
-    :raises HTTPException: If `file` is not a valid CSV file.
+    Raises
+    ------
+    HTTPException
+        If `file` is not a valid CSV file.
     """
 
     # Ensure the file is a CSV
@@ -351,12 +403,20 @@ async def bulk_upload_contents(
 def _load_csv(file: UploadFile) -> pd.DataFrame:
     """Load the CSV file into a pandas DataFrame.
 
-    :param file: The CSV file to load.
+    Parameters
+    ----------
+    file
+        The CSV file to load.
 
-    :returns:
-        df: The loaded DataFrame.
+    Returns
+    -------
+    pd.DataFrame
+        The loaded DataFrame.
 
-    :raises HTTPException: If the CSV file is empty or unreadable.
+    Raises
+    ------
+    HTTPException
+        If the CSV file is empty or unreadable.
     """
 
     try:
@@ -402,10 +462,16 @@ async def check_content_quota(
     """Check if the user would exceed their content quota given the number of new
     contents to add.
 
-    :param user_id: The user ID to check the content quota for.
-    :param n_contents_to_add: The number of new contents to add.
-    :param asession: The AsyncSession object for database transactions.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    user_id
+        The user ID to check the content quota for.
+    n_contents_to_add
+        The number of new contents to add.
+    asession
+        `AsyncSession` object for database transactions.
+    error_list
+        The list of errors to append to.
     """
 
     try:
@@ -424,10 +490,16 @@ async def check_db_duplicates(
 ) -> None:
     """Check for duplicates between the CSV and the database.
 
-    :param df: The DataFrame to check.
-    :param user_id: The user ID to check the content duplicates for.
-    :param asession: The AsyncSession object for database transactions.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    user_id
+        The user ID to check the content duplicates for.
+    asession
+        `AsyncSession` object for database transactions.
+    error_list
+        The list of errors to append to.
     """
 
     contents_in_db = await get_list_of_content_from_db(
@@ -455,11 +527,19 @@ async def check_db_duplicates(
 async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
     """Perform checks on the CSV file to ensure it meets the requirements.
 
-    :param df: The DataFrame to check.
-    :param user_id: The user ID to check the content quota for.
-    :param asession: The AsyncSession object for database transactions.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    user_id
+        The user ID to check the content quota for.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :raises HTTPException: If the CSV file does not meet the requirements.
+    Raises
+    ------
+    HTTPException
+        If the CSV file does not meet the requirements.
     """
 
     error_list: List[CustomError] = []
@@ -481,8 +561,12 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
 def check_duplicates(df: pd.DataFrame, error_list: List[CustomError]) -> None:
     """Check for duplicates in the DataFrame.
 
-    :param df: The DataFrame to check.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    error_list
+        The list of errors to append to.
     """
 
     if df.duplicated(subset=["title"]).any():
@@ -504,9 +588,14 @@ def check_duplicates(df: pd.DataFrame, error_list: List[CustomError]) -> None:
 def check_empty_values(df: pd.DataFrame, error_list: List[CustomError]) -> None:
     """Check for empty values in the DataFrame.
 
-    :param df: The DataFrame to check.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    error_list
+        The list of errors to append to.
     """
+
     if df["title"].isnull().any():
         error_list.append(
             CustomError(
@@ -526,8 +615,12 @@ def check_empty_values(df: pd.DataFrame, error_list: List[CustomError]) -> None:
 def check_length_constraints(df: pd.DataFrame, error_list: List[CustomError]) -> None:
     """Check for length constraints in the DataFrame.
 
-    :param df: The DataFrame to check.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    error_list
+        The list of errors to append to.
     """
 
     if df["title"].str.len().max() > 150:
@@ -549,10 +642,17 @@ def check_length_constraints(df: pd.DataFrame, error_list: List[CustomError]) ->
 def check_required_columns(df: pd.DataFrame, error_list: List[CustomError]) -> None:
     """Check if the CSV file has the required columns.
 
-    :param df: The DataFrame to check.
-    :param error_list: The list of errors to append to.
+    Parameters
+    ----------
+    df
+        The DataFrame to check.
+    error_list
+        The list of errors to append to.
 
-    :raises HTTPException: If the CSV file does not have the required columns.
+    Raises
+    ------
+    HTTPException
+        If the CSV file does not have the required columns.
     """
 
     required_columns = {"title", "text"}
@@ -572,7 +672,10 @@ def check_required_columns(df: pd.DataFrame, error_list: List[CustomError]) -> N
 def clean_dataframe(df: pd.DataFrame) -> None:
     """Clean the DataFrame by stripping whitespace and replacing empty strings.
 
-    :param df: The DataFrame to clean.
+    Parameters
+    ----------
+    df
+        The DataFrame to clean.
     """
 
     df["title"] = df["title"].str.strip()
@@ -587,11 +690,19 @@ async def _check_content_quota_availability(
 ) -> None:
     """Raise an error if user would reach their content quota given n new contents.
 
-    :param user_id: The user ID to check the content quota for.
-    :param n_contents_to_add: The number of new contents to add.
-    :param asession: The AsyncSession object for database transactions.
+    Parameters
+    ----------
+    user_id
+        The user ID to check the content quota for.
+    n_contents_to_add
+        The number of new contents to add.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :raises ExceedsContentQuotaError: If the user would exceed their content quota.
+    Raises
+    ------
+    ExceedsContentQuotaError
+        If the user would exceed their content quota.
     """
 
     # get content_quota value for this user from UserDB
@@ -619,10 +730,16 @@ def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     """Get unique UPPERCASE tags from a DataFrame column (comma-separated within
     column).
 
-    :param tags_col: The column containing tags.
+    Parameters
+    ----------
+    tags_col
+        The column containing tags.
 
-    :returns:
-        tags_unique_list: A list of unique tags.
+    Returns
+    -------
+    List[str]
+        A list of unique tags.
+
     """
 
     # prep col
@@ -643,11 +760,17 @@ def _get_tags_not_in_db(
     """Compare tags fetched from the DB with incoming tags and return tags not in the
     DB.
 
-    :param tags_in_db: List of `TagDB` objects fetched from the database.
-    :param incoming_tags: List of incoming tags.
+    Parameters
+    ----------
+    tags_in_db
+        List of `TagDB` objects fetched from the database.
+    incoming_tags
+        List of incoming tags.
 
-    :returns:
-        tags_not_in_db_list: List of tags not in the database.
+    Returns
+    -------
+    List[str]
+        List of tags not in the database.
     """
 
     tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
@@ -659,9 +782,14 @@ def _get_tags_not_in_db(
 def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
     """Convert `models.ContentDB` models to `ContentRetrieve` schema.
 
-    :param record: `ContentDB` object to convert.
+    Parameters
+    ----------
+    record
+        `ContentDB` object to convert.
 
-    :returns:
+    Returns
+    -------
+    ContentRetrieve
         `ContentRetrieve` object of the converted record.
     """
 
@@ -684,10 +812,15 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
 def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
     """Convert `models.TagDB` models to `TagRetrieve` schema.
 
-    :param record: `TagDB` object to convert.
+    Parameters
+    ----------
+    record
+        `TagDB` object to convert.
 
-    :returns:
-        tag_retrieve: `TagRetrieve` object of the converted record.
+    Returns
+    -------
+    TagRetrieve
+        `TagRetrieve` object of the converted record.
     """
 
     tag_retrieve = TagRetrieve(

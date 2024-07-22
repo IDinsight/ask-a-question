@@ -87,8 +87,10 @@ class ContentDB(Base):
     def __repr__(self) -> str:
         """Construct the string representation of the `ContentDB` object.
 
-        :returns:
-            A string representation of the `ContentDB` object.
+        Returns
+        -------
+            str
+                A string representation of the `ContentDB` object.
         """
 
         return (
@@ -111,11 +113,18 @@ async def save_content_to_db(
 ) -> ContentDB:
     """Vectorize the content and save to the database.
 
-    :param user_id: The ID of the user requesting the save.
-    :param content: The content to save.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the save.
+    content
+        The content to save.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
+    Returns
+    -------
+    ContentDB
         The content object if it exists, otherwise the newly created content object.
     """
 
@@ -154,14 +163,20 @@ async def update_content_in_db(
 ) -> ContentDB:
     """Update content and content embedding in the database.
 
-    NB: We do not allow archived content to be updated.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the update.
+    content_id
+        The ID of the content to update.
+    content
+        The content to update.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :param user_id: The ID of the user requesting the update.
-    :param content_id: The ID of the content to update.
-    :param content: The content to update.
-    :param asession: The `AsyncSession` object to use for the database transaction.
-
-    :returns:
+    Returns
+    -------
+    ContentDB
         The content object if it exists, otherwise the newly updated content object.
     """
 
@@ -197,12 +212,14 @@ async def increment_query_count(
 ) -> None:
     """Increment the query count for the content.
 
-    NB: Archived content is not retrieved by default and thus, not included in the
-    query count increment.
-
-    :param user_id: The ID of the user requesting the query count increment.
-    :param contents: The content to increment the query count for.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the query count increment.
+    contents
+        The content to increment the query count for.
+    asession
+        `AsyncSession` object for database transactions.
     """
 
     if contents is None:
@@ -224,14 +241,14 @@ async def delete_content_from_db(
 ) -> None:
     """Delete content from the database.
 
-    NB: Deletion is a soft delete, meaning that the content is not actually removed.
-    Instead, the `is_archived` attribute is set to `True`. This will disallow the app
-    from retrieving the content for display and future requests, but the content will
-    still be available for backend reporting and analysis.
-
-    :param user_id: The ID of the user requesting the deletion.
-    :param content_id: The ID of the content to delete.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the deletion.
+    content_id
+        The ID of the content to delete.
+    asession
+        `AsyncSession` object for database transactions.
     """
 
     association_stmt = delete(content_tags_table).where(
@@ -254,15 +271,18 @@ async def get_content_from_db(
 ) -> Optional[ContentDB]:
     """Retrieve content from the database.
 
-    NB: By default, we exclude archived content from retrieval. Scenarios where we
-    would want to fetch archived content include:
-        1. When we are retrieving content that was just saved to the database.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the content.
+    content_id
+        The ID of the content to retrieve.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :param user_id: The ID of the user requesting the content.
-    :param content_id: The ID of the content to retrieve.
-    :param asession: The `AsyncSession` object to use for the database transaction.
-
-    :returns:
+    Returns
+    -------
+    ContentDB
         The content object if it exists, otherwise `None`.
     """
 
@@ -284,13 +304,21 @@ async def get_list_of_content_from_db(
 ) -> List[ContentDB]:
     """Retrieve all content from the database.
 
-    :param user_id: The ID of the user requesting the content.
-    :param offset: The number of content items to skip.
-    :param limit: The maximum number of content items to retrieve. If not specified,
-        then all content items are retrieved.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the content.
+    asession
+        `AsyncSession` object for database transactions.
+    offset
+        The number of content items to skip.
+    limit
+        The maximum number of content items to retrieve. If not specified, then all
+        content items are retrieved.
 
-    :returns:
+    Returns
+    -------
+    List[ContentDB]
         A list of content objects if they exist, otherwise an empty list.
     """
 
@@ -315,10 +343,16 @@ async def _get_content_embeddings(
 ) -> List[float]:
     """Vectorize the content.
 
-    :param content: The content to vectorize.
-    :param metadata: The metadata to use for the embedding generation.
+    Parameters
+    ----------
+    content
+        The content to vectorize.
+    metadata
+        The metadata to use for the embedding generation.
 
-    :returns:
+    Returns
+    -------
+    List[float]
         The vectorized content embedding.
     """
 
@@ -335,15 +369,24 @@ async def get_similar_content_async(
 ) -> Dict[int, tuple[str, str, int, float]]:
     """Get the most similar points in the vector table.
 
-    :param user_id: The ID of the user requesting the similar content.
-    :param question: The question to search for similar content.
-    :param n_similar: The number of similar content items to retrieve.
-    :param metadata: The metadata to use for the embedding generation.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the similar content.
+    question
+        The question to search for similar content.
+    n_similar
+        The number of similar content items to retrieve.
+    asession
+        `AsyncSession` object for database transactions.
+    metadata
+        The metadata to use for the embedding generation
 
-    :returns:
+    Returns
+    -------
+    Dict[int, tuple[str, str, int, float]]
         A dictionary of similar content items if they exist, otherwise an empty
-    dictionary
+        dictionary
     """
 
     metadata = metadata or {}
@@ -370,14 +413,22 @@ async def get_search_results(
 ) -> Dict[int, tuple[str, str, int, float]]:
     """Get similar content to given embedding and return search results.
 
-    :param user_id: The ID of the user requesting the content.
-    :param question_embedding: The embedding vector of the question to search for.
-    :param n_similar: The number of similar content items to retrieve.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the similar content.
+    question_embedding
+        The embedding vector of the question to search for.
+    n_similar
+        The number of similar content items to retrieve.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
-        results_dict: A dictionary of similar content items if they exist, otherwise an
-    empty dictionary.
+    Returns
+    -------
+    Dict[int, tuple[str, str, int, float]]
+        A dictionary of similar content items if they exist, otherwise an empty
+        dictionary
     """
 
     query = (
@@ -408,12 +459,20 @@ async def update_votes_in_db(
 ) -> Optional[ContentDB]:
     """Update votes in the database.
 
-    :param user_id: The ID of the user voting.
-    :param content_id: The ID of the content to vote on.
-    :param vote: The sentiment of the vote.
-    :param asession: The `AsyncSession` object to use for the database transaction.
+    Parameters
+    ----------
+    user_id
+        The ID of the user voting.
+    content_id
+        The ID of the content to vote on.
+    vote
+        The sentiment of the vote.
+    asession
+        `AsyncSession` object for database transactions.
 
-    :returns:
+    Returns
+    -------
+    ContentDB
         The content object if it exists, otherwise `None`.
     """
 
