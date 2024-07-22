@@ -67,7 +67,7 @@ class TestQueryDataAPI:
                             retrieved_title="title",
                             retrieved_text="text",
                             retrieved_content_id=faq_contents[0],
-                            score=0.5,
+                            distance=0.5,
                         )
                     },
                     llm_response=None,
