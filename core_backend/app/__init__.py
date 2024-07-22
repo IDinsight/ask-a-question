@@ -52,7 +52,7 @@ These APIs are used to interact with the Ask A Question application.
 The important endpoints here are divided into the following two groups:
 
 1. APIs to be called from your chat manager (authenticated via API key):
-    - **Question-answering and feedback collection**: LLM-powered question answering
+    - **Question-answering and feedback**: LLM-powered question answering
       based on your content. Plus feedback collection for the answers.
     - **Urgency detection**: Detect urgent messages according to your urgency rules.
 
@@ -62,10 +62,6 @@ application.
     - **Content tag management**: APIs to manage the content tags in the
 application.
     - **Urgency rules management**: APIs to manage the urgency rules in the application.
-
-
-
-<span style="color: #d3d3d3">(GitHub icon source: https://iconduck.com/sets/eva-icons)</span>
 """
 tags_metadata = [
     question_answer.TAG_METADATA,
