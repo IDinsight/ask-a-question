@@ -1,8 +1,8 @@
 """rename content_response column to search_results
 
 Revision ID: c6258d82bfd5
-Revises: 9400641b16d3
-Create Date: 2024-07-18 01:35:15.235945
+Revises: f562cf512c90
+Create Date: 2024-07-22 01:35:15.235945
 
 """
 
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c6258d82bfd5"
-down_revision: Union[str, None] = "9400641b16d3"
+down_revision: Union[str, None] = "f562cf512c90"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
