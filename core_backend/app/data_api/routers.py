@@ -8,9 +8,7 @@ from sqlalchemy.orm import joinedload
 
 from ..auth.dependencies import authenticate_key
 from ..database import get_async_session
-from ..question_answer.models import (
-    QueryDB,
-)
+from ..question_answer.models import QueryDB
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .schemas import (
