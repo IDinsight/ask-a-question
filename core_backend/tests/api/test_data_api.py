@@ -54,7 +54,8 @@ class TestUrgencyQueryDataAPI:
         urgency_rules: int,
     ) -> AsyncGenerator[None, None]:
         dates = [
-            datetime.utcnow() - relativedelta(days=x) for x in range(N_DAYS_HISTORY)
+            datetime.now(timezone.utc) - relativedelta(days=x)
+            for x in range(N_DAYS_HISTORY)
         ]
         all_orm_objects: List[Any] = []
 
@@ -95,7 +96,7 @@ class TestUrgencyQueryDataAPI:
     ) -> AsyncGenerator[int, None]:
 
         days_ago = random.randrange(N_DAYS_HISTORY)
-        date = datetime.utcnow() - relativedelta(days=days_ago)
+        date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
             "core_backend.app.urgency_detection.models.datetime", MockDatetime(date)
         )
@@ -131,8 +132,8 @@ class TestUrgencyQueryDataAPI:
         user1_data: pytest.FixtureRequest,
     ) -> None:
 
-        start_date = datetime.utcnow() - relativedelta(days=start_day)
-        end_date = datetime.utcnow() - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -164,8 +165,8 @@ class TestUrgencyQueryDataAPI:
         user2_data: int,
     ) -> None:
 
-        start_date = datetime.utcnow() - relativedelta(days=start_day)
-        end_date = datetime.utcnow() - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(

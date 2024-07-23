@@ -85,7 +85,7 @@ async def get_urgency_queries(
         datetime | date,
         Query(
             description=(
-                "Can be date or datetime. "
+                "Can be date or UTC datetime. "
                 "Example: `2021-01-01` or `2021-01-01T00:00:00`"
             ),
         ),
@@ -94,7 +94,7 @@ async def get_urgency_queries(
         datetime | date,
         Query(
             description=(
-                "Can be date or datetime. "
+                "Can be date or UTC datetime. "
                 "Example: `2021-01-01` or `2021-01-01T00:00:00`"
             ),
         ),
