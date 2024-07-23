@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,14 +14,17 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
+import { LoadingButton } from "@mui/lab";
 
 export const KeyRenewConfirmationModal = ({
   open,
+  currentKey,
   onClose,
   onRenew,
   isLoading,
 }: {
   open: boolean;
+  currentKey: string;
   onClose: () => void;
   onRenew: () => void;
   isLoading: boolean;
@@ -31,26 +33,28 @@ export const KeyRenewConfirmationModal = ({
     <DialogTitle>{"Are you sure you want to renew your API key?"}</DialogTitle>
     <DialogContent>
       <DialogContentText>
-        If you proceed,
+        {`If you proceed, your current key beginning with `}
         <Typography component="span" style={{ fontWeight: "bold" }}>
-          {` your current key will stop working `}
+          "{currentKey}" will stop working
         </Typography>
-        and you will need to update your applications with the new key.
+        {` and you will need to update your applications with the new key.`}
       </DialogContentText>
     </DialogContent>
     <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
       <Button onClick={onClose} color="primary">
         Cancel
       </Button>
-      <Button
+      <LoadingButton
         onClick={onRenew}
         autoFocus
         variant="contained"
         color="error"
+        loading={isLoading}
+        loadingPosition="start"
         startIcon={<AutorenewIcon />}
       >
         {isLoading ? "Generating..." : "Generate New Key"}
-      </Button>
+      </LoadingButton>
     </DialogActions>
   </Dialog>
 );
@@ -81,7 +85,7 @@ export const NewKeyModal = ({
           Please save this secret key somewhere safe and accessible. For
           security reasons,
           <Typography component="span" style={{ fontWeight: "bold" }}>
-            {" you won't be able to view it again here. "}
+            {" you won't be able to view the full key again here. "}
           </Typography>
           If you lose this secret key, you'll need to generate a new one.
         </DialogContentText>

@@ -1,15 +1,14 @@
 import json
-from collections import namedtuple
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 from unittest.mock import MagicMock
 
-import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from pytest import Item
-from pytest_asyncio import is_async_test
+from pytest_alembic.config import Config
+from sqlalchemy import delete
+from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -22,13 +21,18 @@ from core_backend.app.config import (
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.database import build_connection_string, get_session
+from core_backend.app.database import (
+    SYNC_DB_API,
+    get_connection_url,
+    get_session_context_manager,
+)
 from core_backend.app.llm_call import process_input, process_output
 from core_backend.app.llm_call.llm_prompts import (
     RAG,
     AlignmentScore,
     IdentifiedLanguage,
 )
+from core_backend.app.question_answer.models import ContentFeedbackDB
 from core_backend.app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
@@ -37,16 +41,6 @@ from core_backend.app.question_answer.schemas import (
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
-
-# Define namedtuples for the embedding endpoint
-EmbeddingData = namedtuple("EmbeddingData", "data")
-EmbeddingValues = namedtuple("EmbeddingValues", "embedding")
-
-# Define namedtuples for the completion endpoint
-CompletionData = namedtuple("CompletionData", "choices")
-CompletionChoice = namedtuple("CompletionChoice", "message")
-CompletionMessage = namedtuple("CompletionMessage", "content")
-
 
 TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME = "test_username"
@@ -60,24 +54,11 @@ TEST_USER_API_KEY_2 = "test_api_key_2"
 TEST_CONTENT_QUOTA_2 = 50
 
 
-def pytest_collection_modifyitems(items: List[Item]) -> None:
-    pytest_asyncio_tests = (item for item in items if is_async_test(item))
-    session_scope_marker = pytest.mark.asyncio(scope="session")
-    for async_test in pytest_asyncio_tests:
-        async_test.add_marker(session_scope_marker, append=False)
-
-
 @pytest.fixture(scope="session")
 def db_session() -> Generator[Session, None, None]:
     """Create a test database session."""
-    session_gen = get_session()
-    session = next(session_gen)
-
-    try:
+    with get_session_context_manager() as session:
         yield session
-    finally:
-        session.rollback()
-        next(session_gen, None)
 
 
 # We recreate engine and session to ensure it is in the same
@@ -85,7 +66,7 @@ def db_session() -> Generator[Session, None, None]:
 # See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
 @pytest.fixture(scope="function")
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
-    connection_string = build_connection_string()
+    connection_string = get_connection_url()
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
     await engine.dispose()
@@ -100,7 +81,7 @@ async def asession(
 
 
 @pytest.fixture(scope="session", autouse=True)
-def user(client: TestClient, db_session: Session) -> None:
+def user(db_session: Session) -> Generator[int, None, None]:
     global TEST_USER_ID
     user1_db = UserDB(
         username=TEST_USERNAME,
@@ -112,7 +93,7 @@ def user(client: TestClient, db_session: Session) -> None:
     )
     user2_db = UserDB(
         username=TEST_USERNAME_2,
-        hashed_password=get_key_hash(TEST_PASSWORD_2),
+        hashed_password=get_password_salted_hash(TEST_PASSWORD_2),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
         content_quota=TEST_CONTENT_QUOTA_2,
         created_datetime_utc=datetime.utcnow(),
@@ -125,14 +106,16 @@ def user(client: TestClient, db_session: Session) -> None:
     # update the TEST_USER_ID global variable
     TEST_USER_ID = user1_db.user_id
 
+    yield user1_db.user_id
 
-@pytest.fixture(scope="session")
-async def faq_contents(client: TestClient, db_session: Session) -> None:
+
+@pytest.fixture(scope="function")
+async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None]:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
 
-    for i, content in enumerate(json_data):
+    for _i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = await async_fake_embedding(
             model=LITELLM_MODEL_EMBEDDING,
@@ -141,7 +124,6 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
             api_key=LITELLM_API_KEY,
         )
         content_db = ContentDB(
-            content_id=i,
             user_id=TEST_USER_ID,
             content_embedding=content_embedding,
             content_title=content["content_title"],
@@ -152,8 +134,18 @@ async def faq_contents(client: TestClient, db_session: Session) -> None:
         )
         contents.append(content_db)
 
-    db_session.add_all(contents)
-    db_session.commit()
+    asession.add_all(contents)
+    await asession.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        deleteFeedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        await asession.execute(deleteFeedback)
+        await asession.delete(content)
+    await asession.commit()
 
 
 @pytest.fixture(
@@ -181,8 +173,8 @@ def existing_tag_id(
     )
 
 
-@pytest.fixture(scope="session")
-async def urgency_rules(client: TestClient, db_session: Session) -> int:
+@pytest.fixture(scope="function")
+async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
@@ -209,7 +201,12 @@ async def urgency_rules(client: TestClient, db_session: Session) -> int:
     db_session.add_all(rules)
     db_session.commit()
 
-    return len(rules)
+    yield len(rules)
+
+    # Delete the urgency rules
+    for rule in rules:
+        db_session.delete(rule)
+    db_session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -217,6 +214,13 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
     app = create_app()
     with TestClient(app) as c:
         yield c
+
+
+# @pytest.fixture(scope="session")
+# async def client() -> AsyncGenerator[AsyncClient, None]:
+#    app = create_app()
+#    async with AsyncClient(app=app, base_url="http://test") as c:
+#        yield c
 
 
 @pytest.fixture(scope="session")
@@ -339,23 +343,31 @@ def fullaccess_token_user2() -> str:
     return create_access_token(TEST_USERNAME_2)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
+@pytest.fixture(scope="session")
+def alembic_config() -> Config:
+    """`alembic_config` is the primary point of entry for configurable options for the
+    alembic runner for `pytest-alembic`.
+
+    :returns:
+        Config: A configuration object used by `pytest-alembic`.
     """
-    Monkeypatch call to httpx service
+
+    return Config({"file": "alembic.ini"})
+
+
+@pytest.fixture(scope="function")
+def alembic_engine() -> Engine:
+    """`alembic_engine` is where you specify the engine with which the alembic_runner
+    should execute your tests.
+
+    NB: The engine should point to a database that must be empty. It is out of scope
+    for `pytest-alembic` to manage the database state.
+
+    :returns:
+        A SQLAlchemy engine object.
     """
 
-    class MockClient:
-        async def __aenter__(self) -> "MockClient":
-            return self
-
-        async def __aexit__(self, exc_type: str, exc: str, tb: str) -> None:
-            pass
-
-        async def post(self, *args: str, **kwargs: str) -> httpx.Response:
-            return httpx.Response(200, json={"status": "success"})
-
-    monkeysession.setattr(httpx, "AsyncClient", MockClient)
+    return create_engine(get_connection_url(db_api=SYNC_DB_API))
 
 
 @pytest.fixture

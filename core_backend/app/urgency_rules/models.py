@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from ..utils import embedding
-from .schemas import UrgencyRuleCreate
+from .schemas import UrgencyRuleCosineDistance, UrgencyRuleCreate
 
 
 class UrgencyRuleDB(Base):
@@ -162,7 +162,7 @@ async def get_cosine_distances_from_rules(
     user_id: int,
     message_text: str,
     asession: AsyncSession,
-) -> Dict[int, Dict[str, Union[str, float]]]:
+) -> Dict[int, UrgencyRuleCosineDistance]:
     """
     Get cosine distances from urgency rules
     """
@@ -186,9 +186,9 @@ async def get_cosine_distances_from_rules(
 
     results_dict = {}
     for i, r in enumerate(search_result):
-        results_dict[i] = {
-            "urgency_rule": r[0].urgency_rule_text,
-            "distance": r[1],
-        }
+        results_dict[i] = UrgencyRuleCosineDistance(
+            urgency_rule=r[0].urgency_rule_text,
+            distance=r[1],
+        )
 
     return results_dict

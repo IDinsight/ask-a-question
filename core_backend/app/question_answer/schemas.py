@@ -4,41 +4,40 @@ from typing import Dict, Optional
 from pydantic import BaseModel, ConfigDict
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
-from ..schemas import FeedbackSentiment
+from ..schemas import FeedbackSentiment, QuerySearchResult
 
 
 class QueryBase(BaseModel):
     """
-    Pydantic model for query APIs
+    Question answering query base class.
     """
 
     query_text: str
+    generate_llm_response: bool = False
     query_metadata: dict = {}
     generate_tts: bool = False
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "query_text": "What is AAQ?",
+                    "generate_llm_response": False,
+                    "query_metadata": {"some_key": "some_value"},
+                },
+            ]
+        },
+    )
 
 
 class QueryRefined(QueryBase):
     """
-    Pydantic model for refined query
+    Question answering query class with additional data
     """
 
     query_text_original: str
     original_language: IdentifiedLanguage | None = None
-
-
-class QuerySearchResult(BaseModel):
-    """
-    Pydantic model for each individual search result
-    """
-
-    retrieved_title: str
-    retrieved_text: str
-    retrieved_content_id: int
-    score: float
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ResultState(str, Enum):
@@ -72,14 +71,42 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int
-    content_response: Dict[int, QuerySearchResult] | None
     llm_response: Optional[str] = None
+    search_results: Dict[int, QuerySearchResult] | None
     feedback_secret_key: str
     debug_info: dict = {}
     state: ResultState = ResultState.IN_PROGRESS
     tts_file: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "query_id": 1,
+                    "llm_response": "Example LLM response "
+                    "(null if generate_llm_response is False)",
+                    "search_results": {
+                        "0": {
+                            "title": "Example content title",
+                            "text": "Example content text",
+                            "id": 23,
+                            "distance": 0.1,
+                        },
+                        "1": {
+                            "title": "Another example content title",
+                            "text": "Another example content text",
+                            "id": 12,
+                            "distance": 0.2,
+                        },
+                    },
+                    "feedback_secret_key": "secret-key-12345-abcde",
+                    "debug_info": {"example": "debug-info"},
+                    "state": "final",
+                }
+            ]
+        },
+    )
 
 
 class QueryResponseError(BaseModel):
@@ -97,7 +124,8 @@ class QueryResponseError(BaseModel):
 
 class ResponseFeedbackBase(BaseModel):
     """
-    Pydantic model for feedback
+    Response feedback base class.
+    Feedback secret key must be retrieved from query response.
     """
 
     query_id: int
@@ -105,14 +133,40 @@ class ResponseFeedbackBase(BaseModel):
     feedback_text: Optional[str] = None
     feedback_secret_key: str
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "query_id": 1,
+                    "feedback_sentiment": "negative",
+                    "feedback_text": "Not helpful",
+                    "feedback_secret_key": "secret-key-12345-abcde",
+                }
+            ]
+        },
+    )
 
 
 class ContentFeedback(ResponseFeedbackBase):
     """
-    Pydantic model for content feedback
+    Content-level feedback class.
+    Feedback secret key must be retrieved from query response.
     """
 
     content_id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "content_id": 1,
+                    "query_id": 1,
+                    "feedback_sentiment": "positive",
+                    "feedback_text": "This content is very helpful",
+                    "feedback_secret_key": "secret-key-12345-abcde",
+                }
+            ]
+        },
+    )
