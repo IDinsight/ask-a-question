@@ -1,0 +1,6 @@
+{
+  "locustfile_list": ["call_aaq.py"],
+  "users_list": [10, 20, 30, 50, 100, 150, 200],
+  "spawn_rate_list": [1, 2, 3, 5, 5, 5, 10],
+  "run_time_list": ["240s", "240s", "240s", "240s", "240s", "240s", "240s"]
+}

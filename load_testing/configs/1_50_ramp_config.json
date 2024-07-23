@@ -1,6 +1,0 @@
-{
-  "locustfile_list": ["call_aaq.py", "typebot_flow.py"],
-  "users_list": [1, 10, 20, 50, 100],
-  "spawn_rate_list": [1, 1, 1, 1, 1],
-  "run_time_list": ["240s", "240s", "240s", "240s", "240s"]
-}

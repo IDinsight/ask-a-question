@@ -23,7 +23,7 @@ class AAQUser(HttpUser):
     @task
     def check_endpoint(
         self,
-        endpoint: str = "llm-response",
+        endpoint: str = "search",
         question: str = "Is this great content?",
         local: bool = False,
     ) -> (
@@ -42,7 +42,11 @@ class AAQUser(HttpUser):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {os.getenv('AAQ_API_KEY')}",
         }
-        data = {"query_text": question, "query_metadata": {}}
+        data = {
+            "query_text": question,
+            "generate_llm_response": "true",
+            "query_metadata": {},
+        }
         self.client.post(
             endpoint, data=json.dumps(data), headers=headers, verify=not local
         )
