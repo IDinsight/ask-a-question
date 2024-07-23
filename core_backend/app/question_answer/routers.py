@@ -126,9 +126,11 @@ async def search(
     return response
 
 
-@check_align_score__after
 @identify_language__before
 @classify_safety__before
+@translate_question__before
+@paraphrase_question__before
+@check_align_score__after
 async def search_with_llm_response(
     question: QueryRefined,
     response: QueryResponse,
@@ -188,7 +190,7 @@ async def search_with_llm_response(
         context = get_context_string_from_retrieved_contents(search_results)
 
         rag_response = await get_llm_rag_answer(
-            question=question.query_text,
+            question=question.query_text_original,  # use the original query text
             context=context,
             response_language=question.original_language,
             metadata=metadata,
@@ -200,6 +202,7 @@ async def search_with_llm_response(
         else:
             response.state = ResultState.FINAL
             response.llm_response = rag_response.answer
+            response.debug_info["llm_answer"] = rag_response.answer
 
         response.debug_info["extracted_info"] = rag_response.extracted_info
 
