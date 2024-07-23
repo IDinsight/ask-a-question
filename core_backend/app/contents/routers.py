@@ -68,26 +68,6 @@ async def create_content(
     Create new content.
 
     ⚠️ To add tags, first use the tags endpoint to create tags.
-
-
-    Parameters
-    ----------
-    content
-        `ContentCreate` object containing content details.
-    user_db
-        `UserDB` object of the user making the request.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    ContentRetrieve
-        The created content.
-
-    Raises
-    ------
-    HTTPException
-        If the content tags are invalid or if the user would exceed their content quota.
     """
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
@@ -130,28 +110,6 @@ async def edit_content(
 ) -> ContentRetrieve:
     """
     Edit pre-existing content.
-
-    Parameters
-    ----------
-    content_id
-        The ID of the content to edit.
-    content
-        `ContentCreate` object containing content details.
-    user_db
-        `UserDB` object of the user making the request.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    ContentRetrieve
-        The edited content.
-
-    Raises
-    ------
-    HTTPException
-        If the content ID is not found in the database or if the content tags are
-        invalid.
     """
 
     old_content = await get_content_from_db(
@@ -194,22 +152,6 @@ async def retrieve_content(
 ) -> List[ContentRetrieve]:
     """
     Retrieve all contents
-
-    Parameters
-    ----------
-    user_db
-        `UserDB` object of the user making the request.
-    skip
-        Number of records to skip.
-    limit
-        Number of records to retrieve.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    List[ContentRetrieve]
-        List of `ContentRetrieve` objects.
     """
 
     records = await get_list_of_content_from_db(
@@ -230,20 +172,6 @@ async def delete_content(
 ) -> None:
     """
     Delete content by ID
-
-    Parameters
-    ----------
-    content_id
-        The ID of the content to delete.
-    user_db
-        `UserDB` object of the user making the request.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Raises
-    ------
-    HTTPException
-        If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -272,25 +200,6 @@ async def retrieve_content_by_id(
 ) -> ContentRetrieve:
     """
     Retrieve content by ID
-
-    Parameters
-    ----------
-    content_id
-        The ID of the content to retrieve.
-    user_db
-        `UserDB` object of the user making the request.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    ContentRetrieve
-        The retrieved content.
-
-    Raises
-    ------
-    HTTPException
-        If the content ID is not found in the database.
     """
 
     record = await get_content_from_db(
@@ -318,25 +227,6 @@ async def bulk_upload_contents(
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
     with the list of issues under 'detail' in the response body.
-
-    Parameters
-    ----------
-    file
-        The CSV file to upload.
-    user_db
-        `UserDB` object of the user making the request.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    BulkUploadResponse
-        `BulkUploadResponse` object containing the tags and contents created.
-
-    Raises
-    ------
-    HTTPException
-        If `file` is not a valid CSV file.
     """
 
     # Ensure the file is a CSV
