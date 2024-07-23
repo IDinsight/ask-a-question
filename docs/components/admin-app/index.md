@@ -18,16 +18,17 @@
 
     [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
 
-- :material-chat-question:{ .lg .middle } __Playground__
+- :material-chat-question:{ .lg .middle } __Test__
 
     ---
 
-    Allows you to experiment with the Question-Answering Service. You can
-    use this to simulate a question being asked by a user within a chat window
+    Allows you to experiment with the Question-Answering and Urgency Detection.
+    You can use this to simulate a question being asked by a user within a chat
+    window.
 
     [:octicons-arrow-right-24: More info](./playground.md)
 
-- :material-view-dashboard:{ .lg .middle } __Content Manager's Dashboard__
+- :material-view-dashboard:{ .lg .middle } __Dashboard__
 
     ---
 

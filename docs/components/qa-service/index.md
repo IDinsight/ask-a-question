@@ -45,7 +45,7 @@ as text, or as both.
 
 ## SwaggerUI
 
-<img src="./swagger-ui-screenshot.png" alt="swagger-ui-screenshot" style="border: 1px solid  lightgray;">
+<img src="./swagger-ui-screenshot.png" alt="Screenshot of Swagger UI" style="border: 1px solid  lightgray;">
 
 If you have the [application running](../../deployment/quick-setup.md), you can access
 the SwaggerUI at

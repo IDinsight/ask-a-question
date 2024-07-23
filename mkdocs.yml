@@ -31,7 +31,7 @@ nav:
               - components/admin-app/index.md
               - Manage Content: components/admin-app/manage-content.md
               - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
-              - Playground: components/admin-app/playground.md
+              - Test: components/admin-app/playground.md
               - Dashboard: components/admin-app/dashboard.md
           - Question-Answering Service:
               - components/qa-service/index.md
