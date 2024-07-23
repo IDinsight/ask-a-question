@@ -9,7 +9,7 @@ date: 2024-06-06
 # Tracing your AAQ calls with Langfuse
 
 By integrating [Langfuse](https://langfuse.com/), a popular LLM observability tool with a generous
-fee tier, you can now track all LLM calls made via AAQ.
+free tier, you can now track all LLM calls made via AAQ.
 
 <!-- more -->
 
