@@ -9,6 +9,7 @@ from sqlalchemy.orm import joinedload
 from ..auth.dependencies import authenticate_key
 from ..database import get_async_session
 from ..question_answer.models import QueryDB
+from ..urgency_detection.models import UrgencyQueryDB
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .schemas import (
@@ -17,6 +18,8 @@ from .schemas import (
     QueryResponseErrorExtract,
     QueryResponseExtract,
     ResponseFeedbackExtract,
+    UrgencyQueryExtract,
+    UrgencyQueryResponseExtract,
 )
 
 logger = setup_logger()
@@ -71,12 +74,79 @@ async def get_queries(
         )
     )
     queries = result.unique().scalars().all()
-    queries_responses = [convert_to_pydantic_model(query) for query in queries]
+    queries_responses = [convert_query_to_pydantic_model(query) for query in queries]
 
     return queries_responses
 
 
-def convert_to_pydantic_model(query: QueryDB) -> QueryExtract:
+@router.get("/urgency-queries", response_model=List[UrgencyQueryExtract])
+async def get_urgency_queries(
+    start_date: Annotated[
+        datetime | date,
+        Query(
+            description=(
+                "Can be date or UTC datetime. "
+                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
+            ),
+        ),
+    ],
+    end_date: Annotated[
+        datetime | date,
+        Query(
+            description=(
+                "Can be date or UTC datetime. "
+                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
+            ),
+        ),
+    ],
+    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> List[UrgencyQueryExtract]:
+    """
+    Get all urgency queries including child records for a user between
+    a start and end date.
+
+    Note that the `start_date` and `end_date` can be provided as a date
+    or datetime object.
+
+    """
+    result = await asession.execute(
+        select(UrgencyQueryDB)
+        .filter(UrgencyQueryDB.message_datetime_utc.between(start_date, end_date))
+        .filter(UrgencyQueryDB.user_id == user_db.user_id)
+        .options(
+            joinedload(UrgencyQueryDB.response),
+        )
+    )
+    urgency_queries = result.unique().scalars().all()
+    urgency_queries_responses = [
+        convert_urgency_query_to_pydantic_model(query) for query in urgency_queries
+    ]
+
+    return urgency_queries_responses
+
+
+def convert_urgency_query_to_pydantic_model(
+    query: UrgencyQueryDB,
+) -> UrgencyQueryExtract:
+    """
+    Convert a UrgencyQueryDB object to a UrgencyQueryExtract object
+    """
+
+    return UrgencyQueryExtract(
+        urgency_query_id=query.urgency_query_id,
+        user_id=query.user_id,
+        message_text=query.message_text,
+        message_datetime_utc=query.message_datetime_utc,
+        response=(
+            UrgencyQueryResponseExtract.model_validate(query.response)
+            if query.response
+            else None
+        ),
+    )
+
+
+def convert_query_to_pydantic_model(query: QueryDB) -> QueryExtract:
     """
     Convert a QueryDB object to a QueryExtract object
     """
@@ -87,43 +157,19 @@ def convert_to_pydantic_model(query: QueryDB) -> QueryExtract:
         query_text=query.query_text,
         query_metadata=query.query_metadata,
         query_datetime_utc=query.query_datetime_utc,
-        response=(
-            QueryResponseExtract(
-                response_id=query.response[0].response_id,
-                search_results=query.response[0].search_results,
-                llm_response=query.response[0].llm_response,
-                response_datetime_utc=query.response[0].response_datetime_utc,
-            )
-            if query.response
-            else None
-        ),
-        response_error=(
-            QueryResponseErrorExtract(
-                error_id=query.response_error[0].error_id,
-                error_message=query.response_error[0].error_message,
-                error_type=query.response_error[0].error_type,
-                error_datetime_utc=query.response_error[0].error_datetime_utc,
-            )
-            if query.response_error
-            else None
-        ),
+        response=[
+            QueryResponseExtract.model_validate(response) for response in query.response
+        ],
+        response_error=[
+            QueryResponseErrorExtract.model_validate(response_error)
+            for response_error in query.response_error
+        ],
         response_feedback=[
-            ResponseFeedbackExtract(
-                feedback_id=feedback.feedback_id,
-                feedback_sentiment=feedback.feedback_sentiment,
-                feedback_text=feedback.feedback_text,
-                feedback_datetime_utc=feedback.feedback_datetime_utc,
-            )
+            ResponseFeedbackExtract.model_validate(feedback)
             for feedback in query.response_feedback
         ],
         content_feedback=[
-            ContentFeedbackExtract(
-                feedback_id=feedback.feedback_id,
-                feedback_sentiment=feedback.feedback_sentiment,
-                feedback_text=feedback.feedback_text,
-                feedback_datetime_utc=feedback.feedback_datetime_utc,
-                content_id=feedback.content_id,
-            )
+            ContentFeedbackExtract.model_validate(feedback)
             for feedback in query.content_feedback
         ],
     )
