@@ -1,8 +1,8 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
-import ForumIcon from "@mui/icons-material/Forum";
-import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -15,6 +15,7 @@ import AreaChart from "@/app/dashboard/components/AreaChart";
 import TopContentTable from "@/app/dashboard/components/TopContentTable";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
+import { Layout } from "@/components/Layout";
 
 interface OverviewProps {
   timePeriod: Period;
@@ -157,7 +158,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       title: "Total Queries",
       value: query_stats.n_questions,
       percentageChange: query_stats.percentage_increase,
-      Icon: ForumIcon,
+      Icon: ChatBubbleOutlineIcon,
       period: timePeriod,
     });
 
@@ -166,7 +167,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       title: "Unsatisfactory Responses",
       value: response_feedback_stats.n_negative,
       percentageChange: response_feedback_stats.percentage_negative_increase,
-      Icon: SupportAgentIcon,
+      Icon: ThumbDownOffAltIcon,
       period: timePeriod,
     });
 
@@ -248,9 +249,11 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387, height: 260 }}>
+      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387 }}>
         <TopContentTable rows={topContentData} />
+        <Layout.Spacer multiplier={2} />
       </Box>
+      <Layout.Spacer multiplier={5} />
     </>
   );
 };
