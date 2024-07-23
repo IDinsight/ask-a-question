@@ -1,8 +1,8 @@
 """Add is_archived attribute to content table.
 
-Revision ID: 0894c729c99c
-Revises: e354e0c0aad1
-Create Date: 2024-07-23 06:55:55.769059
+Revision ID: 6fd6bcd063ff
+Revises: 0e0efc651e4c
+Create Date: 2024-07-23 13:44:59.187906
 
 """
 
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0894c729c99c"
-down_revision: Union[str, None] = "e354e0c0aad1"
+revision: str = "6fd6bcd063ff"
+down_revision: Union[str, None] = "0e0efc651e4c"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
