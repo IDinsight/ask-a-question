@@ -122,18 +122,19 @@ class TestUrgencyQueryDataAPI:
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "start_day, end_day", [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0]]
+        "days_ago_start, days_ago_end",
+        [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0], [2, 5]],
     )
     def test_urgency_query_data_api_date_filter(
         self,
-        start_day: int,
-        end_day: int,
+        days_ago_start: int,
+        days_ago_end: int,
         client: TestClient,
         user1_data: pytest.FixtureRequest,
     ) -> None:
 
-        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -146,27 +147,28 @@ class TestUrgencyQueryDataAPI:
         )
         assert response.status_code == 200
 
-        data_start_date = min(start_day, N_DAYS_HISTORY)
-        data_end_date = min(end_day, N_DAYS_HISTORY)
+        data_start_date = min(days_ago_start, N_DAYS_HISTORY)
+        data_end_date = min(days_ago_end, N_DAYS_HISTORY)
         n_records = (
             data_start_date - data_end_date if data_start_date > data_end_date else 0
         )
         assert len(response.json()) == n_records
 
     @pytest.mark.parametrize(
-        "start_day, end_day", [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0]]
+        "days_ago_start, days_ago_end",
+        [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0], [2, 5]],
     )
     def test_urgency_query_data_api_other_user(
         self,
-        start_day: int,
-        end_day: int,
+        days_ago_start: int,
+        days_ago_end: int,
         client: TestClient,
         user1_data: pytest.FixtureRequest,
         user2_data: int,
     ) -> None:
 
-        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -179,7 +181,7 @@ class TestUrgencyQueryDataAPI:
         )
         assert response.status_code == 200
 
-        if end_day <= user2_data < start_day:
+        if days_ago_end <= user2_data < days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0
@@ -305,17 +307,18 @@ class TestQueryDataAPI:
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        "start_day, end_day", [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0]]
+        "days_ago_start, days_ago_end",
+        [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0], [2, 5]],
     )
     def test_query_data_api_date_filter(
         self,
-        start_day: int,
-        end_day: int,
+        days_ago_start: int,
+        days_ago_end: int,
         client: TestClient,
         user1_data: pytest.FixtureRequest,
     ) -> None:
-        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -328,8 +331,8 @@ class TestQueryDataAPI:
         )
         assert response.status_code == 200
 
-        data_start_date = min(start_day, N_DAYS_HISTORY)
-        data_end_date = min(end_day, N_DAYS_HISTORY)
+        data_start_date = min(days_ago_start, N_DAYS_HISTORY)
+        data_end_date = min(days_ago_end, N_DAYS_HISTORY)
         n_records = (
             data_start_date - data_end_date if data_start_date > data_end_date else 0
         )
@@ -337,18 +340,19 @@ class TestQueryDataAPI:
         assert len(response.json()) == n_records
 
     @pytest.mark.parametrize(
-        "start_day, end_day", [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0]]
+        "days_ago_start, days_ago_end",
+        [[5, 1], [6, 4], [5, 5], [0, 0], [20, 14], [11, 0], [2, 5]],
     )
     def test_query_data_api_other_user(
         self,
-        start_day: int,
-        end_day: int,
+        days_ago_start: int,
+        days_ago_end: int,
         client: TestClient,
         user1_data: pytest.FixtureRequest,
         user2_data: int,
     ) -> None:
-        start_date = datetime.now(timezone.utc) - relativedelta(days=start_day)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=end_day)
+        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
+        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
         date_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         response = client.get(
@@ -361,7 +365,7 @@ class TestQueryDataAPI:
         )
         assert response.status_code == 200
 
-        if end_day <= user2_data < start_day:
+        if days_ago_end <= user2_data < days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0
