@@ -135,7 +135,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
 
     const seriesData = [
       { name: "Urgent", data: urgent_data },
-      { name: "Unsatisfactory Responses", data: escalated_data },
+      { name: "Downvoted Responses", data: escalated_data },
       { name: "Queries", data: total_queries },
     ];
 
@@ -162,9 +162,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       period: timePeriod,
     });
 
-    // "Total Unsatisfactory Responses"
+    // "Total Downvoted Responses"
     statCardData.push({
-      title: "Unsatisfactory Responses",
+      title: "Downvoted Responses",
       value: response_feedback_stats.n_negative,
       percentageChange: response_feedback_stats.percentage_negative_increase,
       Icon: ThumbDownOffAltIcon,
