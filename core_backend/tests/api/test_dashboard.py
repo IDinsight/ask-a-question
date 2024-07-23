@@ -674,6 +674,7 @@ class TestTopContent:
         yield
         delete_content = delete(ContentDB).where(ContentDB.content_id > 0)
         await asession.execute(delete_content)
+        await asession.commit()
 
     async def test_top_content(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession

@@ -7,9 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from ..auth.dependencies import authenticate_key
+from ..contents.models import ContentDB
+from ..contents.schemas import ContentRetrieve
 from ..database import get_async_session
 from ..question_answer.models import QueryDB
 from ..urgency_detection.models import UrgencyQueryDB
+from ..urgency_rules.models import UrgencyRuleDB
+from ..urgency_rules.schemas import UrgencyRuleRetrieve
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .schemas import (
@@ -29,6 +33,70 @@ router = APIRouter(
     dependencies=[Depends(authenticate_key)],
     tags=["Data API"],
 )
+
+
+@router.get("/contents", response_model=List[ContentRetrieve])
+async def get_contents(
+    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> List[ContentRetrieve]:
+    """
+    Get all contents for a user.
+    """
+
+    result = await asession.execute(
+        select(ContentDB)
+        .filter(ContentDB.user_id == user_db.user_id)
+        .options(
+            joinedload(ContentDB.content_tags),
+        )
+    )
+    contents = result.unique().scalars().all()
+    contents_responses = [
+        convert_content_to_pydantic_model(content) for content in contents
+    ]
+
+    return contents_responses
+
+
+def convert_content_to_pydantic_model(content: ContentDB) -> ContentRetrieve:
+    """
+    Convert a ContentDB object to a ContentRetrieve object
+    """
+
+    return ContentRetrieve(
+        content_id=content.content_id,
+        user_id=content.user_id,
+        content_text=content.content_text,
+        content_title=content.content_title,
+        content_metadata=content.content_metadata,
+        created_datetime_utc=content.created_datetime_utc,
+        updated_datetime_utc=content.updated_datetime_utc,
+        positive_votes=content.positive_votes,
+        negative_votes=content.negative_votes,
+        content_tags=[content_tag.tag_name for content_tag in content.content_tags],
+    )
+
+
+@router.get("/urgency-rules", response_model=List[UrgencyRuleRetrieve])
+async def get_urgency_rules(
+    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> List[UrgencyRuleRetrieve]:
+    """
+    Get all urgency rules for a user.
+    """
+
+    result = await asession.execute(
+        select(UrgencyRuleDB).filter(UrgencyRuleDB.user_id == user_db.user_id)
+    )
+    urgency_rules = result.unique().scalars().all()
+    urgency_rules_responses = [
+        UrgencyRuleRetrieve.model_validate(urgency_rule)
+        for urgency_rule in urgency_rules
+    ]
+
+    return urgency_rules_responses
 
 
 @router.get("/queries", response_model=List[QueryExtract])

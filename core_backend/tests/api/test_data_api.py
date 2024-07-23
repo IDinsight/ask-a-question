@@ -45,6 +45,111 @@ class MockDatetime:
         return self.date
 
 
+class TestContentDataAPI:
+
+    async def test_content_extract(
+        self, client: TestClient, faq_contents: List[int]
+    ) -> None:
+
+        response = client.get(
+            "/data-api/contents",
+            headers={"Authorization": "Bearer test_api_key"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == len(faq_contents)
+        response = client.get(
+            "/data-api/contents",
+            headers={"Authorization": "Bearer test_api_key_2"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 0
+
+    @pytest.fixture
+    async def faq_content_with_tags_user2(
+        self,
+        fullaccess_token_user2: str,
+        client: TestClient,
+    ) -> AsyncGenerator[str, None]:
+        response = client.post(
+            "/tag",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "tag_name": "USER2_TAG",
+            },
+        )
+        tag_id = response.json()["tag_id"]
+        tag_name = response.json()["tag_name"]
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "content_title": "title",
+                "content_text": "text",
+                "content_tags": [tag_id],
+                "content_metadata": {"metadata": "metadata"},
+            },
+        )
+        json_response = response.json()
+
+        yield tag_name
+
+        client.delete(
+            f"/content/{json_response['content_id']}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+
+        client.delete(
+            f"/tag/{tag_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+        )
+
+    async def test_content_extract_with_tags(
+        self, client: TestClient, faq_content_with_tags_user2: int
+    ) -> None:
+
+        response = client.get(
+            "/data-api/contents",
+            headers={"Authorization": "Bearer test_api_key_2"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+        assert response.json()[0]["content_tags"][0] == "USER2_TAG"
+
+
+class TestUrgencyRulesDataAPI:
+    async def test_urgency_rules_data_api(
+        self, client: TestClient, urgency_rules: int
+    ) -> None:
+
+        response = client.get(
+            "/data-api/urgency-rules",
+            headers={"Authorization": "Bearer test_api_key"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == urgency_rules
+
+        response = client.get(
+            "/data-api/urgency-rules",
+            headers={"Authorization": "Bearer test_api_key_2"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 0
+
+    async def test_urgency_rules_data_api_other_user(
+        self,
+        client: TestClient,
+        urgency_rules: int,
+        urgency_rules_user2: int,
+    ) -> None:
+        response = client.get(
+            "/data-api/urgency-rules",
+            headers={"Authorization": "Bearer test_api_key_2"},
+        )
+
+        assert response.status_code == 200
+        assert len(response.json()) == urgency_rules_user2
+
+
 class TestUrgencyQueryDataAPI:
     @pytest.fixture
     async def user1_data(
