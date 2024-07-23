@@ -19,7 +19,7 @@ nav:
       - Usage: usage.md
       - Roadmap: roadmap.md
 
-  - Try it out ↗︎: https://app.ask-a-question.com
+  - Try it ↗︎: https://app.ask-a-question.com
 
   - Latest Updates:
       - blog/index.md
@@ -31,12 +31,11 @@ nav:
               - components/admin-app/index.md
               - Manage Content: components/admin-app/manage-content.md
               - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
-              - Playground: components/admin-app/playground.md
+              - Test: components/admin-app/playground.md
               - Dashboard: components/admin-app/dashboard.md
           - Question-Answering Service:
               - components/qa-service/index.md
-              - Semantic Search: components/qa-service/semantic-search.md
-              - LLM Response: components/qa-service/llm-response.md
+              - Search: components/qa-service/search.md
               - Response Feedback: components/qa-service/response-feedback.md
               - Content Feedback: components/qa-service/content-feedback.md
           - Urgency Detection:

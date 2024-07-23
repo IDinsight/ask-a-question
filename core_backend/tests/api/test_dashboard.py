@@ -44,7 +44,6 @@ from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResp
 
 
 class TestUrgencyDetectionStats:
-
     @pytest.fixture(scope="function", params=[(0, 0), (0, 1), (1, 0), (3, 5)])
     async def urgency_detection(
         self,
@@ -124,7 +123,6 @@ class MockDatetime:
 
 
 class TestQueryStats:
-
     @pytest.fixture(scope="function")
     async def queries_and_feedbacks(
         self,
@@ -132,16 +130,16 @@ class TestQueryStats:
         monkeypatch: pytest.MonkeyPatch,
         faq_contents: pytest.FixtureRequest,
     ) -> AsyncGenerator[None, None]:
-
         dates = [datetime.now() - relativedelta(days=x) for x in range(16)]
         for i, date in enumerate(dates):
-
             monkeypatch.setattr(
                 "core_backend.app.question_answer.models.datetime", MockDatetime(date)
             )
             query = QueryBase(query_text="Test query")
             query_db = await save_user_query_to_db(
-                1, "test_secret_key", query, asession
+                user_id=1,
+                user_query=query,
+                asession=asession,
             )
 
             sentiment = (
@@ -179,7 +177,6 @@ class TestQueryStats:
     async def test_query_stats(
         self, queries_and_feedbacks: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-
         for _i, date in enumerate(
             [datetime.now() - relativedelta(days=x) for x in range(16)]
         ):
@@ -213,7 +210,6 @@ class TestQueryStats:
 
 
 class TestHeatmap:
-
     query_counts = {
         "week": {
             "Mon": 4,
@@ -289,6 +285,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{day}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"day": day},
                     query_datetime_utc=previous_date,
                 )
@@ -301,7 +298,6 @@ class TestHeatmap:
 
     @pytest.fixture(scope="function")
     async def queries_hour(self, asession: AsyncSession) -> AsyncGenerator[None, None]:
-
         current_time = datetime.now().time()
         today = datetime.now()
         for hour, count in self.query_counts["last_day"].items():
@@ -322,6 +318,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{hour}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"hour": hour},
                     query_datetime_utc=previous_date,
                 )
@@ -401,7 +398,6 @@ class TestHeatmap:
 
 
 class TestTimeSeries:
-
     data_to_create = {
         "last_day": {"urgent": 0, "positive": 3, "negative": 0},
         "last_week": {"urgent": 3, "positive": 5, "negative": 2},
@@ -415,7 +411,6 @@ class TestTimeSeries:
     async def create_data(
         self, asession: AsyncSession, request: pytest.FixtureRequest
     ) -> AsyncGenerator[None, None]:
-
         period = request.param
         data_to_create = self.data_to_create[period]
         urgent = data_to_create["urgent"]
@@ -507,12 +502,12 @@ class TestTimeSeries:
         n_negative: int,
         n_neutral: int,
     ) -> None:
-
         for i in range(n_positive + n_negative + n_neutral):
             query = QueryDB(
                 user_id=user_id,
                 feedback_secret_key="abc123",
                 query_text="test message",
+                query_generate_llm_response=False,
                 query_metadata={"details": "test details"},
                 query_datetime_utc=created_datetime,
             )
@@ -681,7 +676,6 @@ class TestTopContent:
     async def test_top_content(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-
         N_TOP_CONTENT = 4
 
         top_content = await get_top_content(1, asession, N_TOP_CONTENT)
@@ -700,7 +694,6 @@ class TestTopContent:
     async def test_content_from_other_user_not_returned(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-
         top_content = await get_top_content(2, asession, 5)
 
         assert len(top_content) == 0

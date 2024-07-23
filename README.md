@@ -58,37 +58,41 @@ Monitor uptime, response rates, throughput HTTP reponse codes and more
 
 ## Usage
 
-There are two major endpoints for Question-Answering:
+To get answers from your database of contents, you can use the `/search` endpoint. This endpoint returns the following:
 
-- Embeddings search: Finds the most similar content in the database using cosine similarity between embeddings.
-- LLM response: Crafts a custom response using LLM chat using the most similar content.
+- Search results: Finds the most similar content in the database using cosine distance between embeddings.
+- (Optionally) LLM generated response: Crafts a custom response using LLM chat using the most similar content.
 
 See [docs](https://idinsight.github.io/aaq-core/) or [API docs](https://app.ask-a-question.com/api/docs) for more details and other API endpoints.
 
-### :question: Embeddings search
+### :question: Simple content search
 
 ```shell
 curl -X 'POST' \
-  'https://[DOMAIN]/api/embeddings-search' \
+  'https://[DOMAIN]/api/search' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
   "query_text": "how are you?",
+  "generate_llm_response": false,
   "query_metadata": {}
 }'
 ```
 
-### :robot: LLM response
+### :robot: With LLM response
+
+The query looks the same as above, except `generate_llm_response` is set to `true`:
 
 ```shell
 curl -X 'POST' \
-  'https://[DOMAIN]/api/llm-response' \
+  'https://[DOMAIN]/api/search' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <BEARER TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
   "query_text": "this is my question",
+  "generate_llm_response": true,
   "query_metadata": {}
 }'
 ```

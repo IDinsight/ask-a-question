@@ -13,6 +13,7 @@ class QueryBase(BaseModel):
     """
 
     query_text: str
+    generate_llm_response: bool = False
     query_metadata: dict = {}
 
     model_config = ConfigDict(
@@ -21,7 +22,8 @@ class QueryBase(BaseModel):
             "examples": [
                 {
                     "query_text": "What is AAQ?",
-                    "query_metadata": {"source": "optinal-metadata-example"},
+                    "generate_llm_response": False,
+                    "query_metadata": {"some_key": "some_value"},
                 },
             ]
         },
@@ -67,8 +69,8 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int
-    content_response: Dict[int, QuerySearchResult] | None
     llm_response: Optional[str] = None
+    search_results: Dict[int, QuerySearchResult] | None
     feedback_secret_key: str
     debug_info: dict = {}
     state: ResultState = ResultState.IN_PROGRESS
@@ -79,22 +81,22 @@ class QueryResponse(BaseModel):
             "examples": [
                 {
                     "query_id": 1,
-                    "content_response": {
+                    "llm_response": "Example LLM response "
+                    "(null if generate_llm_response is False)",
+                    "search_results": {
                         "0": {
-                            "retrieved_title": "Example content title",
-                            "retrieved_text": "Example content text",
-                            "retrieved_content_id": 23,
+                            "title": "Example content title",
+                            "text": "Example content text",
+                            "id": 23,
                             "distance": 0.1,
                         },
                         "1": {
-                            "retrieved_title": "Another example content title",
-                            "retrieved_text": "Another example content text",
-                            "retrieved_content_id": 12,
+                            "title": "Another example content title",
+                            "text": "Another example content text",
+                            "id": 12,
                             "distance": 0.2,
                         },
                     },
-                    "llm_response": "Example LLM response "
-                    "(null for /embeddings-search)",
                     "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
                     "state": "final",

@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -14,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..contents.models import ContentDB
 from ..models import Base, JSONDict
+from ..utils import generate_secret_key
 from .schemas import (
     ContentFeedback,
     QueryBase,
@@ -38,6 +40,7 @@ class QueryDB(Base):
     )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
+    query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -56,23 +59,30 @@ class QueryDB(Base):
 
     def __repr__(self) -> str:
         """Pretty Print"""
-        return f"<Query #{self.query_id}> {self.query_text}>"
+        return (
+            f"<Query #{self.query_id}>, "
+            f"LLM response requested: {self.query_generate_llm_response}, "
+            f"Query text: {self.query_text}>"
+        )
 
 
 async def save_user_query_to_db(
     user_id: int,
-    feedback_secret_key: str,
     user_query: QueryBase,
     asession: AsyncSession,
 ) -> QueryDB:
     """
-    Saves a user query to the database.
+    Saves a user query to the database alongside generated
+    query_id and feedback secret key.
     """
+    feedback_secret_key = generate_secret_key()
     user_query_db = QueryDB(
         user_id=user_id,
         feedback_secret_key=feedback_secret_key,
+        query_text=user_query.query_text,
+        query_generate_llm_response=user_query.generate_llm_response,
+        query_metadata=user_query.query_metadata,
         query_datetime_utc=datetime.utcnow(),
-        **user_query.model_dump(),
     )
     asession.add(user_query_db)
     await asession.commit()
@@ -104,7 +114,7 @@ class QueryResponseDB(Base):
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
-    content_response: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -127,7 +137,7 @@ async def save_query_response_to_db(
     """
     user_query_responses_db = QueryResponseDB(
         query_id=user_query_db.query_id,
-        content_response=response.model_dump()["content_response"],
+        search_results=response.model_dump()["search_results"],
         llm_response=response.model_dump()["llm_response"],
         response_datetime_utc=datetime.utcnow(),
     )

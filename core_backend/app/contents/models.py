@@ -226,7 +226,7 @@ async def increment_query_count(
         return
     for _, content in contents.items():
         content_db = await get_content_from_db(
-            user_id=user_id, content_id=content.retrieved_content_id, asession=asession
+            user_id=user_id, content_id=content.id, asession=asession
         )
         if content_db:
             content_db.query_count = content_db.query_count + 1
@@ -447,9 +447,9 @@ async def get_search_results(
     results_dict = {}
     for i, r in enumerate(search_result):
         results_dict[i] = QuerySearchResult(
-            retrieved_content_id=r[0].content_id,
-            retrieved_title=r[0].content_title,
-            retrieved_text=r[0].content_text,
+            id=r[0].content_id,
+            title=r[0].content_title,
+            text=r[0].content_text,
             distance=r[1],
         )
 

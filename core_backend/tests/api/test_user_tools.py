@@ -99,7 +99,7 @@ class TestKeyManagement:
 
         # make a QA call with this first key
         search_response = client.post(
-            "/embeddings-search",
+            "/search",
             json={"query_text": "Tell me about a good sport to play"},
             headers={"Authorization": f"Bearer {first_api_key}"},
         )
@@ -116,7 +116,7 @@ class TestKeyManagement:
 
         # make a QA call with the second key
         search_response = client.post(
-            "/embeddings-search",
+            "/search",
             json={"query_text": "Tell me about a good sport to play"},
             headers={"Authorization": f"Bearer {second_api_key}"},
         )
@@ -124,7 +124,7 @@ class TestKeyManagement:
 
         # make a QA call with the first key again
         search_response = client.post(
-            "/embeddings-search",
+            "/search",
             json={"query_text": "Tell me about a good sport to play"},
             headers={"Authorization": f"Bearer {first_api_key}"},
         )

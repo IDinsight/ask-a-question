@@ -18,9 +18,9 @@ class QuerySearchResult(BaseModel):
     Pydantic model for each individual search result
     """
 
-    retrieved_title: str
-    retrieved_text: str
-    retrieved_content_id: int
+    title: str
+    text: str
+    id: int
     distance: float
 
     model_config = ConfigDict(from_attributes=True)

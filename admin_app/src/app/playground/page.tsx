@@ -30,7 +30,7 @@ const Page = () => {
   }, [messages]);
 
   const processEmbeddingsSearchResponse = (response: any) => {
-    const contentResponse = response.content_response;
+    const contentResponse = response.search_results;
     const summaries: ResponseSummary[] = [];
 
     for (const key in contentResponse) {
@@ -38,8 +38,8 @@ const Page = () => {
         const item = contentResponse[key];
         summaries.push({
           index: key,
-          title: item.retrieved_title,
-          text: item.retrieved_text,
+          title: item.title,
+          text: item.text,
         });
       }
     }

@@ -182,7 +182,7 @@ def _build_evidence(llm_response: QueryResponse) -> str:
     Build the evidence used by the LLM response
     """
     evidence = ""
-    if llm_response.content_response is not None:
-        for _, result in llm_response.content_response.items():
-            evidence += result.retrieved_text + "\n"
+    if llm_response.search_results is not None:
+        for _, result in llm_response.search_results.items():
+            evidence += result.text + "\n"
     return evidence

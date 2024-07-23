@@ -35,7 +35,7 @@ class TestEmbeddingsSearch:
             (TEST_USER_API_KEY, 200),
         ],
     )
-    def test_content_response(
+    def test_search_results(
         self,
         token: str,
         expected_status_code: int,
@@ -43,22 +43,26 @@ class TestEmbeddingsSearch:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_content_response = response.json()["content_response"]
-            assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
+            json_search_results = response.json()["search_results"]
+            assert len(json_search_results.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> QueryResponse:
         response = client.post(
-            "/embeddings-search",
+            "/search",
             json={
                 "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
             },
             headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
@@ -212,16 +216,18 @@ class TestEmbeddingsSearch:
         faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={
+                "query_text": "Tell me about camping",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -280,8 +286,11 @@ class TestGenerateResponse:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": True,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
@@ -290,8 +299,8 @@ class TestGenerateResponse:
             llm_response = response.json()["llm_response"]
             assert len(llm_response) != 0
 
-            content_response = response.json()["content_response"]
-            assert len(content_response) != 0
+            search_results = response.json()["search_results"]
+            assert len(search_results) != 0
 
             result_state = response.json()["state"]
             assert result_state == ResultState.FINAL
@@ -311,16 +320,15 @@ class TestGenerateResponse:
         faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={"query_text": "Tell me about camping", "generate_llm_response": True},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -339,7 +347,7 @@ class TestErrorResponses:
     ) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={},
+            search_results={},
             llm_response=None,
             feedback_secret_key="abc123",
             debug_info={},
@@ -533,17 +541,17 @@ class TestAlignScore:
     def user_query_response(self) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={
+            search_results={
                 1: QuerySearchResult(
-                    retrieved_title="World",
-                    retrieved_text="hello world",
-                    retrieved_content_id=1,
+                    title="World",
+                    text="hello world",
+                    id=1,
                     distance=0.2,
                 ),
                 2: QuerySearchResult(
-                    retrieved_title="Universe",
-                    retrieved_text="goodbye universe",
-                    retrieved_content_id=2,
+                    title="Universe",
+                    text="goodbye universe",
+                    id=2,
                     distance=0.2,
                 ),
             },
