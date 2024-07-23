@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timezone
-from datetime import datetime
 
 from app.database import get_session
 from app.users.models import UserDB
