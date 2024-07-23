@@ -88,8 +88,8 @@ async def search(
 
     (
         user_query_db,
-        user_query_refined,
-        response,
+        user_query_refined_template,
+        response_template,
     ) = await get_user_query_and_response(
         user_id=user_db.user_id,
         user_query=user_query,
@@ -98,8 +98,8 @@ async def search(
 
     if user_query.generate_llm_response:
         response = await search_with_llm_response(
-            question=user_query_refined,
-            response=response,
+            question=user_query_refined_template,
+            response=response_template,
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_RAG),
             asession=asession,
@@ -107,8 +107,8 @@ async def search(
         )
     else:
         response = await search_without_llm_response(
-            question=user_query_refined,
-            response=response,
+            question=user_query_refined_template,
+            response=response_template,
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
             asession=asession,
