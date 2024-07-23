@@ -18,7 +18,7 @@ def parse_args() -> argparse.Namespace:
         "-c",
         "--config",
         action="store",
-        default="configs/1_50_ramp_config.json",
+        default="configs/1_200_ramp_config.json",
         help="JSON file containing configs for tests",
     )
     parser.add_argument(
