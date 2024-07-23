@@ -2,7 +2,7 @@
 database helper functions such as saving, updating, deleting, and retrieving content.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from pgvector.sqlalchemy import Vector
@@ -70,8 +70,12 @@ class ContentDB(Base):
 
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
 
-    created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -141,8 +145,8 @@ async def save_content_to_db(
         content_text=content.content_text,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     asession.add(content_db)
 
@@ -194,8 +198,8 @@ async def update_content_in_db(
         content_text=content.content_text,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     content_db = await asession.merge(content_db)

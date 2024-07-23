@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_session
 from app.users.models import UserDB
@@ -20,10 +20,10 @@ user_db = UserDB(
     hashed_password=get_password_salted_hash(USER1_PASSWORD),
     hashed_api_key=get_key_hash(USER1_API_KEY),
     api_key_first_characters=USER1_API_KEY[:5],
-    api_key_updated_datetime_utc=datetime.utcnow(),
+    api_key_updated_datetime_utc=datetime.now(timezone.utc),
     content_quota=USER1_CONTENT_QUOTA,
-    created_datetime_utc=datetime.utcnow(),
-    updated_datetime_utc=datetime.utcnow(),
+    created_datetime_utc=datetime.now(timezone.utc),
+    updated_datetime_utc=datetime.now(timezone.utc),
 )
 
 if __name__ == "__main__":

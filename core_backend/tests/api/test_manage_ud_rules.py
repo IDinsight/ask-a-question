@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generator
 
 import pytest
@@ -195,8 +195,8 @@ async def test_convert_record_to_schema() -> None:
         urgency_rule_text="sample text",
         urgency_rule_vector=await async_fake_embedding(),
         urgency_rule_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.datetime.utcnow(),
-        updated_datetime_utc=datetime.datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     result = _convert_record_to_schema(record)
     assert result.urgency_rule_id == _id

@@ -228,7 +228,7 @@ async def get_timeseries_query(
     rows = result.fetchall()
     escalated = dict()
     not_escalated = dict()
-    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
+    format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
     for row in rows:
         escalated[row.time_period.strftime(format_str)] = row.negative_feedback_count
         not_escalated[row.time_period.strftime(format_str)] = (
@@ -278,8 +278,7 @@ async def get_timeseries_urgency(
     result = await asession.execute(statement)
     rows = result.fetchall()
 
-    format_str = "%m/%d/%Y %H:%M:%S" if frequency == TimeFrequency.Hour else "%m/%d/%Y"
-
+    format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
     return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
 
 
