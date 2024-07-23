@@ -115,7 +115,7 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
         component="div"
         sx={{ p: 3, py: 2, fontWeight: "bold" }}
       >
-        Top Content
+        Most Sent Content
       </Typography>
       <Box sx={{ mx: 3 }}>
         <TableContainer component={Paper}>
@@ -128,9 +128,11 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
               <TableRow>
                 <StyledTableCell>Content</StyledTableCell>
                 <StyledTableCell align="right">Last Updated</StyledTableCell>
-                <StyledTableCell align="right">Total Count</StyledTableCell>
+                <StyledTableCell align="right" style={{ whiteSpace: "nowrap" }}>
+                  Total Sent
+                </StyledTableCell>
                 <StyledTableCell align="right">
-                  Upvotes vs. Downvotes
+                  All-time upvotes vs. downvotes
                 </StyledTableCell>
               </TableRow>
             </TableHead>

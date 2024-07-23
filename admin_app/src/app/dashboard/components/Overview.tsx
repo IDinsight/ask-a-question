@@ -1,8 +1,8 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
-import ForumIcon from "@mui/icons-material/Forum";
-import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -15,6 +15,7 @@ import AreaChart from "@/app/dashboard/components/AreaChart";
 import TopContentTable from "@/app/dashboard/components/TopContentTable";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
+import { Layout } from "@/components/Layout";
 
 interface OverviewProps {
   timePeriod: Period;
@@ -134,8 +135,8 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
 
     const seriesData = [
       { name: "Urgent", data: urgent_data },
-      { name: "Escalated", data: escalated_data },
-      { name: "Total Queries", data: total_queries },
+      { name: "Downvoted Responses", data: escalated_data },
+      { name: "Queries", data: total_queries },
     ];
 
     setTimeseriesData(seriesData);
@@ -157,22 +158,22 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       title: "Total Queries",
       value: query_stats.n_questions,
       percentageChange: query_stats.percentage_increase,
-      Icon: ForumIcon,
+      Icon: ChatBubbleOutlineIcon,
       period: timePeriod,
     });
 
-    // Total Escalated Queries
+    // "Total Downvoted Responses"
     statCardData.push({
-      title: "Total Escalated Queries",
+      title: "Downvoted Responses",
       value: response_feedback_stats.n_negative,
       percentageChange: response_feedback_stats.percentage_negative_increase,
-      Icon: SupportAgentIcon,
+      Icon: ThumbDownOffAltIcon,
       period: timePeriod,
     });
 
     // Total Urgent Queries
     statCardData.push({
-      title: "Total Urgent Queries",
+      title: "Urgent Queries",
       value: urgency_stats.n_urgent,
       percentageChange: urgency_stats.percentage_increase,
       Icon: NewReleasesOutlinedIcon,
@@ -181,7 +182,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
 
     // Total Upvotes
     statCardData.push({
-      title: "Total Upvotes",
+      title: "Content Upvotes",
       value: content_feedback_stats.n_positive,
       percentageChange: content_feedback_stats.percentage_positive_increase,
       Icon: ThumbUpIcon,
@@ -190,7 +191,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
 
     // Total Downvotes
     statCardData.push({
-      title: "Total Downvotes",
+      title: "Content Downvotes",
       value: content_feedback_stats.n_negative,
       percentageChange: content_feedback_stats.percentage_negative_increase,
       Icon: ThumbDownIcon,
@@ -248,9 +249,11 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387, height: 260 }}>
+      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387 }}>
         <TopContentTable rows={topContentData} />
+        <Layout.Spacer multiplier={2} />
       </Box>
+      <Layout.Spacer multiplier={5} />
     </>
   );
 };
