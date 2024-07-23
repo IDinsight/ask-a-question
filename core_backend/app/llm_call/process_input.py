@@ -12,7 +12,6 @@ from ..config import (
     LITELLM_MODEL_SAFETY,
     LITELLM_MODEL_TRANSLATE,
 )
-from ..question_answer.config import STANDARD_FAILURE_MESSAGE
 from ..question_answer.schemas import (
     ErrorType,
     QueryRefined,
@@ -85,6 +84,7 @@ async def _identify_language(
         IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
     )
     question.original_language = identified_lang
+    response.debug_info["query_text_original"] = question.query_text_original
     response.debug_info["original_language"] = identified_lang
 
     processed_response = _process_identified_language_response(
@@ -203,7 +203,7 @@ async def _translate_question(
         return question, response
     else:
         error_response = QueryResponseError(
-            error_message=STANDARD_FAILURE_MESSAGE,
+            error_message="Unable to translate",
             query_id=response.query_id,
             error_type=ErrorType.UNABLE_TO_TRANSLATE,
         )
@@ -267,7 +267,7 @@ async def _classify_safety(
         return question, response
     else:
         error_response = QueryResponseError(
-            error_message=STANDARD_FAILURE_MESSAGE,
+            error_message=f"{safety_classification.value.lower()} found.",
             query_id=response.query_id,
             error_type=ErrorType.QUERY_UNSAFE,
         )
@@ -408,7 +408,7 @@ async def _paraphrase_question(
         return question, response
     else:
         error_response = QueryResponseError(
-            error_message=STANDARD_FAILURE_MESSAGE,
+            error_message="Unable to paraphrase the query.",
             query_id=response.query_id,
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
