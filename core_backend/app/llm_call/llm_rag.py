@@ -1,3 +1,7 @@
+"""This module contains functions for interacting with the LLM model for Retrieval
+Augmented Generation (RAG).
+"""
+
 from typing import Optional
 
 from pydantic import ValidationError
@@ -16,13 +20,26 @@ async def get_llm_rag_answer(
     response_language: IdentifiedLanguage,
     metadata: Optional[dict] = None,
 ) -> RAG:
-    """
-    This function is used to get an answer from the LLM model.
+    """Get an answer from the LLM model using RAG.
+
+    Parameters
+    ----------
+    question
+        The question to ask the LLM model.
+    context
+        The context to provide to the LLM model.
+    response_language
+        The language of the response.
+    metadata
+        Additional metadata to provide to the LLM model.
+
+    Returns
+    -------
+    RAG
+        The response from the LLM model.
     """
 
-    if metadata is None:
-        metadata = {}
-
+    metadata = metadata or {}
     prompt = RAG.prompt.format(context=context)
 
     result = await _ask_llm_async(
