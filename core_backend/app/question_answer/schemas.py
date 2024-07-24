@@ -7,9 +7,9 @@ from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment, QuerySearchResult
 
 
-class ResultState(str, Enum):
+class State(str, Enum):
     """
-    Enum for Response state
+    Enum for progress state
     """
 
     IN_PROGRESS = "in_progress"
@@ -47,7 +47,7 @@ class QueryRefined(QueryBase):
 
     query_text_original: str
     original_language: IdentifiedLanguage | None = None
-    state: ResultState = ResultState.IN_PROGRESS
+    state: State = State.IN_PROGRESS
 
 
 class ErrorType(str, Enum):
