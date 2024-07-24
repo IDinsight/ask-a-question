@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, List
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class ContentCreate(BaseModel):
@@ -9,22 +9,18 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation request
     """
 
-    content_title: Annotated[str, StringConstraints(max_length=150)]
-    content_text: Annotated[str, StringConstraints(max_length=2000)]
-    content_tags: list = []
-    content_metadata: dict = {}
+    content_title: Annotated[str, StringConstraints(max_length=150)] = Field(
+        examples=["Example Content Title"],
+    )
+    content_text: Annotated[str, StringConstraints(max_length=2000)] = Field(
+        examples=["This is an example content."]
+    )
+    content_tags: list = Field(default=[], examples=[[1, 4]])
+    content_metadata: dict = Field(default={}, examples=[{"key": "optional_value"}])
     is_archived: bool = False
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "content_title": "An example content title",
-                    "content_text": "And an example content text!",
-                },
-            ]
-        },
     )
 
 
@@ -41,6 +37,10 @@ class ContentRetrieve(ContentCreate):
     negative_votes: int
     is_archived: bool
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
 
 class ContentUpdate(ContentCreate):
     """
@@ -50,15 +50,7 @@ class ContentUpdate(ContentCreate):
     content_id: int
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "content_id": 1,
-                    "content_title": "A new content title",
-                    "content_text": "A new content text!",
-                },
-            ]
-        },
+        from_attributes=True,
     )
 
 

@@ -47,6 +47,7 @@ TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
 TEST_CONTENT_QUOTA = 50
 
+TEST_USER_ID_2 = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
@@ -82,6 +83,7 @@ async def asession(
 @pytest.fixture(scope="session", autouse=True)
 def user(db_session: Session) -> Generator[int, None, None]:
     global TEST_USER_ID
+    global TEST_USER_ID_2
     user1_db = UserDB(
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
@@ -104,6 +106,7 @@ def user(db_session: Session) -> Generator[int, None, None]:
 
     # update the TEST_USER_ID global variable
     TEST_USER_ID = user1_db.user_id
+    TEST_USER_ID_2 = user2_db.user_id
 
     yield user1_db.user_id
 
@@ -205,6 +208,35 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
     # Delete the urgency rules
     for rule in rules:
         db_session.delete(rule)
+    db_session.commit()
+
+
+@pytest.fixture(scope="function")
+async def urgency_rules_user2(db_session: Session) -> AsyncGenerator[int, None]:
+    rule_embedding = await async_fake_embedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input="user 2 rule",
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    )
+
+    rule_db = UrgencyRuleDB(
+        urgency_rule_id=1000,
+        user_id=TEST_USER_ID_2,
+        urgency_rule_text="user 2 rule",
+        urgency_rule_vector=rule_embedding,
+        urgency_rule_metadata={},
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+
+    db_session.add(rule_db)
+    db_session.commit()
+
+    yield 1
+
+    # Delete the urgency rules
+    db_session.delete(rule_db)
     db_session.commit()
 
 
