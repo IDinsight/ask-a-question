@@ -68,8 +68,7 @@ def check_align_score__after(func: Callable) -> Callable:
                 )
             )
             return llm_response
-        else:
-            return await _check_align_score(llm_response)
+        return await _check_align_score(llm_response)
 
     return wrapper
 
@@ -92,7 +91,7 @@ async def _check_align_score(
         )
         return llm_response
 
-    elif ALIGN_SCORE_METHOD == "AlignScore":
+    if ALIGN_SCORE_METHOD == "AlignScore":
         if ALIGN_SCORE_API is not None:
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
