@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, Query
@@ -130,6 +130,13 @@ async def get_queries(
     or datetime object.
 
     """
+    if isinstance(start_date, date):
+        start_date = datetime.combine(start_date, datetime.min.time())
+    if isinstance(end_date, date):
+        end_date = datetime.combine(end_date, datetime.max.time())
+
+    start_date = start_date.replace(tzinfo=timezone.utc)
+    end_date = end_date.replace(tzinfo=timezone.utc)
 
     result = await asession.execute(
         select(QueryDB)
@@ -179,6 +186,15 @@ async def get_urgency_queries(
     or datetime object.
 
     """
+
+    if isinstance(start_date, date):
+        start_date = datetime.combine(start_date, datetime.min.time())
+    if isinstance(end_date, date):
+        end_date = datetime.combine(end_date, datetime.max.time())
+
+    start_date = start_date.replace(tzinfo=timezone.utc)
+    end_date = end_date.replace(tzinfo=timezone.utc)
+
     result = await asession.execute(
         select(UrgencyQueryDB)
         .filter(UrgencyQueryDB.message_datetime_utc.between(start_date, end_date))

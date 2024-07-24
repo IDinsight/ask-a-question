@@ -158,10 +158,8 @@ class TestUrgencyQueryDataAPI:
         asession: AsyncSession,
         urgency_rules: int,
     ) -> AsyncGenerator[None, None]:
-        dates = [
-            datetime.now(timezone.utc) - relativedelta(days=x)
-            for x in range(N_DAYS_HISTORY)
-        ]
+        now = datetime.now(timezone.utc)
+        dates = [now - relativedelta(days=x) for x in range(N_DAYS_HISTORY)]
         all_orm_objects: List[Any] = []
 
         for i, date in enumerate(dates):
@@ -186,7 +184,6 @@ class TestUrgencyQueryDataAPI:
                 urgency_query_db, urgency_response, asession
             )
             all_orm_objects.append(urgency_response_db)
-
         yield
 
         for orm_object in reversed(all_orm_objects):
@@ -222,7 +219,7 @@ class TestUrgencyQueryDataAPI:
         response = client.get(
             "/data-api/urgency-queries",
             headers={"Authorization": "Bearer test_api_key"},
-            params={"start_date": "2021-01-01T00:00", "end_date": "2021-01-10T00:00"},
+            params={"start_date": "2021-01-01", "end_date": "2021-01-10"},
         )
         assert response.status_code == 200
 
@@ -238,9 +235,16 @@ class TestUrgencyQueryDataAPI:
         user1_data: pytest.FixtureRequest,
     ) -> None:
 
-        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
-        date_format = "%Y-%m-%dT%H:%M:%S.%f"
+        start_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_start, seconds=2
+        )
+        end_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_end, seconds=-2
+        )
+        date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
+
+        print("start_date", start_date.strftime(date_format))
+        print("end_date", end_date.strftime(date_format))
 
         response = client.get(
             "/data-api/urgency-queries",
@@ -252,11 +256,28 @@ class TestUrgencyQueryDataAPI:
         )
         assert response.status_code == 200
 
-        data_start_date = min(days_ago_start, N_DAYS_HISTORY)
-        data_end_date = min(days_ago_end, N_DAYS_HISTORY)
-        n_records = (
-            data_start_date - data_end_date if data_start_date > data_end_date else 0
-        )
+        if days_ago_start > N_DAYS_HISTORY:
+            if days_ago_end == 0:
+                n_records = N_DAYS_HISTORY
+            elif days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            else:
+                n_records = N_DAYS_HISTORY - days_ago_end + 1
+        elif days_ago_start == N_DAYS_HISTORY:
+            if days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            else:
+                n_records = N_DAYS_HISTORY - days_ago_end + 1
+        else:  # days_ago_start < N_DAYS_HISTORY
+            if days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            elif days_ago_end == N_DAYS_HISTORY:
+                n_records = 0
+            elif days_ago_end > days_ago_start:
+                n_records = 0
+            else:  # days_ago_end <= days_ago_start < N_DAYS_HISTORY
+                n_records = days_ago_start - days_ago_end + 1
+
         assert len(response.json()) == n_records
 
     @pytest.mark.parametrize(
@@ -272,9 +293,13 @@ class TestUrgencyQueryDataAPI:
         user2_data: int,
     ) -> None:
 
-        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
-        date_format = "%Y-%m-%dT%H:%M:%S.%f"
+        start_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_start, seconds=2
+        )
+        end_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_end, seconds=-2
+        )
+        date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         response = client.get(
             "/data-api/urgency-queries",
@@ -286,7 +311,7 @@ class TestUrgencyQueryDataAPI:
         )
         assert response.status_code == 200
 
-        if days_ago_end <= user2_data < days_ago_start:
+        if days_ago_end <= user2_data <= days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0
@@ -300,11 +325,12 @@ class TestQueryDataAPI:
         asession: AsyncSession,
         faq_contents: List[int],
     ) -> AsyncGenerator[None, None]:
-        dates = [
-            datetime.now(timezone.utc) - relativedelta(days=x)
-            for x in range(N_DAYS_HISTORY)
-        ]
+
+        now = datetime.now(timezone.utc)
+        dates = [now - relativedelta(days=x) for x in range(N_DAYS_HISTORY)]
         all_orm_objects: List[Any] = []
+        print("user1 dates", *dates)
+        print("n_dates:", len(dates))
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
@@ -407,7 +433,7 @@ class TestQueryDataAPI:
         response = client.get(
             "/data-api/queries",
             headers={"Authorization": "Bearer test_api_key"},
-            params={"start_date": "2021-01-01T00:00", "end_date": "2021-01-10T00:00"},
+            params={"start_date": "2021-01-01", "end_date": "2021-01-10"},
         )
         assert response.status_code == 200
 
@@ -422,9 +448,13 @@ class TestQueryDataAPI:
         client: TestClient,
         user1_data: pytest.FixtureRequest,
     ) -> None:
-        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
-        date_format = "%Y-%m-%dT%H:%M:%S.%f"
+        start_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_start, seconds=2
+        )
+        end_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_end, seconds=-2
+        )
+        date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         response = client.get(
             "/data-api/queries",
@@ -436,11 +466,30 @@ class TestQueryDataAPI:
         )
         assert response.status_code == 200
 
-        data_start_date = min(days_ago_start, N_DAYS_HISTORY)
-        data_end_date = min(days_ago_end, N_DAYS_HISTORY)
-        n_records = (
-            data_start_date - data_end_date if data_start_date > data_end_date else 0
-        )
+        if days_ago_start > N_DAYS_HISTORY:
+            if days_ago_end == 0:
+                n_records = N_DAYS_HISTORY
+            elif days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            else:
+                n_records = N_DAYS_HISTORY - days_ago_end + 1
+        elif days_ago_start == N_DAYS_HISTORY:
+            if days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            else:
+                n_records = N_DAYS_HISTORY - days_ago_end + 1
+        else:  # days_ago_start < N_DAYS_HISTORY
+            if days_ago_end > N_DAYS_HISTORY:
+                n_records = 0
+            elif days_ago_end == N_DAYS_HISTORY:
+                n_records = 0
+            elif days_ago_end > days_ago_start:
+                n_records = 0
+            else:  # days_ago_end <= days_ago_start < N_DAYS_HISTORY
+                n_records = days_ago_start - days_ago_end + 1
+
+        for record in response.json():
+            print("record dt:", record["query_datetime_utc"])
 
         assert len(response.json()) == n_records
 
@@ -456,9 +505,13 @@ class TestQueryDataAPI:
         user1_data: pytest.FixtureRequest,
         user2_data: int,
     ) -> None:
-        start_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_start)
-        end_date = datetime.now(timezone.utc) - relativedelta(days=days_ago_end)
-        date_format = "%Y-%m-%dT%H:%M:%S.%f"
+        start_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_start, seconds=2
+        )
+        end_date = datetime.now(timezone.utc) - relativedelta(
+            days=days_ago_end, seconds=-2
+        )
+        date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         response = client.get(
             "/data-api/queries",
@@ -470,7 +523,7 @@ class TestQueryDataAPI:
         )
         assert response.status_code == 200
 
-        if days_ago_end <= user2_data < days_ago_start:
+        if days_ago_end <= user2_data <= days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0
