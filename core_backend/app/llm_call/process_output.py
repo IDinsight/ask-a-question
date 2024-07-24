@@ -52,36 +52,36 @@ def check_align_score__after(func: Callable) -> Callable:
         Check the alignment score
         """
 
-        llm_response = await func(question, response, *args, **kwargs)
+        response = await func(question, response, *args, **kwargs)
 
-        if (
-            isinstance(llm_response, QueryResponseError)
-            or question.state == ResultState.ERROR
+        if question.state == ResultState.ERROR or isinstance(
+            response, QueryResponseError
         ):
-            return llm_response
+            return response
 
-        if llm_response.llm_response is None:
+        if response.llm_response is None:
             logger.warning(
                 (
                     "No LLM response found in the response but "
                     "`check_align_score` was called"
                 )
             )
-            return llm_response
-        return await _check_align_score(llm_response)
+            return response
+        else:
+            return await _check_align_score(response)
 
     return wrapper
 
 
 async def _check_align_score(
-    llm_response: QueryResponse,
+    response: QueryResponse,
 ) -> QueryResponse:
     """
     Check the alignment score
     """
 
-    evidence = _build_evidence(llm_response)
-    claim = llm_response.llm_response
+    evidence = _build_evidence(response)
+    claim = response.llm_response
     assert claim is not None, "LLM response is None"
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
 
@@ -89,7 +89,7 @@ async def _check_align_score(
         logger.warning(
             "No alignment score method specified but `check_align_score` was called"
         )
-        return llm_response
+        return response
 
     if ALIGN_SCORE_METHOD == "AlignScore":
         if ALIGN_SCORE_API is not None:
@@ -97,7 +97,7 @@ async def _check_align_score(
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        metadata = create_langfuse_metadata(query_id=llm_response.query_id)
+        metadata = create_langfuse_metadata(query_id=response.query_id)
         align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
@@ -119,11 +119,11 @@ async def _check_align_score(
                 f"Evidence: {evidence}\n"
             )
         )
-        llm_response.llm_response = None
-        llm_response.debug_info["reason"] = "Align score failed"
-    llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+        response.llm_response = None
+        response.debug_info["reason"] = "Align score failed"
+    response.debug_info["factual_consistency"] = factual_consistency.copy()
 
-    return llm_response
+    return response
 
 
 async def _get_alignScore_score(
@@ -175,12 +175,12 @@ async def _get_llm_align_score(
     return alignment_score
 
 
-def _build_evidence(llm_response: QueryResponse) -> str:
+def _build_evidence(response: QueryResponse) -> str:
     """
     Build the evidence used by the LLM response
     """
     evidence = ""
-    if llm_response.search_results is not None:
-        for _, result in llm_response.search_results.items():
+    if response.search_results is not None:
+        for _, result in response.search_results.items():
             evidence += result.text + "\n"
     return evidence
