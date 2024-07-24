@@ -75,6 +75,7 @@ def convert_content_to_pydantic_model(content: ContentDB) -> ContentRetrieve:
         positive_votes=content.positive_votes,
         negative_votes=content.negative_votes,
         content_tags=[content_tag.tag_name for content_tag in content.content_tags],
+        is_archived=content.is_archived,
     )
 
 
