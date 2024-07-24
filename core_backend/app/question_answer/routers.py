@@ -98,7 +98,7 @@ async def search(
 
     if user_query.generate_llm_response:
         response = await search_with_llm_response(
-            question=user_query_refined_template,
+            query_refined=user_query_refined_template,
             response=response_template,
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_RAG),
@@ -107,7 +107,7 @@ async def search(
         )
     else:
         response = await search_without_llm_response(
-            question=user_query_refined_template,
+            query_refined=user_query_refined_template,
             response=response_template,
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
@@ -132,7 +132,7 @@ async def search(
 @paraphrase_question__before
 @check_align_score__after
 async def search_with_llm_response(
-    question: QueryRefined,
+    query_refined: QueryRefined,
     response: QueryResponse,
     user_id: int,
     n_similar: int,
@@ -143,7 +143,7 @@ async def search_with_llm_response(
 
     Parameters
     ----------
-    question
+    query_refined
         The refined query object.
     response
         The query response object.
@@ -167,7 +167,7 @@ async def search_with_llm_response(
         If the question language is not identified.
     """
 
-    if question.original_language is None:
+    if query_refined.original_language is None:
         raise ValueError(
             (
                 "Language hasn't been identified. "
@@ -179,7 +179,7 @@ async def search_with_llm_response(
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
         search_results = await get_similar_content_async(
             user_id=user_id,
-            question=question.query_text,
+            question=query_refined.query_text,
             n_similar=n_similar,
             asession=asession,
             metadata=metadata,
@@ -190,17 +190,17 @@ async def search_with_llm_response(
         context = get_context_string_from_retrieved_contents(search_results)
 
         rag_response = await get_llm_rag_answer(
-            question=question.query_text_original,  # use the original query text
+            question=query_refined.query_text_original,  # use the original query text
             context=context,
-            response_language=question.original_language,
+            response_language=query_refined.original_language,
             metadata=metadata,
         )
 
         if rag_response.answer == RAG_FAILURE_MESSAGE:
-            question.state = State.ERROR
+            query_refined.state = State.ERROR
             response.llm_response = None
         else:
-            question.state = State.FINAL
+            query_refined.state = State.FINAL
             response.llm_response = rag_response.answer
             response.debug_info["llm_answer"] = rag_response.answer
 
@@ -213,7 +213,7 @@ async def search_with_llm_response(
 @translate_question__before
 @paraphrase_question__before
 async def search_without_llm_response(
-    question: QueryRefined,
+    query_refined: QueryRefined,
     response: QueryResponse | QueryResponseError,
     user_id: int,
     n_similar: int,
@@ -224,7 +224,7 @@ async def search_without_llm_response(
 
     Parameters
     ----------
-    question
+    query_refined
         The refined query object.
     response
         The query response object.
@@ -247,13 +247,13 @@ async def search_without_llm_response(
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
         search_results = await get_similar_content_async(
             user_id=user_id,
-            question=question.query_text,
+            question=query_refined.query_text,
             n_similar=n_similar,
             asession=asession,
             metadata=metadata,
             exclude_archived=exclude_archived,
         )
-        question.state = State.FINAL
+        query_refined.state = State.FINAL
         response.search_results = search_results
 
     return response

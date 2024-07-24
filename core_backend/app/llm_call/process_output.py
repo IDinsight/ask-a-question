@@ -43,7 +43,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
     @wraps(func)
     async def wrapper(
-        question: QueryRefined,
+        query_refined: QueryRefined,
         response: QueryResponse | QueryResponseError,
         *args: Any,
         **kwargs: Any,
@@ -52,9 +52,11 @@ def check_align_score__after(func: Callable) -> Callable:
         Check the alignment score
         """
 
-        response = await func(question, response, *args, **kwargs)
+        response = await func(query_refined, response, *args, **kwargs)
 
-        if question.state == State.ERROR or isinstance(response, QueryResponseError):
+        if query_refined.state == State.ERROR or isinstance(
+            response, QueryResponseError
+        ):
             return response
 
         if response.llm_response is None:
