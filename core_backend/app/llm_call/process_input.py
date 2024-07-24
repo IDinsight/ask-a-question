@@ -74,8 +74,8 @@ async def _identify_language(
         return query_refined, response
 
     llm_identified_lang = await _ask_llm_async(
-        question=query_refined.query_text,
-        prompt=IdentifiedLanguage.get_prompt(),
+        user_message=query_refined.query_text,
+        system_message=IdentifiedLanguage.get_prompt(),
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         metadata=metadata,
     )
@@ -192,8 +192,10 @@ async def _translate_question(
         )
 
     translation_response = await _ask_llm_async(
-        question=query_refined.query_text,
-        prompt=TRANSLATE_PROMPT.format(language=query_refined.original_language.value),
+        user_message=query_refined.query_text,
+        system_message=TRANSLATE_PROMPT.format(
+            language=query_refined.original_language.value
+        ),
         litellm_model=LITELLM_MODEL_TRANSLATE,
         metadata=metadata,
     )
@@ -256,8 +258,8 @@ async def _classify_safety(
         return query_refined, response
 
     llm_classified_safety = await _ask_llm_async(
-        query_refined.query_text,
-        SafetyClassification.get_prompt(),
+        user_message=query_refined.query_text,
+        system_message=SafetyClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_SAFETY,
         metadata=metadata,
     )
@@ -323,8 +325,8 @@ async def _classify_on_off_topic(
         return user_query, response
 
     label = await _ask_llm_async(
-        question=user_query.query_text,
-        prompt=OnOffTopicClassification.get_prompt(),
+        user_message=user_query.query_text,
+        system_message=OnOffTopicClassification.get_prompt(),
         litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
         metadata=metadata,
     )
@@ -397,8 +399,8 @@ async def _paraphrase_question(
         return query_refined, response
 
     paraphrase_response = await _ask_llm_async(
-        question=query_refined.query_text,
-        prompt=PARAPHRASE_PROMPT,
+        user_message=query_refined.query_text,
+        system_message=PARAPHRASE_PROMPT,
         litellm_model=LITELLM_MODEL_PARAPHRASE,
         metadata=metadata,
     )

@@ -43,8 +43,8 @@ async def get_llm_rag_answer(
     prompt = RAG.prompt.format(context=context)
 
     result = await _ask_llm_async(
-        question=question,
-        prompt=prompt,
+        user_message=question,
+        system_message=prompt,
         litellm_model=LITELLM_MODEL_GENERATION,
         metadata=metadata,
         json=True,

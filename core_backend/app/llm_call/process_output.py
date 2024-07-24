@@ -156,8 +156,8 @@ async def _get_llm_align_score(
     """
     prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
     result = await _ask_llm_async(
-        question=align_score_data["claim"],
-        prompt=prompt,
+        user_message=align_score_data["claim"],
+        system_message=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
         json=True,
