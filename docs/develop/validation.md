@@ -40,8 +40,8 @@ An example content data will look like
     ```shell
     conda create -n "aaq-validate" python=3.10
     ```
-    You can also copy the existing `aaq-core` environment.
-2. Install requirements. This assumes you are in project root `aaq-core`.
+    You can also copy the existing `aaq` environment.
+2. Install requirements. This assumes you are in project root `ask-a-question`.
     ```shell
     conda activate aaq-validate
     pip install -r core_backend/requirements.txt
@@ -69,10 +69,10 @@ An example content data will look like
 
 ### Running retrieval validation
 
- In project root `aaq-core` run the following command. (Perform any necessary
+ In project root `ask-a-question` run the following command. (Perform any necessary
    authentication steps you need to do, e.g. for AWS login).
     ```
-    cd aaq-core
+    cd ask-a-question
 
     python -m pytest core_backend/validation/validate_retrieval.py \
         --validation_data_path <path> \

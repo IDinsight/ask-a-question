@@ -38,7 +38,7 @@ transform="matrix(-1 0 0 -1 24 24)"/><path d="m12 1a10.89 10.89 0 0 0 -11 10.77 
 .11-2.84s.93-.29 3 1.1a10.68 10.68 0 0 1 5.5 0c2.1-1.39 3-1.1 3-1.1a3.78 3.78 0 0 1 .11
 2.84 4.15 4.15 0 0 1 1.17 2.89c0 4.14-2.58 5.05-5 5.32a2.5 2.5 0 0 1 .75
 2v2.95s.2.63.75.52a10.8 10.8 0 0 0 7.5-10.22 10.89 10.89 0 0 0 -11-10.77"
-fill="#231f20"/></svg> <a href="https://github.com/IDinsight/aaq-core"
+fill="#231f20"/></svg> <a href="https://github.com/IDinsight/ask-a-question"
 target="_blank">GitHub</a> |
 🔗 <a href="https://ask-a-question.com" target="_blank">Website</a>
 
