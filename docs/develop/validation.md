@@ -1,7 +1,6 @@
 # Running validation
-ƒ
-!!! note "Currently, there is validation only for retrieval, i.e. `POST /search`
-endpoint with `"generate_llm_response": false`"
+
+!!! warning "Currently, there is validation only for retrieval, i.e. `POST /search` endpoint with `"generate_llm_response": false`"
 
 To evaluate the performance of your model (along with your own configurations and
 guardrails), run the validation test(s) in `core_backend/validation`.

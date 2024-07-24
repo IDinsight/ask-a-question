@@ -31,7 +31,7 @@ the `watch` command.
 
 1. Navigate to the `deployment/docker-compose` directory.
 
-        cd ~/ask-a-question/deployment/docker-compose
+        cd ask-a-question/deployment/docker-compose
 
 2. Copy `template.env` to a new file named `.env` within the same directory, and set
    the necessary variables. For local setup, you just need to set your own
