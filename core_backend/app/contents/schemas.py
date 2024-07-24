@@ -16,7 +16,7 @@ class ContentCreate(BaseModel):
         examples=["This is an example content."]
     )
     content_tags: list = Field(default=[], examples=[[1, 4]])
-    content_metadata: dict = Field(default={}, example=[{"key": "optional_value"}])
+    content_metadata: dict = Field(default={}, examples=[{"key": "optional_value"}])
     is_archived: bool = False
 
     model_config = ConfigDict(
