@@ -13,10 +13,10 @@ line-length = 88
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["corebackend"]
+known-first-party = ["core_backend"]
 
 [tool.isort]
-known_first_party = ["corebackend"]
+known_first_party = ["core_backend"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
