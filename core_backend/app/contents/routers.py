@@ -19,6 +19,7 @@ from ..users.models import UserDB, get_content_quota_by_userid
 from ..utils import setup_logger
 from .models import (
     ContentDB,
+    archive_content_from_db,
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
@@ -69,6 +70,7 @@ async def create_content(
 
     ⚠️ To add tags, first use the tags endpoint to create tags.
     """
+
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
@@ -106,6 +108,7 @@ async def edit_content(
     content_id: int,
     content: ContentCreate,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
@@ -115,6 +118,7 @@ async def edit_content(
     old_content = await get_content_from_db(
         user_id=user_db.user_id,
         content_id=content_id,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
@@ -133,6 +137,7 @@ async def edit_content(
             detail=f"Invalid tag ids: {content_tags}",
         )
     content.content_tags = content_tags
+    content.is_archived = old_content.is_archived
     updated_content = await update_content_in_db(
         user_id=user_db.user_id,
         content_id=content_id,
@@ -148,6 +153,7 @@ async def retrieve_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
     limit: int = 50,
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
     """
@@ -158,10 +164,39 @@ async def retrieve_content(
         user_id=user_db.user_id,
         offset=skip,
         limit=limit,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
+
+
+@router.patch("/{content_id}")
+async def archive_content(
+    content_id: int,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> None:
+    """
+    Archive content by ID.
+    """
+
+    record = await get_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
+        )
+    await archive_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
 
 
 @router.delete("/{content_id}")
@@ -196,6 +231,7 @@ async def delete_content(
 async def retrieve_content_by_id(
     content_id: int,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
@@ -205,6 +241,7 @@ async def retrieve_content_by_id(
     record = await get_content_from_db(
         user_id=user_db.user_id,
         content_id=content_id,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
@@ -706,6 +743,7 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
+        is_archived=record.is_archived,
     )
 
     return content_retrieve

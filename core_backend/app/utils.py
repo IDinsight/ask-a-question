@@ -120,11 +120,22 @@ def generate_secret_key() -> str:
 
 
 async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
+    """Get embedding for the given text.
+
+    Parameters
+    ----------
+    text_to_embed
+        The text to embed.
+    metadata
+        Metadata for `LiteLLM` embedding API.
+
+    Returns
+    -------
+    List[float]
+        The embedding for the given text.
     """
-    Get embedding for the given text
-    """
-    if metadata is None:
-        metadata = {}
+
+    metadata = metadata or {}
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,

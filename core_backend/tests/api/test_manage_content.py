@@ -339,6 +339,7 @@ async def test_convert_record_to_schema() -> None:
         content_metadata={"extra_field": "extra value"},
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        is_archived=False,
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id

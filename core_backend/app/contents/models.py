@@ -8,13 +8,16 @@ from typing import Dict, List, Optional
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
     Integer,
     String,
     delete,
+    false,
     select,
+    update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
@@ -82,6 +85,8 @@ class ContentDB(Base):
 
     query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     content_tags = relationship(
         "TagDB",
         secondary=content_tags_table,
@@ -93,8 +98,8 @@ class ContentDB(Base):
 
         Returns
         -------
-            str
-                A string representation of the `ContentDB` object.
+        str
+            A string representation of the `ContentDB` object.
         """
 
         return (
@@ -106,7 +111,8 @@ class ContentDB(Base):
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
-            f"updated_datetime_utc={self.updated_datetime_utc})"
+            f"updated_datetime_utc={self.updated_datetime_utc}), "
+            f"is_archived={self.is_archived})"
         )
 
 
@@ -154,7 +160,10 @@ async def save_content_to_db(
     await asession.refresh(content_db)
 
     result = await get_content_from_db(
-        content_db.user_id, content_db.content_id, asession
+        user_id=content_db.user_id,
+        content_id=content_db.content_id,
+        exclude_archived=False,  # Don't exclude for newly saved content!
+        asession=asession,
     )
     return result or content_db
 
@@ -166,6 +175,9 @@ async def update_content_in_db(
     asession: AsyncSession,
 ) -> ContentDB:
     """Update content and content embedding in the database.
+
+    NB: The path operation that invokes this function should disallow archived content
+    to be updated.
 
     Parameters
     ----------
@@ -200,14 +212,19 @@ async def update_content_in_db(
         content_tags=content.content_tags,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        is_archived=content.is_archived,
     )
 
     content_db = await asession.merge(content_db)
     await asession.commit()
     await asession.refresh(content_db)
     result = await get_content_from_db(
-        content_db.user_id, content_db.content_id, asession
+        user_id=content_db.user_id,
+        content_id=content_db.content_id,
+        exclude_archived=False,  # Don't exclude for newly updated content!
+        asession=asession,
     )
+
     return result or content_db
 
 
@@ -235,6 +252,33 @@ async def increment_query_count(
         if content_db:
             content_db.query_count = content_db.query_count + 1
             await asession.merge(content_db)
+    await asession.commit()
+
+
+async def archive_content_from_db(
+    user_id: int,
+    content_id: int,
+    asession: AsyncSession,
+) -> None:
+    """Archive content from the database.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting the content to be archived.
+    content_id
+        The ID of the content to archived.
+    asession
+        `AsyncSession` object for database transactions.
+    """
+
+    stmt = (
+        update(ContentDB)
+        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.content_id == content_id)
+        .values(is_archived=True)
+    )
+    await asession.execute(stmt)
     await asession.commit()
 
 
@@ -269,8 +313,10 @@ async def delete_content_from_db(
 
 
 async def get_content_from_db(
+    *,
     user_id: int,
     content_id: int,
+    exclude_archived: bool = True,
     asession: AsyncSession,
 ) -> Optional[ContentDB]:
     """Retrieve content from the database.
@@ -281,6 +327,8 @@ async def get_content_from_db(
         The ID of the user requesting the content.
     content_id
         The ID of the content to retrieve.
+    exclude_archived
+        Specifies whether to exclude archived content.
     asession
         `AsyncSession` object for database transactions.
 
@@ -296,15 +344,19 @@ async def get_content_from_db(
         .where(ContentDB.user_id == user_id)
         .where(ContentDB.content_id == content_id)
     )
+    if exclude_archived:
+        stmt = stmt.where(ContentDB.is_archived == false())
     content_row = (await asession.execute(stmt)).first()
     return content_row[0] if content_row else None
 
 
 async def get_list_of_content_from_db(
+    *,
     user_id: int,
-    asession: AsyncSession,
     offset: int = 0,
     limit: Optional[int] = None,
+    exclude_archived: bool = True,
+    asession: AsyncSession,
 ) -> List[ContentDB]:
     """Retrieve all content from the database.
 
@@ -312,13 +364,15 @@ async def get_list_of_content_from_db(
     ----------
     user_id
         The ID of the user requesting the content.
-    asession
-        `AsyncSession` object for database transactions.
     offset
         The number of content items to skip.
     limit
         The maximum number of content items to retrieve. If not specified, then all
         content items are retrieved.
+    exclude_archived
+        Specifies whether to exclude archived content.
+    asession
+        `AsyncSession` object for database transactions.
 
     Returns
     -------
@@ -332,6 +386,8 @@ async def get_list_of_content_from_db(
         .where(ContentDB.user_id == user_id)
         .order_by(ContentDB.content_id)
     )
+    if exclude_archived:
+        stmt = stmt.where(ContentDB.is_archived == false())
     if offset > 0:
         stmt = stmt.offset(offset)
     if isinstance(limit, int) and limit > 0:
