@@ -37,3 +37,9 @@ repos:
     hooks:
       - id: prettier
         exclude: ^(docs)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: package.lock.json
