@@ -1,8 +1,7 @@
-from copy import deepcopy
 from datetime import datetime
 from typing import Annotated, List
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class ContentCreate(BaseModel):
@@ -10,24 +9,18 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation request
     """
 
-    content_title: Annotated[str, StringConstraints(max_length=150)]
-    content_text: Annotated[str, StringConstraints(max_length=2000)]
-    content_tags: list = []
-    content_metadata: dict = {}
+    content_title: Annotated[str, StringConstraints(max_length=150)] = Field(
+        examples=["Example Content Title"],
+    )
+    content_text: Annotated[str, StringConstraints(max_length=2000)] = Field(
+        examples=["This is an example content."]
+    )
+    content_tags: list = Field(default=[], examples=[[1, 4]])
+    content_metadata: dict = Field(default={}, example=[{"key": "optional_value"}])
     is_archived: bool = False
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "content_title": "An example content title",
-                    "content_text": "And an example content text!",
-                    "content_tags": [1, 4],
-                    "content_metadata": {"example": "optional metadata"},
-                },
-            ]
-        },
     )
 
 
@@ -44,16 +37,8 @@ class ContentRetrieve(ContentCreate):
     negative_votes: int
     is_archived: bool
 
-    model_config = deepcopy(ContentCreate.model_config)
-    model_config["json_schema_extra"]["examples"][0].update(
-        {
-            "content_id": 1,
-            "user_id": 1,
-            "created_datetime_utc": "2024-01-01T00:00:00",
-            "updated_datetime_utc": "2024-01-01T00:00:00",
-            "positive_votes": 1,
-            "negative_votes": 0,
-        }
+    model_config = ConfigDict(
+        from_attributes=True,
     )
 
 
@@ -64,11 +49,8 @@ class ContentUpdate(ContentCreate):
 
     content_id: int
 
-    model_config = deepcopy(ContentCreate.model_config)
-    model_config["json_schema_extra"]["examples"][0].update(
-        {
-            "content_id": 1,
-        }
+    model_config = ConfigDict(
+        from_attributes=True,
     )
 
 
