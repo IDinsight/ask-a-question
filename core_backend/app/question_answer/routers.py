@@ -27,7 +27,7 @@ from ..llm_call.process_input import (
 from ..llm_call.process_output import check_align_score__after
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, setup_logger
-from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
+from .config import N_TOP_CONTENT_FOR_RAG
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -85,8 +85,8 @@ async def search(
     Search endpoint finds the most similar content to the user query and optionally
     generates an LLM response.
 
-    If any guardrails fail, the embeddings search is still done and a
-    `QueryResponseError` object is returned with it and the details of the failure.
+    If any guardrails fail, the embeddings search is still done and an error 400 is
+    returned that includes the search results as well as the details of the failure.
     """
 
     (
@@ -99,24 +99,14 @@ async def search(
         asession=asession,
     )
 
-    if user_query.generate_llm_response:
-        response = await search_with_llm_response(
-            query_refined=user_query_refined_template,
-            response=response_template,
-            user_id=user_db.user_id,
-            n_similar=int(N_TOP_CONTENT_FOR_RAG),
-            asession=asession,
-            exclude_archived=exclude_archived,
-        )
-    else:
-        response = await search_without_llm_response(
-            query_refined=user_query_refined_template,
-            response=response_template,
-            user_id=user_db.user_id,
-            n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
-            asession=asession,
-            exclude_archived=exclude_archived,
-        )
+    response = await search_base(
+        query_refined=user_query_refined_template,
+        response=response_template,
+        generate_llm_response=user_query.generate_llm_response,
+        user_id=user_db.user_id,
+        n_similar=int(N_TOP_CONTENT_FOR_RAG),
+        asession=asession,
+    )
 
     if isinstance(response, QueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
@@ -134,9 +124,10 @@ async def search(
 @translate_question__before
 @paraphrase_question__before
 @check_align_score__after
-async def search_with_llm_response(
+async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,
+    generate_llm_response: bool,
     user_id: int,
     n_similar: int,
     asession: AsyncSession,
@@ -144,12 +135,18 @@ async def search_with_llm_response(
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
+    If any guardrails fail, the embeddings search is still done and a
+    `QueryResponseError` object is returned that includes the search
+    results as well as the details of the failure.
+
     Parameters
     ----------
     query_refined
         The refined query object.
     response
         The query response object.
+    generate_llm_response
+        Flag for generating the LLM response or not.
     user_id
         The ID of the user making the query.
     n_similar
@@ -177,88 +174,42 @@ async def search_with_llm_response(
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
     search_results = await get_similar_content_async(
         user_id=user_id,
-        question=query_refined.query_text,  # use latest version of the text
+        # use latest version of the text
+        question=query_refined.query_text,
         n_similar=n_similar,
         asession=asession,
         metadata=metadata,
+        exclude_archived=exclude_archived,
     )
     response.search_results = search_results
 
-    # only generate LLM response if no guardrails have failed
-    if not isinstance(response, QueryResponseError):
-        context = get_context_string_from_retrieved_contents(search_results)
-        rag_response = await get_llm_rag_answer(
-            question=query_refined.query_text_original,  # use the original query text
-            context=context,
-            original_language=query_refined.original_language,
-            metadata=metadata,
-        )
-
-        if rag_response.answer != RAG_FAILURE_MESSAGE:
-            response.debug_info["extracted_info"] = rag_response.extracted_info
-            response.llm_response = rag_response.answer
-        else:
-            response = QueryResponseError(
-                query_id=response.query_id,
-                feedback_secret_key=response.feedback_secret_key,
-                llm_response=None,
-                search_results=response.search_results,
-                debug_info=response.debug_info,
-                error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
-                error_message="LLM failed to generate an answer.",
+    if generate_llm_response:
+        # only generate LLM response if no guardrails have failed
+        if not isinstance(response, QueryResponseError):
+            context = get_context_string_from_retrieved_contents(search_results)
+            rag_response = await get_llm_rag_answer(
+                # use the original query text
+                question=query_refined.query_text_original,
+                context=context,
+                original_language=query_refined.original_language,
+                metadata=metadata,
             )
-            response.debug_info["extracted_info"] = rag_response.extracted_info
-            response.llm_response = None
 
-    return response
-
-
-@identify_language__before
-@translate_question__before
-@paraphrase_question__before
-async def search_without_llm_response(
-    query_refined: QueryRefined,
-    response: QueryResponse | QueryResponseError,
-    user_id: int,
-    n_similar: int,
-    asession: AsyncSession,
-    exclude_archived: bool = True,
-) -> QueryResponse | QueryResponseError:
-    """Get similar content without generating a LLM response.
-
-    Parameters
-    ----------
-    query_refined
-        The refined query object.
-    response
-        The query response object.
-    user_id
-        The ID of the user making the query.
-    n_similar
-        The number of similar contents to retrieve.
-    exclude_archived:
-        Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    QueryResponse | QueryResponseError
-        An appropriate query response object.
-    """
-
-    if not isinstance(response, QueryResponseError):
-        metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        search_results = await get_similar_content_async(
-            user_id=user_id,
-            question=query_refined.query_text,
-            n_similar=n_similar,
-            asession=asession,
-            metadata=metadata,
-            exclude_archived=exclude_archived,
-        )
-        response.search_results = search_results
-
+            if rag_response.answer != RAG_FAILURE_MESSAGE:
+                response.debug_info["extracted_info"] = rag_response.extracted_info
+                response.llm_response = rag_response.answer
+            else:
+                response = QueryResponseError(
+                    query_id=response.query_id,
+                    feedback_secret_key=response.feedback_secret_key,
+                    llm_response=None,
+                    search_results=response.search_results,
+                    debug_info=response.debug_info,
+                    error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
+                    error_message="LLM failed to generate an answer.",
+                )
+                response.debug_info["extracted_info"] = rag_response.extracted_info
+                response.llm_response = None
     return response
 
 

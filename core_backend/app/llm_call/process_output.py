@@ -78,7 +78,7 @@ async def _check_align_score(
     """
     Check the alignment score
     """
-    if isinstance(response, QueryResponseError):
+    if isinstance(response, QueryResponseError) or response.llm_response is None:
         return response
 
     # check if search_results are present
