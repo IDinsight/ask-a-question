@@ -42,7 +42,11 @@ export const appColors = {
   inverseSurface: "#F1F0F7",
   yellow: "#FFC700",
   green: "#018786",
-
+  dashboardUrgent: "#E91E63",
+  dashboardSecondary: "#546E7A",
+  dashboardPrimary: "#2E93FA",
+  dashboardUpvote: "#96E2C3",
+  dashboardDownvote: "#F69198",
 };
 
 export const appStyles = {

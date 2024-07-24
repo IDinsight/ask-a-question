@@ -4,17 +4,14 @@ from core_backend.tests.api.conftest import TEST_USER_API_KEY_2
 
 
 class TestUserCreation:
-    async def test_admin_create_user(
-        self, client: TestClient, fullaccess_token_admin: str
-    ) -> None:
+    def test_admin_create_user(self, client: TestClient, fullaccess_token: str) -> None:
         response = client.post(
             "/user/",
-            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
-                "api_daily_quota": 200,
             },
         )
 
@@ -22,23 +19,22 @@ class TestUserCreation:
         json_response = response.json()
         assert json_response["username"] == "test_username_5"
 
-    async def test_admin_create_user_existing_user(
-        self, client: TestClient, fullaccess_token_admin: str
+    def test_admin_create_user_existing_user(
+        self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.post(
             "/user/",
-            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
-                "api_daily_quota": 200,
             },
         )
 
         assert response.status_code == 400
 
-    async def test_non_admin_create_user(
+    def test_non_admin_create_user(
         self, client: TestClient, fullaccess_token_user2: str
     ) -> None:
         response = client.post(
@@ -48,7 +44,6 @@ class TestUserCreation:
                 "username": "test_username_6",
                 "password": "password",
                 "content_quota": 50,
-                "api_daily_quota": 200,
             },
         )
 
@@ -56,9 +51,8 @@ class TestUserCreation:
 
 
 class TestKeyManagement:
-
-    async def test_get_new_api_key(
-        self, client: TestClient, api_key_user2: str, fullaccess_token_user2: str
+    def test_get_new_api_key(
+        self, client: TestClient, fullaccess_token_user2: str
     ) -> None:
         response = client.put(
             "/user/rotate-key",

@@ -16,7 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from ..config import CHECK_CONTENT_LIMIT
 from ..models import Base, JSONDict
-from ..schemas import FeedbackSentiment
+from ..schemas import FeedbackSentiment, QuerySearchResult
 from ..tags.models import content_tags_table
 from ..users.models import get_content_quota_by_userid
 from ..utils import embedding
@@ -59,6 +59,8 @@ class ContentDB(Base):
 
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     content_tags = relationship(
         "TagDB",
@@ -176,6 +178,24 @@ async def update_content_in_db(
         return result
     else:
         return content_db
+
+
+async def increment_query_count(
+    user_id: int, contents: Dict[int, QuerySearchResult] | None, asession: AsyncSession
+) -> None:
+    """
+    Increments the query count for the content
+    """
+    if contents is None:
+        return
+    for _, content in contents.items():
+        content_db = await get_content_from_db(
+            user_id=user_id, content_id=content.retrieved_content_id, asession=asession
+        )
+        if content_db:
+            content_db.query_count = content_db.query_count + 1
+            await asession.merge(content_db)
+    await asession.commit()
 
 
 async def delete_content_from_db(

@@ -73,19 +73,22 @@ setup-llm-proxy:
 	-@docker rm litellm-proxy
 	@docker system prune -f
 	@sleep 2
-	@docker pull ghcr.io/berriai/litellm:main-v1.34.6
+	@docker pull ghcr.io/berriai/litellm:main-v1.40.10
 	@docker run \
 		--name litellm-proxy \
 		--rm \
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
+		-v "$(CURDIR)/deployment/docker-compose/.gcp_credentials.json":/app/credentials.json \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		-e GEMINI_API_KEY=$(GEMINI_API_KEY) \
 		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
 		-e EMBEDDINGS_ENDPOINT=$(EMBEDDINGS_ENDPOINT) \
+		-e VERTEXAI_PROJECT=$(VERTEXAI_PROJECT) \
+		-e VERTEXAI_LOCATION=$(VERTEXAI_LOCATION) \
+		-e VERTEXAI_ENDPOINT=https://$(VERTEXAI_LOCATION)-aiplatform.googleapis.com/v1 \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
 		-p 4000:4000 \
-		-d ghcr.io/berriai/litellm:main-v1.34.6 \
+		-d ghcr.io/berriai/litellm:main-v1.40.10 \
 		--config /app/config.yaml --detailed_debug
-
 
 teardown-llm-proxy:
 	@docker stop litellm-proxy

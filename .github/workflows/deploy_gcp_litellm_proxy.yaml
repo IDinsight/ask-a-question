@@ -1,0 +1,99 @@
+name: Deploy LiteLLM Proxy to GCP
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+      - production
+    paths:
+      - "deployment/docker-compose/litellm_proxy/**"
+      - ".github/workflows/deploy_gcp_litellm_proxy.yaml"
+  workflow_dispatch:
+
+jobs:
+  DeployLiteLLMProxyToGCP:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    # TODO: replace improve-gcp-deploy with main
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    env:
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Retrieve secrets from Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v2"
+        with:
+          secrets: |-
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+            openai-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-openai-api-key
+            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
+
+      - name: Copy LiteLLM deployment files
+        working-directory: deployment/docker-compose
+        run: |
+          gcloud compute scp litellm_proxy_config.yaml \
+              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/litellm_proxy_config.yaml \
+              --zone ${{ secrets.DEPLOYMENT_ZONE }}
+          echo '${{ steps.secrets.outputs.gcp-credential-json }}' > .gcp_credentials.json
+          gcloud compute scp .gcp_credentials.json \
+              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/.gcp_credentials.json \
+              --zone ${{ secrets.DEPLOYMENT_ZONE }}
+
+      - name: Deploy LiteLLM Proxy container
+        id: "compute-ssh"
+        uses: "google-github-actions/ssh-compute@v1"
+        with:
+          instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
+          zone: "${{ secrets.DEPLOYMENT_ZONE }}"
+          ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
+          command: |
+            docker stop litellm_proxy
+            docker rm litellm_proxy
+            docker run -d \
+              -v ~/litellm_proxy_config.yaml:/app/config.yaml \
+              -v ~/.gcp_credentials.json:/app/credentials.json \
+              -e OPENAI_API_KEY="${{ steps.secrets.outputs.openai-api-key }}" \
+              -e VERTEXAI_PROJECT=${{ secrets.GCP_PROJECT_ID }} \
+              -e VERTEXAI_LOCATION=${{ vars.VERTEX_AI_LOCATION }} \
+              -e VERTEXAI_ENDPOINT=https://${{ vars.VERTEX_AI_LOCATION }}-aiplatform.googleapis.com/v1 \
+              -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
+              --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
+              --name litellm_proxy \
+              ghcr.io/berriai/litellm:main-v1.40.10 --config /app/config.yaml
+            docker system prune -f
+
+      - name: Show deployment command output
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'
+
+      - name: Wait for Application to start
+        id: wait-for-app
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          curl -f -X 'GET' \
+            'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
+            -H 'accept: application/json'

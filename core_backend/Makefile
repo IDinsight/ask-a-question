@@ -46,7 +46,7 @@ teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
 
-# alignscore containers (if needed)
+# alignscore containers (if it is needed)
 setup-alignscore-container:
 	-@docker stop testalignscore
 	-@docker rm testalignscore

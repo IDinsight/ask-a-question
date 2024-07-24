@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - "**.py"
+      - ".github/workflows/tests.yaml"
 env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
@@ -62,7 +63,6 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run Unit Tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PROMETHEUS_MULTIPROC_DIR: /tmp
           REDIS_URL: ${{ env.REDIS_URL }}
         run: |

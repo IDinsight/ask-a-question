@@ -16,17 +16,20 @@ model_list:
     litellm_params:
       model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
-      # model: gemini/gemini-1.5-pro-latest
-      # api_key: "os.environ/GEMINI_API_KEY"
-      # safety_settings:
-      #   - category: HARM_CATEGORY_HARASSMENT
-      #     threshold: BLOCK_NONE
-      #   - category: HARM_CATEGORY_HATE_SPEECH
-      #     threshold: BLOCK_NONE
-      #   - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
-      #     threshold: BLOCK_NONE
-      #   - category: HARM_CATEGORY_DANGEROUS_CONTENT
-      #     threshold: BLOCK_NONE
+  - model_name: generate-gemini-response
+    litellm_params:
+      # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
+      api_base: "os.environ/VERTEXAI_ENDPOINT"
+      model: vertex_ai/gemini-1.5-pro
+      safety_settings:
+        - category: HARM_CATEGORY_HARASSMENT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_HATE_SPEECH
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_DANGEROUS_CONTENT
+          threshold: BLOCK_ONLY_HIGH
   - model_name: detect-language
     litellm_params:
       model: gpt-4o
@@ -51,6 +54,20 @@ model_list:
     litellm_params:
       model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: alignscore-gemini
+    litellm_params:
+      # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
+      api_base: "os.environ/VERTEXAI_ENDPOINT"
+      model: vertex_ai/gemini-1.5-pro
+      safety_settings:
+        - category: HARM_CATEGORY_HARASSMENT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_HATE_SPEECH
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+          threshold: BLOCK_ONLY_HIGH
+        - category: HARM_CATEGORY_DANGEROUS_CONTENT
+          threshold: BLOCK_ONLY_HIGH
   - model_name: urgency-detection
     litellm_params:
       model: gpt-3.5-turbo-1106
@@ -60,3 +77,6 @@ litellm_settings:
   request_timeout: 100 # raise Timeout error if call takes longer than 10s. Sets litellm.request_timeout
   # fallbacks: [{"paraphrase": ["default"]}] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
+  # To use Vertex AI API, uncomment the following lines:
+  # vertex_project: gcp-project-id-12345
+  # vertex_location: us-central1
