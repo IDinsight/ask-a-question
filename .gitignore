@@ -141,6 +141,7 @@ dmypy.json
 
 # Secrets
 *secrets*
+!.secrets.baseline
 .pgpass
 **/*credentials.json
 
