@@ -478,16 +478,6 @@ const CardsGrid = ({
                         archiveContent={(content_id: number) => {
                           return apiCalls.archiveContent(content_id, token!);
                         }}
-                        // onSuccessfulDelete={onSuccessfulDelete}
-                        // onFailedDelete={(content_id: number) => {
-                        //   setSnackMessage({
-                        //     message: `Failed to delete content #${content_id}`,
-                        //     color: "error",
-                        //   });
-                        // }}
-                        // deleteContent={(content_id: number) => {
-                        //   return apiCalls.deleteContent(content_id, token!);
-                        // }}
                         editAccess={accessLevel === "fullaccess"}
                       />
                     </Grid>

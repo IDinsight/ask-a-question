@@ -1,11 +1,10 @@
 import {
   ContentViewModal,
   ArchiveContentModal,
-  // DeleteContentModal,
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 // import { Delete, Edit } from "@mui/icons-material";
-import { Archive, Edit } from "@mui/icons-material";
+import { ArchiveOutlined, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
@@ -23,9 +22,6 @@ const ContentCard = ({
   onSuccessfulArchive,
   onFailedArchive,
   archiveContent,
-  // onSuccessfulDelete,
-  // onFailedDelete,
-  // deleteContent,
   editAccess,
 }: {
   title: string;
@@ -38,15 +34,11 @@ const ContentCard = ({
   onSuccessfulArchive: (content_id: number) => void;
   onFailedArchive: (content_id: number) => void;
   archiveContent: (content_id: number) => Promise<any>;
-  // onSuccessfulDelete: (content_id: number) => void;
-  // onFailedDelete: (content_id: number) => void;
-  // deleteContent: (content_id: number) => Promise<any>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openArchiveModal, setOpenArchiveModal] =
     React.useState<boolean>(false);
-  // const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
 
   return (
     <>
@@ -134,14 +126,13 @@ const ContentCard = ({
           <IconButton
             disabled={!editAccess}
             aria-label="delete"
-            size="small"
+            size="medium"
             onClick={(event) => {
               event.stopPropagation();
               setOpenArchiveModal(true);
-              // setOpenDeleteModal(true);
             }}
           >
-            <Archive fontSize="inherit" />
+            <ArchiveOutlined fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>
@@ -165,14 +156,6 @@ const ContentCard = ({
         onFailedArchive={onFailedArchive}
         archiveContent={archiveContent}
       />
-      {/*<DeleteContentModal*/}
-      {/*  content_id={content_id}*/}
-      {/*  open={openDeleteModal}*/}
-      {/*  onClose={() => setOpenDeleteModal(false)}*/}
-      {/*  onSuccessfulDelete={onSuccessfulDelete}*/}
-      {/*  onFailedDelete={onFailedDelete}*/}
-      {/*  deleteContent={deleteContent}*/}
-      {/*/>*/}
     </>
   );
 };
