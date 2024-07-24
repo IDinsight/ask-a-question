@@ -16,18 +16,19 @@ from ..contents.models import (
     update_votes_in_db,
 )
 from ..database import get_async_session
-from ..llm_call.llm_prompts import RAG_FAILURE_MESSAGE
-from ..llm_call.llm_rag import get_llm_rag_answer
 from ..llm_call.process_input import (
     classify_safety__before,
     identify_language__before,
     paraphrase_question__before,
     translate_question__before,
 )
-from ..llm_call.process_output import check_align_score__after
+from ..llm_call.process_output import (
+    check_align_score__after,
+    generate_llm_response__after,
+)
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, setup_logger
-from .config import N_TOP_CONTENT_FOR_RAG
+from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -39,15 +40,11 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
-    ErrorType,
     QueryBase,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
     ResponseFeedbackBase,
-)
-from .utils import (
-    get_context_string_from_retrieved_contents,
 )
 
 logger = setup_logger()
@@ -104,8 +101,9 @@ async def search(
         response=response_template,
         generate_llm_response=user_query.generate_llm_response,
         user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT_FOR_RAG),
+        n_similar=int(N_TOP_CONTENT),
         asession=asession,
+        exclude_archived=exclude_archived,
     )
 
     if isinstance(response, QueryResponseError):
@@ -123,6 +121,7 @@ async def search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
+@generate_llm_response__after
 @check_align_score__after
 async def search_base(
     query_refined: QueryRefined,
@@ -183,33 +182,6 @@ async def search_base(
     )
     response.search_results = search_results
 
-    if generate_llm_response:
-        # only generate LLM response if no guardrails have failed
-        if not isinstance(response, QueryResponseError):
-            context = get_context_string_from_retrieved_contents(search_results)
-            rag_response = await get_llm_rag_answer(
-                # use the original query text
-                question=query_refined.query_text_original,
-                context=context,
-                original_language=query_refined.original_language,
-                metadata=metadata,
-            )
-
-            if rag_response.answer != RAG_FAILURE_MESSAGE:
-                response.debug_info["extracted_info"] = rag_response.extracted_info
-                response.llm_response = rag_response.answer
-            else:
-                response = QueryResponseError(
-                    query_id=response.query_id,
-                    feedback_secret_key=response.feedback_secret_key,
-                    llm_response=None,
-                    search_results=response.search_results,
-                    debug_info=response.debug_info,
-                    error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
-                    error_message="LLM failed to generate an answer.",
-                )
-                response.debug_info["extracted_info"] = rag_response.extracted_info
-                response.llm_response = None
     return response
 
 

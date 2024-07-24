@@ -12,7 +12,7 @@ from core_backend.app.llm_call.process_input import (
     _translate_question,
 )
 from core_backend.app.llm_call.process_output import _build_evidence, _check_align_score
-from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
+from core_backend.app.question_answer.config import N_TOP_CONTENT
 from core_backend.app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
@@ -53,7 +53,7 @@ class TestEmbeddingsSearch:
 
         if expected_status_code == 200:
             json_search_results = response.json()["search_results"]
-            assert len(json_search_results.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
+            assert len(json_search_results.keys()) == int(N_TOP_CONTENT)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> QueryResponse:

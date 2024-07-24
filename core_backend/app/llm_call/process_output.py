@@ -21,8 +21,10 @@ from ..question_answer.schemas import (
     QueryResponseError,
     QuerySearchResult,
 )
+from ..question_answer.utils import get_context_string_from_retrieved_contents
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
-from .llm_prompts import AlignmentScore
+from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
+from .llm_rag import get_llm_rag_answer
 from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger("OUTPUT RAILS")
@@ -37,9 +39,93 @@ class AlignScoreData(TypedDict):
     claim: str
 
 
+def generate_llm_response__after(func: Callable) -> Callable:
+    """
+    Decorator to generate the LLM response.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        query_refined: QueryRefined,
+        response: QueryResponse | QueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> QueryResponse | QueryResponseError:
+        """
+        Generate the LLM response
+        """
+        response = await func(query_refined, response, *args, **kwargs)
+
+        if not kwargs.get("generate_llm_response", False):
+            return response
+
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
+        response = await _generate_llm_response(query_refined, response, metadata)
+        return response
+
+    return wrapper
+
+
+async def _generate_llm_response(
+    query_refined: QueryRefined,
+    response: QueryResponse,
+    metadata: Optional[dict] = None,
+) -> QueryResponse:
+    """
+    Generate the LLM response.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
+    """
+    if isinstance(response, QueryResponseError):
+        return response
+
+    if response.search_results is None:
+        logger.warning("No search_results found in the response.")
+        return response
+    if query_refined.original_language is None:
+        logger.warning("No original_language found in the query.")
+        return response
+
+    context = get_context_string_from_retrieved_contents(response.search_results)
+    rag_response = await get_llm_rag_answer(
+        # use the original query text
+        question=query_refined.query_text_original,
+        context=context,
+        original_language=query_refined.original_language,
+        metadata=metadata,
+    )
+
+    if rag_response.answer != RAG_FAILURE_MESSAGE:
+        response.debug_info["extracted_info"] = rag_response.extracted_info
+        response.llm_response = rag_response.answer
+    else:
+        response = QueryResponseError(
+            query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=None,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
+            error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
+            error_message="LLM failed to generate an answer.",
+        )
+        response.debug_info["extracted_info"] = rag_response.extracted_info
+        response.llm_response = None
+
+    return response
+
+
 def check_align_score__after(func: Callable) -> Callable:
     """
-    Check the alignment score
+    Check the alignment score.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "llm_response" and "search_results" in the response.
     """
 
     @wraps(func)
@@ -55,28 +141,27 @@ def check_align_score__after(func: Callable) -> Callable:
 
         response = await func(query_refined, response, *args, **kwargs)
 
-        if isinstance(response, QueryResponseError):
+        if not kwargs.get("generate_llm_response", False):
             return response
 
-        if response.llm_response is None:
-            logger.warning(
-                (
-                    "No LLM response found in the response but "
-                    "`check_align_score` was called"
-                )
-            )
-            return response
-        else:
-            return await _check_align_score(response)
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+        )
+        response = await _check_align_score(response, metadata)
+        return response
 
     return wrapper
 
 
 async def _check_align_score(
     response: QueryResponse,
+    metadata: Optional[dict] = None,
 ) -> QueryResponse:
     """
     Check the alignment score
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "llm_response" and "search_results" in the response.
     """
     if isinstance(response, QueryResponseError) or response.llm_response is None:
         return response
@@ -106,7 +191,6 @@ async def _check_align_score(
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        metadata = create_langfuse_metadata(query_id=response.query_id)
         align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
