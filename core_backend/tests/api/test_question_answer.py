@@ -19,7 +19,6 @@ from core_backend.app.question_answer.schemas import (
     QueryResponse,
     QueryResponseError,
     QuerySearchResult,
-    State,
 )
 from core_backend.tests.api.conftest import (
     TEST_USER_API_KEY,
@@ -348,7 +347,6 @@ class TestErrorResponses:
             llm_response=None,
             feedback_secret_key="abc123",
             debug_info={},
-            state=State.IN_PROGRESS,
         )
 
     @pytest.fixture
@@ -555,7 +553,6 @@ class TestAlignScore:
             llm_response="This is a response",
             feedback_secret_key="abc123",
             debug_info={},
-            state=State.IN_PROGRESS,
         )
 
     async def test_score_less_than_threshold(

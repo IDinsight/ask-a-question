@@ -18,7 +18,6 @@ from ..question_answer.schemas import (
     QueryRefined,
     QueryResponse,
     QueryResponseError,
-    State,
 )
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import AlignmentScore
@@ -54,9 +53,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
         response = await func(query_refined, response, *args, **kwargs)
 
-        if query_refined.state == State.ERROR or isinstance(
-            response, QueryResponseError
-        ):
+        if isinstance(response, QueryResponseError):
             return response
 
         if response.llm_response is None:

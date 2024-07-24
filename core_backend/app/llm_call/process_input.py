@@ -17,7 +17,6 @@ from ..question_answer.schemas import (
     QueryRefined,
     QueryResponse,
     QueryResponseError,
-    State,
 )
 from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import (
@@ -414,7 +413,6 @@ async def _paraphrase_question(
             query_id=response.query_id,
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
-        query_refined.state = State.ERROR
         logger.info(
             (
                 f"PARAPHRASE FAILED on query id:  {str(response.query_id)} "

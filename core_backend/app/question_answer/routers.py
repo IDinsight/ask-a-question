@@ -44,7 +44,6 @@ from .schemas import (
     QueryResponse,
     QueryResponseError,
     ResponseFeedbackBase,
-    State,
 )
 from .utils import (
     get_context_string_from_retrieved_contents,
@@ -197,10 +196,8 @@ async def search_with_llm_response(
         )
 
         if rag_response.answer == RAG_FAILURE_MESSAGE:
-            query_refined.state = State.ERROR
             response.llm_response = None
         else:
-            query_refined.state = State.FINAL
             response.llm_response = rag_response.answer
             response.debug_info["llm_answer"] = rag_response.answer
 
@@ -253,7 +250,6 @@ async def search_without_llm_response(
             metadata=metadata,
             exclude_archived=exclude_archived,
         )
-        query_refined.state = State.FINAL
         response.search_results = search_results
 
     return response
