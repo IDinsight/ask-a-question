@@ -302,9 +302,6 @@ class TestGenerateResponse:
             search_results = response.json()["search_results"]
             assert len(search_results) != 0
 
-            result_state = response.json()["state"]
-            assert result_state == ResultState.FINAL
-
     @pytest.mark.parametrize(
         "token, expect_found",
         [

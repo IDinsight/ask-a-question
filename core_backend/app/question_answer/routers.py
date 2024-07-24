@@ -197,10 +197,10 @@ async def search_with_llm_response(
         )
 
         if rag_response.answer == RAG_FAILURE_MESSAGE:
-            response.state = ResultState.ERROR
+            question.state = ResultState.ERROR
             response.llm_response = None
         else:
-            response.state = ResultState.FINAL
+            question.state = ResultState.FINAL
             response.llm_response = rag_response.answer
             response.debug_info["llm_answer"] = rag_response.answer
 
@@ -253,7 +253,7 @@ async def search_without_llm_response(
             metadata=metadata,
             exclude_archived=exclude_archived,
         )
-        response.state = ResultState.FINAL
+        question.state = ResultState.FINAL
         response.search_results = search_results
 
     return response

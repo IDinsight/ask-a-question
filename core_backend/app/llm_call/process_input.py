@@ -412,7 +412,7 @@ async def _paraphrase_question(
             query_id=response.query_id,
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
-        response.state = ResultState.ERROR
+        question.state = ResultState.ERROR
         logger.info(
             (
                 f"PARAPHRASE FAILED on query id:  {str(response.query_id)} "

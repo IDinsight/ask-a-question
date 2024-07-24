@@ -7,6 +7,16 @@ from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment, QuerySearchResult
 
 
+class ResultState(str, Enum):
+    """
+    Enum for Response state
+    """
+
+    IN_PROGRESS = "in_progress"
+    ERROR = "error"
+    FINAL = "final"
+
+
 class QueryBase(BaseModel):
     """
     Question answering query base class.
@@ -37,16 +47,7 @@ class QueryRefined(QueryBase):
 
     query_text_original: str
     original_language: IdentifiedLanguage | None = None
-
-
-class ResultState(str, Enum):
-    """
-    Enum for Response state
-    """
-
-    FINAL = "final"
-    IN_PROGRESS = "in_progress"
-    ERROR = "error"
+    state: ResultState = ResultState.IN_PROGRESS
 
 
 class ErrorType(str, Enum):
@@ -73,7 +74,6 @@ class QueryResponse(BaseModel):
     search_results: Dict[int, QuerySearchResult] | None
     feedback_secret_key: str
     debug_info: dict = {}
-    state: ResultState = ResultState.IN_PROGRESS
 
     model_config = ConfigDict(
         from_attributes=True,

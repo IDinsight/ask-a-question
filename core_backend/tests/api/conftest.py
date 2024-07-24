@@ -35,7 +35,6 @@ from core_backend.app.question_answer.models import ContentFeedbackDB
 from core_backend.app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
-    ResultState,
 )
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
@@ -334,7 +333,6 @@ async def mock_translate_question(
     Monkeypatch call to LLM translation service
     """
     if question.original_language is None:
-        response.state = ResultState.ERROR
         raise ValueError(
             (
                 "Language hasn't been identified. "

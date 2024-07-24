@@ -56,7 +56,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
         if (
             isinstance(llm_response, QueryResponseError)
-            or llm_response.state == ResultState.ERROR
+            or question.state == ResultState.ERROR
         ):
             return llm_response
 
@@ -120,7 +120,6 @@ async def _check_align_score(
             )
         )
         llm_response.llm_response = None
-        llm_response.state = ResultState.ERROR
         llm_response.debug_info["reason"] = "Align score failed"
     llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
 
