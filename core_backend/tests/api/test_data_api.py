@@ -387,6 +387,7 @@ class TestQueryDataAPI:
             else:
                 response_err = QueryResponseError(
                     query_id=query_db.query_id,
+                    feedback_secret_key="test_secret_key",
                     error_message="error",
                     error_type=ErrorType.ALIGNMENT_TOO_LOW,
                 )

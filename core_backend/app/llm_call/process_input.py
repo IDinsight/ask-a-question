@@ -83,7 +83,7 @@ async def _identify_language(
         IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
     )
     query_refined.original_language = identified_lang
-    response.debug_info["query_text_original"] = query_refined.query_text_original
+    response.debug_info["original_query"] = query_refined.query_text_original
     response.debug_info["original_language"] = identified_lang
 
     processed_response = _process_identified_language_response(
@@ -122,8 +122,9 @@ def _process_identified_language_response(
                 error_type = ErrorType.UNSUPPORTED_LANGUAGE
 
         error_response = QueryResponseError(
-            error_message=error_message,
             query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            error_message=error_message,
             error_type=error_type,
         )
         error_response.debug_info.update(response.debug_info)
@@ -175,7 +176,6 @@ async def _translate_question(
     """
 
     # skip if error or already in English
-
     if (
         isinstance(response, QueryResponseError)
         or query_refined.original_language == IdentifiedLanguage.ENGLISH
@@ -199,13 +199,14 @@ async def _translate_question(
         metadata=metadata,
     )
     if translation_response != TRANSLATE_FAILED_MESSAGE:
-        query_refined.query_text = translation_response
+        query_refined.query_text = translation_response  # update text with translation
         response.debug_info["translated_question"] = translation_response
         return query_refined, response
     else:
         error_response = QueryResponseError(
-            error_message="Unable to translate",
             query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            error_message="Unable to translate",
             error_type=ErrorType.UNABLE_TO_TRANSLATE,
         )
         error_response.debug_info.update(response.debug_info)
@@ -251,10 +252,11 @@ async def _classify_safety(
     Classifies the safety of the question.
     """
 
-    if metadata is None:
-        metadata = {}
     if isinstance(response, QueryResponseError):
         return query_refined, response
+
+    if metadata is None:
+        metadata = {}
 
     llm_classified_safety = await _ask_llm_async(
         user_message=query_refined.query_text,
@@ -268,8 +270,9 @@ async def _classify_safety(
         return query_refined, response
     else:
         error_response = QueryResponseError(
-            error_message=f"{safety_classification.value.lower()} found.",
             query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            error_message=f"{safety_classification.value.lower()} found.",
             error_type=ErrorType.QUERY_UNSAFE,
         )
         error_response.debug_info.update(response.debug_info)
@@ -338,8 +341,9 @@ async def _classify_on_off_topic(
 
     if on_off_topic_label == OnOffTopicClassification.OFF_TOPIC:
         error_response = QueryResponseError(
-            error_message="Off-topic query",
             query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            error_message="Off-topic query",
             error_type=ErrorType.OFF_TOPIC,
         )
         error_response.debug_info.update(response.debug_info)
@@ -388,14 +392,15 @@ async def _paraphrase_question(
     metadata: Optional[dict] = None,
 ) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
     """
-    Paraphrases the question. If it is unable to identify the query_refined,
+    Paraphrases the question. If it is unable to identify the question,
     it will return the original sentence.
     """
 
-    if metadata is None:
-        metadata = {}
     if isinstance(response, QueryResponseError):
         return query_refined, response
+
+    if metadata is None:
+        metadata = {}
 
     paraphrase_response = await _ask_llm_async(
         user_message=query_refined.query_text,
@@ -404,13 +409,14 @@ async def _paraphrase_question(
         metadata=metadata,
     )
     if paraphrase_response != PARAPHRASE_FAILED_MESSAGE:
-        query_refined.query_text = paraphrase_response
+        query_refined.query_text = paraphrase_response  # update text with paraphrase
         response.debug_info["paraphrased_question"] = paraphrase_response
         return query_refined, response
     else:
         error_response = QueryResponseError(
-            error_message="Unable to paraphrase the query.",
             query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            error_message="Unable to paraphrase the query.",
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
         logger.info(

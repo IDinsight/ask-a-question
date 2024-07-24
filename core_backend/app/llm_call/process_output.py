@@ -3,7 +3,7 @@ These are functions to check the LLM response
 """
 
 from functools import wraps
-from typing import Any, Callable, Optional, TypedDict
+from typing import Any, Callable, Dict, Optional, TypedDict
 
 import aiohttp
 from pydantic import ValidationError
@@ -15,9 +15,11 @@ from ..config import (
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
+    ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
+    QuerySearchResult,
 )
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import AlignmentScore
@@ -76,19 +78,29 @@ async def _check_align_score(
     """
     Check the alignment score
     """
+    if isinstance(response, QueryResponseError):
+        return response
 
-    evidence = _build_evidence(response)
-    claim = response.llm_response
-    assert claim is not None, "LLM response is None"
+    # check if search_results are present
+    if response.search_results is not None:
+        evidence = _build_evidence(response.search_results)
+    else:
+        logger.warning(("No search_results found in the response."))
+        return response
+
+    # check if llm_response is present
+    if response.llm_response is not None:
+        claim = response.llm_response
+    else:
+        logger.warning(("No llm_response found in the response."))
+        return response
+
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
 
     if ALIGN_SCORE_METHOD is None:
-        logger.warning(
-            "No alignment score method specified but `check_align_score` was called"
-        )
+        logger.warning("No alignment score method specified.")
         return response
-
-    if ALIGN_SCORE_METHOD == "AlignScore":
+    elif ALIGN_SCORE_METHOD == "AlignScore":
         if ALIGN_SCORE_API is not None:
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
@@ -116,8 +128,16 @@ async def _check_align_score(
                 f"Evidence: {evidence}\n"
             )
         )
-        response.llm_response = None
-        response.debug_info["reason"] = "Align score failed"
+        response = QueryResponseError(
+            query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=None,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
+            error_type=ErrorType.ALIGNMENT_TOO_LOW,
+            error_message="Alignment score of LLM response was too low",
+        )
+
     response.debug_info["factual_consistency"] = factual_consistency.copy()
 
     return response
@@ -172,12 +192,11 @@ async def _get_llm_align_score(
     return alignment_score
 
 
-def _build_evidence(response: QueryResponse) -> str:
+def _build_evidence(search_results: Dict[int, QuerySearchResult]) -> str:
     """
-    Build the evidence used by the LLM response
+    Build the evidence string from the search results
     """
     evidence = ""
-    if response.search_results is not None:
-        for _, result in response.search_results.items():
-            evidence += result.text + "\n"
+    for _, result in search_results.items():
+        evidence += result.text + "\n"
     return evidence

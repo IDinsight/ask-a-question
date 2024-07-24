@@ -39,6 +39,7 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    ErrorType,
     QueryBase,
     QueryRefined,
     QueryResponse,
@@ -70,7 +71,7 @@ router = APIRouter(
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
-            "description": "Bad Request",
+            "description": "Guardrail failure",
         }
     },
 )
@@ -83,6 +84,9 @@ async def search(
     """
     Search endpoint finds the most similar content to the user query and optionally
     generates an LLM response.
+
+    If any guardrails fail, the embeddings search is still done and a
+    `QueryResponseError` object is returned with it and the details of the failure.
     """
 
     (
@@ -167,27 +171,22 @@ async def search_with_llm_response(
     """
 
     if query_refined.original_language is None:
-        raise ValueError(
-            (
-                "Language hasn't been identified. "
-                "Identify language before calling this function."
-            )
-        )
+        raise ValueError(("Identify language before calling this function."))
 
+    # always do the embeddings search even if some guardrails have failed
+    metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
+    search_results = await get_similar_content_async(
+        user_id=user_id,
+        question=query_refined.query_text,  # use latest version of the text
+        n_similar=n_similar,
+        asession=asession,
+        metadata=metadata,
+    )
+    response.search_results = search_results
+
+    # only generate LLM response if no guardrails have failed
     if not isinstance(response, QueryResponseError):
-        metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-        search_results = await get_similar_content_async(
-            user_id=user_id,
-            question=query_refined.query_text,
-            n_similar=n_similar,
-            asession=asession,
-            metadata=metadata,
-            exclude_archived=exclude_archived,
-        )
-
-        response.search_results = search_results
         context = get_context_string_from_retrieved_contents(search_results)
-
         rag_response = await get_llm_rag_answer(
             question=query_refined.query_text_original,  # use the original query text
             context=context,
@@ -195,13 +194,21 @@ async def search_with_llm_response(
             metadata=metadata,
         )
 
-        if rag_response.answer == RAG_FAILURE_MESSAGE:
-            response.llm_response = None
-        else:
+        if rag_response.answer != RAG_FAILURE_MESSAGE:
+            response.debug_info["extracted_info"] = rag_response.extracted_info
             response.llm_response = rag_response.answer
-            response.debug_info["llm_answer"] = rag_response.answer
-
-        response.debug_info["extracted_info"] = rag_response.extracted_info
+        else:
+            response = QueryResponseError(
+                query_id=response.query_id,
+                feedback_secret_key=response.feedback_secret_key,
+                llm_response=None,
+                search_results=response.search_results,
+                debug_info=response.debug_info,
+                error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
+                error_message="LLM failed to generate an answer.",
+            )
+            response.debug_info["extracted_info"] = rag_response.extracted_info
+            response.llm_response = None
 
     return response
 
@@ -283,18 +290,16 @@ async def get_user_query_and_response(
         user_query=user_query,
         asession=asession,
     )
-    # prepare placeholder response object
-    response = QueryResponse(
-        query_id=user_query_db.query_id,
-        search_results=None,
-        llm_response=None,
-        feedback_secret_key=user_query_db.feedback_secret_key,
-    )
     # prepare refined query object
     user_query_refined = QueryRefined(
         **user_query.model_dump(), query_text_original=user_query.query_text
     )
-    return user_query_db, user_query_refined, response
+    # prepare placeholder response object
+    response_template = QueryResponse(
+        query_id=user_query_db.query_id,
+        feedback_secret_key=user_query_db.feedback_secret_key,
+    )
+    return user_query_db, user_query_refined, response_template
 
 
 @router.post("/response-feedback")

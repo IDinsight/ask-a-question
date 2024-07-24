@@ -603,5 +603,6 @@ class TestAlignScore:
     def test_build_evidence(
         self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        evidence = _build_evidence(user_query_response)
-        assert evidence == "hello world\ngoodbye universe\n"
+        if user_query_response.search_results is not None:
+            evidence = _build_evidence(user_query_response.search_results)
+            assert evidence == "hello world\ngoodbye universe\n"

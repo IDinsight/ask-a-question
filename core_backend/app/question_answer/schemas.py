@@ -50,6 +50,7 @@ class ErrorType(str, Enum):
     UNSUPPORTED_LANGUAGE = "unsupported_language"
     UNABLE_TO_TRANSLATE = "unable_to_translate"
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
+    UNABLE_TO_GENERATE_RESPONSE = "unable_to_generate_response"
     ALIGNMENT_TOO_LOW = "alignment_too_low"
 
 
@@ -59,9 +60,9 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int
-    llm_response: Optional[str] = None
-    search_results: Dict[int, QuerySearchResult] | None
     feedback_secret_key: str
+    llm_response: Optional[str] = None
+    search_results: Dict[int, QuerySearchResult] | None = None
     debug_info: dict = {}
 
     model_config = ConfigDict(
@@ -70,8 +71,9 @@ class QueryResponse(BaseModel):
             "examples": [
                 {
                     "query_id": 1,
+                    "feedback_secret_key": "secret-key-12345-abcde",
                     "llm_response": "Example LLM response "
-                    "(null if generate_llm_response is False)",
+                    "(null if generate_llm_response is false)",
                     "search_results": {
                         "0": {
                             "title": "Example content title",
@@ -86,7 +88,6 @@ class QueryResponse(BaseModel):
                             "distance": 0.2,
                         },
                     },
-                    "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
                 }
             ]
@@ -94,17 +95,43 @@ class QueryResponse(BaseModel):
     )
 
 
-class QueryResponseError(BaseModel):
+class QueryResponseError(QueryResponse):
     """
-    Pydantic model when there is an error
+    Pydantic model when there is an error. Inherits from QueryResponse.
     """
 
-    query_id: int
-    error_message: Optional[str] = None
     error_type: ErrorType
-    debug_info: dict = {}
+    error_message: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "error_type": "query_unsafe",
+                    "error_message": "Query is unsafe",
+                    "query_id": 1,
+                    "feedback_secret_key": "secret-key-12345-abcde",
+                    "llm_response": "null",
+                    "search_results": {
+                        "0": {
+                            "title": "Example content title",
+                            "text": "Example content text",
+                            "id": 23,
+                            "distance": 0.1,
+                        },
+                        "1": {
+                            "title": "Another example content title",
+                            "text": "Another example content text",
+                            "id": 12,
+                            "distance": 0.2,
+                        },
+                    },
+                    "debug_info": {"example": "debug-info"},
+                }
+            ]
+        },
+    )
 
 
 class ResponseFeedbackBase(BaseModel):
