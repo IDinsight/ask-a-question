@@ -191,7 +191,7 @@ async def search_with_llm_response(
         rag_response = await get_llm_rag_answer(
             question=query_refined.query_text_original,  # use the original query text
             context=context,
-            response_language=query_refined.original_language,
+            original_language=query_refined.original_language,
             metadata=metadata,
         )
 
