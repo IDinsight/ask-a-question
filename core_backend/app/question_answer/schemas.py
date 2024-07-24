@@ -88,7 +88,6 @@ class QueryResponse(BaseModel):
                     },
                     "feedback_secret_key": "secret-key-12345-abcde",
                     "debug_info": {"example": "debug-info"},
-                    "state": "final",
                 }
             ]
         },
