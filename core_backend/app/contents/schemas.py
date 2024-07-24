@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime
 from typing import Annotated, List
 
@@ -22,6 +23,8 @@ class ContentCreate(BaseModel):
                 {
                     "content_title": "An example content title",
                     "content_text": "And an example content text!",
+                    "content_tags": [1, 4],
+                    "content_metadata": {"example": "optional metadata"},
                 },
             ]
         },
@@ -41,6 +44,18 @@ class ContentRetrieve(ContentCreate):
     negative_votes: int
     is_archived: bool
 
+    model_config = deepcopy(ContentCreate.model_config)
+    model_config["json_schema_extra"]["examples"][0].update(
+        {
+            "content_id": 1,
+            "user_id": 1,
+            "created_datetime_utc": "2024-01-01T00:00:00",
+            "updated_datetime_utc": "2024-01-01T00:00:00",
+            "positive_votes": 1,
+            "negative_votes": 0,
+        }
+    )
+
 
 class ContentUpdate(ContentCreate):
     """
@@ -49,16 +64,11 @@ class ContentUpdate(ContentCreate):
 
     content_id: int
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "content_id": 1,
-                    "content_title": "A new content title",
-                    "content_text": "A new content text!",
-                },
-            ]
-        },
+    model_config = deepcopy(ContentCreate.model_config)
+    model_config["json_schema_extra"]["examples"][0].update(
+        {
+            "content_id": 1,
+        }
     )
 
 
