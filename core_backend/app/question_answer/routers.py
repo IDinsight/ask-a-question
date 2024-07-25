@@ -1,6 +1,10 @@
+"""This module contains the FastAPI router for the content search and AI response
+endpoints.
+"""
+
 from typing import Tuple
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,17 +68,24 @@ router = APIRouter(
 @router.post(
     "/search",
     response_model=QueryResponse,
-    responses={400: {"model": QueryResponseError, "description": "Bad Request"}},
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Bad Request",
+        }
+    },
 )
 async def search(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
+    exclude_archived: bool = True,
 ) -> QueryResponse | JSONResponse:
     """
     Search endpoint finds the most similar content to the user query and optionally
     generates an LLM response.
     """
+
     (
         user_query_db,
         user_query_refined,
@@ -92,6 +103,7 @@ async def search(
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_RAG),
             asession=asession,
+            exclude_archived=exclude_archived,
         )
     else:
         response = await search_without_llm_response(
@@ -100,15 +112,18 @@ async def search(
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT_FOR_SEARCH),
             asession=asession,
+            exclude_archived=exclude_archived,
         )
 
     if isinstance(response, QueryResponseError):
         await save_query_response_error_to_db(user_query_db, response, asession)
-        return JSONResponse(status_code=400, content=response.model_dump())
-    else:
-        await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(user_db.user_id, response.search_results, asession)
-        return response
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+
+    await save_query_response_to_db(user_query_db, response, asession)
+    await increment_query_count(user_db.user_id, response.search_results, asession)
+    return response
 
 
 @check_align_score__after
@@ -120,10 +135,36 @@ async def search_with_llm_response(
     user_id: int,
     n_similar: int,
     asession: AsyncSession,
+    exclude_archived: bool = True,
 ) -> QueryResponse | QueryResponseError:
+    """Get similar content and construct the LLM answer for the user query.
+
+    Parameters
+    ----------
+    question
+        The refined query object.
+    response
+        The query response object.
+    user_id
+        The ID of the user making the query.
+    n_similar
+        The number of similar contents to retrieve.
+    asession
+        `AsyncSession` object for database transactions.
+    exclude_archived
+        Specifies whether to exclude archived content.
+
+    Returns
+    -------
+    QueryResponse | QueryResponseError
+        An appropriate query response object.
+
+    Raises
+    ------
+    ValueError
+        If the question language is not identified.
     """
-    Get similar content and construct the LLM answer for the user query.
-    """
+
     if question.original_language is None:
         raise ValueError(
             (
@@ -140,6 +181,7 @@ async def search_with_llm_response(
             n_similar=n_similar,
             asession=asession,
             metadata=metadata,
+            exclude_archived=exclude_archived,
         )
 
         response.search_results = search_results
@@ -173,10 +215,31 @@ async def search_without_llm_response(
     user_id: int,
     n_similar: int,
     asession: AsyncSession,
+    exclude_archived: bool = True,
 ) -> QueryResponse | QueryResponseError:
+    """Get similar content without generating a LLM response.
+
+    Parameters
+    ----------
+    question
+        The refined query object.
+    response
+        The query response object.
+    user_id
+        The ID of the user making the query.
+    n_similar
+        The number of similar contents to retrieve.
+    exclude_archived:
+        Specifies whether to exclude archived content.
+    asession
+        `AsyncSession` object for database transactions.
+
+    Returns
+    -------
+    QueryResponse | QueryResponseError
+        An appropriate query response object.
     """
-    Get similar contents without generating a LLM response.
-    """
+
     if not isinstance(response, QueryResponseError):
         metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
         search_results = await get_similar_content_async(
@@ -185,6 +248,7 @@ async def search_without_llm_response(
             n_similar=n_similar,
             asession=asession,
             metadata=metadata,
+            exclude_archived=exclude_archived,
         )
         response.state = ResultState.FINAL
         response.search_results = search_results
@@ -195,10 +259,25 @@ async def search_without_llm_response(
 async def get_user_query_and_response(
     user_id: int, user_query: QueryBase, asession: AsyncSession
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
+    """Save the user query to the `QueryDB` database and construct placeholder query
+    and response objects to pass on.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user making the query.
+    user_query
+        The user query database object.
+    asession
+        `AsyncSession` object for database transactions.
+
+    Returns
+    -------
+    Tuple[QueryDB, QueryRefined, QueryResponse]
+        The user query database object, the refined query object, and the response
+        object.
     """
-    Save the user query to the db and construct placeholder query and response objects
-    to pass on.
-    """
+
     # save query to db
     user_query_db = await save_user_query_to_db(
         user_id=user_id,
@@ -240,7 +319,7 @@ async def feedback(
     )
     if is_matched is False:
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "message": f"Secret key does not match query id: {feedback.query_id}"
             },
@@ -248,7 +327,7 @@ async def feedback(
 
     feedback_db = await save_response_feedback_to_db(feedback, asession)
     return JSONResponse(
-        status_code=200,
+        status_code=status.HTTP_200_OK,
         content={
             "message": (
                 f"Added Feedback: {feedback_db.feedback_id} "
@@ -279,40 +358,40 @@ async def content_feedback(
     )
     if is_matched is False:
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "message": f"Secret key does not match query id: {feedback.query_id}"
             },
         )
-    else:
-        try:
-            feedback_db = await save_content_feedback_to_db(feedback, asession)
-        except IntegrityError as e:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "message": (f"Content id: {feedback.content_id} does not exist."),
-                    "details": {
-                        "content_id": feedback.content_id,
-                        "query_id": feedback.query_id,
-                        "exception": "IntegrityError",
-                        "exception_details": str(e),
-                    },
-                },
-            )
-        await update_votes_in_db(
-            user_id=user_db.user_id,
-            content_id=feedback.content_id,
-            vote=feedback.feedback_sentiment,
-            asession=asession,
-        )
+
+    try:
+        feedback_db = await save_content_feedback_to_db(feedback, asession)
+    except IntegrityError as e:
         return JSONResponse(
-            status_code=200,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": (
-                    f"Added Feedback: {feedback_db.feedback_id} "
-                    f"for Query: {feedback_db.query_id} "
-                    f"for Content: {feedback_db.content_id}"
-                )
+                "message": f"Content id: {feedback.content_id} does not exist.",
+                "details": {
+                    "content_id": feedback.content_id,
+                    "query_id": feedback.query_id,
+                    "exception": "IntegrityError",
+                    "exception_details": str(e),
+                },
             },
         )
+    await update_votes_in_db(
+        user_id=user_db.user_id,
+        content_id=feedback.content_id,
+        vote=feedback.feedback_sentiment,
+        asession=asession,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": (
+                f"Added Feedback: {feedback_db.feedback_id} "
+                f"for Query: {feedback_db.query_id} "
+                f"for Content: {feedback_db.content_id}"
+            )
+        },
+    )

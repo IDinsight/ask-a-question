@@ -421,11 +421,13 @@ async def _get_content_embeddings(
 
 
 async def get_similar_content_async(
+    *,
     user_id: int,
     question: str,
     n_similar: int,
     asession: AsyncSession,
     metadata: Optional[dict] = None,
+    exclude_archived: bool = True,
 ) -> Dict[int, QuerySearchResult]:
     """Get the most similar points in the vector table.
 
@@ -441,6 +443,8 @@ async def get_similar_content_async(
         `AsyncSession` object for database transactions.
     metadata
         The metadata to use for the embedding generation
+    exclude_archived
+        Specifies whether to exclude archived content.
 
     Returns
     -------
@@ -461,17 +465,22 @@ async def get_similar_content_async(
         user_id=user_id,
         question_embedding=question_embedding,
         n_similar=n_similar,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
 
 async def get_search_results(
+    *,
     user_id: int,
     question_embedding: List[float],
     n_similar: int,
+    exclude_archived: bool = True,
     asession: AsyncSession,
 ) -> Dict[int, QuerySearchResult]:
     """Get similar content to given embedding and return search results.
+
+    NB: We first exclude archived content and then order by the cosine distance.
 
     Parameters
     ----------
@@ -481,27 +490,30 @@ async def get_search_results(
         The embedding vector of the question to search for.
     n_similar
         The number of similar content items to retrieve.
+    exclude_archived
+        Specifies whether to exclude archived content.
     asession
         `AsyncSession` object for database transactions.
 
     Returns
     -------
-    Dict[int, tuple[str, str, int, float]]
+    Dict[int, QuerySearchResult]
         A dictionary of similar content items if they exist, otherwise an empty
         dictionary
     """
 
-    query = (
-        select(
-            ContentDB,
-            ContentDB.content_embedding.cosine_distance(question_embedding).label(
-                "distance"
-            ),
-        )
-        .where(ContentDB.user_id == user_id)
-        .order_by(ContentDB.content_embedding.cosine_distance(question_embedding))
-        .limit(n_similar)
-    )
+    query = select(
+        ContentDB,
+        ContentDB.content_embedding.cosine_distance(question_embedding).label(
+            "distance"
+        ),
+    ).where(ContentDB.user_id == user_id)
+    if exclude_archived:
+        query = query.where(ContentDB.is_archived == false())
+    query = query.order_by(
+        ContentDB.content_embedding.cosine_distance(question_embedding)
+    ).limit(n_similar)
+
     search_result = (await asession.execute(query)).all()
 
     results_dict = {}
