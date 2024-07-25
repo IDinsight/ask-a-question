@@ -66,9 +66,6 @@ class QueryDB(Base):
     response: Mapped[List["QueryResponseDB"]] = relationship(
         "QueryResponseDB", back_populates="query", lazy=True
     )
-    response_error: Mapped[List["QueryResponseErrorDB"]] = relationship(
-        "QueryResponseErrorDB", back_populates="query", lazy=True
-    )
 
     def __repr__(self) -> str:
         """Construct the string representation of the `QueryDB` object.
@@ -165,6 +162,10 @@ class QueryResponseDB(Base):
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    error_type: Mapped[str] = mapped_column(String, nullable=True)
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
@@ -184,7 +185,7 @@ class QueryResponseDB(Base):
 
 async def save_query_response_to_db(
     user_query_db: QueryDB,
-    response: QueryResponse,
+    response: QueryResponse | QueryResponseError,
     asession: AsyncSession,
 ) -> QueryResponseDB:
     """Saves the user query response to the database.
@@ -204,88 +205,31 @@ async def save_query_response_to_db(
         The user query response database object.
     """
 
-    user_query_responses_db = QueryResponseDB(
-        query_id=user_query_db.query_id,
-        search_results=response.model_dump()["search_results"],
-        llm_response=response.model_dump()["llm_response"],
-        response_datetime_utc=datetime.now(timezone.utc),
-    )
+    if isinstance(response, QueryResponse):
+        user_query_responses_db = QueryResponseDB(
+            query_id=user_query_db.query_id,
+            search_results=response.model_dump()["search_results"],
+            llm_response=response.model_dump()["llm_response"],
+            response_datetime_utc=datetime.now(timezone.utc),
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+        )
+    elif isinstance(response, QueryResponseError):
+        user_query_responses_db = QueryResponseDB(
+            query_id=user_query_db.query_id,
+            search_results=response.model_dump()["search_results"],
+            llm_response=response.model_dump()["llm_response"],
+            response_datetime_utc=datetime.now(timezone.utc),
+            debug_info=response.model_dump()["debug_info"],
+            is_error=True,
+            error_type=response.error_type,
+            error_message=response.error_message,
+        )
+
     asession.add(user_query_responses_db)
     await asession.commit()
     await asession.refresh(user_query_responses_db)
     return user_query_responses_db
-
-
-class QueryResponseErrorDB(Base):
-    """ORM for managing error responses sent to the user.
-
-    This database ties into the Admin app and stores various fields associated with
-    error responses to a user's query.
-    """
-
-    __tablename__ = "query-response-error"
-
-    error_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
-    error_message: Mapped[str] = mapped_column(String, nullable=False)
-    error_type: Mapped[str] = mapped_column(String, nullable=False)
-    error_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-
-    query: Mapped[QueryDB] = relationship(
-        "QueryDB", back_populates="response_error", lazy=True
-    )
-
-    def __repr__(self) -> str:
-        """Construct the string representation of the `QueryResponseErrorDB` object.
-
-        Returns
-        -------
-        str
-            A string representation of the `QueryResponseErrorDB` object.
-        """
-
-        return (
-            f"<Error for query #{self.query_id}: "
-            f"{self.error_type} | {self.error_message}>"
-        )
-
-
-async def save_query_response_error_to_db(
-    user_query_db: QueryDB,
-    error: QueryResponseError,
-    asession: AsyncSession,
-) -> QueryResponseErrorDB:
-    """Saves the user query response error to the database.
-
-    Parameters
-    ----------
-    user_query_db
-        The user query database object.
-    error
-        The query response error object.
-    asession
-        `AsyncSession` object for database
-
-    Returns
-    -------
-    QueryResponseErrorDB
-        The user query response error database object.
-    """
-
-    user_query_response_error_db = QueryResponseErrorDB(
-        query_id=user_query_db.query_id,
-        error_message=error.error_message,
-        error_type=error.error_type,
-        error_datetime_utc=datetime.now(timezone.utc),
-        debug_info=error.debug_info,
-    )
-    asession.add(user_query_response_error_db)
-    await asession.commit()
-    await asession.refresh(user_query_response_error_db)
-    return user_query_response_error_db
 
 
 class ResponseFeedbackDB(Base):

@@ -33,7 +33,6 @@ from .models import (
     QueryDB,
     check_secret_key_match,
     save_content_feedback_to_db,
-    save_query_response_error_to_db,
     save_query_response_to_db,
     save_response_feedback_to_db,
     save_user_query_to_db,
@@ -105,15 +104,18 @@ async def search(
         exclude_archived=exclude_archived,
     )
 
-    if isinstance(response, QueryResponseError):
-        await save_query_response_error_to_db(user_query_db, response, asession)
+    if isinstance(response, QueryResponse):
+        await save_query_response_to_db(user_query_db, response, asession)
+        await increment_query_count(user_db.user_id, response.search_results, asession)
+        return response
+    elif isinstance(response, QueryResponseError):
+        await save_query_response_to_db(user_query_db, response, asession)
+        await increment_query_count(user_db.user_id, response.search_results, asession)
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
-
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(user_db.user_id, response.search_results, asession)
-    return response
+    else:
+        raise ValueError("Unexpected response type.")
 
 
 @identify_language__before

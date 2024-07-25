@@ -19,7 +19,6 @@ from ..utils import setup_logger
 from .schemas import (
     ContentFeedbackExtract,
     QueryExtract,
-    QueryResponseErrorExtract,
     QueryResponseExtract,
     ResponseFeedbackExtract,
     UrgencyQueryExtract,
@@ -146,7 +145,6 @@ async def get_queries(
             joinedload(QueryDB.response_feedback),
             joinedload(QueryDB.content_feedback),
             joinedload(QueryDB.response),
-            joinedload(QueryDB.response_error),
         )
     )
     queries = result.unique().scalars().all()
@@ -244,10 +242,6 @@ def convert_query_to_pydantic_model(query: QueryDB) -> QueryExtract:
         query_datetime_utc=query.query_datetime_utc,
         response=[
             QueryResponseExtract.model_validate(response) for response in query.response
-        ],
-        response_error=[
-            QueryResponseErrorExtract.model_validate(response_error)
-            for response_error in query.response_error
         ],
         response_feedback=[
             ResponseFeedbackExtract.model_validate(feedback)
