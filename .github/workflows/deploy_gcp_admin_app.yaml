@@ -14,21 +14,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  set-env:
+    # This step outputs the deployment environment name.
+    # It is set to `production` if the workflow is triggered by a release or a push to
+    # `production` branch.
+    # It is set to `testing` if the workflow was triggered by a push to `main` branch
+    # or `testing` branch.
+    # Otherwise, set the environment to the branch name.
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ (github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
+
   DeployAdminAppToGCP:
+    needs: [set-env]
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: "read"
       id-token: "write"
 
-    # Set the environment to production if a release was created on the main branch. If
-    # this is main branch but not triggered by a release, set the environment to
-    # testing. Otherwise, set the environment to the branch name.
-    environment: gcp-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
+    environment: gcp-${{ needs.set-env.outputs.env_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
-      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -55,6 +65,7 @@ jobs:
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
       - name: Build and push admin_app image
+        if: ${{ needs.set-env.outputs.env_name == 'testing' }}
         working-directory: admin_app
         run: |
           docker build \
@@ -62,6 +73,17 @@ jobs:
             --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
             -t ${{ env.REPO }}/admin_app:latest \
             -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
+            .
+          docker image push --all-tags ${{ env.REPO }}/admin_app
+
+      - name: Build and push admin_app image to production
+        if: ${{ needs.set-env.outputs.env_name == 'production' }}
+        working-directory: admin_app
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
+            --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
+            -t ${{ env.REPO }}/admin_app:${{ github.ref_name }}
             .
           docker image push --all-tags ${{ env.REPO }}/admin_app
 
