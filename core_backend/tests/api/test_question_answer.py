@@ -358,6 +358,7 @@ class TestGenerateResponse:
         user_query = {
             "query_text": "What is the capital of France?",
             "generate_tts": generate_tts,
+            "generate_llm_response": True,
         }
 
         with patch("core_backend.app.voice_api.text_to_speech.gTTS", mock_gtts):

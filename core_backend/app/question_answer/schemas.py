@@ -25,6 +25,7 @@ class QueryBase(BaseModel):
                     "query_text": "What is AAQ?",
                     "generate_llm_response": False,
                     "query_metadata": {"some_key": "some_value"},
+                    "generate_tts": False,
                 },
             ]
         },
