@@ -15,15 +15,20 @@ on:
 
 jobs:
   set-env:
-    # This step outputs the deployment environment name.
-    # It is set to `production` if the workflow is triggered by a release or a push to
-    # `production` branch.
-    # It is set to `testing` if the workflow was triggered by a push to `main` branch
-    # or `testing` branch.
-    # Otherwise, set the environment to the branch name.
     runs-on: ubuntu-latest
     outputs:
-      env_name: ${{ (github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
+      env_name: ${{ steps.set-env.outputs.env_name }}
+    steps:
+      - name: Resolve deployment environment name
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "release" && "${{ github.event.action }}  == "released"]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_ENV"
+          fi
 
   DeployAdminAppToGCP:
     needs: [set-env]
