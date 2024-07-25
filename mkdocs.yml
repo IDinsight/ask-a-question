@@ -19,6 +19,8 @@ nav:
       - Usage: usage.md
       - Roadmap: roadmap.md
 
+  - Try it ↗︎: https://app.ask-a-question.com
+
   - Latest Updates:
       - blog/index.md
 
@@ -29,11 +31,11 @@ nav:
               - components/admin-app/index.md
               - Manage Content: components/admin-app/manage-content.md
               - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
-              - Playground: components/admin-app/playground.md
+              - Test: components/admin-app/playground.md
+              - Dashboard: components/admin-app/dashboard.md
           - Question-Answering Service:
               - components/qa-service/index.md
-              - Semantic Search: components/qa-service/semantic-search.md
-              - LLM Response: components/qa-service/llm-response.md
+              - Search: components/qa-service/search.md
               - Response Feedback: components/qa-service/response-feedback.md
               - Content Feedback: components/qa-service/content-feedback.md
           - Urgency Detection:
@@ -53,18 +55,11 @@ nav:
           - Botpress: integrations/chat_managers/botpress_v12.md
           - Turn.io: integrations/chat_managers/turn.io/turn.md
           - Glific: integrations/chat_managers/glific/glific.md
-      - WhatsApp Connector:
-          - Setup: integrations/whatsapp/setup.md
-          - Testing: integrations/whatsapp/testing.md
 
   - Deploy:
       - Quick setup with Docker Compose: deployment/quick-setup.md
       - Architecture: deployment/architecture.md
       - Configuring AAQ: deployment/config-options.md
-      - AWS:
-          - deployment/aws/index.md
-          - Infrastructure: deployment/aws/infrastructure.md
-          - CI/CD: deployment/aws/cicd.md
 
   - Contribute:
       - Guidelines: develop/contributing.md
@@ -74,6 +69,8 @@ nav:
 
   - Contact us:
       - Team: contact_us.md
+
+  - API docs ↗︎: https://app.ask-a-question.com/api/docs
 
 # Themes and extensions
 theme:
@@ -134,3 +131,4 @@ plugins:
   - search
   - blog:
       post_excerpt: required
+  - open-in-new-tab

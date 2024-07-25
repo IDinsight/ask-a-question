@@ -53,14 +53,15 @@ services:
       - .env
 
   litellm_proxy:
-    image: ghcr.io/berriai/litellm:main-v1.34.6
+    image: ghcr.io/berriai/litellm:main-v1.40.10
     restart: always
     env_file:
       - .env
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
+      - ./.gcp_credentials.json:/app/credentials.json
     command:
-      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
 
   alignScore:
     image: idinsight/alignscore-base:latest

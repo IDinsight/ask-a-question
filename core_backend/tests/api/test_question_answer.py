@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -36,7 +36,7 @@ class TestEmbeddingsSearch:
             (TEST_USER_API_KEY, 200),
         ],
     )
-    async def test_content_response(
+    def test_search_results(
         self,
         token: str,
         expected_status_code: int,
@@ -44,22 +44,26 @@ class TestEmbeddingsSearch:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_content_response = response.json()["content_response"]
-            assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
+            json_search_results = response.json()["search_results"]
+            assert len(json_search_results.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> QueryResponse:
         response = client.post(
-            "/embeddings-search",
+            "/search",
             json={
                 "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
             },
             headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
@@ -74,14 +78,14 @@ class TestEmbeddingsSearch:
             (TEST_USER_API_KEY, 200, "/content-feedback"),
         ],
     )
-    async def test_response_feedback_correct_token(
+    def test_response_feedback_correct_token(
         self,
         token: str,
         expected_status_code: int,
         endpoint: str,
         client: TestClient,
         question_response: Dict[str, Any],
-        faq_contents: Dict[str, Any],
+        faq_contents: List[int],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -94,7 +98,7 @@ class TestEmbeddingsSearch:
         }
 
         if endpoint == "/content-feedback":
-            json["content_id"] = 1
+            json["content_id"] = faq_contents[0]
 
         response = client.post(
             endpoint,
@@ -104,7 +108,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == expected_status_code
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    async def test_response_feedback_incorrect_secret(
+    def test_response_feedback_incorrect_secret(
         self,
         endpoint: str,
         client: TestClient,
@@ -129,7 +133,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    async def test_response_feedback_incorrect_query_id(
+    def test_response_feedback_incorrect_query_id(
         self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
     ) -> None:
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -149,7 +153,7 @@ class TestEmbeddingsSearch:
         assert response.status_code == 400
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    async def test_response_feedback_incorrect_sentiment(
+    def test_response_feedback_incorrect_sentiment(
         self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
     ) -> None:
         query_id = question_response["query_id"]
@@ -173,8 +177,12 @@ class TestEmbeddingsSearch:
         assert response.status_code == 422
 
     @pytest.mark.parametrize("endpoint", ["/response-feedback", "/content-feedback"])
-    async def test_response_feedback_sentiment_only(
-        self, endpoint: str, client: TestClient, question_response: Dict[str, Any]
+    def test_response_feedback_sentiment_only(
+        self,
+        endpoint: str,
+        client: TestClient,
+        question_response: Dict[str, Any],
+        faq_contents: List[int],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
@@ -185,7 +193,7 @@ class TestEmbeddingsSearch:
             "feedback_secret_key": feedback_secret_key,
         }
         if endpoint == "/content-feedback":
-            json["content_id"] = 1
+            json["content_id"] = faq_contents[0]
 
         response = client.post(
             endpoint,
@@ -201,23 +209,26 @@ class TestEmbeddingsSearch:
             (TEST_USER_API_KEY_2, False),
         ],
     )
-    async def test_user2_access_user1_content(
+    def test_user2_access_user1_content(
         self,
         client: TestClient,
         token: str,
         expect_found: bool,
+        faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={
+                "query_text": "Tell me about camping",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -226,17 +237,25 @@ class TestEmbeddingsSearch:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
 
-    @pytest.mark.parametrize("content_id, response_code", ([1, 200], [999, 400]))
-    async def test_content_feedback_check_content_id(
+    @pytest.mark.parametrize(
+        "content_id_valid, response_code", ([True, 200], [False, 400])
+    )
+    def test_content_feedback_check_content_id(
         self,
-        content_id: int,
+        content_id_valid: str,
         response_code: int,
         client: TestClient,
         question_response: Dict[str, Any],
-        faq_contents: Dict[str, Any],
+        faq_contents: List[int],
     ) -> None:
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
+
+        if content_id_valid:
+            content_id = faq_contents[0]
+        else:
+            content_id = 99999
+
         response = client.post(
             "/content-feedback",
             json={
@@ -248,6 +267,7 @@ class TestEmbeddingsSearch:
             },
             headers={"Authorization": f"Bearer {TEST_USER_API_KEY}"},
         )
+
         assert response.status_code == response_code
 
 
@@ -259,7 +279,7 @@ class TestGenerateResponse:
             (TEST_USER_API_KEY, 200),
         ],
     )
-    async def test_llm_response(
+    def test_llm_response(
         self,
         token: str,
         expected_status_code: int,
@@ -267,8 +287,11 @@ class TestGenerateResponse:
         faq_contents: pytest.FixtureRequest,
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": True,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
@@ -277,8 +300,8 @@ class TestGenerateResponse:
             llm_response = response.json()["llm_response"]
             assert len(llm_response) != 0
 
-            content_response = response.json()["content_response"]
-            assert len(content_response) != 0
+            search_results = response.json()["search_results"]
+            assert len(search_results) != 0
 
             result_state = response.json()["state"]
             assert result_state == ResultState.FINAL
@@ -290,30 +313,30 @@ class TestGenerateResponse:
             (TEST_USER_API_KEY_2, False),
         ],
     )
-    async def test_user2_access_user1_content(
+    def test_user2_access_user1_content(
         self,
         client: TestClient,
         token: str,
         expect_found: bool,
+        faq_contents: List[int],
     ) -> None:
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={"query_text": "Tell me about camping", "generate_llm_response": True},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
-            all_retrieved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+            all_retireved_content_ids = [
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
-                assert len(all_retrieved_content_ids) > 0
+                assert len(all_retireved_content_ids) > 0
             else:
                 # user2 should not have any content
-                assert len(all_retrieved_content_ids) == 0
+                assert len(all_retireved_content_ids) == 0
 
     @pytest.mark.parametrize(
         "token, generate_tts, expected_status_code, expect_tts_file",
@@ -335,11 +358,12 @@ class TestGenerateResponse:
         user_query = {
             "query_text": "What is the capital of France?",
             "generate_tts": generate_tts,
+            "generate_llm_response": True,
         }
 
         with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
             response = client.post(
-                "/llm-response",
+                "/search",
                 headers={"Authorization": f"Bearer {token}"},
                 json=user_query,
             )
@@ -364,7 +388,7 @@ class TestErrorResponses:
     ) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={},
+            search_results={},
             llm_response=None,
             feedback_secret_key="abc123",
             debug_info={},
@@ -558,18 +582,18 @@ class TestAlignScore:
     def user_query_response(self) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={
+            search_results={
                 1: QuerySearchResult(
-                    retrieved_title="World",
-                    retrieved_text="hello world",
-                    retrieved_content_id=1,
-                    score=0.2,
+                    title="World",
+                    text="hello world",
+                    id=1,
+                    distance=0.2,
                 ),
                 2: QuerySearchResult(
-                    retrieved_title="Universe",
-                    retrieved_text="goodbye universe",
-                    retrieved_content_id=2,
-                    score=0.2,
+                    title="Universe",
+                    text="goodbye universe",
+                    id=2,
+                    distance=0.2,
                 ),
             },
             llm_response="This is a response",
@@ -623,7 +647,7 @@ class TestAlignScore:
         assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
-    async def test_build_evidence(
+    def test_build_evidence(
         self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         evidence = _build_evidence(user_query_response)

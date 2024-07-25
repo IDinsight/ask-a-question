@@ -33,6 +33,7 @@ export const appColors = {
   success: theme.palette.success.main,
   warning: theme.palette.warning.main,
   info: theme.palette.info.main,
+  deeperPrimary: "#0e1e3f",
   white: "#FFFFFF",
   black: "#000000",
   grey: "#C0C6DC",
@@ -42,7 +43,11 @@ export const appColors = {
   inverseSurface: "#F1F0F7",
   yellow: "#FFC700",
   green: "#018786",
-
+  dashboardUrgent: "#E91E63",
+  dashboardSecondary: "#546E7A",
+  dashboardPrimary: "#2E93FA",
+  dashboardUpvote: "#96E2C3",
+  dashboardDownvote: "#F69198",
 };
 
 export const appStyles = {

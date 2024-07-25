@@ -6,21 +6,30 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 
 class ContentCreate(BaseModel):
     """
-    Pydantic model for content creation
+    Pydantic model for content creation request
     """
 
-    # Ensure len("*{title}*\n\n{text}") <= 1600
     content_title: Annotated[str, StringConstraints(max_length=150)]
     content_text: Annotated[str, StringConstraints(max_length=2000)]
     content_tags: list = []
     content_metadata: dict = {}
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "content_title": "An example content title",
+                    "content_text": "And an example content text!",
+                },
+            ]
+        },
+    )
 
 
 class ContentRetrieve(ContentCreate):
     """
-    Pydantic model for content retrieval
+    Retrieved content class
     """
 
     content_id: int
@@ -33,15 +42,27 @@ class ContentRetrieve(ContentCreate):
 
 class ContentUpdate(ContentCreate):
     """
-    Pydantic model for content edit
+    Pydantic model for content edit request
     """
 
     content_id: int
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "content_id": 1,
+                    "content_title": "A new content title",
+                    "content_text": "A new content text!",
+                },
+            ]
+        },
+    )
+
 
 class ContentDelete(BaseModel):
     """
-    Pydantic model for content deletiom
+    Pydantic model for content deletion
     """
 
     content_id: int

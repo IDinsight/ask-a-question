@@ -39,7 +39,7 @@ async def test_language_identification(
     question = QueryRefined(query_text=content, query_text_original=content)
     response = QueryResponse(
         query_id=1,
-        content_response=None,
+        search_results=None,
         llm_response="Dummy response",
         feedback_secret_key="feedback-string",
     )

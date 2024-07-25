@@ -1,8 +1,14 @@
 "use client";
 import { useAuth } from "@/utils/auth";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import PostAddIcon from "@mui/icons-material/PostAdd";
+import ExpandCircleDownOutlinedIcon from "@mui/icons-material/ExpandCircleDownOutlined";
+import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
+import Divider from "@mui/material/Divider";
 import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
+import { Layout } from "@/components/Layout";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -12,21 +18,26 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
+import { appColors, sizes } from "@/utils";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
-  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "not-set";
+  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "";
 
 const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
   const { login, loginGoogle, loginError } = useAuth();
-
+  const iconStyles = {
+    color: appColors.white,
+    width: { xs: "30%", lg: "40%" },
+    height: { xs: "30%", lg: "40%" },
+    marginTop: 2,
+  };
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const username = data.get("username") as string;
     const password = data.get("password") as string;
-
     if (
       username === "" ||
       password === "" ||
@@ -58,8 +69,10 @@ const Login = () => {
     if (signinDiv) {
       window.google.accounts.id.renderButton(signinDiv, {
         type: "standard",
+        shape: "pill",
         theme: "outline",
         size: "large",
+        width: 275,
       });
     }
   }, []);
@@ -70,16 +83,172 @@ const Login = () => {
       <Grid
         item
         xs={false}
-        sm={4}
+        sm={5}
         md={7}
+        lg={8}
         sx={{
-          backgroundImage: "url(https://source.unsplash.com/random?wallpapers)",
+          backgroundColor: (theme) => theme.palette.primary.main,
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundPosition: "center",
+          display: { xs: "none", sm: "flex" },
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
-      <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+      >
+        <Box
+          component="div"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              marginY: { sm: 2, lg: 4 },
+              marginX: { sm: 0, lg: 4 },
+            }}
+          >
+            <img
+              src="../../logo-light.png"
+              alt="Logo"
+              style={{
+                maxWidth: "80%",
+                height: "auto",
+                margin: "0 10%",
+              }}
+            />
+          </Box>
+          <Divider
+            sx={{
+              width: "40%",
+              bgcolor: "white",
+              height: "1.5px",
+              my: { sm: 0, lg: 2 },
+            }}
+          />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              margin: { sm: 2, md: 4 },
+            }}
+          >
+            <Typography
+              textAlign="center"
+              color={appColors.white}
+              my={2}
+              fontSize={{
+                md: sizes.icons.small,
+                lg: sizes.icons.medium,
+              }}
+              fontWeight={{ sm: "600", md: "500" }}
+            >
+              Integrate automated question answering into your chatbot in 3
+              simple steps:
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", lg: "row" },
+              alignItems: { sm: "center", lg: "stretch" },
+              justifyContent: "center",
+              maxWidth: "80%",
+              margin: "auto",
+              mx: 8,
+            }}
+          >
+            {["Create", "Test", "Integrate"].map((text, index) => (
+              <React.Fragment key={text}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    p: 0,
+                    borderRadius: "16px",
+                    border: 2,
+                    borderColor: appColors.grey,
+                    flexDirection: "column",
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: appColors.primary,
+                    minWidth: 200,
+                    width: { xs: "100%", md: "70%", lg: "30%" },
+                    marginBottom: 2,
+                    flexGrow: 1,
+                  }}
+                >
+                  {index === 0 && <PostAddIcon sx={iconStyles} />}
+                  {index === 1 && (
+                    <QuestionAnswerOutlinedIcon sx={iconStyles} />
+                  )}
+                  {index === 2 && (
+                    <PowerOutlinedIcon
+                      sx={{ ...iconStyles, transform: "rotate(90deg)" }}
+                    />
+                  )}
+
+                  <Typography
+                    textAlign="center"
+                    fontSize={{ xs: sizes.icons.small, lg: sizes.icons.medium }}
+                    fontWeight={{ xs: "600", md: "500" }}
+                    margin={1}
+                    color={appColors.white}
+                  >
+                    {text}
+                  </Typography>
+                  <Typography
+                    textAlign="center"
+                    color={appColors.white}
+                    sx={{ width: "80%", maxWidth: 280, marginBottom: 4 }}
+                  >
+                    {index === 0 && "Add your FAQs as easy-to-manage cards"}
+                    {index === 1 && "Check if the responses sound right"}
+                    {index === 2 &&
+                      "Connect to your chatbot using our APIs. You are all set"}
+                  </Typography>
+                </Box>
+                {index < 2 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mx: 4,
+                      my: 2,
+                      minHeight: { xs: 48, lg: 0 },
+                    }}
+                  >
+                    <ExpandCircleDownOutlinedIcon
+                      sx={{
+                        transform: { lg: "rotate(270deg)" },
+                        fontSize: sizes.icons.large,
+                        color: appColors.white,
+                      }}
+                    />
+                  </Box>
+                )}
+              </React.Fragment>
+            ))}
+          </Box>
+        </Box>
+      </Grid>
+      <Grid
+        item
+        xs={12}
+        sm={7}
+        md={5}
+        lg={4}
+        component={Paper}
+        elevation={6}
+        square
+      >
         <Box
           sx={{
             my: 8,
@@ -89,22 +258,76 @@ const Login = () => {
             alignItems: "center",
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            Sign in
-          </Typography>
+          <Layout.Spacer multiplier={5} />
+          <Grid
+            item
+            sx={{
+              display: { xs: "none", sm: "flex", md: "flex" },
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+              <LockOutlinedIcon />
+            </Avatar>
+          </Grid>
+          <Grid
+            item
+            sx={{
+              display: { xs: "flex", sm: "none", md: "none" },
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src="../../logo-dark.png"
+              alt="Logo"
+              style={{
+                minWidth: "200px",
+                maxWidth: "80%",
+                marginBottom: 80,
+              }}
+            />
+            <Layout.Spacer multiplier={4} />
+          </Grid>
+          <Typography variant="h6">Sign in</Typography>
+          <Layout.Spacer multiplier={2} />
+          {NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <div id="signinDiv" />
+              <Layout.Spacer multiplier={2.5} />
+              <Box display="flex" alignItems="center" width="100%">
+                <Box flexGrow={1} height="1px" bgcolor="lightgrey" />
+                <Typography variant="body1" px={2}>
+                  or
+                </Typography>
+                <Box flexGrow={1} height="1px" bgcolor="lightgrey" />
+              </Box>
+              <Layout.Spacer multiplier={1.5} />
+            </Box>
+          )}
           <Box
             component="form"
             noValidate
             onSubmit={handleSubmit}
-            sx={{ my: 1 }}
+            width={"300px"}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
           >
-            <Box sx={{ minHeight: "56px" }}>
-              {" "}
-              {/* Reserve space for the alert */}
-              {loginError && <Alert severity="error">{loginError}</Alert>}
+            <Box>
+              {loginError && (
+                <Alert severity="error" sx={{ marginBottom: 2 }}>
+                  {loginError}
+                </Alert>
+              )}
             </Box>
             <TextField
               margin="normal"
@@ -148,25 +371,10 @@ const Login = () => {
                 setIsPasswordEmpty(false);
               }}
             />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-            >
+            <Layout.Spacer multiplier={0.5} />
+            <Button type="submit" variant="contained" sx={{ width: "120px" }}>
               Sign In
             </Button>
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Typography variant="body1" sx={{ py: 4 }}>
-                - or -
-              </Typography>
-              <div id="signinDiv"></div>
-            </Box>
           </Box>
         </Box>
       </Grid>

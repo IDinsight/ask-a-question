@@ -19,7 +19,13 @@ from .models import (
 )
 from .schemas import TagCreate, TagRetrieve
 
-router = APIRouter(prefix="/tag", tags=["Tag Management"])
+TAG_METADATA = {
+    "name": "Content tag management",
+    "description": "_Requires user login._ Manage tags for content used "
+    "for question answering.",
+}
+
+router = APIRouter(prefix="/tag", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
@@ -30,7 +36,7 @@ async def create_tag(
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve | None:
     """
-    Create tag endpoint. Calls embedding model to upsert tag to PG database
+    Create new tag
     """
     tag.tag_name = tag.tag_name.upper()
     if not await is_tag_name_unique(user_db.user_id, tag.tag_name, asession):
@@ -49,7 +55,7 @@ async def edit_tag(
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """
-    Edit tag endpoint
+    Edit pre-extisting tag
     """
     tag.tag_name = tag.tag_name.upper()
     old_tag = await get_tag_from_db(
@@ -84,7 +90,7 @@ async def retrieve_tag(
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[TagRetrieve]:
     """
-    Retrieve all tag endpoint
+    Retrieve all tags
     """
     records = await get_list_of_tag_from_db(
         user_db.user_id, offset=skip, limit=limit, asession=asession
@@ -100,7 +106,7 @@ async def delete_tag(
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """
-    Delete tag endpoint
+    Delete tag by ID
     """
     record = await get_tag_from_db(
         user_db.user_id,
@@ -120,7 +126,7 @@ async def retrieve_tag_by_id(
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """
-    Retrieve tag by id endpoint
+    Retrieve tag by ID
     """
 
     record = await get_tag_from_db(user_db.user_id, tag_id, asession)

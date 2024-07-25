@@ -41,7 +41,7 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 
     5. Change the base of the API Call skill so it looks like:
 
-            [NGROK URL]/api/embeddings-search
+            [NGROK URL]/api/search
 
 ## Self-hosted deployment
 

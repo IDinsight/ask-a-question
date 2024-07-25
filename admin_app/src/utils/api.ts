@@ -7,21 +7,24 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getNewAPIKey = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/rotate-key`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error rotating API key");
+const getUser = async (token: string) => {
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error fetching user info");
     }
-  });
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getContentList = async ({
@@ -124,6 +127,35 @@ const createContent = async (content: ContentBody, token: string) => {
     }
 
     return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+const bulkUploadContents = async (file: File, token: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_BACKEND_URL}/content/csv-upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      },
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return { status: response.status, data };
+    } else {
+      const errorResponse = await response.json();
+      const detail = errorResponse.detail || "An unknown error occurred";
+      return { status: response.status, detail: detail };
+    }
   } catch (error) {
     throw error;
   }
@@ -242,14 +274,14 @@ const getGoogleLoginToken = async (idToken: {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
+  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: false }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -264,14 +296,14 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/llm-response`;
+  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: true }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -283,6 +315,34 @@ const getLLMResponse = async (search: string, token: string) => {
       console.error("Error:", error);
       throw error;
     });
+};
+
+const postResponseFeedback = async (
+  query_id: number,
+  feedback_sentiment: string,
+  feedback_secret_key: string,
+  token: string,
+) => {
+  const feedbackUrl = `${NEXT_PUBLIC_BACKEND_URL}/response-feedback`;
+  return fetch(feedbackUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      query_id: query_id,
+      feedback_sentiment: feedback_sentiment,
+      feedback_secret_key: feedback_secret_key,
+    }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error sending response feedback");
+    }
+  });
 };
 
 const getQuestionStats = async (token: string) => {
@@ -384,12 +444,13 @@ const deleteTag = async (tag_id: number, token: string) => {
   });
 };
 export const apiCalls = {
-  getNewAPIKey,
+  getUser,
   getContentList,
   getContent,
   deleteContent,
   editContent,
   createContent,
+  bulkUploadContents,
   getUrgencyRuleList,
   addUrgencyRule,
   updateUrgencyRule,
@@ -398,6 +459,7 @@ export const apiCalls = {
   getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  postResponseFeedback,
   getQuestionStats,
   getUrgencyDetection,
   createTag,

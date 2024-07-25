@@ -33,7 +33,7 @@ def response() -> QueryResponse:
     """Returns a dummy response"""
     return QueryResponse(
         query_id=1,
-        content_response=None,
+        search_results=None,
         llm_response="Dummy response",
         feedback_secret_key="feedback-string",
     )

@@ -25,7 +25,9 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
-    "LITELLM_MODEL_GENERATION", "openai/generate-response"
+    "LITELLM_MODEL_GENERATION",
+    "openai/generate-gemini-response",
+    # "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"

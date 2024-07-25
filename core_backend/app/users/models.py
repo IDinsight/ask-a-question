@@ -36,6 +36,10 @@ class UserDB(Base):
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
+    api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=True)
+    api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime, nullable=True
+    )
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -95,6 +99,8 @@ async def update_user_api_key(
     """
 
     user_db.hashed_api_key = get_key_hash(new_api_key)
+    user_db.api_key_first_characters = new_api_key[:5]
+    user_db.api_key_updated_datetime_utc = datetime.utcnow()
     user_db.updated_datetime_utc = datetime.utcnow()
 
     await asession.commit()
@@ -137,7 +143,7 @@ async def get_content_quota_by_userid(
         raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
 
 
-async def get_user_by_token(
+async def get_user_by_api_key(
     token: str,
     asession: AsyncSession,
 ) -> UserDB:

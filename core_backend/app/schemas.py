@@ -1,5 +1,7 @@
 from enum import Enum
 
+from pydantic import BaseModel, ConfigDict
+
 
 class FeedbackSentiment(str, Enum):
     """
@@ -9,3 +11,16 @@ class FeedbackSentiment(str, Enum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
     UNKNOWN = "unknown"
+
+
+class QuerySearchResult(BaseModel):
+    """
+    Pydantic model for each individual search result
+    """
+
+    title: str
+    text: str
+    id: int
+    distance: float
+
+    model_config = ConfigDict(from_attributes=True)
