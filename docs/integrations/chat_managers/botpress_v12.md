@@ -9,7 +9,7 @@ Note: [Botpress v12](https://github.com/botpress/v12/) is open-source and availa
 1. Once you have deployed Botpress v12 as per your requirements, go to the URL where the app is running
 2. Make an account and login
 3. Go to "Create Bot" and then "Import Existing" (you can set Bot ID to anything you want)
-4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in the [AAQ repo](https://github.com/IDinsight/aaq-core/tree/main/chat_managers/botpress_v12)
+4. Load the `.tgz` file given under `chat_managers/botpress_v12/` in the [AAQ repo](https://github.com/IDinsight/ask-a-question/tree/main/chat_managers/botpress_v12)
 5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running *
 
     a. Click on the card

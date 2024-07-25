@@ -9,7 +9,7 @@ You can either use the cloud-hosted [Typebot](https://typebot.io/) service or se
 1. Go to your Typebot instance
 2. Make an account and login
 3. Go to "Create a typebot" and then "Import a file"
-4. Load the `.json` file given under `chat_managers/typebot/` in the [AAQ repo](https://github.com/IDinsight/aaq-core/tree/main/chat_managers/typebot)
+4. Load the `.json` file given under `chat_managers/typebot/` in the [AAQ repo](https://github.com/IDinsight/ask-a-question/tree/main/chat_managers/typebot)
 5. Edit the "API Call" cards to reflect the AAQ endpoint URL that you have running
 
     a. Click on the card
