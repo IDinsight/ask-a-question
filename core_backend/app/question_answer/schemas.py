@@ -51,7 +51,7 @@ class QueryResponse(BaseModel):
 
     query_id: int = Field(..., examples=[1])
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
-    llm_response: Optional[str] = Field(None, examples=["Example LLM response"])
+    llm_response: str | None = Field(None, examples=["Example LLM response"])
     search_results: Dict[int, QuerySearchResult] | None = Field(
         None,
         examples=[

@@ -223,6 +223,9 @@ async def get_user_query_and_response(
     response_template = QueryResponse(
         query_id=user_query_db.query_id,
         feedback_secret_key=user_query_db.feedback_secret_key,
+        llm_response=None,
+        search_results=None,
+        debug_info={},
     )
     return user_query_db, user_query_refined, response_template
 

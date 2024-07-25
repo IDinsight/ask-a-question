@@ -124,6 +124,9 @@ def _process_identified_language_response(
         error_response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message=error_message,
             error_type=error_type,
         )
@@ -206,6 +209,9 @@ async def _translate_question(
         error_response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message="Unable to translate",
             error_type=ErrorType.UNABLE_TO_TRANSLATE,
         )
@@ -272,6 +278,9 @@ async def _classify_safety(
         error_response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message=f"{safety_classification.value.lower()} found.",
             error_type=ErrorType.QUERY_UNSAFE,
         )
@@ -343,6 +352,9 @@ async def _classify_on_off_topic(
         error_response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message="Off-topic query",
             error_type=ErrorType.OFF_TOPIC,
         )
@@ -416,6 +428,9 @@ async def _paraphrase_question(
         error_response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message="Unable to paraphrase the query.",
             error_type=ErrorType.UNABLE_TO_PARAPHRASE,
         )
