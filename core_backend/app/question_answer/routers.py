@@ -99,7 +99,6 @@ async def search(
     response = await search_base(
         query_refined=user_query_refined_template,
         response=response_template,
-        generate_llm_response=user_query.generate_llm_response,
         user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
@@ -126,7 +125,6 @@ async def search(
 async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,
-    generate_llm_response: bool,
     user_id: int,
     n_similar: int,
     asession: AsyncSession,
@@ -215,7 +213,9 @@ async def get_user_query_and_response(
     )
     # prepare refined query object
     user_query_refined = QueryRefined(
-        **user_query.model_dump(), query_text_original=user_query.query_text
+        **user_query.model_dump(),
+        user_id=user_id,
+        query_text_original=user_query.query_text,
     )
     # prepare placeholder response object
     response_template = QueryResponse(

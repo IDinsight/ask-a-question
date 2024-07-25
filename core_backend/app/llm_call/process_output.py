@@ -59,11 +59,11 @@ def generate_llm_response__after(func: Callable) -> Callable:
         """
         response = await func(query_refined, response, *args, **kwargs)
 
-        if not kwargs.get("generate_llm_response", False):
+        if not query_refined.generate_llm_response:
             return response
 
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
         response = await _generate_llm_response(query_refined, response, metadata)
         return response
@@ -145,7 +145,7 @@ def check_align_score__after(func: Callable) -> Callable:
             return response
 
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
         response = await _check_align_score(response, metadata)
         return response

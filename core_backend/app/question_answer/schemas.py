@@ -24,6 +24,7 @@ class QueryRefined(QueryBase):
     Question answering query class with additional data
     """
 
+    user_id: int
     query_text_original: str
     original_language: IdentifiedLanguage | None = None
 

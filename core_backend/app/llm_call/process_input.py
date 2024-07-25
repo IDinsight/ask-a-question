@@ -49,7 +49,7 @@ def identify_language__before(func: Callable) -> Callable:
         Wrapper function to identify the language of the question.
         """
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
 
         query_refined, response = await _identify_language(
@@ -153,7 +153,7 @@ def translate_question__before(func: Callable) -> Callable:
         Wrapper function to translate the question.
         """
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
 
         query_refined, response = await _translate_question(
@@ -231,7 +231,7 @@ def classify_safety__before(func: Callable) -> Callable:
         Wrapper function to classify the safety of the question.
         """
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
 
         query_refined, response = await _classify_safety(
@@ -303,7 +303,7 @@ def classify_on_off_topic__before(func: Callable) -> Callable:
         Wrapper function to check if the question is on-topic or off-topic.
         """
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
 
         query_refined, response = await _classify_on_off_topic(
@@ -373,7 +373,7 @@ def paraphrase_question__before(func: Callable) -> Callable:
         Wrapper function to paraphrase the question.
         """
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=kwargs.get("user_id", None)
+            query_id=response.query_id, user_id=query_refined.user_id
         )
 
         query_refined, response = await _paraphrase_question(

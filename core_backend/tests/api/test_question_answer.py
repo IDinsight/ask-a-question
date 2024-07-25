@@ -357,6 +357,7 @@ class TestErrorResponses:
             language = None
         return QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=language,
             query_text_original="This is a query original",
         )
@@ -383,6 +384,7 @@ class TestErrorResponses:
     ) -> None:
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
@@ -455,6 +457,7 @@ class TestErrorResponses:
 
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
