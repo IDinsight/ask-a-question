@@ -27,7 +27,7 @@ page_description = """
 
 🔑 <a href="https://app.ask-a-question.com/integrations" target="_blank">Get your API
 key</a> |
-📖 <a href="https://idinsight.github.io/aaq-core" target="_blank">Docs</a> |
+📖 <a href="https://docs.ask-a-question.com" target="_blank">Docs</a> |
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="1em"
 style="vertical-align: bottom;"><path d="m0 0h24v24h-24z" fill="#fff" opacity="0"
 transform="matrix(-1 0 0 -1 24 24)"/><path d="m12 1a10.89 10.89 0 0 0 -11 10.77 10.79
