@@ -2,14 +2,13 @@
 
 from typing import Generator
 
-import numpy as np
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import get_search_results
+from core_backend.tests.api.conftest import async_fake_embedding
 
 
 class TestArchiveContent:
@@ -67,9 +66,7 @@ class TestArchiveContent:
         assert response.status_code == status.HTTP_200_OK
 
         # 2.
-        question_embedding = (
-            np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
-        )
+        question_embedding = await async_fake_embedding()
         results_with_archived = await get_search_results(
             user_id=user_id,
             question_embedding=question_embedding,
