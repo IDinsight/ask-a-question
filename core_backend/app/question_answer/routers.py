@@ -104,11 +104,11 @@ async def search(
         exclude_archived=exclude_archived,
     )
 
-    if isinstance(response, QueryResponse):
+    if type(response) is QueryResponse:
         await save_query_response_to_db(user_query_db, response, asession)
         await increment_query_count(user_db.user_id, response.search_results, asession)
         return response
-    elif isinstance(response, QueryResponseError):
+    elif type(response) is QueryResponseError:
         await save_query_response_to_db(user_query_db, response, asession)
         await increment_query_count(user_db.user_id, response.search_results, asession)
         return JSONResponse(
