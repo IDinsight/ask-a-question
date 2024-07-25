@@ -9,6 +9,8 @@ on:
     paths:
       - "admin_app/**"
       - ".github/workflows/deploy_gcp_admin_app.yaml"
+  release:
+    types: [released]
   workflow_dispatch:
 
 jobs:
@@ -19,11 +21,14 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    # Set the environment to production if a release was created on the main branch. If
+    # this is main branch but not triggered by a release, set the environment to
+    # testing. Otherwise, set the environment to the branch name.
+    environment: gcp-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
-      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref == 'main' && github.event_name == 'release' && github.event.action == 'released' && 'production') || ((github.ref == 'main' && 'testing') || github.ref_name) }}
 
     steps:
       - uses: "actions/checkout@v4"
