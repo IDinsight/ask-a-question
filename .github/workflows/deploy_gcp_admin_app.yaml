@@ -27,7 +27,7 @@ jobs:
           elif [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
-            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_ENV"
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
   DeployAdminAppToGCP:
