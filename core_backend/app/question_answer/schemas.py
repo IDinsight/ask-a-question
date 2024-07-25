@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment, QuerySearchResult
@@ -12,22 +12,11 @@ class QueryBase(BaseModel):
     Question answering query base class.
     """
 
-    query_text: str
-    generate_llm_response: bool = False
-    query_metadata: dict = {}
+    query_text: str = Field(..., examples=["What is AAQ?"])
+    generate_llm_response: bool = Field(False)
+    query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "query_text": "What is AAQ?",
-                    "generate_llm_response": False,
-                    "query_metadata": {"some_key": "some_value"},
-                },
-            ]
-        },
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QueryRefined(QueryBase):
@@ -59,40 +48,38 @@ class QueryResponse(BaseModel):
     Pydantic model for response to Query
     """
 
-    query_id: int
-    feedback_secret_key: str
-    llm_response: Optional[str] = None
-    search_results: Dict[int, QuerySearchResult] | None = None
-    debug_info: dict = {}
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "query_id": 1,
-                    "feedback_secret_key": "secret-key-12345-abcde",
-                    "llm_response": "Example LLM response "
-                    "(null if generate_llm_response is false)",
-                    "search_results": {
-                        "0": {
-                            "title": "Example content title",
-                            "text": "Example content text",
-                            "id": 23,
-                            "distance": 0.1,
-                        },
-                        "1": {
-                            "title": "Another example content title",
-                            "text": "Another example content text",
-                            "id": 12,
-                            "distance": 0.2,
-                        },
+    query_id: int = Field(..., examples=[1])
+    feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
+    llm_response: Optional[str] = Field(None, examples=["Example LLM response"])
+    search_results: Dict[int, QuerySearchResult] | None = Field(
+        None,
+        examples=[
+            {
+                "query_id": 1,
+                "feedback_secret_key": "secret-key-12345-abcde",
+                "llm_response": "Example LLM response "
+                "(null if generate_llm_response is false)",
+                "search_results": {
+                    "0": {
+                        "title": "Example content title",
+                        "text": "Example content text",
+                        "id": 23,
+                        "distance": 0.1,
                     },
-                    "debug_info": {"example": "debug-info"},
-                }
-            ]
-        },
+                    "1": {
+                        "title": "Another example content title",
+                        "text": "Another example content text",
+                        "id": 12,
+                        "distance": 0.2,
+                    },
+                },
+                "debug_info": {"example": "debug-info"},
+            }
+        ],
     )
+    debug_info: dict = Field({}, examples=[{"example": "debug-info"}])
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QueryResponseError(QueryResponse):
@@ -100,38 +87,10 @@ class QueryResponseError(QueryResponse):
     Pydantic model when there is an error. Inherits from QueryResponse.
     """
 
-    error_type: ErrorType
-    error_message: Optional[str] = None
+    error_type: ErrorType = Field(..., examples=["example_error"])
+    error_message: Optional[str] = Field(None, examples=["Example error message"])
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "error_type": "query_unsafe",
-                    "error_message": "Query is unsafe",
-                    "query_id": 1,
-                    "feedback_secret_key": "secret-key-12345-abcde",
-                    "llm_response": "null",
-                    "search_results": {
-                        "0": {
-                            "title": "Example content title",
-                            "text": "Example content text",
-                            "id": 23,
-                            "distance": 0.1,
-                        },
-                        "1": {
-                            "title": "Another example content title",
-                            "text": "Another example content text",
-                            "id": 12,
-                            "distance": 0.2,
-                        },
-                    },
-                    "debug_info": {"example": "debug-info"},
-                }
-            ]
-        },
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResponseFeedbackBase(BaseModel):
@@ -140,24 +99,14 @@ class ResponseFeedbackBase(BaseModel):
     Feedback secret key must be retrieved from query response.
     """
 
-    query_id: int
-    feedback_sentiment: FeedbackSentiment = FeedbackSentiment.UNKNOWN
-    feedback_text: Optional[str] = None
-    feedback_secret_key: str
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "query_id": 1,
-                    "feedback_sentiment": "negative",
-                    "feedback_text": "Not helpful",
-                    "feedback_secret_key": "secret-key-12345-abcde",
-                }
-            ]
-        },
+    query_id: int = Field(..., examples=[1])
+    feedback_sentiment: FeedbackSentiment = Field(
+        FeedbackSentiment.UNKNOWN, examples=["positive"]
     )
+    feedback_text: Optional[str] = Field(None, examples=["This is helpful"])
+    feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContentFeedback(ResponseFeedbackBase):
@@ -166,19 +115,6 @@ class ContentFeedback(ResponseFeedbackBase):
     Feedback secret key must be retrieved from query response.
     """
 
-    content_id: int
+    content_id: int = Field(..., examples=[1])
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "content_id": 1,
-                    "query_id": 1,
-                    "feedback_sentiment": "positive",
-                    "feedback_text": "This content is very helpful",
-                    "feedback_secret_key": "secret-key-12345-abcde",
-                }
-            ]
-        },
-    )
+    model_config = ConfigDict(from_attributes=True)
