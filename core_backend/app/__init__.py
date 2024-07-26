@@ -12,6 +12,7 @@ from . import (
     dashboard,
     data_api,
     question_answer,
+    question_database,
     tags,
     urgency_detection,
     urgency_rules,
@@ -126,8 +127,9 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(auth.router)
     app.include_router(user_tools.router)
-    app.include_router(admin.routers.router)
+    app.include_router(admin.router)
     app.include_router(data_api.router)
+    app.include_router(question_database.router)
 
     origins = [
         f"http://{DOMAIN}",
