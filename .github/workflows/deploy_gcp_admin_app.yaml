@@ -44,6 +44,7 @@ jobs:
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
       REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      TAG: ${{ (needs.set-env.outputs.env_name == 'production' && github.ref_name) || github.sha }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -69,27 +70,14 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
-      # - name: Build and push admin_app image
-      #   if: ${{ needs.set-env.outputs.env_name == 'testing' }}
-      #   working-directory: admin_app
-      #   run: |
-      #     docker build \
-      #       --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
-      #       --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
-      #       -t ${{ env.REPO }}/admin_app:latest \
-      #       -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
-      #       .
-      #     docker image push --all-tags ${{ env.REPO }}/admin_app
-
-      # Fix the following to production after testing
-      - name: Build and push admin_app image to production (to be fixed)
-        if: ${{ needs.set-env.outputs.env_name == 'testing' }}
+      - name: Build and push admin_app image
         working-directory: admin_app
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
             --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
-            -t ${{ env.REPO }}/admin_app:${{ github.ref_name }} \
+            -t ${{ env.REPO }}/admin_app:latest \
+            -t ${{ env.REPO }}/admin_app:${{ env.TAG }} \
             .
           docker image push --all-tags ${{ env.REPO }}/admin_app
 
