@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Dict, List, Optional, Union
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..contents.config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from ..utils import embedding
-from .schemas import UrgencyRuleCreate
+from .schemas import UrgencyRuleCosineDistance, UrgencyRuleCreate
 
 
 class UrgencyRuleDB(Base):
@@ -38,8 +38,12 @@ class UrgencyRuleDB(Base):
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
     urgency_rule_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=True)
-    created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     def __repr__(self) -> str:
         """Pretty-print the UrgencyRuleDB object"""
@@ -64,8 +68,8 @@ async def save_urgency_rule_to_db(
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
         urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     asession.add(urgency_rule_db)
     await asession.commit()
@@ -96,7 +100,7 @@ async def update_urgency_rule_in_db(
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
         urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
-        updated_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     urgency_rule_db = await asession.merge(urgency_rule_db)
     await asession.commit()
@@ -162,7 +166,7 @@ async def get_cosine_distances_from_rules(
     user_id: int,
     message_text: str,
     asession: AsyncSession,
-) -> Dict[int, Dict[str, Union[str, float]]]:
+) -> Dict[int, UrgencyRuleCosineDistance]:
     """
     Get cosine distances from urgency rules
     """
@@ -186,9 +190,9 @@ async def get_cosine_distances_from_rules(
 
     results_dict = {}
     for i, r in enumerate(search_result):
-        results_dict[i] = {
-            "urgency_rule": r[0].urgency_rule_text,
-            "distance": r[1],
-        }
+        results_dict[i] = UrgencyRuleCosineDistance(
+            urgency_rule=r[0].urgency_rule_text,
+            distance=r[1],
+        )
 
     return results_dict

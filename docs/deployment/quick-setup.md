@@ -2,9 +2,9 @@
 
 !!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
 
-**Step 1:** Clone the [AAQ repository](https://github.com/IDinsight/aaq-core).
+**Step 1:** Clone the [AAQ repository](https://github.com/IDinsight/ask-a-question).
 
-    git clone git@github.com:IDinsight/aaq-core.git
+    git clone git@github.com:IDinsight/ask-a-question.git
 
 **Step 2:** Navigate to the `deployment/docker-compose/` subfolder.
 

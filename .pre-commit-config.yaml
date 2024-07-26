@@ -12,7 +12,7 @@ repos:
       - id: black
         language_version: python3.10
   - repo: https://github.com/econchick/interrogate
-    rev: 1.5.0
+    rev: 1.7.0
     hooks:
       - id: interrogate
         name: interrogate
@@ -20,7 +20,7 @@ repos:
         entry: interrogate
         args: [-v, --fail-under=95, --ignore-module]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.289
+    rev: v0.5.4
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -41,3 +41,9 @@ repos:
     rev: v1.92.0
     hooks:
       - id: terraform_fmt
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: package.lock.json

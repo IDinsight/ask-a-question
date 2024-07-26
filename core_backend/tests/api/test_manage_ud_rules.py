@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generator
 
 import pytest
@@ -46,7 +46,7 @@ class TestManageUDRules:
             ("test rule 4", {"meta_key": "meta_value"}),
         ],
     )
-    async def test_create_and_delete_UDrules(
+    def test_create_and_delete_UDrules(
         self,
         client: TestClient,
         urgency_rule_text: str,
@@ -83,7 +83,7 @@ class TestManageUDRules:
             ),
         ],
     )
-    async def test_edit_and_retrieve_UDrules(
+    def test_edit_and_retrieve_UDrules(
         self,
         client: TestClient,
         existing_rule_id: int,
@@ -112,7 +112,7 @@ class TestManageUDRules:
 
         assert all(edited_metadata[k] == v for k, v in urgency_rule_metadata.items())
 
-    async def test_edit_UDrules_not_found(
+    def test_edit_UDrules_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
@@ -126,7 +126,7 @@ class TestManageUDRules:
 
         assert response.status_code == 404
 
-    async def test_list_UDrules(
+    def test_list_UDrules(
         self, client: TestClient, existing_rule_id: int, fullaccess_token: str
     ) -> None:
         response = client.get(
@@ -135,7 +135,7 @@ class TestManageUDRules:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
-    async def test_delete_UDrules(
+    def test_delete_UDrules(
         self, client: TestClient, existing_rule_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
@@ -146,7 +146,7 @@ class TestManageUDRules:
 
 
 class TestMultUserManageUDRules:
-    async def user2_get_user1_UDrule(
+    def user2_get_user1_UDrule(
         self,
         client: TestClient,
         existing_rule_id: str,
@@ -158,7 +158,7 @@ class TestMultUserManageUDRules:
         )
         assert response.status_code == 404
 
-    async def user2_edit_user1_UDrule(
+    def user2_edit_user1_UDrule(
         self,
         client: TestClient,
         existing_rule_id: str,
@@ -174,7 +174,7 @@ class TestMultUserManageUDRules:
         )
         assert response.status_code == 404
 
-    async def user2_delete_user1_UDrule(
+    def user2_delete_user1_UDrule(
         self,
         client: TestClient,
         existing_rule_id: str,
@@ -195,8 +195,8 @@ async def test_convert_record_to_schema() -> None:
         urgency_rule_text="sample text",
         urgency_rule_vector=await async_fake_embedding(),
         urgency_rule_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.datetime.utcnow(),
-        updated_datetime_utc=datetime.datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     result = _convert_record_to_schema(record)
     assert result.urgency_rule_id == _id

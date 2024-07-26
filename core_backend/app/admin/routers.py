@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+import aiohttp
 from aiohttp.client_exceptions import ClientConnectorError
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -11,7 +12,12 @@ from ..config import ALIGN_SCORE_API, ALIGN_SCORE_METHOD
 from ..database import get_async_session
 from ..utils import get_http_client
 
-router = APIRouter()
+TAG_METADATA = {
+    "name": "Healthcheck",
+    "description": "Healthcheck endpoint for the application",
+}
+
+router = APIRouter(tags=[TAG_METADATA["name"]])
 
 
 @router.get("/healthcheck")
@@ -32,6 +38,7 @@ async def healthcheck(
         url = urlparse(ALIGN_SCORE_API)
         healthcheck_url = f"{url.scheme!r}://{url.netloc!r}/healthcheck"
         http_client = get_http_client()
+        assert isinstance(http_client, aiohttp.ClientSession)
         try:
             resp = await http_client.get(healthcheck_url)
         except ClientConnectorError as e:

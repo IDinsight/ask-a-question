@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core_backend.app.users.models import (
     UserAlreadyExistsError,
     UserNotFoundError,
-    get_user_by_token,
+    get_user_by_api_key,
     get_user_by_username,
     save_user_to_db,
     update_user_api_key,
@@ -36,13 +36,13 @@ class TestUsers:
         with pytest.raises(UserNotFoundError):
             await get_user_by_username("nonexistent", asession)
 
-    async def test_get_user_by_token(self, asession: AsyncSession) -> None:
-        retrieved_user = await get_user_by_token(TEST_USER_API_KEY, asession)
+    async def test_get_user_by_api_key(self, asession: AsyncSession) -> None:
+        retrieved_user = await get_user_by_api_key(TEST_USER_API_KEY, asession)
         assert retrieved_user.username == TEST_USERNAME
 
-    async def test_get_user_by_token_no_user(self, asession: AsyncSession) -> None:
+    async def test_get_user_by_api_key_no_user(self, asession: AsyncSession) -> None:
         with pytest.raises(UserNotFoundError):
-            await get_user_by_token("nonexistent", asession)
+            await get_user_by_api_key("nonexistent", asession)
 
     async def test_update_user_api_key(self, asession: AsyncSession) -> None:
         user = UserCreate(username="test_username_4", content_quota=50)

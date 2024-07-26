@@ -1,9 +1,10 @@
 import {
   ContentViewModal,
-  DeleteContentModal,
+  ArchiveContentModal,
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
-import { Delete, Edit } from "@mui/icons-material";
+// import { Delete, Edit } from "@mui/icons-material";
+import { ArchiveOutlined, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
@@ -18,9 +19,9 @@ const ContentCard = ({
   tags,
   positive_votes,
   negative_votes,
-  onSuccessfulDelete,
-  onFailedDelete,
-  deleteContent,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
   editAccess,
 }: {
   title: string;
@@ -30,13 +31,14 @@ const ContentCard = ({
   tags: Tag[];
   positive_votes: number;
   negative_votes: number;
-  onSuccessfulDelete: (content_id: number) => void;
-  onFailedDelete: (content_id: number) => void;
-  deleteContent: (content_id: number) => Promise<any>;
+  onSuccessfulArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number) => void;
+  archiveContent: (content_id: number) => Promise<any>;
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const [openArchiveModal, setOpenArchiveModal] =
+    React.useState<boolean>(false);
 
   return (
     <>
@@ -57,13 +59,9 @@ const ContentCard = ({
       >
         <Layout.FlexBox
           flexDirection="row"
-          justifyContent="space-between"
-          alignItems="center"
+          justifyContent="end"
           sx={{ width: "98%" }}
         >
-          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
-            #{content_id}
-          </Typography>
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
               <Chip
@@ -99,7 +97,7 @@ const ContentCard = ({
         </Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography variant="body2" color={appColors.darkGrey}>
-          Last updated on{" "}
+          Last updated{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
             month: "numeric",
@@ -128,13 +126,13 @@ const ContentCard = ({
           <IconButton
             disabled={!editAccess}
             aria-label="delete"
-            size="small"
+            size="medium"
             onClick={(event) => {
               event.stopPropagation();
-              setOpenDeleteModal(true);
+              setOpenArchiveModal(true);
             }}
           >
-            <Delete fontSize="inherit" />
+            <ArchiveOutlined fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>
@@ -150,13 +148,13 @@ const ContentCard = ({
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
       />
-      <DeleteContentModal
+      <ArchiveContentModal
         content_id={content_id}
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        onSuccessfulDelete={onSuccessfulDelete}
-        onFailedDelete={onFailedDelete}
-        deleteContent={deleteContent}
+        open={openArchiveModal}
+        onClose={() => setOpenArchiveModal(false)}
+        onSuccessfulArchive={onSuccessfulArchive}
+        onFailedArchive={onFailedArchive}
+        archiveContent={archiveContent}
       />
     </>
   );

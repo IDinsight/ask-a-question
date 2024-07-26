@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - "**.py"
+      - ".github/workflows/tests.yaml"
 env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
@@ -52,7 +53,6 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run Unit Tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PROMETHEUS_MULTIPROC_DIR: /tmp
         run: |
           cd core_backend
@@ -60,4 +60,5 @@ jobs:
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
             ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
-          python -m pytest -m "not rails" tests
+          python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
+          python -m pytest -m "not rails and not alembic" tests

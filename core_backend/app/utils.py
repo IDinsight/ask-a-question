@@ -1,3 +1,6 @@
+"""This module contains utility functions for the backend application."""
+
+# pylint: disable=global-statement
 import hashlib
 import logging
 import os
@@ -117,11 +120,22 @@ def generate_secret_key() -> str:
 
 
 async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
+    """Get embedding for the given text.
+
+    Parameters
+    ----------
+    text_to_embed
+        The text to embed.
+    metadata
+        Metadata for `LiteLLM` embedding API.
+
+    Returns
+    -------
+    List[float]
+        The embedding for the given text.
     """
-    Get embedding for the given text
-    """
-    if metadata is None:
-        metadata = {}
+
+    metadata = metadata or {}
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,
@@ -194,13 +208,36 @@ class HttpClient:
 _HTTP_CLIENT: aiohttp.ClientSession | None = None
 
 
+def get_global_http_client() -> Optional[aiohttp.ClientSession]:
+    """Return the value for the global variable _HTTP_CLIENT.
+
+    :returns:
+        The value for the global variable _HTTP_CLIENT.
+    """
+
+    return _HTTP_CLIENT
+
+
+def set_global_http_client(http_client: HttpClient) -> None:
+    """Set the value for the global variable _HTTP_CLIENT.
+
+    :param http_client: The value to set for the global variable _HTTP_CLIENT.
+    """
+
+    global _HTTP_CLIENT
+    _HTTP_CLIENT = http_client()
+
+
 def get_http_client() -> aiohttp.ClientSession:
     """
     Get HTTP client
     """
-    global _HTTP_CLIENT
-    if _HTTP_CLIENT is None or _HTTP_CLIENT.closed:
+
+    global_http_client = get_global_http_client()
+    if global_http_client is None or global_http_client.closed:
         http_client = HttpClient()
         http_client.start()
-        _HTTP_CLIENT = http_client()
-    return _HTTP_CLIENT
+        set_global_http_client(http_client)
+    new_http_client = get_global_http_client()
+    assert isinstance(new_http_client, aiohttp.ClientSession)
+    return new_http_client

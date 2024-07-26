@@ -9,22 +9,20 @@ date: 2024-06-06
 # Tracing your AAQ calls with Langfuse
 
 By integrating [Langfuse](https://langfuse.com/), a popular LLM observability tool with a generous
-fee tier, you can now track all LLM calls made via AAQ.
+free tier, you can now track all LLM calls made via AAQ.
 
 <!-- more -->
 
 ## What's in a Trace?
 
-With Langfuse enabled, AAQ is set up to trace each query to
-[`POST /embeddings-search`](../../components/qa-service/semantic-search.md) and
-[`POST /llm-response`](../../components/qa-service/llm-response.md) endpoints.
+With Langfuse enabled, AAQ is set up to trace each query to the `POST /search` endpoint.
 
 ![Traces page of Langfuse: you can view each trace by query_id and user_id](../images/langfuse-traces.png)
 
 Each query is represented as a
 [Trace](https://langfuse.com/docs/tracing#introduction-to-traces-in-langfuse). If you
 click on the Trace ID, you can view the details of the trace. Here is an example for a
-`/llm-response` call:
+`/search` call with `generate_llm_response` set to `true`:
 
 ![Trace Details page outlining system prompt. On the right there are Generations that fall under this particular Trace: "detect-language", "safety", "get_similar_content_async", "generate-response", etc.](../images/langfuse-trace-detail.png)
 
@@ -32,7 +30,7 @@ On the right, there are Generations associated with this trace. In
 AAQ, each generation is each call to the [LiteLLM Proxy Server](../../components/litellm-proxy/index.md).
 You can view the series of input checks, RAG ("get_similar_content_async" and
 "openai/generate-response") and one output check we perform (you can learn more about
-our Guardrails [here](../../components/qa-service/llm-response.md#process-flow)). The generation names come
+our Guardrails [here](../../components/qa-service/search.md)). The generation names come
 from the model names used in your [LiteLLM Proxy Server Config](../../components/litellm-proxy/index.md#example-config).
 
 ## Why does AAQ need observability?
@@ -42,7 +40,6 @@ so that we can debug, analyze, and improve AAQ's question-answering ability. We 
 using it to test different prompt templates and guardrails. If you are
 interested in getting your hands dirty with AAQ's codebase, we imagine this will be
 useful to you. (Langfuse has a generous free tier and is self-hostable!)
-
 
 ## So how do I use it?
 
@@ -64,7 +61,6 @@ We want to explore the rich set of features that Langfuse offers, such as evalua
 scoring. One concrete next step is to trace AAQ's [Feedback
 endpoint](../../components/qa-service/response-feedback.md) using Langfuse's
 [Scores](https://langfuse.com/docs/scores/user-feedback).
-
 
 ## Docs references
 

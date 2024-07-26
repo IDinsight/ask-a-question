@@ -23,7 +23,7 @@ Despite clear prompting, LLMs hallucinate. And sometimes use their large trainin
 set to answer a question instead of solely using the context provided.
 
 One of the endpoints that AAQ presents is
-[LLM Response](../../components/qa-service/llm-response.md). The process diagram
+[Search](../../components/qa-service/search.md). The process diagram
 on the page will be kept up to date on how the service works but here is what it looks
 like at the time of writing:
 
@@ -48,5 +48,5 @@ See [docs](../../components/align-score/deployment.md) for how to do this.
 ## Doc references
 
 - [Locally hosted LLMs]("../../components/self_hosted_llms/index.md")
-- [LLM Response](../../components/qa-service/llm-response.md)
+- [Search](../../components/qa-service/search.md)
 - [AlignScore](../../components/align-score/index.md)

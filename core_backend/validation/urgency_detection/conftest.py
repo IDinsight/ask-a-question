@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import AsyncGenerator, List
 
 import pytest
@@ -79,8 +79,8 @@ def user(client: TestClient) -> UserDB:
             username=TEST_USERNAME,
             hashed_password=get_password_salted_hash(TEST_PASSWORD),
             hashed_api_key=get_key_hash(TEST_USER_API_KEY),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
 
         db_session.add(user1)

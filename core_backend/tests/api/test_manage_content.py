@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generator
 
 import pytest
@@ -59,8 +59,8 @@ def temp_user_token_and_quota(
         hashed_password=get_password_salted_hash("temp_password"),
         hashed_api_key=get_key_hash("temp_api_key"),
         content_quota=content_quota,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     db_session.add(temp_user_db)
     db_session.commit()
@@ -164,7 +164,7 @@ class TestManageContent:
             ("title 2", "test content 2", {"meta_key": "meta_value"}),
         ],
     )
-    async def test_create_and_delete_content(
+    def test_create_and_delete_content(
         self,
         client: TestClient,
         content_title: str,
@@ -208,7 +208,7 @@ class TestManageContent:
             ),
         ],
     )
-    async def test_edit_and_retrieve_content(
+    def test_edit_and_retrieve_content(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -244,7 +244,7 @@ class TestManageContent:
 
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
-    async def test_edit_content_not_found(
+    def test_edit_content_not_found(
         self, client: TestClient, fullaccess_token: str
     ) -> None:
         response = client.put(
@@ -259,7 +259,7 @@ class TestManageContent:
 
         assert response.status_code == 404
 
-    async def test_list_content(
+    def test_list_content(
         self,
         client: TestClient,
         existing_content_id: int,
@@ -272,7 +272,7 @@ class TestManageContent:
         assert response.status_code == 200
         assert len(response.json()) > 0
 
-    async def test_delete_content(
+    def test_delete_content(
         self, client: TestClient, existing_content_id: int, fullaccess_token: str
     ) -> None:
         response = client.delete(
@@ -283,7 +283,7 @@ class TestManageContent:
 
 
 class TestMultUserManageContent:
-    async def test_user2_get_user1_content(
+    def test_user2_get_user1_content(
         self,
         client: TestClient,
         existing_content_id: str,
@@ -295,7 +295,7 @@ class TestMultUserManageContent:
         )
         assert response.status_code == 404
 
-    async def test_user2_edit_user1_content(
+    def test_user2_edit_user1_content(
         self,
         client: TestClient,
         existing_content_id: str,
@@ -312,7 +312,7 @@ class TestMultUserManageContent:
         )
         assert response.status_code == 404
 
-    async def test_user2_delete_user1_content(
+    def test_user2_delete_user1_content(
         self,
         client: TestClient,
         existing_content_id: str,
@@ -337,8 +337,9 @@ async def test_convert_record_to_schema() -> None:
         positive_votes=0,
         negative_votes=0,
         content_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
+        is_archived=False,
     )
     result = _convert_record_to_schema(record)
     assert result.content_id == content_id

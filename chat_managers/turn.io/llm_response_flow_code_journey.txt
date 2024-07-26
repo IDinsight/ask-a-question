@@ -11,12 +11,13 @@ end
 
 card AAQ_LLM_Call, then: Response do
   response =
-    post("https://<INSERT_AAQ_URL>/api/llm-response",
+    post("https://app.ask-a-question.com/api/search",
       # milliseconds
       timeout: 20_000,
       body: """
       {
         "query_text": "@question",
+        "generate_llm_response": true,
         "query_metadata": {}
       }
       """,

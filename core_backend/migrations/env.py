@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from app import models
-from app.database import SYNC_DB_API, build_connection_string
+from app.database import SYNC_DB_API, get_connection_url
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
@@ -10,12 +10,17 @@ from sqlalchemy import engine_from_config, pool
 config = context.config
 
 # this will overwrite the ini-file sqlalchemy.url path
-config.set_main_option("sqlalchemy.url", build_connection_string(db_api=SYNC_DB_API))
+connection_url = get_connection_url(db_api=SYNC_DB_API)
+connection_string = connection_url.render_as_string(hide_password=False)
+# Don't use '%' in password: https://stackoverflow.com/a/40837579/25741288
+config.set_main_option("sqlalchemy.url", connection_string)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
+# See: https://pytest-alembic.readthedocs.io/en/latest/setup.html#caplog-issues for
+# more info on fileConfig for `pytest-alembic`.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=True)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -23,7 +28,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = models.Base.metadata
 
-# other values from the config, defined by the needs of env.py,
+# other values from the config, defined by the needs of env.py,q
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
@@ -56,15 +61,22 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    In normal migration scenarios, we need to create an Engine and associate a
+    connection with the context.
 
+    For `pytest-alembic`, the connection is provided by `pytest-alembic` at runtime.
+    Thus, we create a check to see if `connectable` already exists. This allows the same
+    `env.py` to be used for both `pytest-alembic` and regular migrations.
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+
+    connectable = context.config.attributes.get("connection", None)
+
+    if connectable is None:
+        connectable = engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

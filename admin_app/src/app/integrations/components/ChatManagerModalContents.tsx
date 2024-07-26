@@ -44,7 +44,7 @@ const TypebotModalContent: React.FC = () => {
           variant="outlined"
           color="primary"
           startIcon={<DownloadIcon />}
-          href="https://github.com/IDinsight/aaq-core/blob/e75c7fec20373a8db5f5c8771b069aa7fac576a8/chat_managers/typebot/llm_response_flow.json"
+          href="https://github.com/IDinsight/ask-a-question/blob/e75c7fec20373a8db5f5c8771b069aa7fac576a8/chat_managers/typebot/llm_response_flow.json"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -75,7 +75,7 @@ const TurnModalContent: React.FC = () => {
       >
         For now, please refer to our{" "}
         <Link
-          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/turn.io/turn/"
+          href="https://docs.ask-a-question.com/integrations/chat_managers/turn.io/turn/"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -101,7 +101,7 @@ const GlificModalContent: React.FC = () => {
       >
         For now, please refer to our{" "}
         <Link
-          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/glific/glific/"
+          href="https://docs.ask-a-question.com/integrations/chat_managers/glific/glific/"
           target="_blank"
           rel="noopener noreferrer"
         >
