@@ -21,9 +21,9 @@ jobs:
     steps:
       - name: Resolve deployment environment name
         id: set-env
-        run: |
+        run: | # fix first condition to production after test
           if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
-            echo "env_name=production" >> "$GITHUB_OUTPUT"
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
@@ -69,20 +69,21 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
-      - name: Build and push admin_app image
-        if: ${{ needs.set-env.outputs.env_name == 'testing' }}
-        working-directory: admin_app
-        run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
-            --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
-            -t ${{ env.REPO }}/admin_app:latest \
-            -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
-            .
-          docker image push --all-tags ${{ env.REPO }}/admin_app
+      # - name: Build and push admin_app image
+      #   if: ${{ needs.set-env.outputs.env_name == 'testing' }}
+      #   working-directory: admin_app
+      #   run: |
+      #     docker build \
+      #       --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
+      #       --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
+      #       -t ${{ env.REPO }}/admin_app:latest \
+      #       -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
+      #       .
+      #     docker image push --all-tags ${{ env.REPO }}/admin_app
 
-      - name: Build and push admin_app image to production
-        if: ${{ needs.set-env.outputs.env_name == 'production' }}
+      # Fix the following to production after testing
+      - name: Build and push admin_app image to production (to be fixed)
+        if: ${{ needs.set-env.outputs.env_name == 'testing' }}
         working-directory: admin_app
         run: |
           docker build \
