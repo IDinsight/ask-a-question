@@ -75,7 +75,7 @@ const TurnModalContent: React.FC = () => {
       >
         For now, please refer to our{" "}
         <Link
-          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/turn.io/turn/"
+          href="https://docs.ask-a-question.com/integrations/chat_managers/turn.io/turn/"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -101,7 +101,7 @@ const GlificModalContent: React.FC = () => {
       >
         For now, please refer to our{" "}
         <Link
-          href="https://idinsight.github.io/aaq-core/integrations/chat_managers/glific/glific/"
+          href="https://docs.ask-a-question.com/integrations/chat_managers/glific/glific/"
           target="_blank"
           rel="noopener noreferrer"
         >

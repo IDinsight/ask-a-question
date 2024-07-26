@@ -4,7 +4,7 @@
 </p>
 
 <p align="center" style="text-align:center">
-<a href="https://idinsight.github.io/aaq-core/">Developer Docs</a> |
+<a href="https://docs.ask-a-question.com/">Developer Docs</a> |
 <a href="#features">Features</a> |
 <a href="#usage">Usage</a> |
 <a href="#architecture">Architecture</a> |
@@ -63,7 +63,7 @@ To get answers from your database of contents, you can use the `/search` endpoin
 - Search results: Finds the most similar content in the database using cosine distance between embeddings.
 - (Optionally) LLM generated response: Crafts a custom response using LLM chat using the most similar content.
 
-See [docs](https://idinsight.github.io/aaq-core/) or [API docs](https://app.ask-a-question.com/api/docs) for more details and other API endpoints.
+See [docs](https://docs.ask-a-question.com/) or [API docs](https://app.ask-a-question.com/api/docs) for more details and other API endpoints.
 
 ### :question: Simple content search
 
@@ -115,7 +115,7 @@ We use docker-compose to orchestrate containers with a reverse proxy that manage
 
 ## Documentation
 
-See [here](https://idinsight.github.io/aaq-core/) for full documentation.
+See [here](https://docs.ask-a-question.com/) for full documentation.
 
 ## Funders and Partners
 
