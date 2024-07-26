@@ -71,6 +71,9 @@ EMBEDDINGS_ENDPOINT = os.environ.get(
     "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
 )
 
+SPEECH_ENDPOINT = os.environ.get(
+    "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
+)
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 

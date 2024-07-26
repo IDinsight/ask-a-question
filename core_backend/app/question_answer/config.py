@@ -7,4 +7,3 @@ STANDARD_FAILURE_MESSAGE = os.environ.get(
     "STANDARD_FAILURE_MESSAGE",
     "Sorry, I am unable to find an answer to your question in the knowledge base.",
 )
-SPEECH_ENDPOINT = os.environ.get("SPEECH_ENDPOINT")

@@ -1,12 +1,13 @@
 import os
 from typing import Tuple
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key
+from ..config import SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -30,7 +31,7 @@ from ..utils import (
 )
 from ..voice_api.schemas import AudioQueryError
 from ..voice_api.voice_components import generate_speech
-from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH, SPEECH_ENDPOINT
+from .config import N_TOP_CONTENT_FOR_RAG, N_TOP_CONTENT_FOR_SEARCH
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -84,26 +85,14 @@ async def stt_llm_response(
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
     """
-    Transcribes the provided MP3 file to text using Whisper,
-    then generates a custom response using LLM and returns it.
+    Endpoint to transcribe audio from the provided file and generate an LLM response.
     """
-
     file_path = f"temp/{file.filename}"
     try:
         with open(file_path, "wb") as f:
             f.write(await file.read())
 
-        url = SPEECH_ENDPOINT
-        async with get_http_client() as client:
-            async with client.post(url, json={"file_path": f"{file_path}"}) as response:
-                if response.status != 200:
-                    error_content = await response.json()
-                    return JSONResponse(
-                        status_code=response.status, content=error_content
-                    )
-
-                transcription_result = await response.json()
-
+        transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
         user_query = QueryBase(
             query_text=transcription_result["text"],
             query_metadata={},
@@ -114,7 +103,7 @@ async def stt_llm_response(
             user_id=user_db.user_id, user_query=user_query, asession=asession
         )
 
-        response = await search_with_llm_response(
+        search_response = await search_with_llm_response(
             question=user_query_refined,
             response=response,
             user_id=user_db.user_id,
@@ -122,16 +111,18 @@ async def stt_llm_response(
             asession=asession,
         )
 
-        if isinstance(response, QueryResponseError):
-            await save_query_response_error_to_db(user_query_db, response, asession)
-            return JSONResponse(status_code=400, content=response.model_dump())
+        if isinstance(search_response, QueryResponseError):
+            await save_query_response_error_to_db(
+                user_query_db, search_response, asession
+            )
+            return JSONResponse(status_code=400, content=search_response.model_dump())
         else:
-            await save_query_response_to_db(user_query_db, response, asession)
-            return response
+            await save_query_response_to_db(user_query_db, search_response, asession)
+            return search_response
 
     except Exception as e:
         error_msg = f"Failed to process request: {str(e)}"
-        logger.error(error_msg)
+        logger.error(error_msg, exc_info=True)
         error_response = AudioQueryError(
             error_message=error_msg,
             error_type=ErrorType.STT_ERROR,
@@ -142,6 +133,19 @@ async def stt_llm_response(
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
+
+async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
+    """
+    Post request the file to the speech endpoint to get the transcription
+    """
+    async with get_http_client() as client:
+        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
+            if response.status != 200:
+                error_content = await response.json()
+                logger.error(f"Error from SPEECH_ENDPOINT: {error_content}")
+                raise HTTPException(status_code=response.status, detail=error_content)
+            return await response.json()
 
 
 @router.post(

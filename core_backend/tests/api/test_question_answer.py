@@ -1,8 +1,10 @@
+import os
 from functools import partial
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
@@ -377,6 +379,69 @@ class TestGenerateResponse:
                     assert json_response["tts_file"] is not None
                 else:
                     assert json_response["tts_file"] is None
+
+
+class TestSTTLLMResponse:
+    @pytest.mark.parametrize(
+        "token, generate_tts, expected_status_code, mock_response",
+        [
+            (TEST_USER_API_KEY, True, 200, {"text": "Paris"}),
+            (TEST_USER_API_KEY, False, 200, {"text": "Paris"}),
+            (f"{TEST_USER_API_KEY}_incorrect", True, 401, {"error": "Unauthorized"}),
+            (TEST_USER_API_KEY, True, 500, {}),
+        ],
+    )
+    def test_stt_llm_response(
+        self,
+        token: str,
+        generate_tts: bool,
+        expected_status_code: int,
+        mock_response: dict,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_gtts: MagicMock,
+    ) -> None:
+        async def dummy_post_to_speech(file_path: str, endpoint_url: str) -> dict:
+            if expected_status_code == 500:
+                raise HTTPException(
+                    status_code=500, detail={"error": "Internal Server Error"}
+                )
+            return mock_response
+
+        monkeypatch.setattr(
+            "core_backend.app.question_answer.routers.post_to_speech",
+            dummy_post_to_speech,
+        )
+
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        file_path = os.path.join(temp_dir, "test.mp3")
+
+        with open(file_path, "wb") as f:
+            f.write(b"fake audio content")
+
+        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
+            response = client.post(
+                "/stt-llm-response",
+                headers={"Authorization": f"Bearer {token}"},
+                files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
+                data={"generate_tts": str(generate_tts).lower()},
+            )
+
+            assert response.status_code == expected_status_code
+
+            if expected_status_code == 200:
+                json_response = response.json()
+                assert "llm_response" in json_response
+            elif expected_status_code == 500:
+                json_response = response.json()
+                assert "error_message" in json_response
+                assert response.status_code == 500
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            if os.path.exists(temp_dir) and not os.listdir(temp_dir):
+                os.rmdir(temp_dir)
 
 
 class TestErrorResponses:
