@@ -89,7 +89,7 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
             --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
-            -t ${{ env.REPO }}/admin_app:${{ github.ref_name }}
+            -t ${{ env.REPO }}/admin_app:${{ github.ref_name }} \
             .
           docker image push --all-tags ${{ env.REPO }}/admin_app
 
