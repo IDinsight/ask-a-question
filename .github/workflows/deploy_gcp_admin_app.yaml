@@ -21,9 +21,9 @@ jobs:
     steps:
       - name: Resolve deployment environment name
         id: set-env
-        run: | # fix first condition to production after test
+        run: |
           if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
-            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
@@ -44,8 +44,7 @@ jobs:
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
       REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
-      TAG: ${{ (needs.set-env.outputs.env_name == 'testing' && github.ref_name) || github.sha }}
-    # Update TAG condition to production
+      TAG: ${{ (needs.set-env.outputs.env_name == 'production' && github.ref_name) || github.sha }}
 
     steps:
       - uses: "actions/checkout@v4"
