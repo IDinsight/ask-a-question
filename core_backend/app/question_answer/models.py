@@ -205,7 +205,7 @@ async def save_query_response_to_db(
         The user query response database object.
     """
 
-    if isinstance(response, QueryResponse):
+    if type(response) is QueryResponse:
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
             search_results=response.model_dump()["search_results"],
@@ -214,7 +214,7 @@ async def save_query_response_to_db(
             debug_info=response.model_dump()["debug_info"],
             is_error=False,
         )
-    elif isinstance(response, QueryResponseError):
+    elif type(response) is QueryResponseError:
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
             search_results=response.model_dump()["search_results"],
@@ -225,6 +225,8 @@ async def save_query_response_to_db(
             error_type=response.error_type,
             error_message=response.error_message,
         )
+    else:
+        raise ValueError("Invalid response type.")
 
     asession.add(user_query_responses_db)
     await asession.commit()
