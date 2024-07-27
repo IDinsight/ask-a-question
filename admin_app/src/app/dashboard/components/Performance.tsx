@@ -32,8 +32,7 @@ const Performance: React.FC = () => {
           md={14}
           columns={14}
           sx={{
-            borderBottom: 1,
-            borderTop: 1,
+            border: 1,
             borderColor: "secondary.main",
             mt: 3,
             fontSize: "small",
@@ -52,7 +51,8 @@ const Performance: React.FC = () => {
           md={14}
           columns={14}
           sx={{
-            borderBottom: 1,
+            border: 1,
+            borderTop: 0,
             borderColor: "secondary.main",
             mt: 1,
             fontSize: "small",
@@ -109,8 +109,11 @@ const Performance: React.FC = () => {
             md={14}
             columns={14}
             sx={{
-              borderBottom: 1,
+              border: 1,
+              borderTop: 0,
               borderColor: "secondary.main",
+              borderBottomColor: "grey.300",
+              bgcolor: "white",
               mt: 1,
               fontSize: "small",
               fontWeight: 300,
