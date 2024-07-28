@@ -6,10 +6,26 @@ import SwapVertIcon from "@mui/icons-material/SwapVert";
 import TextField from "@mui/material/TextField";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import Pagination from "@mui/material/Pagination";
+import Drawer from "@mui/material/Drawer";
 
 const Performance: React.FC = () => {
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setDrawerOpen(newOpen);
+  };
+
   return (
     <>
+      <Drawer open={drawerOpen} onClose={toggleDrawer(false)} anchor="right">
+        <Box
+          sx={{ width: 450 }}
+          role="presentation"
+          onClick={toggleDrawer(false)}
+        >
+          Feedback + AI Summary
+        </Box>
+      </Drawer>
       <Box
         bgcolor="white"
         sx={{
@@ -104,10 +120,12 @@ const Performance: React.FC = () => {
 
         {rows.map((row) => (
           <Grid
+            key={row.id}
             container
             spacing={2}
             md={14}
             columns={14}
+            onClick={toggleDrawer(true)}
             sx={{
               border: 1,
               borderTop: 0,
