@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import Pagination from "@mui/material/Pagination";
 import Drawer from "@mui/material/Drawer";
+import Paper from "@mui/material/Paper";
 
 const Performance: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -135,6 +136,7 @@ const Performance: React.FC = () => {
               mt: 1,
               fontSize: "small",
               fontWeight: 300,
+              "&:hover": { boxShadow: 2, zIndex: "1000" },
             }}
           >
             <Grid md={6}>{row.title}</Grid>
