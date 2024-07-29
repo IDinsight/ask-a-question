@@ -7,13 +7,108 @@ import TextField from "@mui/material/TextField";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import Pagination from "@mui/material/Pagination";
 import Drawer from "@mui/material/Drawer";
-import Paper from "@mui/material/Paper";
+import { ApexOptions } from "apexcharts";
+import { appColors } from "@/utils/index";
+import LineChart from "@/app/dashboard/components/LineChart";
+import { getPerformancePageData } from "@/app/dashboard/api";
+import { ApexData, Period } from "@/app/dashboard/types";
+import { useAuth } from "@/utils/auth";
+import { useEffect } from "react";
 
-const Performance: React.FC = () => {
+const N_TOP_CONTENT = 7;
+
+interface PerformanceProps {
+  timePeriod: Period;
+}
+
+const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
+  const { token } = useAuth();
+
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-
+  const [timeseriesData, setTimeseriesData] = React.useState<ApexData[]>([]);
   const toggleDrawer = (newOpen: boolean) => () => {
     setDrawerOpen(newOpen);
+  };
+
+  useEffect(() => {
+    if (token) {
+      getPerformancePageData(timePeriod, token, N_TOP_CONTENT).then(
+        (response) => {
+          console.log(response.content_time_series);
+          parseContentTimeSeries(response.content_time_series);
+        },
+      );
+    } else {
+      console.log("No token found");
+    }
+  }, [timePeriod, token]);
+
+  const parseContentTimeSeries = (timeseriesData: Record<string, any>[]) => {
+    const apexTimeSeriesData: ApexData[] = timeseriesData.map((series, idx) => {
+      // const color =
+      //  idx === 0 ? appColors.dashboardPrimary : appColors.dashboardLightGray;
+      const zIndex = idx === 0 ? 3 : 2;
+      const seriesData = {
+        name: series.title,
+        // color: color,
+        zIndex: zIndex,
+        data: Object.entries(series.query_count_time_series).map(
+          ([period, queryCount]) => {
+            const date = new Date(period);
+            return {
+              x: String(date),
+              y: queryCount as number,
+            };
+          },
+        ),
+      };
+      return seriesData;
+    });
+    console.log(apexTimeSeriesData);
+    setTimeseriesData(apexTimeSeriesData);
+  };
+
+  const timeseriesOptions: ApexOptions = {
+    title: {
+      text: `Top content in the last ${timePeriod}`,
+      align: "left",
+      style: {
+        fontSize: "25px",
+        fontWeight: 400,
+        color: appColors.black,
+      },
+    },
+    chart: {
+      id: "content-performance-timeseries",
+      stacked: false,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      },
+    },
+    yaxis: {
+      tickAmount: 5,
+      labels: {
+        formatter: function (value) {
+          return String(Math.round(value)); // Format labels to show whole numbers
+        },
+      },
+    },
+    legend: {
+      show: false,
+      position: "top",
+      horizontalAlign: "left",
+    },
+    stroke: {
+      width: [4, ...Array(N_TOP_CONTENT).fill(2)],
+      curve: "smooth",
+      dashArray: [0, ...Array(N_TOP_CONTENT).fill(7)],
+    },
   };
 
   return (
@@ -30,14 +125,14 @@ const Performance: React.FC = () => {
       <Box
         bgcolor="white"
         sx={{
-          display: "flex",
-          alignItems: "stretch",
-          justifyContent: "space-between",
           height: 300,
           maxWidth: 1387,
-          border: 1,
+          border: 0,
+          padding: 2,
         }}
-      ></Box>
+      >
+        <LineChart options={timeseriesOptions} data={timeseriesData} />
+      </Box>
       <Grid
         container
         columns={14}

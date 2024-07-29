@@ -17,7 +17,6 @@ import { format } from "date-fns";
 import React, { useEffect } from "react";
 import { ApexData, DayHourUsageData, Period, TopContentData } from "../types";
 
-
 interface OverviewProps {
   timePeriod: Period;
 }
@@ -103,10 +102,10 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   }, [timePeriod, token]);
 
   const getLocalTime = (time: string) => {
-    // Convert UCT time to local time
+    // Convert UTC time to local time
     const date = format(new Date(), "yyyy-MM-dd");
-    const UCTDateTimeString = `${date}T${time}:00.000000Z`;
-    const localDateTimeString = new Date(UCTDateTimeString);
+    const UTCDateTimeString = `${date}T${time}:00.000000Z`;
+    const localDateTimeString = new Date(UTCDateTimeString);
     const localTimeString = localDateTimeString.toLocaleString(undefined, {
       hour: "2-digit",
       minute: "2-digit",

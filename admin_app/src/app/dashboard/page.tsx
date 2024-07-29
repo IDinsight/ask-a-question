@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
-        return <Performance />;
+        return <Performance timePeriod={timePeriod} />;
       case "Insights":
         return <div>Products</div>;
       default:

@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Literal, Tuple
 
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
@@ -9,8 +9,14 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .models import get_heatmap, get_stats_cards, get_timeseries, get_top_content
-from .schemas import DashboardOverview, TimeFrequency
+from .models import (
+    get_heatmap,
+    get_overview_timeseries,
+    get_stats_cards,
+    get_timeseries_top_content,
+    get_top_content,
+)
+from .schemas import DashboardOverview, DashboardPerformance, TimeFrequency
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -20,93 +26,102 @@ TAG_METADATA = {
 router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
+DashboardTimeFilter = Literal["day", "week", "month", "year"]
 
-@router.get("/overview/day", response_model=DashboardOverview)
-async def retrieve_overview_day(
+
+@router.get("/performance/{time_frequency}", response_model=DashboardPerformance)
+async def retrieve_performance_frequency(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+    top_n: int = 20,
+) -> DashboardPerformance:
+    """
+    Retrieve timeseries data on content usage and performance of each content
+    """
+
+    today = datetime.now(timezone.utc)
+    frequency, start_date = get_frequency_and_startdate(time_frequency)
+
+    performance_stats = await retrieve_performance(
+        user_id=user_db.user_id,
+        asession=asession,
+        top_n=top_n,
+        start_date=start_date,
+        end_date=today,
+        frequency=frequency,
+    )
+    return performance_stats
+
+
+async def retrieve_performance(
+    user_id: int,
+    asession: AsyncSession,
+    top_n: int,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> DashboardPerformance:
+    """
+    Retrieve timeseries data on content usage and performance of each content
+    """
+    content_time_series = await get_timeseries_top_content(
+        user_id=user_id,
+        asession=asession,
+        top_n=top_n,
+        start_date=start_date,
+        end_date=end_date,
+        frequency=frequency,
+    )
+
+    return DashboardPerformance(content_time_series=content_time_series)
+
+
+@router.get("/overview/{time_frequency}", response_model=DashboardOverview)
+async def retrieve_overview_frequency(
+    time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics
     """
+
     today = datetime.now(timezone.utc)
-    day_ago = today - timedelta(days=1)
+    frequency, start_date = get_frequency_and_startdate(time_frequency)
 
     stats = await retrieve_overview(
         user_id=user_db.user_id,
         asession=asession,
-        start_date=day_ago,
+        start_date=start_date,
         end_date=today,
-        frequency=TimeFrequency.Hour,
+        frequency=frequency,
     )
 
     return stats
 
 
-@router.get("/overview/week", response_model=DashboardOverview)
-async def retrieve_overview_week(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
+def get_frequency_and_startdate(
+    time_frequency: DashboardTimeFilter,
+) -> Tuple[TimeFrequency, datetime]:
     """
-    Retrieve all question answer statistics
+    Get the time frequency and start date based on the time filter
     """
-    today = datetime.now(timezone.utc)
-    week_ago = today - timedelta(days=7)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=week_ago,
-        end_date=today,
-        frequency=TimeFrequency.Day,
-    )
-
-    return stats
-
-
-@router.get("/overview/month", response_model=DashboardOverview)
-async def retrieve_overview_month(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
-    """
-    Retrieve all question answer statistics
-    """
-    today = datetime.now(timezone.utc)
-    month_ago = today + relativedelta(months=-1)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=month_ago,
-        end_date=today,
-        frequency=TimeFrequency.Day,
-    )
-
-    return stats
-
-
-@router.get("/overview/year", response_model=DashboardOverview)
-async def retrieve_overview_year(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
-    """
-    Retrieve all question answer statistics
-    """
-    today = datetime.now(timezone.utc)
-    year_ago = today + relativedelta(years=-1)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=year_ago,
-        end_date=today,
-        frequency=TimeFrequency.Week,
-    )
-
-    return stats
+    match time_frequency:
+        case "day":
+            return TimeFrequency.Hour, datetime.now(timezone.utc) - timedelta(days=1)
+        case "week":
+            return TimeFrequency.Day, datetime.now(timezone.utc) - timedelta(weeks=1)
+        case "month":
+            return TimeFrequency.Day, datetime.now(timezone.utc) + relativedelta(
+                months=-1
+            )
+        case "year":
+            return TimeFrequency.Week, datetime.now(timezone.utc) + relativedelta(
+                years=-1
+            )
+        case _:
+            raise ValueError(f"Invalid time frequency: {time_frequency}")
 
 
 async def retrieve_overview(
@@ -133,7 +148,7 @@ async def retrieve_overview(
         end_date=end_date,
     )
 
-    time_series = await get_timeseries(
+    time_series = await get_overview_timeseries(
         user_id=user_id,
         asession=asession,
         start_date=start_date,

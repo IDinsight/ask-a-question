@@ -28,6 +28,7 @@ from core_backend.app.database import get_session
 from core_backend.app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
+    QueryResponseContentDB,
     ResponseFeedbackDB,
 )
 from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
@@ -113,6 +114,7 @@ def create_data(dt: datetime) -> None:
         query_id = create_query_record(dt, session)
         create_feedback_record(dt, query_id, is_negative, session)
         create_content_feedback_record(dt, query_id, is_content_negative, session)
+        create_content_for_query(dt, query_id, session)
     session.close()
 
 
@@ -191,6 +193,27 @@ def create_content_feedback_record(
         session.commit()
 
 
+def create_content_for_query(dt: datetime, query_id: int, session: Session) -> None:
+    """
+    Create a QueryResponseContentDB record for a given datetime and query_id.
+    """
+    all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
+    content_ids = random.choices(
+        all_content_ids,
+        weights=[c.query_count for c in session.query(ContentDB).all()],
+        k=8,
+    )
+    for content_id in content_ids:
+        response_db = QueryResponseContentDB(
+            query_id=query_id,
+            content_id=content_id,
+            user_id=1,
+            created_datetime_utc=dt,
+        )
+        session.add(response_db)
+        session.commit()
+
+
 def add_content_data() -> None:
     """
     Add N_DATAPOINTS of data for each day in the past year.
@@ -201,6 +224,11 @@ def add_content_data() -> None:
         "Yes, pregnancy can cause TOOTHACHE",
         "Ways to manage HEARTBURN in pregnancy",
         "Some LEG cramps are normal during pregnancy",
+        "How to handle swollen FEET",
+        "Managing GAS and bloating during pregnancy",
+        "Yes, pregnancy can affect your BREATHING",
+        "Snack often to prevent DIZZINESS",
+        "FAINTING could mean anemia – visit the clinic to find out",
     ]
 
     for _i, c in enumerate(content):
