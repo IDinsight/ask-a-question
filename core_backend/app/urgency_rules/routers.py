@@ -1,6 +1,8 @@
+"""This module contains the FastAPI router for the urgency detection rule endpoints."""
+
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,7 +59,8 @@ async def get_urgency_rule(
     )
     if not urgency_rule_db:
         raise HTTPException(
-            status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Urgency Rule id `{urgency_rule_id}` not found",
         )
     return _convert_record_to_schema(urgency_rule_db)
 
@@ -77,7 +80,8 @@ async def delete_urgency_rule(
     )
     if not urgency_rule_db:
         raise HTTPException(
-            status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Urgency Rule id `{urgency_rule_id}` not found",
         )
     await delete_urgency_rule_from_db(
         user_id=user_db.user_id, urgency_rule_id=urgency_rule_id, asession=asession
@@ -102,7 +106,8 @@ async def update_urgency_rule(
 
     if not old_urgency_rule:
         raise HTTPException(
-            status_code=404, detail=f"Urgency Rule id `{urgency_rule_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Urgency Rule id `{urgency_rule_id}` not found",
         )
 
     urgency_rule_db = await update_urgency_rule_in_db(
@@ -132,9 +137,19 @@ async def get_urgency_rules(
 
 
 def _convert_record_to_schema(urgency_rule_db: UrgencyRuleDB) -> UrgencyRuleRetrieve:
+    """Convert a `UrgencyRuleDB` record to a `UrgencyRuleRetrieve` schema.
+
+    Parameters
+    ----------
+    urgency_rule_db
+        The urgency rule record from the database.
+
+    Returns
+    -------
+    UrgencyRuleRetrieve
+        The urgency rule retrieval schema.
     """
-    Convert a UrgencyRuleDB record to a UrgencyRuleRetrieve schema
-    """
+
     return UrgencyRuleRetrieve(
         urgency_rule_id=urgency_rule_db.urgency_rule_id,
         user_id=urgency_rule_db.user_id,
