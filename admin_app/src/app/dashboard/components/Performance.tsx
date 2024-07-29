@@ -34,6 +34,7 @@ const Performance: React.FC = () => {
           alignItems: "stretch",
           justifyContent: "space-between",
           height: 300,
+          maxWidth: 1387,
           border: 1,
         }}
       ></Box>
