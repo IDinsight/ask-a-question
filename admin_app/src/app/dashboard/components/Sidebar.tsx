@@ -167,6 +167,11 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                       minWidth: 0,
                       mr: open ? 3 : "auto",
                       justifyContent: "center",
+
+                        color:
+                          item.name == selectedDashboardPage
+                            ? "primary.main"
+                            : "secondary.main",
                     }}
                   >
                     {item.icon}
