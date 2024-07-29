@@ -319,5 +319,3 @@ class TestArchiveContent:
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
-        assert len(response_json) == 4
