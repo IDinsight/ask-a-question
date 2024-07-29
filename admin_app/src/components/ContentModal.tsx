@@ -214,8 +214,7 @@ const ArchiveContentModal = ({
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          Removing this content will mean that it can no longer be accessed. It
-          cannot be undone.
+          Removing this content will mean that it can no longer be accessed.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
