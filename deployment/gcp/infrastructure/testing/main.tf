@@ -4,12 +4,12 @@
 
 # External IP
 resource "google_compute_address" "vm_static_ip" {
-  name = "${var.project_name}-${var.environment}-static-ip"
+  name = "${var.deployment_group_name}-${var.environment}-static-ip"
 }
 
 # Compute Instance
 resource "google_compute_instance" "vm_instance" {
-  name                = "${var.project_name}-${var.environment}"
+  name                = "${var.deployment_group_name}-${var.environment}"
   machine_type        = var.gce_instance_type
   can_ip_forward      = false
   deletion_protection = false
@@ -17,7 +17,7 @@ resource "google_compute_instance" "vm_instance" {
 
   boot_disk {
     auto_delete = true
-    device_name = "${var.project_name}-${var.environment}"
+    device_name = "${var.deployment_group_name}-${var.environment}"
 
     initialize_params {
       image = "cos-cloud/cos-113-18244-85-49"
@@ -47,7 +47,7 @@ resource "google_compute_instance" "vm_instance" {
 ###############################################################################
 
 resource "google_sql_database_instance" "postgres_instance" {
-  name             = "${var.project_name}-${var.environment}-web-db"
+  name             = "${var.deployment_group_name}-${var.environment}-web-db"
   database_version = "POSTGRES_16"
   root_password    = random_password.postgres_password.result
   settings {
@@ -72,7 +72,7 @@ resource "google_sql_database_instance" "postgres_instance" {
 ###############################################################################
 
 resource "google_artifact_registry_repository" "docker_repo" {
-  repository_id = "${var.project_name}-${var.environment}"
-  description   = "Docker image repository for ${var.project_name}-${var.environment}"
+  repository_id = "${var.deployment_group_name}-${var.environment}"
+  description   = "Docker image repository for ${var.deployment_group_name}-${var.environment}"
   format        = "DOCKER"
 }

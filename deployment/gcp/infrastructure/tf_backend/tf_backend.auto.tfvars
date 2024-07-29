@@ -1,2 +1,2 @@
-project_name = "aaq"
-gcp_region = "asia-south1"
+deployment_group_name = "aaq"
+gcp_location          = "asia-south1"

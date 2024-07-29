@@ -1,10 +1,10 @@
-variable "project_name" {
-  description = "value for the project name"
+variable "deployment_group_name" {
+  description = "value for the deployment group name"
   type        = string
 }
 
 variable "environment" {
-  description = "value for the environment"
+  description = "value for the deployment environment"
   type        = string
 }
 
