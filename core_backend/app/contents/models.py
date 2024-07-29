@@ -88,10 +88,7 @@ class ContentDB(Base):
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     content_tags = relationship(
-        "TagDB",
-        secondary=content_tags_table,
-        back_populates="contents",
-        lazy="selectin",
+        "TagDB", secondary=content_tags_table, back_populates="contents"
     )
 
     def __repr__(self) -> str:
