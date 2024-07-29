@@ -98,6 +98,7 @@ async def create_content(
     content_db = await save_content_to_db(
         user_id=user_db.user_id,
         content=content,
+        exclude_archived=False,  # Don't exclude for newly saved content!
         asession=asession,
     )
     return _convert_record_to_schema(content_db)
@@ -258,6 +259,7 @@ async def retrieve_content_by_id(
 async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
@@ -330,8 +332,12 @@ async def bulk_upload_contents(
             content_tags=content_tags,
             content_metadata={},
         )
+
         content_db = await save_content_to_db(
-            user_id=user_db.user_id, content=content, asession=asession
+            user_id=user_db.user_id,
+            content=content,
+            exclude_archived=exclude_archived,
+            asession=asession,
         )
         content_retrieve = _convert_record_to_schema(content_db)
         created_contents.append(content_retrieve)
@@ -387,7 +393,10 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
                 )
             ]
         )
-        raise HTTPException(status_code=400, detail=error_list_model.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_list_model.model_dump(),
+        )
 
     return df
 
@@ -678,7 +687,6 @@ def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     -------
     List[str]
         A list of unique tags.
-
     """
 
     # prep col
