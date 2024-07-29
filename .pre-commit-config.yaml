@@ -37,6 +37,10 @@ repos:
     hooks:
       - id: prettier
         exclude: ^(docs)
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.92.0
+    hooks:
+      - id: terraform_fmt
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
