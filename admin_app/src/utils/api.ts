@@ -84,7 +84,7 @@ const archiveContent = async (content_id: number, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error archiving content");
+      throw new Error("Error deleting content");
     }
   });
 };

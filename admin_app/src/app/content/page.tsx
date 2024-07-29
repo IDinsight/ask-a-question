@@ -318,7 +318,7 @@ const CardsGrid = ({
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
-      message: `Content #${content_id} archived successfully`,
+      message: `Content #${content_id} removed successfully`,
       color: "success",
     });
   };
@@ -471,7 +471,7 @@ const CardsGrid = ({
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(content_id: number) => {
                           setSnackMessage({
-                            message: `Failed to archive content #${content_id}`,
+                            message: `Failed to remove content #${content_id}`,
                             color: "error",
                           });
                         }}
