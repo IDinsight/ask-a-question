@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Literal
 
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
@@ -20,90 +20,43 @@ TAG_METADATA = {
 router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
+DashboardTimeFilter = Literal["day", "week", "month", "year"]
 
-@router.get("/overview/day", response_model=DashboardOverview)
+
+@router.get("/overview/{time_frequency}", response_model=DashboardOverview)
 async def retrieve_overview_day(
+    time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics
     """
+
     today = datetime.now(timezone.utc)
-    day_ago = today - timedelta(days=1)
+
+    match time_frequency:
+        case "day":
+            start_date = today - timedelta(days=1)
+            frequency = TimeFrequency.Hour
+        case "week":
+            start_date = today - timedelta(weeks=1)
+            frequency = TimeFrequency.Day  # pylint: disable=redefined-variable-type
+        case "month":
+            start_date = today + relativedelta(months=-1)
+            frequency = TimeFrequency.Day
+        case "year":
+            start_date = today + relativedelta(years=-1)
+            frequency = TimeFrequency.Week
+        case _:
+            raise ValueError(f"Invalid time frequency: {time_frequency}")
 
     stats = await retrieve_overview(
         user_id=user_db.user_id,
         asession=asession,
-        start_date=day_ago,
+        start_date=start_date,
         end_date=today,
-        frequency=TimeFrequency.Hour,
-    )
-
-    return stats
-
-
-@router.get("/overview/week", response_model=DashboardOverview)
-async def retrieve_overview_week(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
-    """
-    Retrieve all question answer statistics
-    """
-    today = datetime.now(timezone.utc)
-    week_ago = today - timedelta(days=7)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=week_ago,
-        end_date=today,
-        frequency=TimeFrequency.Day,
-    )
-
-    return stats
-
-
-@router.get("/overview/month", response_model=DashboardOverview)
-async def retrieve_overview_month(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
-    """
-    Retrieve all question answer statistics
-    """
-    today = datetime.now(timezone.utc)
-    month_ago = today + relativedelta(months=-1)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=month_ago,
-        end_date=today,
-        frequency=TimeFrequency.Day,
-    )
-
-    return stats
-
-
-@router.get("/overview/year", response_model=DashboardOverview)
-async def retrieve_overview_year(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> DashboardOverview:
-    """
-    Retrieve all question answer statistics
-    """
-    today = datetime.now(timezone.utc)
-    year_ago = today + relativedelta(years=-1)
-
-    stats = await retrieve_overview(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=year_ago,
-        end_date=today,
-        frequency=TimeFrequency.Week,
+        frequency=frequency,
     )
 
     return stats
