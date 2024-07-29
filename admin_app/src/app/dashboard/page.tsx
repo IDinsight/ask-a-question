@@ -6,6 +6,7 @@ import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
+import Performance from "@/app/dashboard/components/Performance";
 import { useState } from "react";
 import { appColors } from "@/utils";
 
@@ -22,7 +23,7 @@ const Dashboard: React.FC = () => {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
-        return <div>Users</div>;
+        return <Performance />;
       case "Insights":
         return <div>Products</div>;
       default:
@@ -32,8 +33,10 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <Box sx={{ display: "flex", mt: 4, flexDirection: "row" }}>
-        <Box sx={{ width: 240, display: "flex" }}>
+      <Box
+        sx={{ display: "flex", mt: 4, flexDirection: "row", height: "100%" }}
+      >
+        <Box sx={{ width: 240, display: "flex", height: "100%" }}>
           <Sidebar
             setDashboardPage={setDashboardPage}
             selectedDashboardPage={dashboardPage}
@@ -51,6 +54,7 @@ const Dashboard: React.FC = () => {
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
+              height: "100%",
             }}
           >
             <Box
@@ -65,7 +69,7 @@ const Dashboard: React.FC = () => {
               </Typography>
             </Box>
             <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
+            <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
           </Box>
         </Box>
       </Box>
