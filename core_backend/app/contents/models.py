@@ -91,6 +91,7 @@ class ContentDB(Base):
         "TagDB",
         secondary=content_tags_table,
         back_populates="contents",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
@@ -157,6 +158,7 @@ async def save_content_to_db(
         content_tags=content.content_tags,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        is_archived=content.is_archived,
     )
     asession.add(content_db)
 
