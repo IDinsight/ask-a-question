@@ -83,18 +83,31 @@ const Sidebar: React.FC<SideBarProps> = ({
                     : "background.paper"
                 }
                 sx={{
+                  color: "primary.main",
                   width: 6,
                   borderRadius: 3,
                 }}
               />
               <Box sx={{ width: "100%" }}>
-                <ListItem sx={{ padding: 0.5 }}>
+                <ListItem
+                  sx={{
+                    padding: 0.5,
+                  }}
+                >
                   <ListItemButton
                     sx={{ px: 1 }}
                     onClick={() => setDashboardPage(item.name)}
                     dense
                   >
-                    <ListItemIcon sx={{ minWidth: 30 }}>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 30,
+                        color:
+                          item.name == selectedDashboardPage
+                            ? "primary.main"
+                            : "secondary.main",
+                      }}
+                    >
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText primary={item.name} />
