@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UrgencyRuleCreate(BaseModel):
@@ -9,22 +9,20 @@ class UrgencyRuleCreate(BaseModel):
     Schema for creating a new urgency rule
     """
 
-    urgency_rule_text: Annotated[str, StringConstraints(max_length=255)]
+    urgency_rule_text: Annotated[
+        str,
+        Field(
+            ...,
+            max_length=255,
+            examples=[
+                "Blurry vision and dizziness",
+                "Blurry vision, dizziness, and nausea",
+            ],
+        ),
+    ]
     urgency_rule_metadata: dict = {}
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "urgency_rule_text": "Blurry vision and dizziness",
-                },
-                {
-                    "urgency_rule_text": "Blurry vision, dizziness, and nausea",
-                },
-            ]
-        },
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UrgencyRuleRetrieve(UrgencyRuleCreate):
@@ -60,16 +58,5 @@ class UrgencyRuleCosineDistance(BaseModel):
     is set to "cosine_distance_classifier")
     """
 
-    urgency_rule: str
-    distance: float
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "urgency_rule": "Blurry vision and dizziness",
-                    "distance": 0.1,
-                },
-            ]
-        },
-    )
+    urgency_rule: str = Field(..., examples=["Blurry vision and dizziness"])
+    distance: float = Field(..., examples=[0.1])
