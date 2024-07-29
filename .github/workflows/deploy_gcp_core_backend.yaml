@@ -102,7 +102,7 @@ jobs:
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
               -e BACKEND_ROOT_PATH=/api \
               ${{ env.REPO }}/core_backend:latest
-            docker system prune -f;
+            docker system prune -f || true
 
       - name: Show deployment command output
         run: |-
