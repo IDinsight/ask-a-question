@@ -82,7 +82,7 @@ jobs:
               --network aaq-network \
               --name admin_app \
               ${{ env.REPO }}/admin_app:latest
-            docker system prune -f;
+            docker system prune -f || true
 
       - name: Show deployment command output
         run: |-

@@ -73,7 +73,7 @@ jobs:
                 --network aaq-network \
                 --name caddy \
                 caddy:2.7.6
-            docker system prune --volumes -f;
+            docker system prune --volumes -f || true
 
       - name: Show deployment command output
         run: |-

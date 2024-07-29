@@ -79,7 +79,7 @@ jobs:
               --network aaq-network \
               --name litellm_proxy \
               ghcr.io/berriai/litellm:main-v1.40.10 --config /app/config.yaml --num_workers 4
-            docker system prune -f;
+            docker system prune -f || true
 
       - name: Show deployment command output
         run: |-
