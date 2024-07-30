@@ -233,8 +233,7 @@ async def delete_content(
         logger.error(f"Error deleting content: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Content with feedback cannot be deleted. You can instead archive "
-            "the content so that it is no longer useable.",
+            detail="Deletion of content with feedback is not allowed.",
         ) from e
 
 
