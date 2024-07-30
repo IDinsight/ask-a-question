@@ -19,7 +19,7 @@ Below is an example of how to connect a [Turn.io Journey](https://whatsapp.turn.
     ![Type in your journey title and click "Next".](./tutorial/04_New_journey.png){ width=420 }
 
 4. Copy and paste the contents of
-   [chat_managers/turn.io/llm_response_flow_code_journey.txt](https://github.com/IDinsight/aaq-core/blob/main/chat_managers/turn.io/llm_response_flow_code_journey.txt) in the AAQ repository into the
+   [chat_managers/turn.io/llm_response_flow_code_journey.txt](https://github.com/IDinsight/ask-a-question/blob/main/chat_managers/turn.io/llm_response_flow_code_journey.txt) in the AAQ repository into the
    Journey's code area.
 
     ![Copy and paste the journey code from chat_managers/turn.io/llm_response_flow_code_journey.txt into the code area](./tutorial/05_Paste_code.png)

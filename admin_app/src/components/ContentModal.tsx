@@ -1,5 +1,5 @@
 import { appColors, sizes } from "@/utils";
-import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
+import { Archive, Close, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -129,6 +129,7 @@ const ContentViewModal = ({
           <Layout.FlexBox
             flexDirection={"row"}
             justifyContent={"space-between"}
+            alignItems={"center"}
             gap={sizes.smallGap}
           >
             <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
@@ -150,7 +151,7 @@ const ContentViewModal = ({
               justifyContent={"space-between"}
             >
               <Typography variant="body2" color={appColors.darkGrey}>
-                Last modified on{" "}
+                Last modified{" "}
                 {new Date(last_modified).toLocaleString(undefined, {
                   day: "numeric",
                   month: "short",
@@ -186,20 +187,20 @@ const ContentViewModal = ({
   );
 };
 
-const DeleteContentModal = ({
+const ArchiveContentModal = ({
   content_id,
   open,
   onClose,
-  onSuccessfulDelete,
-  onFailedDelete,
-  deleteContent,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
 }: {
   content_id: number;
   open: boolean;
   onClose: () => void;
-  onSuccessfulDelete: (content_id: number) => void;
-  onFailedDelete: (content_id: number) => void;
-  deleteContent: (content_id: number) => Promise<any>;
+  onSuccessfulArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number) => void;
+  archiveContent: (content_id: number) => Promise<any>;
 }) => {
   return (
     <Dialog
@@ -209,11 +210,11 @@ const DeleteContentModal = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        Are you sure you want to delete this content?
+        Are you sure you want to archive this content?
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          Deleting this content will remove it from the database. This action
+          Archiving this content will remove it from the database. This action
           cannot be undone.
         </DialogContentText>
       </DialogContent>
@@ -221,29 +222,29 @@ const DeleteContentModal = ({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {
-            const handleDeleteContent = async (content_id: number) => {
-              const results = deleteContent(content_id)
+            const handleArchiveContent = async (content_id: number) => {
+              const results = archiveContent(content_id)
                 .then((res) => {
-                  onSuccessfulDelete(content_id);
+                  onSuccessfulArchive(content_id);
                 })
                 .catch((err) => {
                   console.log("error", err);
-                  onFailedDelete(content_id);
+                  onFailedArchive(content_id);
                 });
             };
-            handleDeleteContent(Number(content_id));
+            handleArchiveContent(Number(content_id));
             onClose();
           }}
           autoFocus
           variant="contained"
           color="error"
-          startIcon={<Delete />}
+          startIcon={<Archive />}
         >
-          Delete
+          Archive
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export { ContentViewModal, DeleteContentModal };
+export { ContentViewModal, ArchiveContentModal };

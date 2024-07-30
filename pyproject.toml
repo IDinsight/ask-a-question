@@ -5,11 +5,17 @@ disallow_untyped_defs = true
 module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy","google.auth.transport", "google.oauth2","aioredis"]
 ignore_missing_imports = true
 [tool.ruff]
-select = ["E", "F", "B", "Q", "I"]
+lint.select = ["E", "F", "B", "Q", "I"]
 line-length = 88
 
-[tool.ruff.flake8-bugbear]
+[tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core_backend"]
+
+[tool.isort]
+known_first_party = ["core_backend"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
@@ -19,3 +25,14 @@ markers = [
     "rails: marks tests that are testing rails. These call an LLM service."
 ]
 asyncio_mode = "auto"
+
+# Pytest coverage
+[tool.coverage.report]
+exclude_lines = [
+    'if __name__ == "__main__"',
+    "if __name__ == '__main__'",
+    "def cli",
+    "if TYPE_CHECKING:",
+    "pragma: no cover",
+]
+omit = ["*/tests/*"]

@@ -1,27 +1,28 @@
 "use client";
 
 import { apiCalls } from "@/utils/api";
-import { Global, css } from "@emotion/react";
 import React, { useEffect, useRef, useState } from "react";
 
+import { Layout } from "@/components/Layout";
 import {
-  ApiKeyDialog,
   ErrorSnackBar,
   Message,
   MessageBox,
   MessageSkeleton,
   PersistentSearchBar,
   QueryType,
+  FeedbackSentimentType,
   ResponseSummary,
   UserMessage,
-} from "@/components/PlaygroundComponents";
+  ResponseMessage,
+} from "./components/PlaygroundComponents";
 import { Box } from "@mui/material";
-
+import { useAuth } from "@/utils/auth";
 const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const { token } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null); // Ref to scroll to bottom of chat
 
   useEffect(() => {
@@ -29,7 +30,7 @@ const Page = () => {
   }, [messages]);
 
   const processEmbeddingsSearchResponse = (response: any) => {
-    const contentResponse = response.content_response;
+    const contentResponse = response.search_results;
     const summaries: ResponseSummary[] = [];
 
     for (const key in contentResponse) {
@@ -37,8 +38,8 @@ const Page = () => {
         const item = contentResponse[key];
         summaries.push({
           index: key,
-          title: item.retrieved_title,
-          text: item.retrieved_text,
+          title: item.title,
+          text: item.text,
         });
       }
     }
@@ -59,7 +60,7 @@ const Page = () => {
     console.log(response);
     const responseText = llmResponse
       ? llmResponse
-      : `No LLM response. Reason: "${response.debug_info.reason}". See <json> for details.`;
+      : `No LLM response. Reason: "${response.error_message}". See <json> for details.`;
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -119,8 +120,8 @@ const Page = () => {
   };
 
   const queryTypeDisplayNameMapping = {
-    "embeddings-search": "Embedding Search",
-    "llm-response": "LLM Search",
+    "embeddings-search": "Content Search",
+    "llm-response": "AI Response",
     "urgency-detection": "Urgency Detection",
   };
 
@@ -131,11 +132,7 @@ const Page = () => {
 
     setLoading(true);
 
-    if (currApiKey === null || currApiKey === "") {
-      setError("API Key not set. Please set the API key.");
-      setLoading(false);
-      return;
-    } else {
+    if (token) {
       const queryTypeDisplayName =
         queryTypeDisplayNameMapping[queryType] || queryType;
       setMessages((prevMessages) => [
@@ -149,7 +146,7 @@ const Page = () => {
       ]);
       if (queryType === "embeddings-search") {
         apiCalls
-          .getEmbeddingsSearch(queryText, currApiKey)
+          .getEmbeddingsSearch(queryText, token)
           .then((response) => {
             if (response.status === 200) {
               processEmbeddingsSearchResponse(response);
@@ -169,7 +166,7 @@ const Page = () => {
           });
       } else if (queryType === "llm-response") {
         apiCalls
-          .getLLMResponse(queryText, currApiKey)
+          .getLLMResponse(queryText, token)
           .then((response) => {
             if (response.status === 200) {
               processLLMSearchResponse(response);
@@ -189,7 +186,7 @@ const Page = () => {
           });
       } else if (queryType == "urgency-detection") {
         apiCalls
-          .getUrgencyDetection(queryText, currApiKey)
+          .getUrgencyDetection(queryText, token)
           .then((response) => {
             processUrgencyDetection(response);
           })
@@ -207,26 +204,35 @@ const Page = () => {
     }
   };
 
-  const [openDialog, setOpenDialog] = useState(false);
+  const sendResponseFeedback = (
+    message: ResponseMessage,
+    feedback_sentiment: FeedbackSentimentType,
+  ) => {
+    if (token) {
+      // Assuming message.json is a JSON string. Parse it if necessary.
+      const jsonResponse =
+        typeof message.json === "string"
+          ? JSON.parse(message.json)
+          : message.json;
 
-  const [currApiKey, setCurrApiKey] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem("apiToken") : null,
-  );
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
+      const queryID = jsonResponse.query_id;
+      const feedbackSecretKey = jsonResponse.feedback_secret_key;
 
-  const handleDialogOpen = () => {
-    setOpenDialog(true);
-  };
-
-  const handleSaveToken = (token: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("apiToken", token);
-      setCurrApiKey(token);
+      apiCalls
+        .postResponseFeedback(
+          queryID,
+          feedback_sentiment,
+          feedbackSecretKey,
+          token,
+        )
+        .then((response) => {
+          console.log("Feedback sent successfully: ", response.message);
+        })
+        .catch((error: Error) => {
+          setError("Failed to send response feedback.");
+          console.error(error);
+        });
     }
-
-    handleDialogClose();
   };
 
   const handleErrorClose = (
@@ -239,29 +245,14 @@ const Page = () => {
     setError(null);
   };
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (!localStorage.getItem("apiToken")) {
-        handleDialogOpen();
-      }
-    }
-  }, []);
-
   return (
     <>
-      <Global
-        styles={css`
-          body {
-            background-color: white;
-          }
-        `}
-      />
+      <Layout.Spacer multiplier={4} />
       <Box
         display="flex"
         flexDirection="column"
         alignItems="center"
-        bgcolor="white"
-        sx={{ height: "100vh", width: "100%", pb: 10 }}
+        sx={{ height: "90vh", width: "100%", pb: 10, mt: 4 }}
       >
         <Box
           mb={10}
@@ -272,23 +263,18 @@ const Page = () => {
           }}
         >
           {messages.map((message, index) => (
-            <MessageBox key={index} {...message} />
+            <MessageBox
+              key={index}
+              message={message}
+              onFeedbackSend={sendResponseFeedback}
+            />
           ))}
           {loading && <MessageSkeleton />}
           <div ref={bottomRef} />
         </Box>
         <ErrorSnackBar message={error} onClose={handleErrorClose} />
-        <ApiKeyDialog
-          open={openDialog}
-          handleClose={handleDialogClose}
-          handleSave={handleSaveToken}
-          currApiKey={currApiKey}
-        />
         <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
-          <PersistentSearchBar
-            onSend={onSend}
-            openApiKeyDialog={handleDialogOpen}
-          />
+          <PersistentSearchBar onSend={onSend} />
         </Box>
       </Box>
     </>

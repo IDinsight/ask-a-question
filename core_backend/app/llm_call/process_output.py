@@ -3,8 +3,9 @@ These are functions to check the LLM response
 """
 
 from functools import wraps
-from typing import Any, Callable, Optional, TypedDict
+from typing import Any, Callable, Dict, Optional, TypedDict
 
+import aiohttp
 from pydantic import ValidationError
 
 from ..config import (
@@ -14,13 +15,16 @@ from ..config import (
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
+    ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
-    ResultState,
+    QuerySearchResult,
 )
+from ..question_answer.utils import get_context_string_from_retrieved_contents
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
-from .llm_prompts import AlignmentScore
+from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
+from .llm_rag import get_llm_rag_answer
 from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger("OUTPUT RAILS")
@@ -35,14 +39,98 @@ class AlignScoreData(TypedDict):
     claim: str
 
 
-def check_align_score__after(func: Callable) -> Callable:
+def generate_llm_response__after(func: Callable) -> Callable:
     """
-    Check the alignment score
+    Decorator to generate the LLM response.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
     """
 
     @wraps(func)
     async def wrapper(
-        question: QueryRefined,
+        query_refined: QueryRefined,
+        response: QueryResponse | QueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> QueryResponse | QueryResponseError:
+        """
+        Generate the LLM response
+        """
+        response = await func(query_refined, response, *args, **kwargs)
+
+        if not query_refined.generate_llm_response:
+            return response
+
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=query_refined.user_id
+        )
+        response = await _generate_llm_response(query_refined, response, metadata)
+        return response
+
+    return wrapper
+
+
+async def _generate_llm_response(
+    query_refined: QueryRefined,
+    response: QueryResponse,
+    metadata: Optional[dict] = None,
+) -> QueryResponse:
+    """
+    Generate the LLM response.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
+    """
+    if isinstance(response, QueryResponseError):
+        return response
+
+    if response.search_results is None:
+        logger.warning("No search_results found in the response.")
+        return response
+    if query_refined.original_language is None:
+        logger.warning("No original_language found in the query.")
+        return response
+
+    context = get_context_string_from_retrieved_contents(response.search_results)
+    rag_response = await get_llm_rag_answer(
+        # use the original query text
+        question=query_refined.query_text_original,
+        context=context,
+        original_language=query_refined.original_language,
+        metadata=metadata,
+    )
+
+    if rag_response.answer != RAG_FAILURE_MESSAGE:
+        response.debug_info["extracted_info"] = rag_response.extracted_info
+        response.llm_response = rag_response.answer
+    else:
+        response = QueryResponseError(
+            query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=None,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
+            error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
+            error_message="LLM failed to generate an answer.",
+        )
+        response.debug_info["extracted_info"] = rag_response.extracted_info
+        response.llm_response = None
+
+    return response
+
+
+def check_align_score__after(func: Callable) -> Callable:
+    """
+    Check the alignment score.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "llm_response" and "search_results" in the response.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        query_refined: QueryRefined,
         response: QueryResponse | QueryResponseError,
         *args: Any,
         **kwargs: Any,
@@ -51,53 +139,56 @@ def check_align_score__after(func: Callable) -> Callable:
         Check the alignment score
         """
 
-        llm_response = await func(question, response, *args, **kwargs)
+        response = await func(query_refined, response, *args, **kwargs)
 
-        if (
-            isinstance(llm_response, QueryResponseError)
-            or llm_response.state == ResultState.ERROR
-        ):
-            return llm_response
+        if not kwargs.get("generate_llm_response", False):
+            return response
 
-        if llm_response.llm_response is None:
-            logger.warning(
-                (
-                    "No LLM response found in the response but "
-                    "`check_align_score` was called"
-                )
-            )
-            return llm_response
-        else:
-            return await _check_align_score(llm_response)
+        metadata = create_langfuse_metadata(
+            query_id=response.query_id, user_id=query_refined.user_id
+        )
+        response = await _check_align_score(response, metadata)
+        return response
 
     return wrapper
 
 
 async def _check_align_score(
-    llm_response: QueryResponse,
+    response: QueryResponse,
+    metadata: Optional[dict] = None,
 ) -> QueryResponse:
     """
     Check the alignment score
-    """
 
-    evidence = _build_evidence(llm_response)
-    claim = llm_response.llm_response
-    assert claim is not None, "LLM response is None"
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "llm_response" and "search_results" in the response.
+    """
+    if isinstance(response, QueryResponseError) or response.llm_response is None:
+        return response
+
+    if response.search_results is not None:
+        evidence = _build_evidence(response.search_results)
+    else:
+        logger.warning(("No search_results found in the response."))
+        return response
+
+    if response.llm_response is not None:
+        claim = response.llm_response
+    else:
+        logger.warning(("No llm_response found in the response."))
+        return response
+
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
 
     if ALIGN_SCORE_METHOD is None:
-        logger.warning(
-            "No alignment score method specified but `check_align_score` was called"
-        )
-        return llm_response
-
+        logger.warning("No alignment score method specified.")
+        return response
     elif ALIGN_SCORE_METHOD == "AlignScore":
         if ALIGN_SCORE_API is not None:
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
             raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
     elif ALIGN_SCORE_METHOD == "LLM":
-        metadata = create_langfuse_metadata(query_id=llm_response.query_id)
         align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
     else:
         raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
@@ -119,12 +210,19 @@ async def _check_align_score(
                 f"Evidence: {evidence}\n"
             )
         )
-        llm_response.llm_response = None
-        llm_response.state = ResultState.ERROR
-        llm_response.debug_info["reason"] = "Align score failed"
-    llm_response.debug_info["factual_consistency"] = factual_consistency.copy()
+        response = QueryResponseError(
+            query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=None,
+            search_results=response.search_results,
+            debug_info=response.debug_info,
+            error_type=ErrorType.ALIGNMENT_TOO_LOW,
+            error_message="Alignment score of LLM response was too low",
+        )
 
-    return llm_response
+    response.debug_info["factual_consistency"] = factual_consistency.copy()
+
+    return response
 
 
 async def _get_alignScore_score(
@@ -133,7 +231,9 @@ async def _get_alignScore_score(
     """
     Get the alignment score from the AlignScore API
     """
-    async with get_http_client().post(api_url, json=align_score_date) as resp:
+    http_client = get_http_client()
+    assert isinstance(http_client, aiohttp.ClientSession)
+    async with http_client.post(api_url, json=align_score_date) as resp:
         if resp.status != 200:
             logger.error(f"AlignScore API request failed with status {resp.status}")
             raise RuntimeError(
@@ -155,8 +255,8 @@ async def _get_llm_align_score(
     """
     prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
     result = await _ask_llm_async(
-        question=align_score_data["claim"],
-        prompt=prompt,
+        user_message=align_score_data["claim"],
+        system_message=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
         json=True,
@@ -174,12 +274,11 @@ async def _get_llm_align_score(
     return alignment_score
 
 
-def _build_evidence(llm_response: QueryResponse) -> str:
+def _build_evidence(search_results: Dict[int, QuerySearchResult]) -> str:
     """
-    Build the evidence used by the LLM response
+    Build the evidence string from the search results
     """
     evidence = ""
-    if llm_response.content_response is not None:
-        for _, result in llm_response.content_response.items():
-            evidence += result.retrieved_text + "\n"
+    for _, result in search_results.items():
+        evidence += result.text + "\n"
     return evidence

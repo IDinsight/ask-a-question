@@ -36,10 +36,14 @@ async def test_language_identification(
     available_languages: list[str], expected_label: str, content: str
 ) -> None:
     """Test language identification"""
-    question = QueryRefined(query_text=content, query_text_original=content)
+    question = QueryRefined(
+        query_text=content,
+        user_id=124,
+        query_text_original=content,
+    )
     response = QueryResponse(
         query_id=1,
-        content_response=None,
+        search_results=None,
         llm_response="Dummy response",
         feedback_secret_key="feedback-string",
     )

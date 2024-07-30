@@ -1,9 +1,15 @@
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Generator
 
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from core_backend.app.auth.dependencies import create_access_token
+from core_backend.app.users.models import UserDB
+from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
 
 def _dict_to_csv_bytes(data: dict) -> BytesIO:
@@ -19,12 +25,111 @@ def _dict_to_csv_bytes(data: dict) -> BytesIO:
     return csv_bytes
 
 
+@pytest.fixture(scope="class")
+def temp_user_token_and_quota(
+    request: pytest.FixtureRequest, client: TestClient, db_session: Session
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    content_quota = request.param["content_quota"]
+
+    temp_user_db = UserDB(
+        username=username,
+        hashed_password=get_password_salted_hash("temp_password"),
+        hashed_api_key=get_key_hash("temp_api_key"),
+        content_quota=content_quota,
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
+    )
+    db_session.add(temp_user_db)
+    db_session.commit()
+    yield (create_access_token(username), content_quota)
+    db_session.delete(temp_user_db)
+    db_session.commit()
+
+
+class TestImportContentQuota:
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_10", "content_quota": 10},
+            {"username": "temp_user_limit_unlimited", "content_quota": None},
+        ],
+        indirect=True,
+    )
+    async def test_import_content_success(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "csv title 2"],
+                "text": ["csv text 1", "csv text 2"],
+            }
+        )
+
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == 200
+
+        if response.status_code == 200:
+            json_response = response.json()
+            contents_list = json_response["contents"]
+            for content in contents_list:
+                content_id = content["content_id"]
+                response = client.delete(
+                    f"/content/{content_id}",
+                    headers={"Authorization": f"Bearer {temp_user_token}"},
+                )
+                assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "temp_user_token_and_quota",
+        [
+            {"username": "temp_user_limit_10", "content_quota": 0},
+        ],
+        indirect=True,
+    )
+    async def test_import_content_failure(
+        self,
+        client: TestClient,
+        temp_user_token_and_quota: tuple[str, int],
+    ) -> None:
+        temp_user_token, content_quota = temp_user_token_and_quota
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "csv title 2"],
+                "text": ["csv text 1", "csv text 2"],
+            }
+        )
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {temp_user_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"]["errors"][0]["type"] == "exceeds_quota"
+
+
 class TestImportContent:
     @pytest.fixture
     def data_valid(self) -> BytesIO:
         data = {
-            "content_title": ["csv title 1", "csv title 2"],
-            "content_text": ["csv text 1", "csv text 2"],
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["csv text 1", "csv text 2"],
+        }
+        return _dict_to_csv_bytes(data)
+
+    @pytest.fixture
+    def data_valid_with_tags(self) -> BytesIO:
+        data = {
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["csv text 1", "csv text 2"],
+            "tags": ["tag1, tag2", "tag1, tag4"],
         }
         return _dict_to_csv_bytes(data)
 
@@ -36,24 +141,24 @@ class TestImportContent:
     @pytest.fixture
     def data_no_rows(self) -> BytesIO:
         data: dict = {
-            "content_title": [],
-            "content_text": [],
+            "title": [],
+            "text": [],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_title_spaces_only(self) -> BytesIO:
         data: dict = {
-            "content_title": ["  "],
-            "content_text": ["csv text 1"],
+            "title": ["  "],
+            "text": ["csv text 1"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_text_spaces_only(self) -> BytesIO:
         data: dict = {
-            "content_title": ["csv title 1"],
-            "content_text": ["  "],
+            "title": ["csv title 1"],
+            "text": ["  "],
         }
         return _dict_to_csv_bytes(data)
 
@@ -68,88 +173,108 @@ class TestImportContent:
     @pytest.fixture
     def data_title_missing(self) -> BytesIO:
         data = {
-            "content_title": ["", "csv text 1"],
-            "content_text": ["csv title 2", "csv text 2"],
+            "title": ["", "csv text 1"],
+            "text": ["csv title 2", "csv text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_text_missing(self) -> BytesIO:
         data = {
-            "content_title": ["csv title 1", "csv title 2"],
-            "content_text": ["", "csv text 2"],
+            "title": ["csv title 1", "csv title 2"],
+            "text": ["", "csv text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_long_title(self) -> BytesIO:
         data = {
-            "content_title": ["a" * 151],
-            "content_text": ["Valid text"],
+            "title": ["a" * 151],
+            "text": ["Valid text"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_long_text(self) -> BytesIO:
         data = {
-            "content_title": ["Valid title"],
-            "content_text": ["a" * 2001],
+            "title": ["Valid title"],
+            "text": ["a" * 2001],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_duplicate_titles(self) -> BytesIO:
         data = {
-            "content_title": ["Duplicate title", "Duplicate title"],
-            "content_text": ["Text 1", "Text 2"],
+            "title": ["Duplicate title", "Duplicate title"],
+            "text": ["Text 1", "Text 2"],
         }
         return _dict_to_csv_bytes(data)
 
     @pytest.fixture
     def data_duplicate_texts(self) -> BytesIO:
         data = {
-            "content_title": ["Title 1", "Title 2"],
-            "content_text": ["Duplicate text", "Duplicate text"],
+            "title": ["Title 1", "Title 2"],
+            "text": ["Duplicate text", "Duplicate text"],
         }
         return _dict_to_csv_bytes(data)
 
-    test_data = [
-        ("data_empty_csv", "empty_data"),
-        ("data_no_rows", "no_rows_csv"),
-        ("data_title_spaces_only", "empty_title"),
-        ("data_text_spaces_only", "empty_text"),
-        ("data_missing_columns", "missing_columns"),
-        ("data_title_missing", "empty_title"),
-        ("data_text_missing", "empty_text"),
-        ("data_long_title", "title_too_long"),
-        ("data_long_text", "texts_too_long"),
-        ("data_duplicate_titles", "duplicate_titles"),
-        ("data_duplicate_texts", "duplicate_texts"),
-    ]
-
+    @pytest.mark.parametrize(
+        "mock_csv_data",
+        ["data_valid", "data_valid_with_tags"],
+    )
     async def test_csv_import_success(
         self,
         client: TestClient,
-        data_valid: BytesIO,
+        mock_csv_data: BytesIO,
+        request: pytest.FixtureRequest,
         fullaccess_token: str,
     ) -> None:
+        mock_csv_file = request.getfixturevalue(mock_csv_data)
+
         response = client.post(
             "/content/csv-upload",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
-            files={"file": ("test.csv", data_valid, "text/csv")},
+            files={"file": ("test.csv", mock_csv_file, "text/csv")},
         )
         assert response.status_code == 200
 
+        # cleanup
         json_response = response.json()
-        for content in json_response:
+        # delete contents
+        contents_list = json_response["contents"]
+        for content in contents_list:
             content_id = content["content_id"]
             response = client.delete(
                 f"/content/{content_id}",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
             assert response.status_code == 200
+        # delete tags
+        tags_list = json_response["tags"]
+        for tag in tags_list:
+            tag_id = tag["tag_id"]
+            response = client.delete(
+                f"/tag/{tag_id}",
+                headers={"Authorization": f"Bearer {fullaccess_token}"},
+            )
+            assert response.status_code == 200
 
-    @pytest.mark.parametrize("mock_csv_data, expected_error_type", test_data)
+    @pytest.mark.parametrize(
+        "mock_csv_data, expected_error_type",
+        [
+            ("data_empty_csv", "empty_data"),
+            ("data_no_rows", "no_rows_csv"),
+            ("data_title_spaces_only", "empty_title"),
+            ("data_text_spaces_only", "empty_text"),
+            ("data_missing_columns", "missing_columns"),
+            ("data_title_missing", "empty_title"),
+            ("data_text_missing", "empty_text"),
+            ("data_long_title", "title_too_long"),
+            ("data_long_text", "texts_too_long"),
+            ("data_duplicate_titles", "duplicate_titles"),
+            ("data_duplicate_texts", "duplicate_texts"),
+        ],
+    )
     async def test_csv_import_checks(
         self,
         client: TestClient,
@@ -198,8 +323,8 @@ class TestDBDuplicates:
     def data_title_in_db(self) -> BytesIO:
         # Assuming "Title in DB" is a title that exists in the database
         data = {
-            "content_title": ["Title in DB"],
-            "content_text": ["New text"],
+            "title": ["Title in DB"],
+            "text": ["New text"],
         }
         return _dict_to_csv_bytes(data)
 
@@ -207,8 +332,8 @@ class TestDBDuplicates:
     def data_text_in_db(self) -> BytesIO:
         # Assuming "Text in DB" is a text that exists in the database
         data = {
-            "content_title": ["New title"],
-            "content_text": ["Text in DB"],
+            "title": ["New title"],
+            "text": ["Text in DB"],
         }
         return _dict_to_csv_bytes(data)
 

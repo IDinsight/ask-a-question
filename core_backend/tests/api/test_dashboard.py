@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from typing import AsyncGenerator, Dict, List, Tuple
+from datetime import datetime, timedelta, timezone, tzinfo
+from typing import AsyncGenerator, Dict, List, Optional, Tuple
 
 import numpy as np
 import pytest
@@ -44,7 +44,6 @@ from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResp
 
 
 class TestUrgencyDetectionStats:
-
     @pytest.fixture(scope="function", params=[(0, 0), (0, 1), (1, 0), (3, 5)])
     async def urgency_detection(
         self,
@@ -65,7 +64,7 @@ class TestUrgencyDetectionStats:
             )
 
             urgency_response = UrgencyResponse(
-                is_urgent=is_urgent, failed_rules=[], details={}
+                is_urgent=is_urgent, matched_rules=[], details={}
             )
             await save_urgency_response_to_db(
                 urgency_query_db, urgency_response, asession
@@ -101,8 +100,8 @@ class TestUrgencyDetectionStats:
     ) -> None:
         n_urgent, _ = urgency_detection
 
-        start_date = datetime.now() - relativedelta(months=1)
-        end_date = datetime.now() + relativedelta(months=1)
+        start_date = datetime.now(timezone.utc) - relativedelta(months=1)
+        end_date = datetime.now(timezone.utc) + relativedelta(months=1)
 
         stats = await get_urgency_stats(
             1,
@@ -119,12 +118,13 @@ class MockDatetime:
     def __init__(self, date: datetime):
         self.date = date
 
-    def utcnow(self) -> datetime:
+    def now(self, tz: Optional[tzinfo] = None) -> datetime:
+        if tz is not None:
+            return self.date.astimezone(tz)
         return self.date
 
 
 class TestQueryStats:
-
     @pytest.fixture(scope="function")
     async def queries_and_feedbacks(
         self,
@@ -132,16 +132,16 @@ class TestQueryStats:
         monkeypatch: pytest.MonkeyPatch,
         faq_contents: pytest.FixtureRequest,
     ) -> AsyncGenerator[None, None]:
-
-        dates = [datetime.now() - relativedelta(days=x) for x in range(16)]
+        dates = [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         for i, date in enumerate(dates):
-
             monkeypatch.setattr(
                 "core_backend.app.question_answer.models.datetime", MockDatetime(date)
             )
             query = QueryBase(query_text="Test query")
             query_db = await save_user_query_to_db(
-                1, "test_secret_key", query, asession
+                user_id=1,
+                user_query=query,
+                asession=asession,
             )
 
             sentiment = (
@@ -179,12 +179,11 @@ class TestQueryStats:
     async def test_query_stats(
         self, queries_and_feedbacks: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-
         for _i, date in enumerate(
-            [datetime.now() - relativedelta(days=x) for x in range(16)]
+            [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         ):
             start_date = date
-            end_date = datetime.now()
+            end_date = datetime.now(timezone.utc)
             stats = await get_query_count_stats(
                 1,
                 asession,
@@ -213,7 +212,6 @@ class TestQueryStats:
 
 
 class TestHeatmap:
-
     query_counts = {
         "week": {
             "Mon": 4,
@@ -264,7 +262,7 @@ class TestHeatmap:
     async def queries(
         self, asession: AsyncSession, request: pytest.FixtureRequest
     ) -> AsyncGenerator[None, None]:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         today_weekday = today.weekday()
         query_period = request.param
         queries = self.query_counts[query_period]
@@ -289,6 +287,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{day}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"day": day},
                     query_datetime_utc=previous_date,
                 )
@@ -301,9 +300,8 @@ class TestHeatmap:
 
     @pytest.fixture(scope="function")
     async def queries_hour(self, asession: AsyncSession) -> AsyncGenerator[None, None]:
-
-        current_time = datetime.now().time()
-        today = datetime.now()
+        current_time = datetime.now(timezone.utc).time()
+        today = datetime.now(timezone.utc)
         for hour, count in self.query_counts["last_day"].items():
             int(hour[:2])
             time_diff_from_daystart = timedelta(
@@ -322,6 +320,7 @@ class TestHeatmap:
                     user_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{hour}_{i}",
+                    query_generate_llm_response=False,
                     query_metadata={"hour": hour},
                     query_datetime_utc=previous_date,
                 )
@@ -340,7 +339,7 @@ class TestHeatmap:
     async def test_heatmap_day(
         self, queries: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         if period == "week":
             previous_date = today - timedelta(days=7)
         elif period == "month":
@@ -359,7 +358,7 @@ class TestHeatmap:
     async def test_heatmap_hour(
         self, queries_hour: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date = today - timedelta(days=1)
         heatmap = await get_heatmap(
             1, asession, start_date=previous_date, end_date=today
@@ -401,7 +400,6 @@ class TestHeatmap:
 
 
 class TestTimeSeries:
-
     data_to_create = {
         "last_day": {"urgent": 0, "positive": 3, "negative": 0},
         "last_week": {"urgent": 3, "positive": 5, "negative": 2},
@@ -415,7 +413,6 @@ class TestTimeSeries:
     async def create_data(
         self, asession: AsyncSession, request: pytest.FixtureRequest
     ) -> AsyncGenerator[None, None]:
-
         period = request.param
         data_to_create = self.data_to_create[period]
         urgent = data_to_create["urgent"]
@@ -423,15 +420,15 @@ class TestTimeSeries:
         n_negative = data_to_create["negative"]
 
         if period == "last_day":
-            dt = datetime.now() - timedelta(days=1)
+            dt = datetime.now(timezone.utc) - timedelta(days=1)
         elif period == "last_week":
-            dt = datetime.now() - timedelta(weeks=1)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=1)
         elif period == "last_month":
-            dt = datetime.now() - timedelta(weeks=4)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=4)
         elif period == "last_year":
-            dt = datetime.now() - timedelta(weeks=52)
+            dt = datetime.now(timezone.utc) - timedelta(weeks=52)
 
-        dt_two_years = datetime.now() - timedelta(weeks=104)
+        dt_two_years = datetime.now(timezone.utc) - timedelta(weeks=104)
         urgent_two_years = self.data_to_create["last_2_years"]["urgent"]
         n_positive_two_years = self.data_to_create["last_2_years"]["positive"]
         n_negative_two_years = self.data_to_create["last_2_years"]["negative"]
@@ -507,12 +504,12 @@ class TestTimeSeries:
         n_negative: int,
         n_neutral: int,
     ) -> None:
-
         for i in range(n_positive + n_negative + n_neutral):
             query = QueryDB(
                 user_id=user_id,
                 feedback_secret_key="abc123",
                 query_text="test message",
+                query_generate_llm_response=False,
                 query_metadata={"details": "test details"},
                 query_datetime_utc=created_datetime,
             )
@@ -554,7 +551,7 @@ class TestTimeSeries:
     async def test_time_series(
         self, create_data: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date, frequency = get_previous_date_and_frequency(period)
         n_escalated = self.data_to_create[period]["negative"]
         n_not_escalated = self.data_to_create[period]["positive"] + self.N_NEUTRAL
@@ -583,7 +580,7 @@ class TestTimeSeries:
     async def test_time_series_urgency(
         self, create_data: pytest.FixtureRequest, period: str, asession: AsyncSession
     ) -> None:
-        today = datetime.now()
+        today = datetime.now(timezone.utc)
         previous_date, frequency = get_previous_date_and_frequency(period)
 
         n_urgent = self.data_to_create[period]["urgent"]
@@ -600,16 +597,16 @@ class TestTimeSeries:
 
 def get_previous_date_and_frequency(period: str) -> Tuple[datetime, TimeFrequency]:
     if period == "last_day":
-        previous_date = datetime.now() - timedelta(days=1)
+        previous_date = datetime.now(timezone.utc) - timedelta(days=1)
         frequency = TimeFrequency.Hour
     elif period == "last_week":
-        previous_date = datetime.now() - timedelta(weeks=1)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=1)
         frequency = TimeFrequency.Day
     elif period == "last_month":
-        previous_date = datetime.now() - timedelta(weeks=4)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=4)
         frequency = TimeFrequency.Day
     elif period == "last_year":
-        previous_date = datetime.now() - timedelta(weeks=52)
+        previous_date = datetime.now(timezone.utc) - timedelta(weeks=52)
         frequency = TimeFrequency.Week
     else:
         raise ValueError("Invalid query period")
@@ -665,8 +662,8 @@ class TestTopContent:
                 content_title=c["title"],
                 content_text="Test content #{i}",
                 content_metadata={},
-                created_datetime_utc=datetime.now(),
-                updated_datetime_utc=datetime.now(),
+                created_datetime_utc=datetime.now(timezone.utc),
+                updated_datetime_utc=datetime.now(timezone.utc),
                 query_count=c["query_count"],
                 positive_votes=c["positive_votes"],
                 negative_votes=c["negative_votes"],
@@ -677,11 +674,11 @@ class TestTopContent:
         yield
         delete_content = delete(ContentDB).where(ContentDB.content_id > 0)
         await asession.execute(delete_content)
+        await asession.commit()
 
     async def test_top_content(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-
         N_TOP_CONTENT = 4
 
         top_content = await get_top_content(1, asession, N_TOP_CONTENT)
@@ -696,3 +693,10 @@ class TestTopContent:
             assert top_content[i].query_count == c["query_count"]
             assert top_content[i].positive_votes == c["positive_votes"]
             assert top_content[i].negative_votes == c["negative_votes"]
+
+    async def test_content_from_other_user_not_returned(
+        self, content_data: pytest.FixtureRequest, asession: AsyncSession
+    ) -> None:
+        top_content = await get_top_content(2, asession, 5)
+
+        assert len(top_content) == 0

@@ -141,6 +141,7 @@ dmypy.json
 
 # Secrets
 *secrets*
+!.secrets.baseline
 .pgpass
 **/*credentials.json
 
@@ -163,3 +164,6 @@ core_model/requirements.txt
 profiling/outputs/
 # Load testing
 load_testing/outputs/
+
+# PyCharm
+.idea/

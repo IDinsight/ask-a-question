@@ -7,21 +7,24 @@ interface ContentBody {
   content_metadata: Record<string, unknown>;
 }
 
-const getNewAPIKey = async (token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/rotate-key`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      let resp = response.json();
-      return resp;
-    } else {
-      throw new Error("Error rotating API key");
+const getUser = async (token: string) => {
+  try {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error fetching user info");
     }
-  });
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getContentList = async ({
@@ -65,6 +68,23 @@ const getContent = async (content_id: number, token: string) => {
       return resp;
     } else {
       throw new Error("Error fetching content");
+    }
+  });
+};
+
+const archiveContent = async (content_id: number, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error archiving content");
     }
   });
 };
@@ -271,14 +291,14 @@ const getGoogleLoginToken = async (idToken: {
 };
 
 const getEmbeddingsSearch = async (search: string, token: string) => {
-  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/embeddings-search`;
+  const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(embeddingUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: false }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -293,14 +313,14 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
 };
 
 const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/llm-response`;
+  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(llmResponseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search }),
+    body: JSON.stringify({ query_text: search, generate_llm_response: true }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -312,6 +332,34 @@ const getLLMResponse = async (search: string, token: string) => {
       console.error("Error:", error);
       throw error;
     });
+};
+
+const postResponseFeedback = async (
+  query_id: number,
+  feedback_sentiment: string,
+  feedback_secret_key: string,
+  token: string,
+) => {
+  const feedbackUrl = `${NEXT_PUBLIC_BACKEND_URL}/response-feedback`;
+  return fetch(feedbackUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      query_id: query_id,
+      feedback_sentiment: feedback_sentiment,
+      feedback_secret_key: feedback_secret_key,
+    }),
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error sending response feedback");
+    }
+  });
 };
 
 const getQuestionStats = async (token: string) => {
@@ -413,9 +461,10 @@ const deleteTag = async (tag_id: number, token: string) => {
   });
 };
 export const apiCalls = {
-  getNewAPIKey,
+  getUser,
   getContentList,
   getContent,
+  archiveContent,
   deleteContent,
   editContent,
   createContent,
@@ -428,6 +477,7 @@ export const apiCalls = {
   getGoogleLoginToken,
   getEmbeddingsSearch,
   getLLMResponse,
+  postResponseFeedback,
   getQuestionStats,
   getUrgencyDetection,
   createTag,

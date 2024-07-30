@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
 from dateutil.relativedelta import relativedelta
@@ -12,7 +12,12 @@ from ..utils import setup_logger
 from .models import get_heatmap, get_stats_cards, get_timeseries, get_top_content
 from .schemas import DashboardOverview, TimeFrequency
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+TAG_METADATA = {
+    "name": "Dashboard",
+    "description": "_Requires user login._ Dashboard data fetching operations.",
+}
+
+router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
@@ -24,7 +29,7 @@ async def retrieve_overview_day(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
     day_ago = today - timedelta(days=1)
 
     stats = await retrieve_overview(
@@ -46,7 +51,7 @@ async def retrieve_overview_week(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
     week_ago = today - timedelta(days=7)
 
     stats = await retrieve_overview(
@@ -68,7 +73,7 @@ async def retrieve_overview_month(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
     month_ago = today + relativedelta(months=-1)
 
     stats = await retrieve_overview(
@@ -90,7 +95,7 @@ async def retrieve_overview_year(
     """
     Retrieve all question answer statistics
     """
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
     year_ago = today + relativedelta(years=-1)
 
     stats = await retrieve_overview(

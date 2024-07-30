@@ -1,0 +1,7 @@
+gcp_location          = "asia-south2"
+gcp_zone              = "asia-south2-a"
+deployment_group_name = "aaq"
+environment           = "testing"
+gce_instance_type     = "n1-standard-2"
+db_tier               = "db-g1-small"
+admin_username        = "admin"

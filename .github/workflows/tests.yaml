@@ -71,4 +71,5 @@ jobs:
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
             ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
-          python -m pytest -m "not rails" tests
+          python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
+          python -m pytest -m "not rails and not alembic" tests

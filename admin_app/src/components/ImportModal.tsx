@@ -12,7 +12,7 @@ import {
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { LoadingButton } from "@mui/lab";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import { Layout } from "./Layout";
 import { appColors, sizes } from "@/utils";
 
@@ -112,15 +112,37 @@ const ImportModal = ({
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          You can use this feature to import new contents from a CSV file into
-          AAQ. The CSV file must include "content_title" and "content_text" as
-          columns.
-          <br />
-          <br />
-          ⚠️ Be careful not to upload duplicates of what's already in the
-          database.
+          <p>
+            You can use this feature to import new contents from a CSV file into
+            AAQ.
+          </p>
+          <p>
+            The CSV file should have the following columns:
+            <ul>
+              <li>
+                <strong>
+                  <code>title</code>
+                </strong>
+                : content title, up to 150 characters
+              </li>
+              <li>
+                <strong>
+                  <code>text</code>
+                </strong>
+                : content text, up to 2000 characters
+              </li>
+              <li>
+                (Optional){" "}
+                <strong>
+                  <code>tags</code>
+                </strong>
+                : content tags, e.g. "tag1, tag2, tag3"
+              </li>
+            </ul>
+          </p>
+          <p>⚠️ Duplicate titles or texts will be rejected.</p>
         </DialogContentText>
-        <Layout.Spacer multiplier={2} />
+        <Layout.Spacer multiplier={1} />
         <Layout.FlexBox
           flexDirection="row"
           justifyContent="left"
@@ -139,7 +161,7 @@ const ImportModal = ({
             <Button
               variant="outlined"
               component="span"
-              startIcon={<CloudUploadIcon />}
+              startIcon={<NoteAddIcon />}
             >
               Attach File
             </Button>

@@ -12,14 +12,13 @@ from core_backend.app.llm_call.process_input import (
     _translate_question,
 )
 from core_backend.app.llm_call.process_output import _build_evidence, _check_align_score
-from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
+from core_backend.app.question_answer.config import N_TOP_CONTENT
 from core_backend.app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
     QuerySearchResult,
-    ResultState,
 )
 from core_backend.tests.api.conftest import (
     TEST_USERNAME,
@@ -47,14 +46,20 @@ class TestApiCallQuota:
 
         for _i in range(api_daily_limit):
             response = client.post(
-                "/llm-response",
-                json={"query_text": "Test question"},
+                "/search",
+                json={
+                    "query_text": "Test question",
+                    "generate_llm_response": False,
+                },
                 headers={"Authorization": f"Bearer {temp_api_key}"},
             )
             assert response.status_code == 200
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Test question"},
+            "/search",
+            json={
+                "query_text": "Test question",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {temp_api_key}"},
         )
         assert response.status_code == 429
@@ -77,14 +82,20 @@ class TestApiCallQuota:
 
         for _i in range(api_daily_limit):
             response = client.post(
-                "/embeddings-search",
-                json={"query_text": "Test question"},
+                "/search",
+                json={
+                    "query_text": "Test question",
+                    "generate_llm_response": False,
+                },
                 headers={"Authorization": f"Bearer {temp_api_key}"},
             )
             assert response.status_code == 200
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Test question"},
+            "/search",
+            json={
+                "query_text": "Test question",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {temp_api_key}"},
         )
         assert response.status_code == 429
@@ -108,27 +119,39 @@ class TestApiCallQuota:
         for i in range(api_daily_limit):
             if i // 2 == 0:
                 response = client.post(
-                    "/llm-response",
-                    json={"query_text": "Test question"},
+                    "/search",
+                    json={
+                        "query_text": "Test question",
+                        "generate_llm_response": True,
+                    },
                     headers={"Authorization": f"Bearer {temp_api_key}"},
                 )
             else:
                 response = client.post(
-                    "/embeddings-search",
-                    json={"query_text": "Test question"},
+                    "/search",
+                    json={
+                        "query_text": "Test question",
+                        "generate_llm_response": False,
+                    },
                     headers={"Authorization": f"Bearer {temp_api_key}"},
                 )
             assert response.status_code == 200
         if api_daily_limit % 2 == 0:
             response = client.post(
                 "/llm-response",
-                json={"query_text": "Test question"},
+                json={
+                    "query_text": "Test question",
+                    "generate_llm_response": True,
+                },
                 headers={"Authorization": f"Bearer {temp_api_key}"},
             )
         else:
             response = client.post(
-                "/embeddings-search",
-                json={"query_text": "Test question"},
+                "/search",
+                json={
+                    "query_text": "Test question",
+                    "generate_llm_response": False,
+                },
                 headers={"Authorization": f"Bearer {temp_api_key}"},
             )
         assert response.status_code == 429
@@ -146,8 +169,11 @@ class TestApiCallQuota:
         temp_api_key, _ = temp_user_api_key_and_api_quota
 
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {temp_api_key}"},
         )
         assert response.status_code == 200
@@ -161,7 +187,7 @@ class TestEmbeddingsSearch:
             ("api_key_correct", 200),
         ],
     )
-    def test_content_response(
+    def test_search_results(
         self,
         token: str,
         expected_status_code: int,
@@ -171,24 +197,28 @@ class TestEmbeddingsSearch:
     ) -> None:
         request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
-            headers={"Authorization": f"Bearer {request_token}"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
+            },
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
 
         if expected_status_code == 200:
-            json_content_response = response.json()["content_response"]
-            assert len(json_content_response.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
+            json_search_results = response.json()["search_results"]
+            assert len(json_search_results.keys()) == int(N_TOP_CONTENT)
 
     @pytest.fixture
     def question_response(
         self, client: TestClient, api_key_user1: str
     ) -> QueryResponse:
         response = client.post(
-            "/embeddings-search",
+            "/search",
             json={
                 "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": False,
             },
             headers={"Authorization": f"Bearer {api_key_user1}"},
         )
@@ -356,16 +386,18 @@ class TestEmbeddingsSearch:
     ) -> None:
         token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={
+                "query_text": "Tell me about camping",
+                "generate_llm_response": False,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -427,8 +459,11 @@ class TestGenerateResponse:
     ) -> None:
         token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about a good sport to play"},
+            "/search",
+            json={
+                "query_text": "Tell me about a good sport to play",
+                "generate_llm_response": True,
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == expected_status_code
@@ -437,11 +472,8 @@ class TestGenerateResponse:
             llm_response = response.json()["llm_response"]
             assert len(llm_response) != 0
 
-            content_response = response.json()["content_response"]
-            assert len(content_response) != 0
-
-            result_state = response.json()["state"]
-            assert result_state == ResultState.FINAL
+            search_results = response.json()["search_results"]
+            assert len(search_results) != 0
 
     @pytest.mark.parametrize(
         "username, expect_found",
@@ -461,16 +493,15 @@ class TestGenerateResponse:
     ) -> None:
         token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
-            "/llm-response",
-            json={"query_text": "Tell me about camping"},
+            "/search",
+            json={"query_text": "Tell me about camping", "generate_llm_response": True},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
 
         if response.status_code == 200:
             all_retireved_content_ids = [
-                value["retrieved_content_id"]
-                for value in response.json()["content_response"].values()
+                value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
                 # user1 has contents in DB uploaded by the faq_contents fixture
@@ -489,11 +520,10 @@ class TestErrorResponses:
     ) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={},
+            search_results={},
             llm_response=None,
             feedback_secret_key="abc123",
             debug_info={},
-            state=ResultState.IN_PROGRESS,
         )
 
     @pytest.fixture
@@ -504,6 +534,7 @@ class TestErrorResponses:
             language = None
         return QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=language,
             query_text_original="This is a query original",
         )
@@ -530,6 +561,7 @@ class TestErrorResponses:
     ) -> None:
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
@@ -602,6 +634,7 @@ class TestErrorResponses:
 
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
@@ -683,24 +716,23 @@ class TestAlignScore:
     def user_query_response(self) -> QueryResponse:
         return QueryResponse(
             query_id=124,
-            content_response={
+            search_results={
                 1: QuerySearchResult(
-                    retrieved_title="World",
-                    retrieved_text="hello world",
-                    retrieved_content_id=1,
-                    score=0.2,
+                    title="World",
+                    text="hello world",
+                    id=1,
+                    distance=0.2,
                 ),
                 2: QuerySearchResult(
-                    retrieved_title="Universe",
-                    retrieved_text="goodbye universe",
-                    retrieved_content_id=2,
-                    score=0.2,
+                    title="Universe",
+                    text="goodbye universe",
+                    id=2,
+                    distance=0.2,
                 ),
             },
             llm_response="This is a response",
             feedback_secret_key="abc123",
             debug_info={},
-            state=ResultState.IN_PROGRESS,
         )
 
     async def test_score_less_than_threshold(
@@ -751,5 +783,6 @@ class TestAlignScore:
     def test_build_evidence(
         self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        evidence = _build_evidence(user_query_response)
-        assert evidence == "hello world\ngoodbye universe\n"
+        if user_query_response.search_results is not None:
+            evidence = _build_evidence(user_query_response.search_results)
+            assert evidence == "hello world\ngoodbye universe\n"

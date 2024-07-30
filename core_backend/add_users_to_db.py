@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import redis
 from app.config import REDIS_HOST
@@ -23,6 +23,8 @@ user_db = UserDB(
     username=USER1_USERNAME,
     hashed_password=get_password_salted_hash(USER1_PASSWORD),
     hashed_api_key=get_key_hash(USER1_API_KEY),
+    api_key_first_characters=USER1_API_KEY[:5],
+    api_key_updated_datetime_utc=datetime.now(timezone.utc),
     content_quota=USER1_CONTENT_QUOTA,
     api_daily_quota=USER1_API_QUOTA,
     created_datetime_utc=datetime.utcnow(),
@@ -50,4 +52,3 @@ if __name__ == "__main__":
         )
 
     db_session.commit()
-    db_session.close()

@@ -38,7 +38,7 @@
 
 <strong >:octicons-check-16: Manage content</strong> : Use the Admin App to add, edit, and delete content in the database
 
-<strong >:octicons-check-16: Tag urgent messages</strong> : Identify messages that are urgent based on your rules
+<strong >:octicons-check-16: Flag urgent messages</strong> : Identify messages that are urgent based on your rules
 
 <br>
 [See Full Roadmap :octicons-arrow-right-24:](./roadmap.md){ .md-button}
