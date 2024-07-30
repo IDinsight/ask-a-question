@@ -396,3 +396,24 @@ class UrgencyDetectionEntailment:
         )
 
         return prompt
+
+
+# Dashboard queries
+DASHBOARD_SYSTEM_MESSAGE = (
+    "Users will ask you questions about their data stored in Ask A Question."
+)
+DASHBOARD_DB_TABLE_DESCRIPTION = """\
+- content: Each row in this tables describes a piece of content defined by the user.
+- query: Each row is a question sent by the user to the system.
+- query-response: Each row is a successful response to a question.
+- query-response-error: A new row is added to this table for every response to a \
+user question that was unsuccessful (an error).
+- response-feedback: Every time a user chooses to send feedback about a response, \
+a new row is added to this table.
+- content-feedback: Every time a user chooses to send feedback about one of the \
+contents in the search results, a new row is added to this table.
+- urgency-rule: Each row is an urgency rule, i.e. describes an urgent case, \
+defined by the user.
+- urgency-queries: Each user query that was sent for urgency detection is stored \
+in this table.
+"""

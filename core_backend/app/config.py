@@ -46,6 +46,9 @@ LITELLM_MODEL_ALIGNSCORE = os.environ.get(
 LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
     "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
 )
+LITELLM_MODEL_DASHBOARD = os.environ.get(
+    "LITELLM_MODEL_DASHBOARD", "openai/ask-dashboard"
+)
 
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get(

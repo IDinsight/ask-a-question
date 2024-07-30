@@ -42,6 +42,7 @@ class SQLTools:
         self,
         table_list: List[str],
         asession: AsyncSession,
+        user: str,
     ) -> dict[str, str]:
         """
         Queries the target SQL database and returns the schema of the tables.
@@ -50,6 +51,7 @@ class SQLTools:
         - table_list (list[str]): The list of table names for which you
             want to get the schema.
         - asession (AsyncSession): The SQLAlchemy AsyncSession object.
+        - user: user to filter for
 
         Returns:
         - dict[str, str]: The schema of all the relevant tables in the database.
@@ -80,7 +82,9 @@ class SQLTools:
                 return_schema[table.name] += f"\nTable: {table.name}\n{ddl_statement}\n"
 
                 # Fetching the first three rows from the table
-                first_n_rows_result = await asession.execute(select(table).limit(3))
+                first_n_rows_result = await asession.execute(
+                    select(table).where(table.c.user_id == user).limit(3)
+                )
                 first_n_rows = first_n_rows_result.mappings().all()
                 first_n_rows_str = "\n".join(
                     ["\t".join(map(str, row.values())) for row in first_n_rows]
@@ -96,7 +100,7 @@ class SQLTools:
         self,
         table_list: List[str],
         asession: AsyncSession,
-        which_db: str,
+        user: str,
     ) -> str:
         """
         Queries the target SQL database and returns the schema of the tables.
@@ -109,24 +113,22 @@ class SQLTools:
         Returns:
         - str: The schema of all the relevant tables in the database.
         """
-        if which_db not in self._schema_cache:
+        if user not in self._schema_cache:
             add_to_cache = await self._get_table_schema(table_list, asession)
-            self._schema_cache[which_db] = add_to_cache
+            self._schema_cache[user] = add_to_cache
         else:
             # Update cache with tables if not in cache
             tables_not_in_cache = [
-                table
-                for table in table_list
-                if table not in self._schema_cache[which_db]
+                table for table in table_list if table not in self._schema_cache[user]
             ]
             if tables_not_in_cache:
                 add_to_cache = await self._get_table_schema(
-                    tables_not_in_cache, asession
+                    tables_not_in_cache, asession, user
                 )
-                self._schema_cache[which_db].update(add_to_cache)
+                self._schema_cache[user].update(add_to_cache)
         # Add the value for each table in table_list to return schema as a string append
         return_schema = "\n".join(
-            [self._schema_cache[which_db][table] for table in table_list]
+            [self._schema_cache[user][table] for table in table_list]
         )
         return return_schema
 

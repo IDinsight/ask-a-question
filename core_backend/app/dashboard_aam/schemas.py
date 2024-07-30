@@ -1,13 +1,9 @@
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict
 
-AccessLevel = Literal["fullaccess", "readonly"]
 
-
-class UserQueryBase(BaseModel):
+class DashboardQueryBase(BaseModel):
     """
-    Pydantic model for query APIs
+    Pydantic model for dashboard query
     """
 
     query_text: str
@@ -31,13 +27,12 @@ class Prompts(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserQueryResponse(BaseModel):
+class DashboardQueryResponse(BaseModel):
     """
-    Pydantic model for response to Query
+    Pydantic model for response to dashboard query
     """
 
     best_tables: list[str] | str
-    feedback_secret_key: str
     query_language: str
     query_script: str
     best_columns: dict | str

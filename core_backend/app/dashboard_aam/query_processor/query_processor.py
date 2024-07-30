@@ -1,7 +1,11 @@
+import json
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..schemas import UserQueryBase
-from ..utils import _ask_llm_json, track_time
+from ...config import LITELLM_MODEL_DASHBOARD
+from ...llm_call.utils import _ask_llm_async
+from ..schemas import DashboardQueryBase
+from ..utils import track_time
 from .guardrails.guardrails import LLMGuardRails
 from .query_processing_prompts import (
     create_best_columns_prompt,
@@ -18,20 +22,20 @@ class LLMQueryProcessor:
 
     def __init__(
         self,
-        query: UserQueryBase,
+        query: DashboardQueryBase,
         asession: AsyncSession,
-        which_db: str,
-        llm: str,
-        guardrails_llm: str,
+        user: str,
         sys_message: str,
         db_description: str,
         column_description: str,
         num_common_values: int,
+        llm: str = LITELLM_MODEL_DASHBOARD,
+        guardrails_llm: str = LITELLM_MODEL_DASHBOARD,
     ) -> None:
         """Initialize the QueryProcessor class."""
         self.query = query
         self.asession = asession
-        self.which_db = which_db
+        self.user = user
         self.tools: SQLTools = get_tools()
         self.temperature = 0.1
         self.llm = llm
@@ -40,7 +44,8 @@ class LLMQueryProcessor:
         self.column_description = column_description
         self.num_common_values = num_common_values
         self.guardrails: LLMGuardRails = LLMGuardRails(
-            guardrails_llm, self.system_message
+            sys_message=self.system_message,
+            gurdrails_llm=guardrails_llm,
         )
         self.cost = 0.0
         self.language_prompt = ""
@@ -65,13 +70,17 @@ class LLMQueryProcessor:
         system_message, prompt = get_query_language_prompt(self.query["query_text"])
         self.language_prompt = prompt
 
-        query_language_llm_response = await _ask_llm_json(
-            prompt, system_message, llm=self.llm, temperature=self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=system_message,
+            litellm_model=self.llm,
+            temperature=self.temperature,
+            json=True,
         )
-        self.query_language = query_language_llm_response["answer"]["language"]
-        self.query_script = query_language_llm_response["answer"]["script"]
 
-        self.cost += float(query_language_llm_response["cost"])
+        result = json.loads(response)
+        self.query_language = result["language"]
+        self.query_script = result["script"]
 
     @track_time(create_class_attr="timings")
     async def _get_best_tables_from_llm(self) -> None:
@@ -80,12 +89,17 @@ class LLMQueryProcessor:
         tables to answer a question.
         """
         prompt = create_best_tables_prompt(self.query, self.table_description)
-        best_tables_llm_response = await _ask_llm_json(
-            prompt, self.system_message, llm=self.llm, temperature=self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=prompt,
+            litellm_model=self.llm,
+            temperature=self.temperature,
+            json=True,
         )
 
-        self.best_tables = best_tables_llm_response["answer"]["response_sources"]
-        self.cost += float(best_tables_llm_response["cost"])
+        best_tables = json.loads(response)
+
+        self.best_tables = best_tables["response_sources"]
         self.best_tables_prompt = prompt
 
     @track_time(create_class_attr="timings")
@@ -95,19 +109,22 @@ class LLMQueryProcessor:
         to answer a question.
         """
         self.relevant_schemas = await self.tools.get_tables_schema(
-            self.best_tables, self.asession, which_db=self.which_db
+            self.best_tables, self.asession, which_db=self.user
         )
         prompt = create_best_columns_prompt(
             self.query,
             self.relevant_schemas,
             columns_description=self.column_description,
         )
-        best_columns_llm_response = await _ask_llm_json(
-            prompt, self.system_message, llm=self.llm, temperature=self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=self.system_message,
+            litellm_model=self.llm,
+            temperature=self.temperature,
+            json=True,
         )
-
-        self.best_columns = best_columns_llm_response["answer"]
-        self.cost += float(best_columns_llm_response["cost"])
+        best_columns = json.loads(response)
+        self.best_columns = best_columns
         self.best_columns_prompt = prompt
 
     @track_time(create_class_attr="timings")
@@ -126,12 +143,16 @@ class LLMQueryProcessor:
             self.column_description,
             self.num_common_values,
         )
-        sql_query_llm_response = await _ask_llm_json(
-            prompt, self.system_message, llm=self.llm, temperature=self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=self.system_message,
+            litellm_model=self.llm,
+            temperature=self.temperature,
+            json=True,
         )
+        sql_query_llm_response = json.loads(response)
 
-        self.sql_query = sql_query_llm_response["answer"]["sql"]
-        self.cost += float(sql_query_llm_response["cost"])
+        self.sql_query = sql_query_llm_response["sql"]
         self.sql_generating_prompt = prompt
 
     @track_time(create_class_attr="timings")
@@ -148,12 +169,16 @@ class LLMQueryProcessor:
             self.query_language,
             self.query_script,
         )
-        final_answer_llm_response = await _ask_llm_json(
-            prompt, self.system_message, llm=self.llm, temperature=self.temperature
+        response = await _ask_llm_async(
+            prompt,
+            self.system_message,
+            litellm_model=self.llm,
+            temperature=self.temperature,
+            json=True,
         )
 
-        self.final_answer = final_answer_llm_response["answer"]["answer"]
-        self.cost += float(final_answer_llm_response["cost"])
+        final_answer_llm_response = json.loads(response)
+        self.final_answer = final_answer_llm_response["answer"]
         self.final_answer_prompt = prompt
 
     @track_time(create_class_attr="timings")

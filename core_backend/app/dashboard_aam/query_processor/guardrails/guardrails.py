@@ -1,6 +1,9 @@
+import json
 from enum import Enum
 
-from ...utils import _ask_llm_json
+from core_backend.app.config import LITELLM_MODEL_DASHBOARD
+
+from ....llm_call.utils import _ask_llm_async
 from .guardrails_prompts import (
     create_relevance_prompt,
     create_safety_prompt,
@@ -23,8 +26,8 @@ class LLMGuardRails:
 
     def __init__(
         self,
-        gurdrails_llm: str,
         sys_message: str,
+        gurdrails_llm: str = LITELLM_MODEL_DASHBOARD,
     ) -> None:
         """Initialize the GuardRails class."""
         self.cost = 0.0
@@ -44,17 +47,21 @@ class LLMGuardRails:
         Handle the PII in the query.
         """
         prompt = create_safety_prompt(query, language, script)
-        safety_response = await _ask_llm_json(
-            prompt, self.system_message, self.guardrails_llm, self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=self.system_message,
+            litellm_model=self.guardrails_llm,
+            temperature=self.temperature,
+            json=True,
         )
-        self.safe = safety_response["answer"]["safe"] == "True"
+        safety_response = json.loads(response)
+        self.safe = safety_response["safe"] == "True"
         if self.safe is False:
-            self.safety_response = safety_response["answer"]["response"]
+            self.safety_response = safety_response["response"]
             self.guardrails_status["safety"] = GuardRailsStatus.UNSAFE
         else:
             self.guardrails_status["safety"] = GuardRailsStatus.PASSED
 
-        self.cost += float(safety_response["cost"])
         return safety_response
 
     async def check_relevance(
@@ -66,15 +73,19 @@ class LLMGuardRails:
         prompt = create_relevance_prompt(
             query, language, script, table_description=table_description
         )
-        relevance_response = await _ask_llm_json(
-            prompt, self.system_message, self.guardrails_llm, self.temperature
+        response = await _ask_llm_async(
+            question=prompt,
+            prompt=self.system_message,
+            litellm_model=self.guardrails_llm,
+            temperature=self.temperature,
+            json=True,
         )
-        self.relevant = relevance_response["answer"]["relevant"] == "True"
+        relevance_response = json.loads(response)
+        self.relevant = relevance_response["relevant"] == "True"
         if self.relevant is False:
-            self.relevance_response = relevance_response["answer"]["response"]
+            self.relevance_response = relevance_response["response"]
             self.guardrails_status["relevance"] = GuardRailsStatus.IRRELEVANT
         else:
             self.guardrails_status["relevance"] = GuardRailsStatus.PASSED
 
-        self.cost += float(relevance_response["cost"])
         return relevance_response

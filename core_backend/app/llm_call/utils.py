@@ -14,6 +14,7 @@ async def _ask_llm_async(
     litellm_model: Optional[str] = LITELLM_MODEL_DEFAULT,
     litellm_endpoint: Optional[str] = LITELLM_ENDPOINT,
     metadata: Optional[dict] = None,
+    temperature: float = 0.0,
     json: bool = False,
 ) -> str:
     """
@@ -41,7 +42,7 @@ async def _ask_llm_async(
     llm_response_raw = await acompletion(
         model=litellm_model,
         messages=messages,
-        temperature=0,
+        temperature=temperature,
         max_tokens=1024,
         api_base=litellm_endpoint,
         api_key=LITELLM_API_KEY,

@@ -1,10 +1,17 @@
-from uuid import uuid4
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .auth import auth_bearer_token
+from ..auth.dependencies import get_current_user
+from ..database import get_async_session
+from ..llm_call.llm_prompts import (
+    DASHBOARD_DB_TABLE_DESCRIPTION,
+    DASHBOARD_SYSTEM_MESSAGE,
+)
+from ..users.models import UserDB
 from .query_processor.query_processor import LLMQueryProcessor
-from .schemas import Prompts, UserQueryBase, UserQueryResponse
+from .schemas import DashboardQueryBase, DashboardQueryResponse, Prompts
 from .utils import setup_logger
 
 flow_logger = setup_logger("Flow Logger")
@@ -14,9 +21,10 @@ router = APIRouter(prefix="/ask-database", tags=["Ask Database"])
 
 @router.post("/get-metric")
 async def get_metric(
-    user_query: UserQueryBase,
-    auth_response: dict = Depends(auth_bearer_token),
-) -> UserQueryResponse:
+    user_query: DashboardQueryBase,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> DashboardQueryResponse:
     """
     Path operation to answer user query
 
@@ -25,30 +33,24 @@ async def get_metric(
         auth_response (dict): The auth response dictionary
             containing the async session and settings.
     """
-    feedback_secret_key = generate_secret_key()
-    asession_sql = auth_response["async_session"]
-    db_settings = auth_response["settings"]
-
     qp = LLMQueryProcessor(
         query=user_query.model_dump(),
-        asession=asession_sql,
-        llm=db_settings.LLM_MODEL,
-        which_db=db_settings.WHICH_DB,
-        guardrails_llm=db_settings.GUARDRAILS_LLM_MODEL,
-        sys_message=db_settings.SYSTEM_MESSAGE,
-        db_description=db_settings.METRIC_DB_TABLE_DESCRIPTION,
-        column_description=db_settings.METRIC_DB_COLUMN_DESCRIPTION,
-        num_common_values=db_settings.NUM_COMMON_VALUES,
+        asession=asession,
+        user=user_db.user_id,
+        sys_message=DASHBOARD_SYSTEM_MESSAGE,
+        db_description=DASHBOARD_DB_TABLE_DESCRIPTION,
+        column_description="",  # TODO: find out what this does
+        num_common_values=10,  # TODO: find out what this does
     )
     await qp.process_query()
 
     if hasattr(qp, "timings"):
-        flow_logger.debug(f"Query processing time: {qp.timings}")  # type: ignore
+        flow_logger.debug(f"Query processing time: {qp.timings}")
     if hasattr(qp.tools, "timings"):
-        flow_logger.debug(f"Table Schema time: {qp.tools.timings}")  # type: ignore
+        flow_logger.debug(f"Table Schema time: {qp.tools.timings}")
 
     # Return response
-    response = UserQueryResponse(
+    response = DashboardQueryResponse(
         query_language=qp.query_language,
         query_script=qp.query_script,
         best_tables=qp.best_tables,
@@ -60,7 +62,6 @@ async def get_metric(
         guardrails_cost=qp.guardrails.cost,
         guardrails_status=qp.guardrails.guardrails_status,
         schema_used=qp.relevant_schemas,
-        feedback_secret_key=feedback_secret_key,
         prompts=Prompts(
             language_prompt=qp.language_prompt,
             best_tables_prompt=qp.best_tables_prompt,
@@ -74,10 +75,3 @@ async def get_metric(
     )
 
     return response
-
-
-def generate_secret_key() -> str:
-    """
-    Generate a secret key for the user query
-    """
-    return uuid4().hex
