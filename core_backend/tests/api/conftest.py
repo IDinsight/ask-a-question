@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 import numpy as np
@@ -145,7 +145,9 @@ def user(
 
 
 @pytest.fixture(scope="function")
-async def faq_contents(asession: AsyncSession, user1: int) -> None:
+async def faq_contents(
+    asession: AsyncSession, user1: int
+) -> AsyncGenerator[List[int], None]:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -164,8 +166,8 @@ async def faq_contents(asession: AsyncSession, user1: int) -> None:
             content_title=content["content_title"],
             content_text=content["content_text"],
             content_metadata=content.get("content_metadata", {}),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
         contents.append(content_db)
 
@@ -228,8 +230,8 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
-            created_datetime_utc=datetime.utcnow(),
-            updated_datetime_utc=datetime.utcnow(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
         rules.append(rule_db)
     db_session.add_all(rules)
@@ -260,8 +262,8 @@ async def urgency_rules_user2(
         urgency_rule_text="user 2 rule",
         urgency_rule_vector=rule_embedding,
         urgency_rule_metadata={},
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     db_session.add(rule_db)
@@ -272,6 +274,13 @@ async def urgency_rules_user2(
     # Delete the urgency rules
     db_session.delete(rule_db)
     db_session.commit()
+
+
+# @pytest.fixture(scope="session")
+# async def client() -> AsyncGenerator[AsyncClient, None]:
+#    app = create_app()
+#    async with AsyncClient(app=app, base_url="http://test") as c:
+#        yield c
 
 
 @pytest.fixture(scope="session")
