@@ -166,14 +166,12 @@ async def _check_align_score(
     if isinstance(response, QueryResponseError) or response.llm_response is None:
         return response
 
-    # check if search_results are present
     if response.search_results is not None:
         evidence = _build_evidence(response.search_results)
     else:
         logger.warning(("No search_results found in the response."))
         return response
 
-    # check if llm_response is present
     if response.llm_response is not None:
         claim = response.llm_response
     else:
