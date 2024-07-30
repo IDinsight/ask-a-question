@@ -85,7 +85,7 @@ def run_tests(experiment_configs: dict, output_folder: str) -> None:
     None
 
     """
-    host = os.getenv("TARGET_AAQ_URL", "localhost")
+    host = os.getenv("TARGET_AAQ_URL", "localhost/")
     locustfile_list: list = experiment_configs.get("locustfile_list", [])
     users_list: list = experiment_configs.get("users_list", [])
     run_time_list = experiment_configs.get("run_time_list", [])
