@@ -10,7 +10,7 @@ To get answers from your database of contents, you can use the `/search` endpoin
 - Search results: Finds the most similar content in the database using cosine distance between embeddings.
 - (Optionally) LLM generated response: Crafts a custom response using LLM chat using the most similar content.
 
-You can also add your contents programatically using API endpoints. See [docs](https://docs.ask-a-question.com/) or SwaggerUI at `https://<DOMAIN>/api/docs` or `https://<DOMAIN>/docs` for more details and other API endpoints.
+You can also add your contents programatically using API endpoints. See our [API docs](https://app.ask-a-question.com/api/redoc) for more details and other API endpoints.
 
 ### :question: Embeddings search
 
@@ -44,14 +44,14 @@ curl -X 'POST' \
 
 ## Admin app
 
-You can access the admin console at
+You can access the admin app of AAQ's cloud version [here](https://app.ask-a-question.com). You can
+also [self-host your own AAQ admin app](http://localhost:8080/deployment/quick-setup/).
 
-```
-https://[DOMAIN]/
-```
-
-On the [Admin app]("./content/admin-app.md"), you can:
+On the admin app, you can:
 
 - :books: Manage content for more details
 - :test_tube: Use the playground to test the Question-Answering service
 - :bar_chart: View dashboards
+
+See more detailed documentation of the admin app
+[here](http://localhost:8080/components/admin-app/).

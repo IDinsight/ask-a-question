@@ -48,13 +48,10 @@ as text, or as both.
 <img src="./swagger-ui-screenshot.png" alt="Screenshot of Swagger UI" style="border: 1px solid  lightgray;">
 
 If you have the [application running](../../deployment/quick-setup.md), you can access
-the SwaggerUI at
+the SwaggerUI at `https://[DOMAIN]/api/docs` and Redoc at `https://[DOMAIN]/api/redoc`
 
-    https://[DOMAIN]/api/docs
-
-or if you are using the [dev](../../develop/setup.md) setup:
-
-    http://localhost:8000/docs
+or if you are using the [dev](../../develop/setup.md) setup,
+`http://localhost:8000/docs` and `http://localhost:8000/redoc`.
 
 ## Upcoming
 

@@ -70,7 +70,7 @@ nav:
   - Contact us:
       - Team: contact_us.md
 
-  - API docs ↗︎: https://app.ask-a-question.com/api/docs
+  - API docs ↗︎: https://app.ask-a-question.com/api/redoc
 
 # Themes and extensions
 theme:
