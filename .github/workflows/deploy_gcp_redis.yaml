@@ -1,4 +1,4 @@
-name: Deploy Caddy to GCP
+name: Deploy Redis to GCP
 
 on:
   push:
