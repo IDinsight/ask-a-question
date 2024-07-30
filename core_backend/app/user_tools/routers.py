@@ -49,9 +49,9 @@ async def create_user(
             user=user,
             asession=asession,
         )
-        await update_api_limits(
-            request.app.state.redis, user_db.username, user_db.api_daily_quota
-        )
+        # await update_api_limits(
+        #     request.app.state.redis, user_db.username, user_db.api_daily_quota
+        # )
 
         return UserCreate(
             username=user_db.username,

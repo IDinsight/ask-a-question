@@ -1,17 +1,11 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-<<<<<<< HEAD
 from sqlalchemy import delete, select
-=======
-from pytest_alembic.config import Config
-from sqlalchemy import delete
-from sqlalchemy.engine import Engine, create_engine
->>>>>>> main
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -25,7 +19,6 @@ from core_backend.app.config import (
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
-    SYNC_DB_API,
     get_connection_url,
     get_session_context_manager,
 )
@@ -53,7 +46,6 @@ TEST_USER_API_KEY = "test_api_key"
 TEST_CONTENT_QUOTA = 50
 TEST_API_QUOTA = 2000
 
-TEST_USER_ID_2 = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
@@ -88,7 +80,6 @@ async def asession(
 
 
 @pytest.fixture(scope="session", autouse=True)
-<<<<<<< HEAD
 def admin_user(client: TestClient, db_session: Session) -> None:
     admin_user = UserDB(
         username=TEST_ADMIN_USERNAME,
@@ -101,38 +92,9 @@ def admin_user(client: TestClient, db_session: Session) -> None:
     )
 
     db_session.add(admin_user)
-=======
-def user(db_session: Session) -> Generator[int, None, None]:
-    global TEST_USER_ID
-    global TEST_USER_ID_2
-    user1_db = UserDB(
-        username=TEST_USERNAME,
-        hashed_password=get_password_salted_hash(TEST_PASSWORD),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY),
-        content_quota=TEST_CONTENT_QUOTA,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    user2_db = UserDB(
-        username=TEST_USERNAME_2,
-        hashed_password=get_password_salted_hash(TEST_PASSWORD_2),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
-        content_quota=TEST_CONTENT_QUOTA_2,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    db_session.add(user1_db)
-    db_session.add(user2_db)
->>>>>>> main
     db_session.commit()
     yield admin_user.user_id
 
-<<<<<<< HEAD
-=======
-    # update the TEST_USER_ID global variable
-    TEST_USER_ID = user1_db.user_id
-    TEST_USER_ID_2 = user2_db.user_id
->>>>>>> main
 
 @pytest.fixture(scope="session")
 def user1(client: TestClient, db_session: Session) -> None:
@@ -191,8 +153,8 @@ async def faq_contents(asession: AsyncSession, user1: int) -> None:
             content_title=content["content_title"],
             content_text=content["content_text"],
             content_metadata=content.get("content_metadata", {}),
-            created_datetime_utc=datetime.now(timezone.utc),
-            updated_datetime_utc=datetime.now(timezone.utc),
+            created_datetime_utc=datetime.utcnow(),
+            updated_datetime_utc=datetime.utcnow(),
         )
         contents.append(content_db)
 
@@ -255,11 +217,10 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
-            created_datetime_utc=datetime.now(timezone.utc),
-            updated_datetime_utc=datetime.now(timezone.utc),
+            created_datetime_utc=datetime.utcnow(),
+            updated_datetime_utc=datetime.utcnow(),
         )
         rules.append(rule_db)
-    print(rules)
     db_session.add_all(rules)
     db_session.commit()
 
@@ -268,35 +229,6 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
     # Delete the urgency rules
     for rule in rules:
         db_session.delete(rule)
-    db_session.commit()
-
-
-@pytest.fixture(scope="function")
-async def urgency_rules_user2(db_session: Session) -> AsyncGenerator[int, None]:
-    rule_embedding = await async_fake_embedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input="user 2 rule",
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-    )
-
-    rule_db = UrgencyRuleDB(
-        urgency_rule_id=1000,
-        user_id=TEST_USER_ID_2,
-        urgency_rule_text="user 2 rule",
-        urgency_rule_vector=rule_embedding,
-        urgency_rule_metadata={},
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
-    )
-
-    db_session.add(rule_db)
-    db_session.commit()
-
-    yield 1
-
-    # Delete the urgency rules
-    db_session.delete(rule_db)
     db_session.commit()
 
 
@@ -426,6 +358,7 @@ async def mock_translate_question(
     Monkeypatch call to LLM translation service
     """
     if question.original_language is None:
+        response.state = ResultState.ERROR
         raise ValueError(
             (
                 "Language hasn't been identified. "
@@ -474,7 +407,6 @@ def fullaccess_token_user2() -> str:
 
 
 @pytest.fixture(scope="session")
-<<<<<<< HEAD
 def api_key_user1(client, fullaccess_token: str) -> str:
     """
     Returns a token with full access
@@ -496,29 +428,3 @@ def api_key_user2(client, fullaccess_token_user2: str) -> str:
         headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
     )
     return response.json()["new_api_key"]
-=======
-def alembic_config() -> Config:
-    """`alembic_config` is the primary point of entry for configurable options for the
-    alembic runner for `pytest-alembic`.
-
-    :returns:
-        Config: A configuration object used by `pytest-alembic`.
-    """
-
-    return Config({"file": "alembic.ini"})
-
-
-@pytest.fixture(scope="function")
-def alembic_engine() -> Engine:
-    """`alembic_engine` is where you specify the engine with which the alembic_runner
-    should execute your tests.
-
-    NB: The engine should point to a database that must be empty. It is out of scope
-    for `pytest-alembic` to manage the database state.
-
-    :returns:
-        A SQLAlchemy engine object.
-    """
-
-    return create_engine(get_connection_url(db_api=SYNC_DB_API))
->>>>>>> main

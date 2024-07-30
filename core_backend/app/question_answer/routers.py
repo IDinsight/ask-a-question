@@ -58,7 +58,7 @@ TAG_METADATA = {
 
 router = APIRouter(
     dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
-   tags=[TAG_METADATA["name"],
+    tags=[TAG_METADATA["name"]],
 )
 
 
