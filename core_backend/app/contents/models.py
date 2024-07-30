@@ -195,7 +195,7 @@ async def increment_query_count(
         if content_db:
             content_db.query_count = content_db.query_count + 1
             await asession.merge(content_db)
-    await asession.commit()
+            await asession.commit()
 
 
 async def delete_content_from_db(
