@@ -3,6 +3,7 @@
 from typing import Annotated, List, Optional
 
 import pandas as pd
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
@@ -221,11 +222,20 @@ async def delete_content(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Content id `{content_id}` not found",
         )
-    await delete_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
-        asession=asession,
-    )
+
+    try:
+        await delete_content_from_db(
+            user_id=user_db.user_id,
+            content_id=content_id,
+            asession=asession,
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.error(f"Error deleting content: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Content with feedback cannot be deleted. You can instead archive "
+            "the content so that it is no longer useable.",
+        ) from e
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
