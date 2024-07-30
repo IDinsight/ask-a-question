@@ -77,7 +77,6 @@ class QueryExtract(BaseModel):
     query_metadata: dict
     query_datetime_utc: datetime
     response: List[QueryResponseExtract]
-    response_error: List[QueryResponseErrorExtract]
     response_feedback: List[ResponseFeedbackExtract]
     content_feedback: List[ContentFeedbackExtract]
 

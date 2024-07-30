@@ -21,8 +21,8 @@ async def detect_urgency(
     prompt = ud_entailment.get_prompt()
 
     json_str = await _ask_llm_async(
-        question=message,
-        prompt=prompt,
+        user_message=message,
+        system_message=prompt,
         litellm_model=LITELLM_MODEL_URGENCY_DETECT,
         metadata=metadata,
         json=True,

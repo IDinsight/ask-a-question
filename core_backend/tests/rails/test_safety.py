@@ -45,7 +45,8 @@ async def test_prompt_injection_found(
 ) -> None:
     """Tests that prompt injection is found"""
     question = QueryRefined(
-        query_text=prompt_injection, query_text_original=prompt_injection
+        query_text=prompt_injection,
+        query_text_original=prompt_injection,
     )
     _, response = await _classify_safety(question, response)
     assert isinstance(response, QueryResponseError)
@@ -61,7 +62,11 @@ async def test_safe_message(
     safe_text: pytest.FixtureRequest, response: pytest.FixtureRequest
 ) -> None:
     """Tests that safe messages are classified as safe"""
-    question = QueryRefined(query_text=safe_text, query_text_original=safe_text)
+    question = QueryRefined(
+        query_text=safe_text,
+        user_id=124,
+        query_text_original=safe_text,
+    )
     _, response = await _classify_safety(question, response)
 
     assert isinstance(response, QueryResponse)
@@ -78,7 +83,9 @@ async def test_inappropriate_language(
 ) -> None:
     """Tests that inappropriate language is found"""
     question = QueryRefined(
-        query_text=inappropriate_text, query_text_original=inappropriate_text
+        query_text=inappropriate_text,
+        user_id=124,
+        query_text_original=inappropriate_text,
     )
     _, response = await _classify_safety(question, response)
 

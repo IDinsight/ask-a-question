@@ -17,7 +17,7 @@ logger = setup_logger("RAG")
 async def get_llm_rag_answer(
     question: str,
     context: str,
-    response_language: IdentifiedLanguage,
+    original_language: IdentifiedLanguage,
     metadata: Optional[dict] = None,
 ) -> RAG:
     """Get an answer from the LLM model using RAG.
@@ -40,11 +40,11 @@ async def get_llm_rag_answer(
     """
 
     metadata = metadata or {}
-    prompt = RAG.prompt.format(context=context)
+    prompt = RAG.prompt.format(context=context, original_language=original_language)
 
     result = await _ask_llm_async(
-        question=question,
-        prompt=prompt,
+        user_message=question,
+        system_message=prompt,
         litellm_model=LITELLM_MODEL_GENERATION,
         metadata=metadata,
         json=True,

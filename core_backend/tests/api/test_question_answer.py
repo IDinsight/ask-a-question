@@ -12,14 +12,13 @@ from core_backend.app.llm_call.process_input import (
     _translate_question,
 )
 from core_backend.app.llm_call.process_output import _build_evidence, _check_align_score
-from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
+from core_backend.app.question_answer.config import N_TOP_CONTENT
 from core_backend.app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
     QuerySearchResult,
-    ResultState,
 )
 from core_backend.tests.api.conftest import (
     TEST_USER_API_KEY,
@@ -54,7 +53,7 @@ class TestEmbeddingsSearch:
 
         if expected_status_code == 200:
             json_search_results = response.json()["search_results"]
-            assert len(json_search_results.keys()) == int(N_TOP_CONTENT_FOR_SEARCH)
+            assert len(json_search_results.keys()) == int(N_TOP_CONTENT)
 
     @pytest.fixture
     def question_response(self, client: TestClient) -> QueryResponse:
@@ -302,9 +301,6 @@ class TestGenerateResponse:
             search_results = response.json()["search_results"]
             assert len(search_results) != 0
 
-            result_state = response.json()["state"]
-            assert result_state == ResultState.FINAL
-
     @pytest.mark.parametrize(
         "token, expect_found",
         [
@@ -351,7 +347,6 @@ class TestErrorResponses:
             llm_response=None,
             feedback_secret_key="abc123",
             debug_info={},
-            state=ResultState.IN_PROGRESS,
         )
 
     @pytest.fixture
@@ -362,6 +357,7 @@ class TestErrorResponses:
             language = None
         return QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=language,
             query_text_original="This is a query original",
         )
@@ -388,6 +384,7 @@ class TestErrorResponses:
     ) -> None:
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
@@ -460,6 +457,7 @@ class TestErrorResponses:
 
         user_query_refined = QueryRefined(
             query_text="This is a basic query",
+            user_id=124,
             original_language=None,
             query_text_original="This is a query original",
         )
@@ -558,7 +556,6 @@ class TestAlignScore:
             llm_response="This is a response",
             feedback_secret_key="abc123",
             debug_info={},
-            state=ResultState.IN_PROGRESS,
         )
 
     async def test_score_less_than_threshold(
@@ -609,5 +606,6 @@ class TestAlignScore:
     def test_build_evidence(
         self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        evidence = _build_evidence(user_query_response)
-        assert evidence == "hello world\ngoodbye universe\n"
+        if user_query_response.search_results is not None:
+            evidence = _build_evidence(user_query_response.search_results)
+            assert evidence == "hello world\ngoodbye universe\n"

@@ -26,7 +26,11 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
 @pytest.mark.parametrize("expected_label, content", read_test_data(ON_OFF_TOPIC_FILE))
 async def test_on_off_topic(expected_label: str, content: str) -> None:
     """Test on- vs. off-topic classification"""
-    question = QueryRefined(query_text=content, query_text_original=content)
+    question = QueryRefined(
+        query_text=content,
+        user_id=124,
+        query_text_original=content,
+    )
     response = QueryResponse(
         query_id=1,
         search_results=None,

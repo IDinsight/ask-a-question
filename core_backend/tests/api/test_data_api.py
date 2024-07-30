@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core_backend.app.question_answer.models import (
     save_content_feedback_to_db,
-    save_query_response_error_to_db,
     save_query_response_to_db,
     save_response_feedback_to_db,
     save_user_query_to_db,
@@ -387,10 +386,20 @@ class TestQueryDataAPI:
             else:
                 response_err = QueryResponseError(
                     query_id=query_db.query_id,
+                    llm_response=None,
+                    search_results={
+                        1: QuerySearchResult(
+                            title="title",
+                            text="text",
+                            id=faq_contents[0],
+                            distance=0.5,
+                        )
+                    },
+                    feedback_secret_key="test_secret_key",
                     error_message="error",
                     error_type=ErrorType.ALIGNMENT_TOO_LOW,
                 )
-                response_err_db = await save_query_response_error_to_db(
+                response_err_db = await save_query_response_to_db(
                     query_db, response_err, asession
                 )
                 all_orm_objects.append(response_err_db)
