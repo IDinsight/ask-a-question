@@ -45,18 +45,18 @@ async def create_user(
         )
 
     try:
-        user_db = await save_user_to_db(
+        user_new = await save_user_to_db(
             user=user,
             asession=asession,
         )
-        # await update_api_limits(
-        #     request.app.state.redis, user_db.username, user_db.api_daily_quota
-        # )
+        await update_api_limits(
+            request.app.state.redis, user_new.username, user_new.api_daily_quota
+        )
 
         return UserCreate(
-            username=user_db.username,
-            content_quota=user_db.content_quota,
-            api_daily_quota=user_db.api_daily_quota,
+            username=user_new.username,
+            content_quota=user_new.content_quota,
+            api_daily_quota=user_new.api_daily_quota,
         )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")

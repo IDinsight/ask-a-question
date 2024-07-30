@@ -138,7 +138,7 @@ class TestApiCallQuota:
             assert response.status_code == 200
         if api_daily_limit % 2 == 0:
             response = client.post(
-                "/llm-response",
+                "/search",
                 json={
                     "query_text": "Test question",
                     "generate_llm_response": True,
@@ -202,7 +202,7 @@ class TestEmbeddingsSearch:
                 "query_text": "Tell me about a good sport to play",
                 "generate_llm_response": False,
             },
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"Authorization": f"Bearer {request_token}"},
         )
         assert response.status_code == expected_status_code
 

@@ -7,12 +7,11 @@ on:
       - testing
       - production
     paths:
-      - "deployment/docker-compose/caddy/**"
-      - ".github/workflows/deploy_gcp_caddy.yaml"
+      - ".github/workflows/deploy_gcp_redis.yaml"
   workflow_dispatch:
 
 jobs:
-  DeployCaddyToGCP:
+  DeployRedisToGCP:
     runs-on: ubuntu-latest
 
     permissions:
@@ -43,14 +42,7 @@ jobs:
           secrets: |-
             domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
 
-      - name: Copy Caddy deployment files
-        working-directory: deployment/docker-compose
-        run: |
-          gcloud compute scp Caddyfile \
-              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/Caddyfile \
-              --zone ${{ secrets.DEPLOYMENT_ZONE }}
-
-      - name: Deploy Caddy container
+      - name: Deploy Redis container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
         with:
@@ -58,21 +50,11 @@ jobs:
           zone: "${{ secrets.DEPLOYMENT_ZONE }}"
           ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
           command: |
-            docker stop caddy
-            docker rm caddy
-            docker run -d \
-                -v caddy_data:/data \
-                -v caddy_config:/config \
-                -e DOMAIN=${{ steps.secrets.outputs.domain }} \
-                -p 80:80 \
-                -p 443:443 \
-                -p 443:443/udp \
-                -v ~/Caddyfile:/etc/caddy/Caddyfile \
-                --log-driver=gcplogs \
-                --restart always \
-                --network aaq-network \
-                --name caddy \
-                caddy:2.7.6
+            docker stop redis
+            docker rm redis
+            docker run --name redis \
+              -p 6379:6379 \
+              -d redis:6.0-alpine
             docker system prune --volumes -f
 
       - name: Show deployment command output
@@ -84,10 +66,3 @@ jobs:
         id: wait-for-app
         run: sleep 1m
         shell: bash
-
-      - name: Check if deployment was successful
-        id: check-deployment
-        run: |
-          curl -f -X 'GET' \
-            'https://${{ steps.secrets.outputs.domain }}/api/healthcheck' \
-            -H 'accept: application/json'

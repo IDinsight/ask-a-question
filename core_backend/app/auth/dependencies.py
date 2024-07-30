@@ -12,7 +12,7 @@ from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from ..config import DEFAULT_CONTENT_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
@@ -78,7 +78,7 @@ async def authenticate_credentials(
 
 
 async def authenticate_or_create_google_user(
-    *, google_email: str
+    *, request: Request, google_email: str
 ) -> Optional[AuthenticatedUser]:
     """
     Check if user exists in Db. If not, create user
@@ -93,9 +93,14 @@ async def authenticate_or_create_google_user(
             )
         except UserNotFoundError:
             user = UserCreate(
-                username=google_email, content_quota=DEFAULT_CONTENT_QUOTA
+                username=google_email,
+                content_quota=DEFAULT_CONTENT_QUOTA,
+                api_daily_quota=DEFAULT_API_QUOTA,
             )
             user_db = await save_user_to_db(user, asession)
+            await update_api_limits(
+                request.app.state.redis, user_db.username, user_db.api_daily_quota
+            )
             return AuthenticatedUser(
                 username=user_db.username, access_level="fullaccess"
             )

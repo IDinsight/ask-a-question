@@ -1,8 +1,11 @@
-from datetime import datetime, timedelta, timezone
+"""This module contains utility functions for the backend application."""
+
+# pylint: disable=global-statement
 import hashlib
 import logging
 import os
 import secrets
+from datetime import datetime, timedelta, timezone
 from logging import Logger
 from typing import List, Optional
 from uuid import uuid4
@@ -119,11 +122,21 @@ def generate_secret_key() -> str:
 
 
 async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
+    """Get embedding for the given text.
+    Parameters
+    ----------
+    text_to_embed
+        The text to embed.
+    metadata
+        Metadata for `LiteLLM` embedding API.
+    Returns
+    -------
+    List[float]
+        The embedding for the given text.
     """
-    Get embedding for the given text
-    """
-    if metadata is None:
-        metadata = {}
+
+    metadata = metadata or {}
+
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,
@@ -196,6 +209,26 @@ class HttpClient:
 _HTTP_CLIENT: aiohttp.ClientSession | None = None
 
 
+def get_global_http_client() -> Optional[aiohttp.ClientSession]:
+    """Return the value for the global variable _HTTP_CLIENT.
+
+    :returns:
+        The value for the global variable _HTTP_CLIENT.
+    """
+
+    return _HTTP_CLIENT
+
+
+def set_global_http_client(http_client: HttpClient) -> None:
+    """Set the value for the global variable _HTTP_CLIENT.
+
+    :param http_client: The value to set for the global variable _HTTP_CLIENT.
+    """
+
+    global _HTTP_CLIENT
+    _HTTP_CLIENT = http_client()
+
+
 def get_http_client() -> aiohttp.ClientSession:
     """
     Get HTTP client
@@ -205,8 +238,10 @@ def get_http_client() -> aiohttp.ClientSession:
     if global_http_client is None or global_http_client.closed:
         http_client = HttpClient()
         http_client.start()
-        _HTTP_CLIENT = http_client()
-    return _HTTP_CLIENT
+        set_global_http_client(http_client)
+    new_http_client = get_global_http_client()
+    assert isinstance(new_http_client, aiohttp.ClientSession)
+    return new_http_client
 
 
 def encode_api_limit(api_limit: int | None) -> int | str:
@@ -224,10 +259,9 @@ async def update_api_limits(
     Update the api limits for user in Redis
     """
     now = datetime.now(timezone.utc)
-    # next_midnight = (now + timedelta(days=1)).replace(
-    #     hour=0, minute=0, second=0, microsecond=0
-    # )
-    next_midnight = now + timedelta(minutes=3)
+    next_midnight = (now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     key = f"remaining-calls:{username}"
     expire_at = int(next_midnight.timestamp())
     await redis.set(key, encode_api_limit(api_daily_quota))

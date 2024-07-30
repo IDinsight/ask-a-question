@@ -5,7 +5,9 @@ from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from pytest_alembic.config import Config
 from sqlalchemy import delete, select
+from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,7 @@ from core_backend.app.config import (
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
+    SYNC_DB_API,
     get_connection_url,
     get_session_context_manager,
 )
@@ -99,6 +102,14 @@ def admin_user(client: TestClient, db_session: Session) -> None:
 @pytest.fixture(scope="session")
 def user1(client: TestClient, db_session: Session) -> None:
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id
+
+
+@pytest.fixture(scope="session")
+def user2(client: TestClient, db_session: Session) -> None:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME_2)
     result = db_session.execute(stmt)
     user = result.scalar_one()
     yield user.user_id
@@ -232,6 +243,37 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
     db_session.commit()
 
 
+@pytest.fixture(scope="function")
+async def urgency_rules_user2(
+    db_session: Session, user2: int
+) -> AsyncGenerator[int, None]:
+    rule_embedding = await async_fake_embedding(
+        model=LITELLM_MODEL_EMBEDDING,
+        input="user 2 rule",
+        api_base=LITELLM_ENDPOINT,
+        api_key=LITELLM_API_KEY,
+    )
+
+    rule_db = UrgencyRuleDB(
+        urgency_rule_id=1000,
+        user_id=user2,
+        urgency_rule_text="user 2 rule",
+        urgency_rule_vector=rule_embedding,
+        urgency_rule_metadata={},
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+
+    db_session.add(rule_db)
+    db_session.commit()
+
+    yield 1
+
+    # Delete the urgency rules
+    db_session.delete(rule_db)
+    db_session.commit()
+
+
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
@@ -358,7 +400,6 @@ async def mock_translate_question(
     Monkeypatch call to LLM translation service
     """
     if question.original_language is None:
-        response.state = ResultState.ERROR
         raise ValueError(
             (
                 "Language hasn't been identified. "
@@ -428,3 +469,30 @@ def api_key_user2(client, fullaccess_token_user2: str) -> str:
         headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
     )
     return response.json()["new_api_key"]
+
+
+@pytest.fixture(scope="session")
+def alembic_config() -> Config:
+    """`alembic_config` is the primary point of entry for configurable options for the
+    alembic runner for `pytest-alembic`.
+
+    :returns:
+        Config: A configuration object used by `pytest-alembic`.
+    """
+
+    return Config({"file": "alembic.ini"})
+
+
+@pytest.fixture(scope="function")
+def alembic_engine() -> Engine:
+    """`alembic_engine` is where you specify the engine with which the alembic_runner
+    should execute your tests.
+
+    NB: The engine should point to a database that must be empty. It is out of scope
+    for `pytest-alembic` to manage the database state.
+
+    :returns:
+        A SQLAlchemy engine object.
+    """
+
+    return create_engine(get_connection_url(db_api=SYNC_DB_API))

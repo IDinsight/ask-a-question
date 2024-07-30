@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import List
 
 from sqlalchemy import (
     DateTime,
@@ -94,17 +93,6 @@ async def save_user_to_db(
     await asession.refresh(user_db)
 
     return user_db
-
-
-async def get_all_users(
-    asession: AsyncSession,
-) -> List[UserDB]:
-    """
-    Retrieves all users
-    """
-    stmt = select(UserDB)
-    result = (await asession.execute(stmt)).all()
-    return [c[0] for c in result] if result else []
 
 
 async def update_user_api_key(

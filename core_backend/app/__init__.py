@@ -89,7 +89,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
 
     logger.info("Application started")
+    app.state.redis = await aioredis.from_url(REDIS_HOST)
     yield
+    await app.state.redis.close()
     logger.info("Application finished")
 
 
@@ -146,17 +148,5 @@ def create_app() -> FastAPI:
     app.add_middleware(PrometheusMiddleware)
     metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
-
-    @app.on_event("startup")
-    async def startup_event() -> None:
-        """Startup event"""
-        app.state.redis = await aioredis.from_url(REDIS_HOST)
-        logger.info("Application started")
-
-    @app.on_event("shutdown")
-    async def shutdown() -> None:
-        """Shutdown event"""
-
-        await app.state.redis.close()
 
     return app

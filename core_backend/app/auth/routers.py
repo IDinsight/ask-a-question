@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from starlette.requests import Request
 
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
@@ -44,7 +45,9 @@ async def login(
 
 
 @router.post("/login-google")
-async def login_google(login_data: GoogleLoginData) -> AuthenticationDetails:
+async def login_google(
+    request: Request, login_data: GoogleLoginData
+) -> AuthenticationDetails:
     """
     Verify google token, check if user exists. If user does not exist, create user
     Return JWT token for user
@@ -61,7 +64,9 @@ async def login_google(login_data: GoogleLoginData) -> AuthenticationDetails:
     except ValueError as e:
         raise HTTPException(status_code=401, detail="Invalid token") from e
 
-    user = await authenticate_or_create_google_user(google_email=idinfo["email"])
+    user = await authenticate_or_create_google_user(
+        request=request, google_email=idinfo["email"]
+    )
     if not user:
         raise HTTPException(
             status_code=500,
