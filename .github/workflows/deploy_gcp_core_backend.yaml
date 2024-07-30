@@ -97,6 +97,7 @@ jobs:
               -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
               -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
+              -e REDIS_HOST=redis://redis:6379 \
               -e LANGFUSE=True \
               -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \

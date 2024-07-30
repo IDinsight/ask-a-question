@@ -82,7 +82,7 @@ async def asession(
         yield async_session
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def admin_user(client: TestClient, db_session: Session) -> None:
     admin_user = UserDB(
         username=TEST_ADMIN_USERNAME,
@@ -99,7 +99,7 @@ def admin_user(client: TestClient, db_session: Session) -> None:
     yield admin_user.user_id
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def user1(client: TestClient, db_session: Session) -> None:
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
     result = db_session.execute(stmt)
@@ -107,7 +107,7 @@ def user1(client: TestClient, db_session: Session) -> None:
     yield user.user_id
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def user(
     client: TestClient, db_session: Session, admin_user, fullaccess_token_admin: str
 ) -> None:
@@ -133,8 +133,8 @@ def user(
     )
 
 
-@pytest.fixture(scope="session")
-async def faq_contents(client: TestClient, user1: int, db_session: Session) -> None:
+@pytest.fixture(scope="function")
+async def faq_contents(asession: AsyncSession, user1: int) -> None:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -198,7 +198,9 @@ def existing_tag_id(
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
+async def urgency_rules(
+    asession: AsyncSession, user1: int
+) -> AsyncGenerator[int, None]:
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
@@ -222,31 +224,22 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
         )
         rules.append(rule_db)
 
-    db_session.add_all(rules)
-    db_session.commit()
+    asession.add_all(rules)
+    asession.commit()
 
     yield len(rules)
 
     # Delete the urgency rules
     for rule in rules:
-        db_session.delete(rule)
-    db_session.commit()
+        asession.delete(rule)
+    asession.commit()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
     with TestClient(app) as c:
         yield c
-
-
-@pytest.fixture(scope="function")
-def temp_client(
-    patch_llm_call: pytest.FixtureRequest, clear_registry
-) -> Generator[TestClient, None, None]:
-    app_temp = create_app()
-    with TestClient(app_temp) as co:
-        yield co
 
 
 @pytest.fixture(scope="function")
@@ -416,7 +409,7 @@ def fullaccess_token_user2() -> str:
     return create_access_token(TEST_USERNAME_2)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def api_key_user1(client, fullaccess_token: str) -> str:
     """
     Returns a token with full access
@@ -428,7 +421,7 @@ def api_key_user1(client, fullaccess_token: str) -> str:
     return response.json()["new_api_key"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def api_key_user2(client, fullaccess_token_user2: str) -> str:
     """
     Returns a token with full access
@@ -438,22 +431,3 @@ def api_key_user2(client, fullaccess_token_user2: str) -> str:
         headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
     )
     return response.json()["new_api_key"]
-
-
-@pytest.fixture(scope="session", autouse=True)
-def patch_httpx_call(monkeysession: pytest.MonkeyPatch) -> None:
-    """
-    Monkeypatch call to httpx service
-    """
-
-    class MockClient:
-        async def __aenter__(self) -> "MockClient":
-            return self
-
-        async def __aexit__(self, exc_type: str, exc: str, tb: str) -> None:
-            pass
-
-        async def post(self, *args: str, **kwargs: str) -> httpx.Response:
-            return httpx.Response(200, json={"status": "success"})
-
-    monkeysession.setattr(httpx, "AsyncClient", MockClient)
