@@ -14,11 +14,6 @@ services:
       - db_volume:/var/lib/postgresql/data
     ports:
       - 5434:5432
-  redis:
-    image: "redis:6.0-alpine"
-    ports:
-      - "6380:6379"
-    restart: always
 
 
 volumes:

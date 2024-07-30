@@ -85,6 +85,11 @@ services:
       watch:
         - action: rebuild
           path: ../../optional_components/embeddings
+  redis:
+    image: "redis:6.0-alpine"
+    ports:
+      - "6380:6379"
+    restart: always
 volumes:
   caddy_data:
   caddy_config:

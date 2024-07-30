@@ -12,7 +12,7 @@ env:
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
   ALIGN_SCORE_API: http://alignscore:5001/alignscore_base
-  REDIS_URL: redis://redis:6379
+  REDIS_HOST: redis://redis:6379
 jobs:
   container-job:
     runs-on: ubuntu-20.04
@@ -64,7 +64,7 @@ jobs:
       - name: Run Unit Tests
         env:
           PROMETHEUS_MULTIPROC_DIR: /tmp
-          REDIS_URL: ${{ env.REDIS_URL }}
+          REDIS_HOST: ${{ env.REDIS_HOST }}
         run: |
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
