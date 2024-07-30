@@ -63,7 +63,7 @@ To get answers from your database of contents, you can use the `/search` endpoin
 - Search results: Finds the most similar content in the database using cosine distance between embeddings.
 - (Optionally) LLM generated response: Crafts a custom response using LLM chat using the most similar content.
 
-See [docs](https://docs.ask-a-question.com/) or [API docs](https://app.ask-a-question.com/api/docs) for more details and other API endpoints.
+See [docs](https://docs.ask-a-question.com/) or [API docs](https://app.ask-a-question.com/api/redoc) for more details and other API endpoints.
 
 ### :question: Simple content search
 
