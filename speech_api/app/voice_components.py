@@ -7,15 +7,14 @@ from .schemas import TranscriptionResponse
 
 logger = setup_logger("Whisper ASR")
 
-model = whisper.load_model(PREFERRED_MODEL, download_root=WHISPER_MODEL_DIR)
-logger.info(f"Whisper model '{PREFERRED_MODEL}' loaded successfully.")
-
 
 async def transcribe_audio(file_path: str) -> TranscriptionResponse:
     """
     Transcribes audio from a file path using the specified Whisper model.
     """
     try:
+
+        model = whisper.load_model(PREFERRED_MODEL, download_root=WHISPER_MODEL_DIR)
 
         logger.info(
             f"Starting transcription for {file_path} using {PREFERRED_MODEL} model."
