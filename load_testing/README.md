@@ -4,7 +4,7 @@
 
 This submodule extends the core functionality of the `locust` load-testing library to run multiple load-tests in succession and collect and save results to file.
 
-# How to run
+## How to run
 
 1. Create a new python 3.9 environment
 
@@ -12,37 +12,36 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 3. Create an AAQ account, retrieve an API key.
 
-4. Set both the AAQ URL (e.g.https://app.ask-a-question.com/api/) and AAQ_API_KEY in .env file as 
-`TARGET_URL` and `AAQ_API_KEY` respectively.
+4. Set both the AAQ URL (e.g.<https://app.ask-a-question.com/api/>) and AAQ_API_KEY in .env file as
+   `TARGET_URL` and `AAQ_API_KEY` respectively.
 
 5. Run the main script.
 
-    ```console
-    python main.py
-    ```
+   ```console
+   python main.py
+   ```
 
-    This script will loop through each experiment in the config file and its given test configurations and run each parameter combination through `locust`, saving results to file.
+   This script will loop through each experiment in the config file and its given test configurations and run each parameter combination through `locust`, saving results to file.
 
-    > Note: Each experiment can specify multiple values for each parameter, and so multiple load-tests may be run for each experiment.
+   > Note: Each experiment can specify multiple values for each parameter, and so multiple load-tests may be run for each experiment.
 
-    The script can be run with the following command-line arguments:
+   The script can be run with the following command-line arguments:
 
-    - `--config`: JSON file containing configs for tests.
+   - `--config`: JSON file containing configs for tests.
 
-        Default `configs/constant_multi.json`.
+     Default `configs/constant_multi.json`.
 
-    - `--output`: Folder to store outputs.
+   - `--output`: Folder to store outputs.
 
-        Default `outputs`.
+     Default `outputs`.
 
+## Results
 
-# Results
-
-## Live Monitoring
+### Live Monitoring
 
 Results of tests can be monitored live through the Locust WebUI by going to the localhost address given in the terminal when tests are running (Usually at port 8089)
 
-## Saved to file
+### Saved to file
 
 Results are saved to file at 4 stages:
 
@@ -51,17 +50,16 @@ Results are saved to file at 4 stages:
 3. End of each experiment's set of test runs
 4. End of all experiments
 
-
 Results from each individual load-testing experiment are also saved under a corresponding `experiment_name/` subfolder. The following subfolders are then created inside:
 
 1. `raw/`: While each test is running, raw stats and error info are flushed to disk every 10 seconds by Locust into a further subfolder titled `[users]_user_[locustfile]/`, corresponding to the test parameters. Files saved by Locust:
 
-    ```console
-    test_exceptions.csv
-    test_failures.csv
-    test_stats.csv
-    test_stats_history.csv
-    ```
+   ```console
+   test_exceptions.csv
+   test_failures.csv
+   test_stats.csv
+   test_stats_history.csv
+   ```
 
 2. `html_reports/`: At the end of each test, an HTML report made by Locust is saved here. Each report includes final stats and load-test progression plots.
 
@@ -86,9 +84,9 @@ Results from each individual load-testing experiment are also saved under a corr
 ┗ ┗ ┗ ...
 ```
 
-# Config and experiment types
+## Config and experiment types
 
-## Config file format
+### Config file format
 
 The config file used here is `.json` as opposed to locust's expected `.ini` style. This allows us to write defintions for multiple experiments without having to make a different config file for each, and is parsed automatically by the main script.
 
@@ -96,7 +94,7 @@ Each key-value pair here is a load-test experiment, where the key is the experim
 
 Each experiment entry reflects the core elements of a [standard locust config file](https://docs.locust.io/en/stable/configuration.html) but with the key difference that parameters are given as lists as opposed to single values. This allows us to run multiple test configurations per experiment, namely to use different locustfiles (type of requests sent) and numbers of users.
 
-## Experiment types
+### Experiment types
 
 This submodule is designed to be able to run two types of experiments: constant and ramped load-tests. As many experiments can be added to the config file as necessary - the script will execute one after the other.
 
@@ -123,7 +121,6 @@ An example of a config entry for multiple constant load-tests performed on the `
     ]
 }
 ```
-
 
 ### _Ramped load-tests_
 
