@@ -114,7 +114,9 @@ class SQLTools:
         - str: The schema of all the relevant tables in the database.
         """
         if user not in self._schema_cache:
-            add_to_cache = await self._get_table_schema(table_list, asession)
+            add_to_cache = await self._get_table_schema(
+                table_list=table_list, asession=asession, user=user
+            )
             self._schema_cache[user] = add_to_cache
         else:
             # Update cache with tables if not in cache

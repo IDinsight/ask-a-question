@@ -1,8 +1,7 @@
 import json
 from enum import Enum
 
-from core_backend.app.config import LITELLM_MODEL_DASHBOARD
-
+from ....config import LITELLM_MODEL_DASHBOARD
 from ....llm_call.utils import _ask_llm_async
 from .guardrails_prompts import (
     create_relevance_prompt,

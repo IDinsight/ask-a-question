@@ -109,7 +109,7 @@ class LLMQueryProcessor:
         to answer a question.
         """
         self.relevant_schemas = await self.tools.get_tables_schema(
-            self.best_tables, self.asession, which_db=self.user
+            table_list=self.best_tables, asession=self.asession, user=self.user
         )
         prompt = create_best_columns_prompt(
             self.query,
@@ -161,7 +161,9 @@ class LLMQueryProcessor:
         The function asks the LLM model to generate the final
         answer to the user's question.
         """
-        sql_result = await self.tools.run_sql(self.sql_query, self.asession)
+        sql_result = await self.tools.run_sql(
+            self.sql_query, self.asession
+        )  # TODO: add where user_id = self.user
         prompt = create_final_answer_prompt(
             self.query,
             self.sql_query,

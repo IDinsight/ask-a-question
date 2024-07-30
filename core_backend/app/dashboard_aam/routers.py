@@ -10,13 +10,21 @@ from ..llm_call.llm_prompts import (
     DASHBOARD_SYSTEM_MESSAGE,
 )
 from ..users.models import UserDB
+from ..utils import setup_logger
 from .query_processor.query_processor import LLMQueryProcessor
 from .schemas import DashboardQueryBase, DashboardQueryResponse, Prompts
-from .utils import setup_logger
 
-flow_logger = setup_logger("Flow Logger")
+logger = setup_logger("Ask dashboard")
 
-router = APIRouter(prefix="/ask-database", tags=["Ask Database"])
+
+TAG_METADATA = {
+    "name": "Ask dashboard",
+    "description": "_Requires user login._ Ask questions about your AAQ dashboard"
+    "data.",
+}
+
+
+router = APIRouter(prefix="/ask-dashboard", tags=[TAG_METADATA["name"]])
 
 
 @router.post("/get-metric")
@@ -45,9 +53,9 @@ async def get_metric(
     await qp.process_query()
 
     if hasattr(qp, "timings"):
-        flow_logger.debug(f"Query processing time: {qp.timings}")
+        logger.debug(f"Query processing time: {qp.timings}")
     if hasattr(qp.tools, "timings"):
-        flow_logger.debug(f"Table Schema time: {qp.tools.timings}")
+        logger.debug(f"Table Schema time: {qp.tools.timings}")
 
     # Return response
     response = DashboardQueryResponse(

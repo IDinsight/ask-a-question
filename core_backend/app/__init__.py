@@ -68,6 +68,7 @@ tags_metadata = [
     tags.TAG_METADATA,
     urgency_rules.TAG_METADATA,
     dashboard.TAG_METADATA,
+    dashboard_aam.TAG_METADATA,
     auth.TAG_METADATA,
     user_tools.TAG_METADATA,
     admin.TAG_METADATA,
@@ -125,11 +126,11 @@ def create_app() -> FastAPI:
     app.include_router(urgency_rules.router)
     app.include_router(urgency_detection.router)
     app.include_router(dashboard.router)
+    app.include_router(dashboard_aam.router)
     app.include_router(auth.router)
     app.include_router(user_tools.router)
     app.include_router(admin.router)
     app.include_router(data_api.router)
-    app.include_router(dashboard_aam.router)
 
     origins = [
         f"http://{DOMAIN}",
