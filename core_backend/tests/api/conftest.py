@@ -5,11 +5,9 @@ from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
-
 
 from core_backend.app import create_app
 from core_backend.app.auth.dependencies import create_access_token
@@ -82,7 +80,7 @@ async def asession(
         yield async_session
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def admin_user(client: TestClient, db_session: Session) -> None:
     admin_user = UserDB(
         username=TEST_ADMIN_USERNAME,
@@ -99,7 +97,7 @@ def admin_user(client: TestClient, db_session: Session) -> None:
     yield admin_user.user_id
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def user1(client: TestClient, db_session: Session) -> None:
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
     result = db_session.execute(stmt)
@@ -107,9 +105,12 @@ def user1(client: TestClient, db_session: Session) -> None:
     yield user.user_id
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def user(
-    client: TestClient, db_session: Session, admin_user, fullaccess_token_admin: str
+    client: TestClient,
+    db_session: Session,
+    admin_user: int,
+    fullaccess_token_admin: str,
 ) -> None:
     client.post(
         "/user",
@@ -198,9 +199,7 @@ def existing_tag_id(
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules(
-    asession: AsyncSession, user1: int
-) -> AsyncGenerator[int, None]:
+async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, None]:
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
@@ -223,19 +222,19 @@ async def urgency_rules(
             updated_datetime_utc=datetime.utcnow(),
         )
         rules.append(rule_db)
-
-    asession.add_all(rules)
-    asession.commit()
+    print(rules)
+    db_session.add_all(rules)
+    db_session.commit()
 
     yield len(rules)
 
     # Delete the urgency rules
     for rule in rules:
-        asession.delete(rule)
-    asession.commit()
+        db_session.delete(rule)
+    db_session.commit()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
     with TestClient(app) as c:
@@ -409,7 +408,7 @@ def fullaccess_token_user2() -> str:
     return create_access_token(TEST_USERNAME_2)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def api_key_user1(client, fullaccess_token: str) -> str:
     """
     Returns a token with full access
@@ -421,7 +420,7 @@ def api_key_user1(client, fullaccess_token: str) -> str:
     return response.json()["new_api_key"]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def api_key_user2(client, fullaccess_token_user2: str) -> str:
     """
     Returns a token with full access

@@ -1,4 +1,3 @@
-import asyncio
 from functools import partial
 from typing import Any, Dict, List
 
@@ -152,85 +151,6 @@ class TestApiCallQuota:
             headers={"Authorization": f"Bearer {temp_api_key}"},
         )
         assert response.status_code == 200
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "temp_user_api_key_and_api_quota",
-        [
-            {"username": "temp_user_reset_limit_2", "api_daily_quota": 2},
-        ],
-        indirect=True,
-    )
-    async def test_reset_api_quota_works(
-        self,
-        client: TestClient,
-        temp_user_api_key_and_api_quota: tuple[str, int],
-    ):
-
-        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
-
-        for _i in range(api_daily_limit):
-            response = client.post(
-                "/embeddings-search",
-                json={"query_text": "Test question"},
-                headers={"Authorization": f"Bearer {temp_api_key}"},
-            )
-            assert response.status_code == 200
-        response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
-            headers={"Authorization": f"Bearer {temp_api_key}"},
-        )
-        assert response.status_code == 429
-        # loop = asyncio.get_event_loop()
-        await client.app.state.reset_quota()
-        response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Test question"},
-            headers={"Authorization": f"Bearer {temp_api_key}"},
-        )
-        assert response.status_code == 200
-
-        # if loop.is_running():
-        #     loop.stop()
-        # loop.close()
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "temp_user_api_key_and_api_quota",
-        [
-            {"username": "temp_user_reset_limit_3", "api_daily_quota": 3},
-        ],
-        indirect=True,
-    )
-    async def test_reset_api_quota_fail(
-        self,
-        client: TestClient,
-        temp_user_api_key_and_api_quota: tuple[str, int],
-    ):
-
-        temp_api_key, api_daily_limit = temp_user_api_key_and_api_quota
-
-        for _i in range(api_daily_limit):
-            response = client.post(
-                "/embeddings-search",
-                json={"query_text": "Test question"},
-                headers={"Authorization": f"Bearer {temp_api_key}"},
-            )
-            assert response.status_code == 200
-        response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Tell me about a good sport to play"},
-            headers={"Authorization": f"Bearer {temp_api_key}"},
-        )
-        assert response.status_code == 429
-        await client.app.state.reset_quota()
-        response = client.post(
-            "/embeddings-search",
-            json={"query_text": "Test question"},
-            headers={"Authorization": f"Bearer {temp_api_key}"},
-        )
-        assert response.status_code == 429
 
 
 class TestEmbeddingsSearch:

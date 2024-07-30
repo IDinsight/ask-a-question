@@ -2,11 +2,13 @@ import hashlib
 import logging
 import os
 import secrets
+from datetime import datetime, timedelta, timezone
 from logging import Logger
 from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
+import aioredis
 import litellm
 from litellm import aembedding
 
@@ -212,3 +214,23 @@ def encode_api_limit(api_limit: int | None) -> int | str:
     """
 
     return int(api_limit) if api_limit is not None else "None"
+
+
+async def update_api_limits(
+    redis: aioredis.Redis, username: str, api_daily_quota: int | None
+) -> None:
+    """
+    Update the api limits for user in Redis
+    """
+    now = datetime.now(timezone.utc)
+    # next_midnight = (now + timedelta(days=1)).replace(
+    #     hour=0, minute=0, second=0, microsecond=0
+    # )
+    next_midnight = now + timedelta(minutes=3)
+    key = f"remaining-calls:{username}"
+    expire_at = int(next_midnight.timestamp())
+    await redis.set(key, encode_api_limit(api_daily_quota))
+    if api_daily_quota is not None:
+
+        await redis.expireat(key, expire_at)
+        print(f"expire_at: {expire_at}")

@@ -1,9 +1,6 @@
-from datetime import datetime, timedelta
 from typing import Callable
 
 import aioredis
-from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import utc
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
@@ -25,10 +22,8 @@ from . import (
     whatsapp_qa,
 )
 from .config import DOMAIN, LANGFUSE, REDIS_HOST
-from .database import get_async_session
 from .prometheus_middleware import PrometheusMiddleware
-from .users.models import get_all_users
-from .utils import encode_api_limit, setup_logger
+from .utils import setup_logger
 
 logger = setup_logger()
 
@@ -79,54 +74,16 @@ def create_app() -> FastAPI:
     metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
 
-    async def reset_quota() -> None:
-        """Reset api daily quota for all users in redis"""
-        redis = app.state.redis
-        current_time = datetime.utcnow()
-        midnight = datetime(
-            current_time.year,
-            current_time.month,
-            current_time.day,
-        ) + timedelta(days=1)
-        expires_in = int((midnight - current_time).total_seconds())
-        # if reset_quota_executed exists return None else return True and set to "true"
-        is_task_executed = await redis.set(
-            "reset_quota_executed", "true", ex=expires_in, nx=True
-        )
-        if is_task_executed:
-
-            async for asession in get_async_session():
-                try:
-                    users = await get_all_users(asession)
-                    for user in users:
-                        api_daily_quota = encode_api_limit(user.api_daily_quota)
-                        await redis.set(
-                            f"remaining-calls:{user.username}",
-                            api_daily_quota,
-                        )
-                    logger.info("Successfully Synced Redis to database")
-                except Exception as e:
-                    logger.info(f"Redis sync failed: {e}")
-        else:
-            logger.info("Quota resetting skipped...")
-
     @app.on_event("startup")
     async def startup_event() -> None:
         """Startup event"""
         app.state.redis = await aioredis.from_url(REDIS_HOST)
         logger.info("Application started")
-        scheduler = BackgroundScheduler(timezone=utc)
-        app.state.reset_quota = reset_quota
-        await app.state.reset_quota()
-        scheduler.add_job(app.state.reset_quota, "cron", hour=0, minute=0)
-        scheduler.start()
-        app.state.scheduler = scheduler
 
     @app.on_event("shutdown")
     async def shutdown() -> None:
         """Shutdown event"""
 
         await app.state.redis.close()
-        app.state.scheduler.shutdown()
 
     return app

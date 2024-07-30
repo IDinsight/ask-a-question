@@ -15,7 +15,7 @@ from ..users.models import (
     update_user_api_key,
 )
 from ..users.schemas import UserCreate, UserCreateWithPassword
-from ..utils import encode_api_limit, generate_key, setup_logger
+from ..utils import generate_key, setup_logger, update_api_limits
 from .schemas import KeyResponse
 
 router = APIRouter(prefix="/user", tags=["User Tools"])
@@ -43,10 +43,10 @@ async def create_user(
             user=user,
             asession=asession,
         )
-        await request.app.state.redis.set(
-            f"remaining-calls:{user_db.username}",
-            encode_api_limit(user_db.api_daily_quota),
+        await update_api_limits(
+            request.app.state.redis, user_db.username, user_db.api_daily_quota
         )
+
         return UserCreate(
             username=user_db.username,
             content_quota=user_db.content_quota,

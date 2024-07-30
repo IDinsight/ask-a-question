@@ -22,7 +22,11 @@ from ..users.models import (
     save_user_to_db,
 )
 from ..users.schemas import UserCreate
-from ..utils import setup_logger, verify_password_salted_hash
+from ..utils import (
+    setup_logger,
+    update_api_limits,
+    verify_password_salted_hash,
+)
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
 from .schemas import AuthenticatedUser
 
@@ -145,15 +149,17 @@ async def rate_limiter(
     Rate limiter for the API calls. Gets daily quota and decrement it
     """
     username = user_db.username
-
+    key = f"remaining-calls:{username}"
     redis = request.app.state.redis
-    nb_remaining = await redis.get(f"remaining-calls:{username}")
+    ttl = await redis.ttl(key)
+    # if key does not exist, set the key and value
+    if ttl == -2:
+        await update_api_limits(redis, username, user_db.api_daily_quota)
+
+    nb_remaining = await redis.get(key)
 
     if nb_remaining != b"None":
         nb_remaining = int(nb_remaining)
         if nb_remaining <= 0:
             raise HTTPException(status_code=429, detail="API call limit reached.")
-        await redis.set(
-            f"remaining-calls:{username}",
-            nb_remaining - 1,
-        )
+        await redis.set(key, nb_remaining - 1, keepttl=True)
