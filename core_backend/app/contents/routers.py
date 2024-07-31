@@ -231,10 +231,10 @@ async def delete_content(
         )
     except sqlalchemy.exc.IntegrityError as e:
         logger.error(f"Error deleting content: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Deletion of content with feedback is not allowed.",
-        ) from e
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail="Deletion of content with feedback is not allowed.",
+        # ) from e
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
