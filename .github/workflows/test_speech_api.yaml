@@ -1,6 +1,7 @@
 name: Speech Unit Tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
@@ -11,7 +12,6 @@ on:
       - "**"
     paths:
       - "speech_api/**"
-  workflow_dispatch:
 
 env:
   PREFERRED_MODEL: base
