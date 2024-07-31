@@ -46,7 +46,7 @@ setup-db:
 	@sleep 2
 	@docker run --name postgres-local \
      -e POSTGRES_PASSWORD=postgres \
-     -p 5436:5432 \
+     -p 5432:5432 \
      -d pgvector/pgvector:pg16
 	cd core_backend && \
 	python -m alembic upgrade head
