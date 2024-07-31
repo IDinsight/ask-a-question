@@ -3,11 +3,11 @@ model_list:
     litellm_params:
       model: text-embedding-3-small
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: embeddings-local
-    litellm_params:
-      model: huggingface/Alibaba-NLP/gte-large-en-v1.5
-      api_key: "os.environ/HUGGINGFACE_API_KEY" #pragma: allowlist secret
-      api_base: "os.environ/EMBEDDINGS_ENDPOINT"
+  # - model_name: embeddings-local
+  #   litellm_params:
+  #     model: huggingface/Alibaba-NLP/gte-large-en-v1.5
+  #     api_key: "os.environ/HUGGINGFACE_API_KEY" #pragma: allowlist secret
+  #     api_base: "os.environ/EMBEDDINGS_ENDPOINT"
   - model_name: default
     litellm_params:
       model: gpt-4o

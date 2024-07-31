@@ -22,9 +22,7 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 # "model_name" in the proxy config.yaml.
 # "openai/..." is needed since the proxy presents a unified OpenAI-style API
 # for all of its endpoints.
-LITELLM_MODEL_EMBEDDING = os.environ.get(
-    "LITELLM_MODEL_EMBEDDING", "openai/embeddings-local"
-)
+LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
     "LITELLM_MODEL_GENERATION",
