@@ -52,12 +52,12 @@ class UrgencyRuleDB(Base):
     )
 
     def __repr__(self) -> str:
-        """Construct the string representation of the `ContentDB` object.
+        """Construct the string representation of the `UrgencyRuleDB` object.
 
         Returns
         -------
         str
-            A string representation of the `ContentDB` object.
+            A string representation of the `UrgencyRuleDB` object.
         """
 
         return f"<UrgencyRuleDB #{self.urgency_rule_id}: {self.urgency_rule_text})>"
