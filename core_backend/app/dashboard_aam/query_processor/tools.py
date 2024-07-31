@@ -1,6 +1,6 @@
 import re
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from aiocache import cached
 from cachetools import TTLCache
@@ -13,7 +13,7 @@ from ..utils import track_time
 _tools_instance = None
 
 
-class SQLTools:
+class DashboardSQLTools:
     """Tools to query the SQL database."""
 
     def __init__(self) -> None:
@@ -169,7 +169,7 @@ class SQLTools:
         Args:
         - table_column_dict: A dictionary with table names as keys and a list of
             column names as values.
-        - num_common_values (int): The number of common values to return.
+        - num_common_values (int): The number of most common values to return.
 
         Returns:
         - dict[str, dict]: A Dictionary with the top k common values for each table
@@ -217,7 +217,7 @@ class SQLTools:
         asession: AsyncSession,
         tables: List[str],
         user_id: int,
-    ) -> List[Dict[str, Any]]:
+    ) -> Sequence[Any]:
         """
         Executes the SQL query on the target SQL database.
 
@@ -226,7 +226,7 @@ class SQLTools:
         - asession (AsyncSession): The SQLAlchemy AsyncSession object.
 
         Returns:
-        - list[dict[str, Any]]: The result of the SQL query.
+        - List: The result of the SQL query.
         """
         tables_to_filter = await self.find_tables_with_user_id_column(
             asession=asession, tables=tables
@@ -254,7 +254,7 @@ class SQLTools:
         tables_with_user_id = []
 
         for table_name in table_names:
-            table = metadata.tables.get(table_name)
+            table = metadata.tables[table_name]
             if "user_id" in table.columns:
                 tables_with_user_id.append(table_name)
 
@@ -300,9 +300,9 @@ class SQLTools:
         return raw_sql
 
 
-def get_tools() -> SQLTools:
+def get_tools() -> DashboardSQLTools:
     """Return the SQLTools instance."""
     global _tools_instance
     if _tools_instance is None:
-        _tools_instance = SQLTools()
+        _tools_instance = DashboardSQLTools()
     return _tools_instance

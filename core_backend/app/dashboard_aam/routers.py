@@ -11,7 +11,7 @@ from ..llm_call.llm_prompts import (
 )
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .query_processor.query_processor import LLMQueryProcessor
+from .query_processor.query_processor import DashboardQueryProcessor
 from .schemas import DashboardQueryBase, DashboardQueryResponse, Prompts
 
 logger = setup_logger("Ask dashboard")
@@ -36,8 +36,8 @@ async def get_metric(
     """
     Answers user query about AAQ data.
     """
-    qp = LLMQueryProcessor(
-        query=user_query.model_dump(),
+    qp = DashboardQueryProcessor(
+        query=user_query,
         asession=asession,
         user_id=user_db.user_id,
         sys_message=DASHBOARD_SYSTEM_MESSAGE,

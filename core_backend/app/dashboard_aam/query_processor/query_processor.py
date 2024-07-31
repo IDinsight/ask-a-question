@@ -14,10 +14,10 @@ from .query_processing_prompts import (
     create_sql_generating_prompt,
     get_query_language_prompt,
 )
-from .tools import SQLTools, get_tools
+from .tools import DashboardSQLTools, get_tools
 
 
-class LLMQueryProcessor:
+class DashboardQueryProcessor:
     """Processes the user query and returns the final answer."""
 
     def __init__(
@@ -36,7 +36,7 @@ class LLMQueryProcessor:
         self.query = query
         self.asession = asession
         self.user_id = user_id
-        self.tools: SQLTools = get_tools()
+        self.tools: DashboardSQLTools = get_tools()
         self.temperature = 0.1
         self.llm = llm
         self.system_message = sys_message
@@ -67,7 +67,7 @@ class LLMQueryProcessor:
         The function asks the LLM model to identify the language
         of the user's query.
         """
-        system_message, prompt = get_query_language_prompt(self.query["query_text"])
+        system_message, prompt = get_query_language_prompt(self.query.query_text)
         self.language_prompt = prompt
 
         response = await _ask_llm_async(
@@ -196,7 +196,7 @@ class LLMQueryProcessor:
 
         # Check query safety
         await self.guardrails.check_safety(
-            self.query["query_text"], self.query_language, self.query_script
+            self.query.query_text, self.query_language, self.query_script
         )
         if self.guardrails.safe is False:
             self.final_answer = self.guardrails.safety_response
@@ -204,7 +204,7 @@ class LLMQueryProcessor:
 
         # Check answer relevance
         await self.guardrails.check_relevance(
-            self.query["query_text"],
+            self.query.query_text,
             self.query_language,
             self.query_script,
             self.table_description,

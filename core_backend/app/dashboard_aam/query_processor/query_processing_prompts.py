@@ -1,6 +1,9 @@
 # Prompts for the pipeline
 
 
+from core_backend.app.dashboard_aam.schemas import DashboardQueryBase
+
+
 def get_query_language_prompt(query_text: str) -> tuple[str, str]:
     """Create prompt to get the language of the query."""
 
@@ -32,15 +35,17 @@ def get_query_language_prompt(query_text: str) -> tuple[str, str]:
     return system_message, prompt
 
 
-def create_best_tables_prompt(query_model: dict, table_description: str) -> str:
+def create_best_tables_prompt(
+    query_model: DashboardQueryBase, table_description: str
+) -> str:
     """Create prompt for best tables question."""
     prompt = f"""
     ===== Question =====
-    <<< {query_model["query_text"]} >>>
+    <<< {query_model.query_text} >>>
 
     ===== Metadata =====
     Here is useful metadata (might be empty if not available):
-    <<< {query_model["query_metadata"]} >>>
+    <<< {query_model.query_metadata} >>>
 
     ==== Source =====
     Which of the following sources of information are you going to use to
@@ -60,7 +65,7 @@ def create_best_tables_prompt(query_model: dict, table_description: str) -> str:
 
 
 def create_best_columns_prompt(
-    query_model: dict, relevant_schemas: str, columns_description: str
+    query_model: DashboardQueryBase, relevant_schemas: str, columns_description: str
 ) -> str:
     """Create prompt for best columns question."""
     prompt = f"""
@@ -68,11 +73,11 @@ def create_best_columns_prompt(
     identify and enrol out of school girls based on the data in the database.
 
     ===== Question =====
-    <<< {query_model["query_text"]} >>>
+    <<< {query_model.query_text} >>>
 
     ===== Metadata =====
     Here is useful metadata (might be empty if not available):
-    <<< {query_model["query_metadata"]} >>>
+    <<< {query_model.query_metadata} >>>
 
     ===== Relevant Tables =====
     Here is the tables schema of the relevant tables
@@ -96,7 +101,7 @@ def create_best_columns_prompt(
 
 
 def create_sql_generating_prompt(
-    query_model: dict,
+    query_model: DashboardQueryBase,
     relevant_schemas: str,
     top_k_common_values: str,
     columns_description: str,
@@ -105,11 +110,11 @@ def create_sql_generating_prompt(
     """Create prompt for generating SQL query."""
     prompt = f"""
     ===== Question =====
-    <<< {query_model["query_text"]} >>>
+    <<< {query_model.query_text} >>>
 
     ===== Metadata =====
     Here is useful metadata (might be empty if not available):
-    <<< {query_model["query_metadata"]} >>>
+    <<< {query_model.query_metadata} >>>
 
     ===== Relevant Tables =====
     The query will run on a database with the following schema:
@@ -138,7 +143,7 @@ def create_sql_generating_prompt(
 
 
 def create_final_answer_prompt(
-    query_model: dict,
+    query_model: DashboardQueryBase,
     final_sql_code_to_run: str,
     final_sql_response: list,
     language: str,
@@ -148,11 +153,11 @@ def create_final_answer_prompt(
     prompt = f"""
     Here is a question from a field employee -
     ### Question
-    <<< {query_model["query_text"]} >>>
+    <<< {query_model.query_text} >>>
 
     ===== Metadata =====
     Here is useful metadata (might be empty if not available):
-    <<< {query_model["query_metadata"]} >>>
+    <<< {query_model.query_metadata} >>>
 
     Here is a SQL query generated to answer that question -
     <<<{final_sql_code_to_run}>>>
