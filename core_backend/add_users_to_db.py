@@ -1,11 +1,17 @@
 import os
 from datetime import datetime, timezone
 
-import redis
+import asyncio
+import aioredis
 from app.config import REDIS_HOST
 from app.database import get_session
 from app.users.models import UserDB
-from app.utils import get_key_hash, get_password_salted_hash, setup_logger
+from app.utils import (
+    encode_api_limit,
+    get_key_hash,
+    get_password_salted_hash,
+    setup_logger,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -27,12 +33,25 @@ user_db = UserDB(
     api_key_updated_datetime_utc=datetime.now(timezone.utc),
     content_quota=USER1_CONTENT_QUOTA,
     api_daily_quota=USER1_API_QUOTA,
-    created_datetime_utc=datetime.utcnow(),
-    updated_datetime_utc=datetime.utcnow(),
+    created_datetime_utc=datetime.now(timezone.utc),
+    updated_datetime_utc=datetime.now(timezone.utc),
 )
 
+
+async def async_redis_operations(key: str, value: int | None):
+    redis = await aioredis.from_url(REDIS_HOST)
+
+    await redis.set(key, encode_api_limit(value))
+
+    await redis.close()
+
+
+def run_redis_async_tasks(key: str, value: str):
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(async_redis_operations(key, value))
+
+
 if __name__ == "__main__":
-    redis_host = redis.from_url(REDIS_HOST)
 
     db_session = next(get_session())
     stmt = select(UserDB).where(UserDB.username == user_db.username)
@@ -42,8 +61,9 @@ if __name__ == "__main__":
         logger.info(f"User with username {user_db.username} already exists.")
     except NoResultFound:
         db_session.add(user_db)
-        api_daily_quota = user_db.api_daily_quota if user_db.api_daily_quota else "None"
-        redis_host.set(f"remaining-calls:{user_db.username}", "None")
+        run_redis_async_tasks(
+            f"remaining-calls:{user_db.username}", user_db.api_daily_quota
+        )
         logger.info(f"User with username {user_db.username} added to local database.")
 
     except MultipleResultsFound:
