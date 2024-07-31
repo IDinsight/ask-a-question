@@ -34,17 +34,12 @@ async def get_metric(
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardQueryResponse:
     """
-    Path operation to answer user query
-
-    Args:
-        user_query (UserQueryBase): The user query
-        auth_response (dict): The auth response dictionary
-            containing the async session and settings.
+    Answers user query about AAQ data.
     """
     qp = LLMQueryProcessor(
         query=user_query.model_dump(),
         asession=asession,
-        user=user_db.user_id,
+        user_id=user_db.user_id,
         sys_message=DASHBOARD_SYSTEM_MESSAGE,
         db_description=DASHBOARD_DB_TABLE_DESCRIPTION,
         column_description="",  # TODO: find out what this does

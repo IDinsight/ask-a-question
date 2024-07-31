@@ -24,7 +24,7 @@ class LLMQueryProcessor:
         self,
         query: DashboardQueryBase,
         asession: AsyncSession,
-        user: str,
+        user_id: int,
         sys_message: str,
         db_description: str,
         column_description: str,
@@ -35,7 +35,7 @@ class LLMQueryProcessor:
         """Initialize the QueryProcessor class."""
         self.query = query
         self.asession = asession
-        self.user = user
+        self.user_id = user_id
         self.tools: SQLTools = get_tools()
         self.temperature = 0.1
         self.llm = llm
@@ -109,7 +109,7 @@ class LLMQueryProcessor:
         to answer a question.
         """
         self.relevant_schemas = await self.tools.get_tables_schema(
-            table_list=self.best_tables, asession=self.asession, user=self.user
+            table_list=self.best_tables, asession=self.asession, user_id=self.user_id
         )
         prompt = create_best_columns_prompt(
             self.query,
@@ -133,8 +133,11 @@ class LLMQueryProcessor:
         The function asks the LLM model to generate a SQL query to
         answer the user's question.
         """
-        self.top_k_common_values = await self.tools.get_common_column_values(
-            self.best_columns, self.num_common_values, self.asession
+        self.top_k_common_values = await self.tools.get_most_common_column_values(
+            table_column_dict=self.best_columns,
+            num_common_values=self.num_common_values,
+            asession=self.asession,
+            user_id=self.user_id,
         )
         prompt = create_sql_generating_prompt(
             self.query,
@@ -162,8 +165,8 @@ class LLMQueryProcessor:
         answer to the user's question.
         """
         sql_result = await self.tools.run_sql(
-            self.sql_query, self.asession
-        )  # TODO: add where user_id = self.user
+            self.sql_query, self.asession, tables=self.best_tables, user_id=self.user_id
+        )
         prompt = create_final_answer_prompt(
             self.query,
             self.sql_query,
