@@ -1,7 +1,7 @@
 # Prompts for the pipeline
 
 
-from core_backend.app.dashboard_aam.schemas import DashboardQueryBase
+from ..schemas import DashboardQueryBase
 
 
 def get_query_language_prompt(query_text: str) -> tuple[str, str]:
