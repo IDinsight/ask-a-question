@@ -104,18 +104,23 @@ async def search(
         exclude_archived=exclude_archived,
     )
 
-    if type(response) is QueryResponse:
-        await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(user_db.user_id, response.search_results, asession)
+    await save_query_response_to_db(user_query_db, response, asession)
+    await increment_query_count(
+        user_id=user_db.user_id,
+        query_id=response.query_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
+    if isinstance(response, QueryResponse):
         return response
-    elif type(response) is QueryResponseError:
-        await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(user_db.user_id, response.search_results, asession)
+
+    if isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
-    else:
-        raise ValueError("Unexpected response type.")
+
+    raise ValueError("Unexpected response type.")
 
 
 @identify_language__before
@@ -144,8 +149,6 @@ async def search_base(
         The refined query object.
     response
         The query response object.
-    generate_llm_response
-        Flag for generating the LLM response or not.
     user_id
         The ID of the user making the query.
     n_similar
