@@ -1,7 +1,7 @@
+import asyncio
 import os
 from datetime import datetime, timezone
 
-import asyncio
 import aioredis
 from app.config import REDIS_HOST
 from app.database import get_session
