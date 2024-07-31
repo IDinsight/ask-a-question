@@ -71,13 +71,24 @@ services:
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
   embeddings:
-    image: idinsight/embeddings:latest
+    image: ${EMBEDDINGS_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
       - embeddings
       - optional-components
-    build:
-      context: ../../optional_components/embeddings
-      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - $PWD/data:/data
+    environment:
+      MODEL_ID: $HUGGINGFACE_MODEL
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
+    command:
+      [
+        "--model-id",
+        "${HUGGINGFACE_MODEL}",
+        "--api-key",
+        "${HUGGINGFACE_API_KEY}",
+      ]
     restart: always
     env_file:
       - .env

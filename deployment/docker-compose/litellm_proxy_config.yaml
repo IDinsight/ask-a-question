@@ -5,8 +5,8 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: embeddings-local
     litellm_params:
-      model: openai/embedding-gte-large
-      api_key: "os.environ/EMBEDDINGS_API_KEY"
+      model: huggingface/Alibaba-NLP/gte-large-en-v1.5
+      api_key: "os.environ/HUGGINGFACE_API_KEY" #pragma: allowlist secret
       api_base: "os.environ/EMBEDDINGS_ENDPOINT"
   - model_name: default
     litellm_params:
@@ -80,3 +80,4 @@ litellm_settings:
   # To use Vertex AI API, uncomment the following lines:
   # vertex_project: gcp-project-id-12345
   # vertex_location: us-central1
+  drop_params: True

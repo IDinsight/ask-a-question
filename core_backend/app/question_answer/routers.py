@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import authenticate_key, rate_limiter
 from ..contents.models import (
     get_similar_content_async,
-    increment_query_count,
     update_votes_in_db,
 )
 from ..database import get_async_session
