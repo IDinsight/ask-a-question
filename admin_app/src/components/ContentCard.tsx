@@ -3,8 +3,7 @@ import {
   ArchiveContentModal,
 } from "@/components/ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
-// import { Delete, Edit } from "@mui/icons-material";
-import { ArchiveOutlined, Edit } from "@mui/icons-material";
+import { Delete, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
@@ -132,7 +131,7 @@ const ContentCard = ({
               setOpenArchiveModal(true);
             }}
           >
-            <ArchiveOutlined fontSize="inherit" />
+            <Delete fontSize="inherit" />
           </IconButton>
         </Layout.FlexBox>
       </Card>

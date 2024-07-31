@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core_backend.app.contents.models import get_search_results
 from core_backend.tests.api.conftest import async_fake_embedding
+from core_backend.tests.api.test_import_content import _dict_to_csv_bytes
 
 
 class TestArchiveContent:
@@ -237,3 +238,84 @@ class TestArchiveContent:
         assert json_response["content_title"] == content_title
         assert json_response["content_text"] == content_text
         assert json_response["content_metadata"] == content_metadata
+
+    def test_bulk_csv_import_of_archived_content(
+        self,
+        client: TestClient,
+        fullaccess_token: str,
+    ) -> None:
+        """The scenario is as follows:
+
+        A. A user has already uploaded a CSV file with contents. Uploading the CSV file
+            with a duplicated title and/or text should fail.
+        B. The user then archives one or more existing contents.
+
+        Then, this test checks:
+
+        1. The user then uploads another CSV file. This one contains a content that was
+            previously archived and a new content. The previously archived content will
+            pass duplication checks because it is archived. Because it is archived, it
+            will NOT be retrieved from the content database by default.
+        2. After the user uploads the new CSV file, the previously archived content
+            will not be retrieved by default. However, it is still accessible via the
+            query parameter "exclude_archived".
+        """
+
+        # A.
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "csv title 2"],
+                "text": ["csv text 1", "csv text 2"],
+                "tag": ["test-tag", "new-tag"],
+            }
+        )
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        content_ids = [x["content_id"] for x in response.json()["contents"]]
+
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "some new title"],
+                "text": ["csv text 1", "some new text"],
+                "tag": ["test-tag", "some-new-tag"],
+            }
+        )
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # B.
+        response = client.patch(
+            f"/content/{content_ids[0]}",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # 1.
+        data = _dict_to_csv_bytes(
+            {
+                "title": ["csv title 1", "some new title"],
+                "text": ["csv text 1", "some new text"],
+                "tag": ["test-tag", "some-new-tag"],
+            }
+        )
+        response = client.post(
+            "/content/csv-upload",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            files={"file": ("test.csv", data, "text/csv")},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # 2.
+        response = client.get(
+            "/content/?exclude_archived=False",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == status.HTTP_200_OK

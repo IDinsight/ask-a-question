@@ -1,5 +1,5 @@
 import { appColors, sizes } from "@/utils";
-import { Archive, Close, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
+import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -210,12 +210,11 @@ const ArchiveContentModal = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        Are you sure you want to archive this content?
+        Are you sure you want to remove this content?
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          Archiving this content will remove it from the database. This action
-          cannot be undone.
+          Removing this content will mean that it can no longer be accessed.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
@@ -238,9 +237,9 @@ const ArchiveContentModal = ({
           autoFocus
           variant="contained"
           color="error"
-          startIcon={<Archive />}
+          startIcon={<Delete />}
         >
-          Archive
+          Remove
         </Button>
       </DialogActions>
     </Dialog>
