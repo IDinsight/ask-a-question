@@ -120,17 +120,65 @@ def upgrade() -> None:
         UPDATE urgency_response ur
         SET user_id = uq.user_id
         FROM urgency_query uq
-        WHERE ur.user_id = uq.user_id
+        WHERE ur.query_id = uq.urgency_query_id
         """
     )
     op.alter_column("urgency_response", "user_id", nullable=False)
 
+    # Indices
+    op.drop_index("ix_content-feedback_feedback_id", table_name="content_feedback")
+    op.create_index(
+        op.f("ix_content_feedback_feedback_id"), "content_feedback", ["feedback_id"]
+    )
+
+    op.drop_index(
+        "ix_query-response-feedback_feedback_id", table_name="query_response_feedback"
+    )
+    op.create_index(
+        op.f("ix_query_response_feedback_feedback_id"),
+        "query_response_feedback",
+        ["feedback_id"],
+    )
+
+    op.drop_index("ix_urgency-query_urgency_query_id", table_name="urgency_query")
+    op.create_index(
+        op.f("ix_urgency_query_urgency_query_id"), "urgency_query", ["urgency_query_id"]
+    )
+
+    op.drop_index(
+        "ix_urgency-response_urgency_response_id", table_name="urgency_response"
+    )
+    op.create_index(
+        op.f("ix_urgency_response_urgency_response_id"),
+        "urgency_response",
+        ["urgency_response_id"],
+    )
+
 
 def downgrade() -> None:
+    op.drop_constraint(
+        "fk_query_response_user_id_user", "query_response", type_="foreignkey"
+    )
     op.drop_column("query_response", "user_id")
+
+    op.drop_constraint(
+        "fk_query_response_feedback_user_id_user",
+        "query_response_feedback",
+        type_="foreignkey",
+    )
     op.drop_column("query_response_feedback", "user_id")
+
+    op.drop_constraint(
+        "fk_content_feedback_user_id_user", "content_feedback", type_="foreignkey"
+    )
     op.drop_column("content_feedback", "user_id")
+
+    op.drop_constraint("fk_content_tag_user_id_user", "content_tag", type_="foreignkey")
     op.drop_column("content_tag", "user_id")
+
+    op.drop_constraint(
+        "fk_urgency_response_user_id_user", "urgency_response", type_="foreignkey"
+    )
     op.drop_column("urgency_response", "user_id")
 
     op.rename_table("urgency_rule", "urgency-rule")
