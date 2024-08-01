@@ -33,9 +33,9 @@ const IntegrationsPage = () => {
         editAccess={currAccessLevel === "fullaccess"}
       />
       <Layout.Spacer multiplier={4} />
-      <RestAPI />
-      <Layout.Spacer multiplier={4} />
       <ChatManagers />
+      <Layout.Spacer multiplier={4} />
+      <RestAPI />
       <Layout.Spacer multiplier={6} />
     </Layout.FlexBox>
   );

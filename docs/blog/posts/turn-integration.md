@@ -6,13 +6,13 @@ category:
 
 date: 2024-07-29
 ---
-# Your Turn to Play with it
+# Turn.io Integration Now Available: Your Turn to Play with it
 
 As a dedicated question-answering service, Ask A Question is best used with what we call "chat managers" - tools and platforms that help you build end-user chat flows and integrate with channels like WhatsApp. 
 
-<!-- more -->
-
 To make this integration process easier, we published a [Turn.io](https://turn.io) Playbook. Playbooks are reusable components of a chat service that can be shared with and remixed by other teams in the chat-for-impact community. 
+
+<!-- more -->
 
 Find it [here](https://whatsapp.turn.io/app/playbooks/db700074-7db3-4cfb-b73c-87e628ddc1d2). You may need to sign up to see it.
 
