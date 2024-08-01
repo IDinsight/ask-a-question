@@ -9,7 +9,7 @@ interface ContentBody {
 
 const getUser = async (token: string) => {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
