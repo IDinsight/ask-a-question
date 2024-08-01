@@ -155,10 +155,13 @@ class QueryResponseDB(Base):
     responses to a user's query.
     """
 
-    __tablename__ = "query-response"
+    __tablename__ = "query_response"
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
@@ -314,13 +317,16 @@ class ResponseFeedbackDB(Base):
     feedback response to a user's query.
     """
 
-    __tablename__ = "query-response-feedback"
+    __tablename__ = "query_response_feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -383,13 +389,16 @@ class ContentFeedbackDB(Base):
     content feedback response to a user's query.
     """
 
-    __tablename__ = "content-feedback"
+    __tablename__ = "content_feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

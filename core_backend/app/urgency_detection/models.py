@@ -19,10 +19,10 @@ class UrgencyQueryDB(Base):
     """ORM for managing urgency detection queries.
 
     This database ties into the Admin app and allows the user to view, add, edit,
-    and delete content in the `urgency-query` table.
+    and delete content in the `urgency_query` table.
     """
 
-    __tablename__ = "urgency-query"
+    __tablename__ = "urgency_query"
 
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -124,10 +124,10 @@ class UrgencyResponseDB(Base):
     """ORM for managing urgency responses.
 
     This database ties into the Admin app and allows the user to view, add, edit,
-    and delete content in the `urgency-response` table.
+    and delete content in the `urgency_response` table.
     """
 
-    __tablename__ = "urgency-response"
+    __tablename__ = "urgency_response"
 
     urgency_response_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
@@ -136,7 +136,10 @@ class UrgencyResponseDB(Base):
     matched_rules: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
     details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("urgency-query.urgency_query_id")
+        Integer, ForeignKey("urgency_query.urgency_query_id")
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
     )
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
