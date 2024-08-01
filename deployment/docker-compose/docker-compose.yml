@@ -70,6 +70,7 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
+
   embeddings:
     image: ${EMBEDDINGS_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
