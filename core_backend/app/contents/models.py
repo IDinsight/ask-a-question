@@ -127,11 +127,11 @@ class ContentForQueryDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    content_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("content.content_id"), nullable=False
-    )
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id"), nullable=False
+    )
+    content_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("content.content_id"), nullable=False
     )
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
