@@ -25,6 +25,7 @@ Just click on "Activate Journey" and you will see this flow imported in your Jou
 Next, replace the `<API_KEY>` in the code card with your own API key and you should be good to go.
 
 ## Stuck?
+
 Learn all about Playbooks on Turn's [official blog](https://learn.turn.io/l/en/article/yojnmrvosq-community-playbooks-alpha).
 
 And don't hesitate to write to us at [aaq@idinsight.org](mailto:aaq@idinsight.org)!
