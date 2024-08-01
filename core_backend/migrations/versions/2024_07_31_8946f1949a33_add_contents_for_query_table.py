@@ -24,8 +24,8 @@ def upgrade() -> None:
         "content_for_query",
         sa.Column("content_for_query_id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("content_id", sa.Integer(), nullable=False),
         sa.Column("query_id", sa.Integer(), nullable=False),
+        sa.Column("content_id", sa.Integer(), nullable=False),
         sa.Column("created_datetime_utc", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["content_id"],

@@ -19,7 +19,7 @@ from core_backend.app.config import (
     LITELLM_MODEL_EMBEDDING,
 )
 from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
-from core_backend.app.contents.models import ContentDB, ContentForQueryDB
+from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
     SYNC_DB_API,
     get_connection_url,
@@ -31,7 +31,10 @@ from core_backend.app.llm_call.llm_prompts import (
     AlignmentScore,
     IdentifiedLanguage,
 )
-from core_backend.app.question_answer.models import ContentFeedbackDB
+from core_backend.app.question_answer.models import (
+    ContentFeedbackDB,
+    QueryResponseContentDB,
+)
 from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
@@ -141,8 +144,8 @@ async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None
         deleteFeedback = delete(ContentFeedbackDB).where(
             ContentFeedbackDB.content_id == content.content_id
         )
-        content_query = delete(ContentForQueryDB).where(
-            ContentForQueryDB.content_id == content.content_id
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
         )
         await asession.execute(deleteFeedback)
         await asession.execute(content_query)

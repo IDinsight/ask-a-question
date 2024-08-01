@@ -113,53 +113,6 @@ class ContentDB(Base):
         )
 
 
-class ContentForQueryDB(Base):
-    """
-    ORM for storing what content was returned for a given query.
-    Allows us to track how many times a given content was returned in a time period.
-    """
-
-    __tablename__ = "content_for_query"
-
-    content_for_query_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
-    )
-    query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("query.query_id"), nullable=False
-    )
-    content_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("content.content_id"), nullable=False
-    )
-    created_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
-    __table_args__ = (
-        Index("idx_user_id_created_datetime", "user_id", "created_datetime_utc"),
-    )
-
-    def __repr__(self) -> str:
-        """
-        Construct the string representation of the `ContentForQueryDB` object.
-
-        Returns
-        -------
-        str
-            A string representation of the `ContentForQueryDB` object.
-        """
-
-        return (
-            f"ContentForQueryDB(content_for_query_id={self.content_for_query_id}, "
-            f"user_id={self.user_id}, "
-            f"content_id={self.content_id}, "
-            f"query_id={self.query_id}, "
-            f"created_datetime_utc={self.created_datetime_utc})"
-        )
-
-
 async def save_content_to_db(
     user_id: int,
     content: ContentCreate,
@@ -274,7 +227,6 @@ async def update_content_in_db(
 
 async def increment_query_count(
     user_id: int,
-    query_id: int,
     contents: Dict[int, QuerySearchResult] | None,
     asession: AsyncSession,
 ) -> None:
@@ -284,8 +236,6 @@ async def increment_query_count(
     ----------
     user_id
         The ID of the user requesting the query count increment.
-    query_id
-        The ID of the query for which the contents were returned.
     contents
         The content to increment the query count for.
     asession
@@ -301,15 +251,6 @@ async def increment_query_count(
         if content_db:
             content_db.query_count = content_db.query_count + 1
             await asession.merge(content_db)
-
-            content_for_query = ContentForQueryDB(
-                user_id=user_id,
-                content_id=content.id,
-                query_id=query_id,
-                created_datetime_utc=datetime.now(timezone.utc),
-            )
-
-            asession.add(content_for_query)
             await asession.commit()
 
 
