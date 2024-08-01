@@ -21,11 +21,41 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Rename tables
     op.rename_table("query-response", "query_response")
+
     op.rename_table("query-response-feedback", "query_response_feedback")
+    op.execute(
+        'ALTER INDEX "ix_query-response-feedback_feedback_id" '
+        "RENAME TO ix_query_response_feedback_feedback_id"
+    )
+    op.execute(
+        'ALTER INDEX "query-response-feedback_pkey" '
+        "RENAME TO query_response_feedback_pkey"
+    )
+
     op.rename_table("content-feedback", "content_feedback")
+    op.execute(
+        'ALTER INDEX "ix_content-feedback_feedback_id" '
+        "RENAME TO ix_content_feedback_feedback_id"
+    )
+    op.execute('ALTER INDEX "content-feedback_pkey" ' "RENAME TO content_feedback_pkey")
+
     op.rename_table("urgency-rule", "urgency_rule")
+    op.execute('ALTER INDEX "urgency-rule_pkey" ' "RENAME TO urgency_rule_pkey")
+
     op.rename_table("urgency-query", "urgency_query")
+    op.execute(
+        'ALTER INDEX "ix_urgency-query_urgency_query_id" '
+        "RENAME TO ix_urgency_query_urgency_query_id"
+    )
+    op.execute('ALTER INDEX "urgency-query_pkey" ' "RENAME TO urgency_query_pkey")
+
     op.rename_table("urgency-response", "urgency_response")
+    op.execute(
+        'ALTER INDEX "ix_urgency-response_urgency_response_id" '
+        "RENAME TO ix_urgency_response_urgency_response_id"
+    )
+    op.execute('ALTER INDEX "urgency-response_pkey" ' "RENAME TO urgency_response_pkey")
+
     op.rename_table("content-tag", "content_tag")
 
     # Add user_id column to query_response
@@ -125,35 +155,6 @@ def upgrade() -> None:
     )
     op.alter_column("urgency_response", "user_id", nullable=False)
 
-    # Indices
-    op.drop_index("ix_content-feedback_feedback_id", table_name="content_feedback")
-    op.create_index(
-        op.f("ix_content_feedback_feedback_id"), "content_feedback", ["feedback_id"]
-    )
-
-    op.drop_index(
-        "ix_query-response-feedback_feedback_id", table_name="query_response_feedback"
-    )
-    op.create_index(
-        op.f("ix_query_response_feedback_feedback_id"),
-        "query_response_feedback",
-        ["feedback_id"],
-    )
-
-    op.drop_index("ix_urgency-query_urgency_query_id", table_name="urgency_query")
-    op.create_index(
-        op.f("ix_urgency_query_urgency_query_id"), "urgency_query", ["urgency_query_id"]
-    )
-
-    op.drop_index(
-        "ix_urgency-response_urgency_response_id", table_name="urgency_response"
-    )
-    op.create_index(
-        op.f("ix_urgency_response_urgency_response_id"),
-        "urgency_response",
-        ["urgency_response_id"],
-    )
-
 
 def downgrade() -> None:
     op.drop_constraint(
@@ -181,10 +182,41 @@ def downgrade() -> None:
     )
     op.drop_column("urgency_response", "user_id")
 
-    op.rename_table("urgency_rule", "urgency-rule")
+    # Rename tables
     op.rename_table("query_response", "query-response")
+
     op.rename_table("query_response_feedback", "query-response-feedback")
-    op.rename_table("urgency_response", "urgency-response")
+    op.execute(
+        "ALTER INDEX ix_query_response_feedback_feedback_id "
+        'RENAME TO "ix_query-response-feedback_feedback_id"'
+    )
+    op.execute(
+        "ALTER INDEX query_response_feedback_pkey "
+        'RENAME TO "query-response-feedback_pkey"'
+    )
+
     op.rename_table("content_feedback", "content-feedback")
+    op.execute(
+        "ALTER INDEX ix_content_feedback_feedback_id "
+        'RENAME TO "ix_content-feedback_feedback_id"'
+    )
+    op.execute("ALTER INDEX content_feedback_pkey " 'RENAME TO "content-feedback_pkey"')
+
+    op.rename_table("urgency_rule", "urgency-rule")
+    op.execute("ALTER INDEX urgency_rule_pkey " 'RENAME TO "urgency-rule_pkey"')
+
     op.rename_table("urgency_query", "urgency-query")
+    op.execute(
+        "ALTER INDEX ix_urgency_query_urgency_query_id "
+        'RENAME TO "ix_urgency-query_urgency_query_id"'
+    )
+    op.execute("ALTER INDEX urgency_query_pkey " 'RENAME TO "urgency-query_pkey"')
+
+    op.rename_table("urgency_response", "urgency-response")
+    op.execute(
+        "ALTER INDEX ix_urgency_response_urgency_response_id "
+        'RENAME TO "ix_urgency-response_urgency_response_id"'
+    )
+    op.execute("ALTER INDEX urgency_response_pkey " 'RENAME TO "urgency-response_pkey"')
+
     op.rename_table("content_tag", "content-tag")
