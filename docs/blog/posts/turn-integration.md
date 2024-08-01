@@ -10,7 +10,7 @@ date: 2024-07-29
 
 As a question-answering plugin service, Ask A Question requires what we call "chat managers" - platforms that help you build end-user chat flows and integrate with channels like WhatsApp.
 
-To make this integration process easier, we published a [Turn.io](https://turn.io) Playbook. Playbooks are reusable components of a chat service that can be shared with and remixed by other teams in the chat-for-impact community. 
+To make this integration process easier, we published a [Turn.io](https://turn.io) Playbook. Playbooks are reusable, pre-built chat flows that can be shared with and remixed by other teams in the chat-for-impact community.
 
 <!-- more -->
 
