@@ -1,9 +1,8 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { CircularProgress, Typography } from "@mui/material";
+import { Button, CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { format } from "date-fns";
-
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
@@ -16,6 +15,7 @@ import {
 } from "./components/APIKeyModals";
 import ChatManagersGrid from "./components/ChatManagerGrid";
 import { LoadingButton } from "@mui/lab";
+import { OpenInNew } from "@mui/icons-material";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -34,6 +34,8 @@ const IntegrationsPage = () => {
       />
       <Layout.Spacer multiplier={4} />
       <ChatManagers />
+      <Layout.Spacer multiplier={4} />
+      <RestAPI />
       <Layout.Spacer multiplier={6} />
     </Layout.FlexBox>
   );
@@ -63,7 +65,7 @@ const KeyManagement = ({
           setCurrentKey(data.api_key_first_characters);
           const formatted_api_update_date = format(
             data.api_key_updated_datetime_utc,
-            "HH:mm, dd-MM-yyyy",
+            "HH:mm, dd-MM-yyyy"
           );
           setCurrentKeyLastUpdated(formatted_api_update_date);
           setKeyInfoFetchIsLoading(false);
@@ -161,8 +163,8 @@ const KeyManagement = ({
               backgroundColor: keyGenerationIsLoading
                 ? appColors.lightGrey
                 : currentKey
-                ? appColors.error
-                : appColors.primary,
+                  ? appColors.error
+                  : appColors.primary,
             }}
           >
             {currentKey ? `Regenerate Key` : "Generate Key"}
@@ -181,6 +183,44 @@ const KeyManagement = ({
           onClose={handleNewKeyModalClose}
           onCopy={handleNewKeyCopy}
         />
+      </Layout.FlexBox>
+    </Layout.FlexBox>
+  );
+};
+
+const RestAPI = () => {
+  return (
+    <Layout.FlexBox
+      key={"rest-api"}
+      flexDirection="column"
+      sx={{ maxWidth: 690, marginInline: 10 }}
+      gap={sizes.doubleBaseGap}
+    >
+      <Typography variant="h4" color="primary">
+        REST API
+      </Typography>
+      <Typography variant="body1">
+        You can use REST APIs to interact with AAQ from your own application,
+        using the API key generated above as a Bearer token. Click on the link
+        below to see the documentation.
+      </Typography>
+      <Layout.FlexBox
+        flexDirection="column"
+        alignItems={"center"}
+        gap={sizes.baseGap}
+      >
+        <Typography variant="body1">
+          <Button
+            variant="outlined"
+            color="primary"
+            href="https://app.ask-a-question.com/api/docs"
+            target="_blank"
+            rel="noreferrer"
+            endIcon={<OpenInNew />}
+          >
+            REST API Documentation
+          </Button>
+        </Typography>
       </Layout.FlexBox>
     </Layout.FlexBox>
   );

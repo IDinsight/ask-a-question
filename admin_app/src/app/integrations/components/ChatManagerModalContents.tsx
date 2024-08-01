@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
+import { OpenInNew as OpenInNewIcon } from "@mui/icons-material";
 
 // make one of these for each chat manager and use it to populate the modal
 const ChatManagerContentExample: React.FC = () => {
@@ -64,16 +65,25 @@ const TypebotModalContent: React.FC = () => {
 const TurnModalContent: React.FC = () => {
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
-      <Typography variant="subtitle1">Under Construction...</Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          overflowWrap: "break-word",
-          hyphens: "auto",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        For now, please refer to our{" "}
+      <Typography variant="body1">
+        The quickest way to get started with Turn is to use the AAQ Playbook.
+        Just replace <code color="tomato">API_KEY</code> in the API call card
+        with your own API key.
+      </Typography>
+      <Box display="flex" justifyContent="center">
+        <Button
+          variant="outlined"
+          color="primary"
+          endIcon={<OpenInNewIcon />}
+          href="https://whatsapp.turn.io/app/playbooks/db700074-7db3-4cfb-b73c-87e628ddc1d2"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open Turn Playbook
+        </Button>
+      </Box>
+      <Typography variant="body1" mb={sizes.baseGap}>
+        You can also refer to our{" "}
         <Link
           href="https://docs.ask-a-question.com/integrations/chat_managers/turn.io/turn/"
           target="_blank"
@@ -81,7 +91,7 @@ const TurnModalContent: React.FC = () => {
         >
           documentation
         </Link>{" "}
-        for instructions on how to connect Turn to AAQ.
+        for more detailed instructions on how to connect Turn to AAQ.
       </Typography>
     </Layout.FlexBox>
   );
@@ -90,16 +100,25 @@ const TurnModalContent: React.FC = () => {
 const GlificModalContent: React.FC = () => {
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
-      <Typography variant="subtitle1">Under Construction...</Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          overflowWrap: "break-word",
-          hyphens: "auto",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        For now, please refer to our{" "}
+      <Typography variant="body1">
+        You can download a pre-made flow from the link below, and{" "}
+        <code>Import</code> it into Glific. Then replace{" "}
+        <code>INSERT_AAQ_API_KEY</code> in Authorization with your own API key.
+      </Typography>
+      <Box display="flex" justifyContent="center">
+        <Button
+          variant="outlined"
+          color="primary"
+          endIcon={<OpenInNewIcon />}
+          href="https://github.com/IDinsight/ask-a-question/blob/main/chat_managers/glific/search_flow_without_feedback.json"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open Glific Flow
+        </Button>
+      </Box>
+      <Typography variant="body1" mb={sizes.baseGap}>
+        You can also refer to our{" "}
         <Link
           href="https://docs.ask-a-question.com/integrations/chat_managers/glific/glific/"
           target="_blank"
@@ -107,7 +126,8 @@ const GlificModalContent: React.FC = () => {
         >
           documentation
         </Link>{" "}
-        for instructions on how to connect Glific to AAQ.
+        for more detailed instructions on how to import the flow and get going
+        with Glific.
       </Typography>
     </Layout.FlexBox>
   );
