@@ -22,7 +22,7 @@ Find it [here](https://whatsapp.turn.io/app/playbooks/db700074-7db3-4cfb-b73c-87
 
 Just click on "Activate Journey" and you will see this flow imported in your Journeys.
 
-Next, replace the `<API_KEY>` in the code card with your own API key and you should be good to go.
+Next, replace the `<API_KEY>` in the code card with your own API key and you should be good to go. If you are using your own deployment, you will also need to change the URL of the API call.
 
 ## Stuck?
 
