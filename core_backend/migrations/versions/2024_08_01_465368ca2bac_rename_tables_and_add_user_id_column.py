@@ -37,24 +37,24 @@ def upgrade() -> None:
         'ALTER INDEX "ix_content-feedback_feedback_id" '
         "RENAME TO ix_content_feedback_feedback_id"
     )
-    op.execute('ALTER INDEX "content-feedback_pkey" ' "RENAME TO content_feedback_pkey")
+    op.execute('ALTER INDEX "content-feedback_pkey" RENAME TO content_feedback_pkey')
 
     op.rename_table("urgency-rule", "urgency_rule")
-    op.execute('ALTER INDEX "urgency-rule_pkey" ' "RENAME TO urgency_rule_pkey")
+    op.execute('ALTER INDEX "urgency-rule_pkey" RENAME TO urgency_rule_pkey')
 
     op.rename_table("urgency-query", "urgency_query")
     op.execute(
         'ALTER INDEX "ix_urgency-query_urgency_query_id" '
         "RENAME TO ix_urgency_query_urgency_query_id"
     )
-    op.execute('ALTER INDEX "urgency-query_pkey" ' "RENAME TO urgency_query_pkey")
+    op.execute('ALTER INDEX "urgency-query_pkey" RENAME TO urgency_query_pkey')
 
     op.rename_table("urgency-response", "urgency_response")
     op.execute(
         'ALTER INDEX "ix_urgency-response_urgency_response_id" '
         "RENAME TO ix_urgency_response_urgency_response_id"
     )
-    op.execute('ALTER INDEX "urgency-response_pkey" ' "RENAME TO urgency_response_pkey")
+    op.execute('ALTER INDEX "urgency-response_pkey" RENAME TO urgency_response_pkey')
 
     op.rename_table("content-tag", "content_tag")
 

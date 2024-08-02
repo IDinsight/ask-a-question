@@ -185,7 +185,7 @@ async def save_urgency_response_to_db(
     UrgencyResponseDB
         The urgency response object that was saved to the database.
     """
-    # Fetch user_id from the query table
+
     urgency_query_responses_db = UrgencyResponseDB(
         query_id=urgency_query_db.urgency_query_id,
         user_id=urgency_query_db.user_id,

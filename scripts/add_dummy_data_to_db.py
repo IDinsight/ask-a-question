@@ -120,8 +120,9 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     """
     Create an urgency record for a given datetime.
     """
+    user_id = 1
     urgency_db = UrgencyQueryDB(
-        user_id=1,
+        user_id=user_id,
         message_text="test message",
         message_datetime_utc=dt,
         feedback_secret_key="abc123",
@@ -132,6 +133,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
         is_urgent=is_urgent,
         details={"details": "test details"},
         query_id=urgency_db.urgency_query_id,
+        user_id=user_id,
         response_datetime_utc=dt,
     )
     session.add(urgency_response)
@@ -165,6 +167,7 @@ def create_feedback_record(
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=dt,
         query_id=query_id,
+        user_id=1,
         feedback_sentiment=sentiment,
     )
     session.add(feedback_db)
@@ -184,6 +187,7 @@ def create_content_feedback_record(
         feedback_db = ContentFeedbackDB(
             feedback_datetime_utc=dt,
             query_id=query_id,
+            user_id=1,
             content_id=content_id,
             feedback_sentiment=sentiment,
         )
