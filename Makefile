@@ -51,6 +51,18 @@ setup-db:
 	cd core_backend && \
 	python -m alembic upgrade head
 
+setup-redis:
+	-@docker stop redis-local
+	-@docker rm redis-local
+	@docker system prune -f
+	@sleep 2
+	@docker run --name redis-local \
+     -p 6379:6379 \
+     -d redis:6.0-alpine
+
+make teardown-redis:
+	@docker stop redis-local
+	@docker rm redis-local
 teardown-db:
 	@docker stop postgres-local
 	@docker rm postgres-local

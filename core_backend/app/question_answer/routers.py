@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_key
+from ..auth.dependencies import authenticate_key, rate_limiter
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -57,7 +57,8 @@ TAG_METADATA = {
 
 
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
+    dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
+    tags=[TAG_METADATA["name"]],
 )
 
 

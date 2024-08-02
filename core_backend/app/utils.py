@@ -5,11 +5,13 @@ import hashlib
 import logging
 import os
 import secrets
+from datetime import datetime, timedelta, timezone
 from logging import Logger
 from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
+import aioredis
 import litellm
 from litellm import aembedding
 
@@ -121,14 +123,12 @@ def generate_secret_key() -> str:
 
 async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
     """Get embedding for the given text.
-
     Parameters
     ----------
     text_to_embed
         The text to embed.
     metadata
         Metadata for `LiteLLM` embedding API.
-
     Returns
     -------
     List[float]
@@ -136,6 +136,7 @@ async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List
     """
 
     metadata = metadata or {}
+
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,
@@ -241,3 +242,29 @@ def get_http_client() -> aiohttp.ClientSession:
     new_http_client = get_global_http_client()
     assert isinstance(new_http_client, aiohttp.ClientSession)
     return new_http_client
+
+
+def encode_api_limit(api_limit: int | None) -> int | str:
+    """
+    Encode the api limit for redis
+    """
+
+    return int(api_limit) if api_limit is not None else "None"
+
+
+async def update_api_limits(
+    redis: aioredis.Redis, username: str, api_daily_quota: int | None
+) -> None:
+    """
+    Update the api limits for user in Redis
+    """
+    now = datetime.now(timezone.utc)
+    next_midnight = (now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    key = f"remaining-calls:{username}"
+    expire_at = int(next_midnight.timestamp())
+    await redis.set(key, encode_api_limit(api_daily_quota))
+    if api_daily_quota is not None:
+
+        await redis.expireat(key, expire_at)

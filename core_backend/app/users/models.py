@@ -41,6 +41,7 @@ class UserDB(Base):
         DateTime(timezone=True), nullable=True
     )
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -81,6 +82,7 @@ async def save_user_to_db(
     user_db = UserDB(
         username=user.username,
         content_quota=user.content_quota,
+        api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),

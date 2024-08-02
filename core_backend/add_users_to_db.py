@@ -1,9 +1,17 @@
+import asyncio
 import os
 from datetime import datetime, timezone
 
+import aioredis
+from app.config import REDIS_HOST
 from app.database import get_session
 from app.users.models import UserDB
-from app.utils import get_key_hash, get_password_salted_hash, setup_logger
+from app.utils import (
+    encode_api_limit,
+    get_key_hash,
+    get_password_salted_hash,
+    setup_logger,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -14,6 +22,8 @@ USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
 USER1_API_KEY = os.environ.get("USER1_API_KEY", "admin-key")
 USER1_CONTENT_QUOTA = os.environ.get("USER1_CONTENT_QUOTA", None)
+USER1_API_QUOTA = os.environ.get("USER1_API_QUOTA", None)
+
 
 user_db = UserDB(
     username=USER1_USERNAME,
@@ -22,11 +32,27 @@ user_db = UserDB(
     api_key_first_characters=USER1_API_KEY[:5],
     api_key_updated_datetime_utc=datetime.now(timezone.utc),
     content_quota=USER1_CONTENT_QUOTA,
+    api_daily_quota=USER1_API_QUOTA,
     created_datetime_utc=datetime.now(timezone.utc),
     updated_datetime_utc=datetime.now(timezone.utc),
 )
 
+
+async def async_redis_operations(key: str, value: int | None):
+    redis = await aioredis.from_url(REDIS_HOST)
+
+    await redis.set(key, encode_api_limit(value))
+
+    await redis.close()
+
+
+def run_redis_async_tasks(key: str, value: str):
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(async_redis_operations(key, value))
+
+
 if __name__ == "__main__":
+
     db_session = next(get_session())
     stmt = select(UserDB).where(UserDB.username == user_db.username)
     result = db_session.execute(stmt)
@@ -35,7 +61,11 @@ if __name__ == "__main__":
         logger.info(f"User with username {user_db.username} already exists.")
     except NoResultFound:
         db_session.add(user_db)
+        run_redis_async_tasks(
+            f"remaining-calls:{user_db.username}", user_db.api_daily_quota
+        )
         logger.info(f"User with username {user_db.username} added to local database.")
+
     except MultipleResultsFound:
         logger.error(
             "Multiple users with username "

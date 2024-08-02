@@ -2,6 +2,7 @@ services:
   core_backend:
     depends_on:
       - relational_db
+      - redis
     environment:
       - POSTGRES_HOST=relational_db
   relational_db:
@@ -13,6 +14,7 @@ services:
       - db_volume:/var/lib/postgresql/data
     ports:
       - 5434:5432
+
 
 volumes:
   db_volume:

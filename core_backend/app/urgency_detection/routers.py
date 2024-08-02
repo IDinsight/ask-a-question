@@ -5,7 +5,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_key
+from ..auth.dependencies import authenticate_key, rate_limiter
 from ..database import get_async_session
 from ..llm_call.entailment import detect_urgency
 from ..urgency_rules.models import (
@@ -30,7 +30,8 @@ TAG_METADATA = {
 
 logger = setup_logger()
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
+    dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
+    tags=[TAG_METADATA["name"]],
 )
 
 ALL_URGENCY_CLASSIFIERS = {}

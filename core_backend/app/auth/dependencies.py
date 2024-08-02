@@ -3,6 +3,7 @@ from typing import Annotated, Dict, Optional, Union
 
 import jwt
 from fastapi import Depends, HTTPException, status
+from fastapi.requests import Request
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
@@ -11,7 +12,7 @@ from fastapi.security import (
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import DEFAULT_CONTENT_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
@@ -21,8 +22,17 @@ from ..users.models import (
     save_user_to_db,
 )
 from ..users.schemas import UserCreate
-from ..utils import setup_logger, verify_password_salted_hash
-from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
+from ..utils import (
+    setup_logger,
+    update_api_limits,
+    verify_password_salted_hash,
+)
+from .config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_ALGORITHM,
+    JWT_SECRET,
+    REDIS_KEY_EXPIRED,
+)
 from .schemas import AuthenticatedUser
 
 logger = setup_logger()
@@ -40,7 +50,6 @@ async def authenticate_key(
     provided instead of the API key, it will fall back to JWT
     """
     token = credentials.credentials
-
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
@@ -74,7 +83,7 @@ async def authenticate_credentials(
 
 
 async def authenticate_or_create_google_user(
-    *, google_email: str
+    *, request: Request, google_email: str
 ) -> Optional[AuthenticatedUser]:
     """
     Check if user exists in Db. If not, create user
@@ -89,9 +98,14 @@ async def authenticate_or_create_google_user(
             )
         except UserNotFoundError:
             user = UserCreate(
-                username=google_email, content_quota=DEFAULT_CONTENT_QUOTA
+                username=google_email,
+                content_quota=DEFAULT_CONTENT_QUOTA,
+                api_daily_quota=DEFAULT_API_QUOTA,
             )
             user_db = await save_user_to_db(user, asession)
+            await update_api_limits(
+                request.app.state.redis, user_db.username, user_db.api_daily_quota
+            )
             return AuthenticatedUser(
                 username=user_db.username, access_level="fullaccess"
             )
@@ -140,3 +154,27 @@ def create_access_token(username: str) -> str:
     payload["type"] = "access_token"
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+async def rate_limiter(
+    request: Request,
+    user_db: UserDB = Depends(authenticate_key),
+) -> None:
+    """
+    Rate limiter for the API calls. Gets daily quota and decrement it
+    """
+    username = user_db.username
+    key = f"remaining-calls:{username}"
+    redis = request.app.state.redis
+    ttl = await redis.ttl(key)
+    # if key does not exist, set the key and value
+    if ttl == REDIS_KEY_EXPIRED:
+        await update_api_limits(redis, username, user_db.api_daily_quota)
+
+    nb_remaining = await redis.get(key)
+
+    if nb_remaining != b"None":
+        nb_remaining = int(nb_remaining)
+        if nb_remaining <= 0:
+            raise HTTPException(status_code=429, detail="API call limit reached.")
+        await redis.set(key, nb_remaining - 1, keepttl=True)

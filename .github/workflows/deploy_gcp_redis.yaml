@@ -1,0 +1,60 @@
+name: Deploy Redis to GCP
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+      - production
+    paths:
+      - ".github/workflows/deploy_gcp_redis.yaml"
+  workflow_dispatch:
+
+jobs:
+  DeployRedisToGCP:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    # TODO: replace improve-gcp-deploy with main
+    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    env:
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Deploy Redis container
+        id: "compute-ssh"
+        uses: "google-github-actions/ssh-compute@v1"
+        with:
+          instance_name: "${{ secrets.DEPLOYMENT_INSTANCE_NAME }}"
+          zone: "${{ secrets.DEPLOYMENT_ZONE }}"
+          ssh_private_key: "${{ secrets.GCP_SSH_PRIVATE_KEY }}"
+          command: |
+            docker stop redis
+            docker rm redis
+            docker run -d \
+              --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
+              --name redis \
+              -p 6379:6379 \
+              redis:6.0-alpine
+            docker system prune --volumes -f
+
+      - name: Show deployment command output
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'

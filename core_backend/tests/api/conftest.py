@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from pytest_alembic.config import Config
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
@@ -40,17 +40,20 @@ from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
-TEST_USER_ID = None  # updated by "user" fixture. Required for some tests.
+TEST_ADMIN_USERNAME = "admin"
+TEST_ADMIN_PASSWORD = "admin_password"
+TEST_ADMIN_API_KEY = "admin_api_key"
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
 TEST_CONTENT_QUOTA = 50
+TEST_API_QUOTA = 2000
 
-TEST_USER_ID_2 = None  # updated by "user" fixture. Required for some tests.
 TEST_USERNAME_2 = "test_username_2"
 TEST_PASSWORD_2 = "test_password_2"
 TEST_USER_API_KEY_2 = "test_api_key_2"
 TEST_CONTENT_QUOTA_2 = 50
+TEST_API_QUOTA_2 = 2000
 
 
 @pytest.fixture(scope="session")
@@ -80,38 +83,71 @@ async def asession(
 
 
 @pytest.fixture(scope="session", autouse=True)
-def user(db_session: Session) -> Generator[int, None, None]:
-    global TEST_USER_ID
-    global TEST_USER_ID_2
-    user1_db = UserDB(
-        username=TEST_USERNAME,
-        hashed_password=get_password_salted_hash(TEST_PASSWORD),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY),
-        content_quota=TEST_CONTENT_QUOTA,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
+def admin_user(client: TestClient, db_session: Session) -> None:
+    admin_user = UserDB(
+        username=TEST_ADMIN_USERNAME,
+        hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
+        hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
+        content_quota=None,
+        api_daily_quota=None,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
     )
-    user2_db = UserDB(
-        username=TEST_USERNAME_2,
-        hashed_password=get_password_salted_hash(TEST_PASSWORD_2),
-        hashed_api_key=get_key_hash(TEST_USER_API_KEY_2),
-        content_quota=TEST_CONTENT_QUOTA_2,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    db_session.add(user1_db)
-    db_session.add(user2_db)
+
+    db_session.add(admin_user)
     db_session.commit()
+    yield admin_user.user_id
 
-    # update the TEST_USER_ID global variable
-    TEST_USER_ID = user1_db.user_id
-    TEST_USER_ID_2 = user2_db.user_id
 
-    yield user1_db.user_id
+@pytest.fixture(scope="session")
+def user1(client: TestClient, db_session: Session) -> None:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id
+
+
+@pytest.fixture(scope="session")
+def user2(client: TestClient, db_session: Session) -> None:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME_2)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id
+
+
+@pytest.fixture(scope="session", autouse=True)
+def user(
+    client: TestClient,
+    db_session: Session,
+    admin_user: int,
+    fullaccess_token_admin: str,
+) -> None:
+    client.post(
+        "/user",
+        json={
+            "username": TEST_USERNAME,
+            "password": TEST_PASSWORD,
+            "content_quota": TEST_CONTENT_QUOTA,
+            "api_daily_quota": TEST_API_QUOTA,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+    client.post(
+        "/user",
+        json={
+            "username": TEST_USERNAME_2,
+            "password": TEST_PASSWORD_2,
+            "content_quota": TEST_CONTENT_QUOTA_2,
+            "api_daily_quota": TEST_API_QUOTA_2,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
 
 
 @pytest.fixture(scope="function")
-async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None]:
+async def faq_contents(
+    asession: AsyncSession, user1: int
+) -> AsyncGenerator[List[int], None]:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -125,7 +161,7 @@ async def faq_contents(asession: AsyncSession) -> AsyncGenerator[List[int], None
             api_key=LITELLM_API_KEY,
         )
         content_db = ContentDB(
-            user_id=TEST_USER_ID,
+            user_id=user1,
             content_embedding=content_embedding,
             content_title=content["content_title"],
             content_text=content["content_text"],
@@ -175,7 +211,7 @@ def existing_tag_id(
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
+async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, None]:
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
@@ -190,7 +226,7 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
 
         rule_db = UrgencyRuleDB(
             urgency_rule_id=i,
-            user_id=TEST_USER_ID,
+            user_id=user1,
             urgency_rule_text=rule["urgency_rule_text"],
             urgency_rule_vector=rule_embedding,
             urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
@@ -198,7 +234,6 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
             updated_datetime_utc=datetime.now(timezone.utc),
         )
         rules.append(rule_db)
-
     db_session.add_all(rules)
     db_session.commit()
 
@@ -211,7 +246,9 @@ async def urgency_rules(db_session: Session) -> AsyncGenerator[int, None]:
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules_user2(db_session: Session) -> AsyncGenerator[int, None]:
+async def urgency_rules_user2(
+    db_session: Session, user2: int
+) -> AsyncGenerator[int, None]:
     rule_embedding = await async_fake_embedding(
         model=LITELLM_MODEL_EMBEDDING,
         input="user 2 rule",
@@ -221,12 +258,12 @@ async def urgency_rules_user2(db_session: Session) -> AsyncGenerator[int, None]:
 
     rule_db = UrgencyRuleDB(
         urgency_rule_id=1000,
-        user_id=TEST_USER_ID_2,
+        user_id=user2,
         urgency_rule_text="user 2 rule",
         urgency_rule_vector=rule_embedding,
         urgency_rule_metadata={},
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     db_session.add(rule_db)
@@ -239,6 +276,13 @@ async def urgency_rules_user2(db_session: Session) -> AsyncGenerator[int, None]:
     db_session.commit()
 
 
+# @pytest.fixture(scope="session")
+# async def client() -> AsyncGenerator[AsyncClient, None]:
+#    app = create_app()
+#    async with AsyncClient(app=app, base_url="http://test") as c:
+#        yield c
+
+
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
     app = create_app()
@@ -246,11 +290,43 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
         yield c
 
 
-# @pytest.fixture(scope="session")
-# async def client() -> AsyncGenerator[AsyncClient, None]:
-#    app = create_app()
-#    async with AsyncClient(app=app, base_url="http://test") as c:
-#        yield c
+@pytest.fixture(scope="function")
+def temp_user_api_key_and_api_quota(
+    request: pytest.FixtureRequest,
+    fullaccess_token_admin: str,
+    client: TestClient,
+) -> Generator[tuple[str, int], None, None]:
+    username = request.param["username"]
+    api_daily_quota = request.param["api_daily_quota"]
+
+    if api_daily_quota is not None:
+        json = {
+            "username": username,
+            "password": "temp_password",
+            "content_quota": 50,
+            "api_daily_quota": api_daily_quota,
+        }
+    else:
+        json = {
+            "username": username,
+            "password": "temp_password",
+            "content_quota": 50,
+        }
+
+    client.post(
+        "/user",
+        json=json,
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+
+    access_token = create_access_token(username)
+    response_key = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    api_key = response_key.json()["new_api_key"]
+
+    yield (api_key, api_daily_quota)
 
 
 @pytest.fixture(scope="session")
@@ -357,6 +433,14 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
 
 
 @pytest.fixture(scope="session")
+def fullaccess_token_admin() -> str:
+    """
+    Returns a token with full access
+    """
+    return create_access_token(TEST_ADMIN_USERNAME)
+
+
+@pytest.fixture(scope="session")
 def fullaccess_token() -> str:
     """
     Returns a token with full access
@@ -370,6 +454,30 @@ def fullaccess_token_user2() -> str:
     Returns a token with full access
     """
     return create_access_token(TEST_USERNAME_2)
+
+
+@pytest.fixture(scope="session")
+def api_key_user1(client, fullaccess_token: str) -> str:
+    """
+    Returns a token with full access
+    """
+    response = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {fullaccess_token}"},
+    )
+    return response.json()["new_api_key"]
+
+
+@pytest.fixture(scope="session")
+def api_key_user2(client, fullaccess_token_user2: str) -> str:
+    """
+    Returns a token with full access
+    """
+    response = client.put(
+        "/user/rotate-key",
+        headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+    )
+    return response.json()["new_api_key"]
 
 
 @pytest.fixture(scope="session")

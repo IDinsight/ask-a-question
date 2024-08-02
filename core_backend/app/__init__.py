@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
+import aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess
@@ -17,7 +18,7 @@ from . import (
     urgency_rules,
     user_tools,
 )
-from .config import DOMAIN, LANGFUSE
+from .config import DOMAIN, LANGFUSE, REDIS_HOST
 from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
@@ -88,7 +89,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
 
     logger.info("Application started")
+    app.state.redis = await aioredis.from_url(REDIS_HOST)
     yield
+    await app.state.redis.close()
     logger.info("Application finished")
 
 

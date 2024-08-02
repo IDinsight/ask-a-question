@@ -14,8 +14,8 @@ run-tests:
 	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests
 
 ## Helper targets
-setup-test-containers: setup-test-db
-teardown-test-containers: teardown-test-db
+setup-test-containers: setup-test-db setup-redis-test
+teardown-test-containers: teardown-test-db teardown-redis-test
 
 setup-test-db:
 	-@docker stop testdb
@@ -31,6 +31,19 @@ setup-test-db:
 		-d pgvector/pgvector:pg16
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
+
+setup-redis-test:
+	-@docker stop redis-test
+	-@docker rm redis-test
+	@docker system prune -f
+	@sleep 2
+	@docker run --name redis-test \
+     -p 6397:6379 \
+     -d redis:6.0-alpine
+
+teardown-redis-test:
+	@docker stop redis-test
+	@docker rm redis-test
 
 teardown-test-db:
 	@docker stop testdb
