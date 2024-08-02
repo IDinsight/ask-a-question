@@ -3,7 +3,7 @@ from typing import Dict
 from .schemas import QuerySearchResult
 
 
-def get_context_string_from_retrieved_contents(
+def get_context_string_from_search_results(
     search_results: Dict[int, QuerySearchResult]
 ) -> str:
     """
