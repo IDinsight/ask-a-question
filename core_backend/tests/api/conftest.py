@@ -31,11 +31,11 @@ from core_backend.app.llm_call.llm_prompts import (
     AlignmentScore,
     IdentifiedLanguage,
 )
-from core_backend.app.question_answer.models import ContentFeedbackDB
-from core_backend.app.question_answer.schemas import (
-    QueryRefined,
-    QueryResponse,
+from core_backend.app.question_answer.models import (
+    ContentFeedbackDB,
+    QueryResponseContentDB,
 )
+from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
@@ -180,7 +180,11 @@ async def faq_contents(
         deleteFeedback = delete(ContentFeedbackDB).where(
             ContentFeedbackDB.content_id == content.content_id
         )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
         await asession.execute(deleteFeedback)
+        await asession.execute(content_query)
         await asession.delete(content)
     await asession.commit()
 

@@ -32,10 +32,7 @@ from .config import (
     PGVECTOR_M,
     PGVECTOR_VECTOR_SIZE,
 )
-from .schemas import (
-    ContentCreate,
-    ContentUpdate,
-)
+from .schemas import ContentCreate, ContentUpdate
 
 
 class ContentDB(Base):
@@ -233,7 +230,9 @@ async def update_content_in_db(
 
 
 async def increment_query_count(
-    user_id: int, contents: Dict[int, QuerySearchResult] | None, asession: AsyncSession
+    user_id: int,
+    contents: Dict[int, QuerySearchResult] | None,
+    asession: AsyncSession,
 ) -> None:
     """Increment the query count for the content.
 
