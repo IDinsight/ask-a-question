@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from fastapi.requests import Request
 
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (

@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from fastapi.requests import Request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.requests import Request
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
