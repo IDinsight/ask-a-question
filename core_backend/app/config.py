@@ -53,7 +53,7 @@ SERVICE_IDENTITY = os.environ.get(
 )
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
-DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 100))
+DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)

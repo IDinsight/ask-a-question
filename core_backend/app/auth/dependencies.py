@@ -10,7 +10,7 @@ from fastapi.security import (
 )
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
+from fastapi.requests import Request
 
 from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine

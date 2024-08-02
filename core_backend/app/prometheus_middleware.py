@@ -3,7 +3,7 @@ from typing import Callable
 from fastapi import FastAPI
 from prometheus_client import Counter, Histogram
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from fastapi.requests import Request
 from starlette.responses import Response
 
 

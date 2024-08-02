@@ -35,13 +35,6 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.POOL_ID }}/providers/${{ vars.PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Retrieve secrets from Secret Manager
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v2"
-        with:
-          secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
-
       - name: Deploy Redis container
         id: "compute-ssh"
         uses: "google-github-actions/ssh-compute@v1"
@@ -52,9 +45,13 @@ jobs:
           command: |
             docker stop redis
             docker rm redis
-            docker run --name redis \
+            docker run -d \
+              --log-driver=gcplogs \
+              --restart always \
+              --network aaq-network \
+              --name redis \
               -p 6379:6379 \
-              -d redis:6.0-alpine
+              redis:6.0-alpine
             docker system prune --volumes -f
 
       - name: Show deployment command output
@@ -64,5 +61,18 @@ jobs:
 
       - name: Wait for Application to start
         id: wait-for-app
-        run: sleep 1m
-        shell: bash
+        run: sleep 30
+
+      - name: Redis Health Check
+        id: redis-health-check
+        run: |
+          timeout=60
+          while ! docker exec redis redis-cli ping; do
+            sleep 1
+            timeout=$((timeout - 1))
+            if [ "$timeout" -le 0 ]; then
+              echo "Redis failed to start in time."
+              exit 1
+            fi
+          done
+          echo "Redis is up and running."

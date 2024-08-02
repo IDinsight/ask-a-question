@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
+from fastapi.requests import Request
 
 from ..auth.dependencies import get_current_user
 from ..database import get_async_session
