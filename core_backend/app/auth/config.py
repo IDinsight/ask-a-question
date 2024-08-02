@@ -6,3 +6,4 @@ JWT_SECRET = os.environ.get("JWT_SECRET", "jwt-secret")
 NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID = os.environ.get(
     "NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID", "update-me"
 )
+REDIS_KEY_EXPIRED = -2

@@ -27,7 +27,12 @@ from ..utils import (
     update_api_limits,
     verify_password_salted_hash,
 )
-from .config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET
+from .config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_ALGORITHM,
+    JWT_SECRET,
+    REDIS_KEY_EXPIRED,
+)
 from .schemas import AuthenticatedUser
 
 logger = setup_logger()
@@ -163,7 +168,7 @@ async def rate_limiter(
     redis = request.app.state.redis
     ttl = await redis.ttl(key)
     # if key does not exist, set the key and value
-    if ttl == -2:
+    if ttl == REDIS_KEY_EXPIRED:
         await update_api_limits(redis, username, user_db.api_daily_quota)
 
     nb_remaining = await redis.get(key)
