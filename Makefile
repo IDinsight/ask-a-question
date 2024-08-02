@@ -28,8 +28,8 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db add-users-to-db setup-llm-proxy
-teardown-dev: teardown-db teardown-llm-proxy
+setup-dev: setup-db setup-redis add-users-to-db setup-llm-proxy
+teardown-dev: teardown-db teardown-redis teardown-llm-proxy
 
 ## Helper targets
 
@@ -50,6 +50,9 @@ setup-db:
      -d pgvector/pgvector:pg16
 	cd core_backend && \
 	python -m alembic upgrade head
+teardown-db:
+	@docker stop postgres-local
+	@docker rm postgres-local
 
 setup-redis:
 	-@docker stop redis-local
@@ -63,9 +66,7 @@ setup-redis:
 make teardown-redis:
 	@docker stop redis-local
 	@docker rm redis-local
-teardown-db:
-	@docker stop postgres-local
-	@docker rm postgres-local
+
 
 # Dev LiteLLM Proxy server
 setup-llm-proxy:
