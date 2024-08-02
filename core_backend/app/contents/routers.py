@@ -670,9 +670,11 @@ async def _check_content_quota_availability(
     # if content_quota is None, then there is no limit
     if content_quota is not None:
         # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        n_contents_in_db = len(user_contents)
+        stmt = select(ContentDB).where(
+            (ContentDB.user_id == user_id) & (~ContentDB.is_archived)
+        )
+        user_active_contents = (await asession.execute(stmt)).all()
+        n_contents_in_db = len(user_active_contents)
 
         # error if total of existing and new contents exceeds the quota
         if (n_contents_in_db + n_contents_to_add) > content_quota:
