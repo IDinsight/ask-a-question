@@ -242,7 +242,7 @@ class QueryResponseContentDB(Base):
     Allows us to track how many times a given content was returned in a time period.
     """
 
-    __tablename__ = "content_for_query"
+    __tablename__ = "query_response_content"
 
     content_for_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
