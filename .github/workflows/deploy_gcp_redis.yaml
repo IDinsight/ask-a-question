@@ -58,21 +58,3 @@ jobs:
         run: |-
           echo '${{ steps.compute-ssh.outputs.stdout }}'
           echo '${{ steps.compute-ssh.outputs.stderr }}'
-
-      - name: Wait for Application to start
-        id: wait-for-app
-        run: sleep 30
-
-      - name: Redis Health Check
-        id: redis-health-check
-        run: |
-          timeout=60
-          while ! docker exec redis redis-cli ping; do
-            sleep 1
-            timeout=$((timeout - 1))
-            if [ "$timeout" -le 0 ]; then
-              echo "Redis failed to start in time."
-              exit 1
-            fi
-          done
-          echo "Redis is up and running."
