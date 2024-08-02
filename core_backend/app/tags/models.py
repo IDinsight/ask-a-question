@@ -22,7 +22,6 @@ content_tags_table = Table(
     Base.metadata,
     Column("content_id", Integer, ForeignKey("content.content_id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tag.tag_id"), primary_key=True),
-    Column("user_id", Integer, ForeignKey("user.user_id"), nullable=False),
 )
 
 
@@ -49,6 +48,7 @@ class TagDB(Base):
     )
 
     def __repr__(self) -> str:
+        """Return string representation of the TagDB object"""
         return f"TagDB(tag_id={self.tag_id}, " f"tag_name='{self.tag_name}')>"
 
 

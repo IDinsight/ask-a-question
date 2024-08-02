@@ -524,6 +524,7 @@ class TestTimeSeries:
 
             feedback = ResponseFeedbackDB(
                 query_id=query.query_id,
+                user_id=user_id,
                 feedback_sentiment=sentiment,
                 feedback_datetime_utc=created_datetime,
             )

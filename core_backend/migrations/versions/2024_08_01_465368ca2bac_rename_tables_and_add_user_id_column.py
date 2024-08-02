@@ -118,23 +118,23 @@ def upgrade() -> None:
     op.alter_column("content_feedback", "user_id", nullable=False)
 
     # Add user_id column to urgency_rule
-    op.add_column("content_tag", sa.Column("user_id", sa.Integer(), nullable=True))
-    op.create_foreign_key(
-        constraint_name="fk_content_tag_user_id_user",
-        source_table="content_tag",
-        referent_table="user",
-        local_cols=["user_id"],
-        remote_cols=["user_id"],
-    )
-    op.execute(
-        """
-        UPDATE content_tag ct
-        SET user_id = c.user_id
-        FROM content c
-        WHERE ct.content_id = c.content_id
-        """
-    )
-    op.alter_column("content_tag", "user_id", nullable=False)
+    # op.add_column("content_tag", sa.Column("user_id", sa.Integer(), nullable=True))
+    # op.create_foreign_key(
+    #     constraint_name="fk_content_tag_user_id_user",
+    #     source_table="content_tag",
+    #     referent_table="user",
+    #     local_cols=["user_id"],
+    #     remote_cols=["user_id"],
+    # )
+    # op.execute(
+    #     """
+    #     UPDATE content_tag ct
+    #     SET user_id = c.user_id
+    #     FROM content c
+    #     WHERE ct.content_id = c.content_id
+    #     """
+    # )
+    # op.alter_column("content_tag", "user_id", nullable=False)
 
     # Add user_id column to urgency_response
     op.add_column("urgency_response", sa.Column("user_id", sa.Integer(), nullable=True))
@@ -174,8 +174,9 @@ def downgrade() -> None:
     )
     op.drop_column("content_feedback", "user_id")
 
-    op.drop_constraint("fk_content_tag_user_id_user", "content_tag", type_="foreignkey")
-    op.drop_column("content_tag", "user_id")
+    # op.drop_constraint(
+    #     "fk_content_tag_user_id_user", "content_tag", type_="foreignkey")
+    # op.drop_column("content_tag", "user_id")
 
     op.drop_constraint(
         "fk_urgency_response_user_id_user", "urgency_response", type_="foreignkey"
