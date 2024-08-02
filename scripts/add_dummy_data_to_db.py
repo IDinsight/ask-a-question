@@ -1,5 +1,6 @@
 # This script is useful if you want to test the dashboard with dummy data.
 # Navigate to the root directory of the project and run the following command:
+#   > make setup-dev
 #   > python scripts/add_dummy_data_to_db.py
 
 import os
