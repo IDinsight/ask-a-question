@@ -8,7 +8,7 @@
 """
 
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import List
 
 from sqlalchemy import (
     JSON,
@@ -266,12 +266,12 @@ class QueryResponseContentDB(Base):
 
     def __repr__(self) -> str:
         """
-        Construct the string representation of the `ContentForQueryDB` object.
+        Construct the string representation of the `QueryResponseContentDB` object.
 
         Returns
         -------
         str
-            A string representation of the `ContentForQueryDB` object.
+            A string representation of the `QueryResponseContentDB` object.
         """
 
         return (
@@ -286,7 +286,7 @@ class QueryResponseContentDB(Base):
 async def save_content_for_query_to_db(
     user_id: int,
     query_id: int,
-    contents: Dict[int, QuerySearchResult] | None,
+    contents: dict[int, QuerySearchResult] | None,
     asession: AsyncSession,
 ) -> None:
     """
