@@ -378,6 +378,7 @@ class TestQueryDataAPI:
                 for i in range(N_RESPONSE_FEEDBACKS):
                     response_feedback = ResponseFeedbackBase(
                         query_id=response_db.query_id,
+                        session_id=response_db.session_id,
                         feedback_text=f"feedback {i}",
                         feedback_sentiment=FeedbackSentiment.POSITIVE,
                         feedback_secret_key="test_secret_key",
@@ -389,6 +390,7 @@ class TestQueryDataAPI:
                 for i in range(N_CONTENT_FEEDBACKS):
                     content_feedback = ContentFeedback(
                         query_id=response_db.query_id,
+                        session_id=response_db.session_id,
                         content_id=faq_contents[0],
                         feedback_text=f"feedback {i}",
                         feedback_sentiment=FeedbackSentiment.POSITIVE,
