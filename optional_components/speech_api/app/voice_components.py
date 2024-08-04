@@ -1,9 +1,8 @@
 import whisper
 
-from core_backend.app.utils import setup_logger
-
 from .config import PREFERRED_MODEL, WHISPER_MODEL_DIR
 from .schemas import TranscriptionResponse
+from .utils import setup_logger
 
 logger = setup_logger("Whisper ASR")
 

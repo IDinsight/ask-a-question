@@ -3,9 +3,8 @@ import os
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from core_backend.app.utils import setup_logger
-
 from .schemas import TranscriptionRequest, TranscriptionResponse
+from .utils import setup_logger
 from .voice_components import transcribe_audio
 
 router = APIRouter()

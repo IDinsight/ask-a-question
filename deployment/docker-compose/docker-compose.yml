@@ -90,25 +90,6 @@ services:
         - action: rebuild
           path: ../../optional_components/embeddings
 
-  speech_service:
-    build:
-      context: ../../speech_api
-      dockerfile: Dockerfile
-    image: idinsight/speech-service:latest
-    restart: always
-    ports:
-      - "8001:8001"
-    env_file:
-      - .env
-    develop:
-      watch:
-        - action: rebuild
-          path: ../../speech_api
-    volumes:
-      - ../../core_backend/app/utils.py:/usr/src/speech_service/core_backend/app/utils.py
-      - ../../core_backend/app/config.py:/usr/src/speech_service/core_backend/app/config.py
-      - temp:/usr/src/speech_service/temp
-
 volumes:
   caddy_data:
   caddy_config:
