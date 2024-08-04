@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
 
   const showPage = () => {
     switch (dashboardPage) {
-      case "Overview":
+      case "Underview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
         return <div>Users</div>;
