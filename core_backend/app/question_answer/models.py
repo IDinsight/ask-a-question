@@ -15,6 +15,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     select,
@@ -30,6 +31,7 @@ from .schemas import (
     QueryBase,
     QueryResponse,
     QueryResponseError,
+    QuerySearchResult,
     ResponseFeedbackBase,
 )
 
@@ -232,6 +234,77 @@ async def save_query_response_to_db(
     await asession.commit()
     await asession.refresh(user_query_responses_db)
     return user_query_responses_db
+
+
+class QueryResponseContentDB(Base):
+    """
+    ORM for storing what content was returned for a given query.
+    Allows us to track how many times a given content was returned in a time period.
+    """
+
+    __tablename__ = "query_response_content"
+
+    content_for_query_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id"), nullable=False
+    )
+    content_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("content.content_id"), nullable=False
+    )
+    created_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+
+    __table_args__ = (
+        Index("idx_user_id_created_datetime", "user_id", "created_datetime_utc"),
+    )
+
+    def __repr__(self) -> str:
+        """
+        Construct the string representation of the `QueryResponseContentDB` object.
+
+        Returns
+        -------
+        str
+            A string representation of the `QueryResponseContentDB` object.
+        """
+
+        return (
+            f"ContentForQueryDB(content_for_query_id={self.content_for_query_id}, "
+            f"user_id={self.user_id}, "
+            f"content_id={self.content_id}, "
+            f"query_id={self.query_id}, "
+            f"created_datetime_utc={self.created_datetime_utc})"
+        )
+
+
+async def save_content_for_query_to_db(
+    user_id: int,
+    query_id: int,
+    contents: dict[int, QuerySearchResult] | None,
+    asession: AsyncSession,
+) -> None:
+    """
+    Saves the content returned for a query to the database.
+    """
+
+    if contents is None:
+        return
+
+    for content in contents.values():
+        content_for_query_db = QueryResponseContentDB(
+            user_id=user_id,
+            query_id=query_id,
+            content_id=content.id,
+            created_datetime_utc=datetime.now(timezone.utc),
+        )
+        asession.add(content_for_query_db)
+    await asession.commit()
 
 
 class ResponseFeedbackDB(Base):

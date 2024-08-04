@@ -670,17 +670,25 @@ async def _check_content_quota_availability(
     # if content_quota is None, then there is no limit
     if content_quota is not None:
         # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        n_contents_in_db = len(user_contents)
+        stmt = select(ContentDB).where(
+            (ContentDB.user_id == user_id) & (~ContentDB.is_archived)
+        )
+        user_active_contents = (await asession.execute(stmt)).all()
+        n_contents_in_db = len(user_active_contents)
 
         # error if total of existing and new contents exceeds the quota
         if (n_contents_in_db + n_contents_to_add) > content_quota:
-            raise ExceedsContentQuotaError(
-                f"Adding {n_contents_to_add} new contents to the already existing "
-                f"{n_contents_in_db} in the database would exceed the allowed limit "
-                f"of {content_quota} contents."
-            )
+            if n_contents_in_db > 0:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the already existing "
+                    f"{n_contents_in_db} in the database would exceed the allowed "
+                    f"limit of {content_quota} contents."
+                )
+            else:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the database would "
+                    f"exceed the allowed limit of {content_quota} contents."
+                )
 
 
 def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
