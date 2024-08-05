@@ -11,7 +11,7 @@ from core_backend.app.llm_call.process_input import (
     _identify_language,
     _translate_question,
 )
-from core_backend.app.llm_call.process_output import _build_evidence, _check_align_score
+from core_backend.app.llm_call.process_output import _check_align_score
 from core_backend.app.question_answer.config import N_TOP_CONTENT
 from core_backend.app.question_answer.schemas import (
     ErrorType,
@@ -19,6 +19,9 @@ from core_backend.app.question_answer.schemas import (
     QueryResponse,
     QueryResponseError,
     QuerySearchResult,
+)
+from core_backend.app.question_answer.utils import (
+    get_context_string_from_search_results,
 )
 from core_backend.tests.api.conftest import (
     TEST_USERNAME,
@@ -780,9 +783,16 @@ class TestAlignScore:
         assert isinstance(update_query_response, QueryResponse)
         assert update_query_response.debug_info["factual_consistency"]["score"] == 0.9
 
-    def test_build_evidence(
-        self, user_query_response: QueryResponse, monkeypatch: pytest.MonkeyPatch
+    async def test_get_context_string_from_search_results(
+        self, user_query_response: QueryResponse
     ) -> None:
-        if user_query_response.search_results is not None:
-            evidence = _build_evidence(user_query_response.search_results)
-            assert evidence == "hello world\ngoodbye universe\n"
+        assert user_query_response.search_results is not None  # Type assertion for mypy
+
+        context_string = get_context_string_from_search_results(
+            user_query_response.search_results
+        )
+
+        expected_context_string = (
+            "1. World\nhello world\n\n2. Universe\ngoodbye universe"
+        )
+        assert context_string == expected_context_string
