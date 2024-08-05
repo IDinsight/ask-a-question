@@ -195,6 +195,7 @@ class TestEmbeddingsSearch:
         api_key_user1: str,
         faq_contents: pytest.FixtureRequest,
     ) -> None:
+        print(f"6666666 {faq_contents = }")
         request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
             "/search",
@@ -384,6 +385,7 @@ class TestEmbeddingsSearch:
         expect_found: bool,
         faq_contents: List[int],
     ) -> None:
+        print(f"6666666 {faq_contents = }")
         token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
             "/search",
