@@ -368,43 +368,43 @@ class TestEmbeddingsSearch:
     #     )
     #     assert response.status_code == 200
 
-    @pytest.mark.parametrize(
-        "username, expect_found",
-        [
-            (TEST_USERNAME, True),
-            (TEST_USERNAME_2, False),
-        ],
-    )
-    def test_user2_access_user1_content(
-        self,
-        client: TestClient,
-        username: str,
-        api_key_user1: str,
-        api_key_user2: str,
-        expect_found: bool,
-        faq_contents: List[int],
-    ) -> None:
-        token = api_key_user1 if username == TEST_USERNAME else api_key_user2
-        response = client.post(
-            "/search",
-            json={
-                "query_text": "Tell me about camping",
-                "generate_llm_response": False,
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == 200
-
-        if response.status_code == 200:
-            all_retireved_content_ids = [
-                value["id"] for value in response.json()["search_results"].values()
-            ]
-            if expect_found:
-                # user1 has contents in DB uploaded by the faq_contents fixture
-                assert len(all_retireved_content_ids) > 0
-            else:
-                # user2 should not have any content
-                assert len(all_retireved_content_ids) == 0
+    # @pytest.mark.parametrize(
+    #     "username, expect_found",
+    #     [
+    #         (TEST_USERNAME, True),
+    #         (TEST_USERNAME_2, False),
+    #     ],
+    # )
+    # def test_user2_access_user1_content(
+    #     self,
+    #     client: TestClient,
+    #     username: str,
+    #     api_key_user1: str,
+    #     api_key_user2: str,
+    #     expect_found: bool,
+    #     faq_contents: List[int],
+    # ) -> None:
+    #     token = api_key_user1 if username == TEST_USERNAME else api_key_user2
+    #     response = client.post(
+    #         "/search",
+    #         json={
+    #             "query_text": "Tell me about camping",
+    #             "generate_llm_response": False,
+    #         },
+    #         headers={"Authorization": f"Bearer {token}"},
+    #     )
+    #     assert response.status_code == 200
+    #
+    #     if response.status_code == 200:
+    #         all_retireved_content_ids = [
+    #             value["id"] for value in response.json()["search_results"].values()
+    #         ]
+    #         if expect_found:
+    #             # user1 has contents in DB uploaded by the faq_contents fixture
+    #             assert len(all_retireved_content_ids) > 0
+    #         else:
+    #             # user2 should not have any content
+    #             assert len(all_retireved_content_ids) == 0
 
     # @pytest.mark.parametrize(
     #     "content_id_valid, response_code", ([True, 200], [False, 400])

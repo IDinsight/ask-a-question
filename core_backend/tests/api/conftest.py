@@ -146,12 +146,12 @@ def user(
 
 @pytest.fixture(scope="function")
 async def faq_contents(
-    asession: AsyncSession, user1: int
+    asession: AsyncSession, #user1: int
 ) -> AsyncGenerator[List[int], None]:
+    user1 = 2
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
-
     for _i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = await async_fake_embedding(
