@@ -105,10 +105,11 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       horizontalAlign: "left",
     },
     stroke: {
-      width: [4, ...Array(N_TOP_CONTENT).fill(2)],
+      width: [3, ...Array(N_TOP_CONTENT).fill(3)],
       curve: "smooth",
       dashArray: [0, ...Array(N_TOP_CONTENT).fill(7)],
     },
+    colors: appColors.dashboardBlueShades,
   };
 
   return (
