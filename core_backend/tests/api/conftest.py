@@ -173,8 +173,9 @@ async def faq_contents(
 
     asession.add_all(contents)
     await asession.commit()
-
+    print("BEFORE YIELD")
     yield [content.content_id for content in contents]
+    print("AFTER YIELD")
 
     for content in contents:
         deleteFeedback = delete(ContentFeedbackDB).where(
