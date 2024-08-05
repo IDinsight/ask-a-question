@@ -194,15 +194,7 @@ class TestEmbeddingsSearch:
         client: TestClient,
         api_key_user1: str,
         faq_contents: pytest.FixtureRequest,
-        fullaccess_token: str,
     ) -> None:
-        # content_ids = []
-        # while len(content_ids) != len(faq_contents):
-        #     response = client.get(
-        #         "/content", headers={"Authorization": f"Bearer {fullaccess_token}"}
-        #     )
-        #     response_json = response.json()
-        #     content_ids = [content["content_id"] for content in response_json]
         request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
             "/search",
@@ -391,15 +383,7 @@ class TestEmbeddingsSearch:
         api_key_user2: str,
         expect_found: bool,
         faq_contents: List[int],
-        fullaccess_token: str,
     ) -> None:
-        # content_ids = []
-        # while len(content_ids) != len(faq_contents):
-        #     response = client.get(
-        #         "/content", headers={"Authorization": f"Bearer {fullaccess_token}"}
-        #     )
-        #     response_json = response.json()
-        #     content_ids = [content["content_id"] for content in response_json]
         token = api_key_user1 if username == TEST_USERNAME else api_key_user2
         response = client.post(
             "/search",
