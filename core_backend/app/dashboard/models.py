@@ -1,14 +1,16 @@
 from datetime import date
-from typing import Dict, List, Tuple, Union, get_args
+from typing import Any, Dict, List, Sequence, Tuple, Union, get_args
 
-from sqlalchemy import case, func, literal_column, select, text
+from sqlalchemy import Row, case, desc, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import and_
 from sqlalchemy.sql.expression import Subquery
 
 from ..contents.models import ContentDB
 from ..question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
+    QueryResponseContentDB,
     ResponseFeedbackDB,
 )
 from ..urgency_detection.models import UrgencyResponseDB
@@ -16,13 +18,14 @@ from .schemas import (
     ContentFeedbackStats,
     Day,
     Heatmap,
+    OverviewTimeSeries,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
     TimeFrequency,
     TimeHours,
-    TimeSeries,
     TopContent,
+    TopContentTimeSeries,
     UrgencyStats,
 )
 
@@ -89,13 +92,13 @@ async def get_heatmap(
     return Heatmap.model_validate(heatmap)
 
 
-async def get_timeseries(
+async def get_overview_timeseries(
     user_id: int,
     asession: AsyncSession,
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
-) -> TimeSeries:
+) -> OverviewTimeSeries:
     """
     Retrieve count of queries over time for the user
     """
@@ -106,7 +109,7 @@ async def get_timeseries(
         user_id, asession, start_date, end_date, frequency
     )
 
-    return TimeSeries(
+    return OverviewTimeSeries(
         urgent=urgency_ts,
         not_urgent_escalated=query_ts["escalated"],
         not_urgent_not_escalated=query_ts["not_escalated"],
@@ -171,7 +174,8 @@ def get_time_labels_query(
         )
         .select_from(
             text(
-                f"generate_series('{start_date}', '{end_date}', '1 {interval_str}'"
+                f"generate_series('{start_date}'::timestamp, '{end_date}'::timestamp + "
+                f"'1 day'::interval, '1 {interval_str}'"
                 "::interval) AS period_start"
             )
         )
@@ -280,6 +284,148 @@ async def get_timeseries_urgency(
 
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
     return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
+
+
+async def get_timeseries_top_content(
+    user_id: int,
+    asession: AsyncSession,
+    top_n: int,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> List[TopContentTimeSeries]:
+    """
+    Retrieve most frequently shared content.
+    Note that this retrieves top N content from the `QueryResponseContentDB` table
+    and not from the `ContentDB` table.ContentDB
+
+    Returns
+    """
+
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+
+    top_content = (
+        select(
+            ContentDB.content_id,
+            ContentDB.content_title,
+            func.count(QueryResponseContentDB.query_id).label("total_query_count"),
+        )
+        .select_from(QueryResponseContentDB)
+        .join(
+            ContentDB,
+            QueryResponseContentDB.content_id == ContentDB.content_id,
+        )
+        .where(
+            ContentDB.user_id == user_id,
+            QueryResponseContentDB.created_datetime_utc >= start_date,
+            QueryResponseContentDB.created_datetime_utc < end_date,
+        )
+        .group_by(
+            ContentDB.content_title,
+            ContentDB.content_id,
+        )
+        .order_by(desc("total_query_count"))
+        .limit(top_n)
+        .subquery()
+    )
+
+    all_combinations = (
+        select(
+            ts_labels.c.time_period,
+            top_content.c.content_id,
+            top_content.c.content_title,
+            top_content.c.total_query_count,
+        )
+        .select_from(ts_labels)
+        .join(top_content, text("1=1"))
+        .subquery()
+    )
+
+    # Main query to get the required data
+    statement = (
+        select(
+            all_combinations.c.time_period,
+            all_combinations.c.content_id,
+            all_combinations.c.content_title,
+            all_combinations.c.total_query_count,
+            func.coalesce(func.count(QueryResponseContentDB.query_id), 0).label(
+                "query_count"
+            ),
+        )
+        .select_from(all_combinations)
+        .join(
+            QueryResponseContentDB,
+            and_(
+                all_combinations.c.content_id == QueryResponseContentDB.content_id,
+                func.date_trunc(
+                    interval_str, QueryResponseContentDB.created_datetime_utc
+                )
+                == func.date_trunc(interval_str, all_combinations.c.time_period),
+            ),
+            isouter=True,
+        )
+        .group_by(
+            all_combinations.c.time_period,
+            all_combinations.c.content_id,
+            all_combinations.c.content_title,
+            all_combinations.c.total_query_count,
+        )
+        .order_by(
+            desc("total_query_count"),
+            all_combinations.c.content_id,
+            all_combinations.c.time_period,
+        )
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+
+    return convert_rows_to_top_content_time_series(rows, format_str)
+
+
+def convert_rows_to_top_content_time_series(
+    rows: Sequence[Row[Any]], format_str: str
+) -> List[TopContentTimeSeries]:
+    """
+    Convert rows to list of TopContentTimeSeries
+    """
+    curr_content_id = None
+    curr_title = None
+    time_series = dict()
+    top_content_time_series: List[TopContentTimeSeries] = []
+    curr_total_query_count = 0
+    for r in rows:
+        if curr_content_id is None:
+            curr_content_id = r.content_id
+            curr_title = r.content_title
+            curr_total_query_count = r.total_query_count
+            time_series = {r.time_period.strftime(format_str): r.query_count}
+        elif curr_content_id == r.content_id:
+            time_series[r.time_period.strftime(format_str)] = r.query_count
+        else:
+            top_content_time_series.append(
+                TopContentTimeSeries(
+                    title=str(curr_title),
+                    query_count_time_series=time_series,
+                    total_query_count=curr_total_query_count,
+                )
+            )
+            curr_content_id = r.content_id
+            curr_title = r.content_title
+            curr_total_query_count = r.total_query_count
+            time_series = {r.time_period.strftime(format_str): r.query_count}
+
+    if curr_content_id is not None:
+        top_content_time_series.append(
+            TopContentTimeSeries(
+                title=str(curr_title),
+                query_count_time_series=time_series,
+                total_query_count=curr_total_query_count,
+            )
+        )
+
+    return top_content_time_series
 
 
 def initilize_heatmap() -> Dict[TimeHours, Dict[Day, int]]:
