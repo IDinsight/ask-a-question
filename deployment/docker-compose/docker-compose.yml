@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     command: >
       /bin/sh startup.sh
-    depends_on:
-      - speech_service
     restart: always
     env_file:
       - .env
