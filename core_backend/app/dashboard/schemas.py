@@ -86,9 +86,19 @@ class TimeFrequency(str, Enum):
 
 
 def has_all_days(d: dict[str, int]) -> dict[str, int]:
+    """This function is used to validate that all days are present in the data.
+
+    Parameters
+    ----------
+    d
+        Dictionary whose keys are valid `Day` strings and whose values are counts.
+
+    Returns
+    -------
+    dict[str, int]
+        The validated dictionary.
     """
-    This function is used to validate that all days are present in the data
-    """
+
     assert set(d.keys()) - set(get_args(Day)) == set(), "Missing some days in data"
     return d
 
