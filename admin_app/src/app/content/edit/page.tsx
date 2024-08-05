@@ -359,7 +359,7 @@ const ContentBox = ({
         <Layout.Spacer multiplier={0.5} />
         <TextField
           required
-          placeholder="Add content (required)"
+          placeholder="Add content (required!)"
           inputProps={{ maxLength: 2000 }}
           multiline
           rows={15}
