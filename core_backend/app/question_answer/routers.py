@@ -118,12 +118,18 @@ async def search(
         contents=response.search_results,
         asession=asession,
     )
-    if isinstance(response, QueryResponse):
-        return response
 
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
-    )
+    if type(response) is QueryResponse:
+        return response
+    elif type(response) is QueryResponseError:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Internal server error"},
+        )
 
 
 @identify_language__before
