@@ -11,9 +11,9 @@ from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
-import aioredis
 import litellm
 from litellm import aembedding
+from redis import asyncio as aioredis
 
 from .config import (
     LANGFUSE,

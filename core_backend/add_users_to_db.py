@@ -2,7 +2,6 @@ import asyncio
 import os
 from datetime import datetime, timezone
 
-import aioredis
 from app.config import REDIS_HOST
 from app.database import get_session
 from app.users.models import UserDB
@@ -12,6 +11,7 @@ from app.utils import (
     get_password_salted_hash,
     setup_logger,
 )
+from redis import asyncio as aioredis
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -38,7 +38,10 @@ user_db = UserDB(
 )
 
 
-async def async_redis_operations(key: str, value: int | None):
+async def async_redis_operations(key: str, value: int | None) -> None:
+    """
+    Asynchronous Redis operations to set the remaining API calls for a user.
+    """
     redis = await aioredis.from_url(REDIS_HOST)
 
     await redis.set(key, encode_api_limit(value))
@@ -46,9 +49,13 @@ async def async_redis_operations(key: str, value: int | None):
     await redis.close()
 
 
-def run_redis_async_tasks(key: str, value: str):
+def run_redis_async_tasks(key: str, value: str) -> None:
+    """
+    Run asynchronous Redis operations to set the remaining API calls for a user.
+    """
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(async_redis_operations(key, value))
+    value_int = int(value) if value is not None else None
+    loop.run_until_complete(async_redis_operations(key, value_int))
 
 
 if __name__ == "__main__":

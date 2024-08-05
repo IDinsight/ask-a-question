@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
-import aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess
+from redis import asyncio as aioredis
 
 from . import (
     admin,
