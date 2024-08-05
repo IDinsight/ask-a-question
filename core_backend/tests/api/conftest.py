@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
@@ -173,9 +174,8 @@ async def faq_contents(
 
     asession.add_all(contents)
     await asession.commit()
-    print("BEFORE YIELD")
+    await asyncio.sleep(2)
     yield [content.content_id for content in contents]
-    print("AFTER YIELD")
 
     for content in contents:
         deleteFeedback = delete(ContentFeedbackDB).where(
@@ -188,6 +188,7 @@ async def faq_contents(
         await asession.execute(content_query)
         await asession.delete(content)
     await asession.commit()
+    await asyncio.sleep(2)
 
 
 @pytest.fixture(
