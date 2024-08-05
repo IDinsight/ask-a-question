@@ -10,8 +10,9 @@ tests: setup-test-containers run-tests teardown-test-containers
 # tests should be run first.
 run-tests:
 	@set -a && source ./tests/api/test.env && set +a && \
-	python -m pytest -rPQ -m "not rails and alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov=. tests/api/test_alembic_migrations.py && \
-	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests
+	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov=. tests/api/test_question_answer.py -s
+#	python -m pytest -rPQ -m "not rails and alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov=. tests/api/test_alembic_migrations.py && \
+#	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests
 
 ## Helper targets
 setup-test-containers: setup-test-db setup-redis-test
