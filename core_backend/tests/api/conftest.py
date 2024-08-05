@@ -146,12 +146,12 @@ def user(
 
 @pytest.fixture(scope="function")
 async def faq_contents(
-    asession: AsyncSession, #user1: int
+    asession: AsyncSession, user1: int
 ) -> AsyncGenerator[List[int], None]:
-    user1 = 2
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
+
     for _i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = await async_fake_embedding(
@@ -187,6 +187,45 @@ async def faq_contents(
         await asession.execute(content_query)
         await asession.delete(content)
     await asession.commit()
+
+
+@pytest.fixture(scope="function")
+def faq_contents_sync(
+    db_session: Session, user1: int
+) -> AsyncGenerator[List[int], None]:
+    with open("tests/api/data/content.json", "r") as f:
+        json_data = json.load(f)
+    contents = []
+
+    for _i, content in enumerate(json_data):
+        content_embedding = np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
+        content_db = ContentDB(
+            user_id=user1,
+            content_embedding=content_embedding,
+            content_title=content["content_title"],
+            content_text=content["content_text"],
+            content_metadata=content.get("content_metadata", {}),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+        )
+        contents.append(content_db)
+
+    db_session.add_all(contents)
+    db_session.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        deleteFeedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
+        db_session.execute(deleteFeedback)
+        db_session.execute(content_query)
+        db_session.delete(content)
+    db_session.commit()
 
 
 @pytest.fixture(

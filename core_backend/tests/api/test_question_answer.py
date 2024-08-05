@@ -193,7 +193,7 @@ class TestEmbeddingsSearch:
         expected_status_code: int,
         client: TestClient,
         api_key_user1: str,
-        faq_contents: pytest.FixtureRequest,
+        faq_contents_sync: pytest.FixtureRequest,
     ) -> None:
         request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
