@@ -10,6 +10,8 @@ interface DayHourUsageData {
 interface ApexData {
   name: string;
   data: { x: string; y: number }[];
+  color?: string;
+  zIndex?: number;
 }
 
 interface TopContentData {
