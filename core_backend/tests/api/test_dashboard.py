@@ -662,13 +662,14 @@ class TestTopContent:
                 .astype(np.float32)
                 .tolist(),
                 content_title=c["title"],
-                content_text="Test content #{i}",
+                content_text=f"Test content #{_i}",
                 content_metadata={},
                 created_datetime_utc=datetime.now(timezone.utc),
                 updated_datetime_utc=datetime.now(timezone.utc),
                 query_count=c["query_count"],
                 positive_votes=c["positive_votes"],
                 negative_votes=c["negative_votes"],
+                is_archived=True,
             )
             asession.add(content_db)
 
@@ -683,7 +684,9 @@ class TestTopContent:
     ) -> None:
         N_TOP_CONTENT = 4
 
-        top_content = await get_top_content(1, asession, N_TOP_CONTENT)
+        top_content = await get_top_content(
+            user_id=1, asession=asession, top_n=N_TOP_CONTENT, exclude_archived=False
+        )
 
         assert len(top_content) == N_TOP_CONTENT
         # Sort self.content by query count
@@ -696,9 +699,28 @@ class TestTopContent:
             assert top_content[i].positive_votes == c["positive_votes"]
             assert top_content[i].negative_votes == c["negative_votes"]
 
+    async def test_top_content_archived(
+        self, content_data: pytest.FixtureRequest, asession: AsyncSession
+    ) -> None:
+        """This test checks that the title of archived content is returned with the
+        string "[DELETED] " prepended to it. This string should be added to the
+        original content title and is displayed in the "Most Sent Content" table in the
+        Admin app dashboard to inform the user that the content has been removed.
+        """
+
+        top_n = 4
+        top_content = await get_top_content(
+            user_id=1, asession=asession, top_n=top_n, exclude_archived=True
+        )
+        assert len(top_content) == top_n
+        for tc in top_content:
+            assert tc.title.startswith("[DELETED] ")
+
     async def test_content_from_other_user_not_returned(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        top_content = await get_top_content(2, asession, 5)
+        top_content = await get_top_content(
+            user_id=2, asession=asession, top_n=5, exclude_archived=False
+        )
 
         assert len(top_content) == 0
