@@ -33,10 +33,8 @@ jobs:
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           mike deploy \
-            --ignore-remote-status \
+            --push \
             --update-aliases ${{ github.ref_name }} latest
-          mike set-default latest
-          git push --force origin gh-pages
       - name: Add CNAME
         run: |
           git fetch origin
