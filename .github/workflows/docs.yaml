@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
@@ -34,4 +34,7 @@ jobs:
             --ignore-remote-status \
             --update-aliases ${{ github.ref_name }} latest
           mike set-default latest
-          git push --force origin gh-pages
+          echo "docs.ask-a-question.com" >> CNAME
+          git add CNAME
+          git commit -m "Add CNAME"
+          mkdocs gh-deploy --force --ignore-version
