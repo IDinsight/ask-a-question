@@ -295,7 +295,7 @@ async def get_timeseries_top_content(
     frequency: TimeFrequency,
 ) -> List[TopContentTimeSeries]:
     """
-    Retrieve most frequently shared content.
+    Retrieve most frequently shared content and feedback between the start and end date.
     Note that this retrieves top N content from the `QueryResponseContentDB` table
     and not from the `ContentDB` table.ContentDB
 
@@ -326,7 +326,7 @@ async def get_timeseries_top_content(
         )
         .order_by(desc("total_query_count"))
         .limit(top_n)
-        .subquery()
+        .subquery("top_content")
     )
 
     all_combinations = (
@@ -338,28 +338,52 @@ async def get_timeseries_top_content(
         )
         .select_from(ts_labels)
         .join(top_content, text("1=1"))
-        .subquery()
+        .subquery("all_combinations")
     )
 
-    # Main query to get the required data
-    statement = (
+    # Get n_positive and n_negative feedback count for each ContentFeedbackDB
+    content_feedback = (
+        select(
+            func.date_trunc(
+                interval_str, ContentFeedbackDB.feedback_datetime_utc
+            ).label("feedback_date"),
+            ContentFeedbackDB.content_id.label("content_id"),
+            func.count(
+                case((ContentFeedbackDB.feedback_sentiment == "positive", 1))
+            ).label("n_positive_feedback"),
+            func.count(
+                case((ContentFeedbackDB.feedback_sentiment == "negative", 1))
+            ).label("n_negative_feedback"),
+        )
+        .where(ContentFeedbackDB.feedback_datetime_utc >= start_date)
+        .where(ContentFeedbackDB.feedback_datetime_utc <= end_date)
+        .group_by(
+            func.date_trunc(interval_str, ContentFeedbackDB.feedback_datetime_utc),
+            ContentFeedbackDB.feedback_datetime_utc,
+            ContentFeedbackDB.content_id,
+        )
+        .subquery("content_feedback")
+    )
+
+    all_combinations_w_feedback = (
         select(
             all_combinations.c.time_period,
             all_combinations.c.content_id,
             all_combinations.c.content_title,
             all_combinations.c.total_query_count,
-            func.coalesce(func.count(QueryResponseContentDB.query_id), 0).label(
-                "query_count"
+            func.coalesce(func.sum(content_feedback.c.n_positive_feedback), 0).label(
+                "n_positive_feedback"
+            ),
+            func.coalesce(func.sum(content_feedback.c.n_negative_feedback), 0).label(
+                "n_negative_feedback"
             ),
         )
         .select_from(all_combinations)
         .join(
-            QueryResponseContentDB,
+            content_feedback,
             and_(
-                all_combinations.c.content_id == QueryResponseContentDB.content_id,
-                func.date_trunc(
-                    interval_str, QueryResponseContentDB.created_datetime_utc
-                )
+                all_combinations.c.content_id == content_feedback.c.content_id,
+                func.date_trunc(interval_str, content_feedback.c.feedback_date)
                 == func.date_trunc(interval_str, all_combinations.c.time_period),
             ),
             isouter=True,
@@ -370,10 +394,49 @@ async def get_timeseries_top_content(
             all_combinations.c.content_title,
             all_combinations.c.total_query_count,
         )
+        .subquery("all_combinations_w_feedback")
+    )
+
+    # Main query to get the required data
+    statement = (
+        select(
+            all_combinations_w_feedback.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.content_title,
+            all_combinations_w_feedback.c.total_query_count,
+            func.coalesce(func.count(QueryResponseContentDB.query_id), 0).label(
+                "query_count"
+            ),
+            all_combinations_w_feedback.c.n_positive_feedback,
+            all_combinations_w_feedback.c.n_negative_feedback,
+        )
+        .select_from(all_combinations_w_feedback)
+        .join(
+            QueryResponseContentDB,
+            and_(
+                all_combinations_w_feedback.c.content_id
+                == QueryResponseContentDB.content_id,
+                func.date_trunc(
+                    interval_str, QueryResponseContentDB.created_datetime_utc
+                )
+                == func.date_trunc(
+                    interval_str, all_combinations_w_feedback.c.time_period
+                ),
+            ),
+            isouter=True,
+        )
+        .group_by(
+            all_combinations_w_feedback.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.content_title,
+            all_combinations_w_feedback.c.total_query_count,
+            all_combinations_w_feedback.c.n_positive_feedback,
+            all_combinations_w_feedback.c.n_negative_feedback,
+        )
         .order_by(
             desc("total_query_count"),
-            all_combinations.c.content_id,
-            all_combinations.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.time_period,
         )
     )
 
