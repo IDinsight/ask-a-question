@@ -12,6 +12,9 @@ extra:
     - icon: material/shield-lock
       link: https://www.idinsight.org/about/privacy-policy/
       name: Privacy Policy
+  version:
+    provider: mike
+    alias: true
 
 nav:
   - Home:
