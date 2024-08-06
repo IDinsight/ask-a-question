@@ -3,7 +3,7 @@ These are functions to check the LLM response
 """
 
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypedDict
+from typing import Any, Callable, Optional, TypedDict
 
 import aiohttp
 from pydantic import ValidationError
@@ -19,13 +19,15 @@ from ..question_answer.schemas import (
     QueryRefined,
     QueryResponse,
     QueryResponseError,
-    QuerySearchResult,
 )
-from ..question_answer.utils import get_context_string_from_retrieved_contents
+from ..question_answer.utils import get_context_string_from_search_results
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
-from .utils import _ask_llm_async, remove_json_markdown
+from .utils import (
+    _ask_llm_async,
+    remove_json_markdown,
+)
 
 logger = setup_logger("OUTPUT RAILS")
 
@@ -92,7 +94,7 @@ async def _generate_llm_response(
         logger.warning("No original_language found in the query.")
         return response
 
-    context = get_context_string_from_retrieved_contents(response.search_results)
+    context = get_context_string_from_search_results(response.search_results)
     rag_response = await get_llm_rag_answer(
         # use the original query text
         question=query_refined.query_text_original,
@@ -167,7 +169,7 @@ async def _check_align_score(
         return response
 
     if response.search_results is not None:
-        evidence = _build_evidence(response.search_results)
+        evidence = get_context_string_from_search_results(response.search_results)
     else:
         logger.warning(("No search_results found in the response."))
         return response
@@ -272,13 +274,3 @@ async def _get_llm_align_score(
     logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
 
     return alignment_score
-
-
-def _build_evidence(search_results: Dict[int, QuerySearchResult]) -> str:
-    """
-    Build the evidence string from the search results
-    """
-    evidence = ""
-    for _, result in search_results.items():
-        evidence += result.text + "\n"
-    return evidence

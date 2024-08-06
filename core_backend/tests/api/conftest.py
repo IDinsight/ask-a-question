@@ -83,7 +83,7 @@ async def asession(
 
 
 @pytest.fixture(scope="session", autouse=True)
-def admin_user(client: TestClient, db_session: Session) -> None:
+def admin_user(client: TestClient, db_session: Session) -> Generator:
     admin_user = UserDB(
         username=TEST_ADMIN_USERNAME,
         hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
@@ -100,7 +100,7 @@ def admin_user(client: TestClient, db_session: Session) -> None:
 
 
 @pytest.fixture(scope="session")
-def user1(client: TestClient, db_session: Session) -> None:
+def user1(client: TestClient, db_session: Session) -> Generator:
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
     result = db_session.execute(stmt)
     user = result.scalar_one()
@@ -108,7 +108,7 @@ def user1(client: TestClient, db_session: Session) -> None:
 
 
 @pytest.fixture(scope="session")
-def user2(client: TestClient, db_session: Session) -> None:
+def user2(client: TestClient, db_session: Session) -> Generator:
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME_2)
     result = db_session.execute(stmt)
     user = result.scalar_one()
@@ -461,7 +461,7 @@ def fullaccess_token_user2() -> str:
 
 
 @pytest.fixture(scope="session")
-def api_key_user1(client, fullaccess_token: str) -> str:
+def api_key_user1(client: TestClient, fullaccess_token: str) -> str:
     """
     Returns a token with full access
     """
@@ -473,7 +473,7 @@ def api_key_user1(client, fullaccess_token: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def api_key_user2(client, fullaccess_token_user2: str) -> str:
+def api_key_user2(client: TestClient, fullaccess_token_user2: str) -> str:
     """
     Returns a token with full access
     """
