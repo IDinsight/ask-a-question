@@ -21,23 +21,27 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material==9.5.3 \
+      - name: Install dependencies
+        run: pip install mkdocs-material==9.5.3 \
           pymdown-extensions==10.3 \
           mkdocs-glightbox==0.3.4 \
           mkdocs-material-extensions==1.3.1 \
           mkdocs-open-in-new-tab==1.0.3 \
           mike==2.1.2
-      - run: |
+      - name: Build and push docs version
+        run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           mike deploy \
             --ignore-remote-status \
             --update-aliases ${{ github.ref_name }} latest
           mike set-default latest
-          git push --force origin gh-page
+          git push --force origin gh-pages
+      - name: Add CNAME
+        run: |
           git fetch origin
-          git switch gh-page
+          git switch gh-pages
           echo "docs.ask-a-question.com" >> CNAME
           git add CNAME
           git commit -m "Add CNAME"
-          git push origin gh-page
+          git push origin gh-pages
