@@ -27,8 +27,8 @@ jobs:
           mkdocs-material-extensions==1.3.1 \
           mkdocs-open-in-new-tab==1.0.3 \
           mike==2.1.2
-      - run: |
+      - run: | # TODO: switch v0.1.0 to github.ref_name
           git config user.name github-actions-runner
-          git config user.email dsem@idinsight.org
-          mike deploy --push --update-aliases ${{ github.ref_name }} latest
+          git config user.email aaq@idinsight.org
+          mike deploy --push --update-aliases v0.1.0 latest
           mike set-default --push latest
