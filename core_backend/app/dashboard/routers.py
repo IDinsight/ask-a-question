@@ -34,7 +34,7 @@ async def retrieve_performance_frequency(
     time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-    top_n: int = 20,
+    top_n: int | None = None,
 ) -> DashboardPerformance:
     """
     Retrieve timeseries data on content usage and performance of each content
@@ -57,7 +57,7 @@ async def retrieve_performance_frequency(
 async def retrieve_performance(
     user_id: int,
     asession: AsyncSession,
-    top_n: int,
+    top_n: int | None,
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
