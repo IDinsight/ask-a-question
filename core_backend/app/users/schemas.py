@@ -12,6 +12,7 @@ class UserCreate(BaseModel):
 
     username: str
     content_quota: int
+    api_daily_quota: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 

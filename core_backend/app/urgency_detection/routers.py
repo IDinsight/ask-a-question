@@ -1,9 +1,11 @@
+"""This module contains the FastAPI router for the urgency detection endpoints."""
+
 from typing import Callable
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_key
+from ..auth.dependencies import authenticate_key, rate_limiter
 from ..database import get_async_session
 from ..llm_call.entailment import detect_urgency
 from ..urgency_rules.models import (
@@ -28,16 +30,27 @@ TAG_METADATA = {
 
 logger = setup_logger()
 router = APIRouter(
-    dependencies=[Depends(authenticate_key)], tags=[TAG_METADATA["name"]]
+    dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
+    tags=[TAG_METADATA["name"]],
 )
 
 ALL_URGENCY_CLASSIFIERS = {}
 
 
 def urgency_classifier(classifier_func: Callable) -> Callable:
+    """Decorator to register classifier functions.
+
+    Parameters
+    ----------
+    classifier_func
+        The classifier function to register.
+
+    Returns
+    -------
+    Callable
+        The classifier function.
     """
-    Decorator to register classifier functions
-    """
+
     ALL_URGENCY_CLASSIFIERS[classifier_func.__name__] = classifier_func
     return classifier_func
 
@@ -82,8 +95,21 @@ async def cosine_distance_classifier(
     urgency_query: UrgencyQuery,
     asession: AsyncSession,
 ) -> UrgencyResponse:
-    """
-    Classify the urgency of a text message using cosine distance
+    """Classify the urgency of a text message using cosine distance.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting to classify the urgency of the text message.
+    urgency_query
+        The urgency query to classify.
+    asession
+        `AsyncSession` object for database transactions.
+
+    Returns
+    -------
+    UrgencyResponse
+        The urgency response object.
     """
 
     cosine_distances = await get_cosine_distances_from_rules(
@@ -92,17 +118,12 @@ async def cosine_distance_classifier(
         asession=asession,
     )
     matched_rules = []
-    for _, rule in cosine_distances.items():
+    for rule in cosine_distances.values():
         if float(rule.distance) < float(URGENCY_DETECTION_MAX_DISTANCE):
             matched_rules.append(str(rule.urgency_rule))
 
-    if matched_rules:
-        return UrgencyResponse(
-            is_urgent=True, matched_rules=matched_rules, details=cosine_distances
-        )
-
     return UrgencyResponse(
-        is_urgent=False,
+        is_urgent=len(matched_rules) > 0,
         matched_rules=matched_rules,
         details=cosine_distances,
     )
@@ -114,13 +135,25 @@ async def llm_entailment_classifier(
     urgency_query: UrgencyQuery,
     asession: AsyncSession,
 ) -> UrgencyResponse:
+    """Classify the urgency of a text message using LLM entailment.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user requesting to classify the urgency of the text message.
+    urgency_query
+        The urgency query to classify.
+    asession
+        `AsyncSession` object for database transactions.
+
+    Returns
+    -------
+    UrgencyResponse
+        The urgency response object.
     """
-    Classify the urgency of a text message using LLM entailment
-    """
+
     rules = await get_urgency_rules_from_db(user_id=user_id, asession=asession)
-    metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
-    }
+    metadata = {"trace_user_id": "user_id-" + str(user_id)}
     urgency_rules = [rule.urgency_rule_text for rule in rules]
 
     if len(urgency_rules) == 0:

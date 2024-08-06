@@ -1,7 +1,7 @@
 site_name: "" # already part of the logo
 site_description: "Ask A Question Documentation"
-site_url: https://idinsight.github.io/aaq-core/
-repo_url: https://github.com/IDinsight/aaq-core
+site_url: https://ask-a-question.com//
+repo_url: https://github.com/IDinsight/ask-a-question
 copyright: "© 2024 IDinsight"
 extra:
   analytics:

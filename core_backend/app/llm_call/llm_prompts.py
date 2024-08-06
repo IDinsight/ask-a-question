@@ -245,7 +245,7 @@ REFERENCE TEXT:
 {context}
 
 IMPORTANT NOTES ON THE "answer" FIELD:
-- Answer in the language of the question.
+- Answer in the language of the question ({original_language}).
 - Do not include any information that is not present in the REFERENCE TEXT.
 """
 )

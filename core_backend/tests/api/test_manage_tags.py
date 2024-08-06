@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from typing import Generator
 
 import pytest
@@ -207,8 +207,8 @@ def test_convert_record_to_schema() -> None:
         tag_id=tag_id,
         user_id=user_id,
         tag_name="tag",
-        created_datetime_utc=datetime.datetime.utcnow(),
-        updated_datetime_utc=datetime.datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
     result = _convert_record_to_schema(record)
     assert result.tag_id == tag_id

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class QueryResponseExtract(BaseModel):
@@ -14,6 +14,10 @@ class QueryResponseExtract(BaseModel):
     llm_response: str | None
     response_datetime_utc: datetime
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
 
 class QueryResponseErrorExtract(BaseModel):
     """
@@ -25,6 +29,10 @@ class QueryResponseErrorExtract(BaseModel):
     error_type: str
     error_datetime_utc: datetime
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
 
 class ResponseFeedbackExtract(BaseModel):
     """
@@ -35,6 +43,10 @@ class ResponseFeedbackExtract(BaseModel):
     feedback_sentiment: str
     feedback_text: str | None
     feedback_datetime_utc: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
 
 class ContentFeedbackExtract(BaseModel):
@@ -48,6 +60,10 @@ class ContentFeedbackExtract(BaseModel):
     feedback_datetime_utc: datetime
     content_id: int
 
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
 
 class QueryExtract(BaseModel):
     """
@@ -60,7 +76,35 @@ class QueryExtract(BaseModel):
     query_text: str
     query_metadata: dict
     query_datetime_utc: datetime
-    response: QueryResponseExtract | None
-    response_error: QueryResponseErrorExtract | None
+    response: List[QueryResponseExtract]
     response_feedback: List[ResponseFeedbackExtract]
     content_feedback: List[ContentFeedbackExtract]
+
+
+class UrgencyQueryResponseExtract(BaseModel):
+    """
+    Model when valid response is returned
+    """
+
+    urgency_response_id: int
+    is_urgent: bool
+    matched_rules: List[str] | None
+    details: Dict
+    response_datetime_utc: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+class UrgencyQueryExtract(BaseModel):
+    """
+    Main model that is returned for an urgency query.
+    Contains all related child models
+    """
+
+    urgency_query_id: int
+    user_id: int
+    message_text: str
+    message_datetime_utc: datetime
+    response: UrgencyQueryResponseExtract | None

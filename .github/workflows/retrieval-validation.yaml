@@ -65,7 +65,7 @@ jobs:
           python -m alembic upgrade head
       - name: Run validation script
         env:
-          N_TOP_CONTENT_FOR_SEARCH: 10
+          N_TOP_CONTENT: 10
           PROMETHEUS_MULTIPROC_DIR: /tmp
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           REPO: ${{ github.repository }}

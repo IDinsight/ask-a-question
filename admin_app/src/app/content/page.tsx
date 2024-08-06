@@ -314,6 +314,14 @@ const CardsGrid = ({
   }, [action, content_id, getSnackMessage]);
 
   const [refreshKey, setRefreshKey] = React.useState(0);
+  const onSuccessfulArchive = (content_id: number) => {
+    setIsLoading(true);
+    setRefreshKey((prevKey) => prevKey + 1);
+    setSnackMessage({
+      message: `Content #${content_id} removed successfully`,
+      color: "success",
+    });
+  };
   const onSuccessfulDelete = (content_id: number) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
@@ -460,15 +468,15 @@ const CardsGrid = ({
                         }
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
-                        onSuccessfulDelete={onSuccessfulDelete}
-                        onFailedDelete={(content_id: number) => {
+                        onSuccessfulArchive={onSuccessfulArchive}
+                        onFailedArchive={(content_id: number) => {
                           setSnackMessage({
-                            message: `Failed to delete content #${content_id}`,
+                            message: `Failed to remove content #${content_id}`,
                             color: "error",
                           });
                         }}
-                        deleteContent={(content_id: number) => {
-                          return apiCalls.deleteContent(content_id, token!);
+                        archiveContent={(content_id: number) => {
+                          return apiCalls.archiveContent(content_id, token!);
                         }}
                         editAccess={accessLevel === "fullaccess"}
                       />

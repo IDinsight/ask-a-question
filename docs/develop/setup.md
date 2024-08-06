@@ -9,10 +9,10 @@ You can view the [pros and cons of each method](#pros-and-cons-of-each-setup-met
 the bottom.
 
 Before you get started, please fork the
-[project repository](https://github.com/IDinsight/aaq-core) by clicking on the
+[project repository](https://github.com/IDinsight/ask-a-question) by clicking on the
 "Fork" button and then clone the repo using:
 
-    git clone git@github.com:<your GitHub handle>/aaq-core.git
+    git clone git@github.com:<your GitHub handle>/ask-a-question.git
 
 For questions related to setup, please contact
 [AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
@@ -31,7 +31,7 @@ the `watch` command.
 
 1. Navigate to the `deployment/docker-compose` directory.
 
-        cd ~/aaq-core/deployment/docker-compose
+        cd ask-a-question/deployment/docker-compose
 
 2. Copy `template.env` to a new file named `.env` within the same directory, and set
    the necessary variables. For local setup, you just need to set your own
@@ -100,7 +100,7 @@ procedures.
 ---
 **Note**
 
-Ensure that you are in the `aaq-core` project directory before proceeding.
+Ensure that you are in the `ask-a-question` project directory before proceeding.
 
 ---
 
@@ -230,7 +230,7 @@ be found in `/core_backend/add_users_to_db.py`.
         python core_backend/main.py
 
     ??? note "Here's what you should see if the above command executes successfully"
-            INFO:     Will watch for changes in these directories: ['~/aaq-core']
+            INFO:     Will watch for changes in these directories: ['~/ask-a-question']
             INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
             INFO:     Started reloader process [73855] using StatReload
             INFO:     Started server process [73858]
@@ -255,7 +255,7 @@ be found in `/core_backend/add_users_to_db.py`.
 ---
 **NB**
 
-Ensure that you are in the `aaq-core` project directory and that you have activated the
+Ensure that you are in the `ask-a-question` project directory and that you have activated the
 `aaq` virtual environment before proceeding.
 
 ---
@@ -292,13 +292,13 @@ Ensure that you are in the `aaq-core` project directory and that you have activa
 ---
 **NB**
 
-Ensure that you are in the `aaq-core` project directory and that you have activated the
+Ensure that you are in the `ask-a-question` project directory and that you have activated the
 `aaq` virtual environment before proceeding.
 
 ---
 
 1. To host docs offline so that you can see documentation changes in real-time, run the
-following from `aaq-core` repository root with an altered port (so that it doesn't
+following from `ask-a-question` repository root with an altered port (so that it doesn't
 interfere with the app's server):
 
         mkdocs serve -a localhost:8080

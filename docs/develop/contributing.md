@@ -19,15 +19,15 @@ guidelines on how to contribute to the project with a minimal setup.
 This section shows you how to raise a pull request to the project.
 
 ### Make a fork
-1. Fork the [project repository](https://github.com/IDinsight/aaq-core) by clicking on
+1. Fork the [project repository](https://github.com/IDinsight/ask-a-question) by clicking on
 the "Fork" button.
 2. Clone the repo using:
 
-        git clone git@github.com:<your GitHub handle>/aaq-core.git
+        git clone git@github.com:<your GitHub handle>/ask-a-question.git
 
 3. Navigate to the project directory.
 
-        cd aaq-core
+        cd ask-a-question
 
 ### Install prerequisites
 

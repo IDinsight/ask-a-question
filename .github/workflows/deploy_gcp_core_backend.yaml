@@ -9,22 +9,42 @@ on:
     paths:
       - "core_backend/**"
       - ".github/workflows/deploy_gcp_core_backend.yaml"
+  release:
+    types: [released]
   workflow_dispatch:
 
 jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ steps.set-env.outputs.env_name }}
+    steps:
+      - name: Resolve deployment environment name
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
   DeployCoreBackendToGCP:
+    needs: [set-env]
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: "read"
       id-token: "write"
 
-    # TODO: replace improve-gcp-deploy with main
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    environment: gcp-${{ needs.set-env.outputs.env_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
-      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      TAG: ${{ (needs.set-env.outputs.env_name == 'production' && github.ref_name) || github.sha }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -62,7 +82,7 @@ jobs:
         run: |
           docker build \
             -t ${{ env.REPO }}/core_backend:latest \
-            -t ${{ env.REPO }}/core_backend:${{ github.sha }} \
+            -t ${{ env.REPO }}/core_backend:${{ env.TAG }} \
             .
           docker image push --all-tags ${{ env.REPO }}/core_backend
 
@@ -97,12 +117,13 @@ jobs:
               -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
               -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
+              -e REDIS_HOST=redis://redis:6379 \
               -e LANGFUSE=True \
               -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
               -e BACKEND_ROOT_PATH=/api \
               ${{ env.REPO }}/core_backend:latest
-            docker system prune -f;
+            docker system prune -f || true
 
       - name: Show deployment command output
         run: |-

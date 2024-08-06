@@ -9,21 +9,42 @@ on:
     paths:
       - "admin_app/**"
       - ".github/workflows/deploy_gcp_admin_app.yaml"
+  release:
+    types: [released]
   workflow_dispatch:
 
 jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ steps.set-env.outputs.env_name }}
+    steps:
+      - name: Resolve deployment environment name
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
   DeployAdminAppToGCP:
+    needs: [set-env]
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    environment: gcp-${{ needs.set-env.outputs.env_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
-      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      REPO: ${{ secrets.DOCKER_REGISTRY_DOMAIN }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
+      TAG: ${{ (needs.set-env.outputs.env_name == 'production' && github.ref_name) || github.sha }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -56,7 +77,7 @@ jobs:
             --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
             --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
             -t ${{ env.REPO }}/admin_app:latest \
-            -t ${{ env.REPO }}/admin_app:${{ github.sha }} \
+            -t ${{ env.REPO }}/admin_app:${{ env.TAG }} \
             .
           docker image push --all-tags ${{ env.REPO }}/admin_app
 
@@ -82,7 +103,7 @@ jobs:
               --network aaq-network \
               --name admin_app \
               ${{ env.REPO }}/admin_app:latest
-            docker system prune -f;
+            docker system prune -f || true
 
       - name: Show deployment command output
         run: |-

@@ -46,7 +46,6 @@ We've also simplified the parameters in our response model so it's easier to use
     },
     "feedback_secret_key": "secret-key-12345-abcde",
     "debug_info": {"example": "debug-info"},
-    "state": "final",
 }
 ```
 

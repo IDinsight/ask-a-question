@@ -9,21 +9,40 @@ on:
     paths:
       - "deployment/docker-compose/caddy/**"
       - ".github/workflows/deploy_gcp_caddy.yaml"
+  release:
+    types: [released]
   workflow_dispatch:
 
 jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ steps.set-env.outputs.env_name }}
+    steps:
+      - name: Resolve deployment environment name
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
   DeployCaddyToGCP:
+    needs: [set-env]
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: "read"
       id-token: "write"
 
-    # TODO: replace improve-gcp-deploy with main
-    environment: gcp-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+    environment: gcp-${{ needs.set-env.outputs.env_name }}
 
     env:
-      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ (github.ref_name == 'main' && 'testing') || github.ref_name }}
+      RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -73,7 +92,7 @@ jobs:
                 --network aaq-network \
                 --name caddy \
                 caddy:2.7.6
-            docker system prune --volumes -f;
+            docker system prune --volumes -f || true
 
       - name: Show deployment command output
         run: |-
