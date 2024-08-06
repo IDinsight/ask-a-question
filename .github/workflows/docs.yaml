@@ -32,6 +32,7 @@ jobs:
         run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
+          git fetch origin gh-pages
           mike deploy \
             --push \
             --update-aliases ${{ github.ref_name }} latest
