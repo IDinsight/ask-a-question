@@ -30,13 +30,13 @@ jobs:
           mike==2.1.2
 
       - name: Build and push docs version
-        run: | # TODO: Change v0.1.1-test to github.ref_name
+        run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           git fetch origin gh-pages
           mike deploy \
             --push \
-            --update-aliases v0.1.1-test latest
+            --update-aliases ${{ github.ref_name }} latest
 
       - name: Add CNAME
         run: |
