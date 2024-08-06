@@ -30,5 +30,8 @@ jobs:
       - run: |
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
-          mike deploy --ignore-remote-status --push --update-aliases ${{ github.ref_name }} latest
+          mike deploy \
+            --ignore-remote-status \
+            --update-aliases ${{ github.ref_name }} latest
+          git push --force origin gh-pages
           mike set-default --push latest
