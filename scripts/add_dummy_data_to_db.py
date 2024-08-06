@@ -1,5 +1,6 @@
 # This script is useful if you want to test the dashboard with dummy data.
 # Navigate to the root directory of the project and run the following command:
+#   > make setup-dev
 #   > python scripts/add_dummy_data_to_db.py
 
 import os
@@ -35,6 +36,7 @@ from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyRes
 # admin user (first user is admin)
 USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
+_USER_ID = 1
 
 N_DATAPOINTS = 10
 URGENCY_RATE = 0.1
@@ -121,7 +123,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     Create an urgency record for a given datetime.
     """
     urgency_db = UrgencyQueryDB(
-        user_id=1,
+        user_id=_USER_ID,
         message_text="test message",
         message_datetime_utc=dt,
         feedback_secret_key="abc123",
@@ -132,6 +134,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
         is_urgent=is_urgent,
         details={"details": "test details"},
         query_id=urgency_db.urgency_query_id,
+        user_id=_USER_ID,
         response_datetime_utc=dt,
     )
     session.add(urgency_response)
@@ -143,7 +146,7 @@ def create_query_record(dt: datetime, session: Session) -> int:
     Create a query record for a given datetime.
     """
     query_db = QueryDB(
-        user_id=1,
+        user_id=_USER_ID,
         feedback_secret_key="abc123",
         query_text="test query",
         query_generate_llm_response=False,
@@ -165,6 +168,7 @@ def create_feedback_record(
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=dt,
         query_id=query_id,
+        user_id=_USER_ID,
         feedback_sentiment=sentiment,
     )
     session.add(feedback_db)
@@ -184,6 +188,7 @@ def create_content_feedback_record(
         feedback_db = ContentFeedbackDB(
             feedback_datetime_utc=dt,
             query_id=query_id,
+            user_id=_USER_ID,
             content_id=content_id,
             feedback_sentiment=sentiment,
         )
@@ -209,7 +214,7 @@ def add_content_data() -> None:
         positive_votes = np.random.randint(0, query_count)
         negative_votes = np.random.randint(0, query_count - positive_votes)
         content_db = ContentDB(
-            user_id=1,
+            user_id=_USER_ID,
             content_embedding=np.random.rand(int(PGVECTOR_VECTOR_SIZE))
             .astype(np.float32)
             .tolist(),

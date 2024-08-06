@@ -28,10 +28,10 @@ class UrgencyRuleDB(Base):
     """ORM for managing urgency detection rules.
 
     This database ties into the Admin app and allows the user to view, add, edit,
-    and delete content in the `urgency-rule` table.
+    and delete content in the `urgency_rule` table.
     """
 
-    __tablename__ = "urgency-rule"
+    __tablename__ = "urgency_rule"
 
     urgency_rule_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False

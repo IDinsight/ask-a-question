@@ -155,10 +155,13 @@ class QueryResponseDB(Base):
     responses to a user's query.
     """
 
-    __tablename__ = "query-response"
+    __tablename__ = "query_response"
 
     response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
@@ -206,10 +209,10 @@ async def save_query_response_to_db(
     QueryResponseDB
         The user query response database object.
     """
-
     if type(response) is QueryResponse:
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
+            user_id=user_query_db.user_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
             response_datetime_utc=datetime.now(timezone.utc),
@@ -219,6 +222,7 @@ async def save_query_response_to_db(
     elif type(response) is QueryResponseError:
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
+            user_id=user_query_db.user_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
             response_datetime_utc=datetime.now(timezone.utc),
@@ -314,13 +318,16 @@ class ResponseFeedbackDB(Base):
     feedback response to a user's query.
     """
 
-    __tablename__ = "query-response-feedback"
+    __tablename__ = "query_response_feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -363,11 +370,17 @@ async def save_response_feedback_to_db(
     ResponseFeedbackDB
         The response feedback database object.
     """
+    # Fetch user_id from the query table
+    result = await asession.execute(
+        select(QueryDB.user_id).where(QueryDB.query_id == feedback.query_id)
+    )
+    user_id = result.scalar_one()
 
     response_feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=datetime.now(timezone.utc),
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
+        user_id=user_id,
         feedback_text=feedback.feedback_text,
     )
     asession.add(response_feedback_db)
@@ -383,13 +396,16 @@ class ContentFeedbackDB(Base):
     content feedback response to a user's query.
     """
 
-    __tablename__ = "content-feedback"
+    __tablename__ = "content_feedback"
 
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.user_id"), nullable=False
+    )
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -435,11 +451,17 @@ async def save_content_feedback_to_db(
     ContentFeedbackDB
         The content feedback database object.
     """
+    # Fetch user_id from the query table
+    result = await asession.execute(
+        select(QueryDB.user_id).where(QueryDB.query_id == feedback.query_id)
+    )
+    user_id = result.scalar_one()
 
     content_feedback_db = ContentFeedbackDB(
         feedback_datetime_utc=datetime.now(timezone.utc),
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
+        user_id=user_id,
         feedback_text=feedback.feedback_text,
         content_id=feedback.content_id,
     )

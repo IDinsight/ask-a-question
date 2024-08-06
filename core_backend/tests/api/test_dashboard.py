@@ -479,6 +479,7 @@ class TestTimeSeries:
                 is_urgent=(i % 2 == 0),
                 details={"details": "test details"},
                 query_id=urgency_db.urgency_query_id,
+                user_id=user_id,
                 response_datetime_utc=created_datetime,
             )
             asession.add(urgency_response)
@@ -523,6 +524,7 @@ class TestTimeSeries:
 
             feedback = ResponseFeedbackDB(
                 query_id=query.query_id,
+                user_id=user_id,
                 feedback_sentiment=sentiment,
                 feedback_datetime_utc=created_datetime,
             )

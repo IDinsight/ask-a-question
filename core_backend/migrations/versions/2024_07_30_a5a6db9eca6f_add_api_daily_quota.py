@@ -1,7 +1,7 @@
 """add api daily quota
 
 Revision ID: a5a6db9eca6f
-Revises: 28861161249b
+Revises: 9d0519332fdd
 Create Date: 2024-07-04 13:31:11.544070
 
 """
