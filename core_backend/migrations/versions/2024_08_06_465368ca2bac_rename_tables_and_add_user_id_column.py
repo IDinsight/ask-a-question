@@ -211,9 +211,9 @@ def downgrade() -> None:
         "ALTER INDEX ix_content_feedback_feedback_id "
         'RENAME TO "ix_content-feedback_feedback_id"'
     )
-    op.execute("ALTER INDEX content_feedback_pkey" 'RENAME TO "content-feedback_pkey"')
+    op.execute('ALTER INDEX content_feedback_pkey RENAME TO "content-feedback_pkey"')
     op.execute(
-        "ALTER SEQUENCE content_feedback_feedback_id_seq"
+        "ALTER SEQUENCE content_feedback_feedback_id_seq "
         'RENAME TO "content-feedback_feedback_id_seq"'
     )
 
@@ -242,6 +242,8 @@ def downgrade() -> None:
     )
     op.execute('ALTER INDEX urgency_response_pkey RENAME TO "urgency-response_pkey"')
     op.execute(
-        "ALTER SEQUENCE urgency_response_urgency_response_id_seq"
+        "ALTER SEQUENCE urgency_response_urgency_response_id_seq "
         'RENAME TO "urgency-response_urgency_response_id_seq"'
     )
+
+    op.rename_table("content_tag", "content-tag")
