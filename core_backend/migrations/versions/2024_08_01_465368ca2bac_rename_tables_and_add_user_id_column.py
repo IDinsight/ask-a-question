@@ -1,7 +1,7 @@
 """Rename tables and add user_id column
 
 Revision ID: 465368ca2bac
-Revises: 9d0519332fdd
+Revises: b87b336df479
 Create Date: 2024-08-01 20:36:52.629572
 
 """
