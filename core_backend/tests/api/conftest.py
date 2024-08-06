@@ -174,7 +174,7 @@ async def faq_contents(
 
     asession.add_all(contents)
     await asession.commit()
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
     yield [content.content_id for content in contents]
 
     for content in contents:
@@ -188,7 +188,7 @@ async def faq_contents(
         await asession.execute(content_query)
         await asession.delete(content)
     await asession.commit()
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
 
 
 @pytest.fixture(
