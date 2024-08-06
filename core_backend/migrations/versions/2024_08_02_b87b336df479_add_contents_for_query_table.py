@@ -1,7 +1,7 @@
 """add contents for query table
 
 Revision ID: b87b336df479
-Revises: 9d0519332fdd
+Revises: a5a6db9eca6f
 Create Date: 2024-08-02 09:44:31.724254
 
 """
