@@ -9,6 +9,8 @@ services:
     restart: always
     env_file:
       - .env
+    depends_on:
+      - redis
     develop:
       watch:
         - action: rebuild
@@ -93,11 +95,13 @@ services:
       watch:
         - action: rebuild
           path: ../../optional_components/embeddings
+
   redis:
     image: "redis:6.0-alpine"
-    ports:
+    ports: # Expose the port to port 6380 on the host machine
       - "6380:6379"
     restart: always
+
 volumes:
   caddy_data:
   caddy_config:
