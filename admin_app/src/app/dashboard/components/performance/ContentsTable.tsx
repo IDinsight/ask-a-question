@@ -4,14 +4,7 @@ import TextField from "@mui/material/TextField";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import Pagination from "@mui/material/Pagination";
 import Box from "@mui/material/Box";
-
-interface RowDataType {
-  title: string;
-  totalSent: number;
-  totalUpvotePercentage: number;
-  totalDownvotePercentage: number;
-  id: number;
-}
+import { RowDataType } from "@/app/dashboard/types";
 
 const ContentsTable = ({
   rows,
@@ -103,9 +96,9 @@ const ContentsTable = ({
         </Grid>
       </Grid>
 
-      {rows.map((row) => (
+      {rows.map((row, id) => (
         <Grid
-          key={row.id}
+          key={id}
           container
           spacing={2}
           md={14}
@@ -124,9 +117,9 @@ const ContentsTable = ({
           }}
         >
           <Grid md={6}>{row.title}</Grid>
-          <Grid md={2}>{row.totalSent}</Grid>
-          <Grid md={2}>{row.totalUpvotePercentage}</Grid>
-          <Grid md={2}>{row.totalDownvotePercentage}</Grid>
+          <Grid md={2}>{row.query_count}</Grid>
+          <Grid md={2}>{row.positive_votes}</Grid>
+          <Grid md={2}>{row.negative_votes}</Grid>
           <Grid md={2}>[TRENDLINE]</Grid>
         </Grid>
       ))}

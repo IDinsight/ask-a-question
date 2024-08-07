@@ -4,7 +4,7 @@ import Drawer from "@mui/material/Drawer";
 import LineChart from "@/app/dashboard/components/performance/LineChart";
 import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
 import { getPerformancePageData } from "@/app/dashboard/api";
-import { ApexData, Period } from "@/app/dashboard/types";
+import { ApexData, Period, RowDataType } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
 import rows from "./rows";
@@ -20,6 +20,10 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [lineChartData, setLineChartData] = React.useState<ApexData[]>([]);
+  const [contentTableData, setContentTableData] = React.useState<RowDataType[]>(
+    [],
+  );
+
   const toggleDrawer = (newOpen: boolean) => () => {
     setDrawerOpen(newOpen);
   };
@@ -30,7 +34,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
         (response) => {
           console.log(response.content_time_series);
           parseLineChartData(response.content_time_series);
-          // parseContentTableData(response.content_time_series);
+          parseContentTableData(response.content_time_series);
         },
       );
     } else {
@@ -60,6 +64,20 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     setLineChartData(apexTimeSeriesData);
   };
 
+  const parseContentTableData = (timeseriesData: Record<string, any>[]) => {
+    const rows: RowDataType[] = timeseriesData.map((series) => {
+      return {
+        title: series.title,
+        query_count: series.total_query_count,
+        positive_votes: series.positive_votes,
+        negative_votes: series.negative_votes,
+        query_count_timeseries: Object.values(series.query_count_time_series),
+      };
+    });
+    console.log(rows);
+    setContentTableData(rows);
+  };
+
   return (
     <>
       <Drawer open={drawerOpen} onClose={toggleDrawer(false)} anchor="right">
@@ -86,7 +104,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
           timePeriod={timePeriod}
         />
       </Box>
-      <ContentsTable rows={rows} onClick={toggleDrawer(true)} />
+      <ContentsTable rows={contentTableData} onClick={toggleDrawer(true)} />
     </>
   );
 };
