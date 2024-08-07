@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
 from .schemas import TranscriptionRequest, TranscriptionResponse
@@ -23,7 +23,10 @@ async def transcribe_audio_endpoint(
 
         if not os.path.exists(request.file_path):
             logger.error(f"File not found: {request.file_path}")
-            return JSONResponse(status_code=404, content={"error": "File not found."})
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"error": "File not found."},
+            )
 
         result = await transcribe_audio(request.file_path)
         return result
@@ -31,5 +34,6 @@ async def transcribe_audio_endpoint(
     except Exception as e:
         logger.error(f"Error during transcription: {str(e)}")
         return JSONResponse(
-            status_code=500, content={"error": "An unexpected error occurred."}
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": "An unexpected error occurred."},
         )
