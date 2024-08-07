@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..llm_call.entailment import UrgencyDetectionEntailment
 from ..urgency_rules.schemas import UrgencyRuleCosineDistance
@@ -11,19 +11,14 @@ class UrgencyQuery(BaseModel):
     Query for urgency detection
     """
 
-    message_text: str
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "message_text": "Is it normal to feel dizzy and blurry vision?"
-                    "I've also been feeling nauseous for the past few weeks.",
-                }
-            ]
-        },
+    message_text: str = Field(
+        ...,
+        examples=[
+            "Is it normal to feel dizzy and blurry vision? I've also been feeling nauseous for the past few weeks."  # noqa: E501
+        ],
     )
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UrgencyResponse(BaseModel):

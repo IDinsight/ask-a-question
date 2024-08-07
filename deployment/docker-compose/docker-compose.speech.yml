@@ -1,0 +1,28 @@
+services:
+  core_backend:
+    depends_on:
+      - speech_service
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
+
+  speech_service:
+    build:
+      context: ../../optional_components/speech_api
+      dockerfile: Dockerfile
+      args:
+        PREFERRED_MODEL: ${PREFERRED_MODEL}
+    image: idinsight/speech-service:latest
+    restart: always
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../optional_components/speech_api
+    volumes:
+      - temp:/usr/src/speech_service/temp
+
+volumes:
+  temp:

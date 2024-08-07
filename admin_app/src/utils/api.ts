@@ -9,7 +9,7 @@ interface ContentBody {
 
 const getUser = async (token: string) => {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -68,6 +68,23 @@ const getContent = async (content_id: number, token: string) => {
       return resp;
     } else {
       throw new Error("Error fetching content");
+    }
+  });
+};
+
+const archiveContent = async (content_id: number, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/content/${content_id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error deleting content");
     }
   });
 };
@@ -447,6 +464,7 @@ export const apiCalls = {
   getUser,
   getContentList,
   getContent,
+  archiveContent,
   deleteContent,
   editContent,
   createContent,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     DateTime,
@@ -38,11 +38,16 @@ class UserDB(Base):
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
     api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=True)
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime, nullable=True
+        DateTime(timezone=True), nullable=True
     )
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
-    created_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    updated_datetime_utc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    created_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     def __repr__(self) -> str:
         """Pretty Print"""
@@ -77,9 +82,10 @@ async def save_user_to_db(
     user_db = UserDB(
         username=user.username,
         content_quota=user.content_quota,
+        api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        created_datetime_utc=datetime.now(timezone.utc),
+        updated_datetime_utc=datetime.now(timezone.utc),
     )
 
     asession.add(user_db)
@@ -100,8 +106,8 @@ async def update_user_api_key(
 
     user_db.hashed_api_key = get_key_hash(new_api_key)
     user_db.api_key_first_characters = new_api_key[:5]
-    user_db.api_key_updated_datetime_utc = datetime.utcnow()
-    user_db.updated_datetime_utc = datetime.utcnow()
+    user_db.api_key_updated_datetime_utc = datetime.now(timezone.utc)
+    user_db.updated_datetime_utc = datetime.now(timezone.utc)
 
     await asession.commit()
     await asession.refresh(user_db)

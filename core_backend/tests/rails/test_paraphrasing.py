@@ -35,7 +35,11 @@ async def test_paraphrasing(test_data: Dict) -> None:
     contains = test_data.get("contains", [])
     missing = test_data.get("missing", [])
 
-    question = QueryRefined(query_text=message, query_text_original=message)
+    question = QueryRefined(
+        query_text=message,
+        user_id=124,
+        query_text_original=message,
+    )
     response = QueryResponse(
         query_id=1,
         search_results=None,

@@ -10,7 +10,7 @@ Below is a tutorial for how to load our FAQ template flow into Glific and connec
 
     ![click import](./tutorial/2_click_import.png){ width="400" }
 
-3. Select a `.json` file given under `chat_managers/glific/` in the [AAQ repo](https://github.com/IDinsight/aaq-core/tree/main/chat_managers/glific)
+3. Select a `.json` file given under `chat_managers/glific/` in the [AAQ repo](https://github.com/IDinsight/ask-a-question/tree/main/chat_managers/glific)
 
     ![import flow](./tutorial/3_load_flow.png){ width="600" }
 

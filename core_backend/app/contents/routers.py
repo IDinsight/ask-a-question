@@ -3,6 +3,7 @@
 from typing import Annotated, List, Optional
 
 import pandas as pd
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
@@ -19,6 +20,7 @@ from ..users.models import UserDB, get_content_quota_by_userid
 from ..utils import setup_logger
 from .models import (
     ContentDB,
+    archive_content_from_db,
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
@@ -69,6 +71,7 @@ async def create_content(
 
     ⚠️ To add tags, first use the tags endpoint to create tags.
     """
+
     is_tag_valid, content_tags = await validate_tags(
         user_db.user_id, content.content_tags, asession
     )
@@ -96,6 +99,7 @@ async def create_content(
     content_db = await save_content_to_db(
         user_id=user_db.user_id,
         content=content,
+        exclude_archived=False,  # Don't exclude for newly saved content!
         asession=asession,
     )
     return _convert_record_to_schema(content_db)
@@ -106,6 +110,7 @@ async def edit_content(
     content_id: int,
     content: ContentCreate,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
@@ -115,6 +120,7 @@ async def edit_content(
     old_content = await get_content_from_db(
         user_id=user_db.user_id,
         content_id=content_id,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
@@ -133,6 +139,7 @@ async def edit_content(
             detail=f"Invalid tag ids: {content_tags}",
         )
     content.content_tags = content_tags
+    content.is_archived = old_content.is_archived
     updated_content = await update_content_in_db(
         user_id=user_db.user_id,
         content_id=content_id,
@@ -148,6 +155,7 @@ async def retrieve_content(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     skip: int = 0,
     limit: int = 50,
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> List[ContentRetrieve]:
     """
@@ -158,10 +166,39 @@ async def retrieve_content(
         user_id=user_db.user_id,
         offset=skip,
         limit=limit,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
     contents = [_convert_record_to_schema(c) for c in records]
     return contents
+
+
+@router.patch("/{content_id}")
+async def archive_content(
+    content_id: int,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> None:
+    """
+    Archive content by ID.
+    """
+
+    record = await get_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content id `{content_id}` not found",
+        )
+    await archive_content_from_db(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+    )
 
 
 @router.delete("/{content_id}")
@@ -185,17 +222,26 @@ async def delete_content(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Content id `{content_id}` not found",
         )
-    await delete_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
-        asession=asession,
-    )
+
+    try:
+        await delete_content_from_db(
+            user_id=user_db.user_id,
+            content_id=content_id,
+            asession=asession,
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.error(f"Error deleting content: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Deletion of content with feedback is not allowed.",
+        ) from e
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: int,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """
@@ -205,6 +251,7 @@ async def retrieve_content_by_id(
     record = await get_content_from_db(
         user_id=user_db.user_id,
         content_id=content_id,
+        exclude_archived=exclude_archived,
         asession=asession,
     )
 
@@ -221,6 +268,7 @@ async def retrieve_content_by_id(
 async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
@@ -293,8 +341,12 @@ async def bulk_upload_contents(
             content_tags=content_tags,
             content_metadata={},
         )
+
         content_db = await save_content_to_db(
-            user_id=user_db.user_id, content=content, asession=asession
+            user_id=user_db.user_id,
+            content=content,
+            exclude_archived=exclude_archived,
+            asession=asession,
         )
         content_retrieve = _convert_record_to_schema(content_db)
         created_contents.append(content_retrieve)
@@ -350,7 +402,10 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
                 )
             ]
         )
-        raise HTTPException(status_code=400, detail=error_list_model.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_list_model.model_dump(),
+        )
 
     return df
 
@@ -615,17 +670,25 @@ async def _check_content_quota_availability(
     # if content_quota is None, then there is no limit
     if content_quota is not None:
         # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        n_contents_in_db = len(user_contents)
+        stmt = select(ContentDB).where(
+            (ContentDB.user_id == user_id) & (~ContentDB.is_archived)
+        )
+        user_active_contents = (await asession.execute(stmt)).all()
+        n_contents_in_db = len(user_active_contents)
 
         # error if total of existing and new contents exceeds the quota
         if (n_contents_in_db + n_contents_to_add) > content_quota:
-            raise ExceedsContentQuotaError(
-                f"Adding {n_contents_to_add} new contents to the already existing "
-                f"{n_contents_in_db} in the database would exceed the allowed limit "
-                f"of {content_quota} contents."
-            )
+            if n_contents_in_db > 0:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the already existing "
+                    f"{n_contents_in_db} in the database would exceed the allowed "
+                    f"limit of {content_quota} contents."
+                )
+            else:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the database would "
+                    f"exceed the allowed limit of {content_quota} contents."
+                )
 
 
 def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
@@ -641,7 +704,6 @@ def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     -------
     List[str]
         A list of unique tags.
-
     """
 
     # prep col
@@ -706,6 +768,7 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
         content_metadata=record.content_metadata,
         created_datetime_utc=record.created_datetime_utc,
         updated_datetime_utc=record.updated_datetime_utc,
+        is_archived=record.is_archived,
     )
 
     return content_retrieve

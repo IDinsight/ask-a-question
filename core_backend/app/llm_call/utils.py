@@ -9,15 +9,15 @@ logger = setup_logger("LLM_call")
 
 
 async def _ask_llm_async(
-    question: str,
-    prompt: str,
+    user_message: str,
+    system_message: str,
     litellm_model: Optional[str] = LITELLM_MODEL_DEFAULT,
     litellm_endpoint: Optional[str] = LITELLM_ENDPOINT,
     metadata: Optional[dict] = None,
     json: bool = False,
 ) -> str:
     """
-    This is a generic function to ask the LLM model a question.
+    This is a generic function to send an LLM call.
     """
     if metadata is not None:
         metadata["generation_name"] = litellm_model
@@ -28,11 +28,11 @@ async def _ask_llm_async(
 
     messages = [
         {
-            "content": prompt,
+            "content": system_message,
             "role": "system",
         },
         {
-            "content": question,
+            "content": user_message,
             "role": "user",
         },
     ]

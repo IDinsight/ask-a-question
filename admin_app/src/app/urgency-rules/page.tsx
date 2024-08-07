@@ -9,6 +9,7 @@ import {
   InputAdornment,
   Button,
   Tooltip,
+  LinearProgress,
 } from "@mui/material";
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
@@ -265,17 +266,23 @@ const UrgencyRulesPage = () => {
                     id={`checkbox-list-label-${index}`}
                     primary={urgencyRule.urgency_rule_text}
                     secondary={
-                      "Last updated: " +
-                      new Date(urgencyRule.updated_datetime_utc).toLocaleString(
-                        undefined,
-                        {
+                      urgencyRule.updated_datetime_utc ? (
+                        "Last updated: " +
+                        new Date(
+                          urgencyRule.updated_datetime_utc,
+                        ).toLocaleString(undefined, {
                           day: "numeric",
                           month: "numeric",
                           year: "numeric",
                           hour: "numeric",
                           minute: "numeric",
                           hour12: true,
-                        },
+                        })
+                      ) : (
+                        <span>
+                          <Layout.Spacer multiplier={0.8} />
+                          <LinearProgress color="secondary" />
+                        </span>
                       )
                     }
                     sx={{

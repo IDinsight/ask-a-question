@@ -187,20 +187,20 @@ const ContentViewModal = ({
   );
 };
 
-const DeleteContentModal = ({
+const ArchiveContentModal = ({
   content_id,
   open,
   onClose,
-  onSuccessfulDelete,
-  onFailedDelete,
-  deleteContent,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
 }: {
   content_id: number;
   open: boolean;
   onClose: () => void;
-  onSuccessfulDelete: (content_id: number) => void;
-  onFailedDelete: (content_id: number) => void;
-  deleteContent: (content_id: number) => Promise<any>;
+  onSuccessfulArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number) => void;
+  archiveContent: (content_id: number) => Promise<any>;
 }) => {
   return (
     <Dialog
@@ -210,29 +210,28 @@ const DeleteContentModal = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        Are you sure you want to delete this content?
+        Are you sure you want to remove this content?
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          Deleting this content will remove it from the database. This action
-          cannot be undone.
+          Removing this content will mean that it can no longer be accessed.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => {
-            const handleDeleteContent = async (content_id: number) => {
-              const results = deleteContent(content_id)
+            const handleArchiveContent = async (content_id: number) => {
+              const results = archiveContent(content_id)
                 .then((res) => {
-                  onSuccessfulDelete(content_id);
+                  onSuccessfulArchive(content_id);
                 })
                 .catch((err) => {
                   console.log("error", err);
-                  onFailedDelete(content_id);
+                  onFailedArchive(content_id);
                 });
             };
-            handleDeleteContent(Number(content_id));
+            handleArchiveContent(Number(content_id));
             onClose();
           }}
           autoFocus
@@ -240,11 +239,11 @@ const DeleteContentModal = ({
           color="error"
           startIcon={<Delete />}
         >
-          Delete
+          Remove
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export { ContentViewModal, DeleteContentModal };
+export { ContentViewModal, ArchiveContentModal };

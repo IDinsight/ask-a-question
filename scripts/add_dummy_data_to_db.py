@@ -1,11 +1,12 @@
 # This script is useful if you want to test the dashboard with dummy data.
 # Navigate to the root directory of the project and run the following command:
+#   > make setup-dev
 #   > python scripts/add_dummy_data_to_db.py
 
 import os
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("scripts"))
     PACKAGE_PATH = PACKAGE_PATH_SPLIT[0]
     if PACKAGE_PATH not in sys.path:
-        print(f"Appending '{PACKAGE_PATH}' to system path.")
+        print(f"Appending '{PACKAGE_PATH}' to system path...")
         sys.path.append(PACKAGE_PATH)
 
 
@@ -35,6 +36,7 @@ from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyRes
 # admin user (first user is admin)
 USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
+_USER_ID = 1
 
 N_DATAPOINTS = 10
 URGENCY_RATE = 0.1
@@ -45,7 +47,7 @@ def add_year_data() -> None:
     """
     Add N_DATAPOINTS of data for each day in the past year.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_year = now - timedelta(days=365)
     year_datetimes = [
         last_year + timedelta(days=i)
@@ -60,7 +62,7 @@ def add_month_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past month.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_month = now - timedelta(days=30)
     month_datetimes = [
         last_month + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
@@ -75,7 +77,7 @@ def add_week_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past week.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=7)
     week_datetimes = [
         last_week + timedelta(days=i) + timedelta(hours=random.randint(0, 24))
@@ -90,7 +92,7 @@ def add_day_data() -> None:
     """
     Add N_DATAPOINTS of data for each hour in the past day.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     last_day = now - timedelta(hours=24)
     hour_datetimes = [
         last_day + timedelta(hours=i) for i in random.choices(range(24), k=N_DATAPOINTS)
@@ -121,7 +123,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     Create an urgency record for a given datetime.
     """
     urgency_db = UrgencyQueryDB(
-        user_id=1,
+        user_id=_USER_ID,
         message_text="test message",
         message_datetime_utc=dt,
         feedback_secret_key="abc123",
@@ -132,6 +134,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
         is_urgent=is_urgent,
         details={"details": "test details"},
         query_id=urgency_db.urgency_query_id,
+        user_id=_USER_ID,
         response_datetime_utc=dt,
     )
     session.add(urgency_response)
@@ -143,7 +146,7 @@ def create_query_record(dt: datetime, session: Session) -> int:
     Create a query record for a given datetime.
     """
     query_db = QueryDB(
-        user_id=1,
+        user_id=_USER_ID,
         feedback_secret_key="abc123",
         query_text="test query",
         query_generate_llm_response=False,
@@ -165,6 +168,7 @@ def create_feedback_record(
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=dt,
         query_id=query_id,
+        user_id=_USER_ID,
         feedback_sentiment=sentiment,
     )
     session.add(feedback_db)
@@ -184,6 +188,7 @@ def create_content_feedback_record(
         feedback_db = ContentFeedbackDB(
             feedback_datetime_utc=dt,
             query_id=query_id,
+            user_id=_USER_ID,
             content_id=content_id,
             feedback_sentiment=sentiment,
         )
@@ -209,18 +214,19 @@ def add_content_data() -> None:
         positive_votes = np.random.randint(0, query_count)
         negative_votes = np.random.randint(0, query_count - positive_votes)
         content_db = ContentDB(
-            user_id=1,
+            user_id=_USER_ID,
             content_embedding=np.random.rand(int(PGVECTOR_VECTOR_SIZE))
             .astype(np.float32)
             .tolist(),
             content_title=c,
             content_text="Test content #{i}",
             content_metadata={},
-            created_datetime_utc=datetime.now(),
-            updated_datetime_utc=datetime.now(),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
             query_count=query_count,
             positive_votes=positive_votes,
             negative_votes=negative_votes,
+            is_archived=False,
         )
         session.add(content_db)
         session.commit()
@@ -233,3 +239,4 @@ if __name__ == "__main__":
     add_month_data()
     add_week_data()
     add_day_data()
+    print("Added dummy data to DB")

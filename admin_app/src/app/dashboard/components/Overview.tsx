@@ -1,21 +1,22 @@
-import React from "react";
-import { Box } from "@mui/material";
-import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
-import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import HeatMap from "@/app/dashboard/components/HeatMap";
-import { Period, DayHourUsageData, ApexData, TopContentData } from "../types";
-import { useAuth } from "@/utils/auth";
 import { getOverviewPageData } from "@/app/dashboard/api";
-import { useEffect } from "react";
 import AreaChart from "@/app/dashboard/components/AreaChart";
+import HeatMap from "@/app/dashboard/components/HeatMap";
+import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
 import TopContentTable from "@/app/dashboard/components/TopContentTable";
-import { ApexOptions } from "apexcharts";
-import { appColors } from "@/utils/index";
 import { Layout } from "@/components/Layout";
+import { useAuth } from "@/utils/auth";
+import { appColors } from "@/utils/index";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import { Box } from "@mui/material";
+import { ApexOptions } from "apexcharts";
+import { format } from "date-fns";
+import React, { useEffect } from "react";
+import { ApexData, DayHourUsageData, Period, TopContentData } from "../types";
+
 
 interface OverviewProps {
   timePeriod: Period;
@@ -70,6 +71,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     },
     xaxis: {
       type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      },
     },
     legend: {
       position: "top",
@@ -98,14 +102,30 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     }
   }, [timePeriod, token]);
 
+  const getLocalTime = (time: string) => {
+    // Convert UCT time to local time
+    const date = format(new Date(), "yyyy-MM-dd");
+    const UCTDateTimeString = `${date}T${time}:00.000000Z`;
+    const localDateTimeString = new Date(UCTDateTimeString);
+    const localTimeString = localDateTimeString.toLocaleString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return localTimeString;
+  };
+
   const parseHeatmapData = (heatmapData: DayHourUsageData) => {
-    const parsedData = Object.keys(heatmapData).map((time: string) => ({
-      name: time,
-      data: Object.keys(heatmapData[time]).map((day: string) => ({
-        x: day,
-        y: +heatmapData[time][day],
-      })),
-    }));
+    const parsedData = Object.keys(heatmapData).map((time: string) => {
+      const timeString = getLocalTime(time);
+      return {
+        name: timeString,
+        data: Object.keys(heatmapData[time]).map((day: string) => ({
+          x: day,
+          y: +heatmapData[time][day],
+        })),
+      };
+    });
 
     setHeatmapData(parsedData);
   };
@@ -114,23 +134,32 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     const { urgent, not_urgent_escalated, not_urgent_not_escalated } =
       timeseriesData;
 
-    const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => ({
-      x: period,
-      y: n_urgent as number,
-    }));
+    const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => {
+      const date = new Date(period);
+      return {
+        x: String(date),
+        y: n_urgent as number,
+      };
+    });
 
     const escalated_data = Object.entries(not_urgent_escalated).map(
-      ([period, n_urgent]) => ({
-        x: period,
-        y: n_urgent as number,
-      }),
+      ([period, n_urgent]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: n_urgent as number,
+        };
+      },
     );
 
     const total_queries = Object.entries(not_urgent_not_escalated).map(
-      ([period, n_urgent]) => ({
-        x: period,
-        y: n_urgent as number,
-      }),
+      ([period, n_urgent]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: n_urgent as number,
+        };
+      },
     );
 
     const seriesData = [

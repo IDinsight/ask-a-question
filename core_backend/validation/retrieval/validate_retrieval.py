@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Union
 
 import boto3
@@ -17,7 +17,7 @@ from core_backend.app.config import (
     LITELLM_MODEL_EMBEDDING,
 )
 from core_backend.app.contents.models import ContentDB
-from core_backend.app.question_answer.config import N_TOP_CONTENT_FOR_SEARCH
+from core_backend.app.question_answer.config import N_TOP_CONTENT
 from core_backend.app.question_answer.schemas import QueryBase
 from core_backend.app.utils import setup_logger
 
@@ -124,8 +124,8 @@ class TestRetrievalPerformance:
                 content_title=content_title,
                 content_text=content_text,
                 content_metadata={},
-                created_datetime_utc=datetime.utcnow(),
-                updated_datetime_utc=datetime.utcnow(),
+                created_datetime_utc=datetime.now(timezone.utc),
+                updated_datetime_utc=datetime.now(timezone.utc),
             )
             for content_id, content_embedding, content_title, content_text in zip(
                 content_dataframe["content_id"],
@@ -212,7 +212,7 @@ class TestRetrievalPerformance:
     ) -> List[float]:
         """Get top K accuracy table for validation results"""
         accuracies = []
-        for i in range(1, int(N_TOP_CONTENT_FOR_SEARCH) + 1):
+        for i in range(1, int(N_TOP_CONTENT) + 1):
             acc = (df["rank"] <= i).mean()
             accuracies.append(acc)
         return accuracies

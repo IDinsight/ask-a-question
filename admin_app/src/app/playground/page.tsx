@@ -60,7 +60,7 @@ const Page = () => {
     console.log(response);
     const responseText = llmResponse
       ? llmResponse
-      : `No LLM response. Reason: "${response.debug_info.reason}". See <json> for details.`;
+      : `No LLM response. Reason: "${response.error_message}". See <json> for details.`;
 
     setMessages((prevMessages) => [
       ...prevMessages,

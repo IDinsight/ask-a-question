@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from fastapi.requests import Request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +15,7 @@ from ..users.models import (
     update_user_api_key,
 )
 from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
-from ..utils import generate_key, setup_logger
+from ..utils import generate_key, setup_logger, update_api_limits
 from .schemas import KeyResponse
 
 TAG_METADATA = {
@@ -31,12 +32,12 @@ logger = setup_logger()
 async def create_user(
     user: UserCreateWithPassword,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreate | None:
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
-
     if user_db.user_id != 1:
         raise HTTPException(
             status_code=403,
@@ -44,13 +45,18 @@ async def create_user(
         )
 
     try:
-        user_db = await save_user_to_db(
+        user_new = await save_user_to_db(
             user=user,
             asession=asession,
         )
+        await update_api_limits(
+            request.app.state.redis, user_new.username, user_new.api_daily_quota
+        )
+
         return UserCreate(
-            username=user_db.username,
-            content_quota=user_db.content_quota,
+            username=user_new.username,
+            content_quota=user_new.content_quota,
+            api_daily_quota=user_new.api_daily_quota,
         )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")
