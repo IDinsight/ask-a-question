@@ -7,9 +7,8 @@ import { getPerformancePageData } from "@/app/dashboard/api";
 import { ApexData, Period, RowDataType } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
-import rows from "./rows";
 
-const N_TOP_CONTENT = 7;
+const N_TOP_CONTENT = 5;
 
 interface PerformanceProps {
   timePeriod: Period;
@@ -30,13 +29,13 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
 
   useEffect(() => {
     if (token) {
-      getPerformancePageData(timePeriod, token, N_TOP_CONTENT).then(
-        (response) => {
-          console.log(response.content_time_series);
-          parseLineChartData(response.content_time_series);
-          parseContentTableData(response.content_time_series);
-        },
-      );
+      getPerformancePageData(timePeriod, token).then((response) => {
+        console.log(response.content_time_series);
+        parseLineChartData(
+          response.content_time_series.slice(0, N_TOP_CONTENT),
+        );
+        parseContentTableData(response.content_time_series);
+      });
     } else {
       console.log("No token found");
     }
@@ -60,7 +59,6 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       };
       return seriesData;
     });
-    console.log(apexTimeSeriesData);
     setLineChartData(apexTimeSeriesData);
   };
 
@@ -74,7 +72,6 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
         query_count_timeseries: Object.values(series.query_count_time_series),
       };
     });
-    console.log(rows);
     setContentTableData(rows);
   };
 
@@ -104,7 +101,11 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
           timePeriod={timePeriod}
         />
       </Box>
-      <ContentsTable rows={contentTableData} onClick={toggleDrawer(true)} />
+      <ContentsTable
+        rows={contentTableData}
+        onClick={toggleDrawer(true)}
+        rowsPerPage={N_TOP_CONTENT}
+      />
     </>
   );
 };

@@ -20,21 +20,14 @@ const getOverviewPageData = async (period: Period, token: string) => {
   });
 };
 
-const getPerformancePageData = async (
-  period: Period,
-  token: string,
-  top_n: number,
-) => {
-  return fetch(
-    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}?top_n=${top_n}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+const getPerformancePageData = async (period: Period, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  ).then((response) => {
+  }).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;
