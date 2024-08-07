@@ -358,8 +358,12 @@ async def get_timeseries_top_content(
             top_content.c.content_title,
             top_content.c.total_query_count,
             top_content.c.updated_datetime_utc,
-            content_w_feedback.c.n_positive_feedback,
-            content_w_feedback.c.n_negative_feedback,
+            func.coalesce(content_w_feedback.c.n_positive_feedback, 0).label(
+                "n_positive_feedback"
+            ),
+            func.coalesce(content_w_feedback.c.n_negative_feedback, 0).label(
+                "n_negative_feedback"
+            ),
         )
         .select_from(top_content)
         .join(

@@ -8,7 +8,7 @@ import { ApexData, Period, RowDataType } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
 
-const N_TOP_CONTENT = 5;
+const N_TOP_CONTENT = 10;
 
 interface PerformanceProps {
   timePeriod: Period;
@@ -19,9 +19,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [lineChartData, setLineChartData] = React.useState<ApexData[]>([]);
-  const [contentTableData, setContentTableData] = React.useState<RowDataType[]>(
-    [],
-  );
+  const [contentTableData, setContentTableData] = React.useState<RowDataType[]>([]);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setDrawerOpen(newOpen);
@@ -31,9 +29,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     if (token) {
       getPerformancePageData(timePeriod, token).then((response) => {
         console.log(response.content_time_series);
-        parseLineChartData(
-          response.content_time_series.slice(0, N_TOP_CONTENT),
-        );
+        parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
         parseContentTableData(response.content_time_series);
       });
     } else {
@@ -78,11 +74,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   return (
     <>
       <Drawer open={drawerOpen} onClose={toggleDrawer(false)} anchor="right">
-        <Box
-          sx={{ width: 450 }}
-          role="presentation"
-          onClick={toggleDrawer(false)}
-        >
+        <Box sx={{ width: 450 }} role="presentation" onClick={toggleDrawer(false)}>
           Feedback + AI Summary
         </Box>
       </Drawer>
