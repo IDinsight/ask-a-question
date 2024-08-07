@@ -95,6 +95,7 @@ async def stt_llm_response(
 
     transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
     user_query = QueryBase(
+        generate_llm_response=True,
         query_text=transcription_result["text"],
         query_metadata={},
         generate_tts=generate_tts,
@@ -333,6 +334,7 @@ async def get_user_query_and_response(
         query_id=user_query_db.query_id,
         feedback_secret_key=user_query_db.feedback_secret_key,
         llm_response=None,
+        tts_file=None,
         search_results=None,
         debug_info={},
     )
