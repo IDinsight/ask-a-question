@@ -146,7 +146,12 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
                 >
                   <StyledTableCell component="th" scope="row">
                     {isDeleted(row.title) ? (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
+                      <span
+                        style={{
+                          color: appColors.lightGrey,
+                          fontWeight: "bold",
+                        }}
+                      >
                         {row.title}
                       </span>
                     ) : (
