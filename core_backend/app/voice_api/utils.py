@@ -1,4 +1,7 @@
 from ..llm_call.llm_prompts import IdentifiedLanguage
+from ..utils import setup_logger
+
+logger = setup_logger("Voice utils")
 
 
 def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:

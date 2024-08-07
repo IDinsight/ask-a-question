@@ -1,10 +1,10 @@
-from gtts import gTTS  # type: ignore
+from gtts import gTTS
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger
 from .utils import get_gtts_lang_code
 
-logger = setup_logger("TTS")
+logger = setup_logger("Voice API")
 
 
 async def generate_speech(
