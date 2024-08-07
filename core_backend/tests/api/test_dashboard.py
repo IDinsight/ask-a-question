@@ -669,7 +669,7 @@ class TestTopContent:
                 query_count=c["query_count"],
                 positive_votes=c["positive_votes"],
                 negative_votes=c["negative_votes"],
-                is_archived=True,
+                is_archived=_i % 2 == 0,  # Mix archived content into DB
             )
             asession.add(content_db)
 
@@ -682,45 +682,33 @@ class TestTopContent:
     async def test_top_content(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        N_TOP_CONTENT = 4
+        """
 
-        top_content = await get_top_content(
-            user_id=1, asession=asession, top_n=N_TOP_CONTENT, exclude_archived=False
-        )
+        NB: The archive feature will prepend the string "[DELETED] " to the content
+        card title if the content card has been archived.
+        """
 
-        assert len(top_content) == N_TOP_CONTENT
+        top_n = 4
+        top_content = await get_top_content(user_id=1, asession=asession, top_n=top_n)
+        assert len(top_content) == top_n
+
         # Sort self.content by query count
         content_sorted = sorted(
             self.content, key=lambda x: x["query_count"], reverse=True
         )
-        for i, c in enumerate(content_sorted[:N_TOP_CONTENT]):
-            assert top_content[i].title == c["title"]
+        for i, c in enumerate(content_sorted[:top_n]):
+            assert isinstance(c["title"], str)
+            if i % 2 == 0:
+                assert top_content[i].title == "[DELETED] " + c["title"]
+            else:
+                assert top_content[i].title == c["title"]
             assert top_content[i].query_count == c["query_count"]
             assert top_content[i].positive_votes == c["positive_votes"]
             assert top_content[i].negative_votes == c["negative_votes"]
 
-    async def test_top_content_archived(
-        self, content_data: pytest.FixtureRequest, asession: AsyncSession
-    ) -> None:
-        """This test checks that the title of archived content is returned with the
-        string "[DELETED] " prepended to it. This string should be added to the
-        original content title and is displayed in the "Most Sent Content" table in the
-        Admin app dashboard to inform the user that the content has been removed.
-        """
-
-        top_n = 4
-        top_content = await get_top_content(
-            user_id=1, asession=asession, top_n=top_n, exclude_archived=True
-        )
-        assert len(top_content) == top_n
-        for tc in top_content:
-            assert tc.title.startswith("[DELETED] ")
-
     async def test_content_from_other_user_not_returned(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        top_content = await get_top_content(
-            user_id=2, asession=asession, top_n=5, exclude_archived=False
-        )
+        top_content = await get_top_content(user_id=2, asession=asession, top_n=5)
 
         assert len(top_content) == 0
