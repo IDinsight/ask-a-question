@@ -74,7 +74,6 @@ jobs:
         working-directory: admin_app
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
             --build-arg NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google_login_client_id }}" \
             -t ${{ env.REPO }}/admin_app:latest \
             -t ${{ env.REPO }}/admin_app:${{ env.TAG }} \
