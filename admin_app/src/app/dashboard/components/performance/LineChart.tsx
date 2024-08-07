@@ -1,8 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
 
-import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
+import { ApexOptions } from "apexcharts";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,

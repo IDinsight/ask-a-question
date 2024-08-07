@@ -2,13 +2,13 @@ import { RowDataType } from "@/app/dashboard/types";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Pagination from "@mui/material/Pagination";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Unstable_Grid2";
-import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
-import { useState, useEffect } from "react";
-import Button from "@mui/material/Button";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -94,11 +94,8 @@ const ContentsTable = ({
 }) => {
   const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
   const [page, setPage] = useState(1);
-  const [sortColumn, setSortColumn] =
-    useState<keyof RowDataType>("query_count");
-  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">(
-    "ascending",
-  );
+  const [sortColumn, setSortColumn] = useState<keyof RowDataType>("query_count");
+  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("ascending");
 
   const percentageIncrease = (queryCount: number[]) => {
     // if the last quarter is greater than the third quarter
@@ -108,10 +105,7 @@ const ContentsTable = ({
       .slice(Math.floor((queryLength / 4) * 3), queryLength)
       .reduce((a, b) => a + b, 0);
     const thirdQuarterValue = queryCount
-      .slice(
-        Math.floor((queryLength / 4) * 2),
-        Math.floor((queryLength / 4) * 3),
-      )
+      .slice(Math.floor((queryLength / 4) * 2), Math.floor((queryLength / 4) * 3))
       .reduce((a, b) => a + b, 0);
 
     return (lastQuarterValue - thirdQuarterValue) / thirdQuarterValue;
@@ -148,16 +142,10 @@ const ContentsTable = ({
       setSortOrder("ascending");
     }
     setSortColumn(column);
-    setItemsToDisplay(
-      paginateRows(sortRows(column, sortOrder), page, rowsPerPage),
-    );
+    setItemsToDisplay(paginateRows(sortRows(column, sortOrder), page, rowsPerPage));
   };
 
-  const paginateRows = (
-    rows: RowDataType[],
-    page: number,
-    rowsPerPage: number,
-  ) => {
+  const paginateRows = (rows: RowDataType[], page: number, rowsPerPage: number) => {
     return rows.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   };
 
@@ -172,9 +160,7 @@ const ContentsTable = ({
 
   const filterRowsByTitle = (title: string) => {
     return paginateRows(
-      rows.filter((row) =>
-        row.title.toLowerCase().includes(title.toLowerCase()),
-      ),
+      rows.filter((row) => row.title.toLowerCase().includes(title.toLowerCase())),
       1,
       rowsPerPage,
     );
@@ -231,9 +217,7 @@ const ContentsTable = ({
               bgcolor: "white",
               "& .MuiOutlinedInput-root": {},
             }}
-            onChange={(e) =>
-              setItemsToDisplay(filterRowsByTitle(e.target.value))
-            }
+            onChange={(e) => setItemsToDisplay(filterRowsByTitle(e.target.value))}
             margin="none"
             inputProps={{
               style: {
