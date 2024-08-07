@@ -1,6 +1,6 @@
 """This script is useful if you want to test the dashboard with dummy data. Navigate to
-the root directory of the project and run the following command:
-    > python scripts/add_dummy_data_to_db.py
+the core_backend directory of the project and run the following command:
+    > python add_dummy_data_to_db.py
 """
 
 import os
@@ -23,22 +23,22 @@ if __name__ == "__main__":
         sys.path.append(PACKAGE_PATH)
 
 
-from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
-from core_backend.app.contents.models import ContentDB
-from core_backend.app.database import get_session
-from core_backend.app.question_answer.models import (
+from app.contents.config import PGVECTOR_VECTOR_SIZE
+from app.contents.models import ContentDB
+from app.database import get_session
+from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     ResponseFeedbackDB,
 )
-from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
+from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 
 # admin user (first user is admin)
 USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
 USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
 _USER_ID = 1
 
-N_DATAPOINTS = 10
+N_DATAPOINTS = 100
 URGENCY_RATE = 0.1
 NEGATIVE_FEEDBACK_RATE = 0.1
 
@@ -140,7 +140,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
         user_id=_USER_ID,
         message_text="test message",
         message_datetime_utc=dt,
-        feedback_secret_key="abc123",
+        feedback_secret_key="abc123",  # pragma: allowlist secret
     )
     session.add(urgency_db)
     session.commit()
