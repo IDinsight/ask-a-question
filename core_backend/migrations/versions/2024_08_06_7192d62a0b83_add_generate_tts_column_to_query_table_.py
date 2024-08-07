@@ -1,7 +1,7 @@
 """add generate_tts column to query table and tts_file column to query response table
 
 Revision ID: 7192d62a0b83
-Revises: 465368ca2bac
+Revises: b87b336df479
 Create Date: 2024-08-07 18:50:40.834060
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "7192d62a0b83"  # pragma: allowlist secret
-down_revision: Union[str, None] = "465368ca2bac"
+down_revision: Union[str, None] = "b87b336df479"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
