@@ -1,7 +1,9 @@
-from datetime import date
-from typing import Dict, List, Tuple, Union, get_args
+"""This module contains functionalities for managing the dashboard statistics."""
 
-from sqlalchemy import case, func, literal_column, select, text
+from datetime import date
+from typing import cast, get_args
+
+from sqlalchemy import case, func, literal_column, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Subquery
 
@@ -28,10 +30,25 @@ from .schemas import (
 
 
 async def get_stats_cards(
-    user_id: int, asession: AsyncSession, start_date: date, end_date: date
+    *, user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> StatsCards:
-    """
-    Retrieve statistics for question answering and upvotes
+    """Retrieve statistics for question answering and upvotes.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the statistics.
+    end_date
+        The ending date for the statistics.
+
+    Returns
+    -------
+    StatsCards
+        The statistics for question answering and upvotes.
     """
 
     query_stats = await get_query_count_stats(user_id, asession, start_date, end_date)
@@ -54,9 +71,25 @@ async def get_stats_cards(
 async def get_heatmap(
     user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> Heatmap:
+    """Retrieve queries per two hour blocks each weekday between start and end date.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the heatmap for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the heatmap.
+    end_date
+        The ending date for the heatmap.
+
+    Returns
+    -------
+    Heatmap
+        The heatmap of queries per two hour blocks.
     """
-    Retrieve queries per two hour blocks each weekday between start and end date
-    """
+
     statement = (
         select(
             func.to_char(QueryDB.query_datetime_utc, "Dy").label("day_of_week"),
@@ -72,9 +105,9 @@ async def get_heatmap(
     )
 
     result = await asession.execute(statement)
-    rows = result.fetchall()
+    rows = result.fetchall()  # (day of week, hour of day, n_questions)
 
-    heatmap = initilize_heatmap()
+    heatmap = initialize_heatmap()
     for row in rows:
         day_of_week = row.day_of_week
         hour_of_day = int(row.hour_of_day)
@@ -83,8 +116,8 @@ async def get_heatmap(
             hour_grp = hour_of_day - 1
         else:
             hour_grp = hour_of_day
-        hour_grp_str = f"{hour_grp:02}:00"
-        heatmap[hour_grp_str][day_of_week] += n_questions  # type: ignore
+        hour_grp_str = cast(TimeHours, f"{hour_grp:02}:00")
+        heatmap[hour_grp_str][day_of_week] += n_questions
 
     return Heatmap.model_validate(heatmap)
 
@@ -96,9 +129,27 @@ async def get_timeseries(
     end_date: date,
     frequency: TimeFrequency,
 ) -> TimeSeries:
+    """Retrieve count of queries over time for the user.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the queries count timeseries for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the queries count timeseries.
+    end_date
+        The ending date for the queries count timeseries.
+    frequency
+        The frequency at which to retrieve the queries count timeseries.
+
+    Returns
+    -------
+    TimeSeries
+        The queries count timeseries.
     """
-    Retrieve count of queries over time for the user
-    """
+
     query_ts = await get_timeseries_query(
         user_id, asession, start_date, end_date, frequency
     )
@@ -114,11 +165,25 @@ async def get_timeseries(
 
 
 async def get_top_content(
-    user_id: int, asession: AsyncSession, top_n: int
-) -> List[TopContent]:
+    *, user_id: int, asession: AsyncSession, top_n: int
+) -> list[TopContent]:
+    """Retrieve most frequently shared content.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the top content for.
+    asession
+        `AsyncSession` object for database transactions.
+    top_n
+        The number of top content to retrieve.
+
+    Returns
+    -------
+    list[TopContent]
+        List of most frequently shared content.
     """
-    Retrieve most frequently shared content
-    """
+
     statement = (
         select(
             ContentDB.content_title,
@@ -126,18 +191,18 @@ async def get_top_content(
             ContentDB.positive_votes,
             ContentDB.negative_votes,
             ContentDB.updated_datetime_utc,
+            ContentDB.is_archived,
         )
         .order_by(ContentDB.query_count.desc())
         .where(ContentDB.user_id == user_id)
-        .limit(top_n)
     )
+    statement = statement.limit(top_n)
 
     result = await asession.execute(statement)
     rows = result.fetchall()
-
     return [
         TopContent(
-            title=r.content_title,
+            title="[DELETED] " + r.content_title if r.is_archived else r.content_title,
             query_count=r.query_count,
             positive_votes=r.positive_votes,
             negative_votes=r.negative_votes,
@@ -149,10 +214,29 @@ async def get_top_content(
 
 def get_time_labels_query(
     frequency: TimeFrequency, start_date: date, end_date: date
-) -> Tuple[str, Subquery]:
+) -> tuple[str, Subquery]:
+    """Get time labels for the query time series query.
+
+    Parameters
+    ----------
+    frequency
+        The frequency at which to retrieve the time labels.
+    start_date
+        The starting date for the time labels.
+    end_date
+        The ending date for the time labels.
+
+    Returns
+    -------
+    tuple[str, Subquery]
+        The interval string and the time label retrieval query.
+
+    Raises
+    ------
+    ValueError
+        If the frequency is invalid.
     """
-    Get time labels for the query time series
-    """
+
     match frequency:
         case TimeFrequency.Day:
             interval_str = "day"
@@ -185,10 +269,37 @@ async def get_timeseries_query(
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
-) -> Dict[str, Dict[str, int]]:
+) -> dict[str, dict[str, int]]:
+    """Retrieve the timeseries corresponding to escalated and not escalated queries
+    over the specified time period.
+
+    NB: The SQLAlchemy statement below selects time periods from `ts_labels` and counts
+    the number of negative and non-negative feedback entries from `ResponseFeedbackDB`
+    for each time period, after filtering for a specific user. It groups and orders the
+    results by time period. The outer join with `ResponseFeedbackDB` is based on the
+    truncation of dates to the specified interval (`interval_str`). This joins
+    `ResponseFeedbackDB` to `ts_labels` on matching truncated dates.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the queries count timeseries query for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the queries count timeseries query.
+    end_date
+        The ending date for the queries count timeseries query.
+    frequency
+        The frequency at which to retrieve the queries count timeseries.
+
+    Returns
+    -------
+    dict[str, dict[str, int]]
+        Dictionary whose keys are "escalated" and "not_escalated" and whose values are
+        dictionaries containing the count of queries over time for each category.
     """
-    Retrieve count of queries over time for the user
-    """
+
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
     statement = (
@@ -244,10 +355,38 @@ async def get_timeseries_urgency(
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
-) -> Dict[str, int]:
+) -> dict[str, int]:
+    """Retrieve the timeseries corresponding to the count of urgent queries over time
+    for the specified user.
+
+    NB: The SQLAlchemy statement below retrieves the count of urgent responses
+    (`n_urgent`) for each time_period from the `ts_labels` table, where the responses
+    are matched based on truncated dates, filtered by a specific user ID, and ordered
+    by the specified time period. The outer join with `UrgencyResponseDB` table is
+    based on matching truncated dates. The truncation is done using `func.date_trunc`
+    with `interval_str` (e.g., 'month', 'year', etc.), ensuring that dates are compared
+    at the same granularity.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the timeseries corresponding to the count of
+        urgent queries over time for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the count of urgent queries.
+    end_date
+        The ending date for the count of urgent queries.
+    frequency
+        The frequency at which to retrieve the count of urgent queries.
+
+    Returns
+    -------
+    dict[str, int]
+        Dictionary containing the count of urgent queries over time.
     """
-    Retrieve count of urgent queries over time for the user
-    """
+
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
     statement = (
@@ -256,7 +395,7 @@ async def get_timeseries_urgency(
             func.coalesce(
                 func.count(
                     case(
-                        (UrgencyResponseDB.is_urgent == True, 1),  # noqa
+                        (UrgencyResponseDB.is_urgent == true(), 1),
                         else_=None,
                     )
                 ),
@@ -282,19 +421,46 @@ async def get_timeseries_urgency(
     return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
 
 
-def initilize_heatmap() -> Dict[TimeHours, Dict[Day, int]]:
+def initialize_heatmap() -> dict[TimeHours, dict[Day, int]]:
+    """Initialize the heatmap dictionary.
+
+    Returns
+    -------
+    dict[TimeHours, dict[Day, int]]
+        The initialized heatmap dictionary
     """
-    Initialize heatmap dictionary
-    """
+
     return {h: {d: 0 for d in get_args(Day)} for h in get_args(TimeHours)}
 
 
 async def get_query_count_stats(
     user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> QueryStats:
+    """Retrieve statistics for question answering for the specified period. The current
+    period is defined by `start_date` and `end_date`. The previous period is defined as
+    the same window in time before the current period. The statistics include:
+
+    1. The total number of questions asked in the current period.
+    2. The percentage increase in the number of questions asked in the current period
+        from the previous period.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the statistics.
+    end_date
+        The ending date for the statistics.
+
+    Returns
+    -------
+    QueryStats
+        The statistics for question answering.
     """
-    Retrieve statistics for question answering
-    """
+
     # Total questions asked in this period
     statement_combined = select(
         func.sum(
@@ -325,6 +491,7 @@ async def get_query_count_stats(
     # Execute the combined statement
     result = await asession.execute(statement_combined)
     counts = result.fetchone()
+
     n_questions_curr_period = (
         counts.current_period_count if counts and counts.current_period_count else 0
     )
@@ -338,17 +505,39 @@ async def get_query_count_stats(
     )
 
     return QueryStats(
-        n_questions=n_questions_curr_period,
-        percentage_increase=percent_increase,
+        n_questions=n_questions_curr_period, percentage_increase=percent_increase
     )
 
 
 async def get_response_feedback_stats(
     user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> ResponseFeedbackStats:
+    """Retrieve statistics for response feedback grouped by sentiment. The current
+    period is defined by `start_date` and `end_date`. The previous period is defined as
+    the same window in time before the current period. The statistics include:
+
+    1. The total number of positive and negative feedback received in the current
+        period.
+    2. The percentage increase in the number of positive and negative feedback received
+        in the current period from the previous period.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve response feedback statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date to retrieve response feedback statistics.
+    end_date
+        The ending date to retrieve response feedback statistics.
+
+    Returns
+    -------
+    ResponseFeedbackStats
+        The statistics for response feedback.
     """
-    Retrieve statistics for response feedback
-    """
+
     statement_combined = (
         select(
             ResponseFeedbackDB.feedback_sentiment,
@@ -402,9 +591,32 @@ async def get_response_feedback_stats(
 async def get_content_feedback_stats(
     user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> ContentFeedbackStats:
+    """Retrieve statistics for content feedback. The current period is defined by
+    `start_date` and `end_date`. The previous period is defined as the same window in
+    time before the current period. The statistics include:
+
+    1. The total number of positive and negative feedback received in the current
+        period.
+    2. The percentage increase in the number of positive and negative feedback received
+        in the current period from the previous period.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve content feedback statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The start date to retrieve content feedback statistics.
+    end_date
+        The end date to retrieve content feedback statistics
+
+    Returns
+    -------
+    ContentFeedbackStats
+        The statistics for content feedback.
     """
-    Retrieve statistics for content feedback
-    """
+
     statement_combined = (
         select(
             ContentFeedbackDB.feedback_sentiment,
@@ -454,11 +666,23 @@ async def get_content_feedback_stats(
 
 
 def get_feedback_stats(
-    feedback_curr_period_dict: dict, feedback_prev_period_dict: dict
-) -> Dict[str, Union[int, float]]:
+    feedback_curr_period_dict: dict[str, int], feedback_prev_period_dict: dict[str, int]
+) -> dict[str, int | float]:
+    """Get feedback statistics.
+
+    Parameters
+    ----------
+    feedback_curr_period_dict
+        The dictionary containing feedback statistics for the current period.
+    feedback_prev_period_dict
+        The dictionary containing feedback statistics for the previous period.
+
+    Returns
+    -------
+    dict[str, int | float]
+        The feedback statistics.
     """
-    Get feedback statistics
-    """
+
     n_positive_curr = feedback_curr_period_dict.get("positive", 0)
     n_negative_curr = feedback_curr_period_dict.get("negative", 0)
     n_positive_prev = feedback_prev_period_dict.get("positive", 0)
@@ -482,8 +706,29 @@ def get_feedback_stats(
 async def get_urgency_stats(
     user_id: int, asession: AsyncSession, start_date: date, end_date: date
 ) -> UrgencyStats:
-    """
-    Retrieve statistics for urgency
+    """Retrieve statistics for urgency. The current period is defined by `start_date`
+    and `end_date`. The previous period is defined as the same window in time before
+    the current period. The statistics include:
+
+    1. The total number of urgent queries in the current period.
+    2. The percentage increase in the number of urgent queries in the current period
+        from the previous period.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve urgency statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the urgency statistics.
+    end_date
+        The ending date for the urgency statistics.
+
+    Returns
+    -------
+    UrgencyStats
+        The statistics for urgency.
     """
 
     statement_combined = (
@@ -493,7 +738,7 @@ async def get_urgency_stats(
                     (
                         (UrgencyResponseDB.response_datetime_utc <= end_date)
                         & (UrgencyResponseDB.response_datetime_utc > start_date)
-                        & (UrgencyResponseDB.is_urgent == True),  # noqa
+                        & (UrgencyResponseDB.is_urgent == true()),
                         1,
                     ),
                     else_=0,
@@ -507,7 +752,7 @@ async def get_urgency_stats(
                             UrgencyResponseDB.response_datetime_utc
                             > start_date - (end_date - start_date)
                         )
-                        & (UrgencyResponseDB.is_urgent == True),  # noqa
+                        & (UrgencyResponseDB.is_urgent == true()),
                         1,
                     ),
                     else_=0,
@@ -534,15 +779,26 @@ async def get_urgency_stats(
     )
 
     return UrgencyStats(
-        n_urgent=n_urgency_curr_period,
-        percentage_increase=percentage_increase,
+        n_urgent=n_urgency_curr_period, percentage_increase=percentage_increase
     )
 
 
 def get_percentage_increase(n_curr: int, n_prev: int) -> float:
+    """Calculate percentage increase.
+
+    Parameters
+    ----------
+    n_curr
+        The current count.
+    n_prev
+        The previous count.
+
+    Returns
+    -------
+    float
+        The percentage increase.
     """
-    Calculate percentage increase
-    """
+
     if n_prev == 0:
         return 0.0
 
