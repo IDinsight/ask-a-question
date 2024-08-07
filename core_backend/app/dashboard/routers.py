@@ -27,7 +27,6 @@ logger = setup_logger()
 async def retrieve_overview_day(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-    exclude_archived: bool = True,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics for the last day.
@@ -41,7 +40,6 @@ async def retrieve_overview_day(
         start_date=day_ago,
         end_date=today,
         frequency=TimeFrequency.Hour,
-        exclude_archived=exclude_archived,
     )
 
     return stats
@@ -51,7 +49,6 @@ async def retrieve_overview_day(
 async def retrieve_overview_week(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-    exclude_archived: bool = True,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics for the last week.
@@ -65,7 +62,6 @@ async def retrieve_overview_week(
         start_date=week_ago,
         end_date=today,
         frequency=TimeFrequency.Day,
-        exclude_archived=exclude_archived,
     )
 
     return stats
@@ -75,7 +71,6 @@ async def retrieve_overview_week(
 async def retrieve_overview_month(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-    exclude_archived: bool = True,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics for the last month.
@@ -89,7 +84,6 @@ async def retrieve_overview_month(
         start_date=month_ago,
         end_date=today,
         frequency=TimeFrequency.Day,
-        exclude_archived=exclude_archived,
     )
 
     return stats
@@ -99,7 +93,6 @@ async def retrieve_overview_month(
 async def retrieve_overview_year(
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
-    exclude_archived: bool = True,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics for the last year.
@@ -113,7 +106,6 @@ async def retrieve_overview_year(
         start_date=year_ago,
         end_date=today,
         frequency=TimeFrequency.Week,
-        exclude_archived=exclude_archived,
     )
 
     return stats
@@ -126,7 +118,6 @@ async def retrieve_overview(
     end_date: date,
     frequency: TimeFrequency,
     top_n: int = 4,
-    exclude_archived: bool = True,
 ) -> DashboardOverview:
     """Retrieve all question answer statistics.
 
@@ -144,8 +135,6 @@ async def retrieve_overview(
         The frequency at which to retrieve the statistics.
     top_n
         The number of top content to retrieve.
-    exclude_archived
-        Specifies whether to exclude archived content.
 
     Returns
     -------
@@ -179,7 +168,6 @@ async def retrieve_overview(
         user_id=user_id,
         asession=asession,
         top_n=top_n,
-        exclude_archived=exclude_archived,
     )
 
     return DashboardOverview(

@@ -165,7 +165,7 @@ async def get_timeseries(
 
 
 async def get_top_content(
-    *, user_id: int, asession: AsyncSession, top_n: int, exclude_archived: bool
+    *, user_id: int, asession: AsyncSession, top_n: int
 ) -> list[TopContent]:
     """Retrieve most frequently shared content.
 
@@ -177,8 +177,6 @@ async def get_top_content(
         `AsyncSession` object for database transactions.
     top_n
         The number of top content to retrieve.
-    exclude_archived
-        Specifies whether to exclude archived content.
 
     Returns
     -------
@@ -204,11 +202,7 @@ async def get_top_content(
     rows = result.fetchall()
     return [
         TopContent(
-            title=(
-                "[DELETED] " + r.content_title
-                if exclude_archived and r.is_archived
-                else r.content_title
-            ),
+            title="[DELETED] " + r.content_title if r.is_archived else r.content_title,
             query_count=r.query_count,
             positive_votes=r.positive_votes,
             negative_votes=r.negative_votes,
