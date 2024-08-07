@@ -2,11 +2,12 @@
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy","google.auth.transport", "google.oauth2"]
+module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy", "google.auth.transport", "google.oauth2","gtts"]
 ignore_missing_imports = true
 [tool.ruff]
 lint.select = ["E", "F", "B", "Q", "I"]
 line-length = 88
+ignore = ["B008"]  # Do not perform function calls in argument defaults.
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]

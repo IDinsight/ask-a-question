@@ -13,6 +13,8 @@ services:
       watch:
         - action: rebuild
           path: ../../core_backend
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
 
   admin_app:
     image: idinsight/aaq-admin-app:latest
@@ -93,3 +95,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  temp:

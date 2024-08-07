@@ -22,6 +22,7 @@ from ..question_answer.schemas import (
 )
 from ..question_answer.utils import get_context_string_from_search_results
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
+from ..voice_api.voice_components import generate_speech
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
 from .utils import (
@@ -102,15 +103,42 @@ async def _generate_llm_response(
         original_language=query_refined.original_language,
         metadata=metadata,
     )
+    tts_save_path = f"response_{response.query_id}.mp3"
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = rag_response.answer
+
+        if query_refined.generate_tts:
+            try:
+                tts_file_path = await generate_speech(
+                    text=rag_response.answer,
+                    language=query_refined.original_language,
+                    save_path=tts_save_path,
+                )
+                response.tts_file = tts_file_path
+            except ValueError as e:
+                logger.error(
+                    f"Error generating TTS for query_id {response.query_id}: {e}"
+                )
+
+                response = QueryResponseError(
+                    query_id=response.query_id,
+                    feedback_secret_key=response.feedback_secret_key,
+                    llm_response=response.llm_response,
+                    tts_file=response.tts_file,
+                    search_results=response.search_results,
+                    error_message="There was an issue generating the speech response.",
+                    error_type=ErrorType.TTS_ERROR,
+                    debug_info=response.debug_info,
+                )
+
     else:
         response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
+            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
@@ -216,6 +244,7 @@ async def _check_align_score(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
+            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_type=ErrorType.ALIGNMENT_TOO_LOW,
