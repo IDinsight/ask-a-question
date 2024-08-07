@@ -697,9 +697,8 @@ class TestTopContent:
             self.content, key=lambda x: x["query_count"], reverse=True
         )
         for i, c in enumerate(content_sorted[:top_n]):
-            assert isinstance(c["title"], str)
             if i % 2 == 0:
-                assert top_content[i].title == "[DELETED] " + c["title"]
+                assert top_content[i].title == "[DELETED] " + str(c["title"])
             else:
                 assert top_content[i].title == c["title"]
             assert top_content[i].query_count == c["query_count"]
