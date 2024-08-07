@@ -77,7 +77,6 @@ async def search(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
-    exclude_archived: bool = True,
 ) -> QueryResponse | JSONResponse:
     """
     Search endpoint finds the most similar content to the user query and optionally
@@ -103,7 +102,7 @@ async def search(
         user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
-        exclude_archived=exclude_archived,
+        exclude_archived=True,
     )
 
     await save_query_response_to_db(user_query_db, response, asession)
