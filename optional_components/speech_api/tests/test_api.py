@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-class TestTranscribeAudioEndpoint:
+class TestTranscribeEndpoint:
 
     @pytest.mark.parametrize(
         "file_path, expected_keywords, expected_language, expected_status_code",
@@ -39,11 +39,11 @@ class TestTranscribeAudioEndpoint:
                 404,
                 "File not found.",
             ),
-            # (
-            #     "tests/data/invalid_audio.wav",
-            #     500,
-            #     "An unexpected error occurred.",
-            # ),
+            (
+                "tests/data/corrupted_file.mp3",
+                500,
+                "An unexpected error occurred.",
+            ),
         ],
     )
     def test_transcribe_audio_errors(
@@ -52,17 +52,8 @@ class TestTranscribeAudioEndpoint:
         expected_status_code: int,
         expected_detail: str,
         client: TestClient,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
 
-        async def mock_transcribe_audio(file_path: str) -> None:
-            if expected_status_code == 500:
-                raise ValueError("Test ValueError")
-
-        monkeypatch.setattr(
-            "speech_api.app.routers.transcribe_audio",
-            mock_transcribe_audio,
-        )
         response = client.post("/transcribe", json={"file_path": file_path})
         assert response.status_code == expected_status_code
         assert response.json()["error"] == expected_detail
