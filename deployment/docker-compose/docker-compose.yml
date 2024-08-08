@@ -19,8 +19,6 @@ services:
     build:
       context: ../../admin_app
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
     command: >
       node server.js
     depends_on:

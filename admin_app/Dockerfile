@@ -8,13 +8,11 @@ COPY package.json package-lock.json ./
 RUN  npm ci
 
 FROM base AS builder
-ARG NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
-ENV NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID ${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
 
 RUN npm run build
 

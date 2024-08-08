@@ -1,4 +1,5 @@
 "use client";
+import { env } from "next-runtime-env";
 import { useAuth } from "@/utils/auth";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
@@ -21,7 +22,7 @@ import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
-  process.env.NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID || "";
+  env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
 
 const Login = () => {
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
