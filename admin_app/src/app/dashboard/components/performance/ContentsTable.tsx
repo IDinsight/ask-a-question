@@ -45,6 +45,11 @@ const QueryCountTimeSeries = ({
       width: 2,
       curve: "smooth",
     },
+    tooltip: {
+      x: {
+        show: false,
+      },
+    },
     colors: isIncreasing ? ["#4CAF50"] : ["#FF1654"],
   };
   return (
