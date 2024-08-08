@@ -44,7 +44,7 @@ jobs:
           WHISPER_MODEL_DIR: ${{ env.WHISPER_MODEL_DIR }}
         run: |
           mkdir -p $WHISPER_MODEL_DIR
-          cd speech_api
+          cd optional_components/speech_api
           python -m pytest
-          cd ..
+          cd ../..
           rm -rf $WHISPER_MODEL_DIR
