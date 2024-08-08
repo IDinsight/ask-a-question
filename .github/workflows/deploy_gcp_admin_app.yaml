@@ -100,6 +100,8 @@ jobs:
               --restart always \
               --network aaq-network \
               --name admin_app \
+              -e NEXT_PUBLIC_BACKEND_URL="https://${{ steps.secrets.outputs.domain }}/api" \
+              -e NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google-login-client-id }}" \
               ${{ env.REPO }}/admin_app:latest
             docker system prune -f || true
 
