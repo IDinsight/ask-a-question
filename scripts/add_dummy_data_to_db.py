@@ -113,9 +113,13 @@ def create_data(dt: datetime) -> None:
     if not is_urgent:
         is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
         is_content_negative = random.random() < NEGATIVE_FEEDBACK_RATE
-        query_id = create_query_record(dt, session)
-        create_feedback_record(dt, query_id, is_negative, session)
-        create_content_feedback_record(dt, query_id, is_content_negative, session)
+        query_db = create_query_record(dt, session)
+        query_id = query_db.query_id
+        session_id = query_db.session_id
+        create_feedback_record(dt, query_id, session_id, is_negative, session)
+        create_content_feedback_record(
+            dt, query_id, session_id, is_content_negative, session
+        )
     session.close()
 
 
@@ -151,7 +155,7 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     session.commit()
 
 
-def create_query_record(dt: datetime, session: Session) -> int:
+def create_query_record(dt: datetime, session: Session) -> QueryDB:
     """Create a query record for a given datetime.
 
     Parameters
@@ -163,12 +167,13 @@ def create_query_record(dt: datetime, session: Session) -> int:
 
     Returns
     -------
-    int
-        The ID of the query record.
+    QueryDB
+        The query record.
     """
 
     query_db = QueryDB(
         user_id=_USER_ID,
+        session_id=1,
         feedback_secret_key="abc123",
         query_text="test query",
         query_generate_llm_response=False,
@@ -177,11 +182,11 @@ def create_query_record(dt: datetime, session: Session) -> int:
     )
     session.add(query_db)
     session.commit()
-    return query_db.query_id
+    return query_db
 
 
 def create_feedback_record(
-    dt: datetime, query_id: int, is_negative: bool, session: Session
+    dt: datetime, query_id: int, session_id: int, is_negative: bool, session: Session
 ) -> None:
     """Create a feedback record for a given datetime.
 
@@ -202,6 +207,7 @@ def create_feedback_record(
         feedback_datetime_utc=dt,
         query_id=query_id,
         user_id=_USER_ID,
+        session_id=session_id,
         feedback_sentiment=sentiment,
     )
     session.add(feedback_db)
@@ -209,7 +215,12 @@ def create_feedback_record(
 
 
 def create_content_feedback_record(
-    dt: datetime, query_id: int, is_content_negative: bool, session: Session
+    dt: datetime,
+    query_id: int,
+    session_id: int,
+    is_content_negative: bool,
+    is_negative: bool,
+    session: Session,
 ) -> None:
     """Create a content feedback record for a given datetime.
 
@@ -233,6 +244,7 @@ def create_content_feedback_record(
             feedback_datetime_utc=dt,
             query_id=query_id,
             user_id=_USER_ID,
+            session_id=session_id,
             content_id=content_id,
             feedback_sentiment=sentiment,
         )
