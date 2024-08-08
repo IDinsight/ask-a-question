@@ -98,7 +98,7 @@ services:
 
   redis:
     image: "redis:6.0-alpine"
-    ports: # Expose the port to port 6380 on the host machine
+    ports: # Expose the port to port 6380 on the host machine for debugging
       - "6380:6379"
     restart: always
 
