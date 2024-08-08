@@ -71,10 +71,10 @@ services:
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
 
-  embeddings:
+  local-embeddings:
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
-      - embeddings
+      - local-embeddings
       - optional-components
     volumes:
       - $PWD/data:/data
