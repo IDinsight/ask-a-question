@@ -28,14 +28,15 @@ jobs:
         run: |
           git fetch origin tonyzhao6-main
           git worktree add /tmp/main-branch origin/tonyzhao6-main
-          cd /tmp/main-branch
-          alembic_head_main=$(alembic heads | awk '/head/ {print $NF}')
+          cd /tmp/main-branch/core_backend
+          alembic_head_main=$(alembic heads | awk '{print $1}')
           echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
           cd -
 
       - name: Get Alembic head of current branch
         run: |
-          alembic_head_pr=$(alembic heads | awk '/head/ {print $NF}')
+          cd core_backend
+          alembic_head_pr=$(alembic heads | awk '{print $1}')
           echo "ALEMBIC_HEAD_PR=${alembic_head_pr}" >> $GITHUB_ENV
 
       - name: Compare Alembic heads
