@@ -81,8 +81,8 @@ setup-llm-proxy:
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
 		-v "$(CURDIR)/deployment/docker-compose/.gcp_credentials.json":/app/credentials.json \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		-e HUGGINGFACE_API_KEY=$(HUGGINGFACE_API_KEY) \
-		-e EMBEDDINGS_ENDPOINT=$(EMBEDDINGS_ENDPOINT) \
+		-e CUSTOM_EMBEDDINGS_API_KEY=$(CUSTOM_EMBEDDINGS_API_KEY) \
+		-e CUSTOM_EMBEDDINGS_ENDPOINT=$(CUSTOM_EMBEDDINGS_ENDPOINT) \
 		-e VERTEXAI_PROJECT=$(VERTEXAI_PROJECT) \
 		-e VERTEXAI_LOCATION=$(VERTEXAI_LOCATION) \
 		-e VERTEXAI_ENDPOINT=https://$(VERTEXAI_LOCATION)-aiplatform.googleapis.com/v1 \
@@ -114,7 +114,7 @@ setup-embeddings-arm:
         -v $(PWD)/data:/data \
         -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
-        --api-key $(HUGGINGFACE_API_KEY)
+        --api-key $(CUSTOM_EMBEDDINGS_API_KEY)
 
 setup-embeddings:
 	-@docker stop huggingface-embeddings
@@ -127,7 +127,7 @@ setup-embeddings:
 		-v $(PWD)/data:/data \
 		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
 		--model-id $(HUGGINGFACE_MODEL) \
-		--api-key $(HUGGINGFACE_API_KEY)
+		--api-key $(CUSTOM_EMBEDDINGS_API_KEY)
 
 teardown-embeddings:
 	@docker stop huggingface-embeddings
