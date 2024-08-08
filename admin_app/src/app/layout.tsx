@@ -1,3 +1,5 @@
+import { PublicEnvScript } from "next-runtime-env";
+
 import theme from "@/theme";
 import AuthProvider from "@/utils/auth";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -22,6 +24,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
         <script src="https://accounts.google.com/gsi/client" async></script>
+        <PublicEnvScript />
       </head>
       <body className={inter.className}>
         <ThemeProvider theme={theme}>
