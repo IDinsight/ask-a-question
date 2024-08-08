@@ -111,7 +111,7 @@ setup-embeddings-arm:
 	@docker run \
 		--name huggingface-embeddings \
         -p 8080:80 \
-        -v $(PWD)/data:/data \
+        -v "$(PWD)/data:/data" \
         -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
         --api-key $(CUSTOM_EMBEDDINGS_API_KEY)
@@ -124,7 +124,7 @@ setup-embeddings:
 	@docker run \
 		--name huggingface-embeddings \
 		-p 8080:80 \
-		-v $(PWD)/data:/data \
+		-v "$(PWD)/data:/data" \
 		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
 		--model-id $(HUGGINGFACE_MODEL) \
 		--api-key $(CUSTOM_EMBEDDINGS_API_KEY)
