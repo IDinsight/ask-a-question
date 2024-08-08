@@ -72,7 +72,7 @@ services:
     restart: always
 
   embeddings:
-    image: ${EMBEDDINGS_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
+    image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
       - embeddings
       - optional-components

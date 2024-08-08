@@ -100,7 +100,7 @@ build-embeddings-arm:
 	@git clone https://github.com/huggingface/text-embeddings-inference.git
 	@docker build text-embeddings-inference -f text-embeddings-inference/Dockerfile \
 		--platform=linux/arm64 \
-		-t $(EMBEDDINGS_NAME)
+		-t text-embeddings-inference-arm
 	@cd ..
 	@rm -rf text-embeddings-inference
 setup-embeddings-arm:
@@ -112,7 +112,7 @@ setup-embeddings-arm:
 		--name huggingface-embeddings \
         -p 8080:80 \
         -v $(PWD)/data:/data \
-        -d $(EMBEDDINGS_NAME) \
+        -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
         --api-key $(HUGGINGFACE_API_KEY)
 
