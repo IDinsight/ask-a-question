@@ -12,9 +12,8 @@ services:
       - .env
     volumes:
       - db_volume:/var/lib/postgresql/data
-    ports:
+    ports: # Expose the port to port 5434 on the host machine for debugging
       - 5434:5432
-
 
 volumes:
   db_volume:
