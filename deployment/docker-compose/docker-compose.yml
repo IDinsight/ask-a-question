@@ -70,14 +70,22 @@ services:
     command: >
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
-  embeddings:
-    image: idinsight/embeddings:latest
+
+  local-embeddings:
+    # image either refers to locally built image or defaults to the one from the registry
+    image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
-      - embeddings
+      - local-embeddings
       - optional-components
-    build:
-      context: ../../optional_components/embeddings
-      dockerfile: Dockerfile
+    volumes:
+      - $PWD/data:/data
+    command:
+      [
+        "--model-id",
+        "${HUGGINGFACE_MODEL}",
+        "--api-key",
+        "${CUSTOM_EMBEDDINGS_API_KEY}",
+      ]
     restart: always
     env_file:
       - .env
