@@ -106,6 +106,8 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+const isDeleted = (title: string) => title.startsWith("[DELETED]");
+
 const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
   return (
     <Box sx={{ width: "100%" }}>
@@ -143,7 +145,18 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
                   <StyledTableCell component="th" scope="row">
-                    {row.title}
+                    {isDeleted(row.title) ? (
+                      <span
+                        style={{
+                          color: appColors.lightGrey,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {row.title}
+                      </span>
+                    ) : (
+                      row.title
+                    )}
                   </StyledTableCell>
                   <StyledTableCell align="right">
                     {format(new Date(row.last_updated), "yyyy-MM-dd HH:mm")}

@@ -1,7 +1,7 @@
-# This script is useful if you want to test the dashboard with dummy data.
-# Navigate to the root directory of the project and run the following command:
-#   > make setup-dev
-#   > python scripts/add_dummy_data_to_db.py
+"""This script is useful if you want to test the dashboard with dummy data. Navigate to
+the root directory of the project and run the following command:
+    > python scripts/add_dummy_data_to_db.py
+"""
 
 import os
 import random
@@ -44,9 +44,8 @@ NEGATIVE_FEEDBACK_RATE = 0.1
 
 
 def add_year_data() -> None:
-    """
-    Add N_DATAPOINTS of data for each day in the past year.
-    """
+    """Add N_DATAPOINTS of data for each day in the past year."""
+
     now = datetime.now(timezone.utc)
     last_year = now - timedelta(days=365)
     year_datetimes = [
@@ -59,9 +58,8 @@ def add_year_data() -> None:
 
 
 def add_month_data() -> None:
-    """
-    Add N_DATAPOINTS of data for each hour in the past month.
-    """
+    """Add N_DATAPOINTS of data for each hour in the past month."""
+
     now = datetime.now(timezone.utc)
     last_month = now - timedelta(days=30)
     month_datetimes = [
@@ -74,9 +72,8 @@ def add_month_data() -> None:
 
 
 def add_week_data() -> None:
-    """
-    Add N_DATAPOINTS of data for each hour in the past week.
-    """
+    """Add N_DATAPOINTS of data for each hour in the past week."""
+
     now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=7)
     week_datetimes = [
@@ -89,9 +86,8 @@ def add_week_data() -> None:
 
 
 def add_day_data() -> None:
-    """
-    Add N_DATAPOINTS of data for each hour in the past day.
-    """
+    """Add N_DATAPOINTS of data for each hour in the past day."""
+
     now = datetime.now(timezone.utc)
     last_day = now - timedelta(hours=24)
     hour_datetimes = [
@@ -103,25 +99,43 @@ def add_day_data() -> None:
 
 
 def create_data(dt: datetime) -> None:
+    """Create a record for a given datetime.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
     """
-    Create a record for a given datetime.
-    """
+
     is_urgent = random.random() < URGENCY_RATE
     session = next(get_session())
     create_urgency_record(dt, is_urgent, session)
     if not is_urgent:
         is_negative = random.random() < NEGATIVE_FEEDBACK_RATE
         is_content_negative = random.random() < NEGATIVE_FEEDBACK_RATE
-        query_id = create_query_record(dt, session)
-        create_feedback_record(dt, query_id, is_negative, session)
-        create_content_feedback_record(dt, query_id, is_content_negative, session)
+        query_db = create_query_record(dt, session)
+        query_id = query_db.query_id
+        session_id = query_db.session_id
+        create_feedback_record(dt, query_id, session_id, is_negative, session)
+        create_content_feedback_record(
+            dt, query_id, session_id, is_content_negative, session
+        )
     session.close()
 
 
 def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> None:
+    """Create an urgency record for a given datetime.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
+    is_urgent
+        Specifies whether the record is urgent.
+    session
+        `Session` object for database transactions.
     """
-    Create an urgency record for a given datetime.
-    """
+
     urgency_db = UrgencyQueryDB(
         user_id=_USER_ID,
         message_text="test message",
@@ -141,12 +155,25 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     session.commit()
 
 
-def create_query_record(dt: datetime, session: Session) -> int:
+def create_query_record(dt: datetime, session: Session) -> QueryDB:
+    """Create a query record for a given datetime.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
+    session
+        `Session` object for database transactions.
+
+    Returns
+    -------
+    QueryDB
+        The query record.
     """
-    Create a query record for a given datetime.
-    """
+
     query_db = QueryDB(
         user_id=_USER_ID,
+        session_id=1,
         feedback_secret_key="abc123",
         query_text="test query",
         query_generate_llm_response=False,
@@ -155,20 +182,32 @@ def create_query_record(dt: datetime, session: Session) -> int:
     )
     session.add(query_db)
     session.commit()
-    return query_db.query_id
+    return query_db
 
 
 def create_feedback_record(
-    dt: datetime, query_id: int, is_negative: bool, session: Session
+    dt: datetime, query_id: int, session_id: int, is_negative: bool, session: Session
 ) -> None:
+    """Create a feedback record for a given datetime.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
+    query_id
+        The ID of the query record.
+    is_negative
+        Specifies whether the feedback is negative.
+    session
+        `Session` object for database transactions.
     """
-    Create a feedback record for a given datetime.
-    """
+
     sentiment = "negative" if is_negative else "positive"
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=dt,
         query_id=query_id,
         user_id=_USER_ID,
+        session_id=session_id,
         feedback_sentiment=sentiment,
     )
     session.add(feedback_db)
@@ -176,12 +215,28 @@ def create_feedback_record(
 
 
 def create_content_feedback_record(
-    dt: datetime, query_id: int, is_negative: bool, session: Session
+    dt: datetime,
+    query_id: int,
+    session_id: int,
+    is_content_negative: bool,
+    is_negative: bool,
+    session: Session,
 ) -> None:
+    """Create a content feedback record for a given datetime.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
+    query_id
+        The ID of the query record.
+    is_content_negative
+        Specifies whether the content feedback is negative.
+    session
+        `Session` object for database transactions.
     """
-    Create a feedback record for a given datetime.
-    """
-    sentiment = "negative" if is_negative else "positive"
+
+    sentiment = "negative" if is_content_negative else "positive"
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
     content_ids = random.choices(all_content_ids, k=3)
     for content_id in content_ids:
@@ -189,6 +244,7 @@ def create_content_feedback_record(
             feedback_datetime_utc=dt,
             query_id=query_id,
             user_id=_USER_ID,
+            session_id=session_id,
             content_id=content_id,
             feedback_sentiment=sentiment,
         )
@@ -197,9 +253,8 @@ def create_content_feedback_record(
 
 
 def add_content_data() -> None:
-    """
-    Add N_DATAPOINTS of data for each day in the past year.
-    """
+    """Add N_DATAPOINTS of content data to the database."""
+
     content = [
         "Ways to manage back pain during pregnancy",
         "Headache during pregnancy is normal ‚except after 20 weeks",
@@ -208,7 +263,7 @@ def add_content_data() -> None:
         "Some LEG cramps are normal during pregnancy",
     ]
 
-    for _i, c in enumerate(content):
+    for i, c in enumerate(content):
         session = next(get_session())
         query_count = np.random.randint(100, 700)
         positive_votes = np.random.randint(0, query_count)
@@ -219,7 +274,7 @@ def add_content_data() -> None:
             .astype(np.float32)
             .tolist(),
             content_title=c,
-            content_text="Test content #{i}",
+            content_text=f"Test content #{i}",
             content_metadata={},
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),

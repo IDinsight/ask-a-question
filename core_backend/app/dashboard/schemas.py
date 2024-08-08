@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Dict, List, Literal, get_args
+from typing import Annotated, Literal, get_args
 
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
@@ -85,15 +85,25 @@ class TimeFrequency(str, Enum):
     Hour = "Hour"
 
 
-def has_all_days(d: Dict[str, int]) -> Dict[str, int]:
+def has_all_days(d: dict[str, int]) -> dict[str, int]:
+    """This function is used to validate that all days are present in the data.
+
+    Parameters
+    ----------
+    d
+        Dictionary whose keys are valid `Day` strings and whose values are counts.
+
+    Returns
+    -------
+    dict[str, int]
+        The validated dictionary.
     """
-    This function is used to validate that all days are present in the data
-    """
+
     assert set(d.keys()) - set(get_args(Day)) == set(), "Missing some days in data"
     return d
 
 
-DayCount = Annotated[Dict[Day, int], AfterValidator(has_all_days)]
+DayCount = Annotated[dict[Day, int], AfterValidator(has_all_days)]
 
 
 class Heatmap(BaseModel):
@@ -120,9 +130,9 @@ class TimeSeries(BaseModel):
     This class is used to define the schema for the line chart
     """
 
-    urgent: Dict[str, int]
-    not_urgent_escalated: Dict[str, int]
-    not_urgent_not_escalated: Dict[str, int]
+    urgent: dict[str, int]
+    not_urgent_escalated: dict[str, int]
+    not_urgent_not_escalated: dict[str, int]
 
 
 class TopContent(BaseModel):
@@ -145,4 +155,4 @@ class DashboardOverview(BaseModel):
     stats_cards: StatsCards
     heatmap: Heatmap
     time_series: TimeSeries
-    top_content: List[TopContent]
+    top_content: list[TopContent]
