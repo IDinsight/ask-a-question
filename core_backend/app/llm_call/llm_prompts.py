@@ -7,7 +7,6 @@ from typing import ClassVar, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..config import SERVICE_IDENTITY
 from .utils import remove_json_markdown
 
 
@@ -125,41 +124,6 @@ class SafetyClassification(str, Enum):
             You are a dump piece of shit -> INAPPROPRIATE_LANGUAGE
             You are a terrible bot -> SAFE""".strip()
         )
-
-
-# ----  On/Off topic bot
-class OnOffTopicClassification(str, Enum):
-    """
-    On/Off topic classification of the user's input.
-    """
-
-    ON_TOPIC = "ON_TOPIC"
-    OFF_TOPIC = "OFF_TOPIC"
-    UNKNOWN = "UNKNOWN"
-
-    @classmethod
-    def get_available_labels(cls) -> list[str]:
-        """
-        Returns a list of available classes for on/off topic classification.
-        UNKNOWN is only used internally.
-        """
-
-        return [label for label in cls._member_names_ if label != "UNKNOWN"]
-
-    @classmethod
-    def get_prompt(cls) -> str:
-        """
-        Returns the prompt for the on/off topic bot.
-        """
-
-        return textwrap.dedent(
-            f"""
-            You are a labelling agent. You declare whether a query sent to an
-            {SERVICE_IDENTITY} can be reasonably answered or not.
-            When it is reasonably answerable, you label it as {cls.ON_TOPIC.value}.
-            When it is not, you label it as {cls.OFF_TOPIC.value}.
-            """
-        ).strip()
 
 
 # ---- Paraphrase question
