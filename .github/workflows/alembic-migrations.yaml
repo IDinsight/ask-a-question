@@ -14,29 +14,36 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-python@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+
       - name: Install Python libraries
         run: |
           python -m pip install -r core_backend/requirements.txt
+
       - name: Get Alembic head of tonyzhao6-main branch
         run: |
           git fetch origin tonyzhao6-main
           git worktree add /tmp/main-branch origin/tonyzhao6-main
           cd /tmp/main-branch
-          alembic_head_main=$(alembic heads | grep 'head' | awk '{print $3}')
+          alembic_head_main=$(alembic heads | awk '/head/ {print $NF}')
           echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
           cd -
+
       - name: Get Alembic head of current branch
         run: |
-          git checkout -f ${{ github.event.pull_request.head.sha }}
-          alembic_head_pr=$(alembic heads | grep 'head' | awk '{print $3}')
+          alembic_head_pr=$(alembic heads | awk '/head/ {print $NF}')
           echo "ALEMBIC_HEAD_PR=${alembic_head_pr}" >> $GITHUB_ENV
+
       - name: Compare Alembic heads
         run: |
-          if [ "$ALEMBIC_HEAD_MAIN" != "$ALEMBIC_HEAD_PR" ]; then
-            echo "Alembic head of the current branch ($ALEMBIC_HEAD_PR) is not the same as the Alembic head of tonyzhao6-main ($ALEMBIC_HEAD_MAIN)."
+          echo "Main branch Alembic head: ${{ env.ALEMBIC_HEAD_MAIN }}"
+          echo "PR branch Alembic head: ${{ env.ALEMBIC_HEAD_PR }}"
+          if [ "${{ env.ALEMBIC_HEAD_MAIN }}" != "${{ env.ALEMBIC_HEAD_PR }}" ]; then
+            echo "Alembic head of the current branch (${{ env.ALEMBIC_HEAD_PR }}) is not the same as the Alembic head of tonyzhao6-main (${{ env.ALEMBIC_HEAD_MAIN }})."
             exit 1
           else
             echo "Alembic heads are the same."
