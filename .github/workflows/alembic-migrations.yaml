@@ -23,9 +23,11 @@ jobs:
       - name: Get Alembic head of tonyzhao6-main branch
         run: |
           git fetch origin tonyzhao6-main
-          git checkout origin/tonyzhao6-main
+          git worktree add /tmp/main-branch origin/tonyzhao6-main
+          cd /tmp/main-branch
           alembic_head_main=$(alembic heads | grep 'head' | awk '{print $3}')
           echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
+          cd -
       - name: Get Alembic head of current branch
         run: |
           git checkout -f ${{ github.event.pull_request.head.sha }}
