@@ -72,15 +72,13 @@ services:
     restart: always
 
   local-embeddings:
+    # image either refers to locally built image or defaults to the one from the registry
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
       - local-embeddings
       - optional-components
     volumes:
       - $PWD/data:/data
-    environment:
-      MODEL_ID: $HUGGINGFACE_MODEL
-      CUSTOM_EMBEDDINGS_API_KEY: ${CUSTOM_EMBEDDINGS_API_KEY}
     command:
       [
         "--model-id",
