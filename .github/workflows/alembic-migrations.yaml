@@ -12,16 +12,30 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Install Python libraries
         run: |
           python -m pip install -r core_backend/requirements.txt
-      - name: Check Alembic heads
+      - name: Get Alembic head of tonyzhao6-main branch
         run: |
-          heads_count=$(alembic heads --resolve-dependencies | grep 'head' | wc -l)
-          if [ "$heads_count" -gt 1 ]; then
-            echo "Multiple Alembic heads detected. Please rebase or merge with the latest main branch."
+          git fetch origin tonyzhao6-main
+          git checkout origin/tonyzhao6-main
+          alembic_head_main=$(alembic heads | grep 'head' | awk '{print $3}')
+          echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
+      - name: Get Alembic head of current branch
+        run: |
+          git checkout -f ${{ github.event.pull_request.head.sha }}
+          alembic_head_pr=$(alembic heads | grep 'head' | awk '{print $3}')
+          echo "ALEMBIC_HEAD_PR=${alembic_head_pr}" >> $GITHUB_ENV
+      - name: Compare Alembic heads
+        run: |
+          if [ "$ALEMBIC_HEAD_MAIN" != "$ALEMBIC_HEAD_PR" ]; then
+            echo "Alembic head of the current branch ($ALEMBIC_HEAD_PR) is not the same as the Alembic head of tonyzhao6-main ($ALEMBIC_HEAD_MAIN)."
             exit 1
+          else
+            echo "Alembic heads are the same."
           fi
