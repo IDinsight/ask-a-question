@@ -160,6 +160,8 @@ class TopContentTimeSeries(TopContentBase):
     """
 
     query_count_time_series: dict[str, int]
+    positive_votes: int
+    negative_votes: int
     total_query_count: int
 
 

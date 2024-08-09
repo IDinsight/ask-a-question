@@ -428,13 +428,13 @@ async def get_timeseries_urgency(
 async def get_timeseries_top_content(
     user_id: int,
     asession: AsyncSession,
-    top_n: int,
+    top_n: int | None,
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
 ) -> list[TopContentTimeSeries]:
     """
-    Retrieve most frequently shared content.
+    Retrieve most frequently shared content and feedback between the start and end date.
     Note that this retrieves top N content from the `QueryResponseContentDB` table
     and not from the `ContentDB` table.ContentDB
 
@@ -443,10 +443,11 @@ async def get_timeseries_top_content(
 
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
-    top_content = (
+    top_content_base = (
         select(
             ContentDB.content_id,
             ContentDB.content_title,
+            ContentDB.updated_datetime_utc,
             func.count(QueryResponseContentDB.query_id).label("total_query_count"),
         )
         .select_from(QueryResponseContentDB)
@@ -464,63 +465,130 @@ async def get_timeseries_top_content(
             ContentDB.content_id,
         )
         .order_by(desc("total_query_count"))
-        .limit(top_n)
-        .subquery()
     )
 
-    all_combinations = (
+    if top_n:
+        top_content_base = top_content_base.limit(top_n)
+
+    top_content = top_content_base.subquery("top_content")
+
+    content_w_feedback = (
         select(
-            ts_labels.c.time_period,
+            ContentFeedbackDB.content_id,
+            func.count(
+                case((ContentFeedbackDB.feedback_sentiment == "positive", 1))
+            ).label("n_positive_feedback"),
+            func.count(
+                case((ContentFeedbackDB.feedback_sentiment == "negative", 1))
+            ).label("n_negative_feedback"),
+        )
+        .where(
+            ContentFeedbackDB.user_id == user_id,
+            ContentFeedbackDB.feedback_datetime_utc >= start_date,
+            ContentFeedbackDB.feedback_datetime_utc < end_date,
+        )
+        .group_by(ContentFeedbackDB.content_id)
+        .subquery("content_w_feedback")
+    )
+
+    top_content_w_feedback = (
+        select(
             top_content.c.content_id,
             top_content.c.content_title,
             top_content.c.total_query_count,
+            top_content.c.updated_datetime_utc,
+            func.coalesce(content_w_feedback.c.n_positive_feedback, 0).label(
+                "n_positive_feedback"
+            ),
+            func.coalesce(content_w_feedback.c.n_negative_feedback, 0).label(
+                "n_negative_feedback"
+            ),
+        )
+        .select_from(top_content)
+        .join(
+            content_w_feedback,
+            top_content.c.content_id == content_w_feedback.c.content_id,
+            isouter=True,
+        )
+        .subquery("top_content_w_feedback")
+    )
+
+    all_combinations_w_feedback = (
+        select(
+            ts_labels.c.time_period,
+            top_content_w_feedback.c.content_id,
+            top_content_w_feedback.c.content_title,
+            top_content_w_feedback.c.total_query_count,
+            top_content_w_feedback.c.updated_datetime_utc,
+            top_content_w_feedback.c.n_positive_feedback,
+            top_content_w_feedback.c.n_negative_feedback,
         )
         .select_from(ts_labels)
-        .join(top_content, text("1=1"))
-        .subquery()
+        .join(top_content_w_feedback, text("1=1"))
+        .subquery("all_combinations_w_feedback")
     )
 
     # Main query to get the required data
     statement = (
         select(
-            all_combinations.c.time_period,
-            all_combinations.c.content_id,
-            all_combinations.c.content_title,
-            all_combinations.c.total_query_count,
+            all_combinations_w_feedback.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.content_title,
+            all_combinations_w_feedback.c.total_query_count,
             func.coalesce(func.count(QueryResponseContentDB.query_id), 0).label(
                 "query_count"
             ),
+            all_combinations_w_feedback.c.n_positive_feedback,
+            all_combinations_w_feedback.c.n_negative_feedback,
         )
-        .select_from(all_combinations)
+        .select_from(all_combinations_w_feedback)
         .join(
             QueryResponseContentDB,
             and_(
-                all_combinations.c.content_id == QueryResponseContentDB.content_id,
+                all_combinations_w_feedback.c.content_id
+                == QueryResponseContentDB.content_id,
                 func.date_trunc(
                     interval_str, QueryResponseContentDB.created_datetime_utc
                 )
-                == func.date_trunc(interval_str, all_combinations.c.time_period),
+                == func.date_trunc(
+                    interval_str, all_combinations_w_feedback.c.time_period
+                ),
             ),
             isouter=True,
         )
         .group_by(
-            all_combinations.c.time_period,
-            all_combinations.c.content_id,
-            all_combinations.c.content_title,
-            all_combinations.c.total_query_count,
+            all_combinations_w_feedback.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.content_title,
+            all_combinations_w_feedback.c.total_query_count,
+            all_combinations_w_feedback.c.n_positive_feedback,
+            all_combinations_w_feedback.c.n_negative_feedback,
         )
         .order_by(
             desc("total_query_count"),
-            all_combinations.c.content_id,
-            all_combinations.c.time_period,
+            all_combinations_w_feedback.c.content_id,
+            all_combinations_w_feedback.c.time_period,
         )
     )
 
     result = await asession.execute(statement)
     rows = result.fetchall()
+    print(rows)
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
 
     return convert_rows_to_top_content_time_series(rows, format_str)
+
+
+def set_curr_content_values(r: Row[Any]) -> dict[str, Any]:
+    """
+    Set current content values
+    """
+    return {
+        "title": r.content_title,
+        "total_query_count": r.total_query_count,
+        "positive_votes": r.n_positive_feedback,
+        "negative_votes": r.n_negative_feedback,
+    }
 
 
 def convert_rows_to_top_content_time_series(
@@ -530,37 +598,31 @@ def convert_rows_to_top_content_time_series(
     Convert rows to list of TopContentTimeSeries
     """
     curr_content_id = None
-    curr_title = None
+    curr_content_values = {}
     time_series = dict()
     top_content_time_series: list[TopContentTimeSeries] = []
-    curr_total_query_count = 0
     for r in rows:
         if curr_content_id is None:
+            curr_content_values = set_curr_content_values(r)
             curr_content_id = r.content_id
-            curr_title = r.content_title
-            curr_total_query_count = r.total_query_count
             time_series = {r.time_period.strftime(format_str): r.query_count}
         elif curr_content_id == r.content_id:
             time_series[r.time_period.strftime(format_str)] = r.query_count
         else:
             top_content_time_series.append(
                 TopContentTimeSeries(
-                    title=str(curr_title),
+                    **curr_content_values,
                     query_count_time_series=time_series,
-                    total_query_count=curr_total_query_count,
                 )
             )
-            curr_content_id = r.content_id
-            curr_title = r.content_title
-            curr_total_query_count = r.total_query_count
+            curr_content_values = set_curr_content_values(r)
             time_series = {r.time_period.strftime(format_str): r.query_count}
-
+            curr_content_id = r.content_id
     if curr_content_id is not None:
         top_content_time_series.append(
             TopContentTimeSeries(
-                title=str(curr_title),
+                **curr_content_values,
                 query_count_time_series=time_series,
-                total_query_count=curr_total_query_count,
             )
         )
 
