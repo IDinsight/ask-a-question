@@ -16,6 +16,7 @@ class QueryBase(BaseModel):
     session_id: Optional[int] = None
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
+    generate_tts: bool = Field(False)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,6 +44,8 @@ class ErrorType(str, Enum):
     UNABLE_TO_PARAPHRASE = "unable_to_paraphrase"
     UNABLE_TO_GENERATE_RESPONSE = "unable_to_generate_response"
     ALIGNMENT_TOO_LOW = "alignment_too_low"
+    TTS_ERROR = "tts_error"
+    STT_ERROR = "stt_error"
 
 
 class QueryResponse(BaseModel):
@@ -54,6 +57,7 @@ class QueryResponse(BaseModel):
     session_id: Optional[int] = None
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
+    tts_file: str | None = Field(None, examples=["response.mp3"])
     search_results: Dict[int, QuerySearchResult] | None = Field(
         None,
         examples=[
