@@ -12,24 +12,25 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 3. Create an AAQ account, retrieve an API key.
 
-4. Set both the AAQ URL (e.g.<https://app.ask-a-question.com/api/>) and AAQ_API_KEY in .env file as
-   `TARGET_URL` and `AAQ_API_KEY` respectively.
+4. Copy the `sample.env` contents into a new `.env` file and set both the `TARGET_AAQ_URL` (e.g.<https://app.ask-a-question.com/api/>) and `AAQ_API_KEY` as needed.
+   [Optional] If you are testing TypeBot loads as well, you will need to set those `.env` variables as per the instructions in the `sample.env`
 
-5. Run the main script.
+5. Ensure your configuration `.json` looks correct. In the `conigs/` folder there is a `.json` that defines which tests are carried out when the `main.py` script is run.
+   [Optional] If you would like to test out AAQ in the context of a TypeBot flow, you can include `typebot.py` in list corresponding to the key `locustfile_list`.
+
+6. Run the main script.
 
    ```console
    python main.py
    ```
 
-   This script will loop through each experiment in the config file and its given test configurations and run each parameter combination through `locust`, saving results to file.
-
-   > Note: Each experiment can specify multiple values for each parameter, and so multiple load-tests may be run for each experiment.
+   This script will loop through each experiment in the default experiment config file and its given test configurations and run each parameter combination through `locust`, saving results to file.
 
    The script can be run with the following command-line arguments:
 
    - `--config`: JSON file containing configs for tests.
 
-     Default `configs/constant_multi.json`.
+     Default `configs/1_200_users.json`.
 
    - `--output`: Folder to store outputs.
 
@@ -68,20 +69,17 @@ Results from each individual load-testing experiment are also saved under a corr
 ```console
 📂outputs
 ┣ all_experiments_endoftest_results_summary.csv
-┣ 📂staging_constant_multi
 ┃ ┣ 📂html_reports
-┃ ┃ ┣ 10_user_same_msgs_report.html
+┃ ┃ ┣ 10_user_aaq_search_report.html
 ┃ ┃ ┗ ...
 ┃ ┣ 📂raw
-┃ ┃ ┣ 10_user_same_msgs_report
+┃ ┃ ┣ 10_user_aaq_search
 ┃ ┃ ┃ ┣ test_exceptions.csv
 ┃ ┃ ┃ ┣ test_failures.csv
 ┃ ┃ ┃ ┣ test_stats.csv
 ┃ ┃ ┃ ┗ test_stats_history.csv
-┃ ┃ ┣ 📂100_user_val_msgs
+┃ ┃ ┣ 📂100_user_aaq_search
 ┃ ┃ ┗ ┗ ...
-┃ ┣ 📂staging_ramped
-┗ ┗ ┗ ...
 ```
 
 ## Config and experiment types
@@ -104,8 +102,6 @@ Constant load-tests initiate the max number of users from the start and sustain 
 
 When multiple request types (via different locustfiles) and numbers of users are specificed, the constant load-tests experiment outputs a grid of results that allows us to compare response times and requests/sec under stable load conditions.
 
-An example of a config entry for multiple constant load-tests performed on the `STAGING_URL` is given below:
-
 ```json
 "constant_multi": {
     "locustfile_list": [
@@ -122,31 +118,23 @@ An example of a config entry for multiple constant load-tests performed on the `
 }
 ```
 
-### _Ramped load-tests_
+### Ramping
 
-Ramped load-tests gradually increase number of users based on a given spawn-rate, up to a given max number of users, for a given run-time.
-
-A ramped load-test is helpful in estimating the point at which a server starts to experience slowdowns and/or throw errors, but is more difficult to interpret. This difficulty is due to the delay between users spawning, their requests being responded to with different response times, and the rolling average that the stats are presented with.
-
-Also note that end-of-test results are often unreliable or irrelevant in ramped load-tests (e.g. median and average response time values). A constant load-test is more suited to extracting stable response time results and can be repeated for any number of users as required.
-
-An example of a config entry for a single ramped load-test is given below. This test is performed on the `STAGING_URL`, with 2 users spawned per second, up to a maximum of 500 users, with a max run-time of 8 minutes.
+Ramping up the number of users each second is also possible, though this would require the creation of a new `.json` config file. An example of a config entry for a single ramped load-test is given below. The load tests will build up to 50 users with 5 users spawned per second. The entire test will end after 400 seconds.
 
 ```json
-"staging_ramped_50": {
-    "host_label": "STAGING_URL",
+"ramped_50": {
     "locustfile_list": [
-        "same_msgs.py",
-        "val_msgs.py"
+        "aaq_search.py"
     ],
     "users_list": [
         50
     ],
     "spawn_rate_list": [
-        1
+        5
     ],
     "run_time_list": [
-        "40s"
+        "400s"
     ]
 }
 ```
