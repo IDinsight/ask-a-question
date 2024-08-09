@@ -1,23 +1,32 @@
 from datetime import datetime, timezone, tzinfo
 from typing import AsyncGenerator, List, Optional
 
+import numpy as np
 import pytest
 from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import delete
 
+from core_backend.app.dashboard.models import get_content_details
 from core_backend.app.dashboard.routers import (
     DashboardTimeFilter,
     get_frequency_and_startdate,
     retrieve_performance,
 )
 from core_backend.app.question_answer.models import (
+    ContentFeedbackDB,
     QueryDB,
     QueryResponseContentDB,
+    save_content_feedback_to_db,
     save_content_for_query_to_db,
     save_user_query_to_db,
 )
-from core_backend.app.question_answer.schemas import QueryBase, QuerySearchResult
+from core_backend.app.question_answer.schemas import (
+    ContentFeedback,
+    QueryBase,
+    QuerySearchResult,
+)
+from core_backend.app.schemas import FeedbackSentiment
 
 
 class MockDatetime:
@@ -101,6 +110,25 @@ async def content_with_query_history(
             user1, 1, query_db.query_id, query_search_results, asession
         )
 
+        if idx % 2 == 0:
+            sentiment = FeedbackSentiment.POSITIVE
+        else:
+            sentiment = FeedbackSentiment.NEGATIVE
+
+        content_feedback = ContentFeedback(
+            query_id=query_db.query_id,
+            session_id=query_db.session_id,
+            feedback_sentiment=sentiment,
+            feedback_text="Great content",
+            feedback_secret_key="secret key",
+            content_id=faq_contents[0],
+        )
+
+        await save_content_feedback_to_db(
+            feedback=content_feedback,
+            asession=asession,
+        )
+
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta - delta - delta
         monkeypatch.setattr(
@@ -122,6 +150,20 @@ async def content_with_query_history(
             )
         await save_content_for_query_to_db(
             user1, 1, query_db.query_id, query_search_results, asession
+        )
+
+        content_feedback = ContentFeedback(
+            query_id=query_db.query_id,
+            session_id=query_db.session_id,
+            feedback_sentiment=sentiment,
+            feedback_text="Great content",
+            feedback_secret_key="secret key",
+            content_id=faq_contents[0],
+        )
+
+        await save_content_feedback_to_db(
+            feedback=content_feedback,
+            asession=asession,
         )
 
         query_search_results = {}
@@ -151,12 +193,30 @@ async def content_with_query_history(
             user1, 1, query_db.query_id, query_search_results, asession
         )
 
+        content_feedback = ContentFeedback(
+            query_id=query_db.query_id,
+            session_id=query_db.session_id,
+            feedback_sentiment=sentiment,
+            feedback_text="Great content",
+            feedback_secret_key="secret key",
+            content_id=faq_contents[0],
+        )
+
+        await save_content_feedback_to_db(
+            feedback=content_feedback,
+            asession=asession,
+        )
+
     yield request.param
 
     delete_content_history = delete(QueryResponseContentDB).where(
         QueryResponseContentDB.query_id == query_db.query_id
     )
     await asession.execute(delete_content_history)
+    delete_feedback = delete(ContentFeedbackDB).where(
+        ContentFeedbackDB.query_id == query_db.query_id
+    )
+    await asession.execute(delete_feedback)
     delete_query = delete(QueryDB).where(QueryDB.query_id == query_db.query_id)
     await asession.execute(delete_query)
     await asession.commit()
@@ -209,3 +269,27 @@ async def test_cannot_access_other_user_stats(
 
     time_series = performance_stats.content_time_series
     assert len(time_series) == 0
+
+
+async def test_drawer_data(
+    content_with_query_history: DashboardTimeFilter,
+    asession: AsyncSession,
+    faq_contents: List[int],
+    user1: int,
+) -> None:
+    end_date = datetime.now(timezone.utc)
+    frequency, start_date = get_frequency_and_startdate(content_with_query_history)
+
+    drawer_data = await get_content_details(
+        user1,
+        faq_contents[0],
+        asession,
+        start_date,
+        end_date,
+        frequency,
+    )
+
+    assert drawer_data.query_count == N_CONTENT_SHARED[0]
+    assert drawer_data.positive_votes == np.ceil(len(N_CONTENT_SHARED) / 2)
+    assert len(drawer_data.user_feedback) == len(N_CONTENT_SHARED)
+    assert drawer_data.negative_votes == np.floor(len(N_CONTENT_SHARED) / 2)
