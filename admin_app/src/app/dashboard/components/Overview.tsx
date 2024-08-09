@@ -1,18 +1,19 @@
 import { getOverviewPageData } from "@/app/dashboard/api";
-import AreaChart from "@/app/dashboard/components/AreaChart";
-import HeatMap from "@/app/dashboard/components/HeatMap";
-import { StatCard, StatCardProps } from "@/app/dashboard/components/StatCard";
-import TopContentTable from "@/app/dashboard/components/TopContentTable";
+import AreaChart from "@/app/dashboard/components/overview/AreaChart";
+import HeatMap from "@/app/dashboard/components/overview/HeatMap";
+import {
+  StatCard,
+  StatCardProps,
+} from "@/app/dashboard/components/overview/StatCard";
+import TopContentTable from "@/app/dashboard/components/overview/TopContentTable";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/utils/auth";
-import { appColors } from "@/utils/index";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import { Box } from "@mui/material";
-import { ApexOptions } from "apexcharts";
 import { format } from "date-fns";
 import React, { useEffect } from "react";
 import { ApexData, DayHourUsageData, Period, TopContentData } from "../types";
@@ -27,61 +28,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([]);
   const [timeseriesData, setTimeseriesData] = React.useState<ApexData[]>([]);
   const [topContentData, setTopContentData] = React.useState<TopContentData[]>([]);
-
-  const heatmapOptions: ApexOptions = {
-    chart: {
-      id: "usage-heatmap",
-      width: "100%",
-      height: "100%",
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    title: {
-      text: "Usage Frequency",
-      margin: 2,
-      offsetX: 6,
-      offsetY: 8,
-      floating: false,
-      style: {
-        fontSize: "16px",
-        fontWeight: "bold",
-        fontFamily: undefined,
-        color: "#263238",
-      },
-    },
-    colors: ["#008FFB"],
-    plotOptions: {
-      heatmap: {
-        radius: 1,
-      },
-    },
-  };
-
-  const timeseriesOptions: ApexOptions = {
-    chart: {
-      id: "usage-timeseries",
-      stacked: true,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      },
-    },
-    legend: {
-      position: "top",
-      horizontalAlign: "left",
-    },
-    colors: [
-      appColors.dashboardUrgent,
-      appColors.dashboardSecondary,
-      appColors.dashboardPrimary,
-    ],
-  };
 
   useEffect(() => {
     if (token) {
@@ -255,7 +201,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
             height: 450,
           }}
         >
-          <AreaChart data={timeseriesData} options={timeseriesOptions} />
+          <AreaChart data={timeseriesData} />
         </Box>
         <Box
           bgcolor="white"
@@ -266,7 +212,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
             height: 450,
           }}
         >
-          <HeatMap data={heatmapData} options={heatmapOptions} />
+          <HeatMap data={heatmapData} />
         </Box>
       </Box>
       <Box bgcolor="white" sx={{ marginTop: 2 }}>

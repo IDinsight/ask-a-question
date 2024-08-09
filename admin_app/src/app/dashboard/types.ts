@@ -14,9 +14,8 @@ interface ApexData {
   zIndex?: number;
 }
 
-interface TopContentData {
+interface ContentData {
   title: string;
-  last_updated: string;
   query_count: number;
   positive_votes: number;
   negative_votes: number;
@@ -24,5 +23,21 @@ interface TopContentData {
 
 const drawerWidth = 240;
 
-export type { Period, TimeFrame, DayHourUsageData, ApexData, TopContentData };
+interface TopContentData extends ContentData {
+  last_updated: string;
+}
+
+interface RowDataType extends ContentData {
+  query_count_timeseries: number[];
+}
+
+export type {
+  Period,
+  TimeFrame,
+  DayHourUsageData,
+  ApexData,
+  TopContentData,
+  RowDataType,
+};
+
 export { drawerWidth };
