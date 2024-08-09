@@ -227,6 +227,10 @@ def create_response_feedback_record(
     session.commit()
 
 
+POSITIVE_FEEDBACK_TEXTS = ["Great!", "Very helpful!", "Thanks!"]
+NEGATIVE_FEEDBACK_TEXTS = ["Not helpful", "Confusing", "Too long"]
+
+
 def create_content_feedback_record(
     dt: datetime,
     query_id: int,
@@ -251,6 +255,11 @@ def create_content_feedback_record(
     """
 
     sentiment = "negative" if is_negative else "positive"
+    sentiment_text = (
+        random.choice(NEGATIVE_FEEDBACK_TEXTS)
+        if is_negative
+        else random.choice(POSITIVE_FEEDBACK_TEXTS)
+    )
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
     content_ids = random.choices(all_content_ids, k=3)
     for content_id in content_ids:
@@ -261,6 +270,7 @@ def create_content_feedback_record(
             session_id=session_id,
             content_id=content_id,
             feedback_sentiment=sentiment,
+            feedback_text=sentiment_text,
         )
         session.add(feedback_db)
         session.commit()
