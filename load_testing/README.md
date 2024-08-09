@@ -114,7 +114,7 @@ Each experiment entry reflects the core elements of a [standard locust config fi
 
 This submodule is designed to be able to run two types of experiments: constant and ramped load-tests. As many experiments can be added to the config file as necessary - the script will execute one after the other.
 
-### _Constant load-tests_
+### Constant load-tests
 
 Constant load-tests initiate the max number of users from the start and sustain the load for the given run-time.
 
