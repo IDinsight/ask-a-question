@@ -3,8 +3,8 @@ import Box from "@mui/material/Box";
 import DetailsDrawer from "@/app/dashboard/components/performance/DetailsDrawer";
 import LineChart from "@/app/dashboard/components/performance/LineChart";
 import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
-import { getPerformancePageData } from "@/app/dashboard/api";
-import { ApexData, Period, RowDataType } from "@/app/dashboard/types";
+import { getPerformancePageData, getPerformanceDrawerData } from "@/app/dashboard/api";
+import { ApexData, Period, RowDataType, DrawerData } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
 const N_TOP_CONTENT = 10;
@@ -19,10 +19,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [lineChartData, setLineChartData] = React.useState<ApexData[]>([]);
   const [contentTableData, setContentTableData] = React.useState<RowDataType[]>([]);
-
-  const toggleDrawer = (newOpen: boolean) => () => {
-    setDrawerOpen(newOpen);
-  };
+  const [drawerData, setDrawerData] = React.useState<DrawerData | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -35,6 +32,76 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       console.log("No token found");
     }
   }, [timePeriod, token]);
+
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setDrawerOpen(newOpen);
+  };
+
+  const tableRowClickHandler = (contentId: number) => {
+    if (token) {
+      getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
+        console.log(response);
+        parseDrawerData(response);
+        setDrawerOpen(true);
+      });
+    }
+  };
+
+  const parseDrawerData = (data: Record<string, any>) => {
+    interface Timeseries {
+      query_count: number;
+      positive_count: number;
+      negative_count: number;
+    }
+
+    const queryCountSeriesData: ApexData = {
+      name: "Query Count",
+      data: Object.entries(data.time_series).map(([period, timeseries]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: (timeseries as Timeseries).query_count as number,
+        };
+      }),
+    };
+
+    const positiveVotesSeriesData: ApexData = {
+      name: "Positive Votes",
+      data: Object.entries(data.time_series).map(([period, timeseries]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: (timeseries as Timeseries).positive_count as number,
+        };
+      }),
+    };
+
+    const negativeVotesSeriesData: ApexData = {
+      name: "Negative Votes",
+      data: Object.entries(data.time_series).map(([period, timeseries]) => {
+        const date = new Date(period);
+        return {
+          x: String(date),
+          y: (timeseries as Timeseries).negative_count as number,
+        };
+      }),
+    };
+
+    const drawerData: DrawerData = {
+      title: data.title,
+      query_count: data.query_count,
+      positive_votes: data.positive_votes,
+      negative_votes: data.negative_votes,
+      daily_query_count_avg: data.daily_query_count_avg,
+      line_chart_data: [
+        queryCountSeriesData,
+        positiveVotesSeriesData,
+        negativeVotesSeriesData,
+      ],
+      user_feedback: data.user_feedback,
+    };
+    setDrawerData(drawerData);
+  };
 
   const parseLineChartData = (timeseriesData: Record<string, any>[]) => {
     const apexTimeSeriesData: ApexData[] = timeseriesData.map((series, idx) => {
@@ -60,6 +127,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   const parseContentTableData = (timeseriesData: Record<string, any>[]) => {
     const rows: RowDataType[] = timeseriesData.map((series) => {
       return {
+        id: series.id,
         title: series.title,
         query_count: series.total_query_count,
         positive_votes: series.positive_votes,
@@ -116,14 +184,14 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     user_feedback: [
       {
         timestamp: "2021-09-01T00:00:00.000Z",
-        userQuestion: "What is Learner Mobilisation?",
-        userFeedback: "Not enough information",
+        question: "What is Learner Mobilisation?",
+        feedback: "Not enough information",
       },
       {
         timestamp: "2021-09-02T00:00:00.000Z",
-        userQuestion:
+        question:
           "This is a very long question that should get truncated when displayed",
-        userFeedback:
+        feedback:
           "This ia a very long feedback that should get truncated when displayed",
       },
     ],
@@ -131,7 +199,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
 
   return (
     <>
-      <DetailsDrawer open={drawerOpen} onClose={toggleDrawer} data={sampleDrawerData} />
+      <DetailsDrawer open={drawerOpen} onClose={toggleDrawer} data={drawerData} />
       <Box
         bgcolor="white"
         sx={{
@@ -149,7 +217,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       </Box>
       <ContentsTable
         rows={contentTableData}
-        onClick={toggleDrawer(true)}
+        onClick={tableRowClickHandler}
         rowsPerPage={N_TOP_CONTENT}
       />
     </>

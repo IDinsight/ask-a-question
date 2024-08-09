@@ -12,13 +12,19 @@ from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
+    get_content_details,
     get_heatmap,
     get_overview_timeseries,
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
 )
-from .schemas import DashboardOverview, DashboardPerformance, TimeFrequency
+from .schemas import (
+    DashboardOverview,
+    DashboardPerformance,
+    DetailsDrawer,
+    TimeFrequency,
+)
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -29,6 +35,31 @@ router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 DashboardTimeFilter = Literal["day", "week", "month", "year"]
+
+
+@router.get("/performance/{time_frequency}/{content_id}", response_model=DetailsDrawer)
+async def retrieve_content_details(
+    content_id: int,
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> DetailsDrawer:
+    """
+    Retrieve detailed statistics of a content
+    """
+
+    today = datetime.now(timezone.utc)
+    frequency, start_date = get_frequency_and_startdate(time_frequency)
+
+    details = await get_content_details(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        asession=asession,
+        start_date=start_date,
+        end_date=today,
+        frequency=frequency,
+    )
+    return details
 
 
 @router.get("/performance/{time_frequency}", response_model=DashboardPerformance)

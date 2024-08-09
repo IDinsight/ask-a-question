@@ -38,4 +38,28 @@ const getPerformancePageData = async (period: Period, token: string) => {
   });
 };
 
-export { getOverviewPageData, getPerformancePageData };
+const getPerformanceDrawerData = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer data");
+    }
+  });
+};
+
+export { getOverviewPageData, getPerformancePageData, getPerformanceDrawerData };
