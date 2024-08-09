@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: tonyzhao6-main
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -21,11 +26,6 @@ jobs:
       - name: Install alembic package
         run: |
           grep -w 'alembic' core_backend/requirements.txt | xargs python -m pip install
-
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: tonyzhao6-main
 
       - name: Get Alembic head of tonyzhao6-main branch
         run: |
