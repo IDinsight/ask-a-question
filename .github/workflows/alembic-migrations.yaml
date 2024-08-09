@@ -40,6 +40,7 @@ jobs:
 
       - name: Check if Alembic head revision from main exists in feature branch
         run: |
+          cd core_backend
           if alembic history | grep -q ALEMBIC_HEAD_MAIN; then
             echo "Alembic head revision from main exists in PR branch."
           else
