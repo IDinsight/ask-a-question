@@ -106,12 +106,20 @@ const ContentsTable = ({
     // if the last quarter is greater than the third quarter
     // then the trend is increasing
     const queryLength = queryCount.length;
-    const lastQuarterValue = queryCount
-      .slice(Math.floor((queryLength / 4) * 3), queryLength)
-      .reduce((a, b) => a + b, 0);
-    const thirdQuarterValue = queryCount
-      .slice(Math.floor((queryLength / 4) * 2), Math.floor((queryLength / 4) * 3))
-      .reduce((a, b) => a + b, 0);
+
+    const lastQuarter = queryCount.slice(
+      Math.floor((queryLength / 4) * 3),
+      queryLength,
+    );
+    const lastQuarterValue =
+      lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
+
+    const thirdQuarter = queryCount.slice(
+      Math.floor((queryLength / 4) * 2),
+      Math.floor((queryLength / 4) * 3),
+    );
+    const thirdQuarterValue =
+      thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
 
     return (lastQuarterValue - thirdQuarterValue) / thirdQuarterValue;
   };
