@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - tonyzhao6-main
+    paths:
+      - "core_backend/migrations/versions/**.py"
+      - ".github/workflows/alembic-migrations.yaml"
 
 jobs:
   alembic-check:
