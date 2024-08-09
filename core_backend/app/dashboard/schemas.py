@@ -159,6 +159,7 @@ class TopContentTimeSeries(TopContentBase):
     This class is used to define the schema for the top content time series
     """
 
+    id: int
     query_count_time_series: dict[str, int]
     positive_votes: int
     negative_votes: int
@@ -174,6 +175,31 @@ class DashboardOverview(BaseModel):
     heatmap: Heatmap
     time_series: OverviewTimeSeries
     top_content: list[TopContent]
+
+
+class UserFeedback(BaseModel):
+    """
+    This class is used to define the schema for the user feedback
+    """
+
+    timestamp: datetime
+    question: str
+    feedback: str
+
+
+class DetailsDrawer(BaseModel):
+    """
+    This class is used to define the schema for the details drawer
+    """
+
+    title: str
+    query_count: int
+    positive_votes: int
+    negative_votes: int
+    daily_query_count_avg: int
+    time_series: dict[str, dict[str, int]]
+    ai_summary: str | None
+    user_feedback: list[UserFeedback]
 
 
 class DashboardPerformance(BaseModel):

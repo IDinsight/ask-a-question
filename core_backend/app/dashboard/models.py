@@ -19,6 +19,7 @@ from ..urgency_detection.models import UrgencyResponseDB
 from .schemas import (
     ContentFeedbackStats,
     Day,
+    DetailsDrawer,
     Heatmap,
     OverviewTimeSeries,
     QueryStats,
@@ -29,6 +30,7 @@ from .schemas import (
     TopContent,
     TopContentTimeSeries,
     UrgencyStats,
+    UserFeedback,
 )
 
 
@@ -250,6 +252,7 @@ def get_time_labels_query(
         case _:
             raise ValueError("Invalid frequency")
 
+    extra_interval = "hour" if interval_str == "hour" else "day"
     return interval_str, (
         select(
             func.date_trunc(interval_str, literal_column("period_start")).label(
@@ -259,7 +262,7 @@ def get_time_labels_query(
         .select_from(
             text(
                 f"generate_series('{start_date}'::timestamp, '{end_date}'::timestamp + "
-                f"'1 day'::interval, '1 {interval_str}'"
+                f"'1 day'::interval, '1 {extra_interval}'"
                 "::interval) AS period_start"
             )
         )
@@ -573,7 +576,6 @@ async def get_timeseries_top_content(
 
     result = await asession.execute(statement)
     rows = result.fetchall()
-    print(rows)
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
 
     return convert_rows_to_top_content_time_series(rows, format_str)
@@ -584,6 +586,7 @@ def set_curr_content_values(r: Row[Any]) -> dict[str, Any]:
     Set current content values
     """
     return {
+        "id": r.content_id,
         "title": r.content_title,
         "total_query_count": r.total_query_count,
         "positive_votes": r.n_positive_feedback,
@@ -627,6 +630,177 @@ def convert_rows_to_top_content_time_series(
         )
 
     return top_content_time_series
+
+
+async def get_content_details(
+    user_id: int,
+    content_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> DetailsDrawer:
+    """
+    Retrieve detailed statistics of a content.
+
+    SQL to run within start_date and end_date and for user_id:
+    1. Get ts_labels
+    2. Get title, query_count_timeseries from QueryResponseContentDB
+    2. Get positive_count_timeseries, negative_count_timeseries from ContentFeedbackDB
+    3. Get user feedback (timestamp, question, feedback) from ContentFeedbackDB
+    """
+    day_between = (end_date - start_date).days
+    day_between = day_between if day_between > 0 else 1
+
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+    query_count_ts = (
+        select(
+            func.date_trunc(interval_str, ts_labels.c.time_period).label("time_period"),
+            func.coalesce(func.count(QueryResponseContentDB.query_id), 0).label(
+                "query_count"
+            ),
+            ContentDB.content_title,
+        )
+        .select_from(ts_labels)
+        .join(
+            QueryResponseContentDB,
+            and_(
+                func.date_trunc(
+                    interval_str, QueryResponseContentDB.created_datetime_utc
+                )
+                == func.date_trunc(interval_str, ts_labels.c.time_period),
+                QueryResponseContentDB.content_id == content_id,
+                QueryResponseContentDB.user_id == user_id,
+            ),
+            isouter=True,
+        )
+        .join(
+            ContentDB,
+            ContentDB.content_id == content_id,
+            isouter=True,
+        )
+        .group_by(ts_labels.c.time_period, ContentDB.content_title)
+        .subquery("query_count_ts")
+    )
+
+    feedback_ts = (
+        select(
+            query_count_ts.c.time_period,
+            query_count_ts.c.query_count,
+            query_count_ts.c.content_title,
+            func.coalesce(
+                func.count(
+                    case((ContentFeedbackDB.feedback_sentiment == "positive", 1))
+                ),
+                0,
+            ).label("positive_count"),
+            func.coalesce(
+                func.count(
+                    case((ContentFeedbackDB.feedback_sentiment == "negative", 1))
+                ),
+                0,
+            ).label("negative_count"),
+        )
+        .select_from(query_count_ts)
+        .join(
+            ContentFeedbackDB,
+            and_(
+                func.date_trunc(interval_str, ContentFeedbackDB.feedback_datetime_utc)
+                == query_count_ts.c.time_period,
+                ContentFeedbackDB.content_id == content_id,
+                ContentFeedbackDB.user_id == user_id,
+            ),
+            isouter=True,
+        )
+        .group_by(
+            query_count_ts.c.time_period,
+            query_count_ts.c.content_title,
+            query_count_ts.c.query_count,
+        )
+        .order_by(query_count_ts.c.time_period)
+    )
+
+    user_feedback = (
+        select(
+            ContentFeedbackDB.feedback_datetime_utc,
+            QueryDB.query_text,
+            ContentFeedbackDB.feedback_text,
+        )
+        .join(QueryDB)
+        .where(
+            ContentFeedbackDB.content_id == content_id,
+            ContentFeedbackDB.user_id == user_id,
+            ContentFeedbackDB.feedback_datetime_utc >= start_date,
+            ContentFeedbackDB.feedback_datetime_utc < end_date,
+            ContentFeedbackDB.feedback_text.is_not(None),
+        )
+        .order_by(ContentFeedbackDB.feedback_datetime_utc.desc())
+        .limit(10)
+    )
+
+    result_ts = await asession.execute(feedback_ts)
+    result_feedback = await asession.execute(user_feedback)
+
+    rows_ts = result_ts.fetchall()
+    rows_feedback = result_feedback.fetchall()
+
+    format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+    return convert_rows_to_details_drawer(
+        timeseries=rows_ts,
+        feedback=rows_feedback,
+        format_str=format_str,
+        n_days=day_between,
+    )
+
+
+def convert_rows_to_details_drawer(
+    timeseries: Sequence[Row[Any]],
+    feedback: Sequence[Row[Any]],
+    format_str: str,
+    n_days: int,
+) -> DetailsDrawer:
+    """
+    Convert rows to DetailsDrawer
+    """
+    time_series = {}
+    query_count = 0
+    positive_count = 0
+    negative_count = 0
+    title = ""
+
+    if timeseries:
+        title = timeseries[0].content_title
+
+    for r in timeseries:
+        time_series[r.time_period.strftime(format_str)] = {
+            "query_count": r.query_count,
+            "positive_count": r.positive_count,
+            "negative_count": r.negative_count,
+        }
+        query_count += r.query_count
+        positive_count += r.positive_count
+        negative_count += r.negative_count
+
+    feedback_rows = []
+    for r in feedback:
+        feedback_rows.append(
+            UserFeedback(
+                timestamp=r.feedback_datetime_utc.strftime(format_str),
+                question=r.query_text,
+                feedback=r.feedback_text,
+            )
+        )
+
+    return DetailsDrawer(
+        title=title,
+        query_count=query_count,
+        positive_votes=positive_count,
+        negative_votes=negative_count,
+        daily_query_count_avg=query_count // n_days,
+        time_series=time_series,
+        ai_summary="Not Available",
+        user_feedback=feedback_rows,
+    )
 
 
 def initialize_heatmap() -> dict[TimeHours, dict[Day, int]]:

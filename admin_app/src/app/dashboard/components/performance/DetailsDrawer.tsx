@@ -4,24 +4,53 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Grid from "@mui/material/Grid";
+import { DrawerData } from "@/app/dashboard/types";
+import dynamic from "next/dynamic";
+import { ApexData } from "@/app/dashboard/types";
+import { ApexOptions } from "apexcharts";
 
-interface DrawerData {
-  title: string;
-  query_count: number;
-  positive_votes: number;
-  negative_votes: number;
-  daily_query_count_avg: number;
-  query_count_timeseries: { x: string; y: number }[];
-  positive_votes_timeseries: { x: string; y: number }[];
-  negative_votes_timeseries: { x: string; y: number }[];
-  user_feedback: { timestamp: string; userQuestion: string; userFeedback: string }[];
-}
+const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 interface DetailsDrawerProps {
   open: boolean;
   onClose: (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => void;
-  data: DrawerData;
+  data: DrawerData | null;
 }
+
+const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
+  const options: ApexOptions = {
+    chart: {
+      id: "drawer-line-chart",
+      stacked: false,
+    },
+    stroke: {
+      width: 3,
+      curve: "straight",
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      },
+    },
+    legend: {
+      position: "top",
+      horizontalAlign: "left",
+    },
+  };
+
+  return (
+    <ReactApexcharts
+      type="line"
+      height="100%"
+      width={550}
+      options={options}
+      series={seriesData}
+    />
+  );
+};
 
 const StatCard: React.FC<{ title: string; value: number }> = ({ title, value }) => {
   return (
@@ -57,9 +86,10 @@ const StatCard: React.FC<{ title: string; value: number }> = ({ title, value }) 
 };
 
 const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) => {
+  if (data === null) return null;
   return (
     <Drawer
-      open={open}
+      open={open && data !== null}
       onClose={onClose(false)}
       anchor="right"
       sx={{
@@ -94,15 +124,17 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
         <Box
           sx={{
             height: 300,
+            width: "100%",
             border: 1,
             borderColor: "secondary.main",
             borderRadius: 2,
             alignItems: "center",
             justifyContent: "center",
             display: "flex",
+            flexGrow: 1,
           }}
         >
-          chart
+          <ContentLineChart seriesData={data.line_chart_data} />
         </Box>
         <Divider sx={{ my: 3, borderBottomWidth: 2 }} />
 
@@ -175,13 +207,13 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
             lineHeight: "32px",
           }}
         >
-          <Grid md={3} sx={{ px: 1 }}>
+          <Grid item md={3} sx={{ px: 1 }}>
             Timestamp
           </Grid>
-          <Grid md={5} sx={{ px: 1 }}>
+          <Grid item md={5} sx={{ px: 1 }}>
             User Question
           </Grid>
-          <Grid md={5} sx={{ px: 1 }}>
+          <Grid item md={5} sx={{ px: 1 }}>
             User Feedback
           </Grid>
         </Grid>
@@ -201,13 +233,14 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
               py: 0.5,
             }}
           >
-            <Grid md={3} sx={{ px: 1, lineHeight: "20px" }}>
+            <Grid item md={3} sx={{ px: 1, lineHeight: "20px" }}>
               {Intl.DateTimeFormat("en-ZA", {
                 dateStyle: "short",
                 timeStyle: "short",
               }).format(new Date(feedback.timestamp))}
             </Grid>
             <Grid
+              item
               md={5}
               sx={{
                 overflow: "hidden",
@@ -217,9 +250,10 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
                 lineHeight: "20px",
               }}
             >
-              {feedback.userQuestion}
+              {feedback.question}
             </Grid>
             <Grid
+              item
               md={5}
               sx={{
                 px: 1,
@@ -229,7 +263,7 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
                 lineHeight: "20px",
               }}
             >
-              {feedback.userFeedback}
+              {feedback.feedback}
             </Grid>
           </Grid>
         ))}

@@ -94,7 +94,7 @@ const ContentsTable = ({
   rowsPerPage,
 }: {
   rows: RowDataType[];
-  onClick: () => void;
+  onClick: (content_id: number) => void;
   rowsPerPage: number;
 }) => {
   const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
@@ -248,14 +248,14 @@ const ContentsTable = ({
         </Grid>
       </Grid>
 
-      {itemsToDisplay.map((row, id) => (
+      {itemsToDisplay.map((row) => (
         <Grid
-          key={id}
           container
+          key={row.id}
           spacing={2}
           md={14}
           columns={14}
-          onClick={onClick}
+          onClick={() => onClick(row.id)}
           sx={{
             border: 1,
             borderTop: 0,
