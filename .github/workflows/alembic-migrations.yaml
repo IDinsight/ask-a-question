@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install alembic package
+      - name: Just install alembic package
         run: |
           grep -w 'alembic' core_backend/requirements.txt | xargs python -m pip install
 
@@ -41,8 +41,8 @@ jobs:
       - name: Check if Alembic head revision from main exists in feature branch
         run: |
           if alembic history | grep -q ALEMBIC_HEAD_MAIN; then
-            echo "Alembic head revision from main exists in this branch."
+            echo "Alembic head revision from main exists in PR branch."
           else
-            echo "Alembic head revision from main does NOT exist in this branch."
+            echo "Alembic head revision from main does NOT exist in PR branch. Update your migrations to align with main branch."
             exit 1
           fi
