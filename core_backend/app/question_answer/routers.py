@@ -127,6 +127,7 @@ async def stt_llm_response(
     )
     await save_content_for_query_to_db(
         user_id=user_db.user_id,
+        session_id=user_query.session_id,
         query_id=response.query_id,
         contents=response.search_results,
         asession=asession,
