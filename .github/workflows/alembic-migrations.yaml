@@ -23,9 +23,9 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install alembic package
+      - name: Install Python libraries
         run: |
-          grep -w 'alembic' core_backend/requirements.txt | xargs python -m pip install
+          python -m pip install -r core_backend/requirements.txt
 
       - name: Get Alembic head of tonyzhao6-main branch
         run: |
