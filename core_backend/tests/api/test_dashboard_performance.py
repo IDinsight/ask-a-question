@@ -98,7 +98,7 @@ async def content_with_query_history(
                 }
             )
         await save_content_for_query_to_db(
-            user1, query_db.query_id, query_search_results, asession
+            user1, 1, query_db.query_id, query_search_results, asession
         )
 
         query_search_results = {}
@@ -121,7 +121,7 @@ async def content_with_query_history(
                 }
             )
         await save_content_for_query_to_db(
-            user1, query_db.query_id, query_search_results, asession
+            user1, 1, query_db.query_id, query_search_results, asession
         )
 
         query_search_results = {}
@@ -148,7 +148,7 @@ async def content_with_query_history(
                 }
             )
         await save_content_for_query_to_db(
-            user1, query_db.query_id, query_search_results, asession
+            user1, 1, query_db.query_id, query_search_results, asession
         )
 
     yield request.param

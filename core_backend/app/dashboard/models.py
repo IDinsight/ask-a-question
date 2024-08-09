@@ -262,7 +262,7 @@ def get_time_labels_query(
         .select_from(
             text(
                 f"generate_series('{start_date}'::timestamp, '{end_date}'::timestamp + "
-                f"'1 day'::interval, '1 {extra_interval}'"
+                f"'1 {extra_interval}'::interval, '1 {interval_str}'"
                 "::interval) AS period_start"
             )
         )
