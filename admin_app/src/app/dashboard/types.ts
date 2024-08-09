@@ -8,6 +8,7 @@ interface DrawerData {
   negative_votes: number;
   daily_query_count_avg: number;
   line_chart_data: ApexData[];
+  ai_summary: string;
   user_feedback: {
     timestamp: string;
     question: string;

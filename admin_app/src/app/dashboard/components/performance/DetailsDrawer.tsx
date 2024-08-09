@@ -24,6 +24,12 @@ const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
     chart: {
       id: "drawer-line-chart",
       stacked: false,
+      toolbar: {
+        show: false,
+      },
+      zoom: {
+        enabled: false,
+      },
     },
     stroke: {
       width: 3,
@@ -37,7 +43,10 @@ const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
     },
     legend: {
       position: "top",
-      horizontalAlign: "left",
+      horizontalAlign: "center",
+      itemMargin: {
+        horizontal: 40,
+      },
     },
   };
 
@@ -183,10 +192,7 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
               textAlign: "left",
             }}
           >
-            Users are saying that the answer could elaborate on more infomation about
-            specific reasons behind the purpose of the Learner Mobilisation phase. The
-            answer could also provide more information on the purpose of the Learner
-            Mobilisation phase.
+            {data.ai_summary}
           </Typography>
         </Box>
 
