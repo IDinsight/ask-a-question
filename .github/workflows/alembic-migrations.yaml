@@ -44,7 +44,7 @@ jobs:
           alembic_history_pr=$(alembic history)
           echo "Main branch Alembic head: ${alembic_head_main}"
           echo "PR branch Alembic history: ${alembic_history_pr}"
-          if echo "${alembic_history_pr}" | grep -q "${alembic_head_main}"; then
+          if echo "${alembic_history_pr}" | grep -q "${{ env.ALEMBIC_HEAD_MAIN }}"; then
               echo "Alembic head revision from main exists in PR branch."
           else
               echo "Alembic head revision from main does NOT exist in PR branch. Update your migrations to align with main branch."
