@@ -81,8 +81,8 @@ setup-llm-proxy:
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
 		-v "$(CURDIR)/deployment/docker-compose/.gcp_credentials.json":/app/credentials.json \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
-		-e EMBEDDINGS_ENDPOINT=$(EMBEDDINGS_ENDPOINT) \
+		-e CUSTOM_EMBEDDINGS_API_KEY=$(CUSTOM_EMBEDDINGS_API_KEY) \
+		-e CUSTOM_EMBEDDINGS_ENDPOINT=$(CUSTOM_EMBEDDINGS_ENDPOINT) \
 		-e VERTEXAI_PROJECT=$(VERTEXAI_PROJECT) \
 		-e VERTEXAI_LOCATION=$(VERTEXAI_LOCATION) \
 		-e VERTEXAI_ENDPOINT=https://$(VERTEXAI_LOCATION)-aiplatform.googleapis.com/v1 \
@@ -95,19 +95,40 @@ teardown-llm-proxy:
 	@docker stop litellm-proxy
 	@docker rm litellm-proxy
 
-setup-embeddings:
-	-@docker stop embeddings
-	-@docker rm embeddings
+
+build-embeddings-arm:
+	@git clone https://github.com/huggingface/text-embeddings-inference.git
+	@docker build text-embeddings-inference -f text-embeddings-inference/Dockerfile \
+		--platform=linux/arm64 \
+		-t text-embeddings-inference-arm
+	@cd ..
+	@rm -rf text-embeddings-inference
+setup-embeddings-arm:
+	-@docker stop huggingface-embeddings
+	-@docker rm huggingface-embeddings
 	@docker system prune -f
 	@sleep 2
-	@docker build -t embeddings ./optional_components/embeddings
 	@docker run \
-		--name embeddings \
-		-e EMBEDDINGS_API_KEY=$(EMBEDDINGS_API_KEY) \
-		-e HUGGINGFACE_MODEL=$(HUGGINGFACE_MODEL) \
-		-p 8080:8080 \
-		-d embeddings
+		--name huggingface-embeddings \
+        -p 8080:80 \
+        -v "$(PWD)/data:/data" \
+        -d text-embeddings-inference-arm \
+        --model-id $(HUGGINGFACE_MODEL) \
+        --api-key $(CUSTOM_EMBEDDINGS_API_KEY)
+
+setup-embeddings:
+	-@docker stop huggingface-embeddings
+	-@docker rm huggingface-embeddings
+	@docker system prune -f
+	@sleep 2
+	@docker run \
+		--name huggingface-embeddings \
+		-p 8080:80 \
+		-v "$(PWD)/data:/data" \
+		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
+		--model-id $(HUGGINGFACE_MODEL) \
+		--api-key $(CUSTOM_EMBEDDINGS_API_KEY)
 
 teardown-embeddings:
-	@docker stop embeddings
-	@docker rm embeddings
+	@docker stop huggingface-embeddings
+	@docker rm  huggingface-embeddings

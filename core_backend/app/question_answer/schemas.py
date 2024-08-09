@@ -13,6 +13,7 @@ class QueryBase(BaseModel):
     """
 
     query_text: str = Field(..., examples=["What is AAQ?"])
+    session_id: Optional[int] = None
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
     generate_tts: bool = Field(False)
@@ -53,6 +54,7 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
+    session_id: Optional[int] = None
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
     tts_file: str | None = Field(None, examples=["response.mp3"])
@@ -61,6 +63,7 @@ class QueryResponse(BaseModel):
         examples=[
             {
                 "query_id": 1,
+                "session_id": 1,
                 "feedback_secret_key": "secret-key-12345-abcde",
                 "llm_response": "Example LLM response "
                 "(null if generate_llm_response is false)",
@@ -105,6 +108,7 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
+    session_id: Optional[int] = None
     feedback_sentiment: FeedbackSentiment = Field(
         FeedbackSentiment.UNKNOWN, examples=["positive"]
     )

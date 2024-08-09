@@ -1,5 +1,7 @@
+import { env } from "next-runtime-env";
+
 const NEXT_PUBLIC_BACKEND_URL: string =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  env("NEXT_PUBLIC_BACKEND_URL") || "http://localhost:8000";
 
 interface ContentBody {
   content_title: string;

@@ -3,11 +3,11 @@ model_list:
     litellm_params:
       model: text-embedding-3-small
       api_key: "os.environ/OPENAI_API_KEY"
-  - model_name: embeddings-local
-    litellm_params:
-      model: openai/embedding-gte-large
-      api_key: "os.environ/EMBEDDINGS_API_KEY"
-      api_base: "os.environ/EMBEDDINGS_ENDPOINT"
+  # - model_name: embeddings
+  #   litellm_params:
+  #     model: huggingface/custom_embeddings # model name not important
+  #     api_key: "os.environ/CUSTOM_EMBEDDINGS_API_KEY" #pragma: allowlist secret
+  #     api_base: "os.environ/CUSTOM_EMBEDDINGS_ENDPOINT"
   - model_name: default
     litellm_params:
       model: gpt-4o
@@ -80,3 +80,4 @@ litellm_settings:
   # To use Vertex AI API, uncomment the following lines:
   # vertex_project: gcp-project-id-12345
   # vertex_location: us-central1
+  drop_params: True

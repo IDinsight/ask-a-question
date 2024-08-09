@@ -175,11 +175,10 @@ async def search(
     user_query: QueryBase,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
-    exclude_archived: bool = True,
 ) -> QueryResponse | JSONResponse:
     """
     Search endpoint finds the most similar content to the user query and optionally
-    generates an LLM response.
+    generates a single-turn LLM response.
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
@@ -194,14 +193,13 @@ async def search(
         user_query=user_query,
         asession=asession,
     )
-
     response = await search_base(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
-        exclude_archived=exclude_archived,
+        exclude_archived=True,
     )
 
     await save_query_response_to_db(user_query_db, response, asession)
@@ -212,6 +210,7 @@ async def search(
     )
     await save_content_for_query_to_db(
         user_id=user_db.user_id,
+        session_id=user_query.session_id,
         query_id=response.query_id,
         contents=response.search_results,
         asession=asession,
@@ -332,6 +331,7 @@ async def get_user_query_and_response(
     # prepare placeholder response object
     response_template = QueryResponse(
         query_id=user_query_db.query_id,
+        session_id=user_query.session_id,
         feedback_secret_key=user_query_db.feedback_secret_key,
         llm_response=None,
         tts_file=None,

@@ -149,6 +149,7 @@ class TestQueryStats:
             )
             response_feedback = ResponseFeedbackBase(
                 query_id=query_db.query_id,
+                session_id=query_db.session_id,
                 feedback_sentiment=sentiment,
                 feedback_secret_key="test_secret_key",
             )
@@ -157,6 +158,7 @@ class TestQueryStats:
             content_feedback = ContentFeedback(
                 content_id=1,
                 query_id=query_db.query_id,
+                session_id=query_db.session_id,
                 feedback_sentiment=sentiment,
                 feedback_secret_key="test_secret_key",
             )
@@ -285,6 +287,7 @@ class TestHeatmap:
             for i in range(count):
                 query = QueryDB(
                     user_id=1,
+                    session_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{day}_{i}",
                     query_generate_llm_response=False,
@@ -318,6 +321,7 @@ class TestHeatmap:
             for i in range(count):
                 query = QueryDB(
                     user_id=1,
+                    session_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{hour}_{i}",
                     query_generate_llm_response=False,
@@ -508,6 +512,7 @@ class TestTimeSeries:
         for i in range(n_positive + n_negative + n_neutral):
             query = QueryDB(
                 user_id=user_id,
+                session_id=1,
                 feedback_secret_key="abc123",
                 query_text="test message",
                 query_generate_llm_response=False,
@@ -525,6 +530,7 @@ class TestTimeSeries:
             feedback = ResponseFeedbackDB(
                 query_id=query.query_id,
                 user_id=user_id,
+                session_id=query.session_id,
                 feedback_sentiment=sentiment,
                 feedback_datetime_utc=created_datetime,
             )
@@ -662,13 +668,14 @@ class TestTopContent:
                 .astype(np.float32)
                 .tolist(),
                 content_title=c["title"],
-                content_text="Test content #{i}",
+                content_text=f"Test content #{_i}",
                 content_metadata={},
                 created_datetime_utc=datetime.now(timezone.utc),
                 updated_datetime_utc=datetime.now(timezone.utc),
                 query_count=c["query_count"],
                 positive_votes=c["positive_votes"],
                 negative_votes=c["negative_votes"],
+                is_archived=_i % 2 == 0,  # Mix archived content into DB
             )
             asession.add(content_db)
 
@@ -681,17 +688,25 @@ class TestTopContent:
     async def test_top_content(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        N_TOP_CONTENT = 4
+        """
 
-        top_content = await get_top_content(1, asession, N_TOP_CONTENT)
+        NB: The archive feature will prepend the string "[DELETED] " to the content
+        card title if the content card has been archived.
+        """
 
-        assert len(top_content) == N_TOP_CONTENT
+        top_n = 4
+        top_content = await get_top_content(user_id=1, asession=asession, top_n=top_n)
+        assert len(top_content) == top_n
+
         # Sort self.content by query count
         content_sorted = sorted(
             self.content, key=lambda x: x["query_count"], reverse=True
         )
-        for i, c in enumerate(content_sorted[:N_TOP_CONTENT]):
-            assert top_content[i].title == c["title"]
+        for i, c in enumerate(content_sorted[:top_n]):
+            if i % 2 == 0:
+                assert top_content[i].title == "[DELETED] " + str(c["title"])
+            else:
+                assert top_content[i].title == c["title"]
             assert top_content[i].query_count == c["query_count"]
             assert top_content[i].positive_votes == c["positive_votes"]
             assert top_content[i].negative_votes == c["negative_votes"]
@@ -699,6 +714,6 @@ class TestTopContent:
     async def test_content_from_other_user_not_returned(
         self, content_data: pytest.FixtureRequest, asession: AsyncSession
     ) -> None:
-        top_content = await get_top_content(2, asession, 5)
+        top_content = await get_top_content(user_id=2, asession=asession, top_n=5)
 
         assert len(top_content) == 0
