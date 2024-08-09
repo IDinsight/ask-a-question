@@ -12,8 +12,26 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 3. Create an AAQ account, retrieve an API key.
 
-4. Copy the `sample.env` contents into a new `.env` file and set both the `TARGET_AAQ_URL` (e.g.<https://app.ask-a-question.com/api/>) and `AAQ_API_KEY` as needed.
-   [Optional] If you are testing TypeBot loads as well, you will need to set those `.env` variables as per the instructions in the `sample.env`
+4. Setting up environment variables. Each of the following variables should be exported, i.e.
+
+```
+# Set to the URL of the AAQ in production
+export TARGET_AAQ_URL="https://app.ask-a-question.com/api/"
+or
+export TARGET_AAQ_URL="http://localhost/api/" # If running locally t
+
+# Create aan API key in the AAQ admin panel
+export AAQ_API_KEY="<aaq-api-key>"
+
+# Once TypeBot is created at typebot.idinsight.io,
+# go to settings -> share -> API.
+# Copy the ID from the preview URL
+export TYPEBOT_BOT_ID="load-testing-pipeline-mctk9nv"
+
+# TYPEBOT ENV VARIABLES (only if using TypeBot test)
+# Create an API key in the Typebot admin panel
+export TYPEBOT_API_KEY="<typebot-api-key>"
+```
 
 5. Ensure your configuration `.json` looks correct. In the `conigs/` folder there is a `.json` that defines which tests are carried out when the `main.py` script is run.
    [Optional] If you would like to test out AAQ in the context of a TypeBot flow, you can include `typebot.py` in list corresponding to the key `locustfile_list`.
