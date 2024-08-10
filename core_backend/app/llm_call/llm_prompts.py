@@ -360,3 +360,32 @@ class UrgencyDetectionEntailment:
         )
 
         return prompt
+
+
+AI_FEEDBACK_SUMMARY_PROMPT = textwrap.dedent(
+    """
+    The following is a list of feedback provided by the user for a content share with
+    them. Summarize the key themes in the list of feedback text into a few sentences.
+    Suggest ways to address their feedback where applicable. Your response should be no
+    longer than 50 words and NOT be in dot point. Do not include headers.
+
+    <CONTENT_TITLE>
+    {content_title}
+    </CONTENT_TITLE>
+
+    <CONTENT>
+    {content}
+    </CONTENT>
+
+    """
+).strip()
+
+
+def get_feedback_summary_prompt(content_title: str, content: str) -> str:
+    """
+    Returns the prompt for the feedback summarization task.
+    """
+    return AI_FEEDBACK_SUMMARY_PROMPT.format(
+        content_title=content_title,
+        content=content,
+    )
