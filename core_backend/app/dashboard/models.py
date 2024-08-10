@@ -641,6 +641,7 @@ async def get_content_details(
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
+    max_feedback_records: int,
 ) -> DetailsDrawer:
     """
     Retrieve detailed statistics of a content.
@@ -737,7 +738,7 @@ async def get_content_details(
             ContentFeedbackDB.feedback_text.is_not(None),
         )
         .order_by(ContentFeedbackDB.feedback_datetime_utc.desc())
-        .limit(10)
+        .limit(max_feedback_records)
     )
 
     result_ts = await asession.execute(feedback_ts)
