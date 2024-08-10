@@ -3,7 +3,11 @@ import Box from "@mui/material/Box";
 import DetailsDrawer from "@/app/dashboard/components/performance/DetailsDrawer";
 import LineChart from "@/app/dashboard/components/performance/LineChart";
 import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
-import { getPerformancePageData, getPerformanceDrawerData } from "@/app/dashboard/api";
+import {
+  getPerformancePageData,
+  getPerformanceDrawerData,
+  getPerformanceDrawerAISummary,
+} from "@/app/dashboard/api";
 import { ApexData, Period, RowDataType, DrawerData } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
@@ -20,6 +24,7 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   const [lineChartData, setLineChartData] = React.useState<ApexData[]>([]);
   const [contentTableData, setContentTableData] = React.useState<RowDataType[]>([]);
   const [drawerData, setDrawerData] = React.useState<DrawerData | null>(null);
+  const [drawerAISummary, setDrawerAISummary] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -38,11 +43,17 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   };
 
   const tableRowClickHandler = (contentId: number) => {
+    setDrawerAISummary(null);
     if (token) {
       getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
         console.log(response);
         parseDrawerData(response);
         setDrawerOpen(true);
+      });
+
+      getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
+        console.log(response);
+        setDrawerAISummary(response.ai_summary);
       });
     }
   };
@@ -99,7 +110,6 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
         negativeVotesSeriesData,
       ],
       user_feedback: data.user_feedback,
-      ai_summary: data.ai_summary,
     };
     setDrawerData(drawerData);
   };
@@ -141,7 +151,12 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
 
   return (
     <>
-      <DetailsDrawer open={drawerOpen} onClose={toggleDrawer} data={drawerData} />
+      <DetailsDrawer
+        open={drawerOpen}
+        onClose={toggleDrawer}
+        data={drawerData}
+        aiSummary={drawerAISummary}
+      />
       <Box
         bgcolor="white"
         sx={{

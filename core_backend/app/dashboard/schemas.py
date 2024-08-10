@@ -198,7 +198,6 @@ class DetailsDrawer(BaseModel):
     negative_votes: int
     daily_query_count_avg: int
     time_series: dict[str, dict[str, int]]
-    ai_summary: str | None
     user_feedback: list[UserFeedback]
 
 
@@ -208,3 +207,11 @@ class DashboardPerformance(BaseModel):
     """
 
     content_time_series: list[TopContentTimeSeries]
+
+
+class AIFeedbackSummary(BaseModel):
+    """
+    This class is used to define the schema for the AI feedback summary
+    """
+
+    ai_summary: str

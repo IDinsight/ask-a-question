@@ -62,4 +62,32 @@ const getPerformanceDrawerData = async (
   });
 };
 
-export { getOverviewPageData, getPerformancePageData, getPerformanceDrawerData };
+const getPerformanceDrawerAISummary = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}/ai-summary`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer AI summary");
+    }
+  });
+};
+export {
+  getOverviewPageData,
+  getPerformancePageData,
+  getPerformanceDrawerData,
+  getPerformanceDrawerAISummary,
+};
