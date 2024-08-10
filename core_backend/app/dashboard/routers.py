@@ -11,7 +11,10 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .config import MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY
+from .config import (
+    MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY,
+    MAX_FEEDBACK_RECORDS_FOR_TOP_CONTENT,
+)
 from .models import (
     get_ai_answer_summary,
     get_content_details,
@@ -61,6 +64,7 @@ async def retrieve_content_details(
         start_date=start_date,
         end_date=today,
         frequency=frequency,
+        max_feedback_records=int(MAX_FEEDBACK_RECORDS_FOR_TOP_CONTENT),
     )
     return details
 
