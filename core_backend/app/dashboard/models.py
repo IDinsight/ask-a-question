@@ -9,6 +9,7 @@ from sqlalchemy.sql import and_
 from sqlalchemy.sql.expression import Subquery
 
 from ..contents.models import ContentDB
+from ..llm_call.dashboard import generate_ai_summary
 from ..question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -16,6 +17,7 @@ from ..question_answer.models import (
     ResponseFeedbackDB,
 )
 from ..urgency_detection.models import UrgencyResponseDB
+from .config import GENERATE_AI_ANSWER
 from .schemas import (
     ContentFeedbackStats,
     Day,
@@ -745,17 +747,85 @@ async def get_content_details(
     rows_feedback = result_feedback.fetchall()
 
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+    ai_summary = await get_ai_answer_summary(
+        content_id=content_id,
+        user_id=user_id,
+        start_date=start_date,
+        end_date=end_date,
+        max_feedback_records=100,
+        asession=asession,
+    )
+
     return convert_rows_to_details_drawer(
         timeseries=rows_ts,
         feedback=rows_feedback,
+        ai_summary=ai_summary,
         format_str=format_str,
         n_days=day_between,
     )
 
 
+async def get_ai_answer_summary(
+    content_id: int,
+    user_id: int,
+    start_date: date,
+    end_date: date,
+    max_feedback_records: int,
+    asession: AsyncSession,
+) -> str:
+    """
+    Get AI answer summary
+    """
+
+    if not GENERATE_AI_ANSWER:
+        return "Not Available"
+
+    user_feedback = (
+        select(
+            ContentFeedbackDB.feedback_text,
+        )
+        .join(QueryDB)
+        .where(
+            ContentFeedbackDB.content_id == content_id,
+            ContentFeedbackDB.user_id == user_id,
+            ContentFeedbackDB.feedback_datetime_utc >= start_date,
+            ContentFeedbackDB.feedback_datetime_utc < end_date,
+            ContentFeedbackDB.feedback_text.is_not(None),
+        )
+        .order_by(ContentFeedbackDB.feedback_datetime_utc.desc())
+        .limit(max_feedback_records)
+    )
+
+    content = select(ContentDB.content_title, ContentDB.content_text).where(
+        ContentDB.content_id == content_id, ContentDB.user_id == user_id
+    )
+    result_feedback = await asession.execute(user_feedback)
+    rows_feedback = result_feedback.fetchall()
+    all_feedback = [r.feedback_text for r in rows_feedback]
+
+    content_result = await asession.execute(content)
+    content_row = content_result.fetchone()
+
+    if not content_row:
+        raise ValueError(f"Content with id {content_id} for user {user_id} not found")
+
+    if all_feedback:
+        ai_summary = await generate_ai_summary(
+            user_id=user_id,
+            content_title=content_row.content_title,
+            content_text=content_row.content_text,
+            feedback=all_feedback,
+        )
+    else:
+        ai_summary = "No feedback to summarize."
+
+    return ai_summary
+
+
 def convert_rows_to_details_drawer(
     timeseries: Sequence[Row[Any]],
     feedback: Sequence[Row[Any]],
+    ai_summary: str,
     format_str: str,
     n_days: int,
 ) -> DetailsDrawer:
@@ -798,7 +868,7 @@ def convert_rows_to_details_drawer(
         negative_votes=negative_count,
         daily_query_count_avg=query_count // n_days,
         time_series=time_series,
-        ai_summary="Not Available",
+        ai_summary=ai_summary,
         user_feedback=feedback_rows,
     )
 

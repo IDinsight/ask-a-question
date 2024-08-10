@@ -1,3 +1,8 @@
+"""
+Config for core_backend. Not that there are other config files within
+each endpoin module
+"""
+
 import os
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
@@ -46,7 +51,9 @@ LITELLM_MODEL_ALIGNSCORE = os.environ.get(
 LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
     "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
 )
-
+LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
+    "LITELLM_MODEL_DASHBOARD_SUMMARY", "openai/dashboard-summary"
+)
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"

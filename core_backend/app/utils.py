@@ -82,9 +82,20 @@ def get_random_string(size: int) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=size))
 
 
-def create_langfuse_metadata(query_id: int, user_id: int | None = None) -> dict:
+def create_langfuse_metadata(
+    query_id: int | None = None,
+    feature_name: str | None = None,
+    user_id: int | None = None,
+) -> dict:
     """Create metadata for langfuse logging."""
-    trace_id_elements = ["query_id", str(query_id)]
+
+    trace_id_elements = []
+    if query_id is not None:
+        trace_id_elements += ["query_id", str(query_id)]
+    elif feature_name is not None:
+        trace_id_elements += ["feature_name", feature_name]
+    else:
+        raise ValueError("Either `query_id` or `feature_name` must be provided.")
 
     if LANGFUSE_PROJECT_NAME is not None:
         trace_id_elements.insert(0, LANGFUSE_PROJECT_NAME)
