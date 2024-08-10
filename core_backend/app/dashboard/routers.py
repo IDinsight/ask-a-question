@@ -11,7 +11,9 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
+from .config import MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY
 from .models import (
+    get_ai_answer_summary,
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
@@ -20,6 +22,7 @@ from .models import (
     get_top_content,
 )
 from .schemas import (
+    AIFeedbackSummary,
     DashboardOverview,
     DashboardPerformance,
     DetailsDrawer,
@@ -60,6 +63,34 @@ async def retrieve_content_details(
         frequency=frequency,
     )
     return details
+
+
+@router.get(
+    "/performance/{time_frequency}/{content_id}/ai-summary",
+    response_model=AIFeedbackSummary,
+)
+async def retrieve_content_ai_summary(
+    content_id: int,
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> AIFeedbackSummary:
+    """
+    Retrieve AI summary of a content
+    """
+
+    today = datetime.now(timezone.utc)
+    _, start_date = get_frequency_and_startdate(time_frequency)
+
+    ai_summary = await get_ai_answer_summary(
+        user_id=user_db.user_id,
+        content_id=content_id,
+        start_date=start_date,
+        end_date=today,
+        max_feedback_records=int(MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY),
+        asession=asession,
+    )
+    return AIFeedbackSummary(ai_summary=ai_summary)
 
 
 @router.get("/performance/{time_frequency}", response_model=DashboardPerformance)

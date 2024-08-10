@@ -8,6 +8,7 @@ import { DrawerData } from "@/app/dashboard/types";
 import dynamic from "next/dynamic";
 import { ApexData } from "@/app/dashboard/types";
 import { ApexOptions } from "apexcharts";
+import TypingAnimation from "@/components/Common";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -17,6 +18,7 @@ interface DetailsDrawerProps {
   open: boolean;
   onClose: (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => void;
   data: DrawerData | null;
+  aiSummary: string | null;
 }
 
 const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
@@ -94,7 +96,12 @@ const StatCard: React.FC<{ title: string; value: number }> = ({ title, value }) 
   );
 };
 
-const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) => {
+const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
+  open,
+  onClose,
+  data,
+  aiSummary,
+}) => {
   if (data === null) return null;
   return (
     <Drawer
@@ -192,7 +199,7 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({ open, onClose, data }) =>
               textAlign: "left",
             }}
           >
-            {data.ai_summary}
+            {aiSummary === null ? <TypingAnimation /> : aiSummary}
           </Typography>
         </Box>
 
