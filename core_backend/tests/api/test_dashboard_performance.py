@@ -280,16 +280,15 @@ async def test_drawer_data(
     end_date = datetime.now(timezone.utc)
     frequency, start_date = get_frequency_and_startdate(content_with_query_history)
 
+    max_feedback_records = 10
+
     drawer_data = await get_content_details(
-        user1,
-        faq_contents[0],
-        asession,
-        start_date,
-        end_date,
-        frequency,
+        user1, faq_contents[0], asession, start_date, end_date, frequency, 10
     )
 
     assert drawer_data.query_count == N_CONTENT_SHARED[0]
     assert drawer_data.positive_votes == np.ceil(len(N_CONTENT_SHARED) / 2)
-    assert len(drawer_data.user_feedback) == len(N_CONTENT_SHARED)
+    assert len(drawer_data.user_feedback) == min(
+        len(N_CONTENT_SHARED), max_feedback_records
+    )
     assert drawer_data.negative_votes == np.floor(len(N_CONTENT_SHARED) / 2)
