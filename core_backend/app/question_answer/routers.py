@@ -3,6 +3,7 @@ endpoints.
 """
 
 import os
+from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -11,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import SPEECH_ENDPOINT
+from ..config import BUCKET_NAME, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -29,7 +30,12 @@ from ..llm_call.process_output import (
     generate_llm_response__after,
 )
 from ..users.models import UserDB
-from ..utils import create_langfuse_metadata, get_http_client, setup_logger
+from ..utils import (
+    create_langfuse_metadata,
+    get_http_client,
+    setup_logger,
+    upload_file_to_gcs,
+)
 from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
@@ -89,6 +95,14 @@ async def stt_llm_response(
     """
     Endpoint to transcribe audio from the provided file and generate an LLM response.
     """
+    file_stream = BytesIO(await file.read())
+    content_type = file.content_type
+    destination_blob_name = f"stt-voice-notes/{file.filename}"
+
+    await upload_file_to_gcs(
+        BUCKET_NAME, file_stream, destination_blob_name, content_type
+    )
+
     file_path = f"temp/{file.filename}"
     with open(file_path, "wb") as f:
         f.write(await file.read())

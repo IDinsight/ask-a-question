@@ -4,6 +4,7 @@ services:
       - speech_service
     volumes:
       - temp:/usr/src/aaq_backend/temp
+      - ./.gcp_credentials.json:/app/credentials.json
 
   speech_service:
     build:

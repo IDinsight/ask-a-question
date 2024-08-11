@@ -72,6 +72,7 @@ EMBEDDINGS_ENDPOINT = os.environ.get(
     "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
 )
 
+# Speech API
 SPEECH_ENDPOINT = os.environ.get(
     "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
 )
@@ -83,3 +84,6 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
+
+# Google Cloud storage
+BUCKET_NAME = os.environ.get("BUCKET_NAME", "aaq-speech-test")

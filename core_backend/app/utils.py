@@ -6,12 +6,14 @@ import logging
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from logging import Logger
 from typing import List, Optional
 from uuid import uuid4
 
 import aiohttp
 import litellm
+from google.cloud import storage
 from litellm import aembedding
 from redis import asyncio as aioredis
 
@@ -268,3 +270,47 @@ async def update_api_limits(
     if api_daily_quota is not None:
 
         await redis.expireat(key, expire_at)
+
+
+async def upload_file_to_gcs(
+    bucket_name: str,
+    file_stream: BytesIO,
+    destination_blob_name: str,
+    content_type: str,
+) -> None:
+    """
+    Upload a file stream to a Google Cloud Storage bucket.
+
+    Params:
+        bucket_name (str): The name of the GCS bucket.
+        file_stream (BytesIO): The file stream to upload.
+        destination_blob_name (str): The destination blob name in the bucket.
+        content_type (str): The content type of the file.
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    file_stream.seek(0)
+
+    blob.upload_from_file(file_stream, content_type=content_type)
+
+
+async def generate_signed_url(bucket_name: str, blob_name: str) -> str:
+    """
+    Generate a signed URL for a GCS blob.
+
+    Params:
+        bucket_name (str): The name of the GCS bucket.
+        blob_name (str): The name of the blob in the bucket.
+
+    Returns:
+        str: A signed URL that allows access to the GCS file.
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+
+    url = blob.generate_signed_url(expiration=timedelta(seconds=3600), version="v4")
+
+    return url
