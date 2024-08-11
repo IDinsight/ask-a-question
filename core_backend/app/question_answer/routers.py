@@ -276,9 +276,6 @@ async def search_base(
         If the question language is not identified.
     """
 
-    if query_refined.original_language is None:
-        raise ValueError(("Identify language before calling this function."))
-
     # always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
     search_results = await get_similar_content_async(
