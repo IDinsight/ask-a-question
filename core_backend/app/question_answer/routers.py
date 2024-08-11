@@ -96,16 +96,20 @@ async def stt_llm_response(
     Endpoint to transcribe audio from the provided file and generate an LLM response.
     """
     file_stream = BytesIO(await file.read())
+
+    file_path = f"temp/{file.filename}"
+    with open(file_path, "wb") as f:
+        file_stream.seek(0)
+        f.write(file_stream.read())
+
+    file_stream.seek(0)
+
     content_type = file.content_type
     destination_blob_name = f"stt-voice-notes/{file.filename}"
 
     await upload_file_to_gcs(
         BUCKET_NAME, file_stream, destination_blob_name, content_type
     )
-
-    file_path = f"temp/{file.filename}"
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
 
     transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
     user_query = QueryBase(
@@ -148,6 +152,7 @@ async def stt_llm_response(
 
     if os.path.exists(file_path):
         os.remove(file_path)
+        file_stream.close()
 
     if type(response) is QueryResponse:
         return response
