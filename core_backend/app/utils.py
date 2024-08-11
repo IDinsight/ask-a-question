@@ -276,7 +276,7 @@ async def upload_file_to_gcs(
     bucket_name: str,
     file_stream: BytesIO,
     destination_blob_name: str,
-    content_type: str,
+    content_type: Optional[str],
 ) -> None:
     """
     Upload a file stream to a Google Cloud Storage bucket.
