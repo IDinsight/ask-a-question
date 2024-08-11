@@ -198,8 +198,17 @@ class TestEmbeddingsSearch:
         expected_status_code: int,
         client: TestClient,
         api_key_user1: str,
+        fullaccess_token: str,
         faq_contents: pytest.FixtureRequest,
     ) -> None:
+        while True:
+            response = client.get(
+                "/content",
+                headers={"Authorization": f"Bearer {fullaccess_token}"},
+            )
+            if len(response.json()) == 9:
+                break
+
         request_token = api_key_user1 if token == "api_key_correct" else token
         response = client.post(
             "/search",
@@ -387,9 +396,17 @@ class TestEmbeddingsSearch:
         api_key_user1: str,
         api_key_user2: str,
         expect_found: bool,
+        fullaccess_token: str,
         faq_contents: List[int],
     ) -> None:
         token = api_key_user1 if username == TEST_USERNAME else api_key_user2
+        while True:
+            response = client.get(
+                "/content",
+                headers={"Authorization": f"Bearer {fullaccess_token}"},
+            )
+            if len(response.json()) == 9:
+                break
         response = client.post(
             "/search",
             json={

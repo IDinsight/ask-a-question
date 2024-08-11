@@ -187,6 +187,7 @@ async def faq_contents(
         await asession.execute(deleteFeedback)
         await asession.execute(content_query)
         await asession.delete(content)
+
     await asession.commit()
 
 
