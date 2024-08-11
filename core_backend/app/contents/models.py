@@ -505,17 +505,16 @@ async def get_search_results(
         dictionary
     """
 
-    query = select(
-        ContentDB,
-        ContentDB.content_embedding.cosine_distance(question_embedding).label(
-            "distance"
-        ),
-    ).where(ContentDB.user_id == user_id)
+    distance = ContentDB.content_embedding.cosine_distance(question_embedding).label(
+        "distance"
+    )
+
+    query = select(ContentDB, distance).where(ContentDB.user_id == user_id)
+
     if exclude_archived:
         query = query.where(ContentDB.is_archived == false())
-    query = query.order_by(
-        ContentDB.content_embedding.cosine_distance(question_embedding)
-    ).limit(n_similar)
+
+    query = query.order_by(distance).limit(n_similar)
 
     search_result = (await asession.execute(query)).all()
 
