@@ -65,38 +65,34 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       negative_count: number;
     }
 
-    const queryCountSeriesData: ApexData = {
-      name: "Total Sent",
-      data: Object.entries(data.time_series).map(([period, timeseries]) => {
-        const date = new Date(period);
-        return {
-          x: String(date),
-          y: (timeseries as Timeseries).query_count as number,
-        };
-      }),
-    };
+    function createSeriesData(
+      name: string,
+      key: keyof Timeseries,
+      data: Record<string, Timeseries>,
+    ): ApexData {
+      return {
+        name,
+        data: Object.entries(data.time_series).map(([period, timeseries]) => {
+          const date = new Date(period);
+          return {
+            x: String(date),
+            y: timeseries[key] as number,
+          };
+        }),
+      };
+    }
 
-    const positiveVotesSeriesData: ApexData = {
-      name: "Total Upvotes",
-      data: Object.entries(data.time_series).map(([period, timeseries]) => {
-        const date = new Date(period);
-        return {
-          x: String(date),
-          y: (timeseries as Timeseries).positive_count as number,
-        };
-      }),
-    };
-
-    const negativeVotesSeriesData: ApexData = {
-      name: "Total Downvotes",
-      data: Object.entries(data.time_series).map(([period, timeseries]) => {
-        const date = new Date(period);
-        return {
-          x: String(date),
-          y: (timeseries as Timeseries).negative_count as number,
-        };
-      }),
-    };
+    const queryCountSeriesData = createSeriesData("Total Sent", "query_count", data);
+    const positiveVotesSeriesData = createSeriesData(
+      "Total Upvotes",
+      "positive_count",
+      data,
+    );
+    const negativeVotesSeriesData = createSeriesData(
+      "Total Downvotes",
+      "negative_count",
+      data,
+    );
 
     const drawerData: DrawerData = {
       title: data.title,
