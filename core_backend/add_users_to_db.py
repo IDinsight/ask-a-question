@@ -17,22 +17,22 @@ from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 logger = setup_logger()
 
-# admin user (first user is admin)
-USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
-USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
-USER1_API_KEY = os.environ.get("USER1_API_KEY", "admin-key")
-USER1_CONTENT_QUOTA = os.environ.get("USER1_CONTENT_QUOTA", None)
-USER1_API_QUOTA = os.environ.get("USER1_API_QUOTA", None)
+# admin user
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin-test")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
+ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
+ADMIN_CONTENT_QUOTA = os.environ.get("ADMIN_CONTENT_QUOTA", None)
+ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
 
 
 user_db = UserDB(
-    username=USER1_USERNAME,
-    hashed_password=get_password_salted_hash(USER1_PASSWORD),
-    hashed_api_key=get_key_hash(USER1_API_KEY),
-    api_key_first_characters=USER1_API_KEY[:5],
+    username=ADMIN_USERNAME,
+    hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
+    hashed_api_key=get_key_hash(ADMIN_API_KEY),
+    api_key_first_characters=ADMIN_API_KEY[:5],
     api_key_updated_datetime_utc=datetime.now(timezone.utc),
-    content_quota=USER1_CONTENT_QUOTA,
-    api_daily_quota=USER1_API_QUOTA,
+    content_quota=ADMIN_CONTENT_QUOTA,
+    api_daily_quota=ADMIN_API_DAILY_QUOTA,
     created_datetime_utc=datetime.now(timezone.utc),
     updated_datetime_utc=datetime.now(timezone.utc),
 )
@@ -46,7 +46,7 @@ async def async_redis_operations(key: str, value: int | None) -> None:
 
     await redis.set(key, encode_api_limit(value))
 
-    await redis.close()
+    await redis.aclose()
 
 
 def run_redis_async_tasks(key: str, value: str) -> None:

@@ -14,7 +14,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
 # LiteLLM proxy variables
 # Endpoint
-LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://0.0.0.0:4000")
+LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
 # API Key. Required but just a dummy for now. The actual OPENAI_API_KEY is set
 # in the proxy container.
 LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
@@ -47,10 +47,7 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
     "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
 )
 
-# On/Off Topic variables
-SERVICE_IDENTITY = os.environ.get(
-    "SERVICE_IDENTITY", "air pollution and air quality chatbot"
-)
+# Rate limit variables
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
 DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))

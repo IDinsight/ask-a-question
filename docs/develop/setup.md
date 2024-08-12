@@ -1,6 +1,45 @@
 # Setting up your development environment
 
-There are two ways to set up your development environment for AAQ:
+## Step 1: Fork the repository
+
+Please fork the
+[project repository](https://github.com/IDinsight/ask-a-question) by clicking on the
+"Fork" button. Then, clone the repo using your own GitHub handle:
+
+    git clone git@github.com:<your GitHub handle>/ask-a-question.git
+
+For questions related to setup, please contact
+[AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
+
+## Step 2: Configure environment variables
+
+1. Navigate to the `deployment/docker-compose` directory.
+
+    ```shell
+    cd ask-a-question/deployment/docker-compose
+    ```
+
+2. Copy `template.*.env` into new files named `.*.env` within the same directory:
+
+    ```shell
+    cp template.base.env .base.env
+    cp template.core_backend.env .core_backend.env
+    cp template.litellm_proxy.env .litellm_proxy.env
+    ```
+
+3. Update `.litellm_proxy.env` with LLM service credentials. This will be used by
+   LiteLLM Proxy Server to authenticate to LLM services.
+
+    For local development setup, this is the only file you need to update to get started. For more
+    information on the variables used here and other template environment files, see [Configuring AAQ](../deployment/config-options.md).
+
+4. (optional) Edit which LLMs are used in the
+   [`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml).
+
+## Step 3: Set up your development environment
+
+Once you are done with steps [1](#step-1-fork-the-repository) &
+[2](#step-2-configure-environment-variables), there are two ways to set up your development environment for AAQ:
 
 1. [Docker Compose Watch](#set-up-using-docker-compose-watch)
 2. [Manual](#set-up-manually)
@@ -8,18 +47,9 @@ There are two ways to set up your development environment for AAQ:
 You can view the [pros and cons of each method](#pros-and-cons-of-each-setup-method) at
 the bottom.
 
-Before you get started, please fork the
-[project repository](https://github.com/IDinsight/ask-a-question) by clicking on the
-"Fork" button and then clone the repo using:
+### Set up using [Docker Compose Watch](https://docs.docker.com/compose/file-watch/)
 
-    git clone git@github.com:<your GitHub handle>/ask-a-question.git
-
-For questions related to setup, please contact
-[AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
-
-## Set up using [Docker Compose Watch](https://docs.docker.com/compose/file-watch/)
-
-### Step 0: Install prerequisites
+#### Install prerequisites
 
 1. Install [Docker](https://docs.docker.com/get-docker/).
 2. If you are not using
@@ -27,25 +57,15 @@ For questions related to setup, please contact
 [Docker Compose](https://docs.docker.com/compose/install/) with version \>=2.22 to use
 the `watch` command.
 
-### Step 1: Configure environment variables
+#### Run `docker compose watch`
 
-1. Navigate to the `deployment/docker-compose` directory.
-
-        cd ask-a-question/deployment/docker-compose
-
-2. Copy `template.env` to a new file named `.env` within the same directory, and set
-   the necessary variables. For local setup, you just need to set your own
-   `OPENAI_API_KEY` as the app can use default values for other environment variables
-   (check out the various `config.py` under `core_backend/app/` and its subdirectories.)
-
-3. (optional) Edit which LLMs are used in the `litellm_proxy_config.yaml`.
-
-### Step 2: Run `docker compose watch`
+If not done already, configure the environment variables in [Step 2](#step-2-configure-environment-variables).
 
 1. In the `deployment/docker-compose` directory, run
 
-    ```bash
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+    ```shell
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+        -p aaq-stack watch
     ```
 
     ??? note "Here's what you should see if the above command executes successfully"
@@ -66,14 +86,17 @@ the `watch` command.
     The admin app will be available on [https://localhost](https://localhost) and the
     backend API testing UI on [https://localhost/api/docs](https://localhost/api/docs).
 
-2. To stop the admin app, first exit the running app process in your terminal with
+2. To stop AAQ, first exit the running app process in your terminal with
 `ctrl+c` and then run:
 
-        docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down
+    ```shell
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+        -p aaq-stack down
+    ```
 
-## Set up manually
+### Set up manually
 
-### Step 0: Install prerequisites
+#### Install prerequisites
 
 1. Install
    [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
@@ -90,23 +113,23 @@ the `watch` command.
         ```
 
 3. Install [Docker](https://docs.docker.com/get-docker/).
-4. Install [PostgreSQL](https://www.postgresql.org/download/).
-5. (optional) Install [GNU Make](https://www.gnu.org/software/make/). `make` is used
+4. (optional) Install [GNU Make](https://www.gnu.org/software/make/). `make` is used
 to run commands (targets) in `Makefile`s and can be used to automate various setup
 procedures.
 
-### Step 1: Set up the backend
+#### Set up the backend
 
----
-**Note**
+0. Navigate to `ask-a-question` repository root.
 
-Ensure that you are in the `ask-a-question` project directory before proceeding.
-
----
+    ```shell
+    cd ask-a-question
+    ```
 
 1. Set up your Python environment by creating a new conda environment using `make`.
 
-        make fresh-env
+    ```shell
+    make fresh-env
+    ```
 
     This command will remove any existing `aaq` conda environment and create a new
     `aaq` conda environment with the required Python packages.
@@ -146,97 +169,58 @@ Ensure that you are in the `ask-a-question` project directory before proceeding.
 
 2. Activate your `aaq` conda environment.
 
-        conda activate aaq
+    ```shell
+    conda activate aaq
+    ```
 
-3. Set required environment variables in your terminal.
+3. Set up the required Docker containers by running
 
-        # 1. Required for core_backend
-        export PROMETHEUS_MULTIPROC_DIR=/tmp
+    ```shell
+    make setup-dev
+    ```
 
-4. ??? note "Set up optional environment variables"
+    The command will start the following containers:
 
-            1. To enable Google login
-            export NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=<YOUR_CLIENT_ID>
+    - PostgreSQL with pgvector extension
+    - LiteLLM Proxy Server
+    - Redis
 
-            2. If you want to track using LANGFUSE
-            export LANGFUSE=True
-            export LANGFUSE_PUBLIC_KEY=pk-...
-            export LANGFUSE_SECRET_KEY=sk-...
+    ??? note "Setting up the DB, LiteLLM Proxy Server, and Redis seprately"
 
-            3. API keys for LLM models used in litellm_proxy_config.yaml. This step is only required if you are using aspects of AAQ that require calls to API providers.
-            export OPENAI_API_KEY=sk... # if using OpenAI
-            export GEMINI_API_KEY=... # if using Gemini
+        If you would like to set
+        up each of these dependencies *separately*, check out the [Makefile](https://github.com/IDinsight/ask-a-question/blob/main/Makefile) at repository root.
 
-            4. Edit which LLMs are used in the `deployment/docker-compose/litellm_proxy_config.yaml`.
+4. Export the environment variables you defined earlier in [Step
+   2](#step-2-configure-environment-variables) by running
 
-5. <a name="optional-login-credentials"></a> You can set custom login credentials for
-the frontend admin app by setting the following environment variables. The defaults can
-be found in `/core_backend/add_users_to_db.py`.
+    ```shell
+    set -a
+    source deployment/docker-compose/.base.env
+    source deployment/docker-compose/.core_backend.env
+    set +a
+    ```
 
-        # user 1
-        export USER1_USERNAME="user1"
-        export USER1_PASSWORD="fullaccess"
-        export USER1_API_KEY="user1-key"
+    ??? note "Saving environment variables in `aaq` conda environment"
 
-        # user 2
-        export USER2_USERNAME="user2"
-        export USER2_PASSWORD="fullaccess"
-        export USER2_API_KEY="user2-key"
+        You can set environment variables by either running `conda env config vars set <NAME>=<VALUE>` for each required environment variable, or [save them in the environment activation script](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#saving-environment-variables).
 
-6. Set up the required Docker containers for the `PostgreSQL` database and the
-`LiteLLM` proxy server using `make`.
+5. Start the backend app.
 
-        make setup-dev
-
-    ??? note "Setting up the `PostgreSQL` database and `LiteLLM` proxy server separately"
-
-        The `make setup-dev` command should set up the `PostgreSQL` database docker
-        container and `LiteLLM` proxy server automatically.  If you would like to set
-        up each of these *separately*, here are the steps:
-
-        NB: To run each of the `make` steps *manually*, you can check out the
-        individual steps in each of the corresponding Make targets.
-
-        ####`PostgreSQL` database on Docker
-
-        You can launch a container running `PostgreSQL` database and run the necessary
-        migrations using:
-
-            make setup-db
-
-        You can stop and remove the `PostgreSQL` container using:
-
-            make teardown-db
-
-        ####LiteLLM Proxy Server
-
-            1. Set models and parameters in `deployment/docker-compose/litellm_proxy_config.yaml`.
-
-            2. Set the appropriate API key(s) as environment variables in your terminal:
-
-                export OPENAI_API_KEY=sk... # if using OpenAI
-                export GEMINI_API_KEY=... # if using Gemini
-
-            3. Run the Make target to set up the `LiteLLM` proxy server:
-
-                make setup-llm-proxy
-
-            4. Once done, teardown the container with:
-
-                make teardown-llm-proxy
-
-7. Start the backend app.
-
-        python core_backend/main.py
+    ```shell
+    python core_backend/main.py
+    ```
 
     ??? note "Here's what you should see if the above command executes successfully"
-            INFO:     Will watch for changes in these directories: ['~/ask-a-question']
-            INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-            INFO:     Started reloader process [73855] using StatReload
-            INFO:     Started server process [73858]
-            INFO:     Waiting for application startup.
-            07/15/2024 12:29:08 PM          __init__.py  79 : Application started
-            INFO:     Application startup complete.
+
+        ```
+        INFO:     Will watch for changes in these directories: ['~/ask-a-question']
+        INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+        INFO:     Started reloader process [73855] using StatReload
+        INFO:     Started server process [73858]
+        INFO:     Waiting for application startup.
+        07/15/2024 12:29:08 PM          __init__.py  79 : Application started
+        INFO:     Application startup complete.
+        ```
 
     This will launch the application in "reload" mode (i.e., the app will automatically
     refresh everytime you make a change to one of the files).
@@ -245,36 +229,46 @@ be found in `/core_backend/add_users_to_db.py`.
     [http://localhost:8000/docs](http://localhost:8000/docs) (the backend itself runs
     on [http://localhost:8000](http://localhost:8000)).
 
-8. To stop the backend app, first exit the running app process in your terminal with
+6. To stop the backend app, first exit the running app process in your terminal with
 `ctrl+c` and then run:
 
-        make teardown-dev
+    ```shell
+    make teardown-dev
+    ```
 
-### Step 2: Set up the frontend
+#### Set up the frontend
 
----
-**NB**
+0. Navigate to `ask-a-question` repository root and activate the
+`aaq` virtual environment:
 
-Ensure that you are in the `ask-a-question` project directory and that you have activated the
-`aaq` virtual environment before proceeding.
+    ```shell
+    cd ask-a-question
+    ```
 
----
+    ```shell
+    conda activate aaq
+    ```
 
 1. In a *new* terminal:
 
-        cd admin_app
-        nvm use 19
-        npm install
-        npm run dev
+    ```shell
+    cd admin_app
+    nvm use 19
+    npm install
+    npm run dev
+    ```
 
     ??? note "Here's what you should see if the above commands execute successfully"
-            > admin-app@0.2.0 dev
-            > next dev
 
-            ▲ Next.js 14.1.3
-            - Local:        http://localhost:3000
+        ```
+        > admin-app@0.2.0 dev
+        > next dev
 
-            ✓ Ready in 1233ms
+        ▲ Next.js 14.1.3
+        - Local:        http://localhost:3000
+
+        ✓ Ready in 1233ms
+        ```
 
     This will install the required NodeJS packages for the admin app and start the
     admin app in `dev` (i.e., autoreload) mode. The admin app will now be accessible on
@@ -282,30 +276,33 @@ Ensure that you are in the `ask-a-question` project directory and that you have 
 
     You can login with either the default credentials
     (username: `admin`, password: `fullaccess`) or the ones you specified
-    [when setting up the login credentials](#optional-login-credentials).
+    in `.core_backend.env`.
 
 2. To stop the admin app, exit the running app process in your terminal with
 `ctrl`+`c`.
 
-## Set up docs
+### Pros and cons of each setup method
+
+| Method | Pros | Cons |
+| --- | --- | --- |
+| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 20-30s to be reflected in the app</li></ul> |
+| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
+
+
+## Step 4: Set up docs
 
 ---
-**NB**
+**Note**
 
 Ensure that you are in the `ask-a-question` project directory and that you have activated the
 `aaq` virtual environment before proceeding.
 
 ---
 
-1. To host docs offline so that you can see documentation changes in real-time, run the
+To host docs offline so that you can see documentation changes in real-time, run the
 following from `ask-a-question` repository root with an altered port (so that it doesn't
 interfere with the app's server):
 
-        mkdocs serve -a localhost:8080
-
-## Pros and cons of each setup method
-
-| Method | Pros | Cons |
-| --- | --- | --- |
-| [Set up using docker compose watch](#set-up-using-docker-compose-watch) | <ul><li>Good for end-to-end testing</li><li>Local environment identical to production deployment</li><li>No need to setup local environment</li><li>Set environment variables and configs once</li></ul> | <ul><li>Changes take 20-30s to be reflected in the app</li></ul> |
-| [Set up manually](#set-up-manually)| <ul><li>Instant feedback from changes</li></ul>| <ul><li>Requires more configuration before each run</li><li>Requires environment and dependencies to be set up correctly</li><ul> |
+```shell
+mkdocs serve -a localhost:8080
+```
