@@ -1,6 +1,6 @@
 site_name: "" # already part of the logo
 site_description: "Ask A Question Documentation"
-site_url: https://ask-a-question.com//
+site_url: https://docs.ask-a-question.com/
 repo_url: https://github.com/IDinsight/ask-a-question
 copyright: "© 2024 IDinsight"
 extra:
@@ -12,6 +12,10 @@ extra:
     - icon: material/shield-lock
       link: https://www.idinsight.org/about/privacy-policy/
       name: Privacy Policy
+  version:
+    provider: mike
+    alias: true
+    default: latest
 
 nav:
   - Home:

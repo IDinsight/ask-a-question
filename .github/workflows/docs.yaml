@@ -1,9 +1,9 @@
 name: Deploy Docs
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+  release:
+    types: [released]
+
 permissions:
   contents: write
 jobs:
@@ -11,19 +11,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material==9.5.3 \
+      - name: Install dependencies
+        run: pip install mkdocs-material==9.5.3 \
           pymdown-extensions==10.3 \
           mkdocs-glightbox==0.3.4 \
           mkdocs-material-extensions==1.3.1 \
-          mkdocs-open-in-new-tab==1.0.3
-      - run: mkdocs gh-deploy --force
+          mkdocs-open-in-new-tab==1.0.3 \
+          mike==2.1.2
+
+      - name: Build and push docs version
+        run: |
+          git config user.name github-actions-runner
+          git config user.email aaq@idinsight.org
+          git fetch origin gh-pages
+          mike deploy \
+            --push \
+            --update-aliases ${{ github.ref_name }} latest
+
+      - name: Add CNAME
+        run: |
+          git fetch origin
+          git switch gh-pages
+          echo "docs.ask-a-question.com" >> CNAME
+          git add CNAME
+          git commit -m "Add CNAME"
+          git push origin gh-pages
