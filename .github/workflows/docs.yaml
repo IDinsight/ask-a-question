@@ -21,6 +21,7 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
+
       - name: Install dependencies
         run: pip install mkdocs-material==9.5.3 \
           pymdown-extensions==10.3 \
@@ -34,6 +35,7 @@ jobs:
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           git fetch origin gh-pages
+          mike set-default latest
           mike deploy \
             --push \
             --update-aliases ${{ github.ref_name }} latest
