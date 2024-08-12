@@ -1,0 +1,52 @@
+name: Alembic Migration Check
+
+on:
+  pull_request:
+    branches:
+      - tonyzhao6-main
+    paths:
+      - "core_backend/migrations/versions/**.py"
+      - ".github/workflows/alembic-migrations.yaml"
+
+jobs:
+  alembic-check:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: tonyzhao6-main
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Python libraries
+        run: |
+          python -m pip install -r core_backend/requirements.txt
+
+      - name: Get Alembic head of tonyzhao6-main branch
+        run: |
+          cd core_backend
+          alembic_head_main=$(alembic heads | awk '{print $1}')
+          echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Check if Alembic head revision from main exists in feature branch
+        run: |
+          cd core_backend
+          alembic_history_pr=$(alembic history)
+          echo "Main branch Alembic head: ${alembic_head_main}"
+          echo "PR branch Alembic history: ${alembic_history_pr}"
+          if echo "${alembic_history_pr}" | grep -q "${{ env.ALEMBIC_HEAD_MAIN }}"; then
+              echo "Alembic head revision from main exists in PR branch."
+          else
+              echo "Alembic head revision from main does NOT exist in PR branch. Update your migrations to align with main branch."
+              exit 1
+          fi
