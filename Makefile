@@ -36,6 +36,9 @@ teardown-dev: teardown-db teardown-redis teardown-llm-proxy
 # Add users to db
 add-users-to-db:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
+	set -a && \
+        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        set +a && \
 	python core_backend/add_users_to_db.py
 
 # Dev db
@@ -45,11 +48,16 @@ setup-db:
 	@docker system prune -f
 	@sleep 2
 	@docker run --name postgres-local \
-     -e POSTGRES_PASSWORD=postgres \
-     -p 5432:5432 \
-     -d pgvector/pgvector:pg16
+		--env-file "$(CURDIR)/deployment/docker-compose/.core_backend.env" \
+		-p 5432:5432 \
+		-d pgvector/pgvector:pg16
+	set -a && \
+        source $(CURDIR)/deployment/docker-compose/.base.env && \
+        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        set +a && \
 	cd core_backend && \
 	python -m alembic upgrade head
+
 teardown-db:
 	@docker stop postgres-local
 	@docker rm postgres-local
@@ -80,13 +88,7 @@ setup-llm-proxy:
 		--rm \
 		-v "$(CURDIR)/deployment/docker-compose/litellm_proxy_config.yaml":/app/config.yaml \
 		-v "$(CURDIR)/deployment/docker-compose/.gcp_credentials.json":/app/credentials.json \
-		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		-e CUSTOM_EMBEDDINGS_API_KEY=$(CUSTOM_EMBEDDINGS_API_KEY) \
-		-e CUSTOM_EMBEDDINGS_ENDPOINT=$(CUSTOM_EMBEDDINGS_ENDPOINT) \
-		-e VERTEXAI_PROJECT=$(VERTEXAI_PROJECT) \
-		-e VERTEXAI_LOCATION=$(VERTEXAI_LOCATION) \
-		-e VERTEXAI_ENDPOINT=https://$(VERTEXAI_LOCATION)-aiplatform.googleapis.com/v1 \
-		-e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
+		--env-file "$(CURDIR)/deployment/docker-compose/.litellm_proxy.env" \
 		-p 4000:4000 \
 		-d ghcr.io/berriai/litellm:main-v1.40.10 \
 		--config /app/config.yaml --detailed_debug
@@ -103,6 +105,7 @@ build-embeddings-arm:
 		-t text-embeddings-inference-arm
 	@cd ..
 	@rm -rf text-embeddings-inference
+
 setup-embeddings-arm:
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
