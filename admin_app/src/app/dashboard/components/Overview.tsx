@@ -17,7 +17,6 @@ import { format } from "date-fns";
 import React, { useEffect } from "react";
 import { ApexData, DayHourUsageData, Period, TopContentData } from "../types";
 
-
 interface OverviewProps {
   timePeriod: Period;
 }
@@ -251,7 +250,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           flexDirection: "row",
           alignItems: "stretch",
           gap: 3,
-          pt: 3,
+          paddingTop: 3,
           maxWidth: 1387,
         }}
       >
@@ -278,7 +277,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ mt: 2, maxWidth: 1387 }}>
+      <Box bgcolor="white" sx={{ marginTop: 2, maxWidth: 1387 }}>
         <TopContentTable rows={topContentData} />
         <Layout.Spacer multiplier={2} />
       </Box>

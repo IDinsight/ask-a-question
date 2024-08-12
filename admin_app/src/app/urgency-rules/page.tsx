@@ -143,12 +143,7 @@ const UrgencyRulesPage = () => {
   }, [token, accessLevel]);
 
   return (
-    <Layout.FlexBox
-      alignItems="center"
-      marginTop={6}
-      padding={5}
-      gap={sizes.baseGap}
-    >
+    <Layout.FlexBox alignItems="center" padding={5} gap={sizes.baseGap}>
       <Box
         sx={{
           display: "flex",
@@ -159,7 +154,7 @@ const UrgencyRulesPage = () => {
         }}
       >
         <Typography
-          sx={{ pl: 1, pt: 2 }}
+          sx={{ paddingLeft: 1, paddingTop: 2 }}
           variant="h4"
           align="left"
           color="primary"
@@ -243,11 +238,11 @@ const UrgencyRulesPage = () => {
                     onBlur={() => {
                       onBlur(index);
                     }}
-                    sx={{ pr: 12, pl: 0, marginBottom: 1 }}
+                    sx={{ paddingRight: 12, paddingLeft: 0, marginBottom: 1 }}
                     InputProps={{
                       style: { backgroundColor: "white" },
                       endAdornment: (
-                        <InputAdornment position="end" sx={{ pr: 2 }}>
+                        <InputAdornment position="end" sx={{ paddingRight: 2 }}>
                           <IconButton
                             onMouseDown={() => {
                               addOrUpdateItem(index);

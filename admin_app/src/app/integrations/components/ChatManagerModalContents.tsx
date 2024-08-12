@@ -35,7 +35,7 @@ const TypebotModalContent: React.FC = () => {
         In Typebot, you can use the "HTTPS request" card to call AAQ and receive
         its response.
       </Typography>
-      <Typography variant="body1" mb={sizes.baseGap}>
+      <Typography variant="body1" marginBottom={sizes.baseGap}>
         To get a head start, you can download our template below and load it
         into Typebot by going to "Create a typebot &gt; Import a file".
       </Typography>
@@ -53,7 +53,7 @@ const TypebotModalContent: React.FC = () => {
         </Button>
       </Box>
 
-      <Typography variant="body1" mt={sizes.doubleBaseGap}>
+      <Typography variant="body1" marginTop={sizes.doubleBaseGap}>
         Once loaded, you need to update the{" "}
         <code style={{ color: "tomato" }}>API_KEY</code> field inside the "HTTP
         request" card with your own API key before trying the flow.
@@ -82,7 +82,7 @@ const TurnModalContent: React.FC = () => {
           Open Turn Playbook
         </Button>
       </Box>
-      <Typography variant="body1" mb={sizes.baseGap}>
+      <Typography variant="body1" marginBottom={sizes.baseGap}>
         You can also refer to our{" "}
         <Link
           href="https://docs.ask-a-question.com/integrations/chat_managers/turn.io/turn/"
@@ -117,7 +117,7 @@ const GlificModalContent: React.FC = () => {
           Open Glific Flow
         </Button>
       </Box>
-      <Typography variant="body1" mb={sizes.baseGap}>
+      <Typography variant="body1" marginBottom={sizes.baseGap}>
         You can also refer to our{" "}
         <Link
           href="https://docs.ask-a-question.com/integrations/chat_managers/glific/glific/"
