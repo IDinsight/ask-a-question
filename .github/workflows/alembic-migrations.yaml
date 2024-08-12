@@ -3,7 +3,6 @@ name: Alembic Migration Check
 on:
   pull_request:
     branches:
-      - main
       - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
@@ -11,7 +10,6 @@ on:
 
   push:
     branches:
-      - main
       - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
@@ -25,7 +23,7 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: tonyzhao6-gha-workflow-for-alembic-migration
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -61,13 +59,13 @@ jobs:
   merged-pr-outdated-head-check:
     runs-on: ubuntu-20.04
     needs: open-pr-outdated-head-check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/tonyzhao6-gha-workflow-for-alembic-migration'
 
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: tonyzhao6-gha-workflow-for-alembic-migration
 
       - name: Set up Python
         uses: actions/setup-python@v4
