@@ -19,7 +19,7 @@ cd deployment/docker-compose/
 **Step 3:** Copy `template.*.env` files to `.*.env`:
 
 ```shell
-cp template.common.env .common.env
+cp template.base.env .base.env
 cp template.core_backend.env .core_backend.env
 cp template.litellm_proxy.env .litellm_proxy.env
 ```

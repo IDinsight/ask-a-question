@@ -22,7 +22,7 @@ For questions related to setup, please contact
 2. Copy `template.*.env` into new files named `.*.env` within the same directory:
 
     ```shell
-    cp template.common.env .common.env
+    cp template.base.env .base.env
     cp template.core_backend.env .core_backend.env
     cp template.litellm_proxy.env .litellm_proxy.env
     ```
@@ -195,7 +195,7 @@ procedures.
 
     ```shell
     set -a
-    source deployment/docker-compose/.common.env
+    source deployment/docker-compose/.base.env
     source deployment/docker-compose/.core_backend.env
     set +a
     ```

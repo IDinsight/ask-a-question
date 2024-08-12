@@ -8,7 +8,7 @@ services:
       /bin/sh startup.sh
     restart: always
     env_file:
-      - .common.env
+      - .base.env
       - .core_backend.env
     environment:
       - REDIS_HOST=redis://redis:6379
@@ -31,7 +31,7 @@ services:
       - core_backend
     restart: always
     env_file:
-      - .common.env
+      - .base.env
     develop:
       watch:
         - action: rebuild
@@ -49,7 +49,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     env_file:
-      - .common.env
+      - .base.env
 
   litellm_proxy:
     image: ghcr.io/berriai/litellm:main-v1.40.10

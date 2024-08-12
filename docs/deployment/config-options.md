@@ -9,7 +9,7 @@ There are several aspects of AAQ you can configure:
     templates into `.*.env` files.**
 
     ```shell
-    cp template.common.env .common.env
+    cp template.base.env .base.env
     cp template.core_backend.env .core_backend.env
     cp template.litellm_proxy.env .litellm_proxy.env
     ```
@@ -50,17 +50,17 @@ There are several aspects of AAQ you can configure:
 The base environment variables are shared by `caddy` (reverse proxy), `core_backend`,
 and `admin_app` during run time.
 
-If not done already, copy the template environment file to `.common.env`
+If not done already, copy the template environment file to `.base.env`
 
 ```shell
 cd deployment/docker-compose/
-cp template.common.env .common.env
+cp template.base.env .base.env
 ```
 
 Then, edit the environment variables according to your need ([guide](#template-env-guide) on updating the template):
 
-```shell title="<code>deployment/docker-compose/template.common.env</code>"
---8<-- "deployment/docker-compose/template.common.env"
+```shell title="<code>deployment/docker-compose/template.base.env</code>"
+--8<-- "deployment/docker-compose/template.base.env"
 ```
 
 ## Configuring the backend (`core_backend`)

@@ -52,7 +52,7 @@ setup-db:
 		-p 5432:5432 \
 		-d pgvector/pgvector:pg16
 	set -a && \
-        source $(CURDIR)/deployment/docker-compose/.common.env && \
+        source $(CURDIR)/deployment/docker-compose/.base.env && \
         source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
         set +a && \
 	cd core_backend && \
