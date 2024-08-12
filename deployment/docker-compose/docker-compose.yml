@@ -91,7 +91,7 @@ services:
       ]
     restart: always
     env_file:
-      - .core_backend.env
+      - .litellm_proxy.env
     develop:
       watch:
         - action: rebuild
