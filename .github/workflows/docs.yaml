@@ -42,7 +42,7 @@ jobs:
         run: |
           git fetch origin
           git switch gh-pages
-          echo "docs.ask-a-question.com" >> CNAME
+          echo "docs.ask-a-question.com" > CNAME
           git add CNAME
           git commit -m "Add CNAME"
           git push origin gh-pages
