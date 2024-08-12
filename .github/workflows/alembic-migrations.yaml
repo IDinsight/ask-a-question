@@ -64,7 +64,8 @@ jobs:
           cd core_backend
           alembic_heads=$(alembic heads | wc -l)
           if [ "$alembic_heads" -gt 1 ]; then
-              echo "Multiple Alembic heads detected in the main branch after PR merge. Resolve the heads to maintain a single migration history."
+              echo "Multiple Alembic heads detected in the ${{ env.BRANCH_NAME }} branch after PR merge. Resolve the heads to maintain a single migration history."
               exit 1
           else
               echo "No multiple Alembic heads detected."
+          fi
