@@ -46,7 +46,7 @@ async def async_redis_operations(key: str, value: int | None) -> None:
 
     await redis.set(key, encode_api_limit(value))
 
-    await redis.close()
+    await redis.aclose()
 
 
 def run_redis_async_tasks(key: str, value: str) -> None:

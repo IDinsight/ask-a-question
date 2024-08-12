@@ -27,9 +27,11 @@ For questions related to setup, please contact
     cp template.litellm_proxy.env .litellm_proxy.env
     ```
 
-3. Update `.litellm_proxy.env` to enable LiteLLM Proxy Server to authenticate to LLM services. This is sufficient for local
-   development setup. See [Configuring AAQ](../deployment/config-options.md) for more
-   information about other environment variables.
+3. Update `.litellm_proxy.env` with LLM service credentials. This will be used by
+   LiteLLM Proxy Server to authenticate to LLM services.
+
+    For local development setup, this is the only file you need to update to get started. For more
+    information on the variables used here and other template environment files, see [Configuring AAQ](../deployment/config-options.md).
 
 4. (optional) Edit which LLMs are used in the
    [`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml).
@@ -62,7 +64,8 @@ If not done already, configure the environment variables in [Step 2](#step-2-con
 1. In the `deployment/docker-compose` directory, run
 
     ```shell
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack watch
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+        -p aaq-stack watch
     ```
 
     ??? note "Here's what you should see if the above command executes successfully"
@@ -87,7 +90,8 @@ If not done already, configure the environment variables in [Step 2](#step-2-con
 `ctrl+c` and then run:
 
     ```shell
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml -p aaq-stack down
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+        -p aaq-stack down
     ```
 
 ### Set up manually
@@ -175,7 +179,7 @@ procedures.
     make setup-dev
     ```
 
-    As of now, this will start up
+    The command will start the following containers:
 
     - PostgreSQL with pgvector extension
     - LiteLLM Proxy Server

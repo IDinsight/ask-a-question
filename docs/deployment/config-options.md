@@ -47,10 +47,8 @@ There are several aspects of AAQ you can configure:
 
 ## AAQ-wide configurations
 
-The base environment variables are shared by multiple containers:
-
-1. `caddy` (reverse proxy) and `core_backend` during run time, and
-2. `admin_app` during build time
+The base environment variables are shared by `caddy` (reverse proxy), `core_backend`,
+and `admin_app` during run time.
 
 If not done already, copy the template environment file to `.common.env`
 
@@ -119,4 +117,4 @@ authentication for different LLMs.
 ## Configuring optional components
 
 See instructions for setting these in the documentation for the specific optional
-component at [Optional components](../components/index.md#internal-components)
+component at [Optional components](../components/index.md#internal-components).
