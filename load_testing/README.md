@@ -14,26 +14,20 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 4. Setting up environment variables. Each of the following variables should be exported, i.e.
 
-```
-# Set to the URL of the AAQ in production
-export TARGET_AAQ_URL="https://app.ask-a-question.com/api/"
-or
-export TARGET_AAQ_URL="http://localhost/api/" # If running locally t
-
-# Create aan API key in the AAQ admin panel
+```bash
+# For AAQ load testing:
+export TARGET_AAQ_URL="http://localhost/api/" # example
 export AAQ_API_KEY="<aaq-api-key>"
 
-# Once TypeBot is created at typebot.idinsight.io,
-# go to settings -> share -> API.
-# Copy the ID from the preview URL
+# For Typebot load testing:
+# Typebot bot ID (from bot > Share > API)
 export TYPEBOT_BOT_ID="load-testing-pipeline-mctk9nv"
-
-# TYPEBOT ENV VARIABLES (only if using TypeBot test)
-# Create an API key in the Typebot admin panel
+# Typebot API key (from "Settings & Members" > API tokens)
 export TYPEBOT_API_KEY="<typebot-api-key>"
 ```
 
-5. Ensure your configuration `.json` looks correct. In the `conigs/` folder there is a `.json` that defines which tests are carried out when the `main.py` script is run.
+5. Ensure your configuration `.json` looks correct. In the `configs/` folder there is a `.json` that defines which tests are carried out when the `main.py` script is run.
+
    [Optional] If you would like to test out AAQ in the context of a TypeBot flow, you can include `typebot.py` in list corresponding to the key `locustfile_list`.
 
 6. Run the main script.
@@ -58,7 +52,7 @@ export TYPEBOT_API_KEY="<typebot-api-key>"
 
 ### Live Monitoring
 
-Results of tests can be monitored live through the Locust WebUI by going to the localhost address given in the terminal when tests are running (Usually at port 8089)
+Results of tests can be monitored live through the Locust WebUI by going to the localhost address given in the terminal when tests are running (Usually at port `8089`)
 
 ### Saved to file
 
