@@ -68,3 +68,4 @@ jobs:
               exit 1
           else
               echo "No multiple Alembic heads detected."
+          fi
