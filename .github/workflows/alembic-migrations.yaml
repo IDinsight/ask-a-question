@@ -35,6 +35,7 @@ jobs:
           python -m pip install -r core_backend/requirements.txt
 
       - name: Get Alembic head of main branch
+        if: github.event_name == 'pull_request'
         run: |
           cd core_backend
           alembic_head_main=$(alembic heads | awk '{print $1}')
