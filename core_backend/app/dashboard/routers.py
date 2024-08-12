@@ -1,3 +1,5 @@
+"""This module contains the FastAPI router for the dashboard endpoints."""
+
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
@@ -27,7 +29,7 @@ async def retrieve_overview_day(
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
-    Retrieve all question answer statistics
+    Retrieve all question answer statistics for the last day.
     """
     today = datetime.now(timezone.utc)
     day_ago = today - timedelta(days=1)
@@ -49,7 +51,7 @@ async def retrieve_overview_week(
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
-    Retrieve all question answer statistics
+    Retrieve all question answer statistics for the last week.
     """
     today = datetime.now(timezone.utc)
     week_ago = today - timedelta(days=7)
@@ -71,7 +73,7 @@ async def retrieve_overview_month(
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
-    Retrieve all question answer statistics
+    Retrieve all question answer statistics for the last month.
     """
     today = datetime.now(timezone.utc)
     month_ago = today + relativedelta(months=-1)
@@ -93,7 +95,7 @@ async def retrieve_overview_year(
     asession: AsyncSession = Depends(get_async_session),
 ) -> DashboardOverview:
     """
-    Retrieve all question answer statistics
+    Retrieve all question answer statistics for the last year.
     """
     today = datetime.now(timezone.utc)
     year_ago = today + relativedelta(years=-1)
@@ -115,10 +117,31 @@ async def retrieve_overview(
     start_date: date,
     end_date: date,
     frequency: TimeFrequency,
+    top_n: int = 4,
 ) -> DashboardOverview:
+    """Retrieve all question answer statistics.
+
+    Parameters
+    ----------
+    user_id
+        The ID of the user to retrieve the statistics for.
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the statistics.
+    end_date
+        The ending date for the statistics.
+    frequency
+        The frequency at which to retrieve the statistics.
+    top_n
+        The number of top content to retrieve.
+
+    Returns
+    -------
+    DashboardOverview
+        The dashboard overview statistics.
     """
-    Retrieve all question answer statistics
-    """
+
     stats = await get_stats_cards(
         user_id=user_id,
         asession=asession,
@@ -144,7 +167,7 @@ async def retrieve_overview(
     top_content = await get_top_content(
         user_id=user_id,
         asession=asession,
-        top_n=4,
+        top_n=top_n,
     )
 
     return DashboardOverview(

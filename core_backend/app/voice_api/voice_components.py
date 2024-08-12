@@ -16,7 +16,8 @@ async def generate_speech(
     destination_blob_name: str = "response.mp3",
 ) -> str:
     """
-    Converts the provided text to speech and saves it as an mp3 file.
+    Converts the provided text to speech and saves it as an mp3 file on
+    Google cloud storage
     """
 
     try:

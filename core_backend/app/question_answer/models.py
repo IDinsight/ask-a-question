@@ -51,6 +51,7 @@ class QueryDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -97,9 +98,9 @@ async def save_user_query_to_db(
     Parameters
     ----------
     user_id
-        The user ID.
+        The user ID for the organization.
     user_query
-        The user query database object.
+        The end user query database object.
     asession
         `AsyncSession` object for database transactions.
 
@@ -112,6 +113,7 @@ async def save_user_query_to_db(
     feedback_secret_key = generate_secret_key()
     user_query_db = QueryDB(
         user_id=user_id,
+        session_id=user_query.session_id,
         feedback_secret_key=feedback_secret_key,
         query_text=user_query.query_text,
         query_generate_llm_response=user_query.generate_llm_response,
@@ -163,6 +165,7 @@ class QueryResponseDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
@@ -215,6 +218,7 @@ async def save_query_response_to_db(
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
             user_id=user_query_db.user_id,
+            session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
             tts_file=response.model_dump()["tts_file"],
@@ -226,6 +230,7 @@ async def save_query_response_to_db(
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,
             user_id=user_query_db.user_id,
+            session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
             tts_file=response.model_dump()["tts_file"],
@@ -258,6 +263,7 @@ class QueryResponseContentDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id"), nullable=False
     )
@@ -285,6 +291,7 @@ class QueryResponseContentDB(Base):
         return (
             f"ContentForQueryDB(content_for_query_id={self.content_for_query_id}, "
             f"user_id={self.user_id}, "
+            f"session_id={self.session_id}, "
             f"content_id={self.content_id}, "
             f"query_id={self.query_id}, "
             f"created_datetime_utc={self.created_datetime_utc})"
@@ -293,6 +300,7 @@ class QueryResponseContentDB(Base):
 
 async def save_content_for_query_to_db(
     user_id: int,
+    session_id: int | None,
     query_id: int,
     contents: dict[int, QuerySearchResult] | None,
     asession: AsyncSession,
@@ -307,6 +315,7 @@ async def save_content_for_query_to_db(
     for content in contents.values():
         content_for_query_db = QueryResponseContentDB(
             user_id=user_id,
+            session_id=session_id,
             query_id=query_id,
             content_id=content.id,
             created_datetime_utc=datetime.now(timezone.utc),
@@ -332,6 +341,7 @@ class ResponseFeedbackDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -385,6 +395,7 @@ async def save_response_feedback_to_db(
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         user_id=user_id,
+        session_id=feedback.session_id,
         feedback_text=feedback.feedback_text,
     )
     asession.add(response_feedback_db)
@@ -410,6 +421,7 @@ class ContentFeedbackDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -466,6 +478,7 @@ async def save_content_feedback_to_db(
         feedback_sentiment=feedback.feedback_sentiment,
         query_id=feedback.query_id,
         user_id=user_id,
+        session_id=feedback.session_id,
         feedback_text=feedback.feedback_text,
         content_id=feedback.content_id,
     )
