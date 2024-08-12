@@ -1,19 +1,16 @@
 name: Alembic Migration Check
 
-env:
-  BRANCH_NAME: tonyzhao6-gha-workflow-for-alembic-migration
-
 on:
   pull_request:
     branches:
-      - ${{ env.BRANCH_NAME }}
+      - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
 
   push:
     branches:
-      - ${{ env.BRANCH_NAME }}
+      - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
@@ -23,10 +20,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout BRANCH_NAME branch
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.BRANCH_NAME }}
+          ref: tonyzhao6-gha-workflow-for-alembic-migration
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -37,7 +34,7 @@ jobs:
         run: |
           python -m pip install -r core_backend/requirements.txt
 
-      - name: Get Alembic head of BRANCH_NAME branch
+      - name: Get Alembic head of main branch
         run: |
           cd core_backend
           alembic_head_main=$(alembic heads | awk '{print $1}')
@@ -49,15 +46,15 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Check if Alembic head revision from BRANCH_NAME branch exists in feature branch DURING PR
+      - name: Check if Alembic head revision from main branch exists in feature branch DURING PR
         if: github.event_name == 'pull_request'
         run: |
           cd core_backend
           alembic_history_pr=$(alembic history)
           if echo "${alembic_history_pr}" | grep -q "$ALEMBIC_HEAD_MAIN"; then
-              echo "Alembic head revision from ${{ env.BRANCH_NAME }} branch exists in PR branch."
+              echo "Alembic head revision from main branch exists in PR branch."
           else
-              echo "Alembic head revision from ${{ env.BRANCH_NAME }} branch does NOT exist in PR branch. Update your migrations to align with ${{ env.BRANCH_NAME }} branch."
+              echo "Alembic head revision from main branch does NOT exist in PR branch. Update your migrations to align with main branch."
               exit 1
           fi
 
@@ -67,7 +64,7 @@ jobs:
           cd core_backend
           alembic_heads=$(alembic heads | wc -l)
           if [ "$alembic_heads" -gt 1 ]; then
-              echo "Multiple Alembic heads detected in the ${{ env.BRANCH_NAME }} branch after PR merge. Resolve the heads to maintain a single migration history."
+              echo "Multiple Alembic heads detected in the main branch after PR merge. Resolve the heads to maintain a single migration history."
               exit 1
           else
               echo "No multiple Alembic heads detected."
