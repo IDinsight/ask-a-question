@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
@@ -11,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - tonyzhao6-gha-workflow-for-alembic-migration
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
