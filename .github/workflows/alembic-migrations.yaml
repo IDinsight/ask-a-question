@@ -35,6 +35,7 @@ jobs:
           python -m pip install -r core_backend/requirements.txt
 
       - name: Get Alembic head of main branch
+        if: github.event_name == 'pull_request'
         run: |
           cd core_backend
           alembic_head_main=$(alembic heads | awk '{print $1}')
@@ -64,7 +65,7 @@ jobs:
           cd core_backend
           alembic_heads=$(alembic heads | wc -l)
           if [ "$alembic_heads" -gt 1 ]; then
-              echo "Multiple Alembic heads detected in the ${{ env.BRANCH_NAME }} branch after PR merge. Resolve the heads to maintain a single migration history."
+              echo "Multiple Alembic heads detected in the main branch after PR merge. Resolve the heads to maintain a single migration history."
               exit 1
           else
               echo "No multiple Alembic heads detected."
