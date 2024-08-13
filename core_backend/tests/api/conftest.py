@@ -187,6 +187,7 @@ async def faq_contents(
         await asession.execute(deleteFeedback)
         await asession.execute(content_query)
         await asession.delete(content)
+
     await asession.commit()
 
 
@@ -357,7 +358,6 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
         "core_backend.app.urgency_rules.models.embedding", async_fake_embedding
     )
     monkeysession.setattr(process_input, "_classify_safety", mock_return_args)
-    monkeysession.setattr(process_input, "_classify_on_off_topic", mock_return_args)
     monkeysession.setattr(process_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(process_input, "_paraphrase_question", mock_return_args)
     monkeysession.setattr(process_input, "_translate_question", mock_translate_question)

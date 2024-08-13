@@ -1,6 +1,6 @@
 site_name: "" # already part of the logo
 site_description: "Ask A Question Documentation"
-site_url: https://ask-a-question.com//
+site_url: https://docs.ask-a-question.com/
 repo_url: https://github.com/IDinsight/ask-a-question
 copyright: "© 2024 IDinsight"
 extra:
@@ -12,6 +12,10 @@ extra:
     - icon: material/shield-lock
       link: https://www.idinsight.org/about/privacy-policy/
       name: Privacy Policy
+  version:
+    provider: mike
+    alias: true
+    default: latest
 
 nav:
   - Home:
@@ -95,9 +99,11 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - content.code.annotate
+    - content.code.copy
     - navigation.sections
     - navigation.indexes
     - navigation.top
+
   icon:
     admonition:
       note: material/alert-circle
@@ -125,6 +131,13 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - toc:
       title: On this page
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 
 plugins:
   - glightbox
