@@ -5,6 +5,8 @@ services:
     volumes:
       - temp:/usr/src/aaq_backend/temp
       - ./.gcp_credentials.json:/app/credentials.json
+    env_file:
+      - .litellm_proxy.env
 
   speech_service:
     build:

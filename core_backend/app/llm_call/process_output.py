@@ -303,3 +303,12 @@ async def _get_llm_align_score(
     logger.info(f"LLM Alignment result: {alignment_score.model_dump_json()}")
 
     return alignment_score
+
+
+# def generate_tts_after(func: Callable) -> Callable:
+#     """
+#     Decorator to generate the TTS response.
+
+#     Only runs if the generate_tts flag is set to True.
+#     Requires "llm_response" and "align score" in the response.
+#     """

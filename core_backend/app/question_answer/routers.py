@@ -4,7 +4,7 @@ endpoints.
 
 import os
 from io import BytesIO
-from typing import Tuple
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -47,6 +47,7 @@ from .models import (
     save_user_query_to_db,
 )
 from .schemas import (
+    AudioResponse,
     ContentFeedback,
     QueryBase,
     QueryRefined,
@@ -72,8 +73,8 @@ router = APIRouter(
 
 
 @router.post(
-    "/stt-llm-response",
-    response_model=QueryResponse,
+    "/voice-search",
+    response_model=QueryResponse | AudioResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
@@ -85,15 +86,15 @@ router = APIRouter(
         },
     },
 )
-async def stt_llm_response(
-    generate_tts: bool = Form(...),
+async def voice_search(
+    generate_tts: bool = Form(False),
     file: UploadFile = File(...),
-    exclude_archived: bool = Form(True),
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
-) -> QueryResponse | JSONResponse:
+) -> AudioResponse | QueryResponse | JSONResponse:
     """
-    Endpoint to transcribe audio from the provided file and generate an LLM response.
+    Endpoint to transcribe audio from the provided file and generate
+    an LLM response along with an optional TTS file.
     """
     file_stream = BytesIO(await file.read())
 
@@ -118,7 +119,6 @@ async def stt_llm_response(
         query_metadata={},
         generate_tts=generate_tts,
     )
-
     (
         user_query_db,
         user_query_refined_template,
@@ -127,6 +127,7 @@ async def stt_llm_response(
         user_id=user_db.user_id,
         user_query=user_query,
         asession=asession,
+        generate_tts=generate_tts,
     )
 
     response = await search_base(
@@ -135,7 +136,7 @@ async def stt_llm_response(
         user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
-        exclude_archived=exclude_archived,
+        exclude_archived=True,
     )
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -155,7 +156,9 @@ async def stt_llm_response(
         os.remove(file_path)
         file_stream.close()
 
-    if type(response) is QueryResponse:
+    if type(response) is AudioResponse:
+        return response
+    elif type(response) is QueryResponse:
         return response
     elif type(response) is QueryResponseError:
         return JSONResponse(
@@ -312,7 +315,10 @@ async def search_base(
 
 
 async def get_user_query_and_response(
-    user_id: int, user_query: QueryBase, asession: AsyncSession
+    user_id: int,
+    user_query: QueryBase,
+    asession: AsyncSession,
+    generate_tts: Optional[bool] = False,
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
     and response objects to pass on.
@@ -343,6 +349,7 @@ async def get_user_query_and_response(
     user_query_refined = QueryRefined(
         **user_query.model_dump(),
         user_id=user_id,
+        generate_tts=generate_tts,
         query_text_original=user_query.query_text,
     )
     # prepare placeholder response object
@@ -351,7 +358,6 @@ async def get_user_query_and_response(
         session_id=user_query.session_id,
         feedback_secret_key=user_query_db.feedback_secret_key,
         llm_response=None,
-        tts_file=None,
         search_results=None,
         debug_info={},
     )
