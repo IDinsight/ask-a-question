@@ -10,13 +10,13 @@ services:
       context: ../../optional_components/speech_api
       dockerfile: Dockerfile
       args:
-        PREFERRED_MODEL: ${PREFERRED_MODEL}
+        PREFERRED_MODEL: "small"
     image: idinsight/speech-service:latest
     restart: always
     ports:
       - "8001:8001"
     env_file:
-      - .env
+      - .core_backend.env
     develop:
       watch:
         - action: rebuild
