@@ -1,4 +1,36 @@
 "use client";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import React, { MouseEvent, useState } from "react";
+
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  ButtonGroup,
+  CircularProgress,
+  Fab,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
+  Paper,
+  Snackbar,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+
+import AddIcon from "@mui/icons-material/Add";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import CloseIcon from "@mui/icons-material/Close";
+import DownloadIcon from "@mui/icons-material/Download";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SendIcon from "@mui/icons-material/Send";
+
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
 import { DownloadModal } from "@/components/DownloadModal";
@@ -6,26 +38,6 @@ import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { Add } from "@mui/icons-material";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import DownloadIcon from "@mui/icons-material/Download";
-import {
-  Alert,
-  Autocomplete,
-  Button,
-  ButtonGroup,
-  CircularProgress,
-  Grid,
-  Menu,
-  MenuItem,
-  Snackbar,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import React, { MouseEvent, useState } from "react";
 import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
@@ -52,6 +64,15 @@ const CardsPage = () => {
     color: "success" | "info" | "warning" | "error" | undefined;
   }>({ message: null, color: undefined });
 
+  const [openSidebar, setOpenSideBar] = useState(false);
+  const handleSidebarToggle = () => {
+    setOpenSideBar(!openSidebar);
+  };
+  const handleSidebarClose = () => {
+    setOpenSideBar(false);
+  };
+  const sidebarGridSize = openSidebar ? 5 : 0;
+
   React.useEffect(() => {
     if (token) {
       const fetchTags = async () => {
@@ -72,57 +93,106 @@ const CardsPage = () => {
 
   return (
     <>
-      <Layout.FlexBox alignItems="center" gap={sizes.baseGap} paddingTop={8}>
-        <Layout.FlexBox
-          gap={sizes.smallGap}
+      <Grid container>
+        <Grid
+          item
+          xs={12}
+          sm={12}
+          md={12 - sidebarGridSize}
           sx={{
-            width: "70%",
-            maxWidth: "500px",
-            minWidth: "200px",
+            display: openSidebar
+              ? { xs: "none", sm: "none", md: "block" }
+              : "block",
           }}
         >
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           <Layout.FlexBox
+            flexGrow={1}
             alignItems="center"
-            sx={{ flexDirection: "row", justifyContent: "center" }}
-            gap={sizes.smallGap}
+            gap={sizes.baseGap}
+            paddingTop={8}
           >
-            <Autocomplete
-              multiple
-              limitTags={3}
-              id="tags-autocomplete"
-              options={tags}
-              getOptionLabel={(option) => option.tag_name}
-              noOptionsText="No tags found"
-              value={filterTags}
-              onChange={(event, updatedTags) => {
-                setFilterTags(updatedTags);
+            <Layout.FlexBox
+              gap={sizes.smallGap}
+              sx={{
+                width: "70%",
+                maxWidth: "500px",
+                minWidth: "200px",
               }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="standard"
-                  label="Filter by tags"
+            >
+              <SearchBar
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+              />
+              <Layout.FlexBox
+                alignItems="center"
+                sx={{ flexDirection: "row", justifyContent: "center" }}
+                gap={sizes.smallGap}
+              >
+                <Autocomplete
+                  multiple
+                  limitTags={3}
+                  id="tags-autocomplete"
+                  options={tags}
+                  getOptionLabel={(option) => option.tag_name}
+                  noOptionsText="No tags found"
+                  value={filterTags}
+                  onChange={(event, updatedTags) => {
+                    setFilterTags(updatedTags);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="standard"
+                      label="Filter by tags"
+                    />
+                  )}
+                  sx={{ width: "80%", color: appColors.white }}
                 />
-              )}
-              sx={{ width: "80%", color: appColors.white }}
+              </Layout.FlexBox>
+            </Layout.FlexBox>
+            <CardsUtilityStrip
+              editAccess={currAccessLevel === "fullaccess"}
+              setSnackMessage={setSnackMessage}
+            />
+            <CardsGrid
+              displayLanguage={displayLanguage}
+              searchTerm={searchTerm}
+              tags={tags}
+              filterTags={filterTags}
+              token={token}
+              accessLevel={currAccessLevel}
+              setSnackMessage={setSnackMessage}
             />
           </Layout.FlexBox>
-        </Layout.FlexBox>
-        <CardsUtilityStrip
-          editAccess={currAccessLevel === "fullaccess"}
-          setSnackMessage={setSnackMessage}
-        />
-        <CardsGrid
-          displayLanguage={displayLanguage}
-          searchTerm={searchTerm}
-          tags={tags}
-          filterTags={filterTags}
-          token={token}
-          accessLevel={currAccessLevel}
-          setSnackMessage={setSnackMessage}
-        />
-      </Layout.FlexBox>
+          <div style={{ position: "relative" }}>
+            <Fab
+              variant="extended"
+              sx={{
+                bgcolor: "orange",
+                position: "absolute",
+                bottom: 16,
+                right: 16,
+              }}
+              onClick={handleSidebarToggle}
+            >
+              {openSidebar ? <CloseIcon /> : <PlayArrowIcon />}
+              <Layout.Spacer horizontal multiplier={0.25} />
+              Test
+            </Fab>
+          </div>
+        </Grid>
+        <Grid
+          item
+          xs={openSidebar ? 12 : 0}
+          sm={openSidebar ? 12 : 0}
+          md={sidebarGridSize}
+          sx={{
+            display: openSidebar ? "block" : "none",
+          }}
+        >
+          <TestQuestionAnswering onClose={handleSidebarClose} />
+        </Grid>
+      </Grid>
       <Snackbar
         open={snackMessage.message !== null}
         autoHideDuration={6000}
@@ -142,6 +212,79 @@ const CardsPage = () => {
         </Alert>
       </Snackbar>
     </>
+  );
+};
+
+const TestQuestionAnswering = ({ onClose }: { onClose: () => void }) => {
+  const [question, setQuestion] = useState("");
+  const [generateAIResponse, setGenerateAIResponse] = useState(false);
+  const [response, setResponse] = useState("");
+
+  const handleQuestionChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setQuestion(event.target.value);
+  };
+
+  const handleGenerateAIResponseChange = () => {
+    setGenerateAIResponse((prev) => !prev);
+  };
+
+  const handleSendClick = () => {
+    setResponse("Headache during pregnancy is normal ..."); // Placeholder response
+  };
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{ padding: 2, height: "98%", minHeight: "950px", margin: 2 }}
+    >
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        marginBottom={2}
+      >
+        <Typography variant="h6">Test Question Answering</Typography>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <TextField
+        label="Test question"
+        variant="outlined"
+        fullWidth
+        value={question}
+        onChange={handleQuestionChange}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end" sx={{ paddingRight: 2 }}>
+              <IconButton onClick={handleSendClick} edge="end">
+                <SendIcon />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+      <Box
+        display="flex"
+        alignItems="center"
+        marginTop={2}
+        padding={1}
+        alignContent={"flex-end"}
+      >
+        <Switch
+          checked={generateAIResponse}
+          onChange={handleGenerateAIResponseChange}
+        />
+        <Typography>Generate AI Response</Typography>
+      </Box>
+      {response && (
+        <Box marginTop={2}>
+          <Typography>{response}</Typography>
+        </Box>
+      )}
+    </Paper>
   );
 };
 
@@ -231,7 +374,7 @@ function AddButtonWithDropdown() {
           disabled={!editAccess}
           component={Link}
           href="/content/edit"
-          startIcon={<Add />}
+          startIcon={<AddIcon />}
         >
           New
         </Button>
@@ -402,16 +545,13 @@ const CardsGrid = ({
   }
   return (
     <>
-      <Layout.FlexBox
-        bgcolor="#fcfcfc"
+      <Paper
+        elevation={2}
         sx={{
           mx: sizes.baseGap,
           py: sizes.tinyGap,
           width: "98%",
           minHeight: "660px",
-          border: 1,
-          borderColor: appColors.lightGrey,
-          borderRadius: 2,
         }}
       >
         <Grid container>
@@ -422,8 +562,8 @@ const CardsGrid = ({
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "50vh",
                 width: "100%",
+                padding: sizes.doubleBaseGap,
               }}
             >
               <p>
@@ -484,7 +624,7 @@ const CardsGrid = ({
               })
           )}
         </Grid>
-      </Layout.FlexBox>
+      </Paper>
       <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
       <Layout.Spacer multiplier={1} />
     </>
