@@ -164,22 +164,23 @@ const CardsPage = () => {
               setSnackMessage={setSnackMessage}
             />
           </Layout.FlexBox>
-          <div style={{ position: "relative" }}>
-            <Fab
-              variant="extended"
-              sx={{
-                bgcolor: "orange",
-                position: "absolute",
-                bottom: 16,
-                right: 16,
-              }}
-              onClick={handleSidebarToggle}
-            >
-              {openSidebar ? <CloseIcon /> : <PlayArrowIcon />}
-              <Layout.Spacer horizontal multiplier={0.25} />
-              Test
-            </Fab>
-          </div>
+          {!openSidebar && (
+            <div style={{ position: "relative" }}>
+              <Fab
+                variant="extended"
+                sx={{
+                  bgcolor: "orange",
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                }}
+                onClick={handleSidebarToggle}
+              >
+                <PlayArrowIcon sx={{ marginRight: 0.5 }} />
+                Test
+              </Fab>
+            </div>
+          )}
         </Grid>
         <Grid
           item
@@ -237,7 +238,11 @@ const TestQuestionAnswering = ({ onClose }: { onClose: () => void }) => {
   return (
     <Paper
       elevation={2}
-      sx={{ padding: 2, height: "98%", minHeight: "950px", margin: 2 }}
+      sx={{
+        padding: 3,
+        paddingTop: 4,
+        height: "95vh",
+      }}
     >
       <Box
         display="flex"
@@ -522,7 +527,7 @@ const CardsGrid = ({
             mx: sizes.baseGap,
             py: sizes.tinyGap,
             width: "98%",
-            minHeight: "660px",
+            height: "60vh",
           }}
         >
           <div
@@ -531,8 +536,8 @@ const CardsGrid = ({
               flexDirection: "row",
               justifyContent: "center",
               alignItems: "center",
-              height: "50vh",
               width: "100%",
+              height: "60vh",
             }}
           >
             <CircularProgress />
@@ -551,7 +556,7 @@ const CardsGrid = ({
           mx: sizes.baseGap,
           py: sizes.tinyGap,
           width: "98%",
-          minHeight: "660px",
+          height: "60vh",
         }}
       >
         <Grid container>
