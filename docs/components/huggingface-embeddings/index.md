@@ -20,6 +20,6 @@ some heavy. Please carefully choose the model that will fit your use case best.
 
   ***
 
-  Deploying the custom embeddings model and Configuring AAQ to use custom embeddings.
+  Deploying the custom huggingface embeddings model and Configuring AAQ to use huggingface embeddings.
 
   [:octicons-arrow-right-24: More info](./deployment.md)

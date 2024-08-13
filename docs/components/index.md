@@ -58,13 +58,13 @@ There are 3 main components in Ask-A-Question.
 
   [:octicons-arrow-right-24: More info](./align-score/index.md)
 
-- :material-format-align-middle:{ .lg .middle } **Custom embeddings Model**
+- :material-format-align-middle:{ .lg .middle } **Huggingface embeddings Model**
 
   ***
 
-  _(Optional)_ Use a custom dockerised huggingface embeddings model create vectors
+  _(Optional)_ A dockerised huggingface text embeddings model to create vectors
   and perform embeddings search.
 
-  [:octicons-arrow-right-24: More info](./custom-embeddings/index.md)
+  [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)
 
 </div>
