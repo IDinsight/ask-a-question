@@ -12,7 +12,7 @@ pyjwt[crypto]==2.8.0
 prometheus_client==0.19.0
 google-api-python-client==2.129.0
 google-api-python-client-stubs==1.25.0
-langfuse==2.27.3
+langfuse==2.42.1
 pandas==2.2.2
 pandas-stubs==2.2.2.240603
 types-openpyxl==3.1.4.20240621

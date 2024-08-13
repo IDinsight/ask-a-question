@@ -7,7 +7,6 @@ from typing import Any, Callable, Optional, Tuple
 
 from ..config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
-    LITELLM_MODEL_ON_OFF_TOPIC,
     LITELLM_MODEL_PARAPHRASE,
     LITELLM_MODEL_SAFETY,
     LITELLM_MODEL_TRANSLATE,
@@ -25,7 +24,6 @@ from .llm_prompts import (
     TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_PROMPT,
     IdentifiedLanguage,
-    OnOffTopicClassification,
     SafetyClassification,
 )
 from .utils import _ask_llm_async
@@ -297,80 +295,6 @@ async def _classify_safety(
             )
         )
         return query_refined, error_response
-
-
-def classify_on_off_topic__before(func: Callable) -> Callable:
-    """
-    Decorator to check if the question is on-topic or off-topic.
-    """
-
-    @wraps(func)
-    async def wrapper(
-        query_refined: QueryRefined,
-        response: QueryResponse | QueryResponseError,
-        *args: Any,
-        **kwargs: Any,
-    ) -> QueryResponse | QueryResponseError:
-        """
-        Wrapper function to check if the question is on-topic or off-topic.
-        """
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=query_refined.user_id
-        )
-
-        query_refined, response = await _classify_on_off_topic(
-            query_refined, response, metadata=metadata
-        )
-        response = await func(query_refined, response, *args, **kwargs)
-        return response
-
-    return wrapper
-
-
-async def _classify_on_off_topic(
-    user_query: QueryRefined,
-    response: QueryResponse | QueryResponseError,
-    metadata: Optional[dict] = None,
-) -> Tuple[QueryRefined, QueryResponse | QueryResponseError]:
-    """
-    Checks if the user query is on-topic or off-topic.
-    """
-    if isinstance(response, QueryResponseError):
-        return user_query, response
-
-    label = await _ask_llm_async(
-        user_message=user_query.query_text,
-        system_message=OnOffTopicClassification.get_prompt(),
-        litellm_model=LITELLM_MODEL_ON_OFF_TOPIC,
-        metadata=metadata,
-    )
-    label_cleaned = label.replace(" ", "_").upper()
-    on_off_topic_label = getattr(
-        OnOffTopicClassification, label_cleaned, OnOffTopicClassification.UNKNOWN
-    )
-
-    response.debug_info["on_off_topic"] = on_off_topic_label.value
-
-    if on_off_topic_label == OnOffTopicClassification.OFF_TOPIC:
-        error_response = QueryResponseError(
-            query_id=response.query_id,
-            feedback_secret_key=response.feedback_secret_key,
-            llm_response=response.llm_response,
-            tts_file=response.tts_file,
-            search_results=response.search_results,
-            debug_info=response.debug_info,
-            error_message="Off-topic query",
-            error_type=ErrorType.OFF_TOPIC,
-        )
-        error_response.debug_info.update(response.debug_info)
-        error_response.debug_info["query_text"] = user_query.query_text
-        logger.info(
-            f"OFF-TOPIC query found on query id: {response.query_id} "
-            f"for query text {user_query.query_text}"
-        )
-        return user_query, error_response
-
-    return user_query, response
 
 
 def paraphrase_question__before(func: Callable) -> Callable:

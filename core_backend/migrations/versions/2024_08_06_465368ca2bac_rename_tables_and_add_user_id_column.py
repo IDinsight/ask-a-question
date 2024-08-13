@@ -1,7 +1,7 @@
 """Rename tables and add user_id column
 
 Revision ID: 465368ca2bac
-Revises: 7192d62a0b83
+Revises: b87b336df479
 Create Date: 2024-08-01 20:36:52.629572
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "465368ca2bac"  # pragma: allowlist secret
-down_revision: Union[str, None] = "7192d62a0b83"
+down_revision: Union[str, None] = "b87b336df479"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
