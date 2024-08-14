@@ -34,8 +34,8 @@ from app.question_answer.models import (
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 
 # admin user (first user is admin)
-USER1_USERNAME = os.environ.get("USER1_USERNAME", "admin")
-USER1_PASSWORD = os.environ.get("USER1_PASSWORD", "fullaccess")
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "fullaccess")
 _USER_ID = 1
 
 N_DATAPOINTS = 100

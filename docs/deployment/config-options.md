@@ -1,45 +1,120 @@
 # Configuring AAQ
 
-There are compulsory configs you must set like secrets and API keys. These are all set
-in the .env files as shown in Steps 3 and 4 in [Quick Setup](./quick-setup.md).
+There are several aspects of AAQ you can configure:
 
-## Other parameters
+1. **Application configs through environment variables**
 
-In addition to these, you can modify a bunch of other parameters by either:
+    All required and optional environment variables are defined in
+    `deployment/docker-compose/template.*.env` files. **You will need to copy the
+    templates into `.*.env` files.**
 
-- Setting environment variables in the `.env` file; or
-- Updating the config directly in [`core_backend/app/config.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/config.py).
+    ```shell
+    cp template.base.env .base.env
+    cp template.core_backend.env .core_backend.env
+    cp template.litellm_proxy.env .litellm_proxy.env
+    ```
 
-For example, you set a different LLM to be used for each guardrail step.
+    To get a [local setup running with docker
+    compose](./quick-setup.md), you won't need to change any values except for
+    [LLM credentials in
+    `.litellm_proxy.env`](#authenticating-litellm-proxy-server-to-llms).
+
+    See the rest of
+    this page for more information on the environment variables.
+
+
+2. **LLM models in
+   [`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml)**
+
+    This defines which LLM to use for which task. You may want to change the LLMs and
+    specific calling parameters based on your needs.
+
+3. **LLM prompts in
+   [`llm_prompts.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/llm_call/llm_prompts.py)**
+
+    While all prompts have been carefully selected to perform each task well, you can
+    customize them to your need here.
+
+<a name="template-env-guide"></a>
+!!! note "Understanding the template environment files `template.*.env`"
+
+    For local testing and development, the values shoud work as is, except for LLM API credentials in `.litellm_proxy.env`
+
+    For production, make sure you confirm or update the ones marked "change for production" at the least.
+
+    1. Secrets have been marked with 🔒.
+    2. All optional values have been commented out. Uncomment to customize for your own case.
+
+## AAQ-wide configurations
+
+The base environment variables are shared by `caddy` (reverse proxy), `core_backend`,
+and `admin_app` during run time.
+
+If not done already, copy the template environment file to `.base.env`
+
+```shell
+cd deployment/docker-compose/
+cp template.base.env .base.env
+```
+
+Then, edit the environment variables according to your need ([guide](#template-env-guide) on updating the template):
+
+```shell title="<code>deployment/docker-compose/template.base.env</code>"
+--8<-- "deployment/docker-compose/template.base.env"
+```
+
+## Configuring the backend (`core_backend`)
+
+### Environment variables for the backend
+
+If not done already, copy the template environment file to `.core_backend.env` ([guide](#template-env-guide) on updating the template):
+
+```shell
+cd deployment/docker-compose/
+cp template.core_backend.env .core_backend.env
+```
+
+The `core_backend` uses the following required and optional (commented out) environment variables.
+
+```shell title="<code>deployment/docker-compose/template.core_backend.env</code>"
+--8<-- "deployment/docker-compose/template.core_backend.env"
+```
+
+### Other configurations for the backend
+
+You can view all configurations that `core_backend` uses in
+`core_backend/app/*/config.py`
+files -- for example, [`core_backend/app/config.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/config.py).
 
 ??? Note "Environment variables take precedence over the config file."
     You'll see in the config files that we get parameters from the environment and if
     not found, we fall back on defaults provided. So any environment variables set
     will override any defaults you have set in the config file.
 
-### Application parameters
+## Configuring LiteLLM Proxy Server (`litellm_proxy`)
 
-You can find parameters than control the behaviour of the app at [`core_backend/app/config.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/config.py)
+### LiteLLM Proxy Server configurations
 
-For a number of optional components like offline models, you will need to update the parameters in this file.
+You can edit the default [LiteLLM Proxy Server](../components/litellm-proxy/index.md)
+settings by updating
+[`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml).
+Learn more about the server configuration in [LiteLLM Proxy Server](../components/litellm-proxy/index.md).
 
-See instructions for setting these in the documentation for the specific optional component.
+### Authenticating LiteLLM Proxy Server to LLMs
 
-### Updating LLM prompts
+The `litellm_proxy` server uses the following required and optional (commented out) environment
+variables for authenticating to external LLM APIs ([guide](#template-env-guide) on updating the template).
 
-You may wish to customize the prompts for your specific context. These are all found
-in [`core_backend/app/llm_call/llm_prompts.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/llm_call/llm_prompts.py)
+You will need to set up
+the correct credentials (API keys, etc.) for all LLM APIs declared in
+[`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml). See [LiteLLM's documentation](https://docs.litellm.ai/docs/) for more information about
+authentication for different LLMs.
 
-### Tracing with Langfuse
-
-To connect your AAQ to [Langfuse](https://langfuse.com/docs), `core_backend` container
-needs the following environment variables set:
-
-```shell
-LANGFUSE=True # by default, False
-LANGFUSE_PUBLIC_KEY=pk-...
-LANGFUSE_SECRET_KEY=sk-...
-LANGFUSE_HOST=https://cloud.langfuse.com # optional based on your Langfuse host
+```shell title="<code>deployment/docker-compose/template.litellm_proxy.env</code>"
+--8<-- "deployment/docker-compose/template.litellm_proxy.env"
 ```
 
-Also see [LiteLLM's Langfuse Integration docs](https://docs.litellm.ai/docs/observability/langfuse_integration).
+## Configuring optional components
+
+See instructions for setting these in the documentation for the specific optional
+component at [Optional components](../components/index.md#internal-components).

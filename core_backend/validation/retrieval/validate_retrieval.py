@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from litellm import embedding
 from sqlalchemy.orm import Session
 
-from core_backend.add_users_to_db import USER1_API_KEY  # temp
+from core_backend.add_users_to_db import ADMIN_API_KEY  # temp
 from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -181,7 +181,7 @@ class TestRetrievalPerformance:
         request_json = QueryBase(
             query_text=query_text, generate_llm_response=False
         ).model_dump()
-        headers = {"Authorization": f"Bearer {USER1_API_KEY}"}
+        headers = {"Authorization": f"Bearer {ADMIN_API_KEY}"}
         response = client.post("/search", json=request_json, headers=headers)
 
         if response.status_code != 200:
