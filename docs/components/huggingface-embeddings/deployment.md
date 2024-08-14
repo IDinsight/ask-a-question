@@ -2,7 +2,7 @@
 
 To host huggingface embeddings we are using the
 [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference)
-by huggingface
+by Hugging Face.
 
 ## How to deploy
 
