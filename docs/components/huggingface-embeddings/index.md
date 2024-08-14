@@ -9,19 +9,18 @@ to generate text vectors. But we give the option of deploying and hosting custom
 
 **Note**
 
-Huggingface has an extensive list of embeddings models, some lightweight and
+Hugging Face has an extensive list of embeddings models, some lightweight and
 some heavy. Please carefully choose the model that will fit your use case best.
 
 ---
 
-
 <div class="grid cards" markdown>
 
--   :octicons-gear-16:{ .lg .middle } __Deployment__
+- :octicons-gear-16:{ .lg .middle .red} __How to use__
 
     ---
 
     Deploying the custom Hugging Face embeddings model and
     configuring AAQ to use Hugging Face embeddings.
 
-    [:octicons-arrow-right-24: More info](./deployment.md)
+    [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)

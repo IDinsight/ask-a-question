@@ -59,7 +59,7 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./align-score/index.md)
 
-- :material-api:{ .lg .middle .red} __Huggingface embeddings Model__
+- :material-api:{ .lg .middle .red} __Hugging Face embeddings Model__
 
     ---
 

@@ -53,7 +53,7 @@ nav:
               - Testing: components/align-score/testing.md
           - HuggingFace embeddings:
               - components/huggingface-embeddings/index.md
-              - Deployment: components/huggingface-embeddings/deployment.md
+              - How to use: components/huggingface-embeddings/how-to-use.md
 
   - Integrations:
       - integrations/index.md
