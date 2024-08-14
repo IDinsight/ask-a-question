@@ -3,14 +3,14 @@ name: Alembic Migration Check
 on:
   pull_request:
     branches:
-      - tonyzhao6-gha-workflow-for-alembic-migration
+      - main
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
 
   push:
     branches:
-      - tonyzhao6-gha-workflow-for-alembic-migration
+      - main
     paths:
       - "core_backend/migrations/versions/**.py"
       - ".github/workflows/alembic-migrations.yaml"
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: tonyzhao6-gha-workflow-for-alembic-migration
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v4
