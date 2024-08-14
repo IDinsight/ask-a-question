@@ -51,6 +51,9 @@ nav:
               - components/align-score/index.md
               - Deployment: components/align-score/deployment.md
               - Testing: components/align-score/testing.md
+          - HuggingFace embeddings:
+              - components/huggingface-embeddings/index.md
+              - How to use: components/huggingface-embeddings/how-to-use.md
 
   - Integrations:
       - integrations/index.md

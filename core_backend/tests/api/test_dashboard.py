@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
+from core_backend.app.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.dashboard.models import (
     get_content_feedback_stats,

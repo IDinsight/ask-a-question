@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..contents.config import PGVECTOR_VECTOR_SIZE
+from ..config import PGVECTOR_VECTOR_SIZE
 from ..models import Base, JSONDict
 from ..utils import embedding
 from .schemas import UrgencyRuleCosineDistance, UrgencyRuleCreate
