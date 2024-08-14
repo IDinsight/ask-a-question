@@ -66,7 +66,7 @@ The embeddings api endpoint by default is at: http://localhost:8080.
 
 ---
 
-## Use huggingface embeddings
+## Use Hugging Face embeddings with LiteLLM Proxy
 
 To use huggingface embeddings instead of OpenAI embeddings, you can replace OpenAI
 embeddings in `litellm_proxy_config.yaml`.
