@@ -1,4 +1,6 @@
-# Get more control of your data with Custom Embeddings
+# Hugging Face Embeddings
+
+_Get more control of your data by using open-source embeddings from Hugging Face_
 
 By default, AAQ uses
 [OpenAI text embeddings](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings)
@@ -23,4 +25,4 @@ some heavy. Please carefully choose the model that will fit your use case best.
     Deploying the custom Hugging Face embeddings model and
     configuring AAQ to use Hugging Face embeddings.
 
-    [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)
+    [:octicons-arrow-right-24: More info](./how-to-use.md)
