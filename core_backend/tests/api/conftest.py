@@ -18,8 +18,8 @@ from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
+    PGVECTOR_VECTOR_SIZE,
 )
-from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
     SYNC_DB_API,
