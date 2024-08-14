@@ -131,6 +131,7 @@ def create_data(dt: datetime) -> None:
             is_negative=content_feedback_is_negative,
             session=session,
         )
+        create_content_for_query(dt=dt, query_id=query_id, session=session)
     session.close()
 
 
