@@ -4,7 +4,7 @@ endpoints.
 
 import os
 from io import BytesIO
-from typing import Optional, Tuple
+from typing import Tuple
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -215,6 +215,7 @@ async def search(
         user_id=user_db.user_id,
         user_query=user_query,
         asession=asession,
+        generate_tts=False,
     )
     response = await search_base(
         query_refined=user_query_refined_template,
@@ -319,7 +320,7 @@ async def get_user_query_and_response(
     user_id: int,
     user_query: QueryBase,
     asession: AsyncSession,
-    generate_tts: Optional[bool] = False,
+    generate_tts: bool,
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
     and response objects to pass on.
