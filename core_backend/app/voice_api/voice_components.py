@@ -12,13 +12,17 @@ logger = setup_logger("Voice API")
 
 async def generate_speech(
     text: str,
-    language: IdentifiedLanguage,
+    language: IdentifiedLanguage | None,
     destination_blob_name: str = "response.mp3",
 ) -> str:
     """
     Converts the provided text to speech and saves it as an mp3 file on
     Google cloud storage
     """
+    if language is None:
+        error_msg = "Language must be provided to generate speech."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     try:
         lang = get_gtts_lang_code(language)

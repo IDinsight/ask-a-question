@@ -15,6 +15,7 @@ from ..config import (
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
+    AudioResponse,
     ErrorType,
     QueryRefined,
     QueryResponse,
@@ -103,42 +104,16 @@ async def _generate_llm_response(
         original_language=query_refined.original_language,
         metadata=metadata,
     )
-    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = rag_response.answer
-
-        if query_refined.generate_tts:
-            try:
-                tts_file_path = await generate_speech(
-                    text=rag_response.answer,
-                    language=query_refined.original_language,
-                    destination_blob_name=blob_name,
-                )
-                response.tts_file = tts_file_path
-            except ValueError as e:
-                logger.error(
-                    f"Error generating TTS for query_id {response.query_id}: {e}"
-                )
-
-                response = QueryResponseError(
-                    query_id=response.query_id,
-                    feedback_secret_key=response.feedback_secret_key,
-                    llm_response=response.llm_response,
-                    tts_file=response.tts_file,
-                    search_results=response.search_results,
-                    error_message="There was an issue generating the speech response.",
-                    error_type=ErrorType.TTS_ERROR,
-                    debug_info=response.debug_info,
-                )
 
     else:
         response = QueryResponseError(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
@@ -244,7 +219,6 @@ async def _check_align_score(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_type=ErrorType.ALIGNMENT_TOO_LOW,
@@ -305,10 +279,88 @@ async def _get_llm_align_score(
     return alignment_score
 
 
-# def generate_tts_after(func: Callable) -> Callable:
-#     """
-#     Decorator to generate the TTS response.
+def generate_tts__after(func: Callable) -> Callable:
+    """
+    Decorator to generate the TTS response.
 
-#     Only runs if the generate_tts flag is set to True.
-#     Requires "llm_response" and "align score" in the response.
-#     """
+    Only runs if the generate_tts flag is set to True.
+    Requires "llm_response" and alignment score is present in the response.
+    """
+
+    @wraps(func)
+    async def wrapper(
+        query_refined: QueryRefined,
+        response: AudioResponse | QueryResponseError,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AudioResponse | QueryResponseError:
+        """
+        Wrapper function to check conditions before generating TTS.
+        """
+
+        response = await func(query_refined, response, *args, **kwargs)
+
+        if not query_refined.generate_tts:
+            return response
+
+        response = await _generate_tts_response(
+            query_refined,
+            response,
+        )
+
+        return response
+
+    return wrapper
+
+
+async def _generate_tts_response(
+    query_refined: QueryRefined,
+    response: AudioResponse,
+) -> AudioResponse | QueryResponseError:
+    """
+    Generate the TTS response.
+
+    Requires valid `llm_response` and alignment score in the response.
+    """
+
+    if isinstance(response, QueryResponseError):
+        logger.warning("TTS generation skipped due to QueryResponseError.")
+        return response
+
+    if response.llm_response is None:
+        logger.warning("TTS generation skipped due to missing LLM response.")
+        return response
+
+    if "factual_consistency" not in response.debug_info:
+        logger.warning(
+            """TTS generation skipped due to missing factual consistency data
+            in debug info."""
+        )
+        return response
+
+    if response.debug_info["factual_consistency"].get("score") is None:
+        logger.warning("TTS generation skipped due to missing alignment score.")
+        return response
+
+    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
+    try:
+        tts_file_path = await generate_speech(
+            text=response.llm_response,
+            language=query_refined.original_language,
+            destination_blob_name=blob_name,
+        )
+        response.tts_file = tts_file_path
+    except ValueError as e:
+        logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
+        return QueryResponseError(
+            query_id=response.query_id,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            tts_file=response.tts_file,
+            search_results=response.search_results,
+            error_message="There was an issue generating the speech response.",
+            error_type=ErrorType.TTS_ERROR,
+            debug_info=response.debug_info,
+        )
+
+    return response

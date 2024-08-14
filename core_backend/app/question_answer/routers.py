@@ -28,6 +28,7 @@ from ..llm_call.process_input import (
 from ..llm_call.process_output import (
     check_align_score__after,
     generate_llm_response__after,
+    generate_tts__after,
 )
 from ..users.models import UserDB
 from ..utils import (
@@ -74,7 +75,7 @@ router = APIRouter(
 
 @router.post(
     "/voice-search",
-    response_model=QueryResponse | AudioResponse,
+    response_model=AudioResponse | QueryResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
@@ -117,7 +118,6 @@ async def voice_search(
         generate_llm_response=True,
         query_text=transcription_result["text"],
         query_metadata={},
-        generate_tts=generate_tts,
     )
     (
         user_query_db,
@@ -258,6 +258,7 @@ async def search(
 @paraphrase_question__before
 @generate_llm_response__after
 @check_align_score__after
+@generate_tts__after
 async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,
