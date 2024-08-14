@@ -53,7 +53,7 @@ then:
 make setup-embeddings-arm
 ```
 
-??? info "Before running the commands above, you need to make sure to export the environment variables"
+!!! warning "Before running the commands above, you must export environment variables `HUGGINGFACE_MODEL` and `HUGGINGFACE_EMBEDDINGS_API_KEY`."
 
     This can be done using:
 
