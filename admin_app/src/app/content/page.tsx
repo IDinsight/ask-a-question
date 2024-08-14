@@ -164,23 +164,22 @@ const CardsPage = () => {
               setSnackMessage={setSnackMessage}
             />
           </Layout.FlexBox>
-          {!openSidebar && (
-            <div style={{ position: "relative" }}>
-              <Fab
-                variant="extended"
-                sx={{
-                  bgcolor: "orange",
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
-                }}
-                onClick={handleSidebarToggle}
-              >
-                <PlayArrowIcon sx={{ marginRight: 0.5 }} />
-                Test
-              </Fab>
-            </div>
-          )}
+          <div style={{ position: "relative" }}>
+            <Fab
+              variant="extended"
+              sx={{
+                bgcolor: "orange",
+                position: "absolute",
+                bottom: 16,
+                right: 16,
+              }}
+              onClick={handleSidebarToggle}
+            >
+              {openSidebar ? <CloseIcon /> : <PlayArrowIcon />}
+              <Layout.Spacer horizontal multiplier={0.3} />
+              Test
+            </Fab>
+          </div>
         </Grid>
         <Grid
           item
@@ -191,7 +190,7 @@ const CardsPage = () => {
             display: openSidebar ? "block" : "none",
           }}
         >
-          <TestQuestionAnswering onClose={handleSidebarClose} />
+          <QuestionAnsweringSidebar onClose={handleSidebarClose} />
         </Grid>
       </Grid>
       <Snackbar
@@ -216,7 +215,7 @@ const CardsPage = () => {
   );
 };
 
-const TestQuestionAnswering = ({ onClose }: { onClose: () => void }) => {
+const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
   const [question, setQuestion] = useState("");
   const [generateAIResponse, setGenerateAIResponse] = useState(false);
   const [response, setResponse] = useState("");
