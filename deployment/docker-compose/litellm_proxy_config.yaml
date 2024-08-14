@@ -5,7 +5,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   # - model_name: embeddings
   #   litellm_params:
-  #     model: huggingface/custom_embeddings # model name not important
+  #     model: huggingface/huggingface-embeddings # model name not important
   #     api_key: "os.environ/HUGGINGFACE_EMBEDDINGS_API_KEY" #pragma: allowlist secret
   #     api_base: "os.environ/HUGGINGFACE_EMBEDDINGS_ENDPOINT"
   - model_name: default
