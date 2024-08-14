@@ -245,7 +245,7 @@ async def save_query_response_to_db(
             session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
-            tts_file=response.model_dump()["tts_file"],
+            tts_file=None,
             response_datetime_utc=datetime.now(timezone.utc),
             debug_info=response.model_dump()["debug_info"],
             is_error=True,

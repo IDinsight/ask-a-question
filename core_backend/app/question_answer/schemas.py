@@ -107,7 +107,6 @@ class QueryResponseError(QueryResponse):
 
     error_type: ErrorType = Field(..., examples=["example_error"])
     error_message: Optional[str] = Field(None, examples=["Example error message"])
-    tts_file: str | None = Field(None, examples=["response.mp3"])
 
     model_config = ConfigDict(from_attributes=True)
 

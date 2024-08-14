@@ -156,11 +156,11 @@ async def voice_search(
         os.remove(file_path)
         file_stream.close()
 
-    if type(response) is AudioResponse:
+    if isinstance(response, AudioResponse):
         return response
-    elif type(response) is QueryResponse:
+    elif isinstance(response, QueryResponse):
         return response
-    elif type(response) is QueryResponseError:
+    elif isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
@@ -256,9 +256,9 @@ async def search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
+@generate_tts__after
 @generate_llm_response__after
 @check_align_score__after
-@generate_tts__after
 async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,

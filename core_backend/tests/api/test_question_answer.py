@@ -585,6 +585,8 @@ class TestSTTResponse:
         if expected_status_code == 200:
             json_response = response.json()
             assert "llm_response" in json_response
+            if generate_tts:
+                assert "tts_file" in json_response
         elif expected_status_code == 500:
             json_response = response.json()
             assert "detail" in json_response

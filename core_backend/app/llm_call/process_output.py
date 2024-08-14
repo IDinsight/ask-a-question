@@ -303,6 +303,19 @@ def generate_tts__after(func: Callable) -> Callable:
         if not query_refined.generate_tts:
             return response
 
+        if not isinstance(response, AudioResponse):
+            logger.warning(
+                f"Converting response of type {type(response)} to AudioResponse."
+            )
+            response = AudioResponse(
+                query_id=response.query_id,
+                feedback_secret_key=response.feedback_secret_key,
+                llm_response=response.llm_response,
+                search_results=response.search_results,
+                debug_info=response.debug_info,
+                tts_file=None,
+            )
+
         response = await _generate_tts_response(
             query_refined,
             response,
@@ -331,17 +344,6 @@ async def _generate_tts_response(
         logger.warning("TTS generation skipped due to missing LLM response.")
         return response
 
-    if "factual_consistency" not in response.debug_info:
-        logger.warning(
-            """TTS generation skipped due to missing factual consistency data
-            in debug info."""
-        )
-        return response
-
-    if response.debug_info["factual_consistency"].get("score") is None:
-        logger.warning("TTS generation skipped due to missing alignment score.")
-        return response
-
     blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
     try:
         tts_file_path = await generate_speech(
@@ -356,7 +358,6 @@ async def _generate_tts_response(
             query_id=response.query_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             error_message="There was an issue generating the speech response.",
             error_type=ErrorType.TTS_ERROR,
