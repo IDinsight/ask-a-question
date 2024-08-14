@@ -34,7 +34,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml \
 
 ### Dev setup
 
-If you are using the [Dev setup](../../develop/setup.md), you can start the container
+To [set up your development environment](../../develop/setup.md) with Hugging Face embeddings, you can start the container
 manually using:
 
 ```bash
