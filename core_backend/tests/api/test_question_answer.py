@@ -1,4 +1,5 @@
 import os
+import time
 from functools import partial
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
@@ -207,6 +208,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
 
@@ -406,6 +408,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
         response = client.post(
