@@ -29,7 +29,6 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   useEffect(() => {
     if (token) {
       getPerformancePageData(timePeriod, token).then((response) => {
-        console.log(response.content_time_series);
         parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
         parseContentTableData(response.content_time_series);
       });
@@ -46,13 +45,11 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     setDrawerAISummary(null);
     if (token) {
       getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
-        console.log(response);
         parseDrawerData(response);
         setDrawerOpen(true);
       });
 
       getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
-        console.log(response);
         setDrawerAISummary(response.ai_summary);
       });
     }
