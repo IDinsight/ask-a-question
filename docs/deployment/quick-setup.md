@@ -24,7 +24,7 @@ cp template.core_backend.env .core_backend.env
 cp template.litellm_proxy.env .litellm_proxy.env
 ```
 
-**Step 4:** Configure LiteLLM Proxy server:
+**Step 4:** Configure LiteLLM Proxy server
 
 1. (optional) Edit `litellm_proxy_config.yaml` with LLM services you want to use. See
    [LiteLLM Proxy Server](../components/litellm-proxy/index.md) for more details.

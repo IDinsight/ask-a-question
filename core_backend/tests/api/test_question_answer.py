@@ -1,7 +1,7 @@
 import os
+import time
 from functools import partial
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -206,6 +206,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
 
@@ -405,6 +406,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
         response = client.post(
@@ -547,7 +549,6 @@ class TestGenerateResponse:
         expected_status_code: int,
         expect_tts_file: bool,
         client: TestClient,
-        mock_gtts: MagicMock,
         api_key_user1: str,
     ) -> None:
         token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
@@ -557,22 +558,21 @@ class TestGenerateResponse:
             "generate_llm_response": True,
         }
 
-        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
-            response = client.post(
-                "/search",
-                headers={"Authorization": f"Bearer {token}"},
-                json=user_query,
-            )
+        response = client.post(
+            "/search",
+            headers={"Authorization": f"Bearer {token}"},
+            json=user_query,
+        )
 
-            assert response.status_code == expected_status_code
+        assert response.status_code == expected_status_code
 
-            if expected_status_code == 200:
-                json_response = response.json()
+        if expected_status_code == 200:
+            json_response = response.json()
 
-                if expect_tts_file:
-                    assert json_response["tts_file"] is not None
-                else:
-                    assert json_response["tts_file"] is None
+            if expect_tts_file:
+                assert json_response["tts_file"] is not None
+            else:
+                assert json_response["tts_file"] is None
 
 
 class TestSTTLLMResponse:
@@ -593,7 +593,6 @@ class TestSTTLLMResponse:
         mock_response: dict,
         client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
-        mock_gtts: MagicMock,
         api_key_user1: str,
     ) -> None:
         token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
@@ -617,28 +616,27 @@ class TestSTTLLMResponse:
         with open(file_path, "wb") as f:
             f.write(b"fake audio content")
 
-        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
-            response = client.post(
-                "/stt-llm-response",
-                headers={"Authorization": f"Bearer {token}"},
-                files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
-                data={"generate_tts": str(generate_tts).lower()},
-            )
+        response = client.post(
+            "/stt-llm-response",
+            headers={"Authorization": f"Bearer {token}"},
+            files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
+            data={"generate_tts": str(generate_tts).lower()},
+        )
 
-            assert response.status_code == expected_status_code
+        assert response.status_code == expected_status_code
 
-            if expected_status_code == 200:
-                json_response = response.json()
-                assert "llm_response" in json_response
-            elif expected_status_code == 500:
-                json_response = response.json()
-                assert "detail" in json_response
-                assert response.status_code == 500
+        if expected_status_code == 200:
+            json_response = response.json()
+            assert "llm_response" in json_response
+        elif expected_status_code == 500:
+            json_response = response.json()
+            assert "detail" in json_response
+            assert response.status_code == 500
 
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            if os.path.exists(temp_dir) and not os.listdir(temp_dir):
-                os.rmdir(temp_dir)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if os.path.exists(temp_dir) and not os.listdir(temp_dir):
+            os.rmdir(temp_dir)
 
 
 class TestErrorResponses:

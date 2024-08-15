@@ -1,0 +1,72 @@
+name: Alembic Migration Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "core_backend/migrations/versions/**.py"
+      - ".github/workflows/alembic-migrations.yaml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "core_backend/migrations/versions/**.py"
+      - ".github/workflows/alembic-migrations.yaml"
+
+jobs:
+  check-for-outdated-heads:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Python libraries
+        run: |
+          python -m pip install -r core_backend/requirements.txt
+
+      - name: Get Alembic head of main branch
+        if: github.event_name == 'pull_request'
+        run: |
+          cd core_backend
+          alembic_head_main=$(alembic heads | awk '{print $1}')
+          echo "ALEMBIC_HEAD_MAIN=${alembic_head_main}" >> $GITHUB_ENV
+
+      - name: Checkout PR branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Check if Alembic head revision from main branch exists in feature branch DURING PR
+        if: github.event_name == 'pull_request'
+        run: |
+          cd core_backend
+          alembic_history_pr=$(alembic history)
+          if echo "${alembic_history_pr}" | grep -q "$ALEMBIC_HEAD_MAIN"; then
+              echo "Alembic head revision from main branch exists in PR branch."
+          else
+              echo "Alembic head revision from main branch does NOT exist in PR branch. Update your migrations to align with main branch."
+              exit 1
+          fi
+
+      - name: Check for multiple Alembic heads after PR is merged
+        if: github.event_name == 'push'
+        run: |
+          cd core_backend
+          alembic_heads=$(alembic heads | wc -l)
+          if [ "$alembic_heads" -gt 1 ]; then
+              echo "Multiple Alembic heads detected in the main branch after PR merge. Resolve the heads to maintain a single migration history."
+              exit 1
+          else
+              echo "No multiple Alembic heads detected."
+          fi

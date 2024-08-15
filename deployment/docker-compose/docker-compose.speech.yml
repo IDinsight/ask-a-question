@@ -4,7 +4,9 @@ services:
       - speech_service
     volumes:
       - temp:/usr/src/aaq_backend/temp
-
+      - ./.gcp_credentials.json:/app/credentials.json
+    env_file:
+      - .litellm_proxy.env
   speech_service:
     build:
       context: ../../optional_components/speech_api
@@ -15,8 +17,6 @@ services:
     restart: always
     ports:
       - "8001:8001"
-    env_file:
-      - .core_backend.env
     develop:
       watch:
         - action: rebuild

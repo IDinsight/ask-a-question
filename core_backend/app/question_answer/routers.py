@@ -3,6 +3,7 @@ endpoints.
 """
 
 import os
+from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -11,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import SPEECH_ENDPOINT
+from ..config import GCS_SPEECH_BUCKET, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -29,7 +30,12 @@ from ..llm_call.process_output import (
     generate_llm_response__after,
 )
 from ..users.models import UserDB
-from ..utils import create_langfuse_metadata, get_http_client, setup_logger
+from ..utils import (
+    create_langfuse_metadata,
+    get_http_client,
+    setup_logger,
+    upload_file_to_gcs,
+)
 from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
@@ -89,9 +95,21 @@ async def stt_llm_response(
     """
     Endpoint to transcribe audio from the provided file and generate an LLM response.
     """
+    file_stream = BytesIO(await file.read())
+
     file_path = f"temp/{file.filename}"
     with open(file_path, "wb") as f:
-        f.write(await file.read())
+        file_stream.seek(0)
+        f.write(file_stream.read())
+
+    file_stream.seek(0)
+
+    content_type = file.content_type
+    destination_blob_name = f"stt-voice-notes/{file.filename}"
+
+    await upload_file_to_gcs(
+        GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
+    )
 
     transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
     user_query = QueryBase(
@@ -127,14 +145,15 @@ async def stt_llm_response(
     )
     await save_content_for_query_to_db(
         user_id=user_db.user_id,
-        session_id=user_query.session_id,
         query_id=response.query_id,
+        session_id=user_query.session_id,
         contents=response.search_results,
         asession=asession,
     )
 
     if os.path.exists(file_path):
         os.remove(file_path)
+        file_stream.close()
 
     if type(response) is QueryResponse:
         return response
@@ -270,10 +289,6 @@ async def search_base(
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
-    Raises
-    ------
-    ValueError
-        If the question language is not identified.
     """
 
     # always do the embeddings search even if some guardrails have failed
