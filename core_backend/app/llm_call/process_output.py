@@ -6,11 +6,13 @@ from functools import wraps
 from typing import Any, Callable, Optional, TypedDict
 
 import aiohttp
+import backoff
 from pydantic import ValidationError
 
 from ..config import (
     ALIGN_SCORE_API,
     ALIGN_SCORE_METHOD,
+    ALIGN_SCORE_N_RETRIES,
     ALIGN_SCORE_THRESHOLD,
     LITELLM_MODEL_ALIGNSCORE,
 )
@@ -177,6 +179,7 @@ def check_align_score__after(func: Callable) -> Callable:
         metadata = create_langfuse_metadata(
             query_id=response.query_id, user_id=query_refined.user_id
         )
+        print("We are here in check_align_score__after")
         response = await _check_align_score(response, metadata)
         return response
 
@@ -209,11 +212,12 @@ async def _check_align_score(
         return response
 
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
-
+    print(ALIGN_SCORE_METHOD)
     if ALIGN_SCORE_METHOD is None:
         logger.warning("No alignment score method specified.")
         return response
     elif ALIGN_SCORE_METHOD == "AlignScore":
+
         if ALIGN_SCORE_API is not None:
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
@@ -256,6 +260,9 @@ async def _check_align_score(
     return response
 
 
+@backoff.on_exception(
+    backoff.expo, RuntimeError, max_tries=ALIGN_SCORE_N_RETRIES, jitter=None
+)
 async def _get_alignScore_score(
     api_url: str, align_score_date: AlignScoreData
 ) -> AlignmentScore:
@@ -265,6 +272,8 @@ async def _get_alignScore_score(
     http_client = get_http_client()
     assert isinstance(http_client, aiohttp.ClientSession)
     async with http_client.post(api_url, json=align_score_date) as resp:
+        print("Alignscore tried")
+        logger.info("AlignScore retried")
         if resp.status != 200:
             logger.error(f"AlignScore API request failed with status {resp.status}")
             raise RuntimeError(
@@ -273,6 +282,7 @@ async def _get_alignScore_score(
 
         result = await resp.json()
     logger.info(f"AlignScore result: {result}")
+
     alignment_score = AlignmentScore(score=result["alignscore"], reason="N/A")
 
     return alignment_score

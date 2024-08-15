@@ -288,7 +288,7 @@ async def search_base(
         exclude_archived=exclude_archived,
     )
     response.search_results = search_results
-
+    print("We are here")
     return response
 
 

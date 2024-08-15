@@ -9,7 +9,7 @@ DOMAIN = os.environ.get("DOMAIN", "localhost")
 POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5436")
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
 # LiteLLM proxy variables
@@ -25,9 +25,10 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
+    # "LITELLM_MODEL_GENERATION",
+    # "openai/generate-gemini-response",
     "LITELLM_MODEL_GENERATION",
-    "openai/generate-gemini-response",
-    # "LITELLM_MODEL_GENERATION", "openai/generate-response"
+    "openai/generate-response",
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
@@ -55,9 +56,13 @@ DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 # Method: LLM, AlignScore, or None
-ALIGN_SCORE_METHOD = os.environ.get("ALIGN_SCORE_METHOD", "LLM")
+# ALIGN_SCORE_METHOD = os.environ.get("ALIGN_SCORE_METHOD", "AlignScore")
+ALIGN_SCORE_METHOD = "adadad"
 # if AlignScore, set ALIGN_SCORE_API. If LLM, set LITELLM_MODEL_ALIGNSCORE above.
-ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
+ALIGN_SCORE_API = os.environ.get(
+    "ALIGN_SCORE_API", "http://alignscore:5001/alignscore_base"
+)
+ALIGN_SCORE_N_RETRIES = os.environ.get("ALIGN_SCORE_N_RETRIES", 3)
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
