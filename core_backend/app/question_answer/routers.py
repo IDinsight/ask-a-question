@@ -289,10 +289,6 @@ async def search_base(
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
-    Raises
-    ------
-    ValueError
-        If the question language is not identified.
     """
 
     # always do the embeddings search even if some guardrails have failed
