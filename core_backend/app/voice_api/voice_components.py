@@ -2,7 +2,7 @@ from io import BytesIO
 
 from gtts import gTTS
 
-from ..config import BUCKET_NAME
+from ..config import GCS_SPEECH_BUCKET
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import generate_signed_url, setup_logger, upload_file_to_gcs
 from .utils import get_gtts_lang_code
@@ -29,10 +29,10 @@ async def generate_speech(
         content_type = "audio/mpeg"
 
         await upload_file_to_gcs(
-            BUCKET_NAME, mp3_file, destination_blob_name, content_type
+            GCS_SPEECH_BUCKET, mp3_file, destination_blob_name, content_type
         )
 
-        signed_url = await generate_signed_url(BUCKET_NAME, destination_blob_name)
+        signed_url = await generate_signed_url(GCS_SPEECH_BUCKET, destination_blob_name)
 
         logger.info(
             f"Speech generated successfully. Saved to {destination_blob_name} in GCS."

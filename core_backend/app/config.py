@@ -76,4 +76,4 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 
 # Google Cloud storage
-BUCKET_NAME = os.environ.get("BUCKET_NAME", "aaq-speech-test")
+GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
