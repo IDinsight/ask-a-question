@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period } from "./types";
-import Overview from "@/app/dashboard/components/Overview";
-import { useState } from "react";
+import Overview from "./components/Overview";
+import TopicFiles from "@/app/dashboard/components/TopicFiles";
 import { appColors } from "@/utils";
 
 const Dashboard: React.FC = () => {
@@ -17,6 +17,52 @@ const Dashboard: React.FC = () => {
     setTimePeriod(newValue);
   };
 
+  const topics = [
+    {
+      name: "Flu",
+      count: 52,
+      examples: [
+        {
+          timestamp: "2024-07-23 06:01PM",
+          userQuestion:
+            "What are the eligibility criteria for becoming an Empowered Girls Mobiliser?",
+        },
+        {
+          timestamp: "2024-07-24 02:15PM",
+          userQuestion: "How can I prevent the flu?",
+        },
+      ],
+    },
+    {
+      name: "Headache",
+      count: 344,
+      examples: [
+        {
+          timestamp: "2024-07-25 08:30AM",
+          userQuestion: "What are the common causes of headaches?",
+        },
+        {
+          timestamp: "2024-07-25 09:45AM",
+          userQuestion: "What are some natural remedies for headaches?",
+        },
+      ],
+    },
+    {
+      name: "Coughing",
+      count: 29,
+      examples: [
+        {
+          timestamp: "2024-07-26 11:00AM",
+          userQuestion: "Why do I have a persistent cough?",
+        },
+        {
+          timestamp: "2024-07-26 01:20PM",
+          userQuestion: "When should I see a doctor for a cough?",
+        },
+      ],
+    },
+  ];
+
   const showPage = () => {
     switch (dashboardPage) {
       case "Overview":
@@ -24,10 +70,15 @@ const Dashboard: React.FC = () => {
       case "Performance":
         return <div>Users</div>;
       case "Insights":
-        return <div>Products</div>;
+        return <TopicFiles topics={topics} />;
       default:
         return <div>Page not found</div>;
     }
+  };
+
+  // Function to determine if TabPanel should be shown
+  const shouldShowTabPanel = () => {
+    return dashboardPage !== "Insights";
   };
 
   return (
@@ -64,7 +115,9 @@ const Dashboard: React.FC = () => {
                 {dashboardPage}
               </Typography>
             </Box>
-            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+            {shouldShowTabPanel() && (
+              <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+            )}
             <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
           </Box>
         </Box>
