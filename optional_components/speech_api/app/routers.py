@@ -16,7 +16,7 @@ async def transcribe_audio_endpoint(
     request: TranscriptionRequest,
 ) -> TranscriptionResponse | JSONResponse:
     """
-    Transcribes audio from the specified file path using the specified Whisper model.
+    Transcribes audio from the specified file path using the Appropriate ASR model.
     """
     try:
         logger.info(f"Received request to transcribe file at: {request.file_path}")
