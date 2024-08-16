@@ -108,7 +108,7 @@ build-embeddings-arm:
 	@cd ..
 	@rm -rf text-embeddings-inference
 
-setup-embeddings-arm: guard-HUGGINGFACE_MODEL guard-CUSTOM_EMBEDDINGS_API_KEY
+setup-embeddings-arm: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f
@@ -121,7 +121,7 @@ setup-embeddings-arm: guard-HUGGINGFACE_MODEL guard-CUSTOM_EMBEDDINGS_API_KEY
         --model-id $(HUGGINGFACE_MODEL) \
         --api-key $(HUGGINGFACE_EMBEDDINGS_API_KEY)
 
-setup-embeddings: guard-HUGGINGFACE_MODEL guard-CUSTOM_EMBEDDINGS_API_KEY
+setup-embeddings: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f
