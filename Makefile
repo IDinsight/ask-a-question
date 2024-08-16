@@ -79,7 +79,7 @@ make teardown-redis:
 
 
 # Dev LiteLLM Proxy server
-setup-llm-proxy: guard-OPENAI_API_KEY guard-CUSTOM_EMBEDDINGS_API_KEY guard-CUSTOM_EMBEDDINGS_ENDPOINT guard-VERTEXAI_PROJECT guard-VERTEXAI_LOCATION
+setup-llm-proxy:
 	-@docker stop litellm-proxy
 	-@docker rm litellm-proxy
 	@docker system prune -f
