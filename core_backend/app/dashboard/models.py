@@ -18,8 +18,7 @@ from .schemas import (
     ContentFeedbackStats,
     Day,
     Heatmap,
-    InisightsQueries,
-    InsightsQueriesData,
+    InsightQuery,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
@@ -809,7 +808,7 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
 
 async def get_raw_queries(
     asession: AsyncSession, start_date: date, end_date: date
-) -> list[tuple[str, date]]:
+) -> list[InsightQuery]:
     """Retrieve all raw queries (query_text) and their \
     datetime stamps within the specified date range.
 
@@ -839,11 +838,11 @@ async def get_raw_queries(
     result = await asession.execute(statement)
     rows = result.fetchall()
     query_list = [
-        InisightsQueries(
+        InsightQuery(
             query_id=row.query_id,
             query_text=row.query_text,
             query_datetime_utc=row.query_datetime_utc,
         )
         for row in rows
     ]
-    return InsightsQueriesData(n_queries=len(query_list), queries=query_list)
+    return query_list

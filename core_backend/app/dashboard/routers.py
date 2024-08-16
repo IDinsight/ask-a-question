@@ -198,5 +198,10 @@ async def retrieve_topics(
     queries_data = await get_raw_queries(
         asession=asession, start_date=year_ago, end_date=today
     )
-    formatted_data = InsightsQueriesData(queries_data=queries_data)
+    print(queries_data)
+    print(type(queries_data))
+    formatted_data = InsightsQueriesData(
+        queries=queries_data, n_queries=len(queries_data)
+    )
+
     return formatted_data

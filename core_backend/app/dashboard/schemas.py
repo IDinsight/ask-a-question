@@ -158,7 +158,7 @@ class DashboardOverview(BaseModel):
     top_content: list[TopContent]
 
 
-class InisightsQueries(BaseModel):
+class InsightQuery(BaseModel):
     """
     This class is used to define the schema for the insights queries
     """
@@ -174,4 +174,4 @@ class InsightsQueriesData(BaseModel):
     """
 
     n_queries: int
-    queries: list[InisightsQueries]
+    queries: list[InsightQuery]
