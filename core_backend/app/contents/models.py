@@ -22,16 +22,16 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
-from ..models import Base, JSONDict
-from ..schemas import FeedbackSentiment, QuerySearchResult
-from ..tags.models import content_tags_table
-from ..utils import embedding
-from .config import (
+from ..config import (
     PGVECTOR_DISTANCE,
     PGVECTOR_EF_CONSTRUCTION,
     PGVECTOR_M,
     PGVECTOR_VECTOR_SIZE,
 )
+from ..models import Base, JSONDict
+from ..schemas import FeedbackSentiment, QuerySearchResult
+from ..tags.models import content_tags_table
+from ..utils import embedding
 from .schemas import ContentCreate, ContentUpdate
 
 

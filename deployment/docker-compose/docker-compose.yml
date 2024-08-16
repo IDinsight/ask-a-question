@@ -74,11 +74,11 @@ services:
       /usr/local/bin/python server.py --port=5001 --models=base
     restart: always
 
-  local-embeddings:
+  huggingface-embeddings:
     # image either refers to locally built image or defaults to the one from the registry
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
-      - local-embeddings
+      - huggingface-embeddings
       - optional-components
     volumes:
       - $PWD/data:/data
@@ -87,7 +87,7 @@ services:
         "--model-id",
         "${HUGGINGFACE_MODEL}",
         "--api-key",
-        "${CUSTOM_EMBEDDINGS_API_KEY}",
+        "${HUGGINGFACE_EMBEDDINGS_API_KEY}",
       ]
     restart: always
     env_file:

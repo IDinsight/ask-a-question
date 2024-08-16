@@ -12,6 +12,12 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5436")
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
+# PGVector variables
+PGVECTOR_VECTOR_SIZE = os.environ.get("PGVECTOR_VECTOR_SIZE", "1536")
+PGVECTOR_M = os.environ.get("PGVECTOR_M", "16")
+PGVECTOR_EF_CONSTRUCTION = os.environ.get("PGVECTOR_EF_CONSTRUCTION", "64")
+PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
+
 # LiteLLM proxy variables
 # Endpoint
 LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
