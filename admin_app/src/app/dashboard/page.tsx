@@ -17,52 +17,6 @@ const Dashboard: React.FC = () => {
     setTimePeriod(newValue);
   };
 
-  const topics = [
-    {
-      name: "Flu",
-      count: 52,
-      examples: [
-        {
-          timestamp: "2024-07-23 06:01PM",
-          userQuestion:
-            "What are the eligibility criteria for becoming an Empowered Girls Mobiliser?",
-        },
-        {
-          timestamp: "2024-07-24 02:15PM",
-          userQuestion: "How can I prevent the flu?",
-        },
-      ],
-    },
-    {
-      name: "Headache",
-      count: 344,
-      examples: [
-        {
-          timestamp: "2024-07-25 08:30AM",
-          userQuestion: "What are the common causes of headaches?",
-        },
-        {
-          timestamp: "2024-07-25 09:45AM",
-          userQuestion: "What are some natural remedies for headaches?",
-        },
-      ],
-    },
-    {
-      name: "Coughing",
-      count: 29,
-      examples: [
-        {
-          timestamp: "2024-07-26 11:00AM",
-          userQuestion: "Why do I have a persistent cough?",
-        },
-        {
-          timestamp: "2024-07-26 01:20PM",
-          userQuestion: "When should I see a doctor for a cough?",
-        },
-      ],
-    },
-  ];
-
   const showPage = () => {
     switch (dashboardPage) {
       case "Overview":
@@ -70,7 +24,7 @@ const Dashboard: React.FC = () => {
       case "Performance":
         return <div>Users</div>;
       case "Insights":
-        return <TopicFiles topics={topics} />;
+        return <TopicFiles />;
       default:
         return <div>Page not found</div>;
     }

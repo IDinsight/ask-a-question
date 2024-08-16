@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import styled from "styled-components";
+import { useAuth } from "@/utils/auth";
+import { Token } from "@mui/icons-material";
 
 interface Topic {
   name: string;
   count: number;
   examples: { timestamp: string; userQuestion: string }[];
-}
-
-interface TopicsSectionProps {
-  topics: Topic[];
 }
 
 const TopicsContainer = styled.div`
@@ -67,13 +66,13 @@ const ExampleTableRow = styled.tr`
   }
 `;
 
-const ExampleTableCell = styled.td<ExampleTableCellProps>`
+const ExampleTableCell = styled.td<{ istimestamp: boolean }>`
   padding: 8px;
   border: 1px solid #ddd;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: ${({ isTimestamp }) => (isTimestamp ? "150px" : "350px")};
+  max-width: ${({ istimestamp }) => (istimestamp ? "150px" : "350px")};
 `;
 
 const ExampleTableHeader = styled.th`
@@ -83,13 +82,51 @@ const ExampleTableHeader = styled.th`
   background-color: #f2f2f2;
 `;
 
-const TopicsSection: React.FC<TopicsSectionProps> = ({ topics }) => {
+const TopicsSection: React.FC = () => {
+  const { token } = useAuth();
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getTopicColor = (index: number) => {
     const colors = ["#FFA500", "#4B0082", "#228B22"];
     return colors[index % colors.length];
   };
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/dashboard/insights/topics",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        const fetchedTopics = response.data.topics.map((topic: any) => ({
+          name: topic.topic_name,
+          count: topic.topic_samples.length,
+          examples: topic.topic_samples.map((sample: string) => ({
+            timestamp: "2024-07-23 06:01PM", // Placeholder timestamp
+            userQuestion: sample,
+          })),
+        }));
+
+        setTopics(fetchedTopics);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching topics:", err);
+        setError("Failed to load topics");
+        setLoading(false);
+      }
+    };
+
+    fetchTopics();
+  }, []);
+
+  if (loading) return <p>Loading topics...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <TopicsContainer>
@@ -118,7 +155,7 @@ const TopicsSection: React.FC<TopicsSectionProps> = ({ topics }) => {
             <tbody>
               {selectedTopic.examples.map((example, index) => (
                 <ExampleTableRow key={index}>
-                  <ExampleTableCell isTimestamp={true}>
+                  <ExampleTableCell istimestamp={true}>
                     {example.timestamp}
                   </ExampleTableCell>
                   <ExampleTableCell>{example.userQuestion}</ExampleTableCell>
