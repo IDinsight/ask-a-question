@@ -11,8 +11,14 @@ from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from ..utils import setup_logger
-from .models import get_heatmap, get_stats_cards, get_timeseries, get_top_content
-from .schemas import DashboardOverview, TimeFrequency
+from .models import (
+    get_heatmap,
+    get_raw_queries,
+    get_stats_cards,
+    get_timeseries,
+    get_top_content,
+)
+from .schemas import DashboardOverview, InsightsQueriesData, TimeFrequency
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -176,3 +182,21 @@ async def retrieve_overview(
         time_series=time_series,
         top_content=top_content,
     )
+
+
+@router.get("/insights/queries", response_model=InsightsQueriesData)
+async def retrieve_topics(
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> InsightsQueriesData:
+    """
+    Retrieve all question answer statistics for the last year.
+    """
+    today = datetime.now(timezone.utc)
+    year_ago = today + relativedelta(years=-1)
+
+    queries_data = await get_raw_queries(
+        asession=asession, start_date=year_ago, end_date=today
+    )
+    formatted_data = InsightsQueriesData(queries_data=queries_data)
+    return formatted_data

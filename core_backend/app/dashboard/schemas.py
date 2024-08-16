@@ -156,3 +156,22 @@ class DashboardOverview(BaseModel):
     heatmap: Heatmap
     time_series: TimeSeries
     top_content: list[TopContent]
+
+
+class InisightsQueries(BaseModel):
+    """
+    This class is used to define the schema for the insights queries
+    """
+
+    query_id: int
+    query_text: str
+    query_datetime_utc: datetime
+
+
+class InsightsQueriesData(BaseModel):
+    """
+    This class is used to define the schema for the insights queries data
+    """
+
+    n_queries: int
+    queries: list[InisightsQueries]

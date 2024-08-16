@@ -18,6 +18,8 @@ from .schemas import (
     ContentFeedbackStats,
     Day,
     Heatmap,
+    InisightsQueries,
+    InsightsQueriesData,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
@@ -803,3 +805,45 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
         return 0.0
 
     return (n_curr - n_prev) / n_prev
+
+
+async def get_raw_queries(
+    asession: AsyncSession, start_date: date, end_date: date
+) -> list[tuple[str, date]]:
+    """Retrieve all raw queries (query_text) and their \
+    datetime stamps within the specified date range.
+
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the queries.
+    end_date
+        The ending date for the queries.
+
+    Returns
+    -------
+    list[tuple[str, datetime]]
+        A list of tuples where each tuple contains the raw query
+    (query_text) and its corresponding datetime stamp (query_datetime_utc).
+    """
+
+    statement = select(
+        QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id
+    ).where(
+        (QueryDB.query_datetime_utc >= start_date)
+        & (QueryDB.query_datetime_utc < end_date)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    query_list = [
+        InisightsQueries(
+            query_id=row.query_id,
+            query_text=row.query_text,
+            query_datetime_utc=row.query_datetime_utc,
+        )
+        for row in rows
+    ]
+    return InsightsQueriesData(n_queries=len(query_list), queries=query_list)
