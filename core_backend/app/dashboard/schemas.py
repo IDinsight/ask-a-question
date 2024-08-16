@@ -175,3 +175,22 @@ class InsightsQueriesData(BaseModel):
 
     n_queries: int
     queries: list[InsightQuery]
+
+
+class InsightTopic(BaseModel):
+    """
+    This class is used to define the schema for the insights topics
+    """
+
+    topic_id: int
+    topic_samples: list[str]
+    topic_name: str
+
+
+class InsightTopicsData(BaseModel):
+    """
+    This class is used to define the schema for the insights topics data
+    """
+
+    n_topics: int
+    topics: list[InsightTopic]

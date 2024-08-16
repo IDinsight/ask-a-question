@@ -18,7 +18,13 @@ from .models import (
     get_timeseries,
     get_top_content,
 )
-from .schemas import DashboardOverview, InsightsQueriesData, TimeFrequency
+from .schemas import (
+    DashboardOverview,
+    InsightsQueriesData,
+    InsightTopic,
+    InsightTopicsData,
+    TimeFrequency,
+)
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -186,7 +192,6 @@ async def retrieve_overview(
 
 @router.get("/insights/queries", response_model=InsightsQueriesData)
 async def retrieve_topics(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> InsightsQueriesData:
     """
@@ -198,10 +203,30 @@ async def retrieve_topics(
     queries_data = await get_raw_queries(
         asession=asession, start_date=year_ago, end_date=today
     )
-    print(queries_data)
-    print(type(queries_data))
     formatted_data = InsightsQueriesData(
         queries=queries_data, n_queries=len(queries_data)
     )
-
     return formatted_data
+
+
+@router.get("/insights/topics", response_model=InsightTopicsData)
+async def classify_queries(
+    # query_data: InsightsQueriesData,
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[InsightTopic]:
+    """
+    Carries out topic modelling using BertTopic.
+    """
+    dummy_topics = [
+        InsightTopic(
+            topic_id=1, topic_samples=["sample1", "sample2"], topic_name="topic1"
+        ),
+        InsightTopic(
+            topic_id=2, topic_samples=["sample3", "sample4"], topic_name="topic2"
+        ),
+        InsightTopic(
+            topic_id=3, topic_samples=["sample5", "sample6"], topic_name="topic3"
+        ),
+    ]
+    topic_data = InsightTopicsData(n_topics=len(dummy_topics), topics=dummy_topics)
+    return topic_data

@@ -809,7 +809,7 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
 async def get_raw_queries(
     asession: AsyncSession, start_date: date, end_date: date
 ) -> list[InsightQuery]:
-    """Retrieve all raw queries (query_text) and their \
+    """Retrieve all raw queries (query_text) and their
     datetime stamps within the specified date range.
 
     Parameters
