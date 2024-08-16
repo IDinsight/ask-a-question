@@ -20,4 +20,7 @@ interface TopContentData {
   negative_votes: number;
 }
 
+const drawerWidth = 240;
+
 export type { Period, TimeFrame, DayHourUsageData, ApexData, TopContentData };
+export { drawerWidth };

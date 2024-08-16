@@ -26,9 +26,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
   const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([]);
   const [timeseriesData, setTimeseriesData] = React.useState<ApexData[]>([]);
-  const [topContentData, setTopContentData] = React.useState<TopContentData[]>(
-    [],
-  );
+  const [topContentData, setTopContentData] = React.useState<TopContentData[]>([]);
 
   const heatmapOptions: ApexOptions = {
     chart: {
@@ -64,6 +62,11 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     chart: {
       id: "usage-timeseries",
       stacked: true,
+      events: {
+        mounted: (chart) => {
+          chart.windowResizeHandler();
+        },
+      },
     },
     dataLabels: {
       enabled: false,
@@ -130,8 +133,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   };
 
   const parseTimeseriesData = (timeseriesData: Record<string, any>) => {
-    const { urgent, not_urgent_escalated, not_urgent_not_escalated } =
-      timeseriesData;
+    const { urgent, not_urgent_escalated, not_urgent_not_escalated } = timeseriesData;
 
     const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => {
       const date = new Date(period);
@@ -148,7 +150,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           x: String(date),
           y: n_urgent as number,
         };
-      },
+      }
     );
 
     const total_queries = Object.entries(not_urgent_not_escalated).map(
@@ -158,7 +160,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           x: String(date),
           y: n_urgent as number,
         };
-      },
+      }
     );
 
     const seriesData = [
@@ -170,10 +172,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     setTimeseriesData(seriesData);
   };
 
-  const parseCardData = (
-    statsCardsData: Record<string, any>,
-    timePeriod: Period,
-  ) => {
+  const parseCardData = (statsCardsData: Record<string, any>, timePeriod: Period) => {
     const {
       content_feedback_stats,
       query_stats,
@@ -237,7 +236,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           flexDirection: "row",
           alignItems: "stretch",
           gap: 2,
-          maxWidth: 1387,
         }}
       >
         {statCardData.map((data, index) => (
@@ -251,7 +249,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           alignItems: "stretch",
           gap: 3,
           paddingTop: 3,
-          maxWidth: 1387,
         }}
       >
         <Box
@@ -277,7 +274,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           <HeatMap data={heatmapData} options={heatmapOptions} />
         </Box>
       </Box>
-      <Box bgcolor="white" sx={{ marginTop: 2, maxWidth: 1387 }}>
+      <Box bgcolor="white" sx={{ marginTop: 2 }}>
         <TopContentTable rows={topContentData} />
         <Layout.Spacer multiplier={2} />
       </Box>

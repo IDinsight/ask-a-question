@@ -4,7 +4,7 @@ import React from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import { Period } from "./types";
+import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
 import { appColors } from "@/utils";
@@ -38,19 +38,18 @@ const Dashboard: React.FC = () => {
   return (
     <>
       <Box sx={{ display: "flex", marginTop: 2, flexDirection: "row" }}>
-        <Box sx={{ width: sideBarOpen ? 240 : 80, display: "flex" }}>
-          <Sidebar
-            open={sideBarOpen}
-            setOpen={setSideBarOpen}
-            setDashboardPage={setDashboardPage}
-            selectedDashboardPage={dashboardPage}
-          />
-        </Box>
+        <Sidebar
+          open={sideBarOpen}
+          setOpen={setSideBarOpen}
+          setDashboardPage={setDashboardPage}
+          selectedDashboardPage={dashboardPage}
+        />
         <Box
           sx={{
             px: 3,
             height: "100%",
             flexGrow: 1,
+            width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
           }}
         >
           <Box

@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Drawer,
   Box,
   List,
   ListItem,
@@ -9,14 +8,17 @@ import {
   ListItemButton,
   Typography,
 } from "@mui/material";
+
+import MuiDrawer from "@mui/material/Drawer";
 import { IconButton } from "@mui/material";
-import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
+import { styled, Theme, CSSObject } from "@mui/material/styles";
 import {
   Dashboard,
   BarChart,
   Insights,
   ChevronLeft,
 } from "@mui/icons-material";
+import { drawerWidth } from "../types";
 
 interface SideBarProps {
   open: boolean;
@@ -36,7 +38,6 @@ const menuItems: MenuItem[] = [
   { name: "Performance", icon: <BarChart /> },
   { name: "Insights", icon: <Insights /> },
 ];
-const drawerWidth = 30;
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
   transition: theme.transitions.create("width", {
@@ -58,6 +59,25 @@ const closedMixin = (theme: Theme): CSSObject => ({
   },
 });
 
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+  boxSizing: "border-box",
+  zIndex: 1000,
+  borderRight: "1px solid",
+  borderRightColor: "divider",
+  ...(open && {
+    ...openedMixin(theme),
+    "& .MuiDrawer-paper": openedMixin(theme),
+  }),
+  ...(!open && {
+    ...closedMixin(theme),
+    "& .MuiDrawer-paper": closedMixin(theme),
+  }),
+}));
+
 const Sidebar: React.FC<SideBarProps> = ({
   open,
   setOpen,
@@ -66,15 +86,10 @@ const Sidebar: React.FC<SideBarProps> = ({
 }) => {
   return (
     <Drawer
+      open={open}
       variant="permanent"
       sx={{
-        [`& .MuiDrawer-paper`]: {
-          width: open ? 240 : 80,
-          boxSizing: "border-box",
-          zIndex: 1000,
-          borderRight: "1px solid",
-          borderRightColor: "divider",
-        },
+        [`& .MuiDrawer-paper`]: {},
       }}
     >
       <List sx={{ paddingTop: 8 }}>
@@ -87,6 +102,7 @@ const Sidebar: React.FC<SideBarProps> = ({
           }}
         >
           <Box
+            open={open}
             sx={{
               justifyContent: "space-between",
               display: "flex",
