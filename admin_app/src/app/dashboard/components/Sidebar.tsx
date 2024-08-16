@@ -9,10 +9,18 @@ import {
   ListItemButton,
   Typography,
 } from "@mui/material";
-
-import { Dashboard, BarChart, Insights } from "@mui/icons-material";
+import { IconButton } from "@mui/material";
+import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
+import {
+  Dashboard,
+  BarChart,
+  Insights,
+  ChevronLeft,
+} from "@mui/icons-material";
 
 interface SideBarProps {
+  open: boolean;
+  setOpen: (isOpen: boolean) => void;
   setDashboardPage: (pageName: PageName) => void;
   selectedDashboardPage: PageName;
 }
@@ -28,8 +36,31 @@ const menuItems: MenuItem[] = [
   { name: "Performance", icon: <BarChart /> },
   { name: "Insights", icon: <Insights /> },
 ];
+const drawerWidth = 30;
+const openedMixin = (theme: Theme): CSSObject => ({
+  width: drawerWidth,
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: "hidden",
+});
+
+const closedMixin = (theme: Theme): CSSObject => ({
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: "hidden",
+  width: `calc(${theme.spacing(7)} + 1px)`,
+  [theme.breakpoints.up("sm")]: {
+    width: `calc(${theme.spacing(8)} + 1px)`,
+  },
+});
 
 const Sidebar: React.FC<SideBarProps> = ({
+  open,
+  setOpen,
   setDashboardPage,
   selectedDashboardPage,
 }) => {
@@ -38,7 +69,7 @@ const Sidebar: React.FC<SideBarProps> = ({
       variant="permanent"
       sx={{
         [`& .MuiDrawer-paper`]: {
-          width: 240,
+          width: open ? 240 : 80,
           boxSizing: "border-box",
           zIndex: 1000,
           borderRight: "1px solid",
@@ -52,14 +83,39 @@ const Sidebar: React.FC<SideBarProps> = ({
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
+            flexGrow: 0,
           }}
         >
-          <Typography
-            variant="overline"
-            sx={{ padding: 2, mx: 1, py: 1, color: "grey.500" }}
+          <Box
+            sx={{
+              justifyContent: "space-between",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            MAIN MENU
-          </Typography>
+            {open ? (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    display: "flex",
+                    padding: 2,
+                    mx: 1,
+                    py: 1,
+                    color: "grey.500",
+                  }}
+                >
+                  MAIN MENU
+                </Typography>
+
+                <IconButton onClick={() => setOpen(false)}>
+                  <ChevronLeft />
+                </IconButton>
+              </>
+            ) : (
+              <Box sx={{ p: 2, m: 1 }} />
+            )}
+          </Box>
           {menuItems.map((item: MenuItem, i: number) => (
             <Box
               key={`menu-item=${i}`}
@@ -83,7 +139,7 @@ const Sidebar: React.FC<SideBarProps> = ({
                     : "background.paper"
                 }
                 sx={{
-                  width: 6,
+                  minWidth: 6,
                   borderRadius: 3,
                 }}
               />
@@ -94,10 +150,19 @@ const Sidebar: React.FC<SideBarProps> = ({
                     onClick={() => setDashboardPage(item.name)}
                     dense
                   >
-                    <ListItemIcon sx={{ minWidth: 30 }}>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : "auto",
+                        justifyContent: "center",
+                      }}
+                    >
                       {item.icon}
                     </ListItemIcon>
-                    <ListItemText primary={item.name} />
+                    <ListItemText
+                      primary={item.name}
+                      sx={{ opacity: open ? 1 : 0 }}
+                    />
                   </ListItemButton>
                 </ListItem>
               </Box>
