@@ -213,7 +213,7 @@ async def retrieve_topics(
 async def classify_queries(
     # query_data: InsightsQueriesData,
     asession: AsyncSession = Depends(get_async_session),
-) -> list[InsightTopic]:
+) -> InsightTopicsData:
     """
     Carries out topic modelling using BertTopic.
     """
