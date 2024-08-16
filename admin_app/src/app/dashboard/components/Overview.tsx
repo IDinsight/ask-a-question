@@ -62,11 +62,6 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     chart: {
       id: "usage-timeseries",
       stacked: true,
-      events: {
-        mounted: (chart) => {
-          chart.windowResizeHandler();
-        },
-      },
     },
     dataLabels: {
       enabled: false,

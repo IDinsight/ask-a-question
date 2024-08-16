@@ -85,13 +85,7 @@ const Sidebar: React.FC<SideBarProps> = ({
   selectedDashboardPage,
 }) => {
   return (
-    <Drawer
-      open={open}
-      variant="permanent"
-      sx={{
-        [`& .MuiDrawer-paper`]: {},
-      }}
-    >
+    <Drawer open={open} variant="permanent">
       <List sx={{ paddingTop: 8 }}>
         <Box
           sx={{
@@ -102,7 +96,6 @@ const Sidebar: React.FC<SideBarProps> = ({
           }}
         >
           <Box
-            open={open}
             sx={{
               justifyContent: "space-between",
               display: "flex",
