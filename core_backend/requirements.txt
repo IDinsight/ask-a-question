@@ -20,3 +20,5 @@ redis==5.0.8
 python-dateutil==2.8.2
 gTTS==2.5.1
 google-cloud-storage==2.18.2
+google-cloud-texttospeech==2.16.5
+google-cloud-speech==2.27.0

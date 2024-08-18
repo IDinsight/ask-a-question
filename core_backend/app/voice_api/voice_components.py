@@ -1,5 +1,7 @@
+import io
 from io import BytesIO
 
+from google.cloud import speech
 from gtts import gTTS
 
 from ..config import BUCKET_NAME
@@ -8,6 +10,43 @@ from ..utils import generate_signed_url, setup_logger, upload_file_to_gcs
 from .utils import get_gtts_lang_code
 
 logger = setup_logger("Voice API")
+
+
+async def speech_to_text(audio_filename: str, language_code: str = "en-US") -> str:
+    """
+    Converts the provided audio file to text using Google's Speech-to-Text API.
+    """
+    logger.info(
+        f"""Starting transcription for {audio_filename}
+        with language code {language_code}."""
+    )
+
+    try:
+        client = speech.SpeechClient()
+
+        with io.open(audio_filename, "rb") as audio_file:
+            content = audio_file.read()
+
+        audio = speech.RecognitionAudio(content=content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code=language_code,
+        )
+
+        response = client.recognize(config=config, audio=audio)
+
+        transcript = ""
+        for result in response.results:
+            transcript += result.alternatives[0].transcript
+
+        logger.info(f"Transcription completed successfully for {audio_filename}.")
+        return transcript
+
+    except Exception as e:
+        error_msg = f"Failed to transcribe {audio_filename}: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
 
 
 async def generate_speech(
