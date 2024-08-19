@@ -268,7 +268,6 @@ async def _get_alignScore_score(
     http_client = get_http_client()
     assert isinstance(http_client, aiohttp.ClientSession)
     async with http_client.post(api_url, json=align_score_date) as resp:
-        logger.info("AlignScore retried")
         if resp.status != 200:
             logger.error(f"AlignScore API request failed with status {resp.status}")
             raise RuntimeError(
