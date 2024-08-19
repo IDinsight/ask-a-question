@@ -17,6 +17,8 @@ import {
   BarChart,
   Insights,
   ChevronLeft,
+  ChevronRight,
+  Menu,
 } from "@mui/icons-material";
 import { drawerWidth } from "../types";
 
@@ -86,7 +88,7 @@ const Sidebar: React.FC<SideBarProps> = ({
 }) => {
   return (
     <Drawer open={open} variant="permanent">
-      <List sx={{ paddingTop: 8 }}>
+      <List sx={{ paddingTop: 9 }}>
         <Box
           sx={{
             display: "flex",
@@ -100,6 +102,8 @@ const Sidebar: React.FC<SideBarProps> = ({
               justifyContent: "space-between",
               display: "flex",
               alignItems: "center",
+              paddingRight: 1,
+              paddingBottom: 1.5,
             }}
           >
             {open ? (
@@ -116,13 +120,16 @@ const Sidebar: React.FC<SideBarProps> = ({
                 >
                   MAIN MENU
                 </Typography>
-
                 <IconButton onClick={() => setOpen(false)}>
                   <ChevronLeft />
                 </IconButton>
               </>
             ) : (
-              <Box sx={{ p: 2, m: 1 }} />
+              <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
+                <IconButton onClick={() => setOpen(true)}>
+                  <ChevronRight />
+                </IconButton>
+              </Box>
             )}
           </Box>
           {menuItems.map((item: MenuItem, i: number) => (
@@ -168,10 +175,7 @@ const Sidebar: React.FC<SideBarProps> = ({
                     >
                       {item.icon}
                     </ListItemIcon>
-                    <ListItemText
-                      primary={item.name}
-                      sx={{ opacity: open ? 1 : 0 }}
-                    />
+                    <ListItemText primary={item.name} sx={{ opacity: open ? 1 : 0 }} />
                   </ListItemButton>
                 </ListItem>
               </Box>

@@ -8,7 +8,6 @@ import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
 import { appColors } from "@/utils";
-import MenuIcon from "@mui/icons-material/Menu";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
@@ -67,19 +66,6 @@ const Dashboard: React.FC = () => {
                 borderBottomColor: "divider",
               }}
             >
-              <IconButton
-                color="inherit"
-                size="medium"
-                aria-label="open drawer"
-                onClick={handleDrawerOpen}
-                edge="start"
-                sx={{
-                  mr: 2,
-                  ...(sideBarOpen && { display: "none" }),
-                }}
-              >
-                <MenuIcon />
-              </IconButton>
               <Typography variant="h4" color={appColors.primary}>
                 {dashboardPage}
               </Typography>
