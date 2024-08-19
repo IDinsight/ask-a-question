@@ -90,12 +90,12 @@ class QueryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class AudioResponse(QueryResponse):
+class QueryAudioResponse(QueryResponse):
     """
     Pydantic model for response to a Voice Query with audio response and Text response
     """
 
-    tts_file: str | None = Field(None, examples=["response.mp3"])
+    tts_filepath: str | None = Field(None, examples=["response.mp3"])
 
     model_config = ConfigDict(from_attributes=True)
 

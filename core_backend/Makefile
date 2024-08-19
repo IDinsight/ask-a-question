@@ -9,7 +9,7 @@ tests: setup-test-containers run-tests teardown-test-containers
 # NB: `pytest-alembic` requires the DB engine to point an empty database. Thus, alembic
 # tests should be run first.
 run-tests:
-	@set -a && . ./tests/api/test.env && set +a && \
+	@set -a && sorce ./tests/api/test.env && set +a && \
 	python -m pytest -rPQ -m "not rails and alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov=. tests/api/test_alembic_migrations.py && \
 	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests
 
@@ -22,14 +22,14 @@ setup-test-db:
 	-@docker rm testdb
 	@docker system prune -f
 	@sleep 2
-	@set -a && . ./tests/api/test.env && set +a && \
+	@set -a && source ./tests/api/test.env && set +a && \
 	docker run --name testdb \
 		-p 5433:5432 \
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
 		-e POSTGRES_DB \
 		-d pgvector/pgvector:pg16
-	@set -a && . ./tests/api/test.env && set +a && \
+	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 
 # Use port 6381 since port 6379 is used for dev and 6380 for docker-compose
