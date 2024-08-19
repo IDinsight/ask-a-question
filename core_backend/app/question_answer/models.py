@@ -169,6 +169,7 @@ class QueryResponseDB(Base):
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
+    tts_file: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -176,7 +177,6 @@ class QueryResponseDB(Base):
     is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
     error_type: Mapped[str] = mapped_column(String, nullable=True)
     error_message: Mapped[str] = mapped_column(String, nullable=True)
-    tts_file: Mapped[str] = mapped_column(String, nullable=True)
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
@@ -222,6 +222,7 @@ async def save_query_response_to_db(
             session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
+            tts_file=None,
             response_datetime_utc=datetime.now(timezone.utc),
             debug_info=response.model_dump()["debug_info"],
             is_error=False,
