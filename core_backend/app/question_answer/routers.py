@@ -5,13 +5,14 @@ endpoints.
 import os
 from typing import Tuple
 
+import backoff
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import SPEECH_ENDPOINT
+from ..config import ALIGN_SCORE_N_RETRIES, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -42,6 +43,7 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    ErrorType,
     QueryBase,
     QueryRefined,
     QueryResponse,
@@ -216,9 +218,21 @@ async def search(
         contents=response.search_results,
         asession=asession,
     )
+    if is_unable_to_generate_response(response):
+        failure_reason = response.debug_info["factual_consistency"]
+        response = await retry_search(
+            query_refined=user_query_refined_template,
+            response=response_template,
+            user_id=user_db.user_id,
+            n_similar=int(N_TOP_CONTENT),
+            asession=asession,
+            exclude_archived=True,
+        )
+        response.debug_info["past_failure"] = failure_reason
 
     if type(response) is QueryResponse:
         return response
+
     elif type(response) is QueryResponseError:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
@@ -234,8 +248,8 @@ async def search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
-@generate_llm_response__after
 @check_align_score__after
+@generate_llm_response__after
 async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,
@@ -284,8 +298,41 @@ async def search_base(
         exclude_archived=exclude_archived,
     )
     response.search_results = search_results
-    print("We are here")
+
     return response
+
+
+def is_unable_to_generate_response(response: QueryResponse) -> bool:
+    """
+    Check if the response is of type QueryResponseError and caused
+    by low alignment score.
+    """
+    return (
+        isinstance(response, QueryResponseError)
+        and response.error_type == ErrorType.ALIGNMENT_TOO_LOW
+    )
+
+
+@backoff.on_predicate(
+    backoff.expo,
+    max_tries=int(ALIGN_SCORE_N_RETRIES),
+    predicate=is_unable_to_generate_response,
+)
+async def retry_search(
+    query_refined: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+    user_id: int,
+    n_similar: int,
+    asession: AsyncSession,
+    exclude_archived: bool = True,
+) -> QueryResponse | QueryResponseError:
+    """
+    Retry wrapper for search_base.
+    """
+
+    return await search_base(
+        query_refined, response, user_id, n_similar, asession, exclude_archived
+    )
 
 
 async def get_user_query_and_response(
