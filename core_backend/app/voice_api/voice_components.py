@@ -6,7 +6,7 @@ from google.cloud import speech, texttospeech
 from ..config import BUCKET_NAME
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import generate_signed_url, setup_logger, upload_file_to_gcs
-from .utils import get_gtts_lang_code
+from .utils import convert_mp3_to_wav, get_gtts_lang_code
 
 logger = setup_logger("Voice API")
 
@@ -14,13 +14,16 @@ logger = setup_logger("Voice API")
 async def transcribe_audio(audio_filename: str, language_code: str = "en-US") -> str:
     """
     Converts the provided audio file to text using Google's Speech-to-Text API.
+    Ensures the audio file meets the required specifications.
     """
     logger.info(f"Starting transcription for {audio_filename}")
 
     try:
+        wav_filename = convert_mp3_to_wav(audio_filename)
+
         client = speech.SpeechClient()
 
-        with io.open(audio_filename, "rb") as audio_file:
+        with io.open(wav_filename, "rb") as audio_file:
             content = audio_file.read()
 
         audio = speech.RecognitionAudio(content=content)
