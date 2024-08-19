@@ -32,12 +32,14 @@ setup-dev: setup-db setup-redis add-users-to-db setup-llm-proxy
 teardown-dev: teardown-db teardown-redis teardown-llm-proxy
 
 ## Helper targets
+guard-%:
+	@if [ -z '${${*}}' ]; then echo 'ERROR: environment variable $* not set' && exit 1; fi
 
 # Add users to db
 add-users-to-db:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	set -a && \
-        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
         set +a && \
 	python core_backend/add_users_to_db.py
 
@@ -52,8 +54,8 @@ setup-db:
 		-p 5432:5432 \
 		-d pgvector/pgvector:pg16
 	set -a && \
-        source $(CURDIR)/deployment/docker-compose/.base.env && \
-        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        source "$(CURDIR)/deployment/docker-compose/.base.env" && \
+        source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
         set +a && \
 	cd core_backend && \
 	python -m alembic upgrade head
@@ -106,7 +108,7 @@ build-embeddings-arm:
 	@cd ..
 	@rm -rf text-embeddings-inference
 
-setup-embeddings-arm:
+setup-embeddings-arm: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f
@@ -117,9 +119,9 @@ setup-embeddings-arm:
         -v "$(PWD)/data:/data" \
         -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
-        --api-key $(CUSTOM_EMBEDDINGS_API_KEY)
+        --api-key $(HUGGINGFACE_EMBEDDINGS_API_KEY)
 
-setup-embeddings:
+setup-embeddings: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f
@@ -130,7 +132,7 @@ setup-embeddings:
 		-v "$(PWD)/data:/data" \
 		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
 		--model-id $(HUGGINGFACE_MODEL) \
-		--api-key $(CUSTOM_EMBEDDINGS_API_KEY)
+		--api-key $(HUGGINGFACE_EMBEDDINGS_API_KEY)
 
 teardown-embeddings:
 	@docker stop huggingface-embeddings

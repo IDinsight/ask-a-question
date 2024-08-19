@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import BUCKET_NAME, SPEECH_ENDPOINT
+from ..config import GCS_SPEECH_BUCKET, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -110,7 +110,7 @@ async def voice_search(
     destination_blob_name = f"stt-voice-notes/{file.filename}"
 
     await upload_file_to_gcs(
-        BUCKET_NAME, file_stream, destination_blob_name, content_type
+        GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
     )
 
     transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
@@ -294,10 +294,6 @@ async def search_base(
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
-    Raises
-    ------
-    ValueError
-        If the question language is not identified.
     """
 
     # always do the embeddings search even if some guardrails have failed
