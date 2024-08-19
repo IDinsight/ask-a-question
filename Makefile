@@ -49,7 +49,7 @@ setup-db:
 	@sleep 2
 	@docker run --name postgres-local \
 		--env-file "$(CURDIR)/deployment/docker-compose/.core_backend.env" \
-		-p 5436:5432 \
+		-p 5432:5432 \
 		-d pgvector/pgvector:pg16
 	set -a && \
         source "$(CURDIR)/deployment/docker-compose/.base.env" && \
