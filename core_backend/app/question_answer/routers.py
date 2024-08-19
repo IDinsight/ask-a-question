@@ -232,7 +232,6 @@ async def search(
 
     if type(response) is QueryResponse:
         return response
-
     elif type(response) is QueryResponseError:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()

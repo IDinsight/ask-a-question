@@ -177,7 +177,6 @@ def check_align_score__after(func: Callable) -> Callable:
         metadata = create_langfuse_metadata(
             query_id=response.query_id, user_id=query_refined.user_id
         )
-
         response = await _check_align_score(response, metadata)
         return response
 
@@ -194,7 +193,6 @@ async def _check_align_score(
     Only runs if the generate_llm_response flag is set to True.
     Requires "llm_response" and "search_results" in the response.
     """
-
     if isinstance(response, QueryResponseError) or response.llm_response is None:
         return response
 
@@ -216,7 +214,6 @@ async def _check_align_score(
         logger.warning("No alignment score method specified.")
         return response
     elif ALIGN_SCORE_METHOD == "AlignScore":
-
         if ALIGN_SCORE_API is not None:
             align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
         else:
@@ -276,7 +273,6 @@ async def _get_alignScore_score(
 
         result = await resp.json()
     logger.info(f"AlignScore result: {result}")
-
     alignment_score = AlignmentScore(score=result["alignscore"], reason="N/A")
 
     return alignment_score
