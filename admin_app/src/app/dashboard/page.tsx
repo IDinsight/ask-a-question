@@ -44,11 +44,10 @@ const Dashboard: React.FC = () => {
       }
     };
     window.addEventListener("resize", handleResize);
-    // wait 1s
+    // wait 0.75s before first resize (so user can acknowledge the sidebar)
     setTimeout(() => {
       handleResize();
     }, 750);
-    // handleResize(); // Initial check
     return () => {
       window.removeEventListener("resize", handleResize);
     };
