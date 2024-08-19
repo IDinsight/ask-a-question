@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth } from "./types";
@@ -33,6 +33,26 @@ const Dashboard: React.FC = () => {
   const handleDrawerOpen = () => {
     setSideBarOpen(true);
   };
+
+  // Close sidebar on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1075) {
+        setSideBarOpen(false);
+      } else {
+        setSideBarOpen(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    // wait 1s
+    setTimeout(() => {
+      handleResize();
+    }, 750);
+    // handleResize(); // Initial check
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <>
