@@ -1,8 +1,7 @@
 import io
 from io import BytesIO
 
-from google.cloud import speech
-from gtts import gTTS
+from google.cloud import speech, texttospeech
 
 from ..config import BUCKET_NAME
 from ..llm_call.llm_prompts import IdentifiedLanguage
@@ -12,14 +11,11 @@ from .utils import get_gtts_lang_code
 logger = setup_logger("Voice API")
 
 
-async def speech_to_text(audio_filename: str, language_code: str = "en-US") -> str:
+async def transcribe_audio(audio_filename: str, language_code: str = "en-US") -> str:
     """
     Converts the provided audio file to text using Google's Speech-to-Text API.
     """
-    logger.info(
-        f"""Starting transcription for {audio_filename}
-        with language code {language_code}."""
-    )
+    logger.info(f"Starting transcription for {audio_filename}")
 
     try:
         client = speech.SpeechClient()
@@ -52,11 +48,11 @@ async def speech_to_text(audio_filename: str, language_code: str = "en-US") -> s
 async def generate_speech(
     text: str,
     language: IdentifiedLanguage | None,
-    destination_blob_name: str = "response.mp3",
+    destination_blob_name: str,
 ) -> str:
     """
     Converts the provided text to speech and saves it as an mp3 file on
-    Google cloud storage
+    Google Cloud Storage using Google Text-to-Speech.
     """
     if language is None:
         error_msg = "Language must be provided to generate speech."
@@ -64,11 +60,27 @@ async def generate_speech(
         raise ValueError(error_msg)
 
     try:
-        lang = get_gtts_lang_code(language)
-        tts = gTTS(text=text, lang=lang)
 
-        mp3_file = BytesIO()
-        tts.write_to_fp(mp3_file)
+        client = texttospeech.TextToSpeechClient()
+
+        lang = get_gtts_lang_code(language)
+
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=lang,
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,
+        )
+
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+
+        response = client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+
+        mp3_file = BytesIO(response.audio_content)
         content_type = "audio/mpeg"
 
         await upload_file_to_gcs(

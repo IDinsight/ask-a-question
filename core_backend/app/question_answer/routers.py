@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import BUCKET_NAME, SPEECH_ENDPOINT
+from ..config import BUCKET_NAME
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -37,6 +37,7 @@ from ..utils import (
     setup_logger,
     upload_file_to_gcs,
 )
+from ..voice_api.voice_components import transcribe_audio
 from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
@@ -113,10 +114,11 @@ async def voice_search(
         BUCKET_NAME, file_stream, destination_blob_name, content_type
     )
 
-    transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
+    transcription_result = await transcribe_audio(file_path)
+    # transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
     user_query = QueryBase(
         generate_llm_response=True,
-        query_text=transcription_result["text"],
+        query_text=transcription_result,
         query_metadata={},
     )
     (
