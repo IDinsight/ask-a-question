@@ -31,45 +31,43 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <>
-      <Box sx={{ display: "flex", mt: 4, flexDirection: "row" }}>
-        <Box sx={{ width: 240, display: "flex" }}>
-          <Sidebar
-            setDashboardPage={setDashboardPage}
-            selectedDashboardPage={dashboardPage}
-          />
-        </Box>
+    <Box sx={{ display: "flex", marginTop: 2, flexDirection: "row" }}>
+      <Box sx={{ width: 240, display: "flex" }}>
+        <Sidebar
+          setDashboardPage={setDashboardPage}
+          selectedDashboardPage={dashboardPage}
+        />
+      </Box>
+      <Box
+        sx={{
+          px: 3,
+          height: "100%",
+          flexGrow: 1,
+        }}
+      >
         <Box
           sx={{
-            px: 3,
-            height: "100%",
-            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              py: 2,
+              borderBottom: "1px solid",
+              borderBottomColor: "divider",
             }}
           >
-            <Box
-              sx={{
-                py: 2,
-                borderBottom: "1px solid",
-                borderBottomColor: "divider",
-              }}
-            >
-              <Typography variant="h4" color={appColors.primary}>
-                {dashboardPage}
-              </Typography>
-            </Box>
-            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
+            <Typography variant="h4" color={appColors.primary}>
+              {dashboardPage}
+            </Typography>
           </Box>
+          <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+          <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 

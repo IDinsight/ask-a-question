@@ -104,14 +104,17 @@ const ContentViewModal = ({
             sx={{
               maxHeight: "60vh", // this controls overall modal height too
               p: sizes.baseGap,
-              mr: sizes.baseGap,
+              marginRight: sizes.baseGap,
               overflowY: "auto",
               border: 1,
               borderColor: appColors.lightGrey,
               borderRadius: 3,
             }}
           >
-            <Typography variant="subtitle1" sx={{ mb: sizes.baseGap }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ marginBottom: sizes.baseGap }}
+            >
               {title}
             </Typography>
             <Typography
@@ -166,7 +169,7 @@ const ContentViewModal = ({
               flexDirection={"row"}
               gap={sizes.baseGap}
               sx={{
-                pr: sizes.baseGap,
+                paddingRight: sizes.baseGap,
                 alignItems: "center",
                 justifyContent: "center",
               }}

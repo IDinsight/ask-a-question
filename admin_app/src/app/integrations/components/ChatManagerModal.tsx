@@ -53,7 +53,7 @@ const ChatManagerModal = ({
             sx={{
               maxHeight: "70vh",
               p: sizes.baseGap,
-              mr: sizes.baseGap,
+              marginRight: sizes.baseGap,
               overflowY: "auto",
             }}
           >

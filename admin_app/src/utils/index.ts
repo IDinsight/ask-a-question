@@ -21,6 +21,7 @@ export const sizes = {
     medium: theme.spacing(4),
     large: theme.spacing(5),
   },
+  navbar: theme.spacing("60px"),
 };
 
 export const appColors = {

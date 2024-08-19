@@ -72,26 +72,7 @@ const CardsPage = () => {
 
   return (
     <>
-      <Snackbar
-        open={snackMessage.message !== null}
-        autoHideDuration={6000}
-        onClose={() => {
-          setSnackMessage({ message: null, color: snackMessage.color });
-        }}
-      >
-        <Alert
-          onClose={() => {
-            setSnackMessage({ message: null, color: snackMessage.color });
-          }}
-          severity={snackMessage.color}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackMessage.message}
-        </Alert>
-      </Snackbar>
-      <Layout.FlexBox alignItems="center" gap={sizes.baseGap}>
-        <Layout.Spacer multiplier={5} />
+      <Layout.FlexBox alignItems="center" gap={sizes.baseGap} paddingTop={8}>
         <Layout.FlexBox
           gap={sizes.smallGap}
           sx={{
@@ -106,7 +87,6 @@ const CardsPage = () => {
             sx={{ flexDirection: "row", justifyContent: "center" }}
             gap={sizes.smallGap}
           >
-            {/* <FilterListIcon sx={{ width: "auto", flexShrink: 0 }} /> */}
             <Autocomplete
               multiple
               limitTags={3}
@@ -143,6 +123,24 @@ const CardsPage = () => {
           setSnackMessage={setSnackMessage}
         />
       </Layout.FlexBox>
+      <Snackbar
+        open={snackMessage.message !== null}
+        autoHideDuration={6000}
+        onClose={() => {
+          setSnackMessage({ message: null, color: snackMessage.color });
+        }}
+      >
+        <Alert
+          onClose={() => {
+            setSnackMessage({ message: null, color: snackMessage.color });
+          }}
+          severity={snackMessage.color}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackMessage.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
