@@ -28,7 +28,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ tabValue, handleChange }) => {
             label={label}
             key={`tab-label-${index}`}
             value={tabLabels[label]}
-            sx={{ textTransform: "none", mr: 6 }}
+            sx={{ textTransform: "none", marginRight: 6 }}
           />
         ))}
       </Tabs>

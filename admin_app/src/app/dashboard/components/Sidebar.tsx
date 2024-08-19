@@ -46,7 +46,7 @@ const Sidebar: React.FC<SideBarProps> = ({
         },
       }}
     >
-      <List sx={{ pt: 8 }}>
+      <List sx={{ paddingTop: 8 }}>
         <Box
           sx={{
             display: "flex",
@@ -70,7 +70,7 @@ const Sidebar: React.FC<SideBarProps> = ({
               }
               sx={{
                 display: "flex",
-                ml: 2,
+                marginLeft: 2,
                 alignContent: "stretch",
                 width: "90%",
                 borderRadius: 2,

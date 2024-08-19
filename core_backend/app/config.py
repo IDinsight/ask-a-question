@@ -69,6 +69,8 @@ ALIGN_SCORE_N_RETRIES = os.environ.get("ALIGN_SCORE_N_RETRIES", 1)
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
+
+# Speech API
 SPEECH_ENDPOINT = os.environ.get(
     "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
 )
@@ -80,3 +82,6 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
+
+# Google Cloud storage
+GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")

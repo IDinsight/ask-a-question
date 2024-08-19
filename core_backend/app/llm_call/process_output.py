@@ -103,7 +103,7 @@ async def _generate_llm_response(
         original_language=query_refined.original_language,
         metadata=metadata,
     )
-    tts_save_path = f"response_{response.query_id}.mp3"
+    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
         response.debug_info["extracted_info"] = rag_response.extracted_info
@@ -114,7 +114,7 @@ async def _generate_llm_response(
                 tts_file_path = await generate_speech(
                     text=rag_response.answer,
                     language=query_refined.original_language,
-                    save_path=tts_save_path,
+                    destination_blob_name=blob_name,
                 )
                 response.tts_file = tts_file_path
             except ValueError as e:

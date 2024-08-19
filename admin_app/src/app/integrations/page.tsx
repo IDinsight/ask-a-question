@@ -26,17 +26,18 @@ const IntegrationsPage = () => {
   }, [accessLevel]);
 
   return (
-    <Layout.FlexBox alignItems="center">
-      <Layout.Spacer multiplier={5} />
+    <Layout.FlexBox
+      alignItems="center"
+      paddingTop={6}
+      paddingBottom={10}
+      gap={5}
+    >
       <KeyManagement
         token={token}
         editAccess={currAccessLevel === "fullaccess"}
       />
-      <Layout.Spacer multiplier={4} />
       <ChatManagers />
-      <Layout.Spacer multiplier={4} />
       <RestAPI />
-      <Layout.Spacer multiplier={6} />
     </Layout.FlexBox>
   );
 };
@@ -65,7 +66,7 @@ const KeyManagement = ({
           setCurrentKey(data.api_key_first_characters);
           const formatted_api_update_date = format(
             data.api_key_updated_datetime_utc,
-            "HH:mm, dd-MM-yyyy"
+            "HH:mm, dd-MM-yyyy",
           );
           setCurrentKeyLastUpdated(formatted_api_update_date);
           setKeyInfoFetchIsLoading(false);
@@ -114,7 +115,7 @@ const KeyManagement = ({
     <Layout.FlexBox
       key={"key-management"}
       flexDirection="column"
-      sx={{ maxWidth: 690, marginInline: 10 }}
+      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
@@ -163,8 +164,8 @@ const KeyManagement = ({
               backgroundColor: keyGenerationIsLoading
                 ? appColors.lightGrey
                 : currentKey
-                  ? appColors.error
-                  : appColors.primary,
+                ? appColors.error
+                : appColors.primary,
             }}
           >
             {currentKey ? `Regenerate Key` : "Generate Key"}
@@ -193,7 +194,7 @@ const RestAPI = () => {
     <Layout.FlexBox
       key={"rest-api"}
       flexDirection="column"
-      sx={{ maxWidth: 690, marginInline: 10 }}
+      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
@@ -231,7 +232,7 @@ const ChatManagers = () => {
     <Layout.FlexBox
       key={"chat-managers"}
       flexDirection="column"
-      sx={{ maxWidth: 1000, marginInline: 10 }}
+      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
