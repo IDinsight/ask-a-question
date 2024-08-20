@@ -17,13 +17,13 @@ from .models import (
     get_stats_cards,
     get_timeseries,
     get_top_content,
+    topic_model_queries,
 )
 from .schemas import (
     DashboardOverview,
     InsightsQueriesData,
-    InsightTopic,
-    InsightTopicsData,
     TimeFrequency,
+    TopicsData,
 )
 
 TAG_METADATA = {
@@ -197,6 +197,8 @@ async def retrieve_topics(
     """
     Retrieve all question answer statistics for the last year.
     """
+
+    # TO DO: implement time adjust features
     today = datetime.now(timezone.utc)
     year_ago = today + relativedelta(years=-1)
 
@@ -209,24 +211,28 @@ async def retrieve_topics(
     return formatted_data
 
 
-@router.get("/insights/topics", response_model=InsightTopicsData)
+@router.get("/insights/topics", response_model=TopicsData)
 async def classify_queries(
-    # query_data: InsightsQueriesData,
     asession: AsyncSession = Depends(get_async_session),
-) -> InsightTopicsData:
+) -> TopicsData:
     """
     Carries out topic modelling using BertTopic.
+
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+
+    Returns
+    -------
+    TopicsData
+        A list of topics extracted from the user queries,
+        featuring an id, a summary description of the topic
+        and 5 examples.
     """
-    dummy_topics = [
-        InsightTopic(
-            topic_id=1, topic_samples=["sample1", "sample2"], topic_name="topic1"
-        ),
-        InsightTopic(
-            topic_id=2, topic_samples=["sample3", "sample4"], topic_name="topic2"
-        ),
-        InsightTopic(
-            topic_id=3, topic_samples=["sample5", "sample6"], topic_name="topic3"
-        ),
-    ]
-    topic_data = InsightTopicsData(n_topics=len(dummy_topics), topics=dummy_topics)
-    return topic_data
+
+    raw_data = await retrieve_topics(asession=asession)
+
+    topics_data = await topic_model_queries(raw_data)
+
+    return topics_data

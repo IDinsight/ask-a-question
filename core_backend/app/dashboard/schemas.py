@@ -177,9 +177,10 @@ class InsightsQueriesData(BaseModel):
     queries: list[InsightQuery]
 
 
-class InsightTopic(BaseModel):
+class Topic(BaseModel):
     """
-    This class is used to define the schema for the insights topics
+    This class is used to define the schema for one topic
+    extracted from the user queries
     """
 
     topic_id: int
@@ -187,10 +188,11 @@ class InsightTopic(BaseModel):
     topic_name: str
 
 
-class InsightTopicsData(BaseModel):
+class TopicsData(BaseModel):
     """
-    This class is used to define the schema for the insights topics data
+    This class is used to define the schema for the a large group
+    of individual Topics
     """
 
     n_topics: int
-    topics: list[InsightTopic]
+    topics: list[Topic]

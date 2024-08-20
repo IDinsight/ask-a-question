@@ -3,6 +3,7 @@
 from datetime import date
 from typing import cast, get_args
 
+from bertopic import BERTopic
 from sqlalchemy import case, func, literal_column, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Subquery
@@ -19,6 +20,7 @@ from .schemas import (
     Day,
     Heatmap,
     InsightQuery,
+    InsightsQueriesData,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
@@ -26,7 +28,14 @@ from .schemas import (
     TimeHours,
     TimeSeries,
     TopContent,
+    Topic,
+    TopicsData,
     UrgencyStats,
+)
+from .utils import (
+    ask_question,
+    create_topic_query_from_template,
+    fetch_five_sample_queries,
 )
 
 
@@ -809,7 +818,7 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
 async def get_raw_queries(
     asession: AsyncSession, start_date: date, end_date: date
 ) -> list[InsightQuery]:
-    """Retrieve all raw queries (query_text) and their
+    """Retrieve 2000 randomly sampled raw queries (query_text) and their
     datetime stamps within the specified date range.
 
     Parameters
@@ -828,11 +837,14 @@ async def get_raw_queries(
     (query_text) and its corresponding datetime stamp (query_datetime_utc).
     """
 
-    statement = select(
-        QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id
-    ).where(
-        (QueryDB.query_datetime_utc >= start_date)
-        & (QueryDB.query_datetime_utc < end_date)
+    statement = (
+        select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
+        .where(
+            (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
+        )
+        .order_by(func.random())  # Randomly order the results
+        .limit(2000)  # Limit the result to 2000 queries
     )
 
     result = await asession.execute(statement)
@@ -846,3 +858,74 @@ async def get_raw_queries(
         for row in rows
     ]
     return query_list
+
+
+async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
+    """Turn a list of raw queries, run them through a BERTopic pipeline
+    and return the Data for the front end.
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the queries.
+    end_date
+        The ending date for the queries.
+
+    Returns
+    -------
+    list[tuple[str, datetime]]
+        A list of tuples where each tuple contains the raw query
+    (query_text) and its corresponding datetime stamp (query_datetime_utc).
+    """
+
+    # Load the BERTopic model
+    topic_model = BERTopic()
+    # Go throgh each InsightQuery object and place queries in a list
+    queries = [x.query_text for x in data.queries]
+    preds_, probas_ = topic_model.fit_transform(queries)
+
+    # Get the topic info
+    topic_df = topic_model.get_topic_info()
+    # Take the top 5 topics
+    top_5_df = topic_df[1:6].copy()
+
+    # The get_topic_info() method only returns 3 example sentences
+    # and it picks the most representative 3 sentences for each topic.
+
+    # To have more variation + more samples, we get five sample queries for each topic
+    # using the fetch_five_sample_queries function. We then set this to the Examples
+    # column.
+
+    top_5_df["Examples"] = top_5_df.apply(
+        lambda row: fetch_five_sample_queries(
+            topic_num=row["Topic"], topic_model=topic_model, original_queries=queries
+        ),
+        axis=1,
+    )
+
+    # To get an LLM description of the topics, we need to create a prompt which
+    # includes - for each topic - its keyword representation ("Representation")
+    # and the five random examples.
+    representations = top_5_df["Representation"].tolist()
+    examples = top_5_df["Examples"].tolist()
+    prompt = create_topic_query_from_template(representations, examples)
+
+    # Send the prompt to OpenAI and parse the response
+    response = ask_question(prompt)  # to do: use LiteLLM Proxy instead of direct OpenAI
+    topic_list = response["topic_list"]
+    top_5_df["llm_description"] = topic_list
+
+    # TopicData has three fields: Topic, Description, Examples
+    # Create a list of TopicData objects. These will then
+    # be used to create the InsightsTopicsData object which the
+    # front end will use to display the data.
+    topic_data = [
+        Topic(
+            topic_id=row["Topic"],
+            topic_name=row["llm_description"],
+            topic_samples=row["Examples"],
+        )
+        for index, row in top_5_df.iterrows()
+    ]
+    return TopicsData(n_topics=5, topics=topic_data)
