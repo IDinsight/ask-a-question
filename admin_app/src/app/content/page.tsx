@@ -6,19 +6,15 @@ import React, { MouseEvent, useState } from "react";
 import {
   Alert,
   Autocomplete,
-  Box,
   Button,
   ButtonGroup,
   CircularProgress,
   Fab,
   Grid,
-  IconButton,
-  InputAdornment,
   Menu,
   MenuItem,
   Paper,
   Snackbar,
-  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -29,7 +25,6 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import SendIcon from "@mui/icons-material/Send";
 
 import type { Content } from "@/app/content/edit/page";
 import ContentCard from "@/components/ContentCard";
@@ -41,6 +36,7 @@ import { useAuth } from "@/utils/auth";
 import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
+import { QuestionAnsweringSidebar } from "./sidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const MAX_CARDS_PER_PAGE = 12;
@@ -212,83 +208,6 @@ const CardsPage = () => {
         </Alert>
       </Snackbar>
     </>
-  );
-};
-
-const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
-  const [question, setQuestion] = useState("");
-  const [generateAIResponse, setGenerateAIResponse] = useState(false);
-  const [response, setResponse] = useState("");
-
-  const handleQuestionChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setQuestion(event.target.value);
-  };
-
-  const handleGenerateAIResponseChange = () => {
-    setGenerateAIResponse((prev) => !prev);
-  };
-
-  const handleSendClick = () => {
-    setResponse("Headache during pregnancy is normal ..."); // Placeholder response
-  };
-
-  return (
-    <Paper
-      elevation={2}
-      sx={{
-        padding: 3,
-        paddingTop: 4,
-        height: "95vh",
-      }}
-    >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        marginBottom={2}
-      >
-        <Typography variant="h6">Test Question Answering</Typography>
-        <IconButton onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-      <TextField
-        label="Test question"
-        variant="outlined"
-        fullWidth
-        value={question}
-        onChange={handleQuestionChange}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end" sx={{ paddingRight: 2 }}>
-              <IconButton onClick={handleSendClick} edge="end">
-                <SendIcon />
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-      <Box
-        display="flex"
-        alignItems="center"
-        marginTop={2}
-        padding={1}
-        alignContent={"flex-end"}
-      >
-        <Switch
-          checked={generateAIResponse}
-          onChange={handleGenerateAIResponseChange}
-        />
-        <Typography>Generate AI Response</Typography>
-      </Box>
-      {response && (
-        <Box marginTop={2}>
-          <Typography>{response}</Typography>
-        </Box>
-      )}
-    </Paper>
   );
 };
 

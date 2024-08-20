@@ -147,7 +147,7 @@ const Page = () => {
       ]);
       if (queryType === "embeddings-search") {
         apiCalls
-          .getEmbeddingsSearch(queryText, token)
+          .getSearch(queryText, false, token)
           .then((response) => {
             if (response.status === 200) {
               processEmbeddingsSearchResponse(response);
@@ -167,7 +167,7 @@ const Page = () => {
           });
       } else if (queryType === "llm-response") {
         apiCalls
-          .getLLMResponse(queryText, token)
+          .getSearch(queryText, true, token)
           .then((response) => {
             if (response.status === 200) {
               processLLMSearchResponse(response);
