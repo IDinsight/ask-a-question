@@ -525,7 +525,7 @@ def patch_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.voice_api.voice_components.generate_signed_url",
+        "core_backend.app.voice_api.voice_components.generate_public_url",
         async_fake_generate_signed_url,
     )
 
@@ -540,7 +540,7 @@ async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
 
 async def async_fake_generate_signed_url(*args: Any, **kwargs: Any) -> str:
     """
-    A dummy function to replace the real generate_signed_url function.
+    A dummy function to replace the real generate_public_url function.
     """
-    print("Mock generate_signed_url called")
+    print("Mock generate_public_url called")
     return "http://example.com/signed-url"

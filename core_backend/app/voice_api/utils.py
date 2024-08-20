@@ -13,6 +13,8 @@ def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
     Maps IdentifiedLanguage values to google-cloud text to
     speech language codes.
     """
+    # Please add the language codes according to
+    # https://cloud.google.com/text-to-speech/docs/voices
     mapping = {
         IdentifiedLanguage.ENGLISH: "en-US",
         IdentifiedLanguage.SWAHILI: "sw-TZ",

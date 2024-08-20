@@ -7,14 +7,19 @@ services:
     command: >
       /bin/sh startup.sh
     restart: always
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
+      - ./.gcp_credentials.json:/app/credentials.json
     env_file:
       - .base.env
       - .core_backend.env
+      - .litellm_proxy.env
     environment:
       - REDIS_HOST=redis://redis:6379
       - LITELLM_ENDPOINT=http://litellm_proxy:4000
     depends_on:
       - redis
+
     develop:
       watch:
         - action: rebuild
@@ -106,3 +111,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  temp:

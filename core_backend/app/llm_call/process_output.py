@@ -344,12 +344,10 @@ async def _generate_tts_response(
         logger.warning("TTS generation skipped due to missing LLM response.")
         return response
 
-    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
     try:
         tts_file_path = await generate_speech(
             text=response.llm_response,
             language=query_refined.original_language,
-            destination_blob_name=blob_name,
         )
         response.tts_file = tts_file_path
     except ValueError as e:

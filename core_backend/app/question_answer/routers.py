@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import BUCKET_NAME
+from ..config import BUCKET_NAME, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -33,6 +33,8 @@ from ..llm_call.process_output import (
 from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
+    generate_random_filename,
+    get_file_extension_from_mime_type,
     get_http_client,
     setup_logger,
     upload_file_to_gcs,
@@ -108,19 +110,30 @@ async def voice_search(
     file_stream.seek(0)
 
     content_type = file.content_type
-    destination_blob_name = f"stt-voice-notes/{file.filename}"
+
+    file_extension = get_file_extension_from_mime_type(content_type)
+    unique_filename = generate_random_filename(file_extension)
+
+    destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
     await upload_file_to_gcs(
         BUCKET_NAME, file_stream, destination_blob_name, content_type
     )
 
-    transcription_result = await transcribe_audio(file_path)
-    # transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
-    user_query = QueryBase(
-        generate_llm_response=True,
-        query_text=transcription_result,
-        query_metadata={},
-    )
+    if SPEECH_ENDPOINT != "":
+        transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
+        user_query = QueryBase(
+            generate_llm_response=True,
+            query_text=transcription_result[0],
+            query_metadata={},
+        )
+    else:
+        external_transcription_result = await transcribe_audio(file_path)
+        user_query = QueryBase(
+            generate_llm_response=True,
+            query_text=external_transcription_result,
+            query_metadata={},
+        )
     (
         user_query_db,
         user_query_refined_template,

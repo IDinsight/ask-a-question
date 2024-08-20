@@ -63,9 +63,7 @@ ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
-SPEECH_ENDPOINT = os.environ.get(
-    "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
-)
+SPEECH_ENDPOINT = os.environ.get("SPEECH_ENDPOINT", "")
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
