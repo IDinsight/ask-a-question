@@ -12,7 +12,7 @@ from ..utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from .utils import convert_mp3_to_wav, get_gtts_lang_code
+from .utils import convert_audio_to_wav, get_gtts_lang_code
 
 logger = setup_logger("Voice API")
 
@@ -25,7 +25,7 @@ async def transcribe_audio(audio_filename: str) -> str:
     logger.info(f"Starting transcription for {audio_filename}")
 
     try:
-        wav_filename = convert_mp3_to_wav(audio_filename)
+        wav_filename = convert_audio_to_wav(audio_filename)
 
         client = speech.SpeechClient()
 

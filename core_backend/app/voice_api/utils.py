@@ -28,14 +28,16 @@ def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
     return lang_code
 
 
-def convert_mp3_to_wav(input_filename: str) -> str:
+def convert_audio_to_wav(input_filename: str) -> str:
     """
-    Converts an MP3 file to a WAV file and ensures the WAV file has
+    Converts an MP3 or M4A file to a WAV file and ensures the WAV file has
     the required specifications.
     """
-    if input_filename.lower().endswith(".mp3"):
-        logger.info(f"Converting {input_filename} from MP3 to WAV format.")
-        audio = AudioSegment.from_mp3(input_filename)
+    file_extension = input_filename.lower().split(".")[-1]
+
+    if file_extension in ["mp3", "m4a"]:
+        audio = AudioSegment.from_file(input_filename, format=file_extension)
+
         wav_filename = os.path.splitext(input_filename)[0] + ".wav"
         audio.export(wav_filename, format="wav")
         logger.info(f"Conversion complete. Output file: {wav_filename}")
