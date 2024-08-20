@@ -1,25 +1,24 @@
 import React from "react";
+
 import {
   Box,
   List,
   ListItem,
-  ListItemText,
-  ListItemIcon,
   ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Typography,
+  IconButton,
 } from "@mui/material";
-
-import MuiDrawer from "@mui/material/Drawer";
-import { IconButton } from "@mui/material";
-import { styled, Theme, CSSObject } from "@mui/material/styles";
 import {
-  Dashboard,
   BarChart,
-  Insights,
   ChevronLeft,
   ChevronRight,
-  Menu,
+  Dashboard,
+  Insights,
 } from "@mui/icons-material";
+import MuiDrawer from "@mui/material/Drawer";
+import { CSSObject, styled, Theme } from "@mui/material/styles";
 import { drawerWidth } from "../types";
 
 interface SideBarProps {
@@ -84,7 +83,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
   ({ open, setOpen, setDashboardPage, selectedDashboardPage }, ref) => {
     return (
       <Drawer open={open} variant="permanent" ref={ref}>
-        <List sx={{ paddingTop: 9 }}>
+        <List sx={{ paddingTop: 13 }}>
           <Box
             sx={{
               display: "flex",
@@ -121,7 +120,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   </IconButton>
                 </>
               ) : (
-                <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
+                <Box
+                  sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}
+                >
                   <IconButton onClick={() => setOpen(true)}>
                     <ChevronRight />
                   </IconButton>
@@ -184,7 +185,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
         </List>
       </Drawer>
     );
-  }
+  },
 );
 
 export { Sidebar };
