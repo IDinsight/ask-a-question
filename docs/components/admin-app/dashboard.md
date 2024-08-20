@@ -1,9 +1,9 @@
 # Dashboard
 
-The __Dashboard__ provided real-time analytics on the performance of your solution. There
-are four time filters available: __Last 24 hours__, __Last week__, __Last month__, and __Last year__.
+The Dashboard provides real-time analytics on the performance of your solution. There
+are four time filters available: _Last 24 hours_, _Last week_, _Last month_, and _Last year_.
 
-The dashboard is divided into three sections: __Overview__, __Performance__, and __Insights__.
+The dashboard is divided into three sections: [Overview](#overview), [Performance](#performance), and [Insights](#insights).
 
 ## Overview
 
