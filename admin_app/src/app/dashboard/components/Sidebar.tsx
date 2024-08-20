@@ -139,7 +139,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                 }
                 sx={{
                   display: "flex",
-                  ml: 2,
+                  marginLeft: 2,
+                  marginBottom: 1,
                   alignContent: "stretch",
                   width: "90%",
                   borderRadius: 2,
@@ -156,29 +157,25 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                     borderRadius: 3,
                   }}
                 />
-                <Box sx={{ width: "100%" }}>
-                  <ListItem sx={{ padding: 0.5 }}>
-                    <ListItemButton
-                      sx={{ px: 1 }}
-                      onClick={() => setDashboardPage(item.name)}
-                      dense
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {item.icon}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={item.name}
-                        sx={{ opacity: open ? 1 : 0 }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Box>
+                <ListItemButton
+                  sx={{ px: 1, borderRadius: 2 }}
+                  onClick={() => setDashboardPage(item.name)}
+                  dense
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: open ? 3 : "auto",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.name}
+                    sx={{ opacity: open ? 1 : 0 }}
+                  />
+                </ListItemButton>
               </Box>
             ))}
           </Box>
