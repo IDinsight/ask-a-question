@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import ALIGN_SCORE_N_RETRIES,GCS_SPEECH_BUCKET, SPEECH_ENDPOINT
+from ..config import ALIGN_SCORE_N_RETRIES, GCS_SPEECH_BUCKET, SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
