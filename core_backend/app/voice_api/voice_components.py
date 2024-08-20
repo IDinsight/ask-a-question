@@ -76,7 +76,6 @@ async def generate_speech(
 
         voice = texttospeech.VoiceSelectionParams(
             language_code=lang,
-            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,
             name=f"{lang}-Neural2-D",
         )
 

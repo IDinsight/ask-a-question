@@ -318,7 +318,6 @@ async def upload_file_to_gcs(
 
     file_stream.seek(0)
     blob.upload_from_file(file_stream, content_type=content_type)
-    blob.make_public()
 
 
 async def generate_public_url(bucket_name: str, blob_name: str) -> str:
