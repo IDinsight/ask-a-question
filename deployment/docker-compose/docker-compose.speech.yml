@@ -6,7 +6,8 @@ services:
       - temp:/usr/src/aaq_backend/temp
       - ./.gcp_credentials.json:/app/credentials.json
     env_file:
-      - .litellm_proxy.env
+      - .litellm_proxy.env # this env file is used to access the GCP credentials
+
   speech_service:
     build:
       context: ../../optional_components/speech_api
@@ -15,8 +16,6 @@ services:
         PREFERRED_MODEL: "small"
     image: idinsight/speech-service:latest
     restart: always
-    ports:
-      - "8001:8001"
     develop:
       watch:
         - action: rebuild

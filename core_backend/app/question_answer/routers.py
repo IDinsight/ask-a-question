@@ -29,6 +29,7 @@ from ..llm_call.process_input import (
 from ..llm_call.process_output import (
     check_align_score__after,
     generate_llm_response__after,
+    generate_tts__after,
 )
 from ..users.models import UserDB
 from ..utils import (
@@ -50,6 +51,7 @@ from .models import (
 from .schemas import (
     ContentFeedback,
     ErrorType,
+    QueryAudioResponse,
     QueryBase,
     QueryRefined,
     QueryResponse,
@@ -74,8 +76,8 @@ router = APIRouter(
 
 
 @router.post(
-    "/stt-llm-response",
-    response_model=QueryResponse,
+    "/voice-search",
+    response_model=QueryAudioResponse | QueryResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
@@ -87,15 +89,16 @@ router = APIRouter(
         },
     },
 )
-async def stt_llm_response(
-    generate_tts: bool = Form(...),
+async def voice_search(
     file: UploadFile = File(...),
-    exclude_archived: bool = Form(True),
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
-) -> QueryResponse | JSONResponse:
+) -> QueryAudioResponse | JSONResponse:
     """
-    Endpoint to transcribe audio from the provided file and generate an LLM response.
+    Endpoint to transcribe audio from the provided file,
+    generate an LLM response, by default generate_tts is
+    set to true and return a public signed URL of an audio
+    file containing the spoken version of the generated response
     """
     file_stream = BytesIO(await file.read())
 
@@ -118,9 +121,7 @@ async def stt_llm_response(
         generate_llm_response=True,
         query_text=transcription_result["text"],
         query_metadata={},
-        generate_tts=generate_tts,
     )
-
     (
         user_query_db,
         user_query_refined_template,
@@ -129,6 +130,7 @@ async def stt_llm_response(
         user_id=user_db.user_id,
         user_query=user_query,
         asession=asession,
+        generate_tts=True,
     )
 
     response = await search_base(
@@ -137,7 +139,7 @@ async def stt_llm_response(
         user_id=user_db.user_id,
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
-        exclude_archived=exclude_archived,
+        exclude_archived=True,
     )
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -157,9 +159,9 @@ async def stt_llm_response(
         os.remove(file_path)
         file_stream.close()
 
-    if type(response) is QueryResponse:
+    if isinstance(response, QueryAudioResponse):
         return response
-    elif type(response) is QueryResponseError:
+    elif isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
@@ -214,6 +216,7 @@ async def search(
         user_id=user_db.user_id,
         user_query=user_query,
         asession=asession,
+        generate_tts=False,
     )
     response = await search_base(
         query_refined=user_query_refined_template,
@@ -266,6 +269,7 @@ async def search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
+@generate_tts__after
 @check_align_score__after
 @generate_llm_response__after
 async def search_base(
@@ -354,7 +358,10 @@ async def retry_search(
 
 
 async def get_user_query_and_response(
-    user_id: int, user_query: QueryBase, asession: AsyncSession
+    user_id: int,
+    user_query: QueryBase,
+    asession: AsyncSession,
+    generate_tts: bool,
 ) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
     and response objects to pass on.
@@ -385,6 +392,7 @@ async def get_user_query_and_response(
     user_query_refined = QueryRefined(
         **user_query.model_dump(),
         user_id=user_id,
+        generate_tts=generate_tts,
         query_text_original=user_query.query_text,
     )
     # prepare placeholder response object
@@ -393,7 +401,6 @@ async def get_user_query_and_response(
         session_id=user_query.session_id,
         feedback_secret_key=user_query_db.feedback_secret_key,
         llm_response=None,
-        tts_file=None,
         search_results=None,
         debug_info={},
     )

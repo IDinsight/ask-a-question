@@ -534,48 +534,8 @@ class TestGenerateResponse:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
 
-    @pytest.mark.parametrize(
-        "outcome, generate_tts, expected_status_code, expect_tts_file",
-        [
-            ("correct", True, 200, True),
-            ("correct", False, 200, False),
-            ("incorrect", True, 401, False),
-        ],
-    )
-    async def test_llm_response_with_tts_option(
-        self,
-        outcome: str,
-        generate_tts: bool,
-        expected_status_code: int,
-        expect_tts_file: bool,
-        client: TestClient,
-        api_key_user1: str,
-    ) -> None:
-        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
-        user_query = {
-            "query_text": "What is the capital of France?",
-            "generate_tts": generate_tts,
-            "generate_llm_response": True,
-        }
 
-        response = client.post(
-            "/search",
-            headers={"Authorization": f"Bearer {token}"},
-            json=user_query,
-        )
-
-        assert response.status_code == expected_status_code
-
-        if expected_status_code == 200:
-            json_response = response.json()
-
-            if expect_tts_file:
-                assert json_response["tts_file"] is not None
-            else:
-                assert json_response["tts_file"] is None
-
-
-class TestSTTLLMResponse:
+class TestSTTResponse:
     @pytest.mark.parametrize(
         "outcome, generate_tts, expected_status_code, mock_response",
         [
@@ -585,7 +545,7 @@ class TestSTTLLMResponse:
             ("correct", True, 500, {}),
         ],
     )
-    def test_stt_llm_response(
+    def test_voice_search(
         self,
         outcome: str,
         generate_tts: bool,
@@ -617,7 +577,7 @@ class TestSTTLLMResponse:
             f.write(b"fake audio content")
 
         response = client.post(
-            "/stt-llm-response",
+            "/voice-search",
             headers={"Authorization": f"Bearer {token}"},
             files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
             data={"generate_tts": str(generate_tts).lower()},
@@ -628,6 +588,8 @@ class TestSTTLLMResponse:
         if expected_status_code == 200:
             json_response = response.json()
             assert "llm_response" in json_response
+            if generate_tts:
+                assert "tts_filepath" in json_response
         elif expected_status_code == 500:
             json_response = response.json()
             assert "detail" in json_response
