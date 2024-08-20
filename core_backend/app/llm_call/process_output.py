@@ -22,8 +22,8 @@ from ..question_answer.schemas import (
     QueryResponseError,
 )
 from ..question_answer.utils import get_context_string_from_search_results
+from ..question_answer.voice_components import generate_tts_on_gcs
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
-from ..voice_api.voice_components import generate_speech
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
 from .utils import (
@@ -348,7 +348,7 @@ async def _generate_tts_response(
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        tts_file_path = await generate_speech(
+        tts_file_path = await generate_tts_on_gcs(
             text=response.llm_response,
             language=query_refined.original_language,
             destination_blob_name=blob_name,

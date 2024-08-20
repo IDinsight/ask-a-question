@@ -5,19 +5,18 @@ from gtts import gTTS
 from ..config import GCS_SPEECH_BUCKET
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import generate_signed_url, setup_logger, upload_file_to_gcs
-from .utils import get_gtts_lang_code
 
 logger = setup_logger("Voice API")
 
 
-async def generate_speech(
+async def generate_tts_on_gcs(
     text: str,
     language: IdentifiedLanguage,
     destination_blob_name: str = "response.mp3",
 ) -> str:
     """
     Converts the provided text to speech and saves it as an mp3 file on
-    Google cloud storage
+    Google cloud storage. Returns a URL to the generated speech.
     """
 
     try:
@@ -43,3 +42,20 @@ async def generate_speech(
         error_msg = f"Failed to generate speech: {str(e)}"
         logger.error(error_msg)
         raise ValueError(error_msg) from e
+
+
+def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
+    """
+    Maps IdentifiedLanguage values to gTTS language codes.
+    """
+    mapping = {
+        IdentifiedLanguage.ENGLISH: "en",
+        IdentifiedLanguage.SWAHILI: "sw",
+        IdentifiedLanguage.HINDI: "hi",
+    }
+
+    lang_code = mapping.get(identified_language)
+    if lang_code is None:
+        raise ValueError(f"Unsupported language: {identified_language}")
+
+    return lang_code

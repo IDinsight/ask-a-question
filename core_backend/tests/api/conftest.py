@@ -521,11 +521,11 @@ def patch_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.voice_api.voice_components.upload_file_to_gcs",
+        "core_backend.app.question_answer.voice_components.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.voice_api.voice_components.generate_signed_url",
+        "core_backend.app.question_answer.voice_components.generate_signed_url",
         async_fake_generate_signed_url,
     )
 

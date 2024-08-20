@@ -1,7 +1,7 @@
 import pytest
 
 from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
-from core_backend.app.voice_api.voice_components import generate_speech
+from core_backend.app.question_answer.voice_components import generate_tts_on_gcs
 
 
 class TestGenerateSpeech:
@@ -34,7 +34,7 @@ class TestGenerateSpeech:
     ) -> None:
         dummy_url = "http://example.com/signed-url"
 
-        signed_url = await generate_speech(text, language, blob_name)
+        signed_url = await generate_tts_on_gcs(text, language, blob_name)
         assert signed_url == dummy_url
 
     @pytest.mark.parametrize(
@@ -57,4 +57,4 @@ class TestGenerateSpeech:
     ) -> None:
 
         with pytest.raises(ValueError):
-            await generate_speech(text, language, blob_name)
+            await generate_tts_on_gcs(text, language, blob_name)
