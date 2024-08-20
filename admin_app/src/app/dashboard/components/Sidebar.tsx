@@ -80,112 +80,112 @@ const Drawer = styled(MuiDrawer, {
   }),
 }));
 
-const Sidebar: React.FC<SideBarProps> = ({
-  open,
-  setOpen,
-  setDashboardPage,
-  selectedDashboardPage,
-}) => {
-  return (
-    <Drawer open={open} variant="permanent">
-      <List sx={{ paddingTop: 9 }}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            flexGrow: 0,
-          }}
-        >
+const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
+  ({ open, setOpen, setDashboardPage, selectedDashboardPage }, ref) => {
+    return (
+      <Drawer open={open} variant="permanent" ref={ref}>
+        <List sx={{ paddingTop: 9 }}>
           <Box
             sx={{
-              justifyContent: "space-between",
               display: "flex",
-              alignItems: "center",
-              paddingRight: 1,
-              paddingBottom: 1.5,
+              flexDirection: "column",
+              justifyContent: "center",
+              flexGrow: 0,
             }}
           >
-            {open ? (
-              <>
-                <Typography
-                  variant="overline"
-                  sx={{
-                    display: "flex",
-                    padding: 2,
-                    mx: 1,
-                    py: 1,
-                    color: "grey.500",
-                  }}
-                >
-                  MAIN MENU
-                </Typography>
-                <IconButton onClick={() => setOpen(false)}>
-                  <ChevronLeft />
-                </IconButton>
-              </>
-            ) : (
-              <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
-                <IconButton onClick={() => setOpen(true)}>
-                  <ChevronRight />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
-          {menuItems.map((item: MenuItem, i: number) => (
             <Box
-              key={`menu-item=${i}`}
-              bgcolor={
-                item.name === selectedDashboardPage
-                  ? "selected.main"
-                  : "background.paper"
-              }
               sx={{
+                justifyContent: "space-between",
                 display: "flex",
-                marginLeft: 2,
-                alignContent: "stretch",
-                width: "90%",
-                borderRadius: 2,
+                alignItems: "center",
+                paddingRight: 1,
+                paddingBottom: 1.5,
               }}
             >
+              {open ? (
+                <>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      display: "flex",
+                      padding: 2,
+                      mx: 1,
+                      py: 1,
+                      color: "grey.500",
+                    }}
+                  >
+                    MAIN MENU
+                  </Typography>
+                  <IconButton onClick={() => setOpen(false)}>
+                    <ChevronLeft />
+                  </IconButton>
+                </>
+              ) : (
+                <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
+                  <IconButton onClick={() => setOpen(true)}>
+                    <ChevronRight />
+                  </IconButton>
+                </Box>
+              )}
+            </Box>
+            {menuItems.map((item: MenuItem, i: number) => (
               <Box
+                key={`menu-item=${i}`}
                 bgcolor={
                   item.name === selectedDashboardPage
-                    ? "primary.main"
+                    ? "selected.main"
                     : "background.paper"
                 }
                 sx={{
-                  minWidth: 6,
-                  borderRadius: 3,
+                  display: "flex",
+                  ml: 2,
+                  alignContent: "stretch",
+                  width: "90%",
+                  borderRadius: 2,
                 }}
-              />
-              <Box sx={{ width: "100%" }}>
-                <ListItem sx={{ padding: 0.5 }}>
-                  <ListItemButton
-                    sx={{ px: 1 }}
-                    onClick={() => setDashboardPage(item.name)}
-                    dense
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : "auto",
-                        justifyContent: "center",
-                      }}
+              >
+                <Box
+                  bgcolor={
+                    item.name === selectedDashboardPage
+                      ? "primary.main"
+                      : "background.paper"
+                  }
+                  sx={{
+                    minWidth: 6,
+                    borderRadius: 3,
+                  }}
+                />
+                <Box sx={{ width: "100%" }}>
+                  <ListItem sx={{ padding: 0.5 }}>
+                    <ListItemButton
+                      sx={{ px: 1 }}
+                      onClick={() => setDashboardPage(item.name)}
+                      dense
                     >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText primary={item.name} sx={{ opacity: open ? 1 : 0 }} />
-                  </ListItemButton>
-                </ListItem>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.name}
+                        sx={{ opacity: open ? 1 : 0 }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </Box>
               </Box>
-            </Box>
-          ))}
-        </Box>
-      </List>
-    </Drawer>
-  );
-};
+            ))}
+          </Box>
+        </List>
+      </Drawer>
+    );
+  }
+);
 
 export { Sidebar };
 export type { PageName };

@@ -8,6 +8,7 @@ import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import { useState } from "react";
 import { appColors } from "@/utils";
+import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
@@ -55,13 +56,15 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <Box sx={{ display: "flex", marginTop: 2, flexDirection: "row" }}>
-        <Sidebar
-          open={sideBarOpen}
-          setOpen={setSideBarOpen}
-          setDashboardPage={setDashboardPage}
-          selectedDashboardPage={dashboardPage}
-        />
+      <Box sx={{ display: "flex", marginTop: 4, flexDirection: "row" }}>
+        <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
+          <Sidebar
+            open={sideBarOpen}
+            setOpen={setSideBarOpen}
+            setDashboardPage={setDashboardPage}
+            selectedDashboardPage={dashboardPage}
+          />
+        </ClickAwayListener>
         <Box
           sx={{
             px: 3,
