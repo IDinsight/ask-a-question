@@ -173,9 +173,9 @@ async def voice_search(
         os.remove(file_path)
         file_stream.close()
 
-    if isinstance(response, QueryAudioResponse):
+    if type(response) is QueryAudioResponse:
         return response
-    elif isinstance(response, QueryResponseError):
+    elif type(response) is QueryResponseError:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
