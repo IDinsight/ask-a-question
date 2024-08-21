@@ -1,33 +1,35 @@
 import { keyframes } from "@emotion/react";
 import styled from "@emotion/styled";
-import { CircularProgress, Paper, Switch } from "@mui/material";
 import React, { useState } from "react";
-import { useAuth } from "@/utils/auth";
+
 import {
   Alert,
-  Avatar,
   Box,
+  Checkbox,
+  CircularProgress,
   Fade,
+  FormControlLabel,
   IconButton,
-  InputAdornment,
   Link,
   Modal,
+  Paper,
   Snackbar,
   Typography,
 } from "@mui/material";
+import TextField from "@mui/material/TextField";
+
+import {
+  Close,
+  Send,
+  ThumbDownAlt,
+  ThumbDownOffAlt,
+  ThumbUpAlt,
+  ThumbUpOffAlt,
+} from "@mui/icons-material";
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import CloseIcon from "@mui/icons-material/Close";
-import SendIcon from "@mui/icons-material/Send";
-import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
-import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import TextField from "@mui/material/TextField";
-
-type FeedbackSentimentType = "positive" | "negative";
+import { useAuth } from "@/utils/auth";
 
 interface SearchResult {
   index: string;
@@ -40,6 +42,8 @@ interface MessageData {
   message: SearchResult[] | string;
   json: string;
 }
+
+type FeedbackSentimentType = "positive" | "negative";
 
 // For 3-dot typing animation
 const typing = keyframes`
@@ -65,47 +69,12 @@ const TypingAnimation = () => {
   );
 };
 
-const MessageSkeleton = () => {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "top",
-        boxShadow: 0,
-        py: 2,
-        px: 2,
-        width: "100%",
-      }}
-    >
-      <Avatar
-        alt="FA"
-        sx={{
-          mx: 2,
-          my: 1,
-          width: sizes.icons.medium,
-          height: sizes.icons.medium,
-          bgcolor: "secondary.main",
-        }}
-      >
-        <AutoAwesomeIcon />
-      </Avatar>
-      <Box
-        sx={{
-          display: "flex",
-          py: 0.5,
-          px: 1.5,
-        }}
-      >
-        <TypingAnimation />
-      </Box>
-    </Box>
-  );
-};
-
 const MessageBox = ({
+  loading,
   messageData,
   onFeedbackSend,
 }: {
+  loading: boolean;
   messageData: MessageData;
   onFeedbackSend: (
     messageData: MessageData,
@@ -121,14 +90,14 @@ const MessageBox = ({
     positive: {
       state: thumbsUp,
       setState: setThumbsUp,
-      onIcon: <ThumbUpAltIcon fontSize="small" />,
-      offIcon: <ThumbUpOffAltIcon fontSize="small" />,
+      onIcon: <ThumbUpAlt fontSize="small" />,
+      offIcon: <ThumbUpOffAlt fontSize="small" />,
     },
     negative: {
       state: thumbsDown,
       setState: setThumbsDown,
-      onIcon: <ThumbDownAltIcon fontSize="small" />,
-      offIcon: <ThumbDownOffAltIcon fontSize="small" />,
+      onIcon: <ThumbDownAlt fontSize="small" />,
+      offIcon: <ThumbDownOffAlt fontSize="small" />,
     },
   };
 
@@ -160,145 +129,119 @@ const MessageBox = ({
     ));
   };
 
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "top",
-        boxShadow: 0,
-        py: 2,
-        px: 2,
-        width: "100%",
-      }}
-    >
-      <Avatar
-        alt="FA"
-        sx={{
-          mx: 2,
-          my: 1,
-          width: sizes.icons.medium,
-          height: sizes.icons.medium,
-          bgcolor: "primary.main",
-        }}
-      >
-        <AutoAwesomeIcon />
-      </Avatar>
-      <Box
-        sx={{
-          mx: 2,
-          my: 1,
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <Typography
-          component={"span"}
-          variant="body1"
-          align="left"
-          sx={{ width: "100%" }}
-        >
-          {/* check if AI response or search results */}
-          {typeof messageData.message === "string"
-            ? messageData.message
-            : renderResults(messageData.message)}
-        </Typography>
-        <Box
-          style={{
-            marginTop: "5px",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-          }}
-        >
-          {messageData.json.hasOwnProperty("feedback_secret_key") ? (
-            <Box sx={{ marginRight: "8px" }}>
-              <IconButton
-                aria-label="thumbs up"
-                onClick={() => handleFeedback("positive")}
-                style={feedbackButtonStyle}
-              >
-                {feedbackMapping.positive.state == true
-                  ? feedbackMapping.positive.onIcon
-                  : feedbackMapping.positive.offIcon}
-              </IconButton>
-              <IconButton
-                aria-label="thumbs down"
-                onClick={() => handleFeedback("negative")}
-                style={feedbackButtonStyle}
-              >
-                {feedbackMapping.negative.state == true
-                  ? feedbackMapping.negative.onIcon
-                  : feedbackMapping.negative.offIcon}
-              </IconButton>
-            </Box>
-          ) : null}
-          <Link
-            onClick={toggleJsonModal}
-            variant="caption"
-            align="right"
-            underline="hover"
-            sx={{ cursor: "pointer" }}
+  if (loading) {
+    return <TypingAnimation />;
+  } else {
+    return (
+      <>
+        <Box display="flex" flexDirection="column" justifyContent="center">
+          <Typography
+            component={"span"}
+            variant="body1"
+            align="left"
+            sx={{ width: "100%" }}
           >
-            {"<json>"}
-          </Link>
-        </Box>
-      </Box>
-
-      <Modal
-        open={jsonModalOpen}
-        onClose={toggleJsonModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Fade in={jsonModalOpen}>
+            {/* check if AI response or search results */}
+            {typeof messageData.message === "string"
+              ? messageData.message
+              : renderResults(messageData.message)}
+          </Typography>
           <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "80%",
-              maxHeight: "80%",
-              flexGrow: 1,
-              p: 4,
-              boxShadow: 24,
-              overflow: "scroll",
-              borderRadius: "10px",
-              bgcolor: "background.paper",
+            style={{
+              marginTop: "5px",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
             }}
           >
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <IconButton onClick={toggleJsonModal}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <Typography
-              component={"span"}
-              id="modal-modal-description"
-              sx={{ marginTop: 2 }}
+            {messageData.json.hasOwnProperty("feedback_secret_key") ? (
+              <Box sx={{ marginRight: "8px" }}>
+                <IconButton
+                  aria-label="thumbs up"
+                  onClick={() => handleFeedback("positive")}
+                  style={feedbackButtonStyle}
+                >
+                  {feedbackMapping.positive.state == true
+                    ? feedbackMapping.positive.onIcon
+                    : feedbackMapping.positive.offIcon}
+                </IconButton>
+                <IconButton
+                  aria-label="thumbs down"
+                  onClick={() => handleFeedback("negative")}
+                  style={feedbackButtonStyle}
+                >
+                  {feedbackMapping.negative.state == true
+                    ? feedbackMapping.negative.onIcon
+                    : feedbackMapping.negative.offIcon}
+                </IconButton>
+              </Box>
+            ) : null}
+            <Link
+              onClick={toggleJsonModal}
+              variant="caption"
+              align="right"
+              underline="hover"
+              sx={{ cursor: "pointer" }}
             >
-              <pre
-                style={{
-                  backgroundColor: "#f5f5f5",
-                  border: "1px solid #ccc",
-                  padding: "10px",
-                  borderRadius: "10px",
-                  overflowX: "auto",
-                  fontFamily: "Courier, monospace",
-                }}
-              >
-                {"json" in messageData
-                  ? JSON.stringify(messageData.json, null, 2)
-                  : "No JSON message found"}
-              </pre>
-            </Typography>
+              {"<json>"}
+            </Link>
           </Box>
-        </Fade>
-      </Modal>
-    </Box>
-  );
+        </Box>
+
+        <Modal
+          open={jsonModalOpen}
+          onClose={toggleJsonModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Fade in={jsonModalOpen}>
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "80%",
+                maxHeight: "80%",
+                flexGrow: 1,
+                p: 4,
+                boxShadow: 24,
+                overflow: "scroll",
+                borderRadius: "10px",
+                bgcolor: "background.paper",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <IconButton onClick={toggleJsonModal}>
+                  <Close />
+                </IconButton>
+              </Box>
+              <Typography
+                component={"span"}
+                id="modal-modal-description"
+                sx={{ marginTop: 2 }}
+              >
+                <pre
+                  style={{
+                    backgroundColor: "#f5f5f5",
+                    border: "1px solid #ccc",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    overflowX: "auto",
+                    fontFamily: "Courier, monospace",
+                  }}
+                >
+                  {"json" in messageData
+                    ? JSON.stringify(messageData.json, null, 2)
+                    : "No JSON message found"}
+                </pre>
+              </Typography>
+            </Box>
+          </Fade>
+        </Modal>
+      </>
+    );
+  }
 };
 
 const ErrorSnackBar = ({
@@ -495,61 +438,64 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        marginBottom={2}
+        marginBottom={4}
       >
         <Typography variant="h6">Test Question Answering</Typography>
         <IconButton onClick={onClose}>
-          <CloseIcon />
+          <Close />
         </IconButton>
       </Box>
-      <TextField
-        label="Test question"
-        variant="outlined"
-        fullWidth
-        value={question}
-        onChange={handleQuestionChange}
-        onKeyPress={(event) => {
-          if (event.key === "Enter") {
-            handleSendClick(question, generateLLMResponse);
-          }
-        }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment
-              position="end"
-              sx={{ paddingRight: 2, display: "flex", alignItems: "center" }}
-            >
-              <IconButton
-                onClick={() => handleSendClick(question, generateLLMResponse)}
-                edge="end"
-              >
-                {loading ? <CircularProgress size={24} /> : <SendIcon />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          padding: 2,
-          justifyItems: "right",
-          justifyContent: "right",
-        }}
+        display="flex"
+        flexDirection="column"
+        border={1}
+        borderColor="grey.400"
+        borderRadius={1}
+        padding={2}
       >
-        <Typography variant="overline">AI Response</Typography>
-        <Switch
-          checked={generateLLMResponse}
-          onChange={toggleGenerateLLMResponse}
-          color="primary"
-          size="medium"
+        <TextField
+          variant="standard"
+          placeholder="Ask a question..."
+          fullWidth
+          value={question}
+          onChange={handleQuestionChange}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleSendClick(question, generateLLMResponse);
+            }
+          }}
+          InputProps={{ disableUnderline: true }}
         />
+        <Box
+          display="flex"
+          flexDirection="row"
+          justifyContent="space-between"
+          paddingTop={2}
+          paddingRight={1}
+        >
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={generateLLMResponse}
+                onChange={toggleGenerateLLMResponse}
+                color="info"
+              />
+            }
+            label="Also generate AI response"
+          />
+          <IconButton
+            onClick={() => handleSendClick(question, generateLLMResponse)}
+            color={generateLLMResponse ? "info" : "primary"}
+            disabled={loading ? true : false}
+          >
+            {loading ? <CircularProgress size={24} /> : <Send />}
+          </IconButton>
+        </Box>
       </Box>
-      <Box marginTop={2}>
+      <Box paddingTop={5} paddingInline={3}>
         {response && (
           <MessageBox
-            key={0}
+            loading={loading}
             messageData={response}
             onFeedbackSend={sendResponseFeedback}
           />
