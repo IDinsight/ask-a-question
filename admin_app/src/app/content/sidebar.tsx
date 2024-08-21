@@ -37,9 +37,17 @@ interface SearchResult {
   text: string;
 }
 
+interface SearchResultList {
+  search_results: SearchResult[];
+}
+
+interface LLMResponse extends SearchResultList {
+  llm_response: string;
+}
+
 interface MessageData {
   dateTime: string;
-  message: SearchResult[] | string;
+  message: SearchResultList | LLMResponse;
   json: string;
 }
 
@@ -66,6 +74,39 @@ const TypingAnimation = () => {
       <Fader>.</Fader>
       <Fader>.</Fader>
     </Box>
+  );
+};
+
+const RenderSearchResponse = ({
+  data,
+}: {
+  data: SearchResultList | LLMResponse;
+}) => {
+  return (
+    <>
+      {"llm_response" in data && (
+        <Box display="flex" flexDirection="column">
+          <Typography
+            component={"span"}
+            variant="body1"
+            paddingBottom={sizes.doubleBaseGap}
+          >
+            {data.llm_response}
+          </Typography>
+          <Typography component={"span"} variant="subtitle1">
+            References
+          </Typography>
+        </Box>
+      )}
+      {data["search_results"].map((c: SearchResult) => (
+        <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
+          <Typography component={"span"} variant="subtitle2">
+            {Number(c.index) + 1}: {c.title}
+          </Typography>
+          <Typography variant="body2">{c.text}</Typography>
+        </Box>
+      ))}
+    </>
   );
 };
 
@@ -118,34 +159,13 @@ const MessageBox = ({
     cursor: "pointer",
   };
 
-  const renderResults = (content: SearchResult[]) => {
-    return content.map((c: SearchResult) => (
-      <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
-        <Typography component={"span"} variant="subtitle2">
-          {Number(c.index) + 1}: {c.title}
-        </Typography>
-        <Typography variant="body2">{c.text}</Typography>
-      </Box>
-    ));
-  };
-
   if (loading) {
     return <TypingAnimation />;
   } else {
     return (
       <>
         <Box display="flex" flexDirection="column" justifyContent="center">
-          <Typography
-            component={"span"}
-            variant="body1"
-            align="left"
-            sx={{ width: "100%" }}
-          >
-            {/* check if AI response or search results */}
-            {typeof messageData.message === "string"
-              ? messageData.message
-              : renderResults(messageData.message)}
-          </Typography>
+          <RenderSearchResponse data={messageData.message} />
           <Box
             style={{
               marginTop: "5px",
@@ -303,17 +323,39 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
       }
     }
 
+    const searchResultList: SearchResultList = {
+      search_results: search_results,
+    };
     setResponse({
       dateTime: new Date().toISOString(),
-      message: search_results,
+      message: searchResultList,
       json: response,
     });
   };
 
   const processLLMSearchResponse = (response: any) => {
+    const contentResponse = response.search_results;
+    const search_results: SearchResult[] = [];
+
+    for (const key in contentResponse) {
+      if (contentResponse.hasOwnProperty(key)) {
+        const item = contentResponse[key];
+        search_results.push({
+          index: key,
+          title: item.title,
+          text: item.text,
+        });
+      }
+    }
+
+    const llmResponse: LLMResponse = {
+      search_results: search_results,
+      llm_response: response.llm_response,
+    };
+
     setResponse({
       dateTime: new Date().toISOString(),
-      message: response.llm_response,
+      message: llmResponse,
       json: response,
     });
   };
