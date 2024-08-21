@@ -3,7 +3,6 @@ import styled from "@emotion/styled";
 import React, { useState } from "react";
 
 import {
-  Alert,
   Box,
   Checkbox,
   CircularProgress,
@@ -13,7 +12,6 @@ import {
   Link,
   Modal,
   Paper,
-  Snackbar,
   Typography,
 } from "@mui/material";
 import TextField from "@mui/material/TextField";
@@ -269,32 +267,6 @@ const MessageBox = ({
   }
 };
 
-const ErrorSnackBar = ({
-  message,
-  onClose,
-}: {
-  message: string | null;
-  onClose: () => void;
-}) => {
-  return (
-    <Snackbar
-      open={message ? true : false}
-      autoHideDuration={6000}
-      onClose={onClose}
-      anchorOrigin={{ vertical: "top", horizontal: "right" }}
-    >
-      <Alert
-        onClose={onClose}
-        severity="error"
-        variant="filled"
-        sx={{ width: "100%" }}
-      >
-        {message}
-      </Alert>
-    </Snackbar>
-  );
-};
-
 const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
   const [question, setQuestion] = useState("");
   const handleQuestionChange = (
@@ -462,16 +434,6 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const handleErrorClose = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string,
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setError(null);
-  };
-
   return (
     <Paper
       elevation={2}
@@ -533,7 +495,7 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
           <IconButton
             onClick={() => handleSendClick(question, generateLLMResponse)}
             color={generateLLMResponse ? "info" : "primary"}
-            disabled={loading ? true : false}
+            disabled={loading || question == "" ? true : false}
           >
             {loading ? <CircularProgress size={24} /> : <Send />}
           </IconButton>
@@ -552,4 +514,4 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-export { ErrorSnackBar, QuestionAnsweringSidebar };
+export { QuestionAnsweringSidebar };
