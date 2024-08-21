@@ -315,7 +315,7 @@ def generate_tts__after(func: Callable) -> Callable:
                 llm_response=response.llm_response,
                 search_results=response.search_results,
                 debug_info=response.debug_info,
-                tts_file=None,
+                tts_filepath=None,
             )
 
         response = await _generate_tts_response(
@@ -356,7 +356,7 @@ async def _generate_tts_response(
             text=response.llm_response,
             language=query_refined.original_language,
         )
-        response.tts_file = tts_file_path
+        response.tts_filepath = tts_file_path
     except ValueError as e:
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
         return QueryResponseError(

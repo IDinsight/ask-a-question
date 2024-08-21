@@ -39,7 +39,6 @@ from ..utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from ..voice_api.voice_components import transcribe_audio
 from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
@@ -59,6 +58,7 @@ from .schemas import (
     QueryResponseError,
     ResponseFeedbackBase,
 )
+from .speech_components.external_voice_components import transcribe_audio
 
 logger = setup_logger()
 

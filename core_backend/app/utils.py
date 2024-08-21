@@ -14,7 +14,7 @@ from uuid import uuid4
 
 import aiohttp
 import litellm
-from google.cloud import storage
+from google.cloud import storage  # type: ignore
 from litellm import aembedding
 from redis import asyncio as aioredis
 

@@ -36,7 +36,8 @@ async def transcribe_audio(audio_filename: str) -> str:
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code="en-US",
+            language_code="en-US",  # Checkout language codes here:
+            # https://cloud.google.com/speech-to-text/docs/languages
         )
 
         response = client.recognize(config=config, audio=audio)

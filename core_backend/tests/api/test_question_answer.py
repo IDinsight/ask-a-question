@@ -582,7 +582,7 @@ class TestSTTResponse:
             async_fake_transcribe_audio,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.generate_speech",
+            "core_backend.app.llm_call.process_output.generate_tts_on_gcs",
             async_fake_generate_speech,
         )
         monkeypatch.setattr(
