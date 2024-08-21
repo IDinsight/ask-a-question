@@ -3,6 +3,7 @@
 from datetime import date
 from typing import cast, get_args
 
+import pandas as pd
 from bertopic import BERTopic
 from sqlalchemy import case, func, literal_column, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -886,9 +887,21 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
     preds_, probas_ = topic_model.fit_transform(queries)
 
     # Get the topic info
-    topic_df = topic_model.get_topic_info()
+    topic_df = topic_model.get_topic_info()[1:]  # Skip first row unlabeled
+    # Bin the popularity into 3 bins with verbal labels into "High", "Medium", "Low"
+    topic_df["Popularity"] = pd.cut(
+        topic_df["Count"],
+        bins=[
+            topic_df["Count"].min(),
+            0.15 * topic_df["Count"].max(),
+            0.3 * topic_df["Count"].max(),
+            topic_df["Count"].max(),
+        ],
+        labels=["Low", "Medium", "High"],
+        include_lowest=True,
+    )
     # Take the top 5 topics
-    top_5_df = topic_df[1:6].copy()
+    top_5_df = topic_df[0:5].copy()
 
     # The get_topic_info() method only returns 3 example sentences
     # and it picks the most representative 3 sentences for each topic.
@@ -915,7 +928,7 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
     response = ask_question(prompt)  # to do: use LiteLLM Proxy instead of direct OpenAI
     topic_list = response["topic_list"]
     top_5_df["llm_description"] = topic_list
-
+    print(top_5_df)
     # TopicData has three fields: Topic, Description, Examples
     # Create a list of TopicData objects. These will then
     # be used to create the InsightsTopicsData object which the
@@ -925,7 +938,8 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
             topic_id=row["Topic"],
             topic_name=row["llm_description"],
             topic_samples=row["Examples"],
+            topic_popularity=row["Popularity"],
         )
         for index, row in top_5_df.iterrows()
     ]
-    return TopicsData(n_topics=5, topics=topic_data)
+    return TopicsData(n_topics=100, topics=topic_data)

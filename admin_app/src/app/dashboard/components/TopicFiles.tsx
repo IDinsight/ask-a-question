@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 import { useAuth } from "@/utils/auth";
-import { Token } from "@mui/icons-material";
+import Pagination from "@mui/material/Pagination";
 
 interface Topic {
   name: string;
-  count: number;
   examples: { timestamp: string; userQuestion: string }[];
+  topic_popularity: string;
+}
+
+interface TopicsResponse {
+  n_topics: number;
 }
 
 const TopicsContainer = styled.div`
@@ -16,13 +22,14 @@ const TopicsContainer = styled.div`
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
 `;
 
 const TopicsList = styled.ul`
   list-style-type: none;
   padding: 0;
   margin: 0;
-  width: 25%;
+  width: 100%;
 `;
 
 const TopicItem = styled.li<{ selected: boolean }>`
@@ -42,12 +49,11 @@ const TopicName = styled.span`
   font-weight: 500;
 `;
 
-const TopicCount = styled.span`
-  background-color: ${({ color }) => color || "#f0f0f0"};
-  color: #fff;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 0.9em;
+const TopicPopularity = styled.span<{ color: string }>`
+  background-color: ${({ color }) => color};
+  color: white;
+  border-radius: 4px;
+  padding: 4px;
 `;
 
 const ExampleSentencesContainer = styled.div`
@@ -82,16 +88,46 @@ const ExampleTableHeader = styled.th`
   background-color: #f2f2f2;
 `;
 
+const LoadingOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+
+const PaginationContainer = styled.div`
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+`;
+
 const TopicsSection: React.FC = () => {
   const { token } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [n_topics, setNTopics] = useState<number>(0);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const topicsPerPage = 5;
 
-  const getTopicColor = (index: number) => {
-    const colors = ["#FFA500", "#4B0082", "#228B22"];
-    return colors[index % colors.length];
+  const getTopicColor = (popularity: string) => {
+    switch (popularity) {
+      case "High":
+        return "red";
+      case "Medium":
+        return "orange"; // Changed from yellow for better visibility
+      case "Low":
+        return "green";
+      default:
+        return "gray"; // Fallback for unknown popularity levels
+    }
   };
 
   useEffect(() => {
@@ -106,14 +142,15 @@ const TopicsSection: React.FC = () => {
 
         const fetchedTopics = response.data.topics.map((topic: any) => ({
           name: topic.topic_name,
-          count: topic.topic_samples.length,
+          topic_popularity: topic.topic_popularity,
           examples: topic.topic_samples.map((sample: string) => ({
             timestamp: "2024-07-23 06:01PM", // Placeholder timestamp
             userQuestion: sample,
           })),
         }));
-
+        const nTopics = response.data.n_topics;
         setTopics(fetchedTopics);
+        setNTopics(nTopics);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching topics:", err);
@@ -125,47 +162,82 @@ const TopicsSection: React.FC = () => {
     fetchTopics();
   }, []);
 
-  if (loading) return <p>Loading topics...</p>;
+  // Calculate total pages based on the number of topics
+  const totalPages = Math.ceil(n_topics / topicsPerPage);
+  // Get topics for the current page
+  const currentTopics = topics.slice(
+    (currentPage - 1) * topicsPerPage,
+    currentPage * topicsPerPage,
+  );
+
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number,
+  ) => {
+    setCurrentPage(value);
+  };
+
+  if (loading)
+    return (
+      <LoadingOverlay>
+        <Box display="flex" flexDirection="column" alignItems="center">
+          <CircularProgress size={60} />
+          <p>Generating insights...</p>
+        </Box>
+      </LoadingOverlay>
+    );
+
   if (error) return <p>{error}</p>;
 
   return (
     <TopicsContainer>
       <TopicsList>
-        {topics.map((topic, index) => (
+        {currentTopics.map((topic, index) => (
           <TopicItem
             key={index}
             onClick={() => setSelectedTopic(topic)}
             selected={selectedTopic?.name === topic.name}
           >
             <TopicName>{topic.name}</TopicName>
-            <TopicCount color={getTopicColor(index)}>{topic.count}</TopicCount>
+            <TopicPopularity color={getTopicColor(topic.topic_popularity)}>
+              {topic.topic_popularity}
+            </TopicPopularity>
           </TopicItem>
         ))}
       </TopicsList>
+      <PaginationContainer>
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          color="primary"
+        />
+      </PaginationContainer>
       <ExampleSentencesContainer>
-        <h2>Escalated Queries</h2>
-        {selectedTopic ? (
-          <ExampleTable>
-            <thead>
-              <tr>
-                <ExampleTableHeader>Timestamp</ExampleTableHeader>
-                <ExampleTableHeader>User Question</ExampleTableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedTopic.examples.map((example, index) => (
+        <ExampleTable>
+          <thead>
+            <tr>
+              <ExampleTableHeader>Timestamp</ExampleTableHeader>
+              <ExampleTableHeader>User Question</ExampleTableHeader>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedTopic ? (
+              selectedTopic.examples.map((example, index) => (
                 <ExampleTableRow key={index}>
                   <ExampleTableCell istimestamp={true}>
                     {example.timestamp}
                   </ExampleTableCell>
                   <ExampleTableCell>{example.userQuestion}</ExampleTableCell>
                 </ExampleTableRow>
-              ))}
-            </tbody>
-          </ExampleTable>
-        ) : (
-          <p>Select a topic to see examples.</p>
-        )}
+              ))
+            ) : (
+              <tr>
+                <td colSpan={2}>Select a topic to see examples.</td>
+              </tr>
+            )}
+          </tbody>
+        </ExampleTable>
       </ExampleSentencesContainer>
     </TopicsContainer>
   );
