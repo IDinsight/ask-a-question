@@ -18,6 +18,7 @@ import {
 } from "./components/PlaygroundComponents";
 import { Box } from "@mui/material";
 import { useAuth } from "@/utils/auth";
+
 const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -246,38 +247,33 @@ const Page = () => {
   };
 
   return (
-    <>
-      <Layout.Spacer multiplier={4} />
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      sx={{ paddingBottom: 15, paddingTop: 4 }}
+    >
       <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        sx={{ height: "90vh", width: "100%", pb: 10, mt: 4 }}
+        sx={{
+          width: "100%",
+          maxWidth: "lg",
+        }}
       >
-        <Box
-          mb={10}
-          sx={{
-            width: "100%",
-            maxWidth: "lg",
-            pb: 10,
-          }}
-        >
-          {messages.map((message, index) => (
-            <MessageBox
-              key={index}
-              message={message}
-              onFeedbackSend={sendResponseFeedback}
-            />
-          ))}
-          {loading && <MessageSkeleton />}
-          <div ref={bottomRef} />
-        </Box>
-        <ErrorSnackBar message={error} onClose={handleErrorClose} />
-        <Box sx={{ width: "100%", maxWidth: "lg", px: 2 }}>
-          <PersistentSearchBar onSend={onSend} />
-        </Box>
+        {messages.map((message, index) => (
+          <MessageBox
+            key={index}
+            message={message}
+            onFeedbackSend={sendResponseFeedback}
+          />
+        ))}
+        {loading && <MessageSkeleton />}
+        <div ref={bottomRef} />
       </Box>
-    </>
+      <ErrorSnackBar message={error} onClose={handleErrorClose} />
+      <Box sx={{ width: "100%", maxWidth: "lg", paddingLeft: 2 }}>
+        <PersistentSearchBar onSend={onSend} />
+      </Box>
+    </Box>
   );
 };
 

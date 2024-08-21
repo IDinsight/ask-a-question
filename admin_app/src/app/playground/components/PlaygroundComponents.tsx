@@ -155,7 +155,7 @@ const PersistentSearchBar = ({
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position="end" sx={{ pr: 2 }}>
+              <InputAdornment position="end" sx={{ paddingRight: 2 }}>
                 <IconButton
                   onClick={() => {
                     onSend(queryText, selectedOption);
@@ -283,7 +283,7 @@ const MessageBox = ({
 
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
-      <Box sx={{ pb: sizes.smallGap }} key={c.index}>
+      <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
         <Typography component={"span"} variant="subtitle2">
           {Number(c.index) + 1}: {c.title}
         </Typography>
@@ -422,7 +422,7 @@ const MessageBox = ({
             <Typography
               component={"span"}
               id="modal-modal-description"
-              sx={{ mt: 2 }}
+              sx={{ marginTop: 2 }}
             >
               <pre
                 style={{

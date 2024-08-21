@@ -47,7 +47,7 @@ const ChatManagerGrid = () => {
 
   return (
     <>
-      <Grid container spacing={sizes.baseGap} style={{ minWidth: 220 }}>
+      <Grid container spacing={sizes.baseGap} style={{ minWidth: 700 }}>
         {chatManagers.map((item, index) => (
           <Grid
             item

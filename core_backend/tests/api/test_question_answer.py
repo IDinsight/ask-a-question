@@ -1,4 +1,5 @@
 import os
+import time
 from functools import partial
 from typing import Any, Dict, List
 
@@ -205,6 +206,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
 
@@ -404,6 +406,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
         response = client.post(
@@ -607,7 +610,7 @@ class TestSTTResponse:
             json_response = response.json()
             assert "llm_response" in json_response
             if generate_tts:
-                assert "tts_file" in json_response
+                assert "tts_filepath" in json_response
         elif expected_status_code == 500:
             json_response = response.json()
             assert "detail" in json_response

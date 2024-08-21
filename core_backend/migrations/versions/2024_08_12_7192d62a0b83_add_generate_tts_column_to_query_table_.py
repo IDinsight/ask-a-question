@@ -1,4 +1,5 @@
-"""add generate_tts column to query table and tts_file column to query response table
+"""
+add generate_tts column to query table and tts_file column to query response table
 
 Revision ID: 7192d62a0b83
 Revises: 358588881e01

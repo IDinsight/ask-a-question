@@ -23,7 +23,7 @@ if __name__ == "__main__":
         sys.path.append(PACKAGE_PATH)
 
 
-from app.contents.config import PGVECTOR_VECTOR_SIZE
+from app.config import PGVECTOR_VECTOR_SIZE
 from app.contents.models import ContentDB
 from app.database import get_session
 from app.question_answer.models import (

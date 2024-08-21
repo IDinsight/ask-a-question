@@ -2,8 +2,8 @@ import os
 
 from pydub import AudioSegment
 
-from ..llm_call.llm_prompts import IdentifiedLanguage
-from ..utils import setup_logger
+from ...llm_call.llm_prompts import IdentifiedLanguage
+from ...utils import setup_logger
 
 logger = setup_logger("Voice utils")
 

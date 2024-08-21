@@ -15,15 +15,17 @@ from ..config import (
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
-    AudioResponse,
     ErrorType,
+    QueryAudioResponse,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
 )
+from ..question_answer.speech_components.external_voice_components import (
+    generate_tts_on_gcs,
+)
 from ..question_answer.utils import get_context_string_from_search_results
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
-from ..voice_api.voice_components import generate_speech
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
 from .utils import (
@@ -290,10 +292,10 @@ def generate_tts__after(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(
         query_refined: QueryRefined,
-        response: AudioResponse | QueryResponseError,
+        response: QueryAudioResponse | QueryResponseError,
         *args: Any,
         **kwargs: Any,
-    ) -> AudioResponse | QueryResponseError:
+    ) -> QueryAudioResponse | QueryResponseError:
         """
         Wrapper function to check conditions before generating TTS.
         """
@@ -303,11 +305,11 @@ def generate_tts__after(func: Callable) -> Callable:
         if not query_refined.generate_tts:
             return response
 
-        if not isinstance(response, AudioResponse):
+        if not isinstance(response, QueryAudioResponse):
             logger.warning(
                 f"Converting response of type {type(response)} to AudioResponse."
             )
-            response = AudioResponse(
+            response = QueryAudioResponse(
                 query_id=response.query_id,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
@@ -328,8 +330,8 @@ def generate_tts__after(func: Callable) -> Callable:
 
 async def _generate_tts_response(
     query_refined: QueryRefined,
-    response: AudioResponse,
-) -> AudioResponse | QueryResponseError:
+    response: QueryAudioResponse,
+) -> QueryAudioResponse | QueryResponseError:
     """
     Generate the TTS response.
 
@@ -345,7 +347,12 @@ async def _generate_tts_response(
         return response
 
     try:
-        tts_file_path = await generate_speech(
+        if query_refined.original_language is None:
+            error_msg = "Language must be provided to generate speech."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        tts_file_path = await generate_tts_on_gcs(
             text=response.llm_response,
             language=query_refined.original_language,
         )

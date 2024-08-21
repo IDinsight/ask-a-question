@@ -59,7 +59,7 @@ const StatCard: React.FC<StatCardProps> = ({
             sx={{
               fontSize: "2rem",
               fontWeight: "bold",
-              mr: 0.5,
+              marginRight: 0.5,
             }}
           >
             {value.toLocaleString()}

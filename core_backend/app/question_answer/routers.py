@@ -6,13 +6,13 @@ import os
 from io import BytesIO
 from typing import Tuple
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import BUCKET_NAME, CUSTOM_SPEECH_ENDPOINT
+from ..config import CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -51,8 +51,8 @@ from .models import (
     save_user_query_to_db,
 )
 from .schemas import (
-    AudioResponse,
     ContentFeedback,
+    QueryAudioResponse,
     QueryBase,
     QueryRefined,
     QueryResponse,
@@ -78,7 +78,7 @@ router = APIRouter(
 
 @router.post(
     "/voice-search",
-    response_model=AudioResponse | QueryResponse,
+    response_model=QueryAudioResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
@@ -91,14 +91,15 @@ router = APIRouter(
     },
 )
 async def voice_search(
-    generate_tts: bool = Form(False),
     file: UploadFile = File(...),
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
-) -> AudioResponse | QueryResponse | JSONResponse:
+) -> QueryAudioResponse | JSONResponse:
     """
-    Endpoint to transcribe audio from the provided file and generate
-    an LLM response along with an optional TTS file.
+    Endpoint to transcribe audio from the provided file,
+    generate an LLM response, by default generate_tts is
+    set to true and return a public signed URL of an audio
+    file containing the spoken version of the generated response
     """
     file_stream = BytesIO(await file.read())
 
@@ -117,7 +118,7 @@ async def voice_search(
     destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
     await upload_file_to_gcs(
-        BUCKET_NAME, file_stream, destination_blob_name, content_type
+        GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
     )
 
     if CUSTOM_SPEECH_ENDPOINT != "":
@@ -143,7 +144,7 @@ async def voice_search(
         user_id=user_db.user_id,
         user_query=user_query,
         asession=asession,
-        generate_tts=generate_tts,
+        generate_tts=True,
     )
 
     response = await search_base(
@@ -172,9 +173,7 @@ async def voice_search(
         os.remove(file_path)
         file_stream.close()
 
-    if isinstance(response, AudioResponse):
-        return response
-    elif isinstance(response, QueryResponse):
+    if isinstance(response, QueryAudioResponse):
         return response
     elif isinstance(response, QueryResponseError):
         return JSONResponse(
@@ -310,10 +309,6 @@ async def search_base(
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
-    Raises
-    ------
-    ValueError
-        If the question language is not identified.
     """
 
     # always do the embeddings search even if some guardrails have failed

@@ -16,7 +16,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
-import { Layout } from "./Layout";
 
 interface Page {
   title: string;
@@ -47,10 +46,8 @@ const NavBar = () => {
         appStyles.alignItemsCenter,
       ]}
     >
-      <Logo />
       <SmallScreenNavMenu />
       <LargeScreenNavMenu />
-      <Layout.Spacer horizontal multiplier={1.5} />
       <UserDropdown />
     </AppBar>
   );
@@ -65,7 +62,6 @@ const Logo = () => {
         sx={{
           height: 36,
           aspect_ratio: 1200 / 214,
-          display: { xs: "none", md: "block" },
         }}
       />
     </Link>
@@ -78,7 +74,16 @@ const SmallScreenNavMenu = () => {
     null,
   );
   return (
-    <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+    <Box
+      alignItems="center"
+      gap={1.5}
+      paddingRight={1.5}
+      sx={{
+        height: sizes.navbar,
+        flexGrow: 1,
+        display: { xs: "flex", md: "none" },
+      }}
+    >
       <IconButton
         size="large"
         aria-label="account of current user"
@@ -91,6 +96,7 @@ const SmallScreenNavMenu = () => {
       >
         <MenuIcon />
       </IconButton>
+      <Logo />
       <Menu
         id="menu-appbar"
         anchorEl={anchorElNav}
@@ -177,97 +183,110 @@ const LargeScreenNavMenu = () => {
 
   return (
     <Box
-      justifyContent="flex-end"
+      justifyContent="space-between"
       alignItems="center"
-      sx={{ flexGrow: 1, display: { xs: "none", md: "flex", gap: 15 } }}
+      sx={{
+        height: sizes.navbar,
+        flexGrow: 1,
+        display: { xs: "none", md: "flex" },
+      }}
+      paddingLeft={0.5}
+      paddingRight={1.5}
     >
-      <Typography
-        onClick={handleConfigureClick}
-        sx={{
-          color:
-            pathname === "/content" || pathname === "/urgency-rules"
-              ? appColors.white
-              : appColors.outline,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-        }}
+      <Logo />
+      <Box
+        justifyContent="flex-end"
+        alignItems="center"
+        sx={{ flexGrow: 1, display: "flex", gap: 1.5 }}
       >
-        {selectedOption} <ArrowDropDown />
-      </Typography>
-      <Menu
-        id="simple-menu"
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={() => handleConfigureClose(null)}
-        sx={{
-          marginTop: "14px",
-          "& .MuiPaper-root": {
-            backgroundColor: appColors.primary,
-            color: "white",
-          },
-          "& .Mui-selected, & .MuiMenuItem-root:hover": {
-            backgroundColor: appColors.deeperPrimary,
-          },
-        }}
-      >
-        <MenuItem
-          onClick={() =>
-            handleConfigureClose({
-              title: "Manage Content",
-              path: "content",
-            })
-          }
-          style={{ color: "white" }}
+        <Typography
+          onClick={handleConfigureClick}
+          sx={{
+            color:
+              pathname === "/content" || pathname === "/urgency-rules"
+                ? appColors.white
+                : appColors.outline,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
         >
-          Manage Content
-        </MenuItem>
-        <MenuItem
-          onClick={() =>
-            handleConfigureClose({
-              title: "Manage Urgency Rules",
-              path: "urgency-rules",
-            })
-          }
+          {selectedOption} <ArrowDropDown />
+        </Typography>
+        <Menu
+          id="simple-menu"
+          anchorEl={anchorEl}
+          keepMounted
+          open={Boolean(anchorEl)}
+          onClose={() => handleConfigureClose(null)}
+          sx={{
+            marginTop: "14px",
+            "& .MuiPaper-root": {
+              backgroundColor: appColors.primary,
+              color: "white",
+            },
+            "& .Mui-selected, & .MuiMenuItem-root:hover": {
+              backgroundColor: appColors.deeperPrimary,
+            },
+          }}
         >
-          Manage Urgency Rules
-        </MenuItem>
-      </Menu>
-      {staticPages.map((page) => (
-        <Link
-          href={page.path}
-          key={page.title}
-          passHref
-          style={{ textDecoration: "none" }}
-        >
-          <Typography
-            key={page.title}
-            sx={{
-              margin: sizes.baseGap,
-              color:
-                pathname === page.path ? appColors.white : appColors.outline,
-            }}
+          <MenuItem
+            onClick={() =>
+              handleConfigureClose({
+                title: "Manage Content",
+                path: "content",
+              })
+            }
+            style={{ color: "white" }}
           >
-            {page.title}
-          </Typography>
-        </Link>
-      ))}
-      <Button
-        variant="outlined"
-        onClick={() => router.push("/dashboard")}
-        style={{
-          color:
-            pathname === "/dashboard" ? appColors.white : appColors.outline,
-          borderColor:
-            pathname === "/dashboard" ? appColors.white : appColors.outline,
-          maxHeight: "30px",
-          marginInline: 5,
-        }}
-      >
-        Dashboard
-      </Button>
+            Manage Content
+          </MenuItem>
+          <MenuItem
+            onClick={() =>
+              handleConfigureClose({
+                title: "Manage Urgency Rules",
+                path: "urgency-rules",
+              })
+            }
+          >
+            Manage Urgency Rules
+          </MenuItem>
+        </Menu>
+        {staticPages.map((page) => (
+          <Link
+            href={page.path}
+            key={page.title}
+            passHref
+            style={{ textDecoration: "none" }}
+          >
+            <Typography
+              key={page.title}
+              sx={{
+                margin: sizes.baseGap,
+                color:
+                  pathname === page.path ? appColors.white : appColors.outline,
+              }}
+            >
+              {page.title}
+            </Typography>
+          </Link>
+        ))}
+        <Button
+          variant="outlined"
+          onClick={() => router.push("/dashboard")}
+          style={{
+            color:
+              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            borderColor:
+              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            maxHeight: "30px",
+            marginInline: 5,
+          }}
+        >
+          Dashboard
+        </Button>
+      </Box>
     </Box>
   );
 };

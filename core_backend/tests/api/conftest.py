@@ -17,8 +17,8 @@ from core_backend.app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
+    PGVECTOR_VECTOR_SIZE,
 )
-from core_backend.app.contents.config import PGVECTOR_VECTOR_SIZE
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
     SYNC_DB_API,
@@ -526,7 +526,7 @@ def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
     )
     monkeysession.setattr(
         "core_backend.app.voice_api.voice_components.generate_public_url",
-        async_fake_generate_signed_url,
+        async_fake_generate_public_url,
     )
 
 
@@ -537,7 +537,7 @@ async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
     pass
 
 
-async def async_fake_generate_signed_url(*args: Any, **kwargs: Any) -> str:
+async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
     """
     A dummy function to replace the real generate_public_url function.
     """

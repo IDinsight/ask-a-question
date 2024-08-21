@@ -12,6 +12,12 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
+# PGVector variables
+PGVECTOR_VECTOR_SIZE = os.environ.get("PGVECTOR_VECTOR_SIZE", "1536")
+PGVECTOR_M = os.environ.get("PGVECTOR_M", "16")
+PGVECTOR_EF_CONSTRUCTION = os.environ.get("PGVECTOR_EF_CONSTRUCTION", "64")
+PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
+
 # LiteLLM proxy variables
 # Endpoint
 LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
@@ -74,4 +80,4 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 
 # Google Cloud storage
-BUCKET_NAME = os.environ.get("BUCKET_NAME", "aaq-speech-test")
+GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")

@@ -3,9 +3,9 @@ from io import BytesIO
 
 from google.cloud import speech, texttospeech
 
-from ..config import BUCKET_NAME
-from ..llm_call.llm_prompts import IdentifiedLanguage
-from ..utils import (
+from ...config import GCS_SPEECH_BUCKET
+from ...llm_call.llm_prompts import IdentifiedLanguage
+from ...utils import (
     generate_public_url,
     generate_random_filename,
     get_file_extension_from_mime_type,
@@ -54,7 +54,7 @@ async def transcribe_audio(audio_filename: str) -> str:
         raise ValueError(error_msg) from e
 
 
-async def generate_speech(
+async def generate_tts_on_gcs(
     text: str,
     language: IdentifiedLanguage | None,
 ) -> str:
@@ -96,10 +96,10 @@ async def generate_speech(
         destination_blob_name = f"tts-voice-notes/{unique_filename}"
 
         await upload_file_to_gcs(
-            BUCKET_NAME, mp3_file, destination_blob_name, content_type
+            GCS_SPEECH_BUCKET, mp3_file, destination_blob_name, content_type
         )
 
-        public_url = await generate_public_url(BUCKET_NAME, destination_blob_name)
+        public_url = await generate_public_url(GCS_SPEECH_BUCKET, destination_blob_name)
 
         logger.info(
             f"Speech generated successfully. Saved to {destination_blob_name} in GCS."

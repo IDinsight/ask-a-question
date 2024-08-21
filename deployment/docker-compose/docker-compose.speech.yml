@@ -11,8 +11,6 @@ services:
         PREFERRED_MODEL: "small"
     image: idinsight/speech-service:latest
     restart: always
-    ports:
-      - "8001:8001"
     develop:
       watch:
         - action: rebuild
