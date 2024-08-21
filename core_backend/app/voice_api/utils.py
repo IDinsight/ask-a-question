@@ -8,24 +8,27 @@ from ..utils import setup_logger
 logger = setup_logger("Voice utils")
 
 
-def get_gtts_lang_code(identified_language: IdentifiedLanguage) -> str:
+def get_gtts_lang_code_and_model(
+    identified_language: IdentifiedLanguage,
+) -> tuple[str, str]:
     """
-    Maps IdentifiedLanguage values to google-cloud text to
-    speech language codes.
+    Maps IdentifiedLanguage values to Google Cloud Text-to-Speech language codes
+    and voice model names.
     """
-    # Please add the language codes according to
+    # Add language codes and voice models according to
     # https://cloud.google.com/text-to-speech/docs/voices
     mapping = {
-        IdentifiedLanguage.ENGLISH: "en-US",
-        IdentifiedLanguage.SWAHILI: "sw-TZ",
-        IdentifiedLanguage.HINDI: "hi-IN",
+        IdentifiedLanguage.ENGLISH: ("en-US", "Neural2-D"),
+        # IdentifiedLanguage.SWAHILI: ("sw-TZ", "Neural2-D"), # no support for swahili
+        IdentifiedLanguage.HINDI: ("hi-IN", "Neural2-D"),
+        # Add more languages and models as needed
     }
 
-    lang_code = mapping.get(identified_language)
-    if lang_code is None:
+    result = mapping.get(identified_language)
+    if result is None:
         raise ValueError(f"Unsupported language: {identified_language}")
 
-    return lang_code
+    return result
 
 
 def convert_audio_to_wav(input_filename: str) -> str:

@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import BUCKET_NAME, SPEECH_ENDPOINT
+from ..config import BUCKET_NAME, CUSTOM_SPEECH_ENDPOINT
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -120,11 +120,11 @@ async def voice_search(
         BUCKET_NAME, file_stream, destination_blob_name, content_type
     )
 
-    if SPEECH_ENDPOINT != "":
-        transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
+    if CUSTOM_SPEECH_ENDPOINT != "":
+        transcription_result = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
         user_query = QueryBase(
             generate_llm_response=True,
-            query_text=transcription_result[0],
+            query_text=transcription_result["text"],
             query_metadata={},
         )
     else:
@@ -134,6 +134,7 @@ async def voice_search(
             query_text=external_transcription_result,
             query_metadata={},
         )
+
     (
         user_query_db,
         user_query_refined_template,
@@ -194,7 +195,7 @@ async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
         async with client.post(endpoint_url, json={"file_path": file_path}) as response:
             if response.status != 200:
                 error_content = await response.json()
-                logger.error(f"Error from SPEECH_ENDPOINT: {error_content}")
+                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
                 raise HTTPException(status_code=response.status, detail=error_content)
             return await response.json()
 

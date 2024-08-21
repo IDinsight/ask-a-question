@@ -561,6 +561,27 @@ class TestSTTResponse:
                 )
             return mock_response
 
+        async def async_fake_transcribe_audio(*args: Any, **kwargs: Any) -> str:
+
+            if expected_status_code == 500:
+                raise HTTPException(
+                    status_code=500, detail={"error": "Internal Server Error"}
+                )
+
+            return "transcribed text"
+
+        async def async_fake_generate_speech(*args: Any, **kwargs: Any) -> str:
+
+            return "http://example.com/hex-url"
+
+        monkeypatch.setattr(
+            "core_backend.app.question_answer.routers.transcribe_audio",
+            async_fake_transcribe_audio,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.process_output.generate_speech",
+            async_fake_generate_speech,
+        )
         monkeypatch.setattr(
             "core_backend.app.question_answer.routers.post_to_speech",
             dummy_post_to_speech,

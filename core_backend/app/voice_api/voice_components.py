@@ -12,7 +12,7 @@ from ..utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from .utils import convert_audio_to_wav, get_gtts_lang_code
+from .utils import convert_audio_to_wav, get_gtts_lang_code_and_model
 
 logger = setup_logger("Voice API")
 
@@ -70,13 +70,13 @@ async def generate_speech(
     try:
         client = texttospeech.TextToSpeechClient()
 
-        lang = get_gtts_lang_code(language)
+        lang, voice_model = get_gtts_lang_code_and_model(language)
 
         synthesis_input = texttospeech.SynthesisInput(text=text)
 
         voice = texttospeech.VoiceSelectionParams(
             language_code=lang,
-            name=f"{lang}-Neural2-D",
+            name=f"{lang}-{voice_model}",
         )
 
         audio_config = texttospeech.AudioConfig(

@@ -275,12 +275,15 @@ async def update_api_limits(
 
 def generate_random_filename(extension: str) -> str:
     """
-    Generate a random filename with the specified extension.
+    Generate a random filename with the specified extension by concatenating
+    multiple UUIDv4 strings.
 
     Params:
         extension (str): The file extension (e.g., '.wav', '.mp3').
     """
-    return f"{uuid4().hex}{extension}"
+
+    random_filename = "".join([uuid4().hex for _ in range(5)])
+    return f"{random_filename}{extension}"
 
 
 def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
