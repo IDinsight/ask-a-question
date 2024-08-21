@@ -47,7 +47,7 @@ interface LLMResponse extends SearchResultList {
 
 interface MessageData {
   dateTime: string;
-  message: SearchResultList | LLMResponse;
+  message: SearchResultList | LLMResponse | string;
   json: string;
 }
 
@@ -165,7 +165,12 @@ const MessageBox = ({
     return (
       <>
         <Box display="flex" flexDirection="column" justifyContent="center">
-          <RenderSearchResponse data={messageData.message} />
+          {/* if type is string, there was an error */}
+          {typeof messageData.message === "string" ? (
+            <Typography variant="body1">{messageData.message}</Typography>
+          ) : (
+            <RenderSearchResponse data={messageData.message} />
+          )}
           <Box
             style={{
               marginTop: "5px",
