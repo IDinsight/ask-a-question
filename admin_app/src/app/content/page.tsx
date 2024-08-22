@@ -35,7 +35,7 @@ import { useAuth } from "@/utils/auth";
 import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { QuestionAnsweringSidebar } from "./sidebar";
+import { SearchSidebar } from "./SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const CARD_HEIGHT = 250;
@@ -191,7 +191,7 @@ const CardsPage = () => {
             display: openSidebar ? "block" : "none",
           }}
         >
-          <QuestionAnsweringSidebar onClose={handleSidebarClose} />
+          <SearchSidebar closeSidebar={handleSidebarClose} />
         </Grid>
       </Grid>
       <Snackbar

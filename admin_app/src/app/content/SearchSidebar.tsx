@@ -1,24 +1,9 @@
-import { keyframes } from "@emotion/react";
-import styled from "@emotion/styled";
 import React, { useState } from "react";
 
-import {
-  Box,
-  Checkbox,
-  CircularProgress,
-  Fade,
-  FormControlLabel,
-  IconButton,
-  Link,
-  Modal,
-  Paper,
-  Typography,
-} from "@mui/material";
-import TextField from "@mui/material/TextField";
+import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
 
 import {
   Close,
-  Send,
   ThumbDownAlt,
   ThumbDownOffAlt,
   ThumbUpAlt,
@@ -27,7 +12,8 @@ import {
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { useAuth } from "@/utils/auth";
+import { TestSidebar } from "./SidebarCommon";
+import TypingAnimation from "./TypingAnimation";
 
 interface SearchResult {
   index: string;
@@ -50,30 +36,6 @@ interface MessageData {
 }
 
 type FeedbackSentimentType = "positive" | "negative";
-
-// For 3-dot typing animation
-const typing = keyframes`
-  from { opacity: 0 }
-  to { opacity: 1 }
-`;
-const Fader = styled("div")`
-  animation: ${typing} 1s infinite;
-  &:nth-of-type(2) {
-    animation-delay: 0.2s;
-  }
-  &:nth-of-type(3) {
-    animation-delay: 0.4s;
-  }
-`;
-const TypingAnimation = () => {
-  return (
-    <Box sx={{ display: "flex", fontSize: "1.3rem" }}>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
-    </Box>
-  );
-};
 
 const RenderSearchResponse = ({
   data,
@@ -108,17 +70,19 @@ const RenderSearchResponse = ({
   );
 };
 
-const MessageBox = ({
-  loading,
-  messageData,
-  onFeedbackSend,
-}: {
+interface ResponseBoxProps {
   loading: boolean;
   messageData: MessageData;
   onFeedbackSend: (
     messageData: MessageData,
     feedbackSentiment: FeedbackSentimentType,
   ) => void;
+}
+
+const ResponseBox: React.FC<ResponseBoxProps> = ({
+  loading,
+  messageData,
+  onFeedbackSend,
 }) => {
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
   const toggleJsonModal = (): void => setJsonModalOpen(!jsonModalOpen);
@@ -267,24 +231,13 @@ const MessageBox = ({
   }
 };
 
-const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
-  const [question, setQuestion] = useState("");
-  const handleQuestionChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setQuestion(event.target.value);
-  };
-
-  const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
-  const toggleGenerateLLMResponse = () => {
-    setGenerateLLMResponse((prev) => !prev);
-  };
-
-  const [response, setResponse] = useState<MessageData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
-
+const getSearchResponse = (
+  question: string,
+  generateLLMResponse: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setResponse: React.Dispatch<React.SetStateAction<MessageData | null>>,
+  token: string | null,
+) => {
   const processEmbeddingsSearchResponse = (response: any) => {
     const contentResponse = response.search_results;
     const search_results: SearchResult[] = [];
@@ -371,160 +324,76 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
     });
   };
 
-  const handleSendClick = (question: string, generateLLMResponse: boolean) => {
-    if (question === "") {
-      return;
-    }
-    setLoading(true);
-    if (token) {
-      apiCalls
-        .getSearch(question, generateLLMResponse, token)
-        .then((response) => {
-          if (response.status === 200) {
-            if (generateLLMResponse) {
-              processLLMSearchResponse(response);
-            } else {
-              processEmbeddingsSearchResponse(response);
-            }
+  if (question === "") {
+    return;
+  }
+  setLoading(true);
+  if (token) {
+    apiCalls
+      .getSearch(question, generateLLMResponse, token)
+      .then((response) => {
+        if (response.status === 200) {
+          if (generateLLMResponse) {
+            processLLMSearchResponse(response);
           } else {
-            setError("Search failed.");
-            processNotOKResponse(response);
-            console.error(response);
+            processEmbeddingsSearchResponse(response);
           }
-        })
-        .catch((error: Error) => {
-          setError("Search failed.");
-          processErrorMessage(error);
-          console.error(error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
-  };
+        } else {
+          processNotOKResponse(response);
+          console.error(response);
+        }
+      })
+      .catch((error: Error) => {
+        processErrorMessage(error);
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
+};
 
-  const sendResponseFeedback = (
-    messageData: MessageData,
-    feedback_sentiment: FeedbackSentimentType,
-  ) => {
-    if (token) {
-      // Assuming message.json is a JSON string. Parse it if necessary.
-      const jsonResponse =
-        typeof messageData.json === "string"
-          ? JSON.parse(messageData.json)
-          : messageData.json;
+const sendResponseFeedback = (
+  messageData: MessageData,
+  feedback_sentiment: FeedbackSentimentType,
+  token: string | null,
+) => {
+  if (token) {
+    // Assuming message.json is a JSON string. Parse it if necessary.
+    const jsonResponse =
+      typeof messageData.json === "string"
+        ? JSON.parse(messageData.json)
+        : messageData.json;
 
-      const queryID = jsonResponse.query_id;
-      const feedbackSecretKey = jsonResponse.feedback_secret_key;
+    const queryID = jsonResponse.query_id;
+    const feedbackSecretKey = jsonResponse.feedback_secret_key;
 
-      apiCalls
-        .postResponseFeedback(
-          queryID,
-          feedback_sentiment,
-          feedbackSecretKey,
-          token,
-        )
-        .then((response) => {
-          console.log("Feedback sent successfully: ", response.message);
-        })
-        .catch((error: Error) => {
-          setError("Failed to send response feedback.");
-          console.error(error);
-        });
-    }
-  };
+    apiCalls
+      .postResponseFeedback(
+        queryID,
+        feedback_sentiment,
+        feedbackSecretKey,
+        token,
+      )
+      .then((response) => {
+        console.log("Feedback sent successfully: ", response.message);
+      })
+      .catch((error: Error) => {
+        console.error(error);
+      });
+  }
+};
 
+const SearchSidebar = (closeSidebar) => {
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        padding: 3,
-        paddingTop: 4,
-        height: "100%",
-      }}
-    >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        marginBottom={4}
-      >
-        <Typography variant="h6">Test Question Answering</Typography>
-        <IconButton onClick={onClose}>
-          <Close />
-        </IconButton>
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          padding: 2,
-          border: 1,
-          borderRadius: 1,
-          borderColor: "grey.400",
-        }}
-      >
-        <TextField
-          variant="standard"
-          placeholder="Ask a question..."
-          fullWidth
-          value={question}
-          onChange={handleQuestionChange}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleSendClick(question, generateLLMResponse);
-            }
-          }}
-          InputProps={{ disableUnderline: true }}
-        />
-        <Box
-          display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
-          paddingTop={2}
-        >
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={generateLLMResponse}
-                onChange={toggleGenerateLLMResponse}
-                color="info"
-              />
-            }
-            label="Also generate AI response"
-          />
-          <IconButton
-            onClick={() => handleSendClick(question, generateLLMResponse)}
-            color={generateLLMResponse ? "info" : "primary"}
-            disabled={loading || question == "" ? true : false}
-          >
-            {loading ? <CircularProgress size={24} /> : <Send />}
-          </IconButton>
-        </Box>
-      </Box>
-      <Box
-        sx={{
-          marginTop: 4,
-          marginBottom: 4,
-          padding: 4,
-          overflowY: "scroll",
-          border: 1,
-          borderRadius: 1,
-          borderColor: "grey.400",
-          flexGrow: 1,
-          height: "60vh",
-        }}
-      >
-        {response && (
-          <MessageBox
-            loading={loading}
-            messageData={response}
-            onFeedbackSend={sendResponseFeedback}
-          />
-        )}
-      </Box>
-    </Paper>
+    <TestSidebar
+      closeSidebar={closeSidebar}
+      showLLMResponseToggle={true}
+      handleSendClick={getSearchResponse}
+      sendResponseFeedback={sendResponseFeedback}
+      ResponseBox={ResponseBox}
+    />
   );
 };
 
-export { QuestionAnsweringSidebar };
+export { SearchSidebar };
