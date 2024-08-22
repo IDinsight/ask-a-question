@@ -154,7 +154,6 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
         bgcolor="white"
         sx={{
           height: 300,
-          maxWidth: 1387,
           border: 0,
           padding: 2,
         }}

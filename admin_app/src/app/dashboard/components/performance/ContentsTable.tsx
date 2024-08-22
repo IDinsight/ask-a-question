@@ -180,12 +180,7 @@ const ContentsTable = ({
   };
 
   return (
-    <Grid
-      container
-      columns={14}
-      sx={{ mt: 3, maxWidth: 1387 }}
-      columnSpacing={{ xs: 0 }}
-    >
+    <Grid container columns={14} sx={{ mt: 3 }} columnSpacing={{ xs: 0 }}>
       <Grid
         container
         spacing={2}
