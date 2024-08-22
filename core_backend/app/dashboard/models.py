@@ -900,22 +900,23 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
         labels=["Low", "Medium", "High"],
         include_lowest=True,
     )
-    # Take the top 5 topics
-    top_5_df = topic_df[0:5].copy()
-
-    # The get_topic_info() method only returns 3 example sentences
-    # and it picks the most representative 3 sentences for each topic.
 
     # To have more variation + more samples, we get five sample queries for each topic
     # using the fetch_five_sample_queries function. We then set this to the Examples
     # column.
 
-    top_5_df["Examples"] = top_5_df.apply(
+    topic_df["Examples"] = topic_df.apply(
         lambda row: fetch_five_sample_queries(
             topic_num=row["Topic"], topic_model=topic_model, original_queries=queries
         ),
         axis=1,
     )
+
+    # Take the top 5 topics
+    top_5_df = topic_df[0:5].copy()
+
+    # The get_topic_info() method only returns 3 example sentences
+    # and it picks the most representative 3 sentences for each topic.
 
     # To get an LLM description of the topics, we need to create a prompt which
     # includes - for each topic - its keyword representation ("Representation")
