@@ -22,7 +22,6 @@ import {
 
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
@@ -95,6 +94,7 @@ const CardsPage = () => {
           xs={12}
           sm={12}
           md={12 - sidebarGridSize}
+          lg={12 - sidebarGridSize + 1}
           sx={{
             display: openSidebar
               ? { xs: "none", sm: "none", md: "block" }
@@ -160,28 +160,31 @@ const CardsPage = () => {
               setSnackMessage={setSnackMessage}
             />
           </Layout.FlexBox>
-          <div style={{ position: "relative" }}>
-            <Fab
-              variant="extended"
-              sx={{
-                bgcolor: "orange",
-                position: "absolute",
-                bottom: 16,
-                right: 16,
-              }}
-              onClick={handleSidebarToggle}
-            >
-              {openSidebar ? <CloseIcon /> : <PlayArrowIcon />}
-              <Layout.Spacer horizontal multiplier={0.3} />
-              Test
-            </Fab>
-          </div>
+          {!openSidebar && (
+            <div style={{ position: "relative" }}>
+              <Fab
+                variant="extended"
+                sx={{
+                  bgcolor: "orange",
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                }}
+                onClick={handleSidebarToggle}
+              >
+                <PlayArrowIcon />
+                <Layout.Spacer horizontal multiplier={0.3} />
+                Test
+              </Fab>
+            </div>
+          )}
         </Grid>
         <Grid
           item
           xs={openSidebar ? 12 : 0}
           sm={openSidebar ? 12 : 0}
           md={sidebarGridSize}
+          lg={sidebarGridSize - 1}
           sx={{
             display: openSidebar ? "block" : "none",
           }}

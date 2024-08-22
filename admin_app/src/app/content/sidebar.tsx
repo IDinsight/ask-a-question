@@ -480,7 +480,6 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
           flexDirection="row"
           justifyContent="space-between"
           paddingTop={2}
-          paddingRight={1}
         >
           <FormControlLabel
             control={
