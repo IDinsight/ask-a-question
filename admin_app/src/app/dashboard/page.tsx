@@ -32,10 +32,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDrawerOpen = () => {
-    setSideBarOpen(true);
-  };
-
   // Close sidebar on small screens
   useEffect(() => {
     const handleResize = () => {
