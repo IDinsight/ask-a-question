@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
 
 import {
   Alert,
@@ -38,7 +38,8 @@ import { SearchBar } from "../../components/SearchBar";
 import { QuestionAnsweringSidebar } from "./sidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
-const MAX_CARDS_PER_PAGE = 12;
+const CARD_HEIGHT = 300;
+const CARD_WIDTH = 300;
 
 export interface Tag {
   tag_id: number;
@@ -351,13 +352,30 @@ const CardsGrid = ({
   >;
 }) => {
   const [page, setPage] = React.useState<number>(1);
-  const [max_pages, setMaxPages] = React.useState<number>(1);
+  const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
+  const [maxPages, setMaxPages] = React.useState<number>(1);
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const searchParams = useSearchParams();
   const action = searchParams.get("action") || null;
   const content_id = Number(searchParams.get("content_id")) || null;
+
+  const calculateMaxCardsPerPage = () => {
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const rows = Math.max(1, Math.floor(viewportHeight / CARD_HEIGHT));
+    const columns = Math.max(1, Math.floor(viewportWidth / CARD_WIDTH));
+    const maxCards = rows * columns;
+
+    setMaxCardsPerPage(maxCards);
+  };
+
+  useEffect(() => {
+    calculateMaxCardsPerPage();
+    window.addEventListener("resize", calculateMaxCardsPerPage);
+    return () => window.removeEventListener("resize", calculateMaxCardsPerPage);
+  }, []);
 
   const getSnackMessage = React.useCallback(
     (action: string | null, content_id: number | null): string | null => {
@@ -422,7 +440,7 @@ const CardsGrid = ({
           });
 
           setCards(filteredData);
-          setMaxPages(Math.ceil(filteredData.length / MAX_CARDS_PER_PAGE));
+          setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
           setIsLoading(false);
         })
         .catch((error) => {
@@ -438,7 +456,7 @@ const CardsGrid = ({
       setMaxPages(1);
       setIsLoading(false);
     }
-  }, [searchTerm, filterTags, token, refreshKey]);
+  }, [searchTerm, filterTags, maxCardsPerPage, token, refreshKey]);
 
   if (isLoading) {
     return (
@@ -464,7 +482,7 @@ const CardsGrid = ({
             <CircularProgress />
           </div>
         </Layout.FlexBox>
-        <PageNavigation page={1} setPage={setPage} max_pages={1} />
+        <PageNavigation page={1} setPage={setPage} maxPages={maxPages} />
         <Layout.Spacer multiplier={1} />
       </>
     );
@@ -505,7 +523,7 @@ const CardsGrid = ({
             </Layout.FlexBox>
           ) : (
             cards
-              .slice(MAX_CARDS_PER_PAGE * (page - 1), MAX_CARDS_PER_PAGE * page)
+              .slice(maxCardsPerPage * (page - 1), maxCardsPerPage * page)
               .map((item) => {
                 if (item.content_id !== null) {
                   return (
@@ -551,7 +569,7 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <PageNavigation page={page} setPage={setPage} max_pages={max_pages} />
+      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
       <Layout.Spacer multiplier={1} />
     </>
   );
