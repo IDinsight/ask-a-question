@@ -17,8 +17,8 @@ RUN chown -R container_user: ${HOME_DIR}
 RUN mkdir /tmp/prometheus
 RUN chown -R container_user: /tmp/prometheus
 
-ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
-ENV PORT ${PORT}
+ENV PYTHONPATH="${PYTHONPATH}:${HOME_DIR}"
+ENV PORT=${PORT}
 
 COPY . ${HOME_DIR}
 
