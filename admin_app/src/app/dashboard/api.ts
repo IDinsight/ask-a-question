@@ -21,4 +21,23 @@ const getOverviewPageData = async (period: Period, token: string) => {
   });
 };
 
-export { getOverviewPageData };
+const fetchTopicsData = async (token: string): Promise<any> => {
+  const response = await fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/topics`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Error fetching topics data");
+  }
+
+  return response.json();
+};
+
+export { getOverviewPageData, fetchTopicsData };

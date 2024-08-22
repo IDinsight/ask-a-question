@@ -1,111 +1,28 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import styled from "styled-components";
-import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
-import { useAuth } from "@/utils/auth";
+import CircularProgress from "@mui/material/CircularProgress";
+import Container from "@mui/material/Container";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
+import Chip from "@mui/material/Chip";
+import { useAuth } from "@/utils/auth";
+import { fetchTopicsData } from "@/app/dashboard/api";
 
+// Interfaces
 interface Topic {
   name: string;
   examples: { timestamp: string; userQuestion: string }[];
   topic_popularity: string;
 }
-
-interface TopicsResponse {
-  n_topics: number;
-}
-
-const TopicsContainer = styled.div`
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-`;
-
-const TopicsList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  width: 100%;
-`;
-
-const TopicItem = styled.li<{ selected: boolean }>`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-  background-color: ${({ selected }) => (selected ? "#f0f0f0" : "transparent")};
-  &:last-child {
-    border-bottom: none;
-  }
-  cursor: pointer;
-`;
-
-const TopicName = styled.span`
-  font-weight: 500;
-`;
-
-const TopicPopularity = styled.span<{ color: string }>`
-  background-color: ${({ color }) => color};
-  color: white;
-  border-radius: 4px;
-  padding: 4px;
-`;
-
-const ExampleSentencesContainer = styled.div`
-  flex-grow: 1;
-  margin-left: 16px;
-`;
-
-const ExampleTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-`;
-
-const ExampleTableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-`;
-
-const ExampleTableCell = styled.td<{ istimestamp: boolean }>`
-  padding: 8px;
-  border: 1px solid #ddd;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: ${({ istimestamp }) => (istimestamp ? "150px" : "350px")};
-`;
-
-const ExampleTableHeader = styled.th`
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: left;
-  background-color: #f2f2f2;
-`;
-
-const LoadingOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-`;
-
-const PaginationContainer = styled.div`
-  margin-top: 16px;
-  display: flex;
-  justify-content: center;
-`;
 
 const TopicsSection: React.FC = () => {
   const { token } = useAuth();
@@ -113,62 +30,40 @@ const TopicsSection: React.FC = () => {
   const [n_topics, setNTopics] = useState<number>(0);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const topicsPerPage = 5;
 
-  const getTopicColor = (popularity: string) => {
-    switch (popularity) {
-      case "High":
-        return "red";
-      case "Medium":
-        return "orange"; // Changed from yellow for better visibility
-      case "Low":
-        return "green";
-      default:
-        return "gray"; // Fallback for unknown popularity levels
-    }
-  };
-
   useEffect(() => {
-    const fetchTopics = async () => {
+    const initDataFetch = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(
-          "http://localhost:8000/dashboard/insights/topics",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const data = await fetchTopicsData(token);
 
-        const fetchedTopics = response.data.topics.map((topic: any) => ({
-          name: topic.topic_name,
+        const fetchedTopics = data.topics.map((topic: any) => ({
+          name: topic.topic_name, // Make sure the keys match the response of the API
           topic_popularity: topic.topic_popularity,
           examples: topic.topic_samples.map((sample: string) => ({
-            timestamp: "2024-07-23 06:01PM", // Placeholder timestamp
+            timestamp: "2024-07-23 06:01PM", // Adjust this accordingly if there's a timestamp in the API
             userQuestion: sample,
           })),
         }));
-        const nTopics = response.data.n_topics;
+
         setTopics(fetchedTopics);
-        setNTopics(nTopics);
-        setLoading(false);
+        setNTopics(data.n_topics);
       } catch (err) {
         console.error("Error fetching topics:", err);
         setError("Failed to load topics");
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchTopics();
-  }, []);
-
-  // Calculate total pages based on the number of topics
-  const totalPages = Math.ceil(n_topics / topicsPerPage);
-  // Get topics for the current page
-  const currentTopics = topics.slice(
-    (currentPage - 1) * topicsPerPage,
-    currentPage * topicsPerPage,
-  );
+    if (isInitialLoad) {
+      initDataFetch().then(() => setIsInitialLoad(false));
+    }
+  }, [token, isInitialLoad]); // Only re-run the effect if token changes
 
   const handlePageChange = (
     _event: React.ChangeEvent<unknown>,
@@ -177,69 +72,117 @@ const TopicsSection: React.FC = () => {
     setCurrentPage(value);
   };
 
-  if (loading)
+  // Render the loading spinner only during the initial load
+  if (loading && isInitialLoad) {
     return (
-      <LoadingOverlay>
-        <Box display="flex" flexDirection="column" alignItems="center">
+      <Container>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+          flexDirection="column"
+        >
           <CircularProgress size={60} />
-          <p>Generating insights...</p>
+          <Typography variant="subtitle1" marginTop={2}>
+            Generating insights...
+          </Typography>
         </Box>
-      </LoadingOverlay>
+      </Container>
     );
+  }
 
-  if (error) return <p>{error}</p>;
+  // If there is an error, display it
+  if (error) {
+    return (
+      <Typography variant="h6" color="error">
+        {error}
+      </Typography>
+    );
+  }
+
+  const selectTopic = (topic: Topic) => {
+    setSelectedTopic(topic);
+  };
+
+  // Determine the topics to display based on the current page
+  const currentTopics = topics.slice(
+    (currentPage - 1) * topicsPerPage,
+    currentPage * topicsPerPage,
+  );
 
   return (
-    <TopicsContainer>
-      <TopicsList>
+    <Box
+      sx={{
+        boxShadow: 2,
+        borderRadius: 2,
+        p: 2,
+        width: "100%",
+        bgcolor: "#fff",
+      }}
+    >
+      <List>
         {currentTopics.map((topic, index) => (
-          <TopicItem
+          <ListItem
+            button
             key={index}
-            onClick={() => setSelectedTopic(topic)}
-            selected={selectedTopic?.name === topic.name}
+            selected={selectedTopic === topic}
+            onClick={() => selectTopic(topic)}
           >
-            <TopicName>{topic.name}</TopicName>
-            <TopicPopularity color={getTopicColor(topic.topic_popularity)}>
-              {topic.topic_popularity}
-            </TopicPopularity>
-          </TopicItem>
+            <ListItemText primary={topic.name} />
+            <Chip label={topic.topic_popularity} color="primary" />
+          </ListItem>
         ))}
-      </TopicsList>
-      <PaginationContainer>
-        <Pagination
-          count={totalPages}
-          page={currentPage}
-          onChange={handlePageChange}
-          color="primary"
-        />
-      </PaginationContainer>
-      <ExampleSentencesContainer>
-        <ExampleTable>
-          <thead>
-            <tr>
-              <ExampleTableHeader>Timestamp</ExampleTableHeader>
-              <ExampleTableHeader>User Question</ExampleTableHeader>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedTopic ? (
-              selectedTopic.examples.map((example, index) => (
-                <ExampleTableRow key={index}>
-                  <ExampleTableCell istimestamp={true}>
-                    {example.timestamp}
-                  </ExampleTableCell>
-                  <ExampleTableCell>{example.userQuestion}</ExampleTableCell>
-                </ExampleTableRow>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2}>Select a topic to see examples.</td>
-              </tr>
-            )}
-          </tbody>
-        </ExampleTable>
-      </ExampleSentencesContainer>
-    </TopicsContainer>
+      </List>
+      <Pagination
+        count={Math.ceil(n_topics / topicsPerPage)}
+        page={currentPage}
+        onChange={handlePageChange}
+        color="primary"
+        sx={{ display: "flex", justifyContent: "center", p: 3 }}
+      />
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+          <CircularProgress size={24} />
+        </Box>
+      ) : null}
+      <TableContainer component={Box}>
+        <Table aria-label="example sentences" size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell
+                sx={{
+                  width: 200,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Timestamp
+              </TableCell>
+              <TableCell sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                User Question
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {selectedTopic?.examples.map((example, index) => (
+              <TableRow key={index}>
+                <TableCell
+                  sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {example.timestamp}
+                </TableCell>
+                <TableCell
+                  sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {example.userQuestion}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 
