@@ -38,8 +38,8 @@ import { SearchBar } from "../../components/SearchBar";
 import { QuestionAnsweringSidebar } from "./sidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
-const CARD_HEIGHT = 300;
-const CARD_WIDTH = 300;
+const CARD_HEIGHT = 250;
+const CARD_WIDTH = 250;
 
 export interface Tag {
   tag_id: number;
@@ -67,7 +67,7 @@ const CardsPage = () => {
   const handleSidebarClose = () => {
     setOpenSideBar(false);
   };
-  const sidebarGridSize = openSidebar ? 5 : 0;
+  const sidebarGridWidth = openSidebar ? 5 : 0;
 
   React.useEffect(() => {
     if (token) {
@@ -94,8 +94,8 @@ const CardsPage = () => {
           item
           xs={12}
           sm={12}
-          md={12 - sidebarGridSize}
-          lg={12 - sidebarGridSize + 1}
+          md={12 - sidebarGridWidth}
+          lg={12 - sidebarGridWidth + 1}
           sx={{
             display: openSidebar
               ? { xs: "none", sm: "none", md: "block" }
@@ -156,6 +156,7 @@ const CardsPage = () => {
               searchTerm={searchTerm}
               tags={tags}
               filterTags={filterTags}
+              openSidebar={openSidebar}
               token={token}
               accessLevel={currAccessLevel}
               setSnackMessage={setSnackMessage}
@@ -184,8 +185,8 @@ const CardsPage = () => {
           item
           xs={openSidebar ? 12 : 0}
           sm={openSidebar ? 12 : 0}
-          md={sidebarGridSize}
-          lg={sidebarGridSize - 1}
+          md={sidebarGridWidth}
+          lg={sidebarGridWidth - 1}
           sx={{
             display: openSidebar ? "block" : "none",
           }}
@@ -334,6 +335,7 @@ const CardsGrid = ({
   searchTerm,
   tags,
   filterTags,
+  openSidebar,
   token,
   accessLevel,
   setSnackMessage,
@@ -342,6 +344,7 @@ const CardsGrid = ({
   searchTerm: string;
   tags: Tag[];
   filterTags: Tag[];
+  openSidebar: boolean;
   token: string | null;
   accessLevel: string;
   setSnackMessage: React.Dispatch<
@@ -495,7 +498,7 @@ const CardsGrid = ({
           mx: sizes.baseGap,
           py: sizes.tinyGap,
           width: "98%",
-          height: "60vh",
+          minHeight: "60vh",
         }}
       >
         <Grid container>
@@ -530,9 +533,9 @@ const CardsGrid = ({
                     <Grid
                       item
                       xs={12}
-                      sm={6}
-                      md={4}
-                      lg={3}
+                      sm={openSidebar ? 12 : 6}
+                      md={openSidebar ? 6 : 4}
+                      lg={openSidebar ? 4 : 3}
                       key={item.content_id}
                       sx={{ display: "grid", alignItems: "stretch" }}
                     >

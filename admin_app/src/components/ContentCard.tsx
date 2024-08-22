@@ -51,6 +51,7 @@ const ContentCard = ({
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            maxHeight: "250px",
           },
           appStyles.hoverShadow,
           appStyles.shadow,
@@ -83,6 +84,8 @@ const ContentCard = ({
               )}
             </Box>
           )}
+          {/* else just a space */}
+          {!tags || tags.length === 0 ? <Box height={"22px"} /> : null}
         </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
@@ -90,20 +93,17 @@ const ContentCard = ({
         <Typography
           variant="body2"
           color={appColors.darkGrey}
-          sx={appStyles.threeLineEllipsis}
+          sx={appStyles.twoLineEllipsis}
         >
           {text}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography variant="body2" color={appColors.darkGrey}>
-          Last updated{" "}
+          Last updated:{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
-            month: "numeric",
+            month: "short",
             year: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: true,
           })}
         </Typography>
         <Layout.Spacer multiplier={0.75} />

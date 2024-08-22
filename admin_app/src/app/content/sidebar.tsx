@@ -440,7 +440,7 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
       sx={{
         padding: 3,
         paddingTop: 4,
-        height: "95vh",
+        height: "100%",
       }}
     >
       <Box
@@ -455,12 +455,14 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
         </IconButton>
       </Box>
       <Box
-        display="flex"
-        flexDirection="column"
-        border={1}
-        borderColor="grey.400"
-        borderRadius={1}
-        padding={2}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          padding: 2,
+          border: 1,
+          borderRadius: 1,
+          borderColor: "grey.400",
+        }}
       >
         <TextField
           variant="standard"
@@ -500,7 +502,19 @@ const QuestionAnsweringSidebar = ({ onClose }: { onClose: () => void }) => {
           </IconButton>
         </Box>
       </Box>
-      <Box paddingTop={5} paddingInline={3}>
+      <Box
+        sx={{
+          marginTop: 4,
+          marginBottom: 4,
+          padding: 4,
+          overflowY: "scroll",
+          border: 1,
+          borderRadius: 1,
+          borderColor: "grey.400",
+          flexGrow: 1,
+          height: "60vh",
+        }}
+      >
         {response && (
           <MessageBox
             loading={loading}
