@@ -26,6 +26,9 @@ PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
 # LiteLLM proxy variables
 # Endpoint
 LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
+LITELLM_ENDPOINT_GENERATION = os.environ.get(
+    "LITELLM_ENDPOINT_GENERATION", LITELLM_ENDPOINT
+)
 # API Key. Required but just a dummy for now. The actual OPENAI_API_KEY is set
 # in the proxy container.
 LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
@@ -36,15 +39,10 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
 LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
-    "LITELLM_MODEL_GENERATION",
-    "openai/generate-gemini-response",
-    # "LITELLM_MODEL_GENERATION", "openai/generate-response"
+    "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
-)
-LITELLM_MODEL_ON_OFF_TOPIC = os.environ.get(
-    "LITELLM_MODEL_ON_OFF_TOPIC", "openai/on-off-topic"
 )
 LITELLM_MODEL_TRANSLATE = os.environ.get("LITELLM_MODEL_TRANSLATE", "openai/translate")
 LITELLM_MODEL_SAFETY = os.environ.get("LITELLM_MODEL_SAFETY", "openai/safety")

@@ -72,6 +72,7 @@ jobs:
             admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username
             admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
             admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
+            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
 
       - name: Configure Docker to use gcloud as a credential helper
         run: |
@@ -122,6 +123,13 @@ jobs:
               -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
               -e BACKEND_ROOT_PATH=/api \
+              -e LITELLM_ENDPOINT_GENERATION="https://${{ vars.VERTEX_AI_LOCATION }}-aiplatform.googleapis.com/v1" \
+              -e LITELLM_MODEL_GENERATION="vertex_ai/gemini-1.5-pro" \
+              -e VERTEXAI_PROJECT=${{ secrets.GCP_PROJECT_ID }} \
+              -e VERTEXAI_LOCATION=${{ vars.VERTEX_AI_LOCATION }} \
+              -e VERTEXAI_ENDPOINT=https://${{ vars.VERTEX_AI_LOCATION }}-aiplatform.googleapis.com/v1 \
+              -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
+              -v ~/.gcp_credentials.json:/app/credentials.json \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f || true
 
