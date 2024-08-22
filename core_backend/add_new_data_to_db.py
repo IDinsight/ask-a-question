@@ -358,7 +358,7 @@ def update_date_of_records(models: list, random_dates: list) -> None:
 
 if __name__ == "__main__":
     HOST = auth_url = (
-        f"https://{args.domain}" if args.domain else "http://localhost/api"
+        f"http://{args.domain}" if args.domain else "http://localhost/api"
     )
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
     path = args.csv
