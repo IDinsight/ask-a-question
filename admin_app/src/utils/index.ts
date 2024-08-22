@@ -1,5 +1,4 @@
 import theme from "@/theme";
-
 export const DEFAULT_LANGUAGE = "en";
 
 export const LANGUAGE_OPTIONS = [
@@ -46,9 +45,34 @@ export const appColors = {
   green: "#018786",
   dashboardUrgent: "#E91E63",
   dashboardSecondary: "#546E7A",
+  dashboardLightGray: "#B0BEC5",
   dashboardPrimary: "#2E93FA",
   dashboardUpvote: "#96E2C3",
   dashboardDownvote: "#F69198",
+  dashboardBlueShades: [
+    "#2e93fa",
+    "#459ffb",
+    "#5cabfb",
+    "#74b7fc",
+    "#8bc3fc",
+    "#a2cffd",
+    "#b9dbfd",
+    "#d1e7fe",
+    "#e8f3fe",
+    "#ffffff",
+  ],
+  dashboardBrightColors: [
+    "#2e93fa",
+    "#432efa",
+    "#be2efa",
+    "#fa2ebc",
+    "#fa2e41",
+    "#fa952e",
+    "#e5fa2e",
+    "#6afa2e",
+    "#2efa6c",
+    "#2efae7",
+  ],
 };
 
 export const appStyles = {

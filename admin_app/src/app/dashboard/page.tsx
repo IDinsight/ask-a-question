@@ -6,6 +6,7 @@ import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
+import Performance from "@/app/dashboard/components/Performance";
 import { useState } from "react";
 import { appColors } from "@/utils";
 import { ClickAwayListener } from "@mui/base/ClickAwayListener";
@@ -23,16 +24,12 @@ const Dashboard: React.FC = () => {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
-        return <div>Users</div>;
+        return <Performance timePeriod={timePeriod} />;
       case "Insights":
         return <div>Products</div>;
       default:
         return <div>Page not found</div>;
     }
-  };
-
-  const handleDrawerOpen = () => {
-    setSideBarOpen(true);
   };
 
   // Close sidebar on small screens
@@ -78,6 +75,7 @@ const Dashboard: React.FC = () => {
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
+              height: "100%",
             }}
           >
             <Box
@@ -93,7 +91,7 @@ const Dashboard: React.FC = () => {
               </Typography>
             </Box>
             <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
+            <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
           </Box>
         </Box>
       </Box>

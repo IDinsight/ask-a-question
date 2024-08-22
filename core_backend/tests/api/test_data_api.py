@@ -255,9 +255,6 @@ class TestUrgencyQueryDataAPI:
         )
         date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-        print("start_date", start_date.strftime(date_format))
-        print("end_date", end_date.strftime(date_format))
-
         response = client.get(
             "/data-api/urgency-queries",
             headers={"Authorization": f"Bearer {api_key_user1}"},
@@ -343,8 +340,6 @@ class TestQueryDataAPI:
         now = datetime.now(timezone.utc)
         dates = [now - relativedelta(days=x) for x in range(N_DAYS_HISTORY)]
         all_orm_objects: List[Any] = []
-        print("user1 dates", *dates)
-        print("n_dates:", len(dates))
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
@@ -516,9 +511,6 @@ class TestQueryDataAPI:
                 n_records = 0
             else:  # days_ago_end <= days_ago_start < N_DAYS_HISTORY
                 n_records = days_ago_start - days_ago_end + 1
-
-        for record in response.json():
-            print("record dt:", record["query_datetime_utc"])
 
         assert len(response.json()) == n_records
 
