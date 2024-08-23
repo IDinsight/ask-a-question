@@ -59,6 +59,8 @@ services:
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
       - ./.gcp_credentials.json:/app/credentials.json
+    ports: # Expose the port to port 4000 for debugging purposes
+      - 4000:4000
     command:
       ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
 

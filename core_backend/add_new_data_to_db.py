@@ -16,7 +16,12 @@ from app.config import (
 from app.database import get_session
 from app.question_answer.models import ContentFeedbackDB, QueryDB, ResponseFeedbackDB
 from app.urgency_detection.models import UrgencyQueryDB
+from app.users.models import UserDB
+from app.utils import get_key_hash
 from litellm import completion
+from sqlalchemy import (
+    select,
+)
 from urllib3.exceptions import InsecureRequestWarning
 
 # To disable InsecureRequestWarning
@@ -46,13 +51,17 @@ parser = argparse.ArgumentParser(
     python add_new_dummy_data.py \\
         --csv generated_questions.csv \\
         --host localhost:8000 \\
+        --api-key <API_KEY> \\
         --nb-workers 8 \\
         --start-date 01-08-23
 
 """,
 )
-parser.add_argument("--csv", help="Path to the CSV ", required=True)
+parser.add_argument(
+    "--csv", help="Path to the CSV containing example questions ", required=True
+)
 parser.add_argument("--domain", help="Your AAQ domain", required=True)
+parser.add_argument("--api-key", help="Your AAQ API key", required=False)
 parser.add_argument(
     "--nb-workers",
     help="Number of workers to use for parallel processing",
@@ -122,36 +131,38 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
         return None
 
 
+def save_single_row(endpoint: str, data: dict) -> dict:
+    """
+    Save a single row in the database.
+    """
+
+    response = requests.post(
+        endpoint,
+        headers={
+            "accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {API_KEY}",
+        },
+        json=data,
+        verify=False,
+    )
+    return response.json()
+
+
 def process_search(_id: int, text: str) -> tuple | None:
     """
     Process and add query to DB
     """
 
-    def save_single_query(query: str) -> dict:
-        """
-        Save the query in the database.
-        """
-        endpoint = f"{HOST}/search"
-        data = {
-            "query_text": query,
-            "session_id": 0,
-            "generate_llm_response": False,
-            "query_metadata": {"some_key": "some_value"},
-            "generate_tts": False,
-        }
-        response = requests.post(
-            endpoint,
-            headers={
-                "accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {ADMIN_API_KEY}",
-            },
-            json=data,
-            verify=False,
-        )
-        return response.json()
-
-    response = save_single_query(text)
+    endpoint = f"{HOST}/search"
+    data = {
+        "query_text": text,
+        "session_id": 0,
+        "generate_llm_response": False,
+        "query_metadata": {"some_key": "some_value"},
+        "generate_tts": False,
+    }
+    response = save_single_row(endpoint, data)
     if "search_results" in response:
         return (
             _id,
@@ -169,38 +180,21 @@ def process_response_feedback(
     Process and add response feedback to DB
     """
 
-    def save_single_response_feedback(
-        query_id: int, feedback_sentiment: str, feedback_secret_key: str
-    ) -> dict:
-        """
-        Save the query in the database.
-        """
-        endpoint = f"{HOST}/response-feedback"
-        data = {
-            "query_id": query_id,
-            "session_id": 0,
-            "feedback_sentiment": feedback_sentiment,
-            "feedback_text": "",
-            "feedback_secret_key": feedback_secret_key,
-        }
-        response = requests.post(
-            endpoint,
-            headers={
-                "accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {ADMIN_API_KEY}",
-            },
-            json=data,
-            verify=False,
-        )
-        return response.json()
+    endpoint = f"{HOST}/response-feedback"
 
     if is_off_topic and feedback_sentiment == "positive":
         return None
+
+    data = {
+        "query_id": query_id,
+        "session_id": 0,
+        "feedback_sentiment": feedback_sentiment,
+        "feedback_text": "",
+        "feedback_secret_key": feedback_secret_key,
+    }
+
     response = (
-        save_single_response_feedback(query_id, feedback_sentiment, feedback_secret_key)
-        if not pd.isna(feedback_sentiment)
-        else None
+        save_single_row(endpoint, data) if not pd.isna(feedback_sentiment) else None
     )
     if response is not None:
         return (query_id,)
@@ -220,37 +214,7 @@ def process_content_feedback(
     """
     Process and add content feedback to DB
     """
-
-    def save_single_content_feedback(
-        query_id: int,
-        content_id: int,
-        feedback_sentiment: str,
-        feedback_text: str,
-        feedback_secret_key: str,
-    ) -> dict:
-        """
-        Save the feedback in the database.
-        """
-        endpoint = f"{HOST}/content-feedback"
-        data = {
-            "query_id": query_id,
-            "session_id": 0,
-            "content_id": content_id,
-            "feedback_sentiment": feedback_sentiment,
-            "feedback_text": feedback_text,
-            "feedback_secret_key": feedback_secret_key,
-        }
-        response = requests.post(
-            endpoint,
-            headers={
-                "accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {ADMIN_API_KEY}",
-            },
-            json=data,
-            verify=False,
-        )
-        return response.json()
+    endpoint = f"{HOST}/content-feedback"
 
     if is_off_topic and feedback_sentiment == "positive":
         return None
@@ -267,16 +231,16 @@ def process_content_feedback(
         else ""
     )
 
+    data = {
+        "query_id": query_id,
+        "session_id": 0,
+        "content_id": content["id"],
+        "feedback_sentiment": feedback_sentiment,
+        "feedback_text": feedback_text,
+        "feedback_secret_key": feedback_secret_key,
+    }
     response = (
-        save_single_content_feedback(
-            query_id,
-            content["id"],
-            feedback_sentiment,
-            feedback_text,
-            feedback_secret_key,
-        )
-        if not pd.isna(feedback_sentiment)
-        else None
+        save_single_row(endpoint, data) if not pd.isna(feedback_sentiment) else None
     )
     if response is not None:
         return (query_id,)
@@ -288,28 +252,12 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
     """
     Process and add urgency detection to DB
     """
+    endpoint = f"{HOST}/urgency-detect"
+    data = {
+        "message_text": text,
+    }
 
-    def save_single_ud_query(query: str) -> dict:
-        """
-        Save the query in the database.
-        """
-        endpoint = f"{HOST}/urgency-detect"
-        data = {
-            "message_text": query,
-        }
-        response = requests.post(
-            endpoint,
-            headers={
-                "accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {ADMIN_API_KEY}",
-            },
-            json=data,
-            verify=False,
-        )
-        return response.json()
-
-    response = save_single_ud_query(text)
+    response = save_single_row(endpoint, data)
     if "is_urgent" in response:
         return (response["is_urgent"],)
     return None
@@ -335,15 +283,21 @@ def create_random_datetime_from_string(date_string: str) -> datetime:
     return random_datetime
 
 
-def update_date_of_records(models: list, random_dates: list) -> None:
+def update_date_of_records(models: list, random_dates: list, api_key: str) -> None:
     """
     Update the date of the records in the database
     """
     session = next(get_session())
-
+    hashed_token = get_key_hash(api_key)
+    user = session.execute(
+        select(UserDB).where(UserDB.hashed_api_key == hashed_token)
+    ).scalar_one()
     for model in models:
         session = next(get_session())
-        queries = [c for c in session.query(model[0]).all()]
+        queries = [
+            c for c in session.query(model[0]).all() if c.user_id == user.user_id
+        ]
+
         if len(queries) > len(random_dates):
             random_dates = random_dates + [
                 create_random_datetime_from_string(start_date)
@@ -357,10 +311,11 @@ def update_date_of_records(models: list, random_dates: list) -> None:
 
 
 if __name__ == "__main__":
-    HOST = auth_url = (
-        f"http://{args.domain}" if args.domain else "http://localhost/api"
-    )
+    HOST = auth_url = f"http://{args.domain}"
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
+    API_KEY = args.api_key if args.api_key else ADMIN_API_KEY
+
+    start_date = args.start_date if args.start_date else "01-08-23"
     path = args.csv
     df = pd.read_csv(path)
 
@@ -375,6 +330,7 @@ if __name__ == "__main__":
         for future in as_completed(future_to_text):
             result = future.result()
             if result:
+                print(f"Search Query successfully added for query_id: {result[1]}")
                 saved_queries["inbound_id"].append(result[0])
                 saved_queries["query_id"].append(result[1])
                 saved_queries["feedback_secret_key"].append(result[2])
@@ -447,11 +403,10 @@ if __name__ == "__main__":
             result = future.result()
         print("Urgency Detection successfully processed")
 
-    start_date = args.start_date if args.start_date else "01-08-23"
     random_dates = [
         create_random_datetime_from_string(start_date) for _ in range(len(df))
     ]
     print("Updating the date of the records...")
-    update_date_of_records(MODELS, random_dates)
+    update_date_of_records(MODELS, random_dates, API_KEY)
     print("All records dates updated successfully.")
     print("All records added successfully.")
