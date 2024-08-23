@@ -48,11 +48,11 @@ parser = argparse.ArgumentParser(
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
 
     (example)
-    python add_new_dummy_data.py \\
-        --csv generated_questions.csv \\
-        --host localhost:8000 \\
-        --api-key <API_KEY> \\
-        --nb-workers 8 \\
+    python add_new_dummy_data.py \
+        --csv generated_questions.csv \
+        --host http://localhost:8000 \
+        --api-key <API_KEY> \
+        --nb-workers 8 \
         --start-date 01-08-23
 
 """,
@@ -60,7 +60,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--csv", help="Path to the CSV containing example questions ", required=True
 )
-parser.add_argument("--domain", help="Your AAQ domain", required=True)
+parser.add_argument("--host", help="Your hosted AAQ url", required=True)
 parser.add_argument("--api-key", help="Your AAQ API key", required=False)
 parser.add_argument(
     "--nb-workers",
@@ -157,9 +157,7 @@ def process_search(_id: int, text: str) -> tuple | None:
     endpoint = f"{HOST}/search"
     data = {
         "query_text": text,
-        "session_id": 0,
         "generate_llm_response": False,
-        "query_metadata": {"some_key": "some_value"},
         "generate_tts": False,
     }
     response = save_single_row(endpoint, data)
@@ -187,9 +185,7 @@ def process_response_feedback(
 
     data = {
         "query_id": query_id,
-        "session_id": 0,
         "feedback_sentiment": feedback_sentiment,
-        "feedback_text": "",
         "feedback_secret_key": feedback_secret_key,
     }
 
@@ -233,7 +229,6 @@ def process_content_feedback(
 
     data = {
         "query_id": query_id,
-        "session_id": 0,
         "content_id": content["id"],
         "feedback_sentiment": feedback_sentiment,
         "feedback_text": feedback_text,
@@ -311,14 +306,13 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
 
 
 if __name__ == "__main__":
-    HOST = auth_url = f"http://{args.domain}"
+    HOST = args.host
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
     API_KEY = args.api_key if args.api_key else ADMIN_API_KEY
 
     start_date = args.start_date if args.start_date else "01-08-23"
     path = args.csv
     df = pd.read_csv(path)
-
     saved_queries = defaultdict(list)
     print("Processing search queries...")
     # Using multithreading to speed up the process
