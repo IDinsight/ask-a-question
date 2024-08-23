@@ -287,21 +287,28 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
     user = session.execute(
         select(UserDB).where(UserDB.hashed_api_key == hashed_token)
     ).scalar_one()
+    queries = [c for c in session.query(QueryDB).all() if c.user_id == user.user_id]
+    if len(queries) > len(random_dates):
+        random_dates = random_dates + [
+            create_random_datetime_from_string(start_date)
+            for _ in range(len(queries) - len(random_dates))
+        ]
+    # Create a dictionary to map the query_id to the random date
+    date_map_dic = {queries[i].query_id: random_dates[i] for i in range(len(queries))}
     for model in models:
         session = next(get_session())
-        queries = [
-            c for c in session.query(model[0]).all() if c.user_id == user.user_id
-        ]
 
-        if len(queries) > len(random_dates):
-            random_dates = random_dates + [
-                create_random_datetime_from_string(start_date)
-                for _ in range(len(queries) - len(random_dates))
-            ]
-        for query, date in zip(queries, random_dates):
+        rows = [c for c in session.query(model[0]).all() if c.user_id == user.user_id]
+
+        for i, row in enumerate(rows):
             # Set the date attribute to the random date
-            setattr(query, model[1], date)
-            session.merge(query)
+            if hasattr(row, "query_id"):
+                date = date_map_dic[row.query_id]
+            else:
+                date = random_dates[i]
+
+            setattr(row, model[1], date)
+            session.merge(row)
         session.commit()
 
 
