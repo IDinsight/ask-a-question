@@ -39,7 +39,6 @@ import { SearchSidebar } from "./SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const CARD_HEIGHT = 250;
-const CARD_WIDTH = 250;
 
 export interface Tag {
   tag_id: number;
@@ -365,10 +364,22 @@ const CardsGrid = ({
   const content_id = Number(searchParams.get("content_id")) || null;
 
   const calculateMaxCardsPerPage = () => {
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-    const rows = Math.max(1, Math.floor(viewportHeight / CARD_HEIGHT));
-    const columns = Math.max(1, Math.floor(viewportWidth / CARD_WIDTH));
+    // set rows as per height of each card and height of grid (approximated from window height)
+    const gridHeight = window.innerHeight * 0.8;
+    const rows = Math.max(1, Math.floor(gridHeight / CARD_HEIGHT));
+
+    // set columns as per width of grid - this should be changed if grid sizing changes
+    const gridWidth = window.innerWidth;
+    let columns;
+    if (gridWidth < 600) {
+      columns = 1;
+    } else if (gridWidth > 600 && gridWidth < 900) {
+      columns = 2;
+    } else if (gridWidth > 900 && gridWidth < 1200) {
+      columns = 3;
+    } else {
+      columns = 4;
+    }
     const maxCards = rows * columns;
 
     setMaxCardsPerPage(maxCards);
