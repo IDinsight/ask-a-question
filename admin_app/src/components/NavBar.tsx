@@ -18,7 +18,7 @@ import * as React from "react";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
-  { title: "Integrate", path: "/integrations" },
+  { title: "Integrations", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
