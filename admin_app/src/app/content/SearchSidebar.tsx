@@ -107,7 +107,7 @@ const getSearchResponse = (
   //   const isUrgent: boolean = response.is_urgent;
   //   const responseText =
   //     isUrgent === null
-  //       ? `No response. Reason:  See <rawJson> for details.`
+  //       ? `No response. Reason:  See <json> for details.`
   //       : isUrgent
   //         ? "Urgent 🚨"
   //         : "Not Urgent 🟢";
@@ -120,7 +120,7 @@ const getSearchResponse = (
   // };
 
   const processNotOKResponse = (response: any) => {
-    const responseText = `Error: ${response.status}. See <rawJson> for details.`;
+    const responseText = `Error: ${response.status}. See <json> for details.`;
     console.error(responseText, response);
     setResponse({
       dateTime: new Date().toISOString(),
@@ -132,7 +132,7 @@ const getSearchResponse = (
   const processErrorMessage = (error: Error) => {
     setResponse({
       dateTime: new Date().toISOString(),
-      parsedData: "API call failed. See <rawJson> for details.",
+      parsedData: "API call failed. See <json> for details.",
       rawJson: `{error: ${error.message}}`,
     });
   };
@@ -331,7 +331,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
               underline="hover"
               sx={{ cursor: "pointer" }}
             >
-              {"<rawJson>"}
+              {"<json>"}
             </Link>
           </Box>
         </Box>
