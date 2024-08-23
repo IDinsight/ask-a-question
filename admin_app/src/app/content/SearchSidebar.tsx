@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
-
 import {
   Close,
   ThumbDownAlt,
@@ -25,40 +24,170 @@ interface SearchResultList {
   search_results: SearchResult[];
 }
 
-interface LLMResponse extends SearchResultList {
+interface SearchResultListWithLLM extends SearchResultList {
   llm_response: string;
 }
 
-interface MessageData {
+interface SearchResponseBoxData {
   dateTime: string;
-  message: SearchResultList | LLMResponse | string;
-  json: string;
+  parsedData: SearchResultList | SearchResultListWithLLM | string; // string is for error messages
+  rawJson: string;
+}
+
+interface SearchResponseBoxProps {
+  loading: boolean;
+  searchResponseBoxData: SearchResponseBoxData | null;
+  token: string | null;
 }
 
 type FeedbackSentimentType = "positive" | "negative";
 
+const getSearchResponse = (
+  question: string,
+  generateLLMResponse: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setResponse: React.Dispatch<
+    React.SetStateAction<SearchResponseBoxData | null>
+  >,
+  token: string | null,
+) => {
+  const processEmbeddingsSearchResponse = (response: any) => {
+    const contentResponse = response.search_results;
+    const search_results: SearchResult[] = [];
+
+    for (const key in contentResponse) {
+      if (contentResponse.hasOwnProperty(key)) {
+        const item = contentResponse[key];
+        search_results.push({
+          index: key,
+          title: item.title,
+          text: item.text,
+        });
+      }
+    }
+
+    const searchResultList: SearchResultList = {
+      search_results: search_results,
+    };
+    setResponse({
+      dateTime: new Date().toISOString(),
+      parsedData: searchResultList,
+      rawJson: response,
+    });
+  };
+
+  const processLLMSearchResponse = (response: any) => {
+    const contentResponse = response.search_results;
+    const search_results: SearchResult[] = [];
+
+    for (const key in contentResponse) {
+      if (contentResponse.hasOwnProperty(key)) {
+        const item = contentResponse[key];
+        search_results.push({
+          index: key,
+          title: item.title,
+          text: item.text,
+        });
+      }
+    }
+
+    const llmResponse: SearchResultListWithLLM = {
+      search_results: search_results,
+      llm_response: response.llm_response,
+    };
+
+    setResponse({
+      dateTime: new Date().toISOString(),
+      parsedData: llmResponse,
+      rawJson: response,
+    });
+  };
+
+  // const processUrgencyDetection = (response: any) => {
+  //   const isUrgent: boolean = response.is_urgent;
+  //   const responseText =
+  //     isUrgent === null
+  //       ? `No response. Reason:  See <rawJson> for details.`
+  //       : isUrgent
+  //         ? "Urgent 🚨"
+  //         : "Not Urgent 🟢";
+
+  //   setResponse({
+  //     dateTime: new Date().toISOString(),
+  //     parsedData: responseText,
+  //     rawJson: response,
+  //   })
+  // };
+
+  const processNotOKResponse = (response: any) => {
+    const responseText = `Error: ${response.status}. See <rawJson> for details.`;
+    console.error(responseText, response);
+    setResponse({
+      dateTime: new Date().toISOString(),
+      parsedData: responseText,
+      rawJson: response,
+    });
+  };
+
+  const processErrorMessage = (error: Error) => {
+    setResponse({
+      dateTime: new Date().toISOString(),
+      parsedData: "API call failed. See <rawJson> for details.",
+      rawJson: `{error: ${error.message}}`,
+    });
+  };
+
+  if (question === "") {
+    return;
+  }
+  setLoading(true);
+  if (token) {
+    apiCalls
+      .getSearch(question, generateLLMResponse, token)
+      .then((response) => {
+        if (response.status === 200) {
+          if (generateLLMResponse) {
+            processLLMSearchResponse(response);
+          } else {
+            processEmbeddingsSearchResponse(response);
+          }
+        } else {
+          processNotOKResponse(response);
+          console.error(response);
+        }
+      })
+      .catch((error: Error) => {
+        processErrorMessage(error);
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
+};
+
 const RenderSearchResponse = ({
-  data,
+  parsedData,
 }: {
-  data: SearchResultList | LLMResponse;
+  parsedData: SearchResultList | SearchResultListWithLLM;
 }) => {
   return (
     <>
-      {"llm_response" in data && (
+      {"llm_response" in parsedData && (
         <Box display="flex" flexDirection="column">
           <Typography
             component={"span"}
             variant="body1"
             paddingBottom={sizes.doubleBaseGap}
           >
-            {data.llm_response}
+            {parsedData.llm_response}
           </Typography>
           <Typography component={"span"} variant="subtitle1">
             References
           </Typography>
         </Box>
       )}
-      {data["search_results"].map((c: SearchResult) => (
+      {parsedData["search_results"].map((c: SearchResult) => (
         <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
           <Typography component={"span"} variant="subtitle2">
             {Number(c.index) + 1}: {c.title}
@@ -70,20 +199,15 @@ const RenderSearchResponse = ({
   );
 };
 
-interface ResponseBoxProps {
-  loading: boolean;
-  messageData: MessageData;
-  onFeedbackSend: (
-    messageData: MessageData,
-    feedbackSentiment: FeedbackSentimentType,
-  ) => void;
-}
-
-const ResponseBox: React.FC<ResponseBoxProps> = ({
+const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   loading,
-  messageData,
-  onFeedbackSend,
+  searchResponseBoxData,
+  token,
 }) => {
+  if (!searchResponseBoxData) {
+    return;
+  }
+
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
   const toggleJsonModal = (): void => setJsonModalOpen(!jsonModalOpen);
   const [thumbsUp, setThumbsUp] = useState<boolean>(false);
@@ -104,6 +228,37 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
     },
   };
 
+  const sendResponseFeedback = (
+    searchResponseBoxData: SearchResponseBoxData,
+    feedback_sentiment: FeedbackSentimentType,
+    token: string | null,
+  ) => {
+    if (token) {
+      // Assuming parsedData.rawJson is a JSON string. Parse it if necessary.
+      const jsonResponse =
+        typeof searchResponseBoxData.rawJson === "string"
+          ? JSON.parse(searchResponseBoxData.rawJson)
+          : searchResponseBoxData.rawJson;
+
+      const queryID = jsonResponse.query_id;
+      const feedbackSecretKey = jsonResponse.feedback_secret_key;
+
+      apiCalls
+        .postResponseFeedback(
+          queryID,
+          feedback_sentiment,
+          feedbackSecretKey,
+          token,
+        )
+        .then((response) => {
+          console.log("Feedback sent successfully: ", response.parsedData);
+        })
+        .catch((error: Error) => {
+          console.error(error);
+        });
+    }
+  };
+
   const handleFeedback = (feedbackType: FeedbackSentimentType) => {
     const { state, setState } = feedbackMapping[feedbackType];
 
@@ -111,7 +266,7 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
       console.log(`Already sent ${feedbackType} feedback`);
     } else {
       setState(true);
-      return onFeedbackSend(messageData, feedbackType);
+      return sendResponseFeedback(searchResponseBoxData, feedbackType, token);
     }
   };
 
@@ -128,10 +283,14 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
       <>
         <Box display="flex" flexDirection="column" justifyContent="center">
           {/* if type is string, there was an error */}
-          {typeof messageData.message === "string" ? (
-            <Typography variant="body1">{messageData.message}</Typography>
+          {typeof searchResponseBoxData.parsedData === "string" ? (
+            <Typography variant="body1">
+              {searchResponseBoxData.parsedData}
+            </Typography>
           ) : (
-            <RenderSearchResponse data={messageData.message} />
+            <RenderSearchResponse
+              parsedData={searchResponseBoxData.parsedData}
+            />
           )}
           <Box
             style={{
@@ -141,7 +300,9 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
               alignItems: "center",
             }}
           >
-            {messageData.json.hasOwnProperty("feedback_secret_key") ? (
+            {searchResponseBoxData.rawJson.hasOwnProperty(
+              "feedback_secret_key",
+            ) ? (
               <Box sx={{ marginRight: "8px" }}>
                 <IconButton
                   aria-label="thumbs up"
@@ -170,7 +331,7 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
               underline="hover"
               sx={{ cursor: "pointer" }}
             >
-              {"<json>"}
+              {"<rawJson>"}
             </Link>
           </Box>
         </Box>
@@ -218,9 +379,9 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
                     fontFamily: "Courier, monospace",
                   }}
                 >
-                  {"json" in messageData
-                    ? JSON.stringify(messageData.json, null, 2)
-                    : "No JSON message found"}
+                  {"rawJson" in searchResponseBoxData
+                    ? JSON.stringify(searchResponseBoxData.rawJson, null, 2)
+                    : "No JSON parsedData found"}
                 </pre>
               </Typography>
             </Box>
@@ -231,169 +392,17 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({
   }
 };
 
-const getSearchResponse = (
-  question: string,
-  generateLLMResponse: boolean,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setResponse: React.Dispatch<React.SetStateAction<MessageData | null>>,
-  token: string | null,
-) => {
-  const processEmbeddingsSearchResponse = (response: any) => {
-    const contentResponse = response.search_results;
-    const search_results: SearchResult[] = [];
-
-    for (const key in contentResponse) {
-      if (contentResponse.hasOwnProperty(key)) {
-        const item = contentResponse[key];
-        search_results.push({
-          index: key,
-          title: item.title,
-          text: item.text,
-        });
-      }
-    }
-
-    const searchResultList: SearchResultList = {
-      search_results: search_results,
-    };
-    setResponse({
-      dateTime: new Date().toISOString(),
-      message: searchResultList,
-      json: response,
-    });
-  };
-
-  const processLLMSearchResponse = (response: any) => {
-    const contentResponse = response.search_results;
-    const search_results: SearchResult[] = [];
-
-    for (const key in contentResponse) {
-      if (contentResponse.hasOwnProperty(key)) {
-        const item = contentResponse[key];
-        search_results.push({
-          index: key,
-          title: item.title,
-          text: item.text,
-        });
-      }
-    }
-
-    const llmResponse: LLMResponse = {
-      search_results: search_results,
-      llm_response: response.llm_response,
-    };
-
-    setResponse({
-      dateTime: new Date().toISOString(),
-      message: llmResponse,
-      json: response,
-    });
-  };
-
-  // const processUrgencyDetection = (response: any) => {
-  //   const isUrgent: boolean = response.is_urgent;
-  //   const responseText =
-  //     isUrgent === null
-  //       ? `No response. Reason:  See <json> for details.`
-  //       : isUrgent
-  //         ? "Urgent 🚨"
-  //         : "Not Urgent 🟢";
-
-  //   setResponse({
-  //     dateTime: new Date().toISOString(),
-  //     message: responseText,
-  //     json: response,
-  //   })
-  // };
-
-  const processNotOKResponse = (response: any) => {
-    const responseText = `Error: ${response.status}. See <json> for details.`;
-    console.error(responseText, response);
-    setResponse({
-      dateTime: new Date().toISOString(),
-      message: responseText,
-      json: response,
-    });
-  };
-
-  const processErrorMessage = (error: Error) => {
-    setResponse({
-      dateTime: new Date().toISOString(),
-      message: "API call failed. See <json> for details.",
-      json: `{error: ${error.message}}`,
-    });
-  };
-
-  if (question === "") {
-    return;
-  }
-  setLoading(true);
-  if (token) {
-    apiCalls
-      .getSearch(question, generateLLMResponse, token)
-      .then((response) => {
-        if (response.status === 200) {
-          if (generateLLMResponse) {
-            processLLMSearchResponse(response);
-          } else {
-            processEmbeddingsSearchResponse(response);
-          }
-        } else {
-          processNotOKResponse(response);
-          console.error(response);
-        }
-      })
-      .catch((error: Error) => {
-        processErrorMessage(error);
-        console.error(error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }
-};
-
-const sendResponseFeedback = (
-  messageData: MessageData,
-  feedback_sentiment: FeedbackSentimentType,
-  token: string | null,
-) => {
-  if (token) {
-    // Assuming message.json is a JSON string. Parse it if necessary.
-    const jsonResponse =
-      typeof messageData.json === "string"
-        ? JSON.parse(messageData.json)
-        : messageData.json;
-
-    const queryID = jsonResponse.query_id;
-    const feedbackSecretKey = jsonResponse.feedback_secret_key;
-
-    apiCalls
-      .postResponseFeedback(
-        queryID,
-        feedback_sentiment,
-        feedbackSecretKey,
-        token,
-      )
-      .then((response) => {
-        console.log("Feedback sent successfully: ", response.message);
-      })
-      .catch((error: Error) => {
-        console.error(error);
-      });
-  }
-};
-
-const SearchSidebar = (closeSidebar) => {
+const SearchSidebar = ({ closeSidebar }: { closeSidebar: () => void }) => {
   return (
     <TestSidebar
+      title="Test Question Answering"
       closeSidebar={closeSidebar}
       showLLMResponseToggle={true}
       handleSendClick={getSearchResponse}
-      sendResponseFeedback={sendResponseFeedback}
-      ResponseBox={ResponseBox}
+      ResponseBox={SearchResponseBox}
     />
   );
 };
 
+export type { SearchResponseBoxProps, SearchResponseBoxData };
 export { SearchSidebar };
