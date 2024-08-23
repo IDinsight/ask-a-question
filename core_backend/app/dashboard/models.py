@@ -929,7 +929,6 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
     response = ask_question(prompt)  # to do: use LiteLLM Proxy instead of direct OpenAI
     topic_list = response["topic_list"]
     top_5_df["llm_description"] = topic_list
-    print(top_5_df)
     # TopicData has three fields: Topic, Description, Examples
     # Create a list of TopicData objects. These will then
     # be used to create the InsightsTopicsData object which the

@@ -232,7 +232,6 @@ async def classify_queries(
     """
 
     raw_data = await retrieve_topics(asession=asession)
-
     topics_data = await topic_model_queries(raw_data)
 
     return topics_data
