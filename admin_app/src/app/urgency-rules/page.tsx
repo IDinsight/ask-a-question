@@ -19,7 +19,7 @@ import { Delete, Edit, Add, PlayArrow, Send } from "@mui/icons-material";
 import { TextField, Typography, Box } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { SearchSidebar } from "../content/SearchSidebar";
+import { UDSidebar } from "./UDSidebar";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -151,7 +151,7 @@ const UrgencyRulesPage = () => {
   const handleSidebarClose = () => {
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSidebar ? 6 : 0;
+  const sidebarGridWidth = openSidebar ? 5 : 0;
 
   return (
     <Grid container>
@@ -198,14 +198,16 @@ const UrgencyRulesPage = () => {
               gap={sizes.baseGap}
             >
               <Tooltip title="Add new urgency rule">
-                <Button
-                  variant="contained"
-                  disabled={currAccessLevel != "fullaccess" ? true : false}
-                  onClick={() => createNewRecord()}
-                  startIcon={<Add fontSize="small" />}
-                >
-                  New
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    disabled={currAccessLevel != "fullaccess" ? true : false}
+                    onClick={() => createNewRecord()}
+                    startIcon={<Add fontSize="small" />}
+                  >
+                    New
+                  </Button>
+                </>
               </Tooltip>
             </Layout.FlexBox>
             <Layout.Spacer />
@@ -361,7 +363,7 @@ const UrgencyRulesPage = () => {
           display: openSidebar ? "block" : "none",
         }}
       >
-        <SearchSidebar closeSidebar={handleSidebarClose} />
+        <UDSidebar closeSidebar={handleSidebarClose} />
       </Grid>
     </Grid>
   );

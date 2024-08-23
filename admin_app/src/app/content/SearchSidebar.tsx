@@ -36,7 +36,7 @@ interface SearchResponseBoxData {
 
 interface SearchResponseBoxProps {
   loading: boolean;
-  searchResponseBoxData: SearchResponseBoxData | null;
+  responseBoxData: SearchResponseBoxData | null;
   token: string | null;
 }
 
@@ -102,22 +102,6 @@ const getSearchResponse = (
       rawJson: response,
     });
   };
-
-  // const processUrgencyDetection = (response: any) => {
-  //   const isUrgent: boolean = response.is_urgent;
-  //   const responseText =
-  //     isUrgent === null
-  //       ? `No response. Reason:  See <json> for details.`
-  //       : isUrgent
-  //         ? "Urgent 🚨"
-  //         : "Not Urgent 🟢";
-
-  //   setResponse({
-  //     dateTime: new Date().toISOString(),
-  //     parsedData: responseText,
-  //     rawJson: response,
-  //   })
-  // };
 
   const processNotOKResponse = (response: any) => {
     const responseText = `Error: ${response.status}. See <json> for details.`;
@@ -201,10 +185,10 @@ const RenderSearchResponse = ({
 
 const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   loading,
-  searchResponseBoxData,
+  responseBoxData,
   token,
 }) => {
-  if (!searchResponseBoxData) {
+  if (!responseBoxData) {
     return;
   }
 
@@ -229,16 +213,16 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   };
 
   const sendResponseFeedback = (
-    searchResponseBoxData: SearchResponseBoxData,
+    responseBoxData: SearchResponseBoxData,
     feedback_sentiment: FeedbackSentimentType,
     token: string | null,
   ) => {
     if (token) {
       // Assuming parsedData.rawJson is a JSON string. Parse it if necessary.
       const jsonResponse =
-        typeof searchResponseBoxData.rawJson === "string"
-          ? JSON.parse(searchResponseBoxData.rawJson)
-          : searchResponseBoxData.rawJson;
+        typeof responseBoxData.rawJson === "string"
+          ? JSON.parse(responseBoxData.rawJson)
+          : responseBoxData.rawJson;
 
       const queryID = jsonResponse.query_id;
       const feedbackSecretKey = jsonResponse.feedback_secret_key;
@@ -266,7 +250,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
       console.log(`Already sent ${feedbackType} feedback`);
     } else {
       setState(true);
-      return sendResponseFeedback(searchResponseBoxData, feedbackType, token);
+      return sendResponseFeedback(responseBoxData, feedbackType, token);
     }
   };
 
@@ -283,14 +267,12 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
       <>
         <Box display="flex" flexDirection="column" justifyContent="center">
           {/* if type is string, there was an error */}
-          {typeof searchResponseBoxData.parsedData === "string" ? (
+          {typeof responseBoxData.parsedData === "string" ? (
             <Typography variant="body1">
-              {searchResponseBoxData.parsedData}
+              {responseBoxData.parsedData}
             </Typography>
           ) : (
-            <RenderSearchResponse
-              parsedData={searchResponseBoxData.parsedData}
-            />
+            <RenderSearchResponse parsedData={responseBoxData.parsedData} />
           )}
           <Box
             style={{
@@ -300,9 +282,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
               alignItems: "center",
             }}
           >
-            {searchResponseBoxData.rawJson.hasOwnProperty(
-              "feedback_secret_key",
-            ) ? (
+            {responseBoxData.rawJson.hasOwnProperty("feedback_secret_key") ? (
               <Box sx={{ marginRight: "8px" }}>
                 <IconButton
                   aria-label="thumbs up"
@@ -379,9 +359,9 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
                     fontFamily: "Courier, monospace",
                   }}
                 >
-                  {"rawJson" in searchResponseBoxData
-                    ? JSON.stringify(searchResponseBoxData.rawJson, null, 2)
-                    : "No JSON parsedData found"}
+                  {"rawJson" in responseBoxData
+                    ? JSON.stringify(responseBoxData.rawJson, null, 2)
+                    : "No JSON data found"}
                 </pre>
               </Typography>
             </Box>
@@ -404,5 +384,5 @@ const SearchSidebar = ({ closeSidebar }: { closeSidebar: () => void }) => {
   );
 };
 
-export type { SearchResponseBoxProps, SearchResponseBoxData };
+export type { SearchResponseBoxData };
 export { SearchSidebar };

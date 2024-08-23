@@ -1,4 +1,5 @@
-import { useAuth } from "@/utils/auth";
+import React, { useState } from "react";
+
 import { Close, Send } from "@mui/icons-material";
 import {
   Box,
@@ -8,13 +9,12 @@ import {
   IconButton,
   Paper,
   Typography,
+  TextField,
 } from "@mui/material";
-import TextField from "@mui/material/TextField";
-import React, { useState } from "react";
-import {
-  SearchResponseBoxData,
-  SearchResponseBoxProps,
-} from "../app/content/SearchSidebar";
+
+import { useAuth } from "@/utils/auth";
+import { SearchResponseBoxData } from "../app/content/SearchSidebar";
+import { UDResponseBoxData } from "../app/urgency-rules/UDSidebar";
 
 const TestSidebar = ({
   title,
@@ -30,17 +30,17 @@ const TestSidebar = ({
     question: string,
     generateLLMResponse: boolean,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setResponse: React.Dispatch<
-      React.SetStateAction<SearchResponseBoxData | null>
-    >,
+    setResponse: React.Dispatch<any>,
     token: string | null,
   ) => void;
-  ResponseBox: React.FC<SearchResponseBoxProps>;
+  ResponseBox: React.FC<any>;
 }) => {
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState("");
   const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
-  const [response, setResponse] = useState<SearchResponseBoxData | null>(null);
+  const [response, setResponse] = useState<
+    SearchResponseBoxData | UDResponseBoxData | null
+  >(null);
   const { token } = useAuth();
 
   const handleQuestionChange = (
@@ -153,7 +153,7 @@ const TestSidebar = ({
         {ResponseBox && (
           <ResponseBox
             loading={loading}
-            searchResponseBoxData={response}
+            responseBoxData={response}
             token={token}
           />
         )}
