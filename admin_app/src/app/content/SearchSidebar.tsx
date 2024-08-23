@@ -11,8 +11,8 @@ import {
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { TestSidebar } from "./SidebarCommon";
-import TypingAnimation from "./TypingAnimation";
+import { TestSidebar } from "../../components/SidebarCommon";
+import TypingAnimation from "../../components/TypingAnimation";
 
 interface SearchResult {
   index: string;

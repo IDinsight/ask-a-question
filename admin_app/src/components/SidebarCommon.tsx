@@ -11,7 +11,10 @@ import {
 } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import React, { useState } from "react";
-import { SearchResponseBoxData, SearchResponseBoxProps } from "./SearchSidebar";
+import {
+  SearchResponseBoxData,
+  SearchResponseBoxProps,
+} from "../app/content/SearchSidebar";
 
 const TestSidebar = ({
   title,
