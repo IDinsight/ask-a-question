@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import ValidationError
 
-from ..config import LITELLM_ENDPOINT_GENERATION, LITELLM_MODEL_GENERATION
+from ..config import LITELLM_MODEL_GENERATION
 from ..utils import setup_logger
 from .llm_prompts import RAG, IdentifiedLanguage
 from .utils import _ask_llm_async, remove_json_markdown
@@ -46,7 +46,6 @@ async def get_llm_rag_answer(
         user_message=question,
         system_message=prompt,
         litellm_model=LITELLM_MODEL_GENERATION,
-        litellm_endpoint=LITELLM_ENDPOINT_GENERATION,
         metadata=metadata,
         json=True,
     )

@@ -26,9 +26,6 @@ PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
 # LiteLLM proxy variables
 # Endpoint
 LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
-LITELLM_ENDPOINT_GENERATION = os.environ.get(
-    "LITELLM_ENDPOINT_GENERATION", LITELLM_ENDPOINT
-)
 # API Key. Required but just a dummy for now. The actual OPENAI_API_KEY is set
 # in the proxy container.
 LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
