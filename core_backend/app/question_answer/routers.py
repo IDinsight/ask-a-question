@@ -121,20 +121,18 @@ async def voice_search(
         GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
     )
 
-    if CUSTOM_SPEECH_ENDPOINT != "":
-        transcription_result = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
-        user_query = QueryBase(
-            generate_llm_response=True,
-            query_text=transcription_result["text"],
-            query_metadata={},
-        )
+    if CUSTOM_SPEECH_ENDPOINT is not None:
+        transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+        transcription_result = transcription["text"]
+
     else:
-        external_transcription_result = await transcribe_audio(file_path)
-        user_query = QueryBase(
-            generate_llm_response=True,
-            query_text=external_transcription_result,
-            query_metadata={},
-        )
+        transcription_result = await transcribe_audio(file_path)
+
+    user_query = QueryBase(
+        generate_llm_response=True,
+        query_text=transcription_result,
+        query_metadata={},
+    )
 
     (
         user_query_db,
