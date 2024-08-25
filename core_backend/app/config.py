@@ -1,3 +1,8 @@
+"""
+Config for core_backend. Not that there are other config files within
+each endpoin module
+"""
+
 import os
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
@@ -11,6 +16,12 @@ POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
+
+# PGVector variables
+PGVECTOR_VECTOR_SIZE = os.environ.get("PGVECTOR_VECTOR_SIZE", "1536")
+PGVECTOR_M = os.environ.get("PGVECTOR_M", "16")
+PGVECTOR_EF_CONSTRUCTION = os.environ.get("PGVECTOR_EF_CONSTRUCTION", "64")
+PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
 
 # LiteLLM proxy variables
 # Endpoint
@@ -46,7 +57,13 @@ LITELLM_MODEL_ALIGNSCORE = os.environ.get(
 LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
     "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
 )
-
+LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
+    "LITELLM_MODEL_DASHBOARD_SUMMARY", "openai/dashboard-summary"
+)
+# On/Off Topic variables
+SERVICE_IDENTITY = os.environ.get(
+    "SERVICE_IDENTITY", "air pollution and air quality chatbot"
+)
 # Rate limit variables
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
@@ -61,6 +78,8 @@ ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
+
+# Speech API
 SPEECH_ENDPOINT = os.environ.get(
     "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
 )
@@ -72,3 +91,6 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
+
+# Google Cloud storage
+GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")

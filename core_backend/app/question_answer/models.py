@@ -28,6 +28,7 @@ from ..models import Base, JSONDict
 from ..utils import generate_secret_key
 from .schemas import (
     ContentFeedback,
+    QueryAudioResponse,
     QueryBase,
     QueryResponse,
     QueryResponseError,
@@ -167,6 +168,7 @@ class QueryResponseDB(Base):
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    tts_filepath: Mapped[str] = mapped_column(String, nullable=True)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -175,7 +177,6 @@ class QueryResponseDB(Base):
     is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
     error_type: Mapped[str] = mapped_column(String, nullable=True)
     error_message: Mapped[str] = mapped_column(String, nullable=True)
-    tts_file: Mapped[str] = mapped_column(String, nullable=True)
 
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
@@ -195,7 +196,7 @@ class QueryResponseDB(Base):
 
 async def save_query_response_to_db(
     user_query_db: QueryDB,
-    response: QueryResponse | QueryResponseError,
+    response: QueryResponse | QueryAudioResponse | QueryResponseError,
     asession: AsyncSession,
 ) -> QueryResponseDB:
     """Saves the user query response to the database.
@@ -221,7 +222,19 @@ async def save_query_response_to_db(
             session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
-            tts_file=response.model_dump()["tts_file"],
+            tts_filepath=None,
+            response_datetime_utc=datetime.now(timezone.utc),
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+        )
+    elif type(response) is QueryAudioResponse:
+        user_query_responses_db = QueryResponseDB(
+            query_id=user_query_db.query_id,
+            user_id=user_query_db.user_id,
+            session_id=user_query_db.session_id,
+            search_results=response.model_dump()["search_results"],
+            llm_response=response.model_dump()["llm_response"],
+            tts_filepath=response.model_dump()["tts_filepath"],
             response_datetime_utc=datetime.now(timezone.utc),
             debug_info=response.model_dump()["debug_info"],
             is_error=False,
@@ -233,7 +246,7 @@ async def save_query_response_to_db(
             session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
-            tts_file=response.model_dump()["tts_file"],
+            tts_filepath=None,
             response_datetime_utc=datetime.now(timezone.utc),
             debug_info=response.model_dump()["debug_info"],
             is_error=True,
@@ -311,16 +324,18 @@ async def save_content_for_query_to_db(
 
     if contents is None:
         return
-
+    all_records = []
     for content in contents.values():
-        content_for_query_db = QueryResponseContentDB(
-            user_id=user_id,
-            session_id=session_id,
-            query_id=query_id,
-            content_id=content.id,
-            created_datetime_utc=datetime.now(timezone.utc),
+        all_records.append(
+            QueryResponseContentDB(
+                user_id=user_id,
+                session_id=session_id,
+                query_id=query_id,
+                content_id=content.id,
+                created_datetime_utc=datetime.now(timezone.utc),
+            )
         )
-        asession.add(content_for_query_db)
+    asession.add_all(all_records)
     await asession.commit()
 
 

@@ -32,6 +32,7 @@ const theme = createTheme({
     },
     secondary: {
       main: "#C0C6DC",
+      dark: "#505050",
     },
     selected: {
       main: "#DEE5F7",
@@ -43,7 +44,7 @@ const theme = createTheme({
     lightgray: {
       main: "#F5F5F5",
       light: "#FAFAFA",
-      dark: "eeeeee",
+      dark: "#a0a0a0",
       contrastText: "#000000",
     },
   },

@@ -125,7 +125,7 @@ class Heatmap(BaseModel):
     h22_00: DayCount = Field(..., alias="22:00")
 
 
-class TimeSeries(BaseModel):
+class OverviewTimeSeries(BaseModel):
     """
     This class is used to define the schema for the line chart
     """
@@ -135,16 +135,35 @@ class TimeSeries(BaseModel):
     not_urgent_not_escalated: dict[str, int]
 
 
-class TopContent(BaseModel):
+class TopContentBase(BaseModel):
+    """
+    This class is used to define the schema for the top content basic
+    """
+
+    title: str
+
+
+class TopContent(TopContentBase):
     """
     This class is used to define the schema for the top content
     """
 
-    title: str
     query_count: int
     positive_votes: int
     negative_votes: int
     last_updated: datetime
+
+
+class TopContentTimeSeries(TopContentBase):
+    """
+    This class is used to define the schema for the top content time series
+    """
+
+    id: int
+    query_count_time_series: dict[str, int]
+    positive_votes: int
+    negative_votes: int
+    total_query_count: int
 
 
 class DashboardOverview(BaseModel):
@@ -154,7 +173,7 @@ class DashboardOverview(BaseModel):
 
     stats_cards: StatsCards
     heatmap: Heatmap
-    time_series: TimeSeries
+    time_series: OverviewTimeSeries
     top_content: list[TopContent]
 
 
@@ -197,3 +216,43 @@ class TopicsData(BaseModel):
 
     n_topics: int
     topics: list[Topic]
+
+
+class UserFeedback(BaseModel):
+    """
+    This class is used to define the schema for the user feedback
+    """
+
+    timestamp: datetime
+    question: str
+    feedback: str
+
+
+class DetailsDrawer(BaseModel):
+    """
+    This class is used to define the schema for the details drawer
+    """
+
+    title: str
+    query_count: int
+    positive_votes: int
+    negative_votes: int
+    daily_query_count_avg: int
+    time_series: dict[str, dict[str, int]]
+    user_feedback: list[UserFeedback]
+
+
+class DashboardPerformance(BaseModel):
+    """
+    This class is used to define the schema for the dashboard performance page
+    """
+
+    content_time_series: list[TopContentTimeSeries]
+
+
+class AIFeedbackSummary(BaseModel):
+    """
+    This class is used to define the schema for the AI feedback summary
+    """
+
+    ai_summary: str

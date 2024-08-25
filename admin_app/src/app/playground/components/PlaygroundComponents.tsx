@@ -1,5 +1,3 @@
-import { keyframes } from "@emotion/react";
-import styled from "@emotion/styled";
 import { SelectChangeEvent } from "@mui/material";
 import React, { useState } from "react";
 
@@ -28,6 +26,7 @@ import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import TypingAnimation from "@/components/Common";
 
 type QueryType = "embeddings-search" | "llm-response" | "urgency-detection";
 
@@ -63,8 +62,7 @@ const PersistentSearchBar = ({
 }: {
   onSend: (queryText: string, queryType: QueryType) => void;
 }) => {
-  const [selectedOption, setSelectedOption] =
-    useState<QueryType>("embeddings-search");
+  const [selectedOption, setSelectedOption] = useState<QueryType>("embeddings-search");
   const [queryText, setQueryText] = useState<string>("");
 
   const handleSelectChange = (event: SelectChangeEvent<unknown>) => {
@@ -112,10 +110,7 @@ const PersistentSearchBar = ({
               borderRadius: "10px",
             },
             startAdornment: (
-              <InputAdornment
-                position="start"
-                sx={{ margin: 0, marginRight: 1 }}
-              >
+              <InputAdornment position="start" sx={{ margin: 0, marginRight: 1 }}>
                 <Select
                   value={selectedOption}
                   onChange={handleSelectChange}
@@ -155,7 +150,7 @@ const PersistentSearchBar = ({
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position="end" sx={{ pr: 2 }}>
+              <InputAdornment position="end" sx={{ paddingRight: 2 }}>
                 <IconButton
                   onClick={() => {
                     onSend(queryText, selectedOption);
@@ -170,30 +165,6 @@ const PersistentSearchBar = ({
           }}
         />
       </Box>
-    </Box>
-  );
-};
-
-// For 3-dot typing animation
-const typing = keyframes`
-  from { opacity: 0 }
-  to { opacity: 1 }
-`;
-const Fader = styled("div")`
-  animation: ${typing} 1s infinite;
-  &:nth-of-type(2) {
-    animation-delay: 0.2s;
-  }
-  &:nth-of-type(3) {
-    animation-delay: 0.4s;
-  }
-`;
-const TypingAnimation = () => {
-  return (
-    <Box sx={{ display: "flex", fontSize: "1.3rem" }}>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
     </Box>
   );
 };
@@ -283,7 +254,7 @@ const MessageBox = ({
 
   const renderResults = (content: ResponseSummary[]) => {
     return content.map((c: ResponseSummary) => (
-      <Box sx={{ pb: sizes.smallGap }} key={c.index}>
+      <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
         <Typography component={"span"} variant="subtitle2">
           {Number(c.index) + 1}: {c.title}
         </Typography>
@@ -311,8 +282,7 @@ const MessageBox = ({
           my: 1,
           width: sizes.icons.medium,
           height: sizes.icons.medium,
-          bgcolor:
-            message.type === "question" ? "primary.main" : "secondary.main",
+          bgcolor: message.type === "question" ? "primary.main" : "secondary.main",
         }}
       >
         {message.type === "question" ? <PersonIcon /> : <AutoAwesomeIcon />}
@@ -328,12 +298,7 @@ const MessageBox = ({
         }}
       >
         {message.type === "question" && (
-          <Typography
-            component={"span"}
-            variant="body2"
-            align="left"
-            color="grey"
-          >
+          <Typography component={"span"} variant="body2" align="left" color="grey">
             {`${(message as UserMessage).queryType}`}
           </Typography>
         )}
@@ -422,7 +387,7 @@ const MessageBox = ({
             <Typography
               component={"span"}
               id="modal-modal-description"
-              sx={{ mt: 2 }}
+              sx={{ marginTop: 2 }}
             >
               <pre
                 style={{
@@ -460,12 +425,7 @@ const ErrorSnackBar = ({
       onClose={onClose}
       anchorOrigin={{ vertical: "top", horizontal: "right" }}
     >
-      <Alert
-        onClose={onClose}
-        severity="error"
-        variant="filled"
-        sx={{ width: "100%" }}
-      >
+      <Alert onClose={onClose} severity="error" variant="filled" sx={{ width: "100%" }}>
         {message}
       </Alert>
     </Snackbar>

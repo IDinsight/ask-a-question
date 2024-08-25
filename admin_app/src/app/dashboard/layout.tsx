@@ -1,7 +1,7 @@
 import NavBar from "@/components/NavBar";
 import { ProtectedComponent } from "@/components/ProtectedComponent";
 import React from "react";
-import Grid from "@mui/material/Grid";
+import { Box } from "@mui/material";
 
 export default function RootLayout({
   children,
@@ -10,14 +10,8 @@ export default function RootLayout({
 }>) {
   return (
     <ProtectedComponent>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <NavBar />
-        </Grid>
-        <Grid item xs={12}>
-          {children}
-        </Grid>
-      </Grid>
+      <NavBar />
+      <Box paddingTop={"60px"}>{children}</Box>
     </ProtectedComponent>
   );
 }

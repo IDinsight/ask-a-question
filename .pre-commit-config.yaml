@@ -16,7 +16,7 @@ repos:
     hooks:
       - id: interrogate
         name: interrogate
-        exclude: ^(core_backend/migrations|core_backend/tests|core_backend/validation)
+        exclude: ^(core_backend/migrations|core_backend/tests|core_backend/validation|optional_components/speech_api/tests)
         entry: interrogate
         args: [-v, --fail-under=95, --ignore-module]
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -29,14 +29,14 @@ repos:
     hooks:
       - id: mypy
         exclude: ^data/|^scripts/
-        additional_dependencies:
-          [types-PyYAML==6.0.12.12, types-python-dateutil, redis]
+        additional_dependencies: [types-PyYAML==6.0.12.12, types-python-dateutil, redis]
         args: [--ignore-missing-imports, --explicit-package-base]
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v3.0.3" # Use the sha / tag you want to point at
     hooks:
       - id: prettier
         exclude: ^(docs)
+        args: ["--print-width", "88"]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.92.0
     hooks:

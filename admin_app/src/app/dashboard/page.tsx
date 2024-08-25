@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import { Period } from "./types";
-import Overview from "./components/Overview";
-import TopicFiles from "@/app/dashboard/components/TopicFiles";
+import { Period, drawerWidth } from "./types";
+import Overview from "@/app/dashboard/components/Overview";
+import Performance from "@/app/dashboard/components/Performance";
+import TopicsSection from "./components/TopicFiles";
+import { useState } from "react";
 import { appColors } from "@/utils";
+import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
   const [timePeriod, setTimePeriod] = useState<Period>("week" as Period);
-
+  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
   const handleTabChange = (_: React.ChangeEvent<{}>, newValue: Period) => {
     setTimePeriod(newValue);
   };
@@ -22,33 +25,50 @@ const Dashboard: React.FC = () => {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
-        return <div>Users</div>;
+        return <Performance timePeriod={timePeriod} />;
       case "Insights":
-        return <TopicFiles />;
+        return <TopicsSection />;
       default:
         return <div>Page not found</div>;
     }
   };
 
-  // Function to determine if TabPanel should be shown
-  const shouldShowTabPanel = () => {
-    return dashboardPage !== "Insights";
-  };
+  // Close sidebar on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1075) {
+        setSideBarOpen(false);
+      } else {
+        setSideBarOpen(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    // wait 0.75s before first resize (so user can acknowledge the sidebar)
+    setTimeout(() => {
+      handleResize();
+    }, 750);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <>
-      <Box sx={{ display: "flex", mt: 4, flexDirection: "row" }}>
-        <Box sx={{ width: 240, display: "flex" }}>
+      <Box sx={{ display: "flex", marginTop: 4, flexDirection: "row" }}>
+        <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
           <Sidebar
+            open={sideBarOpen}
+            setOpen={setSideBarOpen}
             setDashboardPage={setDashboardPage}
             selectedDashboardPage={dashboardPage}
           />
-        </Box>
+        </ClickAwayListener>
         <Box
           sx={{
             px: 3,
             height: "100%",
             flexGrow: 1,
+            width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
           }}
         >
           <Box
@@ -56,10 +76,12 @@ const Dashboard: React.FC = () => {
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
+              height: "100%",
             }}
           >
             <Box
               sx={{
+                display: "flex",
                 py: 2,
                 borderBottom: "1px solid",
                 borderBottomColor: "divider",
@@ -69,10 +91,8 @@ const Dashboard: React.FC = () => {
                 {dashboardPage}
               </Typography>
             </Box>
-            {shouldShowTabPanel() && (
-              <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            )}
-            <Box sx={{ flexGrow: 1 }}>{showPage()}</Box>
+            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+            <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
           </Box>
         </Box>
       </Box>

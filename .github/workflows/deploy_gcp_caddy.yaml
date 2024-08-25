@@ -83,6 +83,7 @@ jobs:
                 -v caddy_data:/data \
                 -v caddy_config:/config \
                 -e DOMAIN=${{ steps.secrets.outputs.domain }} \
+                -e BACKEND_ROOT_PATH=/api \
                 -p 80:80 \
                 -p 443:443 \
                 -p 443:443/udp \

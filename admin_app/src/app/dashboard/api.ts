@@ -16,14 +16,52 @@ const getOverviewPageData = async (period: Period, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error fetching dashboard stats card data");
+      throw new Error("Error fetching dashboard overview page data");
     }
   });
 };
 
 const fetchTopicsData = async (token: string): Promise<any> => {
-  const response = await fetch(
-    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/topics`,
+  const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/topics`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching Topics data");
+    }
+  });
+};
+
+const getPerformancePageData = async (period: Period, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance page data");
+    }
+  });
+};
+
+const getPerformanceDrawerData = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}`,
     {
       method: "GET",
       headers: {
@@ -31,13 +69,43 @@ const fetchTopicsData = async (token: string): Promise<any> => {
         Authorization: `Bearer ${token}`,
       },
     },
-  );
-
-  if (!response.ok) {
-    throw new Error("Error fetching topics data");
-  }
-
-  return response.json();
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer data");
+    }
+  });
 };
 
-export { getOverviewPageData, fetchTopicsData };
+const getPerformanceDrawerAISummary = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}/ai-summary`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer AI summary");
+    }
+  });
+};
+export {
+  getOverviewPageData,
+  getPerformancePageData,
+  getPerformanceDrawerData,
+  getPerformanceDrawerAISummary,
+  fetchTopicsData,
+};
