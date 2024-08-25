@@ -1346,7 +1346,6 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
     # To have more variation + more samples, we get five sample queries for each topic
     # using the fetch_five_sample_queries function. We then set this to the Examples
     # column.
-
     topic_df["Examples"] = topic_df.apply(
         lambda row: fetch_five_sample_queries(
             topic_num=row["Topic"], topic_model=topic_model, original_queries=queries
@@ -1356,7 +1355,6 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
 
     # Take the top 5 topics
     top_5_df = topic_df[0:5].copy()
-
     # The get_topic_info() method only returns 3 example sentences
     # and it picks the most representative 3 sentences for each topic.
 
@@ -1384,4 +1382,4 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
         )
         for index, row in top_5_df.iterrows()
     ]
-    return TopicsData(n_topics=100, topics=topic_data)
+    return TopicsData(n_topics=len(topic_df), topics=topic_data)
