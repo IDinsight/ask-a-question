@@ -36,6 +36,10 @@ const TopicsSection: React.FC = () => {
   const topicsPerPage = 5;
 
   useEffect(() => {
+    /// check for token first
+    if (!token) {
+      return;
+    }
     const initDataFetch = async () => {
       setLoading(true);
       try {
