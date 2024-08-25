@@ -21,8 +21,8 @@ const getOverviewPageData = async (period: Period, token: string) => {
   });
 };
 
-const fetchTopicsData = async (token: string): Promise<any> => {
-  const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/topics`, {
+const fetchTopicsData = async (token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/topics`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
