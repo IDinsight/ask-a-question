@@ -278,30 +278,24 @@ async def get_session_history(
     """Get the session history for a given session ID."""
     if session_id is None:
         raise ValueError("Session ID cannot be None.")
-    # Query QueryDB for the given user_id and session_id, ordered by query_datetime_utc
     query_stmt = (
         select(QueryDB)
         .where(QueryDB.user_id == user_id, QueryDB.session_id == session_id)
         .order_by(QueryDB.query_datetime_utc)
     )
-
     query_results = (await asession.execute(query_stmt)).scalars().all()
 
-    # Query QueryResponseDB for the given user_id and session_id
     response_stmt = select(QueryResponseDB).where(
         QueryResponseDB.user_id == user_id, QueryResponseDB.session_id == session_id
     )
-
     response_results = (await asession.execute(response_stmt)).scalars().all()
-
-    # Create a dictionary to map query_id to llm_response
     response_dict = {response.query_id: response for response in response_results}
 
-    # Construct the list of dictionaries
     messages = []
     for query in query_results:
         if query.query_id in response_dict:
             response = response_dict[query.query_id]
+            # use original query for history since that's what llms see
             messages.append(
                 {"content": response.debug_info["original_query"], "role": "user"}
             )
