@@ -2,8 +2,6 @@
 Augmented Generation (RAG).
 """
 
-from typing import Optional
-
 from pydantic import ValidationError
 
 from ..config import LITELLM_MODEL_GENERATION
@@ -18,7 +16,7 @@ async def get_llm_rag_answer(
     question: str,
     context: str,
     original_language: IdentifiedLanguage,
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
 ) -> RAG:
     """Get an answer from the LLM model using RAG.
 
@@ -32,7 +30,6 @@ async def get_llm_rag_answer(
         The language of the response.
     metadata
         Additional metadata to provide to the LLM model.
-
     Returns
     -------
     RAG
