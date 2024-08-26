@@ -281,6 +281,7 @@ def generate_tts__after(func: Callable) -> Callable:
             )
             response = QueryAudioResponse(
                 query_id=response.query_id,
+                session_id=response.session_id,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
                 search_results=response.search_results,
