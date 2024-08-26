@@ -6,7 +6,7 @@ import os
 from io import BytesIO
 from typing import Tuple
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +35,7 @@ from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
     get_file_extension_from_mime_type,
+    get_http_client,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -166,104 +167,157 @@ async def search(
     },
 )
 async def voice_search(
-    file: UploadFile = File(...),
+    file_url: str,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryAudioResponse | JSONResponse:
     """
-    Endpoint to transcribe audio from the provided file,
+    Endpoint to transcribe audio from a provided URL,
     generate an LLM response, by default generate_tts is
-    set to true and return a public signed URL of an audio
-    file containing the spoken version of the generated response
+    set to true and return a public encrypted URL of an audio
+    file containing the spoken version of the generated response.
     """
-    file_stream = BytesIO(await file.read())
+    try:
+        file_stream, content_type, file_extension = await download_file_from_url(
+            file_url
+        )
 
-    file_path = f"temp/{file.filename}"
-    with open(file_path, "wb") as f:
+        unique_filename = generate_random_filename(file_extension)
+        destination_blob_name = f"stt-voice-notes/{unique_filename}"
+
+        await upload_file_to_gcs(
+            GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
+        )
+
+        file_path = f"temp/{unique_filename}"
+        with open(file_path, "wb") as f:
+            file_stream.seek(0)
+            f.write(file_stream.read())
         file_stream.seek(0)
-        f.write(file_stream.read())
 
-    file_stream.seek(0)
+        if CUSTOM_SPEECH_ENDPOINT is not None:
+            transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+            transcription_result = transcription["text"]
+        else:
+            transcription_result = await transcribe_audio(file_path)
 
-    content_type = file.content_type
+        user_query = QueryBase(
+            generate_llm_response=True,
+            query_text=transcription_result,
+            query_metadata={},
+        )
 
-    file_extension = get_file_extension_from_mime_type(content_type)
-    unique_filename = generate_random_filename(file_extension)
+        (
+            user_query_db,
+            user_query_refined_template,
+            response_template,
+        ) = await get_user_query_and_response(
+            user_id=user_db.user_id,
+            user_query=user_query,
+            asession=asession,
+            generate_tts=True,
+        )
 
-    destination_blob_name = f"stt-voice-notes/{unique_filename}"
-
-    await upload_file_to_gcs(
-        GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
-    )
-
-    if CUSTOM_SPEECH_ENDPOINT is not None:
-        transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
-        transcription_result = transcription["text"]
-
-    else:
-        transcription_result = await transcribe_audio(file_path)
-
-    user_query = QueryBase(
-        generate_llm_response=True,
-        query_text=transcription_result,
-        query_metadata={},
-    )
-
-    (
-        user_query_db,
-        user_query_refined_template,
-        response_template,
-    ) = await get_user_query_and_response(
-        user_id=user_db.user_id,
-        user_query=user_query,
-        asession=asession,
-        generate_tts=True,
-    )
-
-    response = await get_search_response(
-        query_refined=user_query_refined_template,
-        response=response_template,
-        user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT),
-        asession=asession,
-        exclude_archived=True,
-    )
-
-    if user_query.generate_llm_response:
-        response = await get_generation_response(
+        response = await get_search_response(
             query_refined=user_query_refined_template,
-            response=response,
+            response=response_template,
+            user_id=user_db.user_id,
+            n_similar=int(N_TOP_CONTENT),
+            asession=asession,
+            exclude_archived=True,
         )
 
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(
-        user_id=user_db.user_id,
-        contents=response.search_results,
-        asession=asession,
-    )
-    await save_content_for_query_to_db(
-        user_id=user_db.user_id,
-        query_id=response.query_id,
-        session_id=user_query.session_id,
-        contents=response.search_results,
-        asession=asession,
-    )
+        if user_query.generate_llm_response:
+            response = await get_generation_response(
+                query_refined=user_query_refined_template,
+                response=response,
+            )
 
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        file_stream.close()
+        await save_query_response_to_db(user_query_db, response, asession)
+        await increment_query_count(
+            user_id=user_db.user_id,
+            contents=response.search_results,
+            asession=asession,
+        )
+        await save_content_for_query_to_db(
+            user_id=user_db.user_id,
+            query_id=response.query_id,
+            session_id=user_query.session_id,
+            contents=response.search_results,
+            asession=asession,
+        )
 
-    if type(response) is QueryAudioResponse:
-        return response
-    elif type(response) is QueryResponseError:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            file_stream.close()
+
+        if type(response) is QueryAudioResponse:
+            return response
+        elif type(response) is QueryResponseError:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Internal server error"},
+            )
+
+    except ValueError as ve:
+        logger.error(f"ValueError: {str(ve)}")
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": f"Value error: {str(ve)}"},
         )
-    else:
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Internal server error"},
         )
+
+
+async def download_file_from_url(file_url: str) -> tuple[BytesIO, str, str]:
+    """
+    Asynchronously download a file from a given URL using the
+    global aiohttp ClientSession and return its content as a BytesIO object,
+    along with its content type and file extension.
+    """
+    async with get_http_client() as client:
+        try:
+            async with client.get(file_url) as response:
+                if response.status != 200:
+                    error_content = await response.text()
+                    logger.error(f"Failed to download file: {error_content}")
+                    raise ValueError(f"Failed to download file: {error_content}")
+
+                content_type = response.headers.get("Content-Type")
+                if not content_type:
+                    logger.error("Content-Type header missing in response")
+                    raise ValueError("Unable to determine file content type")
+
+                file_stream = BytesIO(await response.read())
+                file_extension = get_file_extension_from_mime_type(content_type)
+
+        except Exception as e:
+            logger.error(f"Error during file download: {str(e)}")
+            raise ValueError(f"Unable to fetch file: {str(e)}") from None
+
+    return file_stream, content_type, file_extension
+
+
+async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
+    """
+    Post request the file to the speech endpoint to get the transcription
+    """
+    async with get_http_client() as client:
+        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
+            if response.status != 200:
+                error_content = await response.json()
+                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
+                raise ValueError(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
+            return await response.json()
 
 
 @identify_language__before
