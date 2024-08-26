@@ -7,7 +7,7 @@ on:
       - testing
       - production
     paths:
-      - "deployment/docker-compose/litellm_proxy/**"
+      - "deployment/docker-compose/litellm_proxy_config.yaml"
       - ".github/workflows/deploy_gcp_litellm_proxy.yaml"
   release:
     types: [released]
