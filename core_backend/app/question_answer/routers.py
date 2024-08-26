@@ -311,7 +311,7 @@ async def get_search_response(
 
     search_results = await get_similar_content_async(
         user_id=user_id,
-        question=query_refined.query_text,
+        question=query_refined.query_text,  # use latest transformed version of the text
         n_similar=n_similar,
         asession=asession,
         metadata=metadata,
