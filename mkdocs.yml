@@ -40,6 +40,7 @@ nav:
           - Question-Answering Service:
               - components/qa-service/index.md
               - Search: components/qa-service/search.md
+              - Voice Search: components/qa-service/voice-search.md
               - Response Feedback: components/qa-service/response-feedback.md
               - Content Feedback: components/qa-service/content-feedback.md
           - Urgency Detection:
