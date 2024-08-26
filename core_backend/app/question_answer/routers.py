@@ -6,7 +6,7 @@ import os
 from io import BytesIO
 from typing import Tuple
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +35,6 @@ from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
     get_file_extension_from_mime_type,
-    get_http_client,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -59,6 +58,7 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
+from .speech_components.utils import post_to_speech
 
 logger = setup_logger()
 
@@ -74,6 +74,81 @@ router = APIRouter(
     dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
     tags=[TAG_METADATA["name"]],
 )
+
+
+@router.post(
+    "/search",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+async def search(
+    user_query: QueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+) -> QueryResponse | JSONResponse:
+    """
+    Search endpoint finds the most similar content to the user query and optionally
+    generates a single-turn LLM response.
+
+    If any guardrails fail, the embeddings search is still done and an error 400 is
+    returned that includes the search results as well as the details of the failure.
+    """
+
+    (
+        user_query_db,
+        user_query_refined_template,
+        response_template,
+    ) = await get_user_query_and_response(
+        user_id=user_db.user_id,
+        user_query=user_query,
+        asession=asession,
+        generate_tts=False,
+    )
+    response = await get_search_response(
+        query_refined=user_query_refined_template,
+        response=response_template,
+        user_id=user_db.user_id,
+        n_similar=int(N_TOP_CONTENT),
+        asession=asession,
+        exclude_archived=True,
+    )
+
+    if user_query.generate_llm_response:
+        response = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
+        )
+
+    await save_query_response_to_db(user_query_db, response, asession)
+    await increment_query_count(
+        user_id=user_db.user_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+    await save_content_for_query_to_db(
+        user_id=user_db.user_id,
+        session_id=user_query.session_id,
+        query_id=response.query_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
+    if type(response) is QueryResponse:
+        return response
+    elif type(response) is QueryResponseError:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Internal server error"},
+        )
 
 
 @router.post(
@@ -153,6 +228,13 @@ async def voice_search(
         asession=asession,
         exclude_archived=True,
     )
+
+    if user_query.generate_llm_response:
+        response = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
+        )
+
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
         user_id=user_db.user_id,
@@ -181,94 +263,6 @@ async def voice_search(
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Internal server error"},
-        )
-
-
-async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
-    """
-    Post request the file to the speech endpoint to get the transcription
-    """
-    async with get_http_client() as client:
-        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
-            if response.status != 200:
-                error_content = await response.json()
-                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-                raise HTTPException(status_code=response.status, detail=error_content)
-            return await response.json()
-
-
-@router.post(
-    "/search",
-    response_model=QueryResponse,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": QueryResponseError,
-            "description": "Guardrail failure",
-        }
-    },
-)
-async def search(
-    user_query: QueryBase,
-    asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
-) -> QueryResponse | JSONResponse:
-    """
-    Search endpoint finds the most similar content to the user query and optionally
-    generates a single-turn LLM response.
-
-    If any guardrails fail, the embeddings search is still done and an error 400 is
-    returned that includes the search results as well as the details of the failure.
-    """
-
-    (
-        user_query_db,
-        user_query_refined_template,
-        response_template,
-    ) = await get_user_query_and_response(
-        user_id=user_db.user_id,
-        user_query=user_query,
-        asession=asession,
-        generate_tts=False,
-    )
-    response = await get_search_response(
-        query_refined=user_query_refined_template,
-        response=response_template,
-        user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT),
-        asession=asession,
-        exclude_archived=True,
-    )
-
-    if user_query.generate_llm_response:
-        response = await get_generation_response(
-            query_refined=user_query_refined_template,
-            response=response,
-        )
-
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(
-        user_id=user_db.user_id,
-        contents=response.search_results,
-        asession=asession,
-    )
-    await save_content_for_query_to_db(
-        user_id=user_db.user_id,
-        session_id=user_query.session_id,
-        query_id=response.query_id,
-        contents=response.search_results,
-        asession=asession,
-    )
-
-    if type(response) is QueryResponse:
-        return response
-    elif type(response) is QueryResponseError:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
-        )
-    else:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": "Internal server error"},
         )
 
 
