@@ -95,8 +95,12 @@ class QueryAudioResponse(QueryResponse):
     Pydantic model for response to a Voice Query with audio response and Text response
     """
 
-    tts_filepath: str | None = Field(None, examples=["response.mp3"])
-
+    tts_filepath: str | None = Field(
+        None,
+        examples=[
+            "https://storage.googleapis.com/this-is-an-example/stt-voice-notes/uuidv4().hex.mp3"
+        ],
+    )
     model_config = ConfigDict(from_attributes=True)
 
 

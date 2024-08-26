@@ -16,9 +16,78 @@ const getOverviewPageData = async (period: Period, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error fetching dashboard stats card data");
+      throw new Error("Error fetching dashboard overview page data");
     }
   });
 };
 
-export { getOverviewPageData };
+const getPerformancePageData = async (period: Period, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance page data");
+    }
+  });
+};
+
+const getPerformanceDrawerData = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer data");
+    }
+  });
+};
+
+const getPerformanceDrawerAISummary = async (
+  period: Period,
+  content_id: number,
+  token: string,
+) => {
+  return fetch(
+    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}/${content_id}/ai-summary`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  ).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching dashboard performance drawer AI summary");
+    }
+  });
+};
+export {
+  getOverviewPageData,
+  getPerformancePageData,
+  getPerformanceDrawerData,
+  getPerformanceDrawerAISummary,
+};

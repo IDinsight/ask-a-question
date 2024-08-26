@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import ALIGN_SCORE_N_RETRIES, GCS_SPEECH_BUCKET, SPEECH_ENDPOINT
+from ..config import ALIGN_SCORE_N_RETRIES, CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -34,6 +34,8 @@ from ..llm_call.process_output import (
 from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
+    generate_random_filename,
+    get_file_extension_from_mime_type,
     get_http_client,
     setup_logger,
     upload_file_to_gcs,
@@ -58,6 +60,7 @@ from .schemas import (
     QueryResponseError,
     ResponseFeedbackBase,
 )
+from .speech_components.external_voice_components import transcribe_audio
 
 logger = setup_logger()
 
@@ -77,7 +80,7 @@ router = APIRouter(
 
 @router.post(
     "/voice-search",
-    response_model=QueryAudioResponse | QueryResponse,
+    response_model=QueryAudioResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": QueryResponseError,
@@ -110,18 +113,29 @@ async def voice_search(
     file_stream.seek(0)
 
     content_type = file.content_type
-    destination_blob_name = f"stt-voice-notes/{file.filename}"
+
+    file_extension = get_file_extension_from_mime_type(content_type)
+    unique_filename = generate_random_filename(file_extension)
+
+    destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
     await upload_file_to_gcs(
         GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
     )
 
-    transcription_result = await post_to_speech(file_path, SPEECH_ENDPOINT)
+    if CUSTOM_SPEECH_ENDPOINT is not None:
+        transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+        transcription_result = transcription["text"]
+
+    else:
+        transcription_result = await transcribe_audio(file_path)
+
     user_query = QueryBase(
         generate_llm_response=True,
-        query_text=transcription_result["text"],
+        query_text=transcription_result,
         query_metadata={},
     )
+
     (
         user_query_db,
         user_query_refined_template,
@@ -159,9 +173,9 @@ async def voice_search(
         os.remove(file_path)
         file_stream.close()
 
-    if isinstance(response, QueryAudioResponse):
+    if type(response) is QueryAudioResponse:
         return response
-    elif isinstance(response, QueryResponseError):
+    elif type(response) is QueryResponseError:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
@@ -180,7 +194,7 @@ async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
         async with client.post(endpoint_url, json={"file_path": file_path}) as response:
             if response.status != 200:
                 error_content = await response.json()
-                logger.error(f"Error from SPEECH_ENDPOINT: {error_content}")
+                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
                 raise HTTPException(status_code=response.status, detail=error_content)
             return await response.json()
 

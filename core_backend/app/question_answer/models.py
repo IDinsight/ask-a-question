@@ -222,7 +222,6 @@ async def save_query_response_to_db(
             session_id=user_query_db.session_id,
             search_results=response.model_dump()["search_results"],
             llm_response=response.model_dump()["llm_response"],
-            tts_filepath=None,
             response_datetime_utc=datetime.now(timezone.utc),
             debug_info=response.model_dump()["debug_info"],
             is_error=False,
@@ -324,16 +323,18 @@ async def save_content_for_query_to_db(
 
     if contents is None:
         return
-
+    all_records = []
     for content in contents.values():
-        content_for_query_db = QueryResponseContentDB(
-            user_id=user_id,
-            session_id=session_id,
-            query_id=query_id,
-            content_id=content.id,
-            created_datetime_utc=datetime.now(timezone.utc),
+        all_records.append(
+            QueryResponseContentDB(
+                user_id=user_id,
+                session_id=session_id,
+                query_id=query_id,
+                content_id=content.id,
+                created_datetime_utc=datetime.now(timezone.utc),
+            )
         )
-        asession.add(content_for_query_db)
+    asession.add_all(all_records)
     await asession.commit()
 
 
