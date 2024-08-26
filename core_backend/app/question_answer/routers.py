@@ -27,7 +27,7 @@ from ..llm_call.process_input import (
 )
 from ..llm_call.process_output import (
     check_align_score__after,
-    generate_llm_response__after,
+    generate_llm_query_response,
     generate_tts__after,
 )
 from ..users.models import UserDB
@@ -145,7 +145,7 @@ async def voice_search(
         generate_tts=True,
     )
 
-    response = await search_base(
+    response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
@@ -230,7 +230,7 @@ async def search(
         asession=asession,
         generate_tts=False,
     )
-    response = await search_base(
+    response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
@@ -239,6 +239,13 @@ async def search(
         exclude_archived=True,
     )
 
+    if user_query.generate_llm_response:
+        response = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
+        )
+    logger.info(f"Search response: {response}")
+    logger.debug(f"Search response type: {type(response)}")
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
         user_id=user_db.user_id,
@@ -270,10 +277,7 @@ async def search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
-@generate_tts__after
-@generate_llm_response__after
-@check_align_score__after
-async def search_base(
+async def get_search_response(
     query_refined: QueryRefined,
     response: QueryResponse,
     user_id: int,
@@ -308,12 +312,12 @@ async def search_base(
         An appropriate query response object.
 
     """
-
-    # always do the embeddings search even if some guardrails have failed
+    # No checks for errors:
+    #   always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
+
     search_results = await get_similar_content_async(
         user_id=user_id,
-        # use latest version of the text
         question=query_refined.query_text,
         n_similar=n_similar,
         asession=asession,
@@ -321,6 +325,32 @@ async def search_base(
         exclude_archived=exclude_archived,
     )
     response.search_results = search_results
+
+    return response
+
+
+@generate_tts__after
+@check_align_score__after
+async def get_generation_response(
+    query_refined: QueryRefined,
+    response: QueryResponse,
+) -> QueryResponse | QueryResponseError:
+    """
+    Generate a response using an LLM given a query with search results.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
+    """
+    if not query_refined.generate_llm_response:
+        return response
+
+    metadata = create_langfuse_metadata(
+        query_id=response.query_id, user_id=query_refined.user_id
+    )
+
+    response = await generate_llm_query_response(
+        query_refined=query_refined, response=response, metadata=metadata
+    )
 
     return response
 
