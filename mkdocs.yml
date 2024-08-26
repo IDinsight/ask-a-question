@@ -54,6 +54,8 @@ nav:
           - HuggingFace embeddings:
               - components/huggingface-embeddings/index.md
               - How to use: components/huggingface-embeddings/how-to-use.md
+          - Voice Service:
+              - components/voice-service/index.md
 
   - Integrations:
       - integrations/index.md
