@@ -150,6 +150,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
         if not query_refined.generate_llm_response:
             return response
+
         metadata = create_langfuse_metadata(
             query_id=response.query_id, user_id=query_refined.user_id
         )
