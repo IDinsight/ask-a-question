@@ -1,5 +1,3 @@
-from typing import Optional
-
 from litellm import acompletion
 
 from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_DEFAULT
@@ -14,7 +12,7 @@ async def _ask_llm_async(
     chat_history: list[dict[str, str]] | None = None,
     litellm_model: str | None = LITELLM_MODEL_DEFAULT,
     litellm_endpoint: str | None = LITELLM_ENDPOINT,
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
     json: bool = False,
 ) -> str:
     """

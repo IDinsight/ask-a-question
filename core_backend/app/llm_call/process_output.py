@@ -83,6 +83,7 @@ async def generate_llm_query_response(
     else:
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -117,7 +118,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
         response = await func(query_refined, response, *args, **kwargs)
 
-        if not kwargs.get("generate_llm_response", False):
+        if not query_refined.generate_llm_response:
             return response
 
         metadata = create_langfuse_metadata(
@@ -188,6 +189,7 @@ async def _check_align_score(
         )
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -280,6 +282,7 @@ def generate_tts__after(func: Callable) -> Callable:
             )
             response = QueryAudioResponse(
                 query_id=response.query_id,
+                session_id=response.session_id,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
                 search_results=response.search_results,
@@ -330,6 +333,7 @@ async def _generate_tts_response(
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
         return QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,

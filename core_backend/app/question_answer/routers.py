@@ -245,7 +245,7 @@ async def search(
     )
 
     if user_query.generate_llm_response:
-        response = get_generation_response(
+        response = await get_generation_response(
             query_refined=user_query_refined_template,
             response=response,
         )
