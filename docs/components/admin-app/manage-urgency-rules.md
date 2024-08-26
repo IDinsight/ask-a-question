@@ -1,10 +1,11 @@
 # Managing Urgency Rules
 
-The Admin app allows you to view, add, edit, or delete  in the database.
+The Admin app allows you to view, add, edit, or delete  in the database. It also allows you to test the service
+with messages to ensure the classifications seem correct.
 
-Once logged in, navigate to "Urgency Rules" from the menu and you should see the
+Once logged in, navigate to "Urgency Detection" from the menu and you should see the
 following screen
 
 <img src="../urgency-rules-screenshot.png" alt="manage-content-screenshot" style="border: 1px solid  lightgray;">
 
-You can add, edit, or delete urgency rules from this screen.
+You can add, edit, delete, or test urgency rules from this screen.

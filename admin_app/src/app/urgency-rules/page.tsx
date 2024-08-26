@@ -70,10 +70,7 @@ const UrgencyRulesPage = () => {
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    index: number,
-  ) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -115,12 +112,10 @@ const UrgencyRulesPage = () => {
       setItems(newItems);
       return;
     }
-    apiCalls
-      .deleteUrgencyRule(items[index].urgency_rule_id!, token!)
-      .then(() => {
-        newItems.splice(index, 1);
-        setItems(newItems);
-      });
+    apiCalls.deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
+      newItems.splice(index, 1);
+      setItems(newItems);
+    });
   };
 
   const onBlur = (index: number) => {
@@ -162,9 +157,7 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar
-            ? { xs: "none", sm: "none", md: "block" }
-            : "block",
+          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
         }}
       >
         <Layout.FlexBox alignItems="center" padding={5} gap={sizes.baseGap}>
@@ -236,10 +229,7 @@ const UrgencyRulesPage = () => {
                           >
                             <Delete fontSize="small" color="primary" />
                           </IconButton>
-                          <IconButton
-                            aria-label="edit"
-                            onClick={handleEdit(index)}
-                          >
+                          <IconButton aria-label="edit" onClick={handleEdit(index)}>
                             <Edit fontSize="small" color="primary" />
                           </IconButton>
                         </>
@@ -249,9 +239,7 @@ const UrgencyRulesPage = () => {
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(-1)}
                     onDoubleClick={
-                      currAccessLevel == "fullaccess"
-                        ? handleEdit(index)
-                        : () => {}
+                      currAccessLevel == "fullaccess" ? handleEdit(index) : () => {}
                     }
                   >
                     <ListItemIcon>#{index + 1}</ListItemIcon>
@@ -277,10 +265,7 @@ const UrgencyRulesPage = () => {
                         InputProps={{
                           style: { backgroundColor: "white" },
                           endAdornment: (
-                            <InputAdornment
-                              position="end"
-                              sx={{ paddingRight: 2 }}
-                            >
+                            <InputAdornment position="end" sx={{ paddingRight: 2 }}>
                               <IconButton
                                 onMouseDown={() => {
                                   addOrUpdateItem(index);
@@ -301,16 +286,17 @@ const UrgencyRulesPage = () => {
                         secondary={
                           urgencyRule.updated_datetime_utc ? (
                             "Last updated: " +
-                            new Date(
-                              urgencyRule.updated_datetime_utc,
-                            ).toLocaleString(undefined, {
-                              day: "numeric",
-                              month: "numeric",
-                              year: "numeric",
-                              hour: "numeric",
-                              minute: "numeric",
-                              hour12: true,
-                            })
+                            new Date(urgencyRule.updated_datetime_utc).toLocaleString(
+                              undefined,
+                              {
+                                day: "numeric",
+                                month: "numeric",
+                                year: "numeric",
+                                hour: "numeric",
+                                minute: "numeric",
+                                hour12: true,
+                              },
+                            )
                           ) : (
                             <span>
                               <Layout.Spacer multiplier={0.8} />
@@ -341,8 +327,8 @@ const UrgencyRulesPage = () => {
               sx={{
                 bgcolor: "orange",
                 position: "absolute",
-                bottom: 40,
-                right: 40,
+                bottom: 80,
+                right: 150,
               }}
               onClick={handleSidebarToggle}
             >

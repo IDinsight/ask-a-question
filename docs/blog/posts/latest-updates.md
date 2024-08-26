@@ -22,7 +22,7 @@ The rest of the docs have now also been restructured to make it easy to parse.
 A lot of the index pages now show cards like the one shown below. These should
 make it easy to grasp the content in section in a glance.
 
-![Manage Content Screenshot](../images/cards.png){: .blog-img }
+![Question Answering Screenshot](../images/cards.png){: .blog-img }
 
 ## Process Flow Diagrams
 
