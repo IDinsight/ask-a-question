@@ -16,7 +16,8 @@ class QueryBase(BaseModel):
     query_text: str = Field(..., examples=["What is AAQ?"])
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
-    session_id: SkipJsonSchema[int | None] = Field(default=None, exclude=True)
+    # TODO: create SearchQueryBase and ChatQueryBase and set QueryBase as a union
+    session_id: SkipJsonSchema[str | None] = Field(default=None, exclude=True)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,7 +56,7 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: int | None = Field(None, exclude=True)
+    session_id: str | None = Field(None, examples=["session-id-12345-abcde"])
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
 
@@ -78,6 +79,9 @@ class QueryResponse(BaseModel):
         ],
     )
     debug_info: dict = Field({}, examples=[{"example": "debug-info"}])
+    chat_history: list[dict[str, str]] | None = Field(
+        None, examples=[{"role": "user", "content": "Hello"}]
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,7 +118,7 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: SkipJsonSchema[int | None] = None
+    session_id: SkipJsonSchema[str | None] = None
     feedback_sentiment: FeedbackSentiment = Field(
         FeedbackSentiment.UNKNOWN, examples=["positive"]
     )

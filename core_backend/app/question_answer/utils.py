@@ -16,3 +16,9 @@ def get_context_string_from_search_results(
         context_list.append(f"{key}. {result.title}\n{result.text}")
     context_string = "\n\n".join(context_list)
     return context_string
+
+
+def format_session_history_as_query(messages: list[dict[str, str]]) -> str:
+    """Format the session history as a query."""
+    history = "\n".join([message["content"] for message in messages])
+    return history

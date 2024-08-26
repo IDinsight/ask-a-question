@@ -67,12 +67,13 @@ async def generate_llm_query_response(
         return response
 
     context = get_context_string_from_search_results(response.search_results)
+
     rag_response = await get_llm_rag_answer(
-        # use the original query text
         question=query_refined.query_text_original,
         context=context,
         original_language=query_refined.original_language,
         metadata=metadata,
+        chat_history=response.chat_history,
     )
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:

@@ -34,6 +34,7 @@ from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
+    generate_secret_key,
     get_file_extension_from_mime_type,
     setup_logger,
     upload_file_to_gcs,
@@ -42,6 +43,7 @@ from .config import N_TOP_CONTENT
 from .models import (
     QueryDB,
     check_secret_key_match,
+    get_session_history,
     save_content_feedback_to_db,
     save_content_for_query_to_db,
     save_query_response_to_db,
@@ -59,6 +61,7 @@ from .schemas import (
 )
 from .speech_components.external_voice_components import transcribe_audio
 from .speech_components.utils import post_to_speech
+from .utils import format_session_history_as_query
 
 logger = setup_logger()
 
@@ -130,6 +133,83 @@ async def search(
         contents=response.search_results,
         asession=asession,
     )
+    await save_content_for_query_to_db(
+        user_id=user_db.user_id,
+        session_id=user_query.session_id,
+        query_id=response.query_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
+    if type(response) is QueryResponse:
+        return response
+    elif type(response) is QueryResponseError:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Internal server error"},
+        )
+
+
+@router.post(
+    "/chat",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+async def chat(
+    user_query: QueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+) -> QueryResponse | JSONResponse:
+    """ """
+    is_new_chat = user_query.session_id is None
+
+    if is_new_chat:
+        session_id = generate_secret_key()
+        user_query.session_id = session_id
+
+    (
+        user_query_db,
+        user_query_refined_template,
+        response_template,
+    ) = await get_user_query_and_response(
+        user_id=user_db.user_id,
+        user_query=user_query,
+        asession=asession,
+        generate_tts=False,
+    )
+
+    response = await get_search_response(
+        query_refined=user_query_refined_template,
+        response=response_template,
+        user_id=user_db.user_id,
+        n_similar=int(N_TOP_CONTENT),
+        asession=asession,
+        exclude_archived=True,
+        is_chat=True,
+    )
+
+    response = await get_generation_response(
+        query_refined=user_query_refined_template,
+        response=response,
+    )
+
+    await save_query_response_to_db(user_query_db, response, asession)
+
+    await increment_query_count(
+        user_id=user_db.user_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
     await save_content_for_query_to_db(
         user_id=user_db.user_id,
         session_id=user_query.session_id,
@@ -227,6 +307,7 @@ async def voice_search(
         n_similar=int(N_TOP_CONTENT),
         asession=asession,
         exclude_archived=True,
+        is_chat=False,
     )
 
     if user_query.generate_llm_response:
@@ -277,6 +358,7 @@ async def get_search_response(
     n_similar: int,
     asession: AsyncSession,
     exclude_archived: bool = True,
+    is_chat: bool = False,
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -308,10 +390,23 @@ async def get_search_response(
     # No checks for errors:
     #   always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
+    if is_chat:
+        # May return empty list if no chat history.
+        # Ideally want to skip if it's a new chat.
+        messages = await get_session_history(
+            user_id=query_refined.user_id,
+            session_id=query_refined.session_id,
+            asession=asession,
+        )
+        question = format_session_history_as_query(messages)
+        response.chat_history = messages
+    else:
+        # use latest transformed version of the text
+        question = query_refined.query_text
 
     search_results = await get_similar_content_async(
         user_id=user_id,
-        question=query_refined.query_text,  # use latest transformed version of the text
+        question=question,
         n_similar=n_similar,
         asession=asession,
         metadata=metadata,
@@ -333,6 +428,8 @@ async def get_generation_response(
 
     Only runs if the generate_llm_response flag is set to True.
     Requires "search_results" and "original_language" in the response.
+
+    If it's a chat query, the chat history is passed to the LLM model.
     """
     if not query_refined.generate_llm_response:
         return response
