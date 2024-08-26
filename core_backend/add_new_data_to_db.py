@@ -1,6 +1,7 @@
 import argparse
 import json
 import random
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
@@ -29,6 +30,7 @@ urllib3.disable_warnings(InsecureRequestWarning)
 
 try:
     import requests  # type: ignore
+
 except ImportError:
     print(
         "Please install requests library using `pip install requests` "
@@ -131,22 +133,32 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
         return None
 
 
-def save_single_row(endpoint: str, data: dict) -> dict:
+def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
     """
     Save a single row in the database.
     """
+    try:
+        response = requests.post(
+            endpoint,
+            headers={
+                "accept": "application/json",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {API_KEY}",
+            },
+            json=data,
+            verify=False,
+        )
+        response.raise_for_status()
+        return response.json()
 
-    response = requests.post(
-        endpoint,
-        headers={
-            "accept": "application/json",
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_KEY}",
-        },
-        json=data,
-        verify=False,
-    )
-    return response.json()
+    except Exception as e:
+        if retries > 0:
+            # Implement exponential wait before retrying
+            time.sleep(2 ** (3 - retries))
+            return save_single_row(endpoint, data, retries=retries - 1)
+        else:
+            print(f"Request failed after retries: {e}")
+            return None
 
 
 def process_search(_id: int, text: str) -> tuple | None:
@@ -161,7 +173,7 @@ def process_search(_id: int, text: str) -> tuple | None:
         "generate_tts": False,
     }
     response = save_single_row(endpoint, data)
-    if "search_results" in response:
+    if response and isinstance(response, dict) and "search_results" in response:
         return (
             _id,
             response["query_id"],
@@ -253,7 +265,7 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
     }
 
     response = save_single_row(endpoint, data)
-    if "is_urgent" in response:
+    if response and "is_urgent" in response:
         return (response["is_urgent"],)
     return None
 
