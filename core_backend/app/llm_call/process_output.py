@@ -21,8 +21,10 @@ from ..question_answer.schemas import (
     QueryResponse,
     QueryResponseError,
 )
+from ..question_answer.speech_components.external_voice_components import (
+    generate_tts_on_gcs,
+)
 from ..question_answer.utils import get_context_string_from_search_results
-from ..question_answer.voice_components import generate_tts_on_gcs
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
@@ -304,6 +306,9 @@ def generate_tts__after(func: Callable) -> Callable:
             return response
 
         if not isinstance(response, QueryAudioResponse):
+            logger.warning(
+                f"Converting response of type {type(response)} to AudioResponse."
+            )
             response = QueryAudioResponse(
                 query_id=response.query_id,
                 feedback_secret_key=response.feedback_secret_key,
@@ -341,7 +346,6 @@ async def _generate_tts_response(
         logger.warning("TTS generation skipped due to missing LLM response.")
         return response
 
-    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
     try:
         if query_refined.original_language is None:
             error_msg = "Language must be provided to generate speech."
@@ -351,7 +355,6 @@ async def _generate_tts_response(
         tts_file_path = await generate_tts_on_gcs(
             text=response.llm_response,
             language=query_refined.original_language,
-            destination_blob_name=blob_name,
         )
         response.tts_filepath = tts_file_path
     except ValueError as e:
