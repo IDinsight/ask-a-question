@@ -7,7 +7,7 @@ import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import Performance from "@/app/dashboard/components/Performance";
-import TopicsSection from "./components/TopicFiles";
+import Insights from "./components/Insights";
 import { useState } from "react";
 import { appColors } from "@/utils";
 import { ClickAwayListener } from "@mui/base/ClickAwayListener";
@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
       case "Performance":
         return <Performance timePeriod={timePeriod} />;
       case "Insights":
-        return <TopicsSection />;
+        return <Insights timePeriod={timePeriod} />;
       default:
         return <div>Page not found</div>;
     }

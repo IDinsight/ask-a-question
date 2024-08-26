@@ -16,6 +16,7 @@ import Pagination from "@mui/material/Pagination";
 import Chip from "@mui/material/Chip";
 import { useAuth } from "@/utils/auth";
 import { fetchTopicsData } from "@/app/dashboard/api";
+import { Period } from "@/app/dashboard/types";
 
 // Interfaces
 interface Topic {
@@ -24,7 +25,11 @@ interface Topic {
   topic_popularity: string;
 }
 
-const TopicsSection: React.FC = () => {
+interface InsightsProps {
+  timePeriod: Period;
+}
+
+const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
   const { token } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [n_topics, setNTopics] = useState<number>(0);
@@ -69,10 +74,7 @@ const TopicsSection: React.FC = () => {
     }
   }, [token, isInitialLoad]); // Only re-run the effect if token changes
 
-  const handlePageChange = (
-    _event: React.ChangeEvent<unknown>,
-    value: number,
-  ) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
   };
 
@@ -171,14 +173,10 @@ const TopicsSection: React.FC = () => {
           <TableBody>
             {selectedTopic?.examples.map((example, index) => (
               <TableRow key={index}>
-                <TableCell
-                  sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                >
+                <TableCell sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                   {example.timestamp}
                 </TableCell>
-                <TableCell
-                  sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                >
+                <TableCell sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                   {example.userQuestion}
                 </TableCell>
               </TableRow>
@@ -190,4 +188,4 @@ const TopicsSection: React.FC = () => {
   );
 };
 
-export default TopicsSection;
+export default Insights;
