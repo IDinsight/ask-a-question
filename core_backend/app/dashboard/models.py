@@ -1327,16 +1327,16 @@ async def topic_model_queries(data: InsightsQueriesData) -> TopicsData:
     # Go throgh each InsightQuery object and place queries in a list
     queries = [x.query_text for x in data.queries]
     preds_, probas_ = topic_model.fit_transform(queries)
-
     # Get the topic info
     topic_df = topic_model.get_topic_info()[1:]  # Skip first row unlabeled
+    print(topic_df)
     # Bin the popularity into 3 bins with verbal labels into "High", "Medium", "Low"
     topic_df["Popularity"] = pd.cut(
         topic_df["Count"],
         bins=[
-            topic_df["Count"].min(),
-            0.15 * topic_df["Count"].max(),
-            0.3 * topic_df["Count"].max(),
+            0,
+            int(topic_df["Count"].max() * 0.2),
+            int(topic_df["Count"].max() * 0.4),
             topic_df["Count"].max(),
         ],
         labels=["Low", "Medium", "High"],
