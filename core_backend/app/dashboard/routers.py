@@ -5,6 +5,7 @@ from typing import Annotated, Literal, Tuple
 
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
+from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -20,18 +21,16 @@ from .models import (
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
-    get_raw_queries,
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
-    topic_model_queries,
 )
 from .schemas import (
     AIFeedbackSummary,
     DashboardOverview,
     DashboardPerformance,
     DetailsDrawer,
-    InsightsQueriesData,
+    InsightsStatus,
     TimeFrequency,
     TopicsData,
 )
@@ -263,48 +262,57 @@ async def retrieve_overview(
     )
 
 
-@router.get("/insights/queries", response_model=InsightsQueriesData)
-async def retrieve_topics(
+@router.get("/insights/{time_frequency}/refresh", response_model=InsightsStatus)
+async def refresh_insights_frequency(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> InsightsQueriesData:
+) -> InsightsStatus:
     """
-    Retrieve all question answer statistics for the last year.
+    Refresh topic modelling insights for the time period specified.
     """
 
-    # TO DO: implement time adjust features
-    today = datetime.now(timezone.utc)
-    year_ago = today + relativedelta(years=-1)
+    redis = request.app.state.redis
 
-    queries_data = await get_raw_queries(
-        asession=asession, start_date=year_ago, end_date=today
+    if redis.exists(f"{user_db.user_id}_insights_status_{time_frequency}"):
+        status = InsightsStatus(
+            **redis.get(f"{user_db.user_id}_insights_status_{time_frequency}")
+        )
+        return status
+
+    status = InsightsStatus(
+        status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
     )
-    formatted_data = InsightsQueriesData(
-        queries=queries_data, n_queries=len(queries_data)
+    redis.set(
+        f"{user_db.user_id}_insights_status_{time_frequency}", status.model_dump()
     )
-    return formatted_data
+    # Kick off topic modelling here ---
+
+    return status
 
 
-@router.get("/insights/topics", response_model=TopicsData)
-async def classify_queries(
-    asession: AsyncSession = Depends(get_async_session),
+@router.get("/insights/{time_frequency}", response_model=TopicsData)
+async def retrieve_insights_frequency(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
 ) -> TopicsData:
     """
-    Carries out topic modelling using BertTopic.
-
-    Parameters
-    ----------
-    asession
-        `AsyncSession` object for database transactions.
-
-    Returns
-    -------
-    TopicsData
-        A list of topics extracted from the user queries,
-        featuring an id, a summary description of the topic
-        and 5 examples.
+    Retrieve topic modelling insights for the time period specified.
     """
 
-    raw_data = await retrieve_topics(asession=asession)
-    topics_data = await topic_model_queries(raw_data)
+    redis = request.app.state.redis
+
+    if redis.exists(f"{user_db.user_id}_insights_{time_frequency}"):
+        topics_data = TopicsData(
+            **redis.get(f"{user_db.user_id}_insights_{time_frequency}")
+        )
+        return topics_data
+
+    topics_data = TopicsData(
+        n_topics=0,
+        topics=[],
+    )
 
     return topics_data

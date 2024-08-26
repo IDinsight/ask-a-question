@@ -177,29 +177,19 @@ class DashboardOverview(BaseModel):
     top_content: list[TopContent]
 
 
-class InsightQuery(BaseModel):
+class InsightsStatus(BaseModel):
     """
-    This class is used to define the schema for the insights queries
-    """
-
-    query_id: int
-    query_text: str
-    query_datetime_utc: datetime
-
-
-class InsightsQueriesData(BaseModel):
-    """
-    This class is used to define the schema for the insights queries data
+    This class is used to define the schema for the insights status
     """
 
-    n_queries: int
-    queries: list[InsightQuery]
+    kicked_off_datetime_utc: datetime
+    status: str
 
 
 class Topic(BaseModel):
     """
     This class is used to define the schema for one topic
-    extracted from the user queries
+    extracted from the user queries. Used for Insights page.
     """
 
     topic_id: int
@@ -211,7 +201,7 @@ class Topic(BaseModel):
 class TopicsData(BaseModel):
     """
     This class is used to define the schema for the a large group
-    of individual Topics
+    of individual Topics. Used for Insights page.
     """
 
     n_topics: int
