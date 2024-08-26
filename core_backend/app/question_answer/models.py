@@ -52,7 +52,7 @@ class QueryDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str] = mapped_column(String, nullable=True)
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -166,7 +166,7 @@ class QueryResponseDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str] = mapped_column(String, nullable=True)
     search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     tts_filepath: Mapped[str] = mapped_column(String, nullable=True)
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
@@ -261,6 +261,59 @@ async def save_query_response_to_db(
     return user_query_responses_db
 
 
+async def check_user_and_session_id(
+    user_id: int, session_id: str, asession: AsyncSession
+) -> bool:
+    """Check if the user_id and session_id are valid."""
+    stmt = select(QueryDB).where(
+        QueryDB.user_id == user_id, QueryDB.session_id == session_id
+    )
+    query_result = await asession.execute(stmt)
+    return query_result.scalar() is not None
+
+
+async def get_session_history(
+    user_id: int, session_id: str | None, asession: AsyncSession
+) -> list[dict[str, str]]:
+    """Get the session history for a given session ID."""
+    if session_id is None:
+        raise ValueError("Session ID cannot be None.")
+    # Query QueryDB for the given user_id and session_id, ordered by query_datetime_utc
+    query_stmt = (
+        select(QueryDB)
+        .where(QueryDB.user_id == user_id, QueryDB.session_id == session_id)
+        .order_by(QueryDB.query_datetime_utc)
+    )
+
+    query_results = (await asession.execute(query_stmt)).scalars().all()
+
+    # Query QueryResponseDB for the given user_id and session_id
+    response_stmt = select(QueryResponseDB).where(
+        QueryResponseDB.user_id == user_id, QueryResponseDB.session_id == session_id
+    )
+
+    response_results = (await asession.execute(response_stmt)).scalars().all()
+
+    # Create a dictionary to map query_id to llm_response
+    response_dict = {response.query_id: response for response in response_results}
+
+    # Construct the list of dictionaries
+    messages = []
+    for query in query_results:
+        if query.query_id in response_dict:
+            response = response_dict[query.query_id]
+            messages.append(
+                {"content": response.debug_info["original_query"], "role": "user"}
+            )
+            if response.llm_response is not None:
+                messages.append({"content": response.llm_response, "role": "assistant"})
+
+        else:  # this shouldn't happen, but for completeness
+            messages.append({"content": query.query_text, "role": "user"})
+
+    return messages
+
+
 class QueryResponseContentDB(Base):
     """
     ORM for storing what content was returned for a given query.
@@ -275,7 +328,7 @@ class QueryResponseContentDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str] = mapped_column(String, nullable=True)
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id"), nullable=False
     )
@@ -312,7 +365,7 @@ class QueryResponseContentDB(Base):
 
 async def save_content_for_query_to_db(
     user_id: int,
-    session_id: int | None,
+    session_id: str | None,
     query_id: int,
     contents: dict[int, QuerySearchResult] | None,
     asession: AsyncSession,
@@ -355,7 +408,7 @@ class ResponseFeedbackDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str] = mapped_column(String, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -435,7 +488,7 @@ class ContentFeedbackDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), nullable=False
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str] = mapped_column(String, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

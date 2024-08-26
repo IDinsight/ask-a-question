@@ -9,10 +9,11 @@ logger = setup_logger("LLM_call")
 
 
 async def _ask_llm_async(
-    user_message: str,
+    user_message: str | list[dict[str, str]],
     system_message: str,
-    litellm_model: Optional[str] = LITELLM_MODEL_DEFAULT,
-    litellm_endpoint: Optional[str] = LITELLM_ENDPOINT,
+    chat_history: list[dict[str, str]] | None = None,
+    litellm_model: str | None = LITELLM_MODEL_DEFAULT,
+    litellm_endpoint: str | None = LITELLM_ENDPOINT,
     metadata: Optional[dict] = None,
     json: bool = False,
 ) -> str:
@@ -36,6 +37,10 @@ async def _ask_llm_async(
             "role": "user",
         },
     ]
+
+    if chat_history is not None:
+        messages = messages[:1] + chat_history + messages[1:]
+
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
 
     llm_response_raw = await acompletion(

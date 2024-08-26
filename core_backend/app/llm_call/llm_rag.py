@@ -2,8 +2,6 @@
 Augmented Generation (RAG).
 """
 
-from typing import Optional
-
 from pydantic import ValidationError
 
 from ..config import LITELLM_MODEL_GENERATION
@@ -15,23 +13,27 @@ logger = setup_logger("RAG")
 
 
 async def get_llm_rag_answer(
-    question: str,
+    question: str | list[dict[str, str]],
     context: str,
     original_language: IdentifiedLanguage,
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
+    chat_history: list[dict[str, str]] | None = None,
 ) -> RAG:
     """Get an answer from the LLM model using RAG.
 
     Parameters
     ----------
     question
-        The question to ask the LLM model.
+        The question to ask the LLM model, or list of chat history messages in the form
+        of {"content": str, "role": str}.
     context
         The context to provide to the LLM model.
     response_language
         The language of the response.
     metadata
         Additional metadata to provide to the LLM model.
+    chat_history
+        The previous chat history to provide to the LLM model if it exists.
 
     Returns
     -------
@@ -45,6 +47,7 @@ async def get_llm_rag_answer(
     result = await _ask_llm_async(
         user_message=question,
         system_message=prompt,
+        chat_history=chat_history,
         litellm_model=LITELLM_MODEL_GENERATION,
         metadata=metadata,
         json=True,

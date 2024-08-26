@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,9 +13,9 @@ class QueryBase(BaseModel):
     """
 
     query_text: str = Field(..., examples=["What is AAQ?"])
-    session_id: Optional[int] = None
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
+    session_id: str | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,7 +54,7 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: Optional[int] = None
+    session_id: str | None = Field(None, examples=["session-id-12345-abcde"])
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
 
@@ -62,30 +62,25 @@ class QueryResponse(BaseModel):
         None,
         examples=[
             {
-                "query_id": 1,
-                "session_id": 1,
-                "feedback_secret_key": "secret-key-12345-abcde",
-                "llm_response": "Example LLM response "
-                "(null if generate_llm_response is false)",
-                "search_results": {
-                    "0": {
-                        "title": "Example content title",
-                        "text": "Example content text",
-                        "id": 23,
-                        "distance": 0.1,
-                    },
-                    "1": {
-                        "title": "Another example content title",
-                        "text": "Another example content text",
-                        "id": 12,
-                        "distance": 0.2,
-                    },
+                "0": {
+                    "title": "Example content title",
+                    "text": "Example content text",
+                    "id": 23,
+                    "distance": 0.1,
                 },
-                "debug_info": {"example": "debug-info"},
+                "1": {
+                    "title": "Another example content title",
+                    "text": "Another example content text",
+                    "id": 12,
+                    "distance": 0.2,
+                },
             }
         ],
     )
     debug_info: dict = Field({}, examples=[{"example": "debug-info"}])
+    chat_history: list[dict[str, str]] | None = Field(
+        None, examples=[{"role": "user", "content": "Hello"}]
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -110,7 +105,7 @@ class QueryResponseError(QueryResponse):
     """
 
     error_type: ErrorType = Field(..., examples=["example_error"])
-    error_message: Optional[str] = Field(None, examples=["Example error message"])
+    error_message: str | None = Field(None, examples=["Example error message"])
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -122,11 +117,11 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: Optional[int] = None
+    session_id: str | None = None
     feedback_sentiment: FeedbackSentiment = Field(
         FeedbackSentiment.UNKNOWN, examples=["positive"]
     )
-    feedback_text: Optional[str] = Field(None, examples=["This is helpful"])
+    feedback_text: str | None = Field(None, examples=["This is helpful"])
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
 
     model_config = ConfigDict(from_attributes=True)

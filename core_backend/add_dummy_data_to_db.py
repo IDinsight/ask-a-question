@@ -185,7 +185,7 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
 
     query_db = QueryDB(
         user_id=_USER_ID,
-        session_id=1,
+        session_id="1",
         feedback_secret_key="abc123",  # pragma: allowlist secret
         query_text="test query",
         query_generate_llm_response=False,
@@ -198,7 +198,7 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
 
 
 def create_response_feedback_record(
-    dt: datetime, query_id: int, session_id: int, is_negative: bool, session: Session
+    dt: datetime, query_id: int, session_id: str, is_negative: bool, session: Session
 ) -> None:
     """Create a feedback record for a given datetime.
 
@@ -209,7 +209,7 @@ def create_response_feedback_record(
     query_id
         The ID of the query record.
     session_id
-        The ID of the session record.
+        The ID of the session record -- uuid
     is_negative
         Specifies whether the feedback is negative.
     session
@@ -235,7 +235,7 @@ NEGATIVE_FEEDBACK_TEXTS = ["Not helpful", "Confusing", "Too long"]
 def create_content_feedback_record(
     dt: datetime,
     query_id: int,
-    session_id: int,
+    session_id: str,
     is_negative: bool,
     session: Session,
 ) -> None:
@@ -248,7 +248,7 @@ def create_content_feedback_record(
     query_id
         The ID of the query record.
     session_id
-        The ID of the session record.
+        The ID of the session record. (uuid)
     is_negative
         Specifies whether the content feedback is negative.
     session
