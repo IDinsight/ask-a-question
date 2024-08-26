@@ -512,7 +512,7 @@ def alembic_engine() -> Engine:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def patch_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
+def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
     """
     Monkeypatch GCS functions to replace their real implementations with dummy ones.
     """
@@ -521,12 +521,12 @@ def patch_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.voice_components.upload_file_to_gcs",
+        "core_backend.app.question_answer.speech_components.external_voice_components.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.voice_components.generate_signed_url",
-        async_fake_generate_signed_url,
+        "core_backend.app.question_answer.speech_components.external_voice_components.generate_public_url",
+        async_fake_generate_public_url,
     )
 
 
@@ -534,13 +534,11 @@ async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
     """
     A dummy function to replace the real upload_file_to_gcs function.
     """
-    print("Mock upload_file_to_gcs called")
     pass
 
 
-async def async_fake_generate_signed_url(*args: Any, **kwargs: Any) -> str:
+async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
     """
-    A dummy function to replace the real generate_signed_url function.
+    A dummy function to replace the real generate_public_url function.
     """
-    print("Mock generate_signed_url called")
     return "http://example.com/signed-url"
