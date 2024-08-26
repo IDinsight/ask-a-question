@@ -1,10 +1,12 @@
 """This module contains functionalities for managing the dashboard statistics."""
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Sequence, cast, get_args
 
 import pandas as pd
 from bertopic import BERTopic
+from hdbscan import HDBSCAN
+from sentence_transformers import SentenceTransformer
 from sqlalchemy import Row, case, desc, func, literal_column, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import and_
@@ -26,6 +28,7 @@ from .schemas import (
     DetailsDrawer,
     Heatmap,
     OverviewTimeSeries,
+    QueryCollection,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
@@ -37,11 +40,11 @@ from .schemas import (
     TopicsData,
     UrgencyStats,
     UserFeedback,
+    UserQuery,
 )
 from .utils import (
     ask_question,
-    create_topic_query_from_template,
-    fetch_five_sample_queries,
+    create_batch_topic_query_from_template,
 )
 
 
@@ -1256,7 +1259,74 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
     return (n_curr - n_prev) / n_prev
 
 
-async def topic_model_queries(data: Any) -> TopicsData:
+async def get_raw_queries(
+    asession: AsyncSession,
+    user_id: int,
+    start_date: date,
+) -> QueryCollection:
+    """Retrieve 2000 randomly sampled raw queries (query_text) and their
+    datetime stamps within the specified date range.
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+    start_date
+        The starting date for the queries.
+    end_date
+        The ending date for the queries.
+    Returns
+    -------
+    list[tuple[str, datetime]]
+        A list of tuples where each tuple contains the raw query
+    (query_text) and its corresponding datetime stamp (query_datetime_utc).
+    """
+    # First, check that there are at least 2000 queries in the database
+    # within the specified date range. If not, return all queries.
+
+    # Include user_id in the query to ensure that only the user's queries are returned
+    count_statement = select(func.count(QueryDB.query_id)).where(
+        (QueryDB.user_id == user_id)
+        & (QueryDB.query_datetime_utc >= start_date)
+        & (QueryDB.query_datetime_utc < datetime.now())
+    )
+    result = await asession.execute(count_statement)
+    count = result.scalar()
+    if count < 2000:
+        print("WTF ITS SMALLER THAN 2000")
+        statement = select(
+            QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id
+        ).where(
+            (QueryDB.user_id == user_id)
+            & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < datetime.now())
+        )
+    else:
+        statement = (
+            select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
+            .where(
+                (QueryDB.user_id == user_id)
+                & (QueryDB.query_datetime_utc >= start_date)
+                & (QueryDB.query_datetime_utc < datetime.now())
+            )
+            .order_by(func.random())  # Randomly order the results
+            .limit(2000)  # Limit the result to 2000 queries
+        )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    query_list = [
+        UserQuery(
+            query_id=row.query_id,
+            query_text=row.query_text,
+            query_datetime_utc=row.query_datetime_utc,
+        )
+        for row in rows
+    ]
+    num_queries_used = len(query_list)
+    return QueryCollection(n_queries=num_queries_used, queries=query_list)
+
+
+async def topic_model_queries(data: QueryCollection) -> TopicsData:
     """Turn a list of raw queries, run them through a BERTopic pipeline
     and return the Data for the front end.
     Parameters
@@ -1274,65 +1344,81 @@ async def topic_model_queries(data: Any) -> TopicsData:
         A list of tuples where each tuple contains the raw query
     (query_text) and its corresponding datetime stamp (query_datetime_utc).
     """
-
-    # Load the BERTopic model
-    topic_model = BERTopic()
-    # Go throgh each InsightQuery object and place queries in a list
-    queries = [x.query_text for x in data.queries]
-    preds_, probas_ = topic_model.fit_transform(queries)
-    # Get the topic info
-    topic_df = topic_model.get_topic_info()[1:]  # Skip first row unlabeled
-    print(topic_df)
-    # Bin the popularity into 3 bins with verbal labels into "High", "Medium", "Low"
-    topic_df["Popularity"] = pd.cut(
-        topic_df["Count"],
-        bins=[
-            0,
-            int(topic_df["Count"].max() * 0.2),
-            int(topic_df["Count"].max() * 0.4),
-            topic_df["Count"].max(),
-        ],
-        labels=["Low", "Medium", "High"],
-        include_lowest=True,
+    # Establish Query DataFrame
+    query_df = pd.DataFrame(
+        {
+            "query_id": [x.query_id for x in data.queries],
+            "query_text": [x.query_text for x in data.queries],
+            "query_datetime_utc": [x.query_datetime_utc for x in data.queries],
+        }
     )
+    docs = query_df["query_text"]
 
-    # To have more variation + more samples, we get five sample queries for each topic
-    # using the fetch_five_sample_queries function. We then set this to the Examples
-    # column.
-    topic_df["Examples"] = topic_df.apply(
-        lambda row: fetch_five_sample_queries(
-            topic_num=row["Topic"], topic_model=topic_model, original_queries=queries
-        ),
-        axis=1,
+    sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
+    embeddings = sentence_model.encode(query_df["query_text"])
+
+    # Create topic model
+    hdbscan_model = HDBSCAN(
+        min_cluster_size=15,
+        metric="euclidean",
+        cluster_selection_method="eom",
+        prediction_data=True,
     )
+    topic_model = BERTopic(hdbscan_model=hdbscan_model).fit(docs, embeddings)
+    topics, probs = topic_model.transform(docs, embeddings)
+    query_df["topic"] = topics
+    query_df["probs"] = probs
+    unclustered_examples_text = query_df[query_df["topic"] == -1]["query_text"].tolist()
+    unclustered_examples_timestamps = query_df[query_df["topic"] == -1][
+        "query_datetime_utc"
+    ].tolist()
+    unclustered_examples = list(
+        zip(unclustered_examples_text, unclustered_examples_timestamps)
+    )
+    query_df = query_df.loc[query_df["probs"] > 0.8]
+    query_df["topic_count"] = query_df.groupby("topic")["topic"].transform("count")
 
-    # Take the top 5 topics
-    top_5_df = topic_df[0:5].copy()
-    # The get_topic_info() method only returns 3 example sentences
-    # and it picks the most representative 3 sentences for each topic.
-
-    # To get an LLM description of the topics, we need to create a prompt which
-    # includes - for each topic - its keyword representation ("Representation")
-    # and the five random examples.
-    representations = top_5_df["Representation"].tolist()
-    examples = top_5_df["Examples"].tolist()
-    prompt = create_topic_query_from_template(representations, examples)
-
-    # Send the prompt to OpenAI and parse the response
-    response = ask_question(prompt)  # to do: use LiteLLM Proxy instead of direct OpenAI
-    topic_list = response["topic_list"]
-    top_5_df["llm_description"] = topic_list
-    # TopicData has three fields: Topic, Description, Examples
-    # Create a list of TopicData objects. These will then
-    # be used to create the InsightsTopicsData object which the
-    # front end will use to display the data.
-    topic_data = [
-        Topic(
-            topic_id=row["Topic"],
-            topic_name=row["llm_description"],
-            topic_samples=row["Examples"],
-            topic_popularity=row["Popularity"],
+    unique_topics = query_df["topic"].unique().tolist()
+    refined_labels = []
+    batch_size = 5
+    for topics_index in range(0, len(unique_topics), batch_size):
+        five_topics_ids = unique_topics[topics_index : topics_index + batch_size]
+        corresponding_examples = [
+            [x for x in query_df[query_df["topic"] == topic]["query_text"].tolist()[:5]]
+            for topic in five_topics_ids
+        ]
+        prompt = create_batch_topic_query_from_template(
+            topic_numbers=five_topics_ids, sample_queries=corresponding_examples
         )
-        for index, row in top_5_df.iterrows()
-    ]
-    return TopicsData(n_topics=len(topic_df), topics=topic_data)
+        response = ask_question(prompt)
+        refined_labels.extend(response["topic_list"])
+    topic_df = pd.DataFrame({"topic": unique_topics, "refined_label": refined_labels})
+    topic_df.column = ["topic", "refined_label"]
+
+    merged_df = pd.merge(
+        query_df, topic_df, left_on="topic", right_on="topic", how="left"
+    )
+
+    topic_data = []
+    for unique_topic in merged_df["topic"].unique():
+        specific_topic_df = merged_df[merged_df["topic"] == unique_topic]
+        topic_data.append(
+            Topic(
+                topic_id=unique_topic,
+                topic_name=specific_topic_df["refined_label"].iloc[0],
+                topic_samples=[
+                    (
+                        specific_topic_df["query_text"].tolist()[x],
+                        specific_topic_df["query_datetime_utc"].tolist()[x],
+                    )
+                    for x in range(5)
+                ],
+                topic_popularity=specific_topic_df["topic_count"].iloc[0],
+            )
+        )
+
+    return TopicsData(
+        n_topics=len(topic_data),
+        topics=topic_data,
+        unclustered_queries=unclustered_examples,
+    )

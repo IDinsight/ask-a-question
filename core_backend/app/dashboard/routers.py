@@ -21,9 +21,11 @@ from .models import (
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
+    get_raw_queries,
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
+    topic_model_queries,
 )
 from .schemas import (
     AIFeedbackSummary,
@@ -274,22 +276,36 @@ async def refresh_insights_frequency(
     """
 
     redis = request.app.state.redis
-
-    if redis.exists(f"{user_db.user_id}_insights_status_{time_frequency}"):
+    exists_data = await redis.exists(
+        f"{user_db.user_id}_insights_status_{time_frequency}"
+    )
+    if not exists_data:
         status = InsightsStatus(
-            **redis.get(f"{user_db.user_id}_insights_status_{time_frequency}")
+            status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
         )
-        return status
+        # Need to pickle dicts before storing in Redis
+        # Can't use json since it doesn't support datetime objects
+        await redis.set(
+            f"{user_db.username}_insights_status_{time_frequency}",
+            status.model_dump_json(),
+        )
+    current_time_period = get_frequency_and_startdate(time_frequency)[1]
 
-    status = InsightsStatus(
-        status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
+    # This logic does everything pipeline-y
+    time_period_queries = await get_raw_queries(
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=current_time_period,
     )
-    redis.set(
-        f"{user_db.user_id}_insights_status_{time_frequency}", status.model_dump()
-    )
-    # Kick off topic modelling here ---
+    topic_output = await topic_model_queries(time_period_queries)
 
-    return status
+    await redis.set(
+        f"{user_db.user_id}_insights_{time_frequency}_results",
+        topic_output.model_dump_json(),
+    )
+    return InsightsStatus(
+        status="completed", kicked_off_datetime_utc=current_time_period
+    )
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)

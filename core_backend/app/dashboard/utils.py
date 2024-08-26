@@ -1,78 +1,45 @@
 import json
 import re
 
-from bertopic import BERTopic
 from openai import OpenAI
 
 
-def fetch_five_sample_queries(
-    topic_num: int, original_queries: list[str], topic_model: BERTopic
-) -> list[str]:
-    """
-    Fetches five sample queries corresponding to a given topic.
-
-    Parameters
-    ----------
-    topic_num : int
-        The topic number to fetch sample queries for.
-    original_queries : list[str]
-        The list of original queries that were clustered into topics.
-    topic_model : Any
-        The topic model object used to classify and extract queries.
-
-    Returns
-    -------
-    list[str]
-        A list of five sample queries for the given topic.
-    """
-    queries = (
-        topic_model.get_document_info(original_queries)
-        .query(f"Topic=={topic_num}")
-        .sample(5)
-        .Document.tolist()
-    )
-    return queries
-
-
-def create_topic_query_from_template(
-    representation: list[list[str]], sample_queries: list[list[str]]
+def create_batch_topic_query_from_template(
+    topic_numbers: list[int], sample_queries: list[list[str]]
 ) -> str:
     """
     Creates a prompt template to ask GPT for topic descriptions.
 
-    Parameters
-    ----------
-    representation : list[list[str]]
-        A list containing lists of keywords representing each topic.
-    sample_queries: list[list[str]]
-        A list containing lists of sample queries for each topic.
-
-    Returns
-    -------
+    RETURNS
     str
         A string prompt to be passed to GPT for generating topic descriptions.
     """
-    initial_context = (
-        "You are a summarization bot designed to condense multiple examples "
-        "alongside some keywords into a topic description specific to maternal health. "
-        "Be concise. DO NOT GIVE A JUSTIFICATION OR PRE-AMBLE - ONLY INCLUDE THE TITLE "
-        "OF THE TOPIC SUMMARY. 8 WORDS MAXIMUM."
-    )
+    # Used for ensuring right length of list comes
+    num_topics = len(topic_numbers)
 
-    response = """Respond in the form of a LIST OF JSONs structured like so:
-    <Response>{"topic_list": ["Topic 1 description here", "Topic 2 description here",
-    "Topic 3 description here", "Topic 4 description here",
-    "Topic 5 description here"]}</Response>
-    "between two response tags as demonstrated. HERE ARE THE FIVE GROUPS OF
-    KEYWORDS AND EXAMPLES OF QUERIES DENOTED IN TRIPLE BACKTICKS:"""
+    initial_context = """You are a summarization bot designed to condense multiple
+    examples into a topic description specific to maternal
+    health. Be concise. DO NOT GIVE A JUSTIFICATION OR PRE-AMBLE - ONLY INCLUDE THE
+    TITLE OF THE TOPIC SUMMARY. 8 WORDS MAXIMUM."""
 
+    response = """Respond in the form of a JSON structured like so:
+    <Response>{"topic_list": ["First description here", "Second description here",
+    "Third description here", "Fourth description here" ...]}</Response>
+    "between two response tags as demonstrated."""
+    number_hint = f"""HERE ARE THE {num_topics} GROUPS OF
+    TOPIC + EXAMPLES QUERIES DENOTED IN TRIPLE BACKTICKS:"""
     data_string = ""
-    for x in range(1, 6):
+    for idx, _ in enumerate(topic_numbers):
         data_string += f"""
-    ```TOPIC {str(x)} KEYWORDS {' '.join(representation[x-1])} + TOPIC {str(x)}
-    SAMPLE QUERIES: {' --- '.join(sample_queries[x-1])}``` """
+    ```TOPIC NUMBER {idx+1}
+    SAMPLE QUERIES: {' --- '.join(sample_queries[idx])}``` """
+    force_n_topics = f""""ENSURE THAT YOU HAVE {num_topics} TOPICS IN TOTAL
+    AND THAT EACH TOPIC HAS A CORRESPONDING LIST OF EXAMPLE QUERIES
+    AND THAT YOU ADHERE TO THE FORMAT ABOVE."""
 
-    full_string = "\n".join([initial_context, response, data_string])
+    full_string = "\n".join(
+        [initial_context, response, number_hint, data_string, force_n_topics]
+    )
     return full_string
 
 

@@ -193,9 +193,9 @@ class Topic(BaseModel):
     """
 
     topic_id: int
-    topic_samples: list[str]
+    topic_samples: list[tuple[str, datetime]]
     topic_name: str
-    topic_popularity: str
+    topic_popularity: int
 
 
 class TopicsData(BaseModel):
@@ -206,6 +206,27 @@ class TopicsData(BaseModel):
 
     n_topics: int
     topics: list[Topic]
+    unclustered_queries: list[tuple[str, datetime]]
+    #### NEEDS NUM_UNCLUSTERED_QUERIES
+
+
+class UserQuery(BaseModel):
+    """
+    This class is used to define the schema for the insights queries
+    """
+
+    query_id: int
+    query_text: str
+    query_datetime_utc: datetime
+
+
+class QueryCollection(BaseModel):
+    """
+    This class is used to define the schema for the insights queries data
+    """
+
+    n_queries: int
+    queries: list[UserQuery]
 
 
 class UserFeedback(BaseModel):
