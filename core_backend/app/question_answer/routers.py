@@ -244,8 +244,7 @@ async def search(
             query_refined=user_query_refined_template,
             response=response,
         )
-    logger.info(f"Search response: {response}")
-    logger.debug(f"Search response type: {type(response)}")
+
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
         user_id=user_db.user_id,
