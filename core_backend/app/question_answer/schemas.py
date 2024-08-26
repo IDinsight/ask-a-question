@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Dict
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.json_schema import SkipJsonSchema
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment, QuerySearchResult
@@ -15,7 +16,7 @@ class QueryBase(BaseModel):
     query_text: str = Field(..., examples=["What is AAQ?"])
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
-    session_id: int | None = Field(default=None, exclude=True)
+    session_id: SkipJsonSchema[int | None] = Field(default=None, exclude=True)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -113,7 +114,7 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: int | None = None
+    session_id: SkipJsonSchema[int | None] = None
     feedback_sentiment: FeedbackSentiment = Field(
         FeedbackSentiment.UNKNOWN, examples=["positive"]
     )
