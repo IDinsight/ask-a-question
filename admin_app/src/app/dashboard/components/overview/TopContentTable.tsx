@@ -7,7 +7,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { TopContentData } from "../types";
+import { TopContentData } from "@/app/dashboard/types";
 import { format } from "date-fns";
 import { Box, Typography } from "@mui/material";
 import { appColors } from "@/utils/index";
