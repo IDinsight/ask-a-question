@@ -355,3 +355,31 @@ async def retrieve_insights_frequency(
     # Currently returning empty topics data if no results
     # Should be updated
     return TopicsData(n_topics=0, topics=[], unclustered_queries=[])
+
+
+@router.get("/insights/{time_frequency}/last-updated", response_model=dict)
+async def retrieve_latest_insights_refresh(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+) -> dict:
+    """
+    Return the datetime of the last time the insights were updated from Redis
+    """
+
+    redis = request.app.state.redis
+
+    if await redis.exists(f"{user_db.username}_insights_status_{time_frequency}"):
+        payload = await redis.get(
+            f"{user_db.username}_insights_status_{time_frequency}"
+        )
+        parsed_payload = json.loads(payload)
+        print(parsed_payload)
+        if parsed_payload["status"] == "completed":
+            datetime_object = datetime.fromisoformat(
+                parsed_payload["kicked_off_datetime_utc"].replace("Z", "+00:00")
+            )
+            clean_date = datetime_object.strftime("%Y-%m-%d %H:%M")
+            return {"last_updated": clean_date}
+
+    return {"time_updated": "No insights have been updated yet."}

@@ -15,7 +15,11 @@ import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
 import Chip from "@mui/material/Chip";
 import { useAuth } from "@/utils/auth";
-import { fetchTopicsData, generateNewTopics } from "@/app/dashboard/api";
+import {
+  fetchTopicsData,
+  generateNewTopics,
+  getLastUpdatedTimestamp,
+} from "@/app/dashboard/api";
 import { Period } from "@/app/dashboard/types";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -46,9 +50,33 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
   const [error, setError] = useState<Error | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const prevTimePeriod = useRef<string | null>(null);
-  const [lastGeneratedTimestamp, setLastGeneratedTimestamp] = useState<string | null>(
-    null,
-  );
+  const [loadingStates, setLoadingStates] = useState<{ [key in Period]?: boolean }>({});
+  const [lastGeneratedTimestamps, setLastGeneratedTimestamps] = useState<{
+    [key in Period]?: string;
+  }>({});
+
+  useEffect(() => {
+    // If there's no loading state for the new timePeriod, set it to false
+    if (loadingStates[timePeriod] === undefined) {
+      setLoadingStates((prev) => ({ ...prev, [timePeriod]: false }));
+    }
+  }, [timePeriod]);
+
+  useEffect(() => {
+    if (token) {
+      // When `timePeriod` changes, this will fetch the last updated timestamp
+      getLastUpdatedTimestamp(timePeriod, token)
+        .then((lastUpdated) => {
+          setLastGeneratedTimestamps((prev) => ({
+            ...prev,
+            [timePeriod]: lastUpdated.last_updated,
+          }));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch last updated timestamp:", error);
+        });
+    }
+  }, [token, timePeriod]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,32 +136,36 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
     setCurrentPage(value);
   };
 
-  const generateInsightsDummy = () => {
-    const currentTime = new Date();
-    setLastGeneratedTimestamp(format(currentTime, "PPpp")); // Formats the current time to a readable string
+  const generateInsightsDummyCall = async () => {
+    setLoadingStates((prevStates) => ({ ...prevStates, [timePeriod]: true }));
     console.log("Generating new topic insights...");
-    // Further logic will go here when the function is fully implemented.
+    // Simulate a network request with a 10-second delay
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    setLoadingStates((prevStates) => ({ ...prevStates, [timePeriod]: false }));
   };
 
   const handleGenerateNewTopics = async () => {
+    // Update the loading state for this `timePeriod`
+    setLoadingStates((prev) => ({ ...prev, [timePeriod]: true }));
+    setShowPopup(false); // Close the dialog if it's open
+
     if (!token) {
       setError(new Error("No authentication token available."));
+      setLoadingStates((prev) => ({ ...prev, [timePeriod]: false })); // Update loading state to false.
       return;
     }
-    setShowPopup(false); // Close the popup dialog
-    setFetching(true); // Start the spinning wheel
+
     try {
-      // Trigger the backend process; we don't care about the response body if it's just a 200
       await generateNewTopics(timePeriod, token);
-      // Now poll the server to check if the new topics have been generated
       const newTopicsData = await fetchTopicsData(timePeriod, token);
       setTopics(newTopicsData.topics || []);
       setNTopics(newTopicsData.n_topics || 0);
+      setLastGeneratedTimestamp(format(new Date(), "PPpp")); // Set last generated timestamp
     } catch (error) {
-      // If either API call fails, catch the error
       setError(new Error(error.message || "Failed to generate or fetch new topics."));
     } finally {
-      setFetching(false); // Stop the spinning wheel regardless of the outcome
+      // Update the loading state for this `timePeriod` to false regardless of the result.
+      setLoadingStates((prev) => ({ ...prev, [timePeriod]: false }));
     }
   };
 
@@ -162,17 +194,27 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              mb: -3, // Spacing below the central elements, before the headers
+              mb: -3, // Spacing correction may be needed after adding CircularProgress
             }}
           >
-            <Button variant="contained" onClick={generateInsightsDummy}>
+            <Button
+              variant="contained"
+              onClick={generateInsightsDummyCall}
+              disabled={loadingStates[timePeriod]} // Disable button if still loading
+            >
               Generate New Topic Insights
             </Button>
-            <Typography variant="body1" sx={{ ml: 2, mr: 2 }}>
-              {lastGeneratedTimestamp
-                ? `Last generated: ${lastGeneratedTimestamp}`
-                : "Not generated yet"}
-            </Typography>
+
+            {/* Conditional rendering based on the loading state for the current timePeriod */}
+            {loadingStates[timePeriod] ? (
+              <CircularProgress size={24} sx={{ ml: 2 }} />
+            ) : (
+              <Typography variant="body1" sx={{ ml: 2 }}>
+                {lastGeneratedTimestamps[timePeriod]
+                  ? `Last updated: ${lastGeneratedTimestamps[timePeriod]}`
+                  : "Not generated yet"}
+              </Typography>
+            )}
           </Box>
 
           {/* Headers on the line below */}
