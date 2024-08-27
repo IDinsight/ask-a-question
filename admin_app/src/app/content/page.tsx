@@ -218,17 +218,21 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
     <Layout.FlexBox
       sx={{
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         width: "100%",
+        flexWrap: "wrap",
+        gap: sizes.baseGap,
       }}
     >
       <Layout.FlexBox
         sx={{
           flexDirection: "row",
           alignItems: "center",
-          px: sizes.baseGap,
+          justifyContent: "flex-start",
+          paddingInline: sizes.baseGap,
+          flexWrap: "wrap",
+          gap: sizes.baseGap,
         }}
-        gap={sizes.doubleBaseGap}
       >
         <Box sx={{ width: "300px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -241,6 +245,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           />
         </Box>
       </Layout.FlexBox>
+      <Layout.FlexBox sx={{ flexGrow: 1 }} />
       <Layout.FlexBox
         sx={{
           flexDirection: "row",
@@ -304,7 +309,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       renderInput={(params) => (
         <TextField {...params} variant="standard" label="Filter by tags" />
       )}
-      sx={{ width: "80%", color: appColors.white }}
+      sx={{ color: appColors.white }}
     />
   );
 };
