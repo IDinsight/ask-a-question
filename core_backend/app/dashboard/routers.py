@@ -344,21 +344,14 @@ async def retrieve_insights_frequency(
 
     redis = request.app.state.redis
 
-    if redis.exists(f"{user_db.user_id}_insights_{time_frequency}_results"):
-        print(
-            "Payload: ",
-            await redis.get(f"{user_db.user_id}_insights_{time_frequency}_results"),
+    if await redis.exists(f"{user_db.username}_insights_{time_frequency}_results"):
+        payload = await redis.get(
+            f"{user_db.username}_insights_{time_frequency}_results"
         )
-        payload = json.loads(
-            await redis.get(f"{user_db.user_id}_insights_{time_frequency}_results")
-        )
-        topics_data = TopicsData(**payload)
+        parsed_payload = json.loads(payload)
+        topics_data = TopicsData(**parsed_payload)
         return topics_data
 
-    topics_data = TopicsData(
-        n_topics=0,
-        topics=[],
-        unclustered_queries=[],
-    )
-
-    return topics_data
+    # Currently returning empty topics data if no results
+    # Should be updated
+    return TopicsData(n_topics=0, topics=[], unclustered_queries=[])
