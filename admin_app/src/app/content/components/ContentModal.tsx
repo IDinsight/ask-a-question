@@ -46,8 +46,7 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            width: "60%",
-            minWidth: "600px",
+            maxWidth: "800px",
             borderRadius: 2,
             backgroundColor: appColors.white,
             p: sizes.doubleBaseGap,
@@ -118,6 +117,7 @@ const ContentViewModal = ({
             justifyContent={"space-between"}
             alignItems={"center"}
             gap={sizes.smallGap}
+            flexWrap={"wrap"}
           >
             <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
               <Button
