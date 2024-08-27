@@ -52,50 +52,56 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <Box sx={{ display: "flex", marginTop: 4, flexDirection: "row" }}>
-        <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
-          <Sidebar
-            open={sideBarOpen}
-            setOpen={setSideBarOpen}
-            setDashboardPage={setDashboardPage}
-            selectedDashboardPage={dashboardPage}
-          />
-        </ClickAwayListener>
+    <Box
+      sx={{
+        display: "flex",
+        marginTop: 4,
+        flexDirection: "row",
+        minWidth: "900px",
+        maxWidth: "1500px",
+      }}
+    >
+      <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
+        <Sidebar
+          open={sideBarOpen}
+          setOpen={setSideBarOpen}
+          setDashboardPage={setDashboardPage}
+          selectedDashboardPage={dashboardPage}
+        />
+      </ClickAwayListener>
+      <Box
+        sx={{
+          px: 3,
+          height: "100%",
+          flexGrow: 1,
+          width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
+        }}
+      >
         <Box
           sx={{
-            px: 3,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
             height: "100%",
-            flexGrow: 1,
-            width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
           }}
         >
           <Box
             sx={{
               display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              height: "100%",
+              py: 2,
+              borderBottom: "1px solid",
+              borderBottomColor: "divider",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                py: 2,
-                borderBottom: "1px solid",
-                borderBottomColor: "divider",
-              }}
-            >
-              <Typography variant="h4" color={appColors.primary}>
-                {dashboardPage}
-              </Typography>
-            </Box>
-            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
+            <Typography variant="h4" color={appColors.primary}>
+              {dashboardPage}
+            </Typography>
           </Box>
+          <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+          <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 
