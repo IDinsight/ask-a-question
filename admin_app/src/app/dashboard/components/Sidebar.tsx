@@ -113,16 +113,14 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                       color: "grey.500",
                     }}
                   >
-                    MAIN MENU
+                    DASHBOARD
                   </Typography>
                   <IconButton onClick={() => setOpen(false)}>
                     <ChevronLeft />
                   </IconButton>
                 </>
               ) : (
-                <Box
-                  sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}
-                >
+                <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
                   <IconButton onClick={() => setOpen(true)}>
                     <ChevronRight />
                   </IconButton>
@@ -168,18 +166,15 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                       mr: open ? 3 : "auto",
                       justifyContent: "center",
 
-                        color:
-                          item.name == selectedDashboardPage
-                            ? "primary.main"
-                            : "secondary.main",
+                      color:
+                        item.name == selectedDashboardPage
+                          ? "primary.main"
+                          : "secondary.main",
                     }}
                   >
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.name}
-                    sx={{ opacity: open ? 1 : 0 }}
-                  />
+                  <ListItemText primary={item.name} sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
               </Box>
             ))}

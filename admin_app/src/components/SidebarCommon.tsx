@@ -110,7 +110,7 @@ const TestSidebar = ({
                 <Checkbox
                   checked={generateLLMResponse}
                   onChange={toggleGenerateLLMResponse}
-                  color="info"
+                  sx={{ color: "#5480D1", "&.Mui-checked": { color: "#5480D1" } }}
                 />
               }
               label="Also generate AI response"
@@ -126,7 +126,7 @@ const TestSidebar = ({
                 token,
               )
             }
-            color={generateLLMResponse ? "info" : "primary"}
+            sx={{ color: generateLLMResponse ? "#5480D1" : "primary" }}
             disabled={loading || question == "" ? true : false}
           >
             {loading ? <CircularProgress size={24} /> : <Send />}
