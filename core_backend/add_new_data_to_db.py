@@ -12,10 +12,16 @@ from add_users_to_db import ADMIN_API_KEY
 from app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
-    LITELLM_MODEL_DEFAULT,
+    LITELLM_MODEL_GENERATION,
 )
+from app.contents.models import ContentDB
 from app.database import get_session
-from app.question_answer.models import ContentFeedbackDB, QueryDB, ResponseFeedbackDB
+from app.question_answer.models import (
+    ContentFeedbackDB,
+    QueryDB,
+    QueryResponseContentDB,
+    ResponseFeedbackDB,
+)
 from app.urgency_detection.models import UrgencyQueryDB
 from app.users.models import UserDB
 from app.utils import get_key_hash
@@ -41,6 +47,7 @@ MODELS = [
     (QueryDB, "query_datetime_utc"),
     (ResponseFeedbackDB, "feedback_datetime_utc"),
     (ContentFeedbackDB, "feedback_datetime_utc"),
+    (QueryResponseContentDB, "created_datetime_utc"),
     (UrgencyQueryDB, "message_datetime_utc"),
 ]
 
@@ -108,7 +115,7 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
     """
 
     response = completion(
-        model=LITELLM_MODEL_DEFAULT,
+        model=LITELLM_MODEL_GENERATION,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
         messages=[{"role": "user", "content": prompt}],
@@ -116,19 +123,17 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
         temperature=0.7,
     )
 
-    # Extract the output from the response
-    feedback_output = response["choices"][0]["message"]["content"].strip()
-    feedback_output = feedback_output.replace("json", "")
-    feedback_output = feedback_output.replace("\n", "").strip()
-
     try:
+        # Extract the output from the response
+        feedback_output = response["choices"][0]["message"]["content"].strip()
+        feedback_output = feedback_output.replace("json", "")
+        feedback_output = feedback_output.replace("\n", "").strip()
         feedback_dict = json.loads(feedback_output)
         if isinstance(feedback_dict, dict) and "output" in feedback_dict:
-
             return feedback_dict
         else:
             raise ValueError("Output is not in the correct format.")
-    except (SyntaxError, ValueError) as e:
+    except Exception as e:
         print(f"Output is not in the correct format.{e}")
         return None
 
@@ -227,7 +232,13 @@ def process_content_feedback(
     if is_off_topic and feedback_sentiment == "positive":
         return None
     # randomly get a content from the search results to provide feedback on
-    content = search_results[str(random.randint(0, 3))]
+    content_num = str(random.randint(0, 3))
+    if not search_results or not isinstance(search_results, dict):
+        return None
+    if content_num not in search_results:
+        return None
+
+    content = search_results[content_num]
 
     # Get content text and use to generate feedback text using LLMs
     content_text = content["title"] + " " + content["text"]
@@ -308,6 +319,7 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
     # Create a dictionary to map the query_id to the random date
     date_map_dic = {queries[i].query_id: random_dates[i] for i in range(len(queries))}
     for model in models:
+        print(f"Updating the date of the records for {model[0].__name__}...")
         session = next(get_session())
 
         rows = [c for c in session.query(model[0]).all() if c.user_id == user.user_id]
@@ -322,6 +334,19 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
             setattr(row, model[1], date)
             session.merge(row)
         session.commit()
+
+
+def update_date_of_contents(date: str) -> None:
+    """
+    Update the date of the content records in the database for consistency
+    """
+    session = next(get_session())
+    contents = session.query(ContentDB).all()
+    for content in contents:
+        content.created_datetime_utc = date
+        content.updated_datetime_utc = date
+        session.merge(content)
+    session.commit()
 
 
 if __name__ == "__main__":
@@ -421,5 +446,8 @@ if __name__ == "__main__":
     ]
     print("Updating the date of the records...")
     update_date_of_records(MODELS, random_dates, API_KEY)
+
+    print("Updating the date of the content records...")
+    update_date_of_contents(start_date)
     print("All records dates updated successfully.")
     print("All records added successfully.")
