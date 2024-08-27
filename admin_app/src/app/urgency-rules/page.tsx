@@ -29,6 +29,7 @@ class UrgencyRule {
 }
 
 const UrgencyRulesPage = () => {
+  const [saving, setSaving] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
   const [editableIndex, setEditableIndex] = useState(-1);
   const [items, setItems] = useState<UrgencyRule[]>([]);
@@ -47,6 +48,7 @@ const UrgencyRulesPage = () => {
   };
 
   const addOrUpdateItem = (index: number) => {
+    setSaving(true);
     if (items[index].urgency_rule_id === null) {
       apiCalls
         .addUrgencyRule(items[index].urgency_rule_text, token!)
@@ -54,6 +56,7 @@ const UrgencyRulesPage = () => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
+          setSaving(false);
         });
     } else {
       apiCalls
@@ -66,6 +69,7 @@ const UrgencyRulesPage = () => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
+          setSaving(false);
         });
     }
   };
@@ -194,7 +198,7 @@ const UrgencyRulesPage = () => {
                 <>
                   <Button
                     variant="contained"
-                    disabled={currAccessLevel != "fullaccess" ? true : false}
+                    disabled={saving}
                     onClick={() => createNewRecord()}
                     startIcon={<Add fontSize="small" />}
                   >
@@ -298,10 +302,10 @@ const UrgencyRulesPage = () => {
                               },
                             )
                           ) : (
-                            <span>
+                            <Typography component="span">
                               <Layout.Spacer multiplier={0.8} />
                               <LinearProgress color="secondary" />
-                            </span>
+                            </Typography>
                           )
                         }
                         sx={{
@@ -318,26 +322,24 @@ const UrgencyRulesPage = () => {
                 );
               })}
             </List>
+            {!openSidebar && items.length > 0 && (
+              <Fab
+                variant="extended"
+                sx={{
+                  bgcolor: "orange",
+                  width: "100px",
+                  alignSelf: "flex-end",
+                  marginRight: 1.2,
+                }}
+                onClick={handleSidebarToggle}
+              >
+                <PlayArrow />
+                <Layout.Spacer horizontal multiplier={0.4} />
+                Test
+              </Fab>
+            )}
           </Box>
         </Layout.FlexBox>
-        {!openSidebar && (
-          <div style={{ position: "relative" }}>
-            <Fab
-              variant="extended"
-              sx={{
-                bgcolor: "orange",
-                position: "absolute",
-                bottom: 80,
-                right: 150,
-              }}
-              onClick={handleSidebarToggle}
-            >
-              <PlayArrow />
-              <Layout.Spacer horizontal multiplier={0.3} />
-              Test
-            </Fab>
-          </div>
-        )}
       </Grid>
       <Grid
         item
