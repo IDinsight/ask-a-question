@@ -22,6 +22,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Button from "@mui/material/Button";
+import { format } from "date-fns";
 
 // Interfaces
 interface Topic {
@@ -45,6 +46,9 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
   const [error, setError] = useState<Error | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const prevTimePeriod = useRef<string | null>(null);
+  const [lastGeneratedTimestamp, setLastGeneratedTimestamp] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,6 +108,13 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
     setCurrentPage(value);
   };
 
+  const generateInsightsDummy = () => {
+    const currentTime = new Date();
+    setLastGeneratedTimestamp(format(currentTime, "PPpp")); // Formats the current time to a readable string
+    console.log("Generating new topic insights...");
+    // Further logic will go here when the function is fully implemented.
+  };
+
   const handleGenerateNewTopics = async () => {
     if (!token) {
       setError(new Error("No authentication token available."));
@@ -137,6 +148,47 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
           bgcolor: "#fff",
         }}
       >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            mb: 2, // Margin bottom for spacing below this box
+          }}
+        >
+          {/* Central elements */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              mb: -3, // Spacing below the central elements, before the headers
+            }}
+          >
+            <Button variant="contained" onClick={generateInsightsDummy}>
+              Generate New Topic Insights
+            </Button>
+            <Typography variant="body1" sx={{ ml: 2, mr: 2 }}>
+              {lastGeneratedTimestamp
+                ? `Last generated: ${lastGeneratedTimestamp}`
+                : "Not generated yet"}
+            </Typography>
+          </Box>
+
+          {/* Headers on the line below */}
+          <Box
+            sx={{
+              width: "95%", // Ensures the header takes the full width
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 5, // Margin top for spacing above the headers if needed
+            }}
+          >
+            <Typography>Topic Title</Typography>
+            <Typography># of queries in topic</Typography>
+          </Box>
+        </Box>
         <List>
           {currentTopics.length > 0
             ? currentTopics.map((topic, index) => (
@@ -219,7 +271,12 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
       {/* Place the Dialog here. It's okay if it's rendered over the Box. */}
       <Dialog open={showPopup} onClose={() => setShowPopup(false)}>
         <DialogContent>
-          <DialogContentText>Click here to generate new topics.</DialogContentText>
+          <DialogContentText>
+            {" "}
+            <DialogContentText>
+              There are currently no generated topics for this time period
+            </DialogContentText>
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowPopup(false)}>Close</Button>
