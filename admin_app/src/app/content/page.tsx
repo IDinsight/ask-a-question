@@ -179,6 +179,7 @@ const CardsPage = () => {
           lg={sidebarGridWidth - 1}
           sx={{
             display: openSidebar ? "block" : "none",
+            height: "95vh",
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />

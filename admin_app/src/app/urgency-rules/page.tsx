@@ -346,6 +346,7 @@ const UrgencyRulesPage = () => {
                   width: "100px",
                   alignSelf: "flex-end",
                   marginRight: 1.2,
+                  marginTop: 2,
                 }}
                 onClick={handleSidebarToggle}
               >
@@ -365,7 +366,7 @@ const UrgencyRulesPage = () => {
         lg={sidebarGridWidth - 1}
         sx={{
           display: openSidebar ? "block" : "none",
-          // height: "95vh",
+          height: "95vh",
         }}
       >
         <UDSidebar closeSidebar={handleSidebarClose} />
