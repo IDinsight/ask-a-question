@@ -1,5 +1,6 @@
 import { keyframes } from "@emotion/react";
 import styled from "@emotion/styled";
+
 import { Box } from "@mui/material";
 
 // For 3-dot typing animation
@@ -7,7 +8,6 @@ const typing = keyframes`
   from { opacity: 0 }
   to { opacity: 1 }
 `;
-
 const Fader = styled("div")`
   animation: ${typing} 1s infinite;
   &:nth-of-type(2) {
@@ -17,7 +17,6 @@ const Fader = styled("div")`
     animation-delay: 0.4s;
   }
 `;
-
 const TypingAnimation = () => {
   return (
     <Box sx={{ display: "flex", fontSize: "1.3rem" }}>
