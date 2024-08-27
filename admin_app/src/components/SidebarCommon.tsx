@@ -13,8 +13,6 @@ import {
 } from "@mui/material";
 
 import { useAuth } from "@/utils/auth";
-import { SearchResponseBoxData } from "../app/content/components/SearchSidebar";
-import { UDResponseBoxData } from "../app/urgency-rules/components/UDSidebar";
 
 const TestSidebar = ({
   title,
@@ -38,9 +36,7 @@ const TestSidebar = ({
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState("");
   const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
-  const [response, setResponse] = useState<
-    SearchResponseBoxData | UDResponseBoxData | null
-  >(null);
+  const [response, setResponse] = useState<any>(null); // could be SearchResponseBoxData or UDResponseBoxData
   const { token } = useAuth();
 
   const handleQuestionChange = (
