@@ -13,6 +13,7 @@ import Papa from "papaparse";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
+import { Layout } from "@/components/Layout";
 
 const MAX_CARDS_TO_FETCH = 200;
 
@@ -138,14 +139,15 @@ const DownloadModal = ({
     <Dialog
       open={open}
       onClose={onClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
+      aria-labelledby="download-dialog-title"
+      aria-describedby="download-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title" sx={{ minWidth: "800px" }}>
+      <DialogTitle id="download-dialog-title">
         Download all contents?
+        <Layout.Spacer horizontal multiplier={50} />
       </DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="download-dialog-description">
           This action will download all contents as a CSV file.
         </DialogContentText>
       </DialogContent>
