@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import textwrap
 from enum import Enum
@@ -389,3 +390,59 @@ def get_feedback_summary_prompt(content_title: str, content: str) -> str:
         content_title=content_title,
         content=content,
     )
+
+
+class TopicModelLabelling:
+    """
+    Topic model labelling task.
+    """
+
+    _context: str
+
+    _prompt_base: str = textwrap.dedent(
+        """
+        You are a summarization bot designed to condense multiple
+        examples into a topic description specific to {context}. If unknown, respond
+        with topic as "Unknown".
+
+        Be concise. DO NOT GIVE A JUSTIFICATION OR PRE-AMBLE - ONLY INCLUDE THE
+        TITLE OF THE TOPIC SUMMARY. 8 WORDS MAXIMUM.
+        """
+    ).strip()
+
+    _response_prompt: str = textwrap.dedent(
+        """
+        Respond in json string:
+
+        {
+           topic: str
+        }
+        """
+    ).strip()
+
+    def __init__(self, context: str) -> None:
+        """
+        Initialize the topic model labelling task with context.
+        """
+        self._context = context
+
+    def get_prompt(self) -> str:
+        """
+        Returns the prompt for the topic model labelling task.
+        """
+        prompt = self._prompt_base.format(context=self._context)
+
+        return prompt + "\n\n" + self._response_prompt
+
+    def parse_json(self, json_str: str) -> str:
+        """
+        Validates the output of the topic model labelling task.
+        """
+
+        json_str = remove_json_markdown(json_str)
+        topic = json.loads(json_str).get("topic")
+
+        if topic is None:
+            raise ValueError("Topic is not provided in the output.")
+
+        return topic

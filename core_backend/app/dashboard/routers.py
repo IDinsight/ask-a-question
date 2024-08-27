@@ -1,5 +1,6 @@
 """This module contains the FastAPI router for the dashboard endpoints."""
 
+import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Tuple
 
@@ -25,7 +26,6 @@ from .models import (
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
-    topic_model_queries,
 )
 from .schemas import (
     AIFeedbackSummary,
@@ -36,6 +36,7 @@ from .schemas import (
     TimeFrequency,
     TopicsData,
 )
+from .topic_modeling import topic_model_queries
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -276,36 +277,59 @@ async def refresh_insights_frequency(
     """
 
     redis = request.app.state.redis
-    exists_data = await redis.exists(
-        f"{user_db.user_id}_insights_status_{time_frequency}"
+    status = InsightsStatus(
+        status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
     )
-    if not exists_data:
-        status = InsightsStatus(
-            status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
-        )
-        # Need to pickle dicts before storing in Redis
-        # Can't use json since it doesn't support datetime objects
-        await redis.set(
-            f"{user_db.username}_insights_status_{time_frequency}",
-            status.model_dump_json(),
-        )
-    current_time_period = get_frequency_and_startdate(time_frequency)[1]
+    await redis.set(
+        f"{user_db.username}_insights_status_{time_frequency}",
+        status.model_dump_json(),
+    )
+    _, start_date = get_frequency_and_startdate(time_frequency)
 
-    # This logic does everything pipeline-y
+    await refresh_insights(
+        time_frequency=time_frequency,
+        user_db=user_db,
+        request=request,
+        start_date=start_date,
+        asession=asession,
+    )
+
+    status = InsightsStatus(
+        status="completed", kicked_off_datetime_utc=datetime.now(timezone.utc)
+    )
+    await redis.set(
+        f"{user_db.username}_insights_status_{time_frequency}",
+        status.model_dump_json(),
+    )
+
+    return status
+
+
+async def refresh_insights(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+    start_date: date,
+    asession: AsyncSession = Depends(get_async_session),
+) -> TopicsData:
+    """
+    Retrieve topic modelling insights for the time period specified.
+    """
+
+    redis = request.app.state.redis
     time_period_queries = await get_raw_queries(
         user_id=user_db.user_id,
         asession=asession,
-        start_date=current_time_period,
+        start_date=start_date,
     )
-    topic_output = await topic_model_queries(time_period_queries)
+    topic_output = await topic_model_queries(user_db.user_id, time_period_queries)
 
     await redis.set(
-        f"{user_db.user_id}_insights_{time_frequency}_results",
+        f"{user_db.username}_insights_{time_frequency}_results",
         topic_output.model_dump_json(),
     )
-    return InsightsStatus(
-        status="completed", kicked_off_datetime_utc=current_time_period
-    )
+
+    return topic_output
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)
@@ -320,15 +344,21 @@ async def retrieve_insights_frequency(
 
     redis = request.app.state.redis
 
-    if redis.exists(f"{user_db.user_id}_insights_{time_frequency}"):
-        topics_data = TopicsData(
-            **redis.get(f"{user_db.user_id}_insights_{time_frequency}")
+    if redis.exists(f"{user_db.user_id}_insights_{time_frequency}_results"):
+        print(
+            "Payload: ",
+            await redis.get(f"{user_db.user_id}_insights_{time_frequency}_results"),
         )
+        payload = json.loads(
+            await redis.get(f"{user_db.user_id}_insights_{time_frequency}_results")
+        )
+        topics_data = TopicsData(**payload)
         return topics_data
 
     topics_data = TopicsData(
         n_topics=0,
         topics=[],
+        unclustered_queries=[],
     )
 
     return topics_data

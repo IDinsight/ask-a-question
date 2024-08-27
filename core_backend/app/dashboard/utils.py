@@ -26,8 +26,10 @@ def create_batch_topic_query_from_template(
     <Response>{"topic_list": ["First description here", "Second description here",
     "Third description here", "Fourth description here" ...]}</Response>
     "between two response tags as demonstrated."""
+
     number_hint = f"""HERE ARE THE {num_topics} GROUPS OF
     TOPIC + EXAMPLES QUERIES DENOTED IN TRIPLE BACKTICKS:"""
+
     data_string = ""
     for idx, _ in enumerate(topic_numbers):
         data_string += f"""

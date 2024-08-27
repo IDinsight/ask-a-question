@@ -1,12 +1,8 @@
 """This module contains functionalities for managing the dashboard statistics."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any, Sequence, cast, get_args
 
-import pandas as pd
-from bertopic import BERTopic
-from hdbscan import HDBSCAN
-from sentence_transformers import SentenceTransformer
 from sqlalchemy import Row, case, desc, func, literal_column, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import and_
@@ -28,7 +24,6 @@ from .schemas import (
     DetailsDrawer,
     Heatmap,
     OverviewTimeSeries,
-    QueryCollection,
     QueryStats,
     ResponseFeedbackStats,
     StatsCards,
@@ -36,15 +31,9 @@ from .schemas import (
     TimeHours,
     TopContent,
     TopContentTimeSeries,
-    Topic,
-    TopicsData,
     UrgencyStats,
     UserFeedback,
     UserQuery,
-)
-from .utils import (
-    ask_question,
-    create_batch_topic_query_from_template,
 )
 
 
@@ -1263,162 +1252,48 @@ async def get_raw_queries(
     asession: AsyncSession,
     user_id: int,
     start_date: date,
-) -> QueryCollection:
+) -> list[UserQuery]:
     """Retrieve 2000 randomly sampled raw queries (query_text) and their
     datetime stamps within the specified date range.
     Parameters
     ----------
     asession
         `AsyncSession` object for database transactions.
+    user_id
+        The ID of the user to retrieve the queries for.
     start_date
         The starting date for the queries.
-    end_date
-        The ending date for the queries.
     Returns
     -------
-    list[tuple[str, datetime]]
-        A list of tuples where each tuple contains the raw query
-    (query_text) and its corresponding datetime stamp (query_datetime_utc).
+    list[UserQuery]
+        A list of UserQuery objects
     """
-    # First, check that there are at least 2000 queries in the database
-    # within the specified date range. If not, return all queries.
+    # You don't need to check if there are at least 2000 queries in the database.
+    # limit(2000) will return all queries if there are fewer than 2000.
 
-    # Include user_id in the query to ensure that only the user's queries are returned
-    count_statement = select(func.count(QueryDB.query_id)).where(
-        (QueryDB.user_id == user_id)
-        & (QueryDB.query_datetime_utc >= start_date)
-        & (QueryDB.query_datetime_utc < datetime.now())
-    )
-    result = await asession.execute(count_statement)
-    count = result.scalar()
-    if count < 2000:
-        print("WTF ITS SMALLER THAN 2000")
-        statement = select(
-            QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id
-        ).where(
+    statement = (
+        select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
+        .where(
             (QueryDB.user_id == user_id)
             & (QueryDB.query_datetime_utc >= start_date)
-            & (QueryDB.query_datetime_utc < datetime.now())
+            & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
         )
-    else:
-        statement = (
-            select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
-            .where(
-                (QueryDB.user_id == user_id)
-                & (QueryDB.query_datetime_utc >= start_date)
-                & (QueryDB.query_datetime_utc < datetime.now())
-            )
-            .order_by(func.random())  # Randomly order the results
-            .limit(2000)  # Limit the result to 2000 queries
-        )
+        .order_by(func.random())
+        .limit(2000)
+    )
 
     result = await asession.execute(statement)
     rows = result.fetchall()
-    query_list = [
-        UserQuery(
-            query_id=row.query_id,
-            query_text=row.query_text,
-            query_datetime_utc=row.query_datetime_utc,
-        )
-        for row in rows
-    ]
-    num_queries_used = len(query_list)
-    return QueryCollection(n_queries=num_queries_used, queries=query_list)
-
-
-async def topic_model_queries(data: QueryCollection) -> TopicsData:
-    """Turn a list of raw queries, run them through a BERTopic pipeline
-    and return the Data for the front end.
-    Parameters
-    ----------
-    asession
-        `AsyncSession` object for database transactions.
-    start_date
-        The starting date for the queries.
-    end_date
-        The ending date for the queries.
-
-    Returns
-    -------
-    list[tuple[str, datetime]]
-        A list of tuples where each tuple contains the raw query
-    (query_text) and its corresponding datetime stamp (query_datetime_utc).
-    """
-    # Establish Query DataFrame
-    query_df = pd.DataFrame(
-        {
-            "query_id": [x.query_id for x in data.queries],
-            "query_text": [x.query_text for x in data.queries],
-            "query_datetime_utc": [x.query_datetime_utc for x in data.queries],
-        }
-    )
-    docs = query_df["query_text"]
-
-    sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = sentence_model.encode(query_df["query_text"])
-
-    # Create topic model
-    hdbscan_model = HDBSCAN(
-        min_cluster_size=15,
-        metric="euclidean",
-        cluster_selection_method="eom",
-        prediction_data=True,
-    )
-    topic_model = BERTopic(hdbscan_model=hdbscan_model).fit(docs, embeddings)
-    topics, probs = topic_model.transform(docs, embeddings)
-    query_df["topic"] = topics
-    query_df["probs"] = probs
-    unclustered_examples_text = query_df[query_df["topic"] == -1]["query_text"].tolist()
-    unclustered_examples_timestamps = query_df[query_df["topic"] == -1][
-        "query_datetime_utc"
-    ].tolist()
-    unclustered_examples = list(
-        zip(unclustered_examples_text, unclustered_examples_timestamps)
-    )
-    query_df = query_df.loc[query_df["probs"] > 0.8]
-    query_df["topic_count"] = query_df.groupby("topic")["topic"].transform("count")
-
-    unique_topics = query_df["topic"].unique().tolist()
-    refined_labels = []
-    batch_size = 5
-    for topics_index in range(0, len(unique_topics), batch_size):
-        five_topics_ids = unique_topics[topics_index : topics_index + batch_size]
-        corresponding_examples = [
-            [x for x in query_df[query_df["topic"] == topic]["query_text"].tolist()[:5]]
-            for topic in five_topics_ids
-        ]
-        prompt = create_batch_topic_query_from_template(
-            topic_numbers=five_topics_ids, sample_queries=corresponding_examples
-        )
-        response = ask_question(prompt)
-        refined_labels.extend(response["topic_list"])
-    topic_df = pd.DataFrame({"topic": unique_topics, "refined_label": refined_labels})
-    topic_df.column = ["topic", "refined_label"]
-
-    merged_df = pd.merge(
-        query_df, topic_df, left_on="topic", right_on="topic", how="left"
-    )
-
-    topic_data = []
-    for unique_topic in merged_df["topic"].unique():
-        specific_topic_df = merged_df[merged_df["topic"] == unique_topic]
-        topic_data.append(
-            Topic(
-                topic_id=unique_topic,
-                topic_name=specific_topic_df["refined_label"].iloc[0],
-                topic_samples=[
-                    (
-                        specific_topic_df["query_text"].tolist()[x],
-                        specific_topic_df["query_datetime_utc"].tolist()[x],
-                    )
-                    for x in range(5)
-                ],
-                topic_popularity=specific_topic_df["topic_count"].iloc[0],
+    if not rows:
+        query_list = []
+    else:
+        query_list = [
+            UserQuery(
+                query_id=row.query_id,
+                query_text=row.query_text,
+                query_datetime_utc=row.query_datetime_utc,
             )
-        )
+            for row in rows
+        ]
 
-    return TopicsData(
-        n_topics=len(topic_data),
-        topics=topic_data,
-        unclustered_queries=unclustered_examples,
-    )
+    return query_list

@@ -60,6 +60,10 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
     "LITELLM_MODEL_DASHBOARD_SUMMARY", "openai/dashboard-summary"
 )
+
+LITELLM_MODEL_TOPIC_MODEL = os.environ.get(
+    "LITELLM_MODEL_TOPIC_MODEL", "openai/topic-label"
+)
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"

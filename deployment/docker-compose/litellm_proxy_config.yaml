@@ -54,6 +54,10 @@ model_list:
     litellm_params:
       model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
+  - model_name: topic-label
+    litellm_params:
+      model: gpt-4o
+      api_key: "os.environ/OPENAI_API_KEY"
   - model_name: alignscore
     litellm_params:
       model: gpt-4o
