@@ -156,6 +156,7 @@ const CardsPage = () => {
                   width: "100px",
                   alignSelf: "flex-end",
                   marginRight: 2,
+                  marginBottom: 3,
                 }}
                 onClick={handleSidebarToggle}
               >

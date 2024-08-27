@@ -347,6 +347,7 @@ const UrgencyRulesPage = () => {
                   alignSelf: "flex-end",
                   marginRight: 1.2,
                   marginTop: 2,
+                  marginBottom: 3,
                 }}
                 onClick={handleSidebarToggle}
               >
