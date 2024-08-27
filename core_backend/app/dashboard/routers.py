@@ -329,6 +329,13 @@ async def refresh_insights(
         topic_output.model_dump_json(),
     )
 
+    await redis.set(
+        f"{user_db.username}_insights_status_{time_frequency}",
+        InsightsStatus(
+            status="completed", kicked_off_datetime_utc=datetime.now(timezone.utc)
+        ).model_dump_json(),
+    )
+
     return topic_output
 
 

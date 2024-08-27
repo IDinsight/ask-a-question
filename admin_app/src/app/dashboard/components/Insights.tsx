@@ -132,14 +132,6 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
     setCurrentPage(value);
   };
 
-  const generateInsightsDummyCall = async () => {
-    setLoadingStates((prevStates) => ({ ...prevStates, [timePeriod]: true }));
-    console.log("Generating new topic insights...");
-    // Simulate a network request with a 10-second delay
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-    setLoadingStates((prevStates) => ({ ...prevStates, [timePeriod]: false }));
-  };
-
   const handleGenerateNewTopics = async () => {
     setLoadingStates((prev) => ({ ...prev, [timePeriod]: true }));
     setShowPopup(false);
@@ -147,7 +139,13 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
     try {
       await generateNewTopics(timePeriod, token);
       // After generating new topics, re-fetch the topic data.
-      await fetchData(); // This will fetch and update the topics state, thus re-rendering the component with the new data.
+      await fetchData();
+      /// Update the last updated timestamp after generating new topics
+      const lastUpdated = await getLastUpdatedTimestamp(timePeriod, token);
+      setLastGeneratedTimestamps((prev) => ({
+        ...prev,
+        [timePeriod]: lastUpdated.last_updated,
+      })); // This will fetch and update the topics state, thus re-rendering the component with the new data.
     } catch (error) {
       setError(new Error(error.message || "Failed to generate or fetch new topics."));
     } finally {
@@ -185,7 +183,7 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
           >
             <Button
               variant="contained"
-              onClick={generateInsightsDummyCall}
+              onClick={handleGenerateNewTopics}
               disabled={loadingStates[timePeriod]} // Disable button if still loading
             >
               Generate New Topic Insights
