@@ -171,7 +171,7 @@ const UrgencyRulesPage = () => {
         <Layout.FlexBox
           sx={{
             alignItems: "center",
-            padding: 5,
+            padding: 6,
             gap: sizes.baseGap,
             height: "95vh",
           }}
@@ -186,7 +186,7 @@ const UrgencyRulesPage = () => {
             }}
           >
             <Typography
-              sx={{ paddingLeft: 1, paddingTop: 2 }}
+              sx={{ paddingLeft: 1 }}
               variant="h4"
               align="left"
               color="primary"
