@@ -6,6 +6,7 @@ import React, { MouseEvent, useEffect, useState } from "react";
 import {
   Alert,
   Autocomplete,
+  Box,
   Button,
   ButtonGroup,
   CircularProgress,
@@ -29,12 +30,12 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appStyles, appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
-import { SearchBar } from "./components/SearchBar";
+import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
@@ -43,6 +44,20 @@ const CARD_HEIGHT = 250;
 export interface Tag {
   tag_id: number;
   tag_name: string;
+}
+
+interface TagsFilterProps {
+  tags: Tag[];
+  filterTags: Tag[];
+  setFilterTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+}
+
+interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
+  editAccess: boolean;
+  setSnackMessage: React.Dispatch<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>;
 }
 
 const CardsPage = () => {
@@ -105,40 +120,13 @@ const CardsPage = () => {
             gap={sizes.baseGap}
             paddingTop={8}
           >
-            <Layout.FlexBox
-              gap={sizes.smallGap}
-              sx={{
-                width: "70%",
-                maxWidth: "500px",
-                minWidth: "200px",
-              }}
-            >
-              <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-              <Layout.FlexBox
-                alignItems="center"
-                sx={{ flexDirection: "row", justifyContent: "center" }}
-                gap={sizes.smallGap}
-              >
-                <Autocomplete
-                  multiple
-                  limitTags={3}
-                  id="tags-autocomplete"
-                  options={tags}
-                  getOptionLabel={(option) => option.tag_name}
-                  noOptionsText="No tags found"
-                  value={filterTags}
-                  onChange={(event, updatedTags) => {
-                    setFilterTags(updatedTags);
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} variant="standard" label="Filter by tags" />
-                  )}
-                  sx={{ width: "80%", color: appColors.white }}
-                />
-              </Layout.FlexBox>
-            </Layout.FlexBox>
             <CardsUtilityStrip
               editAccess={currAccessLevel === "fullaccess"}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              tags={tags}
+              filterTags={filterTags}
+              setFilterTags={setFilterTags}
               setSnackMessage={setSnackMessage}
             />
             <CardsGrid
@@ -207,68 +195,109 @@ const CardsPage = () => {
   );
 };
 
-const CardsUtilityStrip = ({
+const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   editAccess,
+  searchTerm,
+  setSearchTerm,
+  tags,
+  filterTags,
+  setFilterTags,
   setSnackMessage,
-}: {
-  editAccess: boolean;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string | null;
-      color: "success" | "info" | "warning" | "error" | undefined;
-    }>
-  >;
 }) => {
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
   return (
     <Layout.FlexBox
-      key={"utility-strip"}
-      flexDirection={"row"}
-      justifyContent={"flex-right"}
-      alignItems={"right"}
       sx={{
-        display: "flex",
-        alignSelf: "flex-end",
-        px: sizes.baseGap,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%",
       }}
-      gap={sizes.smallGap}
     >
-      <Tooltip title="Download all contents">
-        <>
-          <Button
-            variant="outlined"
-            disabled={!editAccess}
-            onClick={() => {
-              setOpenDownloadModal(true);
-            }}
-          >
-            <DownloadIcon />
-          </Button>
-        </>
-      </Tooltip>
-      <Tooltip title="Add new content">
-        <>
-          <AddButtonWithDropdown />
-        </>
-      </Tooltip>
-      <DownloadModal
-        open={openDownloadModal}
-        onClose={() => setOpenDownloadModal(false)}
-        onFailedDownload={() => {
-          setSnackMessage({
-            message: `Failed to download content`,
-            color: "error",
-          });
+      <Layout.FlexBox
+        sx={{
+          flexDirection: "row",
+          alignItems: "center",
+          px: sizes.baseGap,
         }}
-        onNoDataFound={() => {
-          setSnackMessage({
-            message: `No data to download`,
-            color: "info",
-          });
+        gap={sizes.doubleBaseGap}
+      >
+        <Box sx={{ width: "300px" }}>
+          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        </Box>
+        <Box sx={{ width: "300px" }}>
+          <TagsFilter
+            tags={tags}
+            filterTags={filterTags}
+            setFilterTags={setFilterTags}
+          />
+        </Box>
+      </Layout.FlexBox>
+      <Layout.FlexBox
+        sx={{
+          flexDirection: "row",
+          alignSelf: "flex-end",
+          px: sizes.baseGap,
+          gap: sizes.smallGap,
         }}
-      />
+      >
+        <Tooltip title="Download all contents">
+          <>
+            <Button
+              variant="outlined"
+              disabled={!editAccess}
+              onClick={() => {
+                setOpenDownloadModal(true);
+              }}
+            >
+              <DownloadIcon />
+            </Button>
+          </>
+        </Tooltip>
+        <Tooltip title="Add new content">
+          <>
+            <AddButtonWithDropdown />
+          </>
+        </Tooltip>
+        <DownloadModal
+          open={openDownloadModal}
+          onClose={() => setOpenDownloadModal(false)}
+          onFailedDownload={() => {
+            setSnackMessage({
+              message: `Failed to download content`,
+              color: "error",
+            });
+          }}
+          onNoDataFound={() => {
+            setSnackMessage({
+              message: `No data to download`,
+              color: "info",
+            });
+          }}
+        />
+      </Layout.FlexBox>
     </Layout.FlexBox>
+  );
+};
+
+const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+  return (
+    <Autocomplete
+      multiple
+      limitTags={1}
+      id="tags-autocomplete"
+      options={tags}
+      getOptionLabel={(option) => option.tag_name}
+      noOptionsText="No tags found"
+      value={filterTags}
+      onChange={(event, updatedTags) => {
+        setFilterTags(updatedTags);
+      }}
+      renderInput={(params) => (
+        <TextField {...params} variant="standard" label="Filter by tags" />
+      )}
+      sx={{ width: "80%", color: appColors.white }}
+    />
   );
 };
 
