@@ -78,44 +78,40 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
     }
   }, [token, timePeriod]);
 
+  const fetchData = async () => {
+    if (!token) return;
+
+    setFetching(true);
+    setError(null);
+
+    try {
+      const data = await fetchTopicsData(timePeriod, token);
+      const fetchedTopics = data.topics
+        .map((topic) => ({
+          name: topic.topic_name,
+          topic_popularity: topic.topic_popularity,
+          examples: topic.topic_samples.map((sample) => ({
+            userQuestion: sample[0],
+            timestamp: sample[1],
+          })),
+        }))
+        .sort((a, b) => b.topic_popularity - a.topic_popularity);
+
+      setShowPopup(fetchedTopics.length === 0);
+      setSelectedTopic(null);
+      setTopics(fetchedTopics);
+      setNTopics(data.n_topics);
+    } catch (error) {
+      setError(error);
+      setShowPopup(false);
+    } finally {
+      setFetching(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (token && timePeriod) {
-        setFetching(true);
-        setError(null); // Clear any previous errors
-        try {
-          const data = await fetchTopicsData(timePeriod, token);
-          const fetchedTopics = data.topics
-            .map((topic) => ({
-              name: topic.topic_name,
-              topic_popularity: topic.topic_popularity,
-              examples: topic.topic_samples.map((sample) => ({
-                userQuestion: sample[0],
-                timestamp: sample[1],
-              })),
-            }))
-            .sort((a, b) => b.topic_popularity - a.topic_popularity);
-
-          setShowPopup(fetchedTopics.length === 0); // Show the popup if there are no topics
-
-          if (fetchedTopics.length === 0 || timePeriod !== prevTimePeriod.current) {
-            setSelectedTopic(null); // Reset selected topic if the time period has changed or there are no topics
-          }
-
-          setTopics(fetchedTopics);
-          setNTopics(data.n_topics);
-        } catch (error) {
-          setError(error); // Set error state
-          setShowPopup(false); // Ensure popup doesn't show if there's an error
-        } finally {
-          setFetching(false); // Hide spinner after fetch attempt
-        }
-      }
-    };
-
-    fetchData(); // Call the fetchData function
-    prevTimePeriod.current = timePeriod; // Update the previous time period after the fetch logic runs
-  }, [token, timePeriod]); // Effect runs when token or timePeriod changes
+    fetchData();
+  }, [token, timePeriod]);
 
   useEffect(() => {
     prevTimePeriod.current = timePeriod;
@@ -145,26 +141,16 @@ const Insights: React.FC<InsightsProps> = ({ timePeriod }) => {
   };
 
   const handleGenerateNewTopics = async () => {
-    // Update the loading state for this `timePeriod`
     setLoadingStates((prev) => ({ ...prev, [timePeriod]: true }));
-    setShowPopup(false); // Close the dialog if it's open
-
-    if (!token) {
-      setError(new Error("No authentication token available."));
-      setLoadingStates((prev) => ({ ...prev, [timePeriod]: false })); // Update loading state to false.
-      return;
-    }
+    setShowPopup(false);
 
     try {
       await generateNewTopics(timePeriod, token);
-      const newTopicsData = await fetchTopicsData(timePeriod, token);
-      setTopics(newTopicsData.topics || []);
-      setNTopics(newTopicsData.n_topics || 0);
-      setLastGeneratedTimestamp(format(new Date(), "PPpp")); // Set last generated timestamp
+      // After generating new topics, re-fetch the topic data.
+      await fetchData(); // This will fetch and update the topics state, thus re-rendering the component with the new data.
     } catch (error) {
       setError(new Error(error.message || "Failed to generate or fetch new topics."));
     } finally {
-      // Update the loading state for this `timePeriod` to false regardless of the result.
       setLoadingStates((prev) => ({ ...prev, [timePeriod]: false }));
     }
   };
