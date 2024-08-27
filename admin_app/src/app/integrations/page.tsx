@@ -1,6 +1,6 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, CircularProgress, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Layout } from "@/components/Layout";
@@ -23,10 +23,21 @@ const IntegrationsPage = () => {
   }, [accessLevel]);
 
   return (
-    <Layout.FlexBox alignItems="center" paddingTop={6} paddingBottom={10} gap={5}>
-      <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
-      <ChatManagers />
-      <RestAPI />
+    <Layout.FlexBox sx={{ alignItems: "center" }}>
+      <Box
+        sx={{
+          paddingTop: 6,
+          paddingBottom: 10,
+          paddingInline: 10,
+          maxWidth: 1050,
+        }}
+      >
+        <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
+        <Layout.Spacer multiplier={3} />
+        <ChatManagers />
+        <Layout.Spacer multiplier={3} />
+        <RestAPI />
+      </Box>
     </Layout.FlexBox>
   );
 };
@@ -104,7 +115,6 @@ const KeyManagement = ({
     <Layout.FlexBox
       key={"key-management"}
       flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
@@ -180,12 +190,7 @@ const KeyManagement = ({
 
 const RestAPI = () => {
   return (
-    <Layout.FlexBox
-      key={"rest-api"}
-      flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
-      gap={sizes.doubleBaseGap}
-    >
+    <Layout.FlexBox key={"rest-api"} flexDirection="column" gap={sizes.doubleBaseGap}>
       <Typography variant="h4" color="primary">
         REST API
       </Typography>
@@ -217,7 +222,6 @@ const ChatManagers = () => {
     <Layout.FlexBox
       key={"chat-managers"}
       flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
