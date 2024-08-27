@@ -116,11 +116,8 @@ async def search(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
-        n_similar=(
-            int(N_TOP_CONTENT)
-            if USE_CROSS_ENCODER
-            else int(N_TOP_CONTENT_TO_CROSSENCODER)
-        ),
+        n_similar=int(N_TOP_CONTENT),
+        n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
         asession=asession,
         exclude_archived=True,
         request=request,
@@ -232,6 +229,7 @@ async def voice_search(
             response=response_template,
             user_id=user_db.user_id,
             n_similar=int(N_TOP_CONTENT),
+            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
             asession=asession,
             exclude_archived=True,
             request=request,
@@ -340,6 +338,7 @@ async def get_search_response(
     response: QueryResponse,
     user_id: int,
     n_similar: int,
+    n_to_crossencoder: int,
     asession: AsyncSession,
     request: Request,
     exclude_archived: bool = True,
@@ -360,6 +359,8 @@ async def get_search_response(
         The ID of the user making the query.
     n_similar
         The number of similar contents to retrieve.
+    n_to_crossencoder
+        The number of similar contents to send to the cross-encoder.
     asession
         `AsyncSession` object for database transactions.
     request
@@ -380,14 +381,15 @@ async def get_search_response(
     search_results = await get_similar_content_async(
         user_id=user_id,
         question=query_refined.query_text,  # use latest transformed version of the text
-        n_similar=n_similar,
+        n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
         asession=asession,
         metadata=metadata,
         exclude_archived=exclude_archived,
     )
 
-    if USE_CROSS_ENCODER:
+    if USE_CROSS_ENCODER and (len(search_results) > 1):
         search_results = rerank_search_results(
+            n_similar=n_similar,
             search_results=search_results,
             query_text=query_refined.query_text,
             request=request,
@@ -399,7 +401,10 @@ async def get_search_response(
 
 
 def rerank_search_results(
-    search_results: dict[int, QuerySearchResult], query_text: str, request: Request
+    search_results: dict[int, QuerySearchResult],
+    n_similar: int,
+    query_text: str,
+    request: Request,
 ) -> dict[int, QuerySearchResult]:
     """
     Rerank search results based on the similarity of the content to the query text
@@ -410,7 +415,9 @@ def rerank_search_results(
         [(query_text, content.title + "\n" + content.text) for content in contents]
     )
 
-    sorted_by_score = [v for _, v in sorted(zip(scores, contents), reverse=True)]
+    sorted_by_score = [v for _, v in sorted(zip(scores, contents), reverse=True)][
+        :n_similar
+    ]
     reranked_search_results = dict(enumerate(sorted_by_score))
 
     return reranked_search_results
