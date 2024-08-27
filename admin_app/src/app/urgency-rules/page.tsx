@@ -193,6 +193,13 @@ const UrgencyRulesPage = () => {
             >
               Urgency Rules
             </Typography>
+            <Typography
+              sx={{ paddingLeft: 1, paddingBottom: 2 }}
+              variant="body1"
+              align="left"
+            >
+              On this page, you can view, edit, delete, and test urgency rules.
+            </Typography>
             <Layout.FlexBox
               key={"utility-strip"}
               flexDirection={"row"}
@@ -219,7 +226,7 @@ const UrgencyRulesPage = () => {
               </Tooltip>
             </Layout.FlexBox>
             <Layout.Spacer />
-            <Box sx={{ height: "70vh", overflowY: "auto" }}>
+            <Box sx={{ height: "65vh", overflowY: "auto" }}>
               <List>
                 {items.map((urgencyRule: UrgencyRule, index: number) => {
                   const isLastItem = index === items.length - 1;

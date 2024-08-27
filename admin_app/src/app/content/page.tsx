@@ -116,12 +116,19 @@ const CardsPage = () => {
           }}
         >
           <Typography
-            sx={{ paddingTop: 6, paddingLeft: 2 }}
+            sx={{ paddingTop: 6, paddingLeft: 3 }}
             variant="h4"
             align="left"
             color="primary"
           >
             Manage Contents
+          </Typography>
+          <Typography
+            sx={{ paddingTop: 2, paddingLeft: 3 }}
+            variant="body1"
+            align="left"
+          >
+            On this page, you can view, edit, delete, and test contents.
           </Typography>
           <Layout.FlexBox
             flexGrow={1}

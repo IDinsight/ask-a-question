@@ -112,11 +112,7 @@ const KeyManagement = ({
   };
 
   return (
-    <Layout.FlexBox
-      key={"key-management"}
-      flexDirection="column"
-      gap={sizes.doubleBaseGap}
-    >
+    <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
         Your API Key
       </Typography>
