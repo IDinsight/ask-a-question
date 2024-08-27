@@ -2,6 +2,8 @@
 This module contains the main function for the topic modelling pipeline.
 """
 
+import asyncio
+
 import pandas as pd
 from bertopic import BERTopic
 from hdbscan import HDBSCAN
@@ -61,14 +63,21 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
 
     _idx = 0
     topic_data = []
-    for topic_id, topic_df in query_df.groupby("topic_id"):
+    tasks = []
+    for _, topic_df in query_df.groupby("topic_id"):
         topic_samples = topic_df[["query_text", "query_datetime_utc"]][:5]
-        topic = await generate_topic_label(
-            user_id,
-            TOPIC_MODELING_CONTEXT,
-            topic_samples["query_text"].tolist(),
+        tasks.append(
+            generate_topic_label(
+                user_id,
+                TOPIC_MODELING_CONTEXT,
+                topic_samples["query_text"].tolist(),
+            )
         )
 
+    topics = await asyncio.gather(*tasks)
+    print("Topic:", topics, "\n\n")
+    for topic, (topic_id, topic_df) in zip(topics, query_df.groupby("topic_id")):
+        topic_samples = topic_df[["query_text", "query_datetime_utc"]][:5]
         topic_data.append(
             Topic(
                 topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
