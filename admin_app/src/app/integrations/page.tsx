@@ -9,11 +9,8 @@ import { apiCalls } from "@/utils/api";
 import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
-import {
-  KeyRenewConfirmationModal,
-  NewKeyModal,
-} from "./components/APIKeyModals";
-import ChatManagersGrid from "./components/ChatManagerGrid";
+import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
+import ChatManagerGrid from "./components/ChatManagerGrid";
 import { LoadingButton } from "@mui/lab";
 import { OpenInNew } from "@mui/icons-material";
 
@@ -26,16 +23,8 @@ const IntegrationsPage = () => {
   }, [accessLevel]);
 
   return (
-    <Layout.FlexBox
-      alignItems="center"
-      paddingTop={6}
-      paddingBottom={10}
-      gap={5}
-    >
-      <KeyManagement
-        token={token}
-        editAccess={currAccessLevel === "fullaccess"}
-      />
+    <Layout.FlexBox alignItems="center" paddingTop={6} paddingBottom={10} gap={5}>
+      <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
       <ChatManagers />
       <RestAPI />
     </Layout.FlexBox>
@@ -127,9 +116,9 @@ const KeyManagement = ({
         gap={sizes.doubleBaseGap}
       >
         <Typography variant="body1">
-          You will need your API key to interact with AAQ from your chat
-          manager. You can generate a new key here, but keep in mind that any
-          old key is invalidated if a new key is created.
+          You will need your API key to interact with AAQ from your chat manager. You
+          can generate a new key here, but keep in mind that any old key is invalidated
+          if a new key is created.
         </Typography>
         <Layout.FlexBox
           flexDirection="column"
@@ -201,15 +190,11 @@ const RestAPI = () => {
         REST API
       </Typography>
       <Typography variant="body1">
-        You can use REST APIs to interact with AAQ from your own application,
-        using the API key generated above as a Bearer token. Click on the link
-        below to see the documentation.
+        You can use REST APIs to interact with AAQ from your own application, using the
+        API key generated above as a Bearer token. Click on the link below to see the
+        documentation.
       </Typography>
-      <Layout.FlexBox
-        flexDirection="column"
-        alignItems={"center"}
-        gap={sizes.baseGap}
-      >
+      <Layout.FlexBox flexDirection="column" alignItems={"center"} gap={sizes.baseGap}>
         <Typography variant="body1">
           <Button
             variant="outlined"
@@ -239,10 +224,10 @@ const ChatManagers = () => {
         Chat Managers
       </Typography>
       <Typography variant="body1">
-        Click on the chat manager of your choice to see instructions on how to
-        connect it to AAQ.
+        Click on the chat manager of your choice to see instructions on how to connect
+        it to AAQ.
       </Typography>
-      <ChatManagersGrid />
+      <ChatManagerGrid />
     </Layout.FlexBox>
   );
 };

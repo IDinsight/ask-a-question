@@ -47,15 +47,9 @@ const ChatManagerGrid = () => {
 
   return (
     <>
-      <Grid container spacing={sizes.baseGap} style={{ minWidth: 700 }}>
+      <Grid container spacing={sizes.baseGap} style={{ minWidth: 100 }}>
         {chatManagers.map((item, index) => (
-          <Grid
-            item
-            xs={12}
-            md={6}
-            key={index}
-            onClick={() => handleItemClick(item)}
-          >
+          <Grid item xs={12} md={6} key={index} onClick={() => handleItemClick(item)}>
             <ChatManagerCard logo_src={item.logo_src} name={item.name} />
           </Grid>
         ))}

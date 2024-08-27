@@ -186,7 +186,7 @@ const UrgencyRulesPage = () => {
             }}
           >
             <Typography
-              sx={{ paddingLeft: 1 }}
+              sx={{ paddingLeft: 1, paddingBottom: 2 }}
               variant="h4"
               align="left"
               color="primary"
@@ -201,9 +201,9 @@ const UrgencyRulesPage = () => {
               sx={{
                 display: "flex",
                 alignSelf: "flex-end",
-                px: sizes.baseGap,
+                paddingInline: sizes.baseGap,
+                gap: sizes.baseGap,
               }}
-              gap={sizes.baseGap}
             >
               <Tooltip title="Add new urgency rule">
                 <>
