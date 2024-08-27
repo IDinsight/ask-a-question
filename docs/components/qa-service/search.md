@@ -19,8 +19,10 @@ sequenceDiagram
   LLM->>AAQ: <Translated text>
   AAQ->>LLM: Paraphrase question
   LLM->>AAQ: <Paraphrased question>
-  AAQ->>Vector DB: Request N most similar contents in DB
-  Vector DB->>AAQ: <N contents with similarity score>
+  AAQ->>Vector DB: Request M most similar contents in DB
+  Vector DB->>AAQ: <M contents with similarity score>
+  AAQ->>Cross-encoder: Re-rank to get top N contents
+  Cross-encoder->>AAQ: <N contents with similarity score>
   AAQ->>User: Return JSON of N contents
 
 ```
@@ -37,6 +39,8 @@ sequenceDiagram
   LLM->>AAQ: <Safety Classification>
   AAQ->>Vector DB: Request N most similar contents in DB
   Vector DB->>AAQ: <N contents with similarity score>
+  AAQ->>Cross-encoder: Re-rank to get top N contents
+  Cross-encoder->>AAQ: <N contents with similarity score>
   AAQ->>LLM: Given contents, construct response in user's language to question
   LLM->>AAQ: <LLM response>
   AAQ->>LLM: Check if LLM response is consistent with contents
