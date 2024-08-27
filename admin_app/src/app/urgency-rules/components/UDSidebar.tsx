@@ -5,8 +5,8 @@ import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { TestSidebar } from "../../../components/SidebarCommon";
-import TypingAnimation from "../../../components/TypingAnimation";
+import { TestSidebar } from "@/components/SidebarCommon";
+import TypingAnimation from "@/components/TypingAnimation";
 
 interface UDResults {
   is_urgent: boolean;
