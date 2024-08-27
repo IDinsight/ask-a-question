@@ -6,7 +6,7 @@ import os
 from io import BytesIO
 from typing import Tuple
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +27,7 @@ from ..llm_call.process_input import (
 )
 from ..llm_call.process_output import (
     check_align_score__after,
-    generate_llm_response__after,
+    generate_llm_query_response,
     generate_tts__after,
 )
 from ..users.models import UserDB
@@ -35,7 +35,6 @@ from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
     get_file_extension_from_mime_type,
-    get_http_client,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -59,6 +58,7 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
+from .speech_components.utils import post_to_speech
 
 logger = setup_logger()
 
@@ -74,6 +74,81 @@ router = APIRouter(
     dependencies=[Depends(authenticate_key), Depends(rate_limiter)],
     tags=[TAG_METADATA["name"]],
 )
+
+
+@router.post(
+    "/search",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+async def search(
+    user_query: QueryBase,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+) -> QueryResponse | JSONResponse:
+    """
+    Search endpoint finds the most similar content to the user query and optionally
+    generates a single-turn LLM response.
+
+    If any guardrails fail, the embeddings search is still done and an error 400 is
+    returned that includes the search results as well as the details of the failure.
+    """
+
+    (
+        user_query_db,
+        user_query_refined_template,
+        response_template,
+    ) = await get_user_query_and_response(
+        user_id=user_db.user_id,
+        user_query=user_query,
+        asession=asession,
+        generate_tts=False,
+    )
+    response = await get_search_response(
+        query_refined=user_query_refined_template,
+        response=response_template,
+        user_id=user_db.user_id,
+        n_similar=int(N_TOP_CONTENT),
+        asession=asession,
+        exclude_archived=True,
+    )
+
+    if user_query.generate_llm_response:
+        response = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
+        )
+
+    await save_query_response_to_db(user_query_db, response, asession)
+    await increment_query_count(
+        user_id=user_db.user_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+    await save_content_for_query_to_db(
+        user_id=user_db.user_id,
+        session_id=user_query.session_id,
+        query_id=response.query_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
+    if type(response) is QueryResponse:
+        return response
+    elif type(response) is QueryResponseError:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Internal server error"},
+        )
 
 
 @router.post(
@@ -145,7 +220,7 @@ async def voice_search(
         generate_tts=True,
     )
 
-    response = await search_base(
+    response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
@@ -153,6 +228,13 @@ async def voice_search(
         asession=asession,
         exclude_archived=True,
     )
+
+    if user_query.generate_llm_response:
+        response = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
+        )
+
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
         user_id=user_db.user_id,
@@ -184,96 +266,11 @@ async def voice_search(
         )
 
 
-async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
-    """
-    Post request the file to the speech endpoint to get the transcription
-    """
-    async with get_http_client() as client:
-        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
-            if response.status != 200:
-                error_content = await response.json()
-                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-                raise HTTPException(status_code=response.status, detail=error_content)
-            return await response.json()
-
-
-@router.post(
-    "/search",
-    response_model=QueryResponse,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": QueryResponseError,
-            "description": "Guardrail failure",
-        }
-    },
-)
-async def search(
-    user_query: QueryBase,
-    asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
-) -> QueryResponse | JSONResponse:
-    """
-    Search endpoint finds the most similar content to the user query and optionally
-    generates a single-turn LLM response.
-
-    If any guardrails fail, the embeddings search is still done and an error 400 is
-    returned that includes the search results as well as the details of the failure.
-    """
-
-    (
-        user_query_db,
-        user_query_refined_template,
-        response_template,
-    ) = await get_user_query_and_response(
-        user_id=user_db.user_id,
-        user_query=user_query,
-        asession=asession,
-        generate_tts=False,
-    )
-    response = await search_base(
-        query_refined=user_query_refined_template,
-        response=response_template,
-        user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT),
-        asession=asession,
-        exclude_archived=True,
-    )
-
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(
-        user_id=user_db.user_id,
-        contents=response.search_results,
-        asession=asession,
-    )
-    await save_content_for_query_to_db(
-        user_id=user_db.user_id,
-        session_id=user_query.session_id,
-        query_id=response.query_id,
-        contents=response.search_results,
-        asession=asession,
-    )
-
-    if type(response) is QueryResponse:
-        return response
-    elif type(response) is QueryResponseError:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
-        )
-    else:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": "Internal server error"},
-        )
-
-
 @identify_language__before
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
-@generate_tts__after
-@generate_llm_response__after
-@check_align_score__after
-async def search_base(
+async def get_search_response(
     query_refined: QueryRefined,
     response: QueryResponse,
     user_id: int,
@@ -308,19 +305,45 @@ async def search_base(
         An appropriate query response object.
 
     """
-
-    # always do the embeddings search even if some guardrails have failed
+    # No checks for errors:
+    #   always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
+
     search_results = await get_similar_content_async(
         user_id=user_id,
-        # use latest version of the text
-        question=query_refined.query_text,
+        question=query_refined.query_text,  # use latest transformed version of the text
         n_similar=n_similar,
         asession=asession,
         metadata=metadata,
         exclude_archived=exclude_archived,
     )
     response.search_results = search_results
+
+    return response
+
+
+@generate_tts__after
+@check_align_score__after
+async def get_generation_response(
+    query_refined: QueryRefined,
+    response: QueryResponse,
+) -> QueryResponse | QueryResponseError:
+    """
+    Generate a response using an LLM given a query with search results.
+
+    Only runs if the generate_llm_response flag is set to True.
+    Requires "search_results" and "original_language" in the response.
+    """
+    if not query_refined.generate_llm_response:
+        return response
+
+    metadata = create_langfuse_metadata(
+        query_id=response.query_id, user_id=query_refined.user_id
+    )
+
+    response = await generate_llm_query_response(
+        query_refined=query_refined, response=response, metadata=metadata
+    )
 
     return response
 
