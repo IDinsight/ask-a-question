@@ -143,7 +143,7 @@ const TestSidebar = ({
           borderRadius: 1,
           borderColor: "grey.400",
           flexGrow: 1,
-          height: "60vh",
+          height: "60%",
         }}
       >
         {ResponseBox && (

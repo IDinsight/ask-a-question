@@ -7,8 +7,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
-import LanguageButtonBar from "../../../components/LanguageButtonBar";
-import { Layout } from "../../../components/Layout";
+import { Layout } from "@/components/Layout";
 import { Tag } from "@/app/content/page";
 
 const ContentViewModal = ({
@@ -87,7 +86,6 @@ const ContentViewModal = ({
             </Layout.FlexBox>
           )}
           <Layout.Spacer multiplier={0.5} />
-          {/* <LanguageButtonBar expandable={false} /> */}
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
