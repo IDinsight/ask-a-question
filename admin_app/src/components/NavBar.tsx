@@ -53,6 +53,7 @@ const Logo = () => {
         sx={{
           height: 36,
           aspect_ratio: 1200 / 214,
+          paddingTop: 0.3,
         }}
       />
     </Link>
@@ -61,14 +62,9 @@ const Logo = () => {
 
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
 
-  const smallMenuPageDict = [
-    ...pageDict,
-    { title: "Dashboard", path: "/dashboard" },
-  ];
+  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
 
   return (
     <Box
@@ -130,10 +126,7 @@ const SmallScreenNavMenu = () => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color:
-                  pathname === page.path
-                    ? appColors.white
-                    : appColors.secondary,
+                color: pathname === page.path ? appColors.white : appColors.secondary,
               }}
             >
               {page.title}
@@ -178,8 +171,7 @@ const LargeScreenNavMenu = () => {
               key={page.title}
               sx={{
                 margin: sizes.baseGap,
-                color:
-                  pathname === page.path ? appColors.white : appColors.outline,
+                color: pathname === page.path ? appColors.white : appColors.outline,
               }}
             >
               {page.title}
@@ -190,8 +182,7 @@ const LargeScreenNavMenu = () => {
           variant="outlined"
           onClick={() => router.push("/dashboard")}
           style={{
-            color:
-              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
@@ -209,9 +200,7 @@ const LargeScreenNavMenu = () => {
 const UserDropdown = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
