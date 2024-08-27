@@ -1,13 +1,10 @@
-import {
-  ContentViewModal,
-  ArchiveContentModal,
-} from "@/components/ContentModal";
+import { ContentViewModal, ArchiveContentModal } from "./ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
-import { Layout } from "./Layout";
+import { Layout } from "../../../components/Layout";
 import { Tag } from "@/app/content/page";
 
 const ContentCard = ({
@@ -36,8 +33,7 @@ const ContentCard = ({
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
-  const [openArchiveModal, setOpenArchiveModal] =
-    React.useState<boolean>(false);
+  const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
 
   return (
     <>
@@ -57,11 +53,7 @@ const ContentCard = ({
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox
-          flexDirection="row"
-          justifyContent="end"
-          sx={{ width: "98%" }}
-        >
+        <Layout.FlexBox flexDirection="row" justifyContent="end" sx={{ width: "98%" }}>
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
               <Chip

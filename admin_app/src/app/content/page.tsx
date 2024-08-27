@@ -26,15 +26,15 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import type { Content } from "@/app/content/edit/page";
-import ContentCard from "@/components/ContentCard";
-import { DownloadModal } from "@/components/DownloadModal";
+import ContentCard from "./components/ContentCard";
+import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ImportModal } from "../../components/ImportModal";
-import { PageNavigation } from "../../components/PageNavigation";
-import { SearchBar } from "../../components/SearchBar";
+import { ImportModal } from "./components/ImportModal";
+import { PageNavigation } from "./components/PageNavigation";
+import { SearchBar } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;

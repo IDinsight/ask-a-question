@@ -1,22 +1,14 @@
 import { appColors, sizes } from "@/utils";
 import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
-  Fade,
-  IconButton,
-  Modal,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, Fade, IconButton, Modal, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
-import LanguageButtonBar from "./LanguageButtonBar";
-import { Layout } from "./Layout";
+import LanguageButtonBar from "../../../components/LanguageButtonBar";
+import { Layout } from "../../../components/Layout";
 import { Tag } from "@/app/content/page";
 
 const ContentViewModal = ({
@@ -62,10 +54,7 @@ const ContentViewModal = ({
             p: sizes.doubleBaseGap,
           }}
         >
-          <Layout.FlexBox
-            flexDirection={"row"}
-            justifyContent={"space-between"}
-          >
+          <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
             <Typography variant="h5">Content #{content_id}</Typography>
             <IconButton onClick={onClose}>
               <Close />
@@ -111,10 +100,7 @@ const ContentViewModal = ({
               borderRadius: 3,
             }}
           >
-            <Typography
-              variant="subtitle1"
-              sx={{ marginBottom: sizes.baseGap }}
-            >
+            <Typography variant="subtitle1" sx={{ marginBottom: sizes.baseGap }}>
               {title}
             </Typography>
             <Typography
@@ -149,10 +135,7 @@ const ContentViewModal = ({
               </Button>
               <Layout.Spacer horizontal multiplier={1} />
             </Layout.FlexBox>
-            <Layout.FlexBox
-              flexDirection={"row"}
-              justifyContent={"space-between"}
-            >
+            <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
               <Typography variant="body2" color={appColors.darkGrey}>
                 Last modified{" "}
                 {new Date(last_modified).toLocaleString(undefined, {
