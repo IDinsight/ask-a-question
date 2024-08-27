@@ -7,12 +7,13 @@ from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, status
+from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET
+from ..config import CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET, USE_CROSS_ENCODER
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -30,6 +31,7 @@ from ..llm_call.process_output import (
     generate_llm_query_response,
     generate_tts__after,
 )
+from ..schemas import QuerySearchResult
 from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
@@ -39,7 +41,7 @@ from ..utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from .config import N_TOP_CONTENT
+from .config import N_TOP_CONTENT, N_TOP_CONTENT_TO_CROSSENCODER
 from .models import (
     QueryDB,
     check_secret_key_match,
@@ -88,6 +90,7 @@ router = APIRouter(
 )
 async def search(
     user_query: QueryBase,
+    request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
@@ -113,9 +116,14 @@ async def search(
         query_refined=user_query_refined_template,
         response=response_template,
         user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT),
+        n_similar=(
+            int(N_TOP_CONTENT)
+            if USE_CROSS_ENCODER
+            else int(N_TOP_CONTENT_TO_CROSSENCODER)
+        ),
         asession=asession,
         exclude_archived=True,
+        request=request,
     )
 
     if user_query.generate_llm_response:
@@ -138,17 +146,18 @@ async def search(
         asession=asession,
     )
 
-    if type(response) is QueryResponse:
+    if isinstance(response, QueryResponse):
         return response
-    elif type(response) is QueryResponseError:
+
+    if isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
-    else:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": "Internal server error"},
-        )
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"message": "Internal server error"},
+    )
 
 
 @router.post(
@@ -167,6 +176,7 @@ async def search(
 )
 async def voice_search(
     file_url: str,
+    request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryAudioResponse | JSONResponse:
@@ -224,6 +234,7 @@ async def voice_search(
             n_similar=int(N_TOP_CONTENT),
             asession=asession,
             exclude_archived=True,
+            request=request,
         )
 
         if user_query.generate_llm_response:
@@ -250,17 +261,18 @@ async def voice_search(
             os.remove(file_path)
             file_stream.close()
 
-        if type(response) is QueryAudioResponse:
+        if isinstance(response, QueryAudioResponse):
             return response
-        elif type(response) is QueryResponseError:
+
+        if isinstance(response, QueryResponseError):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
             )
-        else:
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": "Internal server error"},
-            )
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": "Internal server error"},
+        )
 
     except ValueError as ve:
         logger.error(f"ValueError: {str(ve)}")
@@ -329,6 +341,7 @@ async def get_search_response(
     user_id: int,
     n_similar: int,
     asession: AsyncSession,
+    request: Request,
     exclude_archived: bool = True,
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
@@ -349,6 +362,8 @@ async def get_search_response(
         The number of similar contents to retrieve.
     asession
         `AsyncSession` object for database transactions.
+    request
+        The FastAPI request object.
     exclude_archived
         Specifies whether to exclude archived content.
 
@@ -370,9 +385,35 @@ async def get_search_response(
         metadata=metadata,
         exclude_archived=exclude_archived,
     )
+
+    if USE_CROSS_ENCODER:
+        search_results = rerank_search_results(
+            search_results=search_results,
+            query_text=query_refined.query_text,
+            request=request,
+        )
+
     response.search_results = search_results
 
     return response
+
+
+def rerank_search_results(
+    search_results: dict[int, QuerySearchResult], query_text: str, request: Request
+) -> dict[int, QuerySearchResult]:
+    """
+    Rerank search results based on the similarity of the content to the query text
+    """
+    encoder = request.app.state.crossencoder
+    contents = search_results.values()
+    scores = encoder.predict(
+        [(query_text, content.title + "\n" + content.text) for content in contents]
+    )
+
+    sorted_by_score = [v for _, v in sorted(zip(scores, contents), reverse=True)]
+    reranked_search_results = dict(enumerate(sorted_by_score))
+
+    return reranked_search_results
 
 
 @generate_tts__after
@@ -418,6 +459,8 @@ async def get_user_query_and_response(
         The user query database object.
     asession
         `AsyncSession` object for database transactions.
+    generate_tts
+        Specifies whether to generate a TTS audio response
 
     Returns
     -------

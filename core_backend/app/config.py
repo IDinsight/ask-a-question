@@ -63,6 +63,12 @@ LITELLM_MODEL_TOPIC_MODEL = os.environ.get(
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"
 )
+# Cross-encoder
+USE_CROSS_ENCODER = os.environ.get("USE_CROSS_ENCODER", "True")
+CROSS_ENCODER_MODEL = os.environ.get(
+    "CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
+
 # Rate limit variables
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
