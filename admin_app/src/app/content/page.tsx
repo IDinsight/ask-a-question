@@ -112,13 +112,22 @@ const CardsPage = () => {
           lg={12 - sidebarGridWidth + 1}
           sx={{
             display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+            paddingInline: 2,
           }}
         >
+          <Typography
+            sx={{ paddingTop: 6, paddingLeft: 2 }}
+            variant="h4"
+            align="left"
+            color="primary"
+          >
+            Manage Contents
+          </Typography>
           <Layout.FlexBox
             flexGrow={1}
             alignItems="center"
             gap={sizes.baseGap}
-            paddingTop={8}
+            paddingTop={5}
           >
             <CardsUtilityStrip
               editAccess={currAccessLevel === "fullaccess"}
@@ -139,16 +148,14 @@ const CardsPage = () => {
               accessLevel={currAccessLevel}
               setSnackMessage={setSnackMessage}
             />
-          </Layout.FlexBox>
-          {!openSidebar && (
-            <div style={{ position: "relative" }}>
+            {!openSidebar && (
               <Fab
                 variant="extended"
                 sx={{
                   bgcolor: "orange",
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
+                  width: "100px",
+                  alignSelf: "flex-end",
+                  marginRight: 2,
                 }}
                 onClick={handleSidebarToggle}
               >
@@ -156,8 +163,8 @@ const CardsPage = () => {
                 <Layout.Spacer horizontal multiplier={0.3} />
                 Test
               </Fab>
-            </div>
-          )}
+            )}
+          </Layout.FlexBox>
         </Grid>
         <Grid
           item
@@ -598,7 +605,6 @@ const CardsGrid = ({
         </Grid>
       </Paper>
       <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
-      <Layout.Spacer multiplier={1} />
     </>
   );
 };
