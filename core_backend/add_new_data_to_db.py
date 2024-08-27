@@ -16,6 +16,7 @@ from app.config import (
 )
 from app.contents.models import ContentDB
 from app.database import get_session
+from app.llm_call.utils import remove_json_markdown
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -126,8 +127,7 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
     try:
         # Extract the output from the response
         feedback_output = response["choices"][0]["message"]["content"].strip()
-        feedback_output = feedback_output.replace("json", "")
-        feedback_output = feedback_output.replace("\n", "").strip()
+        feedback_output = remove_json_markdown(feedback_output)
         feedback_dict = json.loads(feedback_output)
         if isinstance(feedback_dict, dict) and "output" in feedback_dict:
             return feedback_dict
@@ -159,7 +159,7 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
     except Exception as e:
         if retries > 0:
             # Implement exponential wait before retrying
-            time.sleep(2 ** (3 - retries))
+            time.sleep(2 ** (2 - retries))
             return save_single_row(endpoint, data, retries=retries - 1)
         else:
             print(f"Request failed after retries: {e}")
@@ -281,14 +281,11 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
     return None
 
 
-def create_random_datetime_from_string(date_string: str) -> datetime:
+def create_random_datetime_from_string(start_date: datetime) -> datetime:
     """
     Create a random datetime from a date in the format "%d-%m-%y
     to today
     """
-    date_format = "%d-%m-%y"
-
-    start_date = datetime.strptime(date_string, date_format)
 
     time_difference = datetime.now() - start_date
     random_number_of_days = random.randint(0, time_difference.days)
@@ -336,7 +333,7 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
         session.commit()
 
 
-def update_date_of_contents(date: str) -> None:
+def update_date_of_contents(date: datetime) -> None:
     """
     Update the date of the content records in the database for consistency
     """
@@ -354,7 +351,13 @@ if __name__ == "__main__":
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
     API_KEY = args.api_key if args.api_key else ADMIN_API_KEY
 
-    start_date = args.start_date if args.start_date else "01-08-23"
+    date_string = args.start_date if args.start_date else "01-08-23"
+    date_format = "%d-%m-%y"
+    start_date = datetime.strptime(date_string, date_format)
+    assert (
+        start_date and start_date < datetime.now()
+    ), "Invalid start date. Please provide a valid start date."
+
     path = args.csv
     df = pd.read_csv(path)
     saved_queries = defaultdict(list)
