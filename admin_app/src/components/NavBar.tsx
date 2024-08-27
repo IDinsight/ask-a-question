@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import { useEffect } from "react";
 
 const pageDict = [
   { title: "Question Answering", path: "/content" },
@@ -201,6 +202,22 @@ const UserDropdown = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    // Save user to local storage when it changes
+    if (user) {
+      localStorage.setItem("user", user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Retrieve user from local storage on component mount
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setPersistedUser(storedUser);
+    }
+  }, []);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -234,10 +251,10 @@ const UserDropdown = () => {
           horizontal: "right",
         }}
         open={Boolean(anchorElUser)}
-        onClose={() => setAnchorElUser(null)}
+        onClose={handleCloseUserMenu}
       >
         <MenuItem disabled>
-          <Typography textAlign="center">{user}</Typography>
+          <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
         {settings.map((setting) => (
           <MenuItem key={setting} onClick={logout}>
