@@ -19,7 +19,7 @@ import { Delete, Edit, Add, PlayArrow, Send } from "@mui/icons-material";
 import { TextField, Typography, Box } from "@mui/material";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { UDSidebar } from "./UDSidebar";
+import { UDSidebar } from "./components/UDSidebar";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;

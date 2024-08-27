@@ -11,8 +11,8 @@ import {
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { TestSidebar } from "../../components/SidebarCommon";
-import TypingAnimation from "../../components/TypingAnimation";
+import { TestSidebar } from "../../../components/SidebarCommon";
+import TypingAnimation from "../../../components/TypingAnimation";
 
 interface SearchResult {
   index: string;
@@ -46,9 +46,7 @@ const getSearchResponse = (
   question: string,
   generateLLMResponse: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setResponse: React.Dispatch<
-    React.SetStateAction<SearchResponseBoxData | null>
-  >,
+  setResponse: React.Dispatch<React.SetStateAction<SearchResponseBoxData | null>>,
   token: string | null,
 ) => {
   const processEmbeddingsSearchResponse = (response: any) => {
@@ -228,12 +226,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
       const feedbackSecretKey = jsonResponse.feedback_secret_key;
 
       apiCalls
-        .postResponseFeedback(
-          queryID,
-          feedback_sentiment,
-          feedbackSecretKey,
-          token,
-        )
+        .postResponseFeedback(queryID, feedback_sentiment, feedbackSecretKey, token)
         .then((response) => {
           console.log("Feedback sent successfully: ", response.parsedData);
         })
@@ -268,9 +261,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
         <Box display="flex" flexDirection="column" justifyContent="center">
           {/* if type is string, there was an error */}
           {typeof responseBoxData.parsedData === "string" ? (
-            <Typography variant="body1">
-              {responseBoxData.parsedData}
-            </Typography>
+            <Typography variant="body1">{responseBoxData.parsedData}</Typography>
           ) : (
             <RenderSearchResponse parsedData={responseBoxData.parsedData} />
           )}

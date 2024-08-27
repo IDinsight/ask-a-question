@@ -35,7 +35,7 @@ import { useAuth } from "@/utils/auth";
 import { ImportModal } from "../../components/ImportModal";
 import { PageNavigation } from "../../components/PageNavigation";
 import { SearchBar } from "../../components/SearchBar";
-import { SearchSidebar } from "./SearchSidebar";
+import { SearchSidebar } from "./components/SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
 const CARD_HEIGHT = 250;
@@ -96,9 +96,7 @@ const CardsPage = () => {
           md={12 - sidebarGridWidth}
           lg={12 - sidebarGridWidth + 1}
           sx={{
-            display: openSidebar
-              ? { xs: "none", sm: "none", md: "block" }
-              : "block",
+            display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
           }}
         >
           <Layout.FlexBox
@@ -115,10 +113,7 @@ const CardsPage = () => {
                 minWidth: "200px",
               }}
             >
-              <SearchBar
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-              />
+              <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
               <Layout.FlexBox
                 alignItems="center"
                 sx={{ flexDirection: "row", justifyContent: "center" }}
@@ -136,11 +131,7 @@ const CardsPage = () => {
                     setFilterTags(updatedTags);
                   }}
                   renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      variant="standard"
-                      label="Filter by tags"
-                    />
+                    <TextField {...params} variant="standard" label="Filter by tags" />
                   )}
                   sx={{ width: "80%", color: appColors.white }}
                 />
@@ -227,8 +218,7 @@ const CardsUtilityStrip = ({
     }>
   >;
 }) => {
-  const [openDownloadModal, setOpenDownloadModal] =
-    React.useState<boolean>(false);
+  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
   return (
     <Layout.FlexBox
@@ -437,20 +427,14 @@ const CardsGrid = ({
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              card.content_text
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesAllTags = filterTags.some((fTag) =>
               card.content_tags.includes(fTag.tag_id),
             );
 
-            return (
-              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
-            );
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
           });
 
           setCards(filteredData);

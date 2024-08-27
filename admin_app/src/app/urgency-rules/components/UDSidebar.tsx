@@ -5,8 +5,8 @@ import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
 
 import { sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
-import { TestSidebar } from "../../components/SidebarCommon";
-import TypingAnimation from "../../components/TypingAnimation";
+import { TestSidebar } from "../../../components/SidebarCommon";
+import TypingAnimation from "../../../components/TypingAnimation";
 
 interface UDResults {
   is_urgent: boolean;
@@ -87,9 +87,7 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
       </Typography>
 
       <Typography component={"span"} variant="subtitle2" paddingBottom={1}>
-        {parsedData.matched_rules.length === 1
-          ? "Matched Rule"
-          : "Matched Rules"}
+        {parsedData.matched_rules.length === 1 ? "Matched Rule" : "Matched Rules"}
       </Typography>
       {parsedData.matched_rules.map((text: string) => (
         <Box sx={{ paddingBottom: 1 }} key={1}>
@@ -102,10 +100,7 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
   );
 };
 
-const UDResponseBox: React.FC<UDResponseBoxProps> = ({
-  loading,
-  responseBoxData,
-}) => {
+const UDResponseBox: React.FC<UDResponseBoxProps> = ({ loading, responseBoxData }) => {
   if (!responseBoxData) {
     return;
   }
@@ -121,9 +116,7 @@ const UDResponseBox: React.FC<UDResponseBoxProps> = ({
         <Box display="flex" flexDirection="column" justifyContent="center">
           {/* if type is string, there was an error */}
           {typeof responseBoxData.parsedData === "string" ? (
-            <Typography variant="body1">
-              {responseBoxData.parsedData}
-            </Typography>
+            <Typography variant="body1">{responseBoxData.parsedData}</Typography>
           ) : (
             <RenderUDResponse parsedData={responseBoxData.parsedData} />
           )}

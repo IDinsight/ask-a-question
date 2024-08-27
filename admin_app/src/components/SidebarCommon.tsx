@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 
 import { useAuth } from "@/utils/auth";
-import { SearchResponseBoxData } from "../app/content/SearchSidebar";
-import { UDResponseBoxData } from "../app/urgency-rules/UDSidebar";
+import { SearchResponseBoxData } from "../app/content/components/SearchSidebar";
+import { UDResponseBoxData } from "../app/urgency-rules/components/UDSidebar";
 
 const TestSidebar = ({
   title,
@@ -151,11 +151,7 @@ const TestSidebar = ({
         }}
       >
         {ResponseBox && (
-          <ResponseBox
-            loading={loading}
-            responseBoxData={response}
-            token={token}
-          />
+          <ResponseBox loading={loading} responseBoxData={response} token={token} />
         )}
       </Box>
     </Paper>
