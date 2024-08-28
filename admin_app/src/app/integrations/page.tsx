@@ -1,6 +1,6 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Layout } from "@/components/Layout";
@@ -10,9 +10,8 @@ import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
 import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
-import ChatManagerGrid from "./components/ChatManagerGrid";
+import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
-import { OpenInNew } from "@mui/icons-material";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -34,9 +33,7 @@ const IntegrationsPage = () => {
       >
         <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
         <Layout.Spacer multiplier={3} />
-        <ChatManagers />
-        <Layout.Spacer multiplier={3} />
-        <RestAPI />
+        <Connections />
       </Box>
     </Layout.FlexBox>
   );
@@ -184,36 +181,7 @@ const KeyManagement = ({
   );
 };
 
-const RestAPI = () => {
-  return (
-    <Layout.FlexBox key={"rest-api"} flexDirection="column" gap={sizes.doubleBaseGap}>
-      <Typography variant="h4" color="primary">
-        REST API
-      </Typography>
-      <Typography variant="body1">
-        You can use REST APIs to interact with AAQ from your own application, using the
-        API key generated above as a Bearer token. Click on the link below to see the
-        documentation.
-      </Typography>
-      <Layout.FlexBox flexDirection="column" alignItems={"center"} gap={sizes.baseGap}>
-        <Typography variant="body1">
-          <Button
-            variant="outlined"
-            color="primary"
-            href="https://app.ask-a-question.com/api/docs"
-            target="_blank"
-            rel="noreferrer"
-            endIcon={<OpenInNew />}
-          >
-            REST API Documentation
-          </Button>
-        </Typography>
-      </Layout.FlexBox>
-    </Layout.FlexBox>
-  );
-};
-
-const ChatManagers = () => {
+const Connections = () => {
   return (
     <Layout.FlexBox
       key={"chat-managers"}
@@ -221,13 +189,13 @@ const ChatManagers = () => {
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
-        Chat Managers
+        Connections
       </Typography>
       <Typography variant="body1">
-        Click on the chat manager of your choice to see instructions on how to connect
-        it to AAQ.
+        Click on the connection of your choice to see instructions on how to use it with
+        AAQ.
       </Typography>
-      <ChatManagerGrid />
+      <ConnectionsGrid />
     </Layout.FlexBox>
   );
 };
