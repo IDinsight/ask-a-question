@@ -52,6 +52,6 @@ https://[DOMAIN]/
 
 On the [Admin app]("./content/admin-app.md"), you can:
 
-- :books: Manage content for more details
-- :test_tube: Use the playground to test the Question-Answering service
+- :books: Manage content and urgency rules
+- :test_tube: Use the test sidebars to test the Question-Answering and Urgency Detection services
 - :bar_chart: View dashboards

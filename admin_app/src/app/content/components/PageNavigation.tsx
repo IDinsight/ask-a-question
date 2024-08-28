@@ -7,13 +7,13 @@ import React from "react";
 interface PageNavigationProps {
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-  max_pages: number;
+  maxPages: number;
 }
 
 export const PageNavigation: React.FC<PageNavigationProps> = ({
   page,
   setPage,
-  max_pages,
+  maxPages,
 }) => {
   return (
     <Layout.FlexBox
@@ -32,17 +32,17 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
       </IconButton>
       <Layout.Spacer horizontal multiplier={0.5} />
       <Typography variant="subtitle2">
-        {max_pages === 0 ? 0 : page} of {max_pages}
+        {maxPages === 0 ? 0 : page} of {maxPages}
       </Typography>
       <Layout.Spacer horizontal multiplier={0.5} />
       <IconButton
         onClick={() => {
-          page < max_pages && setPage(page + 1);
+          page < maxPages && setPage(page + 1);
         }}
-        disabled={page >= max_pages}
+        disabled={page >= maxPages}
         sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
       >
-        <ChevronRight color={page < max_pages ? "primary" : "disabled"} />
+        <ChevronRight color={page < maxPages ? "primary" : "disabled"} />
       </IconButton>
     </Layout.FlexBox>
   );

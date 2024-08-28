@@ -12,7 +12,7 @@ import { useAuth } from "@/utils/auth";
 import Papa from "papaparse";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
-import { Content } from "../app/content/edit/page";
+import { Content } from "../edit/page";
 
 const MAX_CARDS_TO_FETCH = 200;
 
@@ -60,13 +60,10 @@ const DownloadModal = ({
     // fetch all tags (to be able to map tag IDs to tag names)
     const tags_json = await apiCalls.getTagList(token!);
     const tag_list = Object.values<Tag>(tags_json);
-    const tag_dict = tag_list.reduce(
-      (acc: Record<string, string>, tag: Tag) => {
-        acc[tag.tag_id] = tag.tag_name;
-        return acc;
-      },
-      {},
-    );
+    const tag_dict = tag_list.reduce((acc: Record<string, string>, tag: Tag) => {
+      acc[tag.tag_id] = tag.tag_name;
+      return acc;
+    }, {});
     // convert fetched contents to list of json objects
     const list_json_contents = Object.values(raw_json_contents);
     // Convert to ContentDownload structure with tag names and metadata as string
@@ -116,13 +113,16 @@ const DownloadModal = ({
       }
       const csv = Papa.unparse(list_json_content_download);
       const now = new Date();
-      const timestamp = `${now.getFullYear()}_${String(
-        now.getMonth() + 1,
-      ).padStart(2, "0")}_${String(now.getDate()).padStart(2, "0")}_${String(
-        now.getHours(),
-      ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(
-        now.getSeconds(),
-      ).padStart(2, "0")}`;
+      const timestamp = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}_${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(
+        2,
+        "0",
+      )}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(
+        2,
+        "0",
+      )}`;
       const filename = `content_${timestamp}.csv`;
       downloadCSV(csv, filename);
     } catch (error) {

@@ -45,39 +45,7 @@ class AlignScoreData(TypedDict):
     claim: str
 
 
-def generate_llm_response__after(func: Callable) -> Callable:
-    """
-    Decorator to generate the LLM response.
-
-    Only runs if the generate_llm_response flag is set to True.
-    Requires "search_results" and "original_language" in the response.
-    """
-
-    @wraps(func)
-    async def wrapper(
-        query_refined: QueryRefined,
-        response: QueryResponse | QueryResponseError,
-        *args: Any,
-        **kwargs: Any,
-    ) -> QueryResponse | QueryResponseError:
-        """
-        Generate the LLM response
-        """
-        response = await func(query_refined, response, *args, **kwargs)
-
-        if not query_refined.generate_llm_response:
-            return response
-
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=query_refined.user_id
-        )
-        response = await _generate_llm_response(query_refined, response, metadata)
-        return response
-
-    return wrapper
-
-
-async def _generate_llm_response(
+async def generate_llm_query_response(
     query_refined: QueryRefined,
     response: QueryResponse,
     metadata: Optional[dict] = None,
@@ -114,6 +82,7 @@ async def _generate_llm_response(
     else:
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -219,6 +188,7 @@ async def _check_align_score(
         )
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -311,6 +281,7 @@ def generate_tts__after(func: Callable) -> Callable:
             )
             response = QueryAudioResponse(
                 query_id=response.query_id,
+                session_id=response.session_id,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
                 search_results=response.search_results,
@@ -361,6 +332,7 @@ async def _generate_tts_response(
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
         return QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,

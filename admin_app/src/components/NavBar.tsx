@@ -2,7 +2,6 @@
 import logowhite from "@/logo-light.png";
 import { appColors, appStyles, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box, Button } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -15,19 +14,11 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { useState } from "react";
 
-interface Page {
-  title: string;
-  path: string;
-}
-
-const smallScreenNavMenuPages = [
-  { title: "Manage Content", path: "/content" },
-  { title: "Manage Urgency Rules", path: "/urgency-rules" },
-  { title: "Test", path: "/playground" },
-  { title: "Integrate", path: "/integrations" },
-  { title: "Dashboard", path: "/dashboard" },
+const pageDict = [
+  { title: "Question Answering", path: "/content" },
+  { title: "Urgency Detection", path: "/urgency-rules" },
+  { title: "Integrations", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
@@ -73,6 +64,12 @@ const SmallScreenNavMenu = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null,
   );
+
+  const smallMenuPageDict = [
+    ...pageDict,
+    { title: "Dashboard", path: "/dashboard" },
+  ];
+
   return (
     <Box
       alignItems="center"
@@ -122,7 +119,7 @@ const SmallScreenNavMenu = () => {
           },
         }}
       >
-        {smallScreenNavMenuPages.map((page) => (
+        {smallMenuPageDict.map((page) => (
           <Link
             href={page.path}
             key={page.title}
@@ -152,35 +149,6 @@ const LargeScreenNavMenu = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  type stringToStringDictType = {
-    [key: string]: string;
-  };
-  const pathToPageNameMap: stringToStringDictType = {
-    "/urgency-rules": "Manage Urgency Rules",
-    "/content": "Manage Content",
-  };
-
-  const staticPages = [
-    { title: "Test", path: "/playground" },
-    { title: "Integrate", path: "/integrations" },
-  ];
-
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [selectedOption, setSelectedOption] = React.useState<string>(
-    pathToPageNameMap[pathname] || "Manage",
-  );
-
-  const handleConfigureClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleConfigureClose = (page: Page | null) => {
-    setAnchorEl(null);
-    if (page) {
-      router.push(`/${page.path}`);
-    }
-  };
-
   return (
     <Box
       justifyContent="space-between"
@@ -197,63 +165,9 @@ const LargeScreenNavMenu = () => {
       <Box
         justifyContent="flex-end"
         alignItems="center"
-        sx={{ flexGrow: 1, display: "flex", gap: 1.5 }}
+        sx={{ flexGrow: 1, display: "flex", gap: 0.5 }}
       >
-        <Typography
-          onClick={handleConfigureClick}
-          sx={{
-            color:
-              pathname === "/content" || pathname === "/urgency-rules"
-                ? appColors.white
-                : appColors.outline,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          {selectedOption} <ArrowDropDown />
-        </Typography>
-        <Menu
-          id="simple-menu"
-          anchorEl={anchorEl}
-          keepMounted
-          open={Boolean(anchorEl)}
-          onClose={() => handleConfigureClose(null)}
-          sx={{
-            marginTop: "14px",
-            "& .MuiPaper-root": {
-              backgroundColor: appColors.primary,
-              color: "white",
-            },
-            "& .Mui-selected, & .MuiMenuItem-root:hover": {
-              backgroundColor: appColors.deeperPrimary,
-            },
-          }}
-        >
-          <MenuItem
-            onClick={() =>
-              handleConfigureClose({
-                title: "Manage Content",
-                path: "content",
-              })
-            }
-            style={{ color: "white" }}
-          >
-            Manage Content
-          </MenuItem>
-          <MenuItem
-            onClick={() =>
-              handleConfigureClose({
-                title: "Manage Urgency Rules",
-                path: "urgency-rules",
-              })
-            }
-          >
-            Manage Urgency Rules
-          </MenuItem>
-        </Menu>
-        {staticPages.map((page) => (
+        {pageDict.map((page) => (
           <Link
             href={page.path}
             key={page.title}
@@ -281,7 +195,8 @@ const LargeScreenNavMenu = () => {
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
-            marginInline: 5,
+            marginLeft: 4,
+            marginRight: 8,
           }}
         >
           Dashboard
