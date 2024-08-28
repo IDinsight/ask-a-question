@@ -102,8 +102,8 @@ const CardsPage = () => {
   }, [accessLevel, token]);
 
   return (
-    <>
-      <Grid container>
+    <Box sx={{ display: "flex", justifyContent: "center", height: "100vh" }}>
+      <Grid container sx={{ maxWidth: "1900px" }}>
         <Grid
           item
           xs={12}
@@ -205,7 +205,7 @@ const CardsPage = () => {
           {snackMessage.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 };
 
