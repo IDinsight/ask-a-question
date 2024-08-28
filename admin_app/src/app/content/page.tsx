@@ -6,6 +6,7 @@ import React, { MouseEvent, useEffect, useState } from "react";
 import {
   Alert,
   Autocomplete,
+  Box,
   Button,
   ButtonGroup,
   CircularProgress,
@@ -29,12 +30,12 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appStyles, appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
-import { SearchBar } from "./components/SearchBar";
+import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
 const MAX_CARDS_TO_FETCH = 200;
@@ -43,6 +44,20 @@ const CARD_HEIGHT = 250;
 export interface Tag {
   tag_id: number;
   tag_name: string;
+}
+
+interface TagsFilterProps {
+  tags: Tag[];
+  filterTags: Tag[];
+  setFilterTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+}
+
+interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
+  editAccess: boolean;
+  setSnackMessage: React.Dispatch<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>;
 }
 
 const CardsPage = () => {
@@ -100,76 +115,80 @@ const CardsPage = () => {
           }}
         >
           <Layout.FlexBox
-            flexGrow={1}
-            alignItems="center"
-            gap={sizes.baseGap}
-            paddingTop={8}
+            sx={{
+              alignItems: "center",
+              paddingTop: 6,
+              paddingInline: 4,
+            }}
           >
-            <Layout.FlexBox
-              gap={sizes.smallGap}
+            <Box
               sx={{
-                width: "70%",
-                maxWidth: "500px",
-                minWidth: "200px",
+                width: "100%",
+                maxWidth: "lg",
               }}
             >
-              <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-              <Layout.FlexBox
-                alignItems="center"
-                sx={{ flexDirection: "row", justifyContent: "center" }}
-                gap={sizes.smallGap}
-              >
-                <Autocomplete
-                  multiple
-                  limitTags={3}
-                  id="tags-autocomplete"
-                  options={tags}
-                  getOptionLabel={(option) => option.tag_name}
-                  noOptionsText="No tags found"
-                  value={filterTags}
-                  onChange={(event, updatedTags) => {
-                    setFilterTags(updatedTags);
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} variant="standard" label="Filter by tags" />
-                  )}
-                  sx={{ width: "80%", color: appColors.white }}
-                />
-              </Layout.FlexBox>
-            </Layout.FlexBox>
-            <CardsUtilityStrip
-              editAccess={currAccessLevel === "fullaccess"}
-              setSnackMessage={setSnackMessage}
-            />
-            <CardsGrid
-              displayLanguage={displayLanguage}
-              searchTerm={searchTerm}
-              tags={tags}
-              filterTags={filterTags}
-              openSidebar={openSidebar}
-              token={token}
-              accessLevel={currAccessLevel}
-              setSnackMessage={setSnackMessage}
-            />
-          </Layout.FlexBox>
-          {!openSidebar && (
-            <div style={{ position: "relative" }}>
-              <Fab
-                variant="extended"
+              <Box
                 sx={{
-                  bgcolor: "orange",
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
                 }}
-                onClick={handleSidebarToggle}
               >
-                <PlayArrowIcon />
-                <Layout.Spacer horizontal multiplier={0.3} />
-                Test
-              </Fab>
-            </div>
-          )}
+                <Typography variant="h4" align="left" color="primary">
+                  Question Answering
+                </Typography>
+                <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                  Add, edit, and test content for question-answering. Questions sent to
+                  the search service will retrieve results from here.
+                </Typography>
+              </Box>
+              <Layout.FlexBox
+                sx={{
+                  flexGrow: 1,
+                  alignItems: "center",
+                  paddingTop: 5,
+                }}
+              >
+                <CardsUtilityStrip
+                  editAccess={currAccessLevel === "fullaccess"}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  tags={tags}
+                  filterTags={filterTags}
+                  setFilterTags={setFilterTags}
+                  setSnackMessage={setSnackMessage}
+                />
+                <Layout.Spacer multiplier={1} />
+                <CardsGrid
+                  displayLanguage={displayLanguage}
+                  searchTerm={searchTerm}
+                  tags={tags}
+                  filterTags={filterTags}
+                  openSidebar={openSidebar}
+                  token={token}
+                  accessLevel={currAccessLevel}
+                  setSnackMessage={setSnackMessage}
+                />
+                {!openSidebar && (
+                  <Fab
+                    variant="extended"
+                    sx={{
+                      bgcolor: "orange",
+                      width: "100px",
+                      alignSelf: "flex-end",
+                      marginRight: 2,
+                      marginBottom: 3,
+                    }}
+                    onClick={handleSidebarToggle}
+                  >
+                    <PlayArrowIcon />
+                    <Layout.Spacer horizontal multiplier={0.3} />
+                    Test
+                  </Fab>
+                )}
+              </Layout.FlexBox>
+            </Box>
+          </Layout.FlexBox>
         </Grid>
         <Grid
           item
@@ -179,7 +198,6 @@ const CardsPage = () => {
           lg={sidebarGridWidth - 1}
           sx={{
             display: openSidebar ? "block" : "none",
-            height: "95vh",
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />
@@ -207,68 +225,113 @@ const CardsPage = () => {
   );
 };
 
-const CardsUtilityStrip = ({
+const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   editAccess,
+  searchTerm,
+  setSearchTerm,
+  tags,
+  filterTags,
+  setFilterTags,
   setSnackMessage,
-}: {
-  editAccess: boolean;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string | null;
-      color: "success" | "info" | "warning" | "error" | undefined;
-    }>
-  >;
 }) => {
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
   return (
     <Layout.FlexBox
-      key={"utility-strip"}
-      flexDirection={"row"}
-      justifyContent={"flex-right"}
-      alignItems={"right"}
       sx={{
-        display: "flex",
-        alignSelf: "flex-end",
-        px: sizes.baseGap,
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        width: "100%",
+        flexWrap: "wrap",
+        gap: sizes.baseGap,
       }}
-      gap={sizes.smallGap}
     >
-      <Tooltip title="Download all contents">
-        <>
-          <Button
-            variant="outlined"
-            disabled={!editAccess}
-            onClick={() => {
-              setOpenDownloadModal(true);
-            }}
-          >
-            <DownloadIcon />
-          </Button>
-        </>
-      </Tooltip>
-      <Tooltip title="Add new content">
-        <>
-          <AddButtonWithDropdown />
-        </>
-      </Tooltip>
-      <DownloadModal
-        open={openDownloadModal}
-        onClose={() => setOpenDownloadModal(false)}
-        onFailedDownload={() => {
-          setSnackMessage({
-            message: `Failed to download content`,
-            color: "error",
-          });
+      <Layout.FlexBox
+        sx={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          flexWrap: "wrap",
+          gap: sizes.baseGap,
         }}
-        onNoDataFound={() => {
-          setSnackMessage({
-            message: `No data to download`,
-            color: "info",
-          });
+      >
+        <Box sx={{ width: "300px" }}>
+          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        </Box>
+        <Box sx={{ width: "300px" }}>
+          <TagsFilter
+            tags={tags}
+            filterTags={filterTags}
+            setFilterTags={setFilterTags}
+          />
+        </Box>
+      </Layout.FlexBox>
+      <Layout.FlexBox sx={{ flexGrow: 1 }} />
+      <Layout.FlexBox
+        sx={{
+          flexDirection: "row",
+          alignSelf: "flex-end",
+          px: sizes.baseGap,
+          gap: sizes.smallGap,
         }}
-      />
+      >
+        <Tooltip title="Download all contents">
+          <>
+            <Button
+              variant="outlined"
+              disabled={!editAccess}
+              onClick={() => {
+                setOpenDownloadModal(true);
+              }}
+            >
+              <DownloadIcon />
+            </Button>
+          </>
+        </Tooltip>
+        <Tooltip title="Add new content">
+          <>
+            <AddButtonWithDropdown />
+          </>
+        </Tooltip>
+        <DownloadModal
+          open={openDownloadModal}
+          onClose={() => setOpenDownloadModal(false)}
+          onFailedDownload={() => {
+            setSnackMessage({
+              message: `Failed to download content`,
+              color: "error",
+            });
+          }}
+          onNoDataFound={() => {
+            setSnackMessage({
+              message: `No data to download`,
+              color: "info",
+            });
+          }}
+        />
+      </Layout.FlexBox>
     </Layout.FlexBox>
+  );
+};
+
+const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+  return (
+    <Autocomplete
+      multiple
+      limitTags={1}
+      id="tags-autocomplete"
+      options={tags}
+      getOptionLabel={(option) => option.tag_name}
+      noOptionsText="No tags found"
+      value={filterTags}
+      onChange={(event, updatedTags) => {
+        setFilterTags(updatedTags);
+      }}
+      renderInput={(params) => (
+        <TextField {...params} variant="standard" label="Filter by tags" />
+      )}
+      sx={{ color: appColors.white }}
+    />
   );
 };
 
@@ -369,7 +432,7 @@ const CardsGrid = ({
     } else if (gridWidth > 900 && gridWidth < 1200) {
       columns = 3;
     } else {
-      columns = 4;
+      columns = 3;
     }
     const maxCards = rows * columns;
 
@@ -489,13 +552,8 @@ const CardsGrid = ({
   return (
     <>
       <Paper
-        elevation={2}
-        sx={{
-          mx: sizes.baseGap,
-          py: sizes.tinyGap,
-          width: "98%",
-          minHeight: "60vh",
-        }}
+        elevation={0}
+        sx={{ minHeight: "60vh", width: "100%", border: 1, borderColor: "lightgrey" }}
       >
         <Grid container>
           {cards.length === 0 ? (
@@ -531,7 +589,7 @@ const CardsGrid = ({
                       xs={12}
                       sm={openSidebar ? 12 : 6}
                       md={openSidebar ? 6 : 4}
-                      lg={openSidebar ? 4 : 3}
+                      lg={openSidebar ? 6 : 4}
                       key={item.content_id}
                       sx={{ display: "grid", alignItems: "stretch" }}
                     >
@@ -568,8 +626,8 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
       <Layout.Spacer multiplier={1} />
+      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
     </>
   );
 };

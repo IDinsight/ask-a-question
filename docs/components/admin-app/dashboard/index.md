@@ -3,7 +3,7 @@
 The Dashboard provides real-time analytics on the performance of your solution. There
 are four time filters available: _Last 24 hours_, _Last week_, _Last month_, and _Last year_.
 
-The dashboard is divided into three sections: [Overview](#overview), [Performance](#performance), and [Insights](#insights).
+The dashboard is divided into three sections: [Overview](#overview), [Performance](#performance), and [Content Gaps](#insights).
 
 ## Overview
 
@@ -26,9 +26,9 @@ suggestion on how to improve the content.
 
 ![Dashboard Screenshot](./dashboard-pg2-drawer.jpeg)
 
-## Insights
+## Content Gaps
 
-:construction: Stay tuned for the "Insights" section.
+:construction: Stay tuned for the "Content Gaps" section.
 
 ## Want to see more?
 

@@ -6,23 +6,24 @@ import { sizes } from "@/utils";
 import glificLogo from "../images/glific_logo.png";
 import turnLogo from "../images/turn_logo.png";
 import typebotLogo from "../images/typebot_logo.svg";
-import ChatManagerCard from "./ChatManagerCard";
-import ChatManagerModal from "./ChatManagerModal";
+import api_logo from "../images/api_logo.png";
+import ConnectionCard from "./ConnectionsCard";
+import ChatManagerModal from "./ConnectionModal";
 import {
-  ChatManagerContentExample,
   TypebotModalContent,
   TurnModalContent,
   GlificModalContent,
-} from "./ChatManagerModalContents";
+  RestApiContent,
+} from "./ConnectionModalContents";
 
-interface ChatManagerInfo {
+interface ConnectionInfo {
   logo_src: string;
   name: string;
   ModalContent: React.FC;
 }
 
-const ChatManagerGrid = () => {
-  const chatManagers: ChatManagerInfo[] = [
+const ConnectionsGrid = () => {
+  const Connections: ConnectionInfo[] = [
     {
       logo_src: typebotLogo.src,
       name: "Typebot",
@@ -38,25 +39,24 @@ const ChatManagerGrid = () => {
       name: "Glific",
       ModalContent: GlificModalContent,
     },
+    {
+      logo_src: api_logo.src,
+      name: "REST API",
+      ModalContent: RestApiContent,
+    },
   ];
 
-  const [modalItem, setModalItem] = useState<ChatManagerInfo | null>(null);
-  const handleItemClick = (item: ChatManagerInfo) => {
+  const [modalItem, setModalItem] = useState<ConnectionInfo | null>(null);
+  const handleItemClick = (item: ConnectionInfo) => {
     setModalItem(item);
   };
 
   return (
     <>
-      <Grid container spacing={sizes.baseGap} style={{ minWidth: 700 }}>
-        {chatManagers.map((item, index) => (
-          <Grid
-            item
-            xs={12}
-            md={6}
-            key={index}
-            onClick={() => handleItemClick(item)}
-          >
-            <ChatManagerCard logo_src={item.logo_src} name={item.name} />
+      <Grid container spacing={sizes.baseGap} style={{ minWidth: 100 }}>
+        {Connections.map((item, index) => (
+          <Grid item xs={12} md={6} key={index} onClick={() => handleItemClick(item)}>
+            <ConnectionCard logo_src={item.logo_src} name={item.name} />
           </Grid>
         ))}
       </Grid>
@@ -72,4 +72,4 @@ const ChatManagerGrid = () => {
   );
 };
 
-export default ChatManagerGrid;
+export default ConnectionsGrid;

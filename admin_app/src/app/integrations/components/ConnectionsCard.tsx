@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@mui/material";
 import React from "react";
 
-interface ChatManagerCardInfo {
+interface ConnectionCardInfo {
   logo_src: string;
   name: string;
 }
 
-const ChatManagerCard: React.FC<ChatManagerCardInfo> = ({ logo_src, name }) => (
+const ConnectionCard: React.FC<ConnectionCardInfo> = ({ logo_src, name }) => (
   <Card
     style={{
       justifyContent: "center",
@@ -32,4 +32,4 @@ const ChatManagerCard: React.FC<ChatManagerCardInfo> = ({ logo_src, name }) => (
   </Card>
 );
 
-export default ChatManagerCard;
+export default ConnectionCard;

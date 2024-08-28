@@ -33,4 +33,4 @@ As before, a special thanks to Anh Mac from Google for the UI/UX design.
 
 ## Doc references
 
-- [Dashboard](../../components/admin-app/dashboard.md)
+- [Dashboard](../../components/admin-app/dashboard/index.md)

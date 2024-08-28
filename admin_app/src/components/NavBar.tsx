@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import { useEffect } from "react";
 
 const pageDict = [
   { title: "Question Answering", path: "/content" },
@@ -53,6 +54,7 @@ const Logo = () => {
         sx={{
           height: 36,
           aspect_ratio: 1200 / 214,
+          paddingTop: 0.3,
         }}
       />
     </Link>
@@ -61,14 +63,9 @@ const Logo = () => {
 
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
 
-  const smallMenuPageDict = [
-    ...pageDict,
-    { title: "Dashboard", path: "/dashboard" },
-  ];
+  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
 
   return (
     <Box
@@ -130,10 +127,7 @@ const SmallScreenNavMenu = () => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color:
-                  pathname === page.path
-                    ? appColors.white
-                    : appColors.secondary,
+                color: pathname === page.path ? appColors.white : appColors.secondary,
               }}
             >
               {page.title}
@@ -178,8 +172,7 @@ const LargeScreenNavMenu = () => {
               key={page.title}
               sx={{
                 margin: sizes.baseGap,
-                color:
-                  pathname === page.path ? appColors.white : appColors.outline,
+                color: pathname === page.path ? appColors.white : appColors.outline,
               }}
             >
               {page.title}
@@ -190,11 +183,11 @@ const LargeScreenNavMenu = () => {
           variant="outlined"
           onClick={() => router.push("/dashboard")}
           style={{
-            color:
-              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
+            width: "110px",
             marginLeft: 4,
             marginRight: 8,
           }}
@@ -209,9 +202,23 @@ const LargeScreenNavMenu = () => {
 const UserDropdown = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    // Save user to local storage when it changes
+    if (user) {
+      localStorage.setItem("user", user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Retrieve user from local storage on component mount
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setPersistedUser(storedUser);
+    }
+  }, []);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -245,10 +252,10 @@ const UserDropdown = () => {
           horizontal: "right",
         }}
         open={Boolean(anchorElUser)}
-        onClose={() => setAnchorElUser(null)}
+        onClose={handleCloseUserMenu}
       >
         <MenuItem disabled>
-          <Typography textAlign="center">{user}</Typography>
+          <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
         {settings.map((setting) => (
           <MenuItem key={setting} onClick={logout}>

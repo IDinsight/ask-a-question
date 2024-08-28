@@ -46,11 +46,10 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            width: "60%",
-            minWidth: "600px",
+            maxWidth: "md",
             borderRadius: 2,
             backgroundColor: appColors.white,
-            p: sizes.doubleBaseGap,
+            padding: sizes.doubleBaseGap,
           }}
         >
           <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
@@ -71,12 +70,12 @@ const ContentViewModal = ({
                 Tags
               </Typography>
               <Layout.FlexBox
-                flexDirection={"row"}
-                gap={sizes.smallGap}
                 sx={{
-                  overflowX: "auto",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
                   py: sizes.smallGap,
                   alignItems: "center",
+                  gap: sizes.smallGap,
                 }}
               >
                 {tags.map((tag) => (
@@ -85,13 +84,12 @@ const ContentViewModal = ({
               </Layout.FlexBox>
             </Layout.FlexBox>
           )}
-          <Layout.Spacer multiplier={0.5} />
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
               maxHeight: "60vh", // this controls overall modal height too
-              p: sizes.baseGap,
-              marginRight: sizes.baseGap,
+              padding: sizes.baseGap,
+              marginTop: 1,
               overflowY: "auto",
               border: 1,
               borderColor: appColors.lightGrey,
@@ -112,47 +110,44 @@ const ContentViewModal = ({
               {text}
             </Typography>
           </Layout.FlexBox>
-          <Layout.Spacer multiplier={2} />
           <Layout.FlexBox
-            flexDirection={"row"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            gap={sizes.smallGap}
+            sx={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: sizes.baseGap,
+              paddingTop: 2,
+              paddingInline: 1,
+            }}
           >
-            <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={!editAccess}
-                component={Link}
-                href={`/content/edit?content_id=${content_id}`}
-              >
-                <Edit />
-                <Layout.Spacer horizontal multiplier={0.4} />
-                Edit
-              </Button>
-              <Layout.Spacer horizontal multiplier={1} />
-            </Layout.FlexBox>
-            <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
-              <Typography variant="body2" color={appColors.darkGrey}>
-                Last modified{" "}
-                {new Date(last_modified).toLocaleString(undefined, {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                  hour12: true,
-                })}
-              </Typography>
-            </Layout.FlexBox>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={!editAccess}
+              component={Link}
+              href={`/content/edit?content_id=${content_id}`}
+              startIcon={<Edit />}
+            >
+              Edit
+            </Button>
+            <Typography variant="body2" color={appColors.darkGrey}>
+              Last modified{" "}
+              {new Date(last_modified).toLocaleString(undefined, {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </Typography>
             <Layout.FlexBox
-              flexDirection={"row"}
-              gap={sizes.baseGap}
               sx={{
-                paddingRight: sizes.baseGap,
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: sizes.smallGap,
               }}
             >
               <ThumbUp fontSize="small" color="disabled" />

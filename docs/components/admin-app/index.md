@@ -2,21 +2,21 @@
 
 <div class="grid cards" markdown>
 
-- :material-database:{ .lg .middle .red} __Manage content__
+- :material-database:{ .lg .middle .red} __Question Answering Contents__
 
     ---
 
     Allows you to view, create, edit, delete, or test content.
 
-    [:octicons-arrow-right-24: More info](./manage-content.md)
+    [:octicons-arrow-right-24: More info](./question-answering/index.md)
 
-- :material-database-eye:{ .lg .middle .red} __Manage urgency rules__
+- :material-database-eye:{ .lg .middle .red} __Urgency Detection Rules__
 
     ---
 
     Allows you to view, create, edit, delete, or test urgency rules.
 
-    [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
+    [:octicons-arrow-right-24: More info](./urgency-rules/index.md)
 
 - :material-view-dashboard:{ .lg .middle } __Dashboard__
 
@@ -25,7 +25,7 @@
     Allows you to see statistics like which content is most frequently being
     used, or the feedback from users on responses provided by the service.
 
-    [:octicons-arrow-right-24: More info](./dashboard.md)
+    [:octicons-arrow-right-24: More info](./dashboard/index.md)
 
 </div>
 

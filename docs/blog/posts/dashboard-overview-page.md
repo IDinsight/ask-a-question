@@ -29,4 +29,4 @@ Also, it wouldn't be an IDinsight product without a decent dashboard!
 
 ## Doc references
 
-- [Dashboard](../../components/admin-app/dashboard.md)
+- [Dashboard](../../components/admin-app/dashboard/index.md)

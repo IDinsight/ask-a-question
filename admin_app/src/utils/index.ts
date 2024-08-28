@@ -117,5 +117,7 @@ export const appStyles = {
     WebkitBoxOrient: "vertical",
     WebkitLineClamp: 2,
     flexGrow: 1,
+    lineHeight: "1.2em", // Adjust line height as needed
+    maxHeight: "2.4em", // Should be lineHeight * 2
   },
 };

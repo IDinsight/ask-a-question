@@ -12,7 +12,7 @@ to do this.
 - **Latency:** :star::star::star:
 
 This method uses the cosine distance between the input message and
-the [urgency rules](../admin-app/manage-urgency-rules.md) in the database.
+the [urgency rules](../admin-app/urgency-rules/index.md) in the database.
 Since it only uses embeddings, it is fast and cheap to run.
 
 ### Setup
@@ -33,7 +33,7 @@ for more details.
 - **Latency:** :star::star:
 
 This method calls an LLM to score the message against each of the
-[urgency rules](../admin-app/manage-urgency-rules.md) in the database.
+[urgency rules](../admin-app/urgency-rules/index.md) in the database.
 
 ### Setup
 

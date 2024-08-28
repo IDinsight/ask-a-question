@@ -85,10 +85,11 @@ const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
       >
         {parsedData.is_urgent ? "Urgent" : "Not urgent"}
       </Typography>
-
-      <Typography component={"span"} variant="subtitle2" paddingBottom={1}>
-        {parsedData.matched_rules.length === 1 ? "Matched Rule" : "Matched Rules"}
-      </Typography>
+      {parsedData.is_urgent && (
+        <Typography component={"span"} variant="subtitle2" paddingBottom={1}>
+          {parsedData.matched_rules.length === 1 ? "Matched Rule" : "Matched Rules"}
+        </Typography>
+      )}
       {parsedData.matched_rules.map((text: string) => (
         <Box sx={{ paddingBottom: 1 }} key={1}>
           <Typography component={"span"} variant="body2">

@@ -7,7 +7,7 @@ import Link from "next/link";
 
 import { Layout } from "@/components/Layout";
 import { sizes } from "@/utils";
-import { OpenInNew as OpenInNewIcon } from "@mui/icons-material";
+import { OpenInNew, OpenInNew as OpenInNewIcon } from "@mui/icons-material";
 
 // make one of these for each chat manager and use it to populate the modal
 const ChatManagerContentExample: React.FC = () => {
@@ -32,12 +32,12 @@ const TypebotModalContent: React.FC = () => {
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.baseGap}>
       <Typography variant="body1">
-        In Typebot, you can use the "HTTPS request" card to call AAQ and receive
-        its response.
+        In Typebot, you can use the "HTTPS request" card to call AAQ and receive its
+        response.
       </Typography>
       <Typography variant="body1" marginBottom={sizes.baseGap}>
-        To get a head start, you can download our template below and load it
-        into Typebot by going to "Create a typebot &gt; Import a file".
+        To get a head start, you can download our template below and load it into
+        Typebot by going to "Create a typebot &gt; Import a file".
       </Typography>
 
       <Box display="flex" justifyContent="center">
@@ -55,8 +55,8 @@ const TypebotModalContent: React.FC = () => {
 
       <Typography variant="body1" marginTop={sizes.doubleBaseGap}>
         Once loaded, you need to update the{" "}
-        <code style={{ color: "tomato" }}>API_KEY</code> field inside the "HTTP
-        request" card with your own API key before trying the flow.
+        <code style={{ color: "tomato" }}>API_KEY</code> field inside the "HTTP request"
+        card with your own API key before trying the flow.
       </Typography>
     </Layout.FlexBox>
   );
@@ -66,9 +66,9 @@ const TurnModalContent: React.FC = () => {
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
       <Typography variant="body1">
-        The quickest way to get started with Turn is to use the AAQ Playbook.
-        Just replace <code color="tomato">API_KEY</code> in the API call card
-        with your own API key.
+        The quickest way to get started with Turn is to use the AAQ Playbook. Just
+        replace <code color="tomato">API_KEY</code> in the API call card with your own
+        API key.
       </Typography>
       <Box display="flex" justifyContent="center">
         <Button
@@ -101,9 +101,9 @@ const GlificModalContent: React.FC = () => {
   return (
     <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
       <Typography variant="body1">
-        You can download a pre-made flow from the link below, and{" "}
-        <code>Import</code> it into Glific. Then replace{" "}
-        <code>INSERT_AAQ_API_KEY</code> in Authorization with your own API key.
+        You can download a pre-made flow from the link below, and <code>Import</code> it
+        into Glific. Then replace <code>INSERT_AAQ_API_KEY</code> in Authorization with
+        your own API key.
       </Typography>
       <Box display="flex" justifyContent="center">
         <Button
@@ -126,9 +126,36 @@ const GlificModalContent: React.FC = () => {
         >
           documentation
         </Link>{" "}
-        for more detailed instructions on how to import the flow and get going
-        with Glific.
+        for more detailed instructions on how to import the flow and get going with
+        Glific.
       </Typography>
+    </Layout.FlexBox>
+  );
+};
+
+const RestApiContent: React.FC = () => {
+  return (
+    <Layout.FlexBox flexDirection={"column"} gap={sizes.doubleBaseGap}>
+      <Typography variant="body1">
+        You can use REST APIs to interact with AAQ from your own application, using the
+        API key generated above as a Bearer token. Click on the link below to see the
+        documentation.
+      </Typography>
+      <Layout.FlexBox flexDirection="column" alignItems={"center"} gap={sizes.baseGap}>
+        <Typography variant="body1">
+          <Button
+            variant="outlined"
+            color="primary"
+            href="https://app.ask-a-question.com/api/docs"
+            target="_blank"
+            rel="noreferrer"
+            endIcon={<OpenInNew />}
+          >
+            REST API Documentation
+          </Button>
+        </Typography>
+        <Layout.Spacer />
+      </Layout.FlexBox>
     </Layout.FlexBox>
   );
 };
@@ -138,4 +165,5 @@ export {
   GlificModalContent,
   TurnModalContent,
   TypebotModalContent,
+  RestApiContent,
 };
