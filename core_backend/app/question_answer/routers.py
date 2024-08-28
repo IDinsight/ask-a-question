@@ -302,7 +302,7 @@ async def get_search_response(
     n_similar
         The number of similar contents to retrieve.
     asession
-        `AsyncSession` object for database POtransactions.
+        `AsyncSession` object for database transactions.
     exclude_archived
         Specifies whether to exclude archived content.
 

@@ -56,7 +56,11 @@ async def generate_llm_query_response(
     Only runs if the generate_llm_response flag is set to True.
     Requires "search_results" and "original_language" in the response.
     """
-    if isinstance(response, QueryResponseError) and not metadata["failure_reason"]:
+    if (
+        isinstance(response, QueryResponseError)
+        and metadata
+        and not metadata["failure_reason"]
+    ):
         return response
 
     if response.search_results is None:

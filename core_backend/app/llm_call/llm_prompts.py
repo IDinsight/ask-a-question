@@ -178,9 +178,9 @@ You are a helpful question-answering AI. You understand user question and answer
 question using the REFERENCE TEXT below.
 """
 RETRY_PROMPT_SUFFIX = """
-If the response above is not aligned with the question, please rectify this by considering \
-the following reason(s) for misalignment: "{failure_reason}". Make necessary adjustments \
-to ensure the answer is aligned with the question.
+If the response above is not aligned with the question, please rectify this by \
+considering the following reason(s) for misalignment: "{failure_reason}". 
+Make necessary adjustments to ensure the answer is aligned with the question.
 """
 RAG_RESPONSE_PROMPT = (
     _RAG_PROFILE_PROMPT
