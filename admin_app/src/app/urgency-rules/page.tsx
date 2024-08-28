@@ -185,21 +185,24 @@ const UrgencyRulesPage = () => {
               minWidth: "sm",
             }}
           >
-            <Typography
-              sx={{ paddingLeft: 1, paddingBottom: 2 }}
-              variant="h4"
-              align="left"
-              color="primary"
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                paddingLeft: 1,
+                paddingBottom: 2,
+                gap: 2,
+              }}
             >
-              Urgency Detection
-            </Typography>
-            <Typography
-              sx={{ paddingLeft: 1, paddingBottom: 2 }}
-              variant="body1"
-              align="left"
-            >
-              On this page, you can view, edit, delete, and test urgency rules.
-            </Typography>
+              <Typography variant="h4" align="left" color="primary">
+                Urgency Detection
+              </Typography>
+              <Typography variant="body1" align="left">
+                Create, edit, and test urgency rules. Messages sent to the urgency
+                detection service will be flagged as urgent if any of the rules apply to
+                the message.
+              </Typography>
+            </Box>
             <Layout.FlexBox
               key={"utility-strip"}
               flexDirection={"row"}

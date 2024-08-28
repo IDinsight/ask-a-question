@@ -115,21 +115,23 @@ const CardsPage = () => {
             paddingInline: 2,
           }}
         >
-          <Typography
-            sx={{ paddingTop: 6, paddingLeft: 3 }}
-            variant="h4"
-            align="left"
-            color="primary"
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              paddingTop: 6,
+              paddingLeft: 3,
+              gap: 2,
+            }}
           >
-            Question Answering
-          </Typography>
-          <Typography
-            sx={{ paddingTop: 2, paddingLeft: 3 }}
-            variant="body1"
-            align="left"
-          >
-            On this page, you can view, edit, delete, and test contents.
-          </Typography>
+            <Typography variant="h4" align="left" color="primary">
+              Question Answering
+            </Typography>
+            <Typography variant="body1" align="left">
+              Add, edit, and test content for question-answering. Questions sent to the
+              search service will retrieve results from here.
+            </Typography>
+          </Box>
           <Layout.FlexBox
             flexGrow={1}
             alignItems="center"
