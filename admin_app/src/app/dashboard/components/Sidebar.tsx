@@ -1,22 +1,21 @@
 import React from "react";
 
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  IconButton,
-} from "@mui/material";
-import {
   BarChart,
   ChevronLeft,
   ChevronRight,
   Dashboard,
   Insights,
 } from "@mui/icons-material";
+import {
+  Box,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 import MuiDrawer from "@mui/material/Drawer";
 import { CSSObject, styled, Theme } from "@mui/material/styles";
 import { drawerWidth } from "../types";
@@ -28,7 +27,7 @@ interface SideBarProps {
   selectedDashboardPage: PageName;
 }
 
-type PageName = "Overview" | "Performance" | "Insights";
+type PageName = "Overview" | "Content Performance" | "Content Gaps";
 
 interface MenuItem {
   name: PageName;
@@ -36,8 +35,8 @@ interface MenuItem {
 }
 const menuItems: MenuItem[] = [
   { name: "Overview", icon: <Dashboard /> },
-  { name: "Performance", icon: <BarChart /> },
-  { name: "Insights", icon: <Insights /> },
+  { name: "Content Performance", icon: <BarChart /> },
+  { name: "Content Gaps", icon: <Insights /> },
 ];
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
@@ -89,7 +88,6 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              flexGrow: 0,
             }}
           >
             <Box
@@ -97,8 +95,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                 justifyContent: "space-between",
                 display: "flex",
                 alignItems: "center",
-                paddingRight: 1,
-                paddingBottom: 1.5,
+                marginLeft: 2.5,
+                marginRight: 1,
+                marginBottom: 1.5,
               }}
             >
               {open ? (
@@ -107,9 +106,6 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                     variant="overline"
                     sx={{
                       display: "flex",
-                      padding: 2,
-                      mx: 1,
-                      py: 1,
                       color: "grey.500",
                     }}
                   >
@@ -120,11 +116,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   </IconButton>
                 </>
               ) : (
-                <Box sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}>
-                  <IconButton onClick={() => setOpen(true)}>
-                    <ChevronRight />
-                  </IconButton>
-                </Box>
+                <IconButton onClick={() => setOpen(true)}>
+                  <ChevronRight />
+                </IconButton>
               )}
             </Box>
             {menuItems.map((item: MenuItem, i: number) => (
@@ -139,7 +133,6 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   display: "flex",
                   marginLeft: 2,
                   marginBottom: 1,
-                  alignContent: "stretch",
                   width: "90%",
                   borderRadius: 2,
                 }}
@@ -156,16 +149,14 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   }}
                 />
                 <ListItemButton
-                  sx={{ px: 1, borderRadius: 2 }}
+                  sx={{ paddingInline: 1, borderRadius: 2 }}
                   onClick={() => setDashboardPage(item.name)}
                   dense
                 >
                   <ListItemIcon
                     sx={{
                       minWidth: 0,
-                      mr: open ? 3 : "auto",
-                      justifyContent: "center",
-
+                      marginRight: 2,
                       color:
                         item.name == selectedDashboardPage
                           ? "primary.main"

@@ -6,7 +6,7 @@ import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
-import Performance from "@/app/dashboard/components/Performance";
+import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import { useState } from "react";
 import { appColors } from "@/utils";
 import { ClickAwayListener } from "@mui/base/ClickAwayListener";
@@ -23,9 +23,9 @@ const Dashboard: React.FC = () => {
     switch (dashboardPage) {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
-      case "Performance":
-        return <Performance timePeriod={timePeriod} />;
-      case "Insights":
+      case "Content Performance":
+        return <ContentPerformance timePeriod={timePeriod} />;
+      case "Content Gaps":
         return <div>Products</div>;
       default:
         return <div>Page not found</div>;
