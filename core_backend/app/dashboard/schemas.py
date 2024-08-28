@@ -177,15 +177,6 @@ class DashboardOverview(BaseModel):
     top_content: list[TopContent]
 
 
-class InsightsStatus(BaseModel):
-    """
-    This class is used to define the schema for the insights status
-    """
-
-    kicked_off_datetime_utc: datetime
-    status: str
-
-
 class Topic(BaseModel):
     """
     This class is used to define the schema for one topic
@@ -204,10 +195,9 @@ class TopicsData(BaseModel):
     of individual Topics. Used for Insights page.
     """
 
-    n_topics: int
+    refreshTimeStamp: str
     topics: list[Topic]
     unclustered_queries: list[tuple[str, datetime]]
-    #### NEEDS NUM_UNCLUSTERED_QUERIES
 
 
 class UserQuery(BaseModel):

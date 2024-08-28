@@ -3,6 +3,7 @@ This module contains the main function for the topic modelling pipeline.
 """
 
 import asyncio
+from datetime import datetime, timezone
 
 import pandas as pd
 from bertopic import BERTopic
@@ -34,7 +35,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     """
 
     if not data:
-        return TopicsData(n_topics=0, topics=[], unclustered_queries=[])
+        return TopicsData(refreshTimeStamp="", topics=[], unclustered_queries=[])
 
     # Establish Query DataFrame
     query_df = pd.DataFrame.from_records([x.model_dump() for x in data])
@@ -52,6 +53,9 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     )
     topic_model = BERTopic(hdbscan_model=hdbscan_model).fit(docs, embeddings)
     query_df["topic_id"], query_df["probs"] = topic_model.transform(docs, embeddings)
+
+    # Queries with low probability of being in a cluster assigned -1
+    query_df.loc[query_df["probs"] < 0.75, "topic_id"] = -1
 
     unclustered_examples = list(
         query_df.loc[
@@ -77,7 +81,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     topics = await asyncio.gather(*tasks)
     print("Topic:", topics, "\n\n")
     for topic, (topic_id, topic_df) in zip(topics, query_df.groupby("topic_id")):
-        topic_samples = topic_df[["query_text", "query_datetime_utc"]][:5]
+        topic_samples = topic_df[["query_text", "query_datetime_utc"]][:20]
         topic_data.append(
             Topic(
                 topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
@@ -88,7 +92,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
         )
 
     return TopicsData(
-        n_topics=len(topic_data),
+        refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         topics=topic_data,
         unclustered_queries=unclustered_examples,
     )

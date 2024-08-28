@@ -32,7 +32,6 @@ from .schemas import (
     DashboardOverview,
     DashboardPerformance,
     DetailsDrawer,
-    InsightsStatus,
     TimeFrequency,
     TopicsData,
 )
@@ -265,44 +264,31 @@ async def retrieve_overview(
     )
 
 
-@router.get("/insights/{time_frequency}/refresh", response_model=InsightsStatus)
+@router.get("/insights/{time_frequency}/refresh", response_model=dict)
 async def refresh_insights_frequency(
     time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> InsightsStatus:
+) -> dict:
     """
     Refresh topic modelling insights for the time period specified.
     """
 
-    redis = request.app.state.redis
-    status = InsightsStatus(
-        status="started", kicked_off_datetime_utc=datetime.now(timezone.utc)
-    )
-    await redis.set(
-        f"{user_db.username}_insights_status_{time_frequency}",
-        status.model_dump_json(),
-    )
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-    await refresh_insights(
-        time_frequency=time_frequency,
-        user_db=user_db,
-        request=request,
-        start_date=start_date,
-        asession=asession,
-    )
-
-    status = InsightsStatus(
-        status="completed", kicked_off_datetime_utc=datetime.now(timezone.utc)
-    )
-    await redis.set(
-        f"{user_db.username}_insights_status_{time_frequency}",
-        status.model_dump_json(),
-    )
-
-    return status
+    try:
+        await refresh_insights(
+            time_frequency=time_frequency,
+            user_db=user_db,
+            request=request,
+            start_date=start_date,
+            asession=asession,
+        )
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error refreshing insights: {e}")
+        return {"status": "failed"}
 
 
 async def refresh_insights(
@@ -313,7 +299,8 @@ async def refresh_insights(
     asession: AsyncSession = Depends(get_async_session),
 ) -> TopicsData:
     """
-    Retrieve topic modelling insights for the time period specified.
+    Retrieve topic modelling insights for the time period specified
+    and write to Redis.
     """
 
     redis = request.app.state.redis
@@ -328,14 +315,6 @@ async def refresh_insights(
         f"{user_db.username}_insights_{time_frequency}_results",
         topic_output.model_dump_json(),
     )
-
-    await redis.set(
-        f"{user_db.username}_insights_status_{time_frequency}",
-        InsightsStatus(
-            status="completed", kicked_off_datetime_utc=datetime.now(timezone.utc)
-        ).model_dump_json(),
-    )
-
     return topic_output
 
 
@@ -361,32 +340,6 @@ async def retrieve_insights_frequency(
 
     # Currently returning empty topics data if no results
     # Should be updated
-    return TopicsData(n_topics=0, topics=[], unclustered_queries=[])
-
-
-@router.get("/insights/{time_frequency}/last-updated", response_model=dict)
-async def retrieve_latest_insights_refresh(
-    time_frequency: DashboardTimeFilter,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-    request: Request,
-) -> dict:
-    """
-    Return the datetime of the last time the insights were updated from Redis
-    """
-
-    redis = request.app.state.redis
-
-    if await redis.exists(f"{user_db.username}_insights_status_{time_frequency}"):
-        payload = await redis.get(
-            f"{user_db.username}_insights_status_{time_frequency}"
-        )
-        parsed_payload = json.loads(payload)
-        print(parsed_payload)
-        if parsed_payload["status"] == "completed":
-            datetime_object = datetime.fromisoformat(
-                parsed_payload["kicked_off_datetime_utc"].replace("Z", "+00:00")
-            )
-            clean_date = datetime_object.strftime("%Y-%m-%d %H:%M")
-            return {"last_updated": clean_date}
-
-    return {"time_updated": "No insights have been updated yet."}
+    return TopicsData(
+        n_topics=0, topics=[], refreshTimeStamp="", unclustered_queries=[]
+    )
