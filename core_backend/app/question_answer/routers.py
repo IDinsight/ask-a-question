@@ -59,7 +59,6 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
-from .speech_components.utils import post_to_speech
 
 logger = setup_logger()
 
@@ -174,7 +173,7 @@ async def voice_search(
     """
     Endpoint to transcribe audio from a provided URL,
     generate an LLM response, by default generate_tts is
-    set to true and return a public encrypted URL of an audio
+    set to true and return a public random URL of an audio
     file containing the spoken version of the generated response.
     """
     try:

@@ -90,7 +90,7 @@ class QueryAudioResponse(QueryResponse):
     tts_filepath: str | None = Field(
         None,
         examples=[
-            "https://storage.googleapis.com/this-is-an-example/stt-voice-notes/encrypted.mp3"
+            "https://storage.googleapis.com/example-bucket/random_uuid_filename.mp3"
         ],
     )
     model_config = ConfigDict(from_attributes=True)
