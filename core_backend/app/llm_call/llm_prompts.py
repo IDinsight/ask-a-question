@@ -7,7 +7,6 @@ from typing import ClassVar, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..config import SERVICE_IDENTITY
 from .utils import remove_json_markdown
 
 
@@ -152,7 +151,7 @@ paraphrase_examples = [
     },
 ]
 PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot. \
-The user has sent a message for a {SERVICE_IDENTITY}.
+The user has sent a message for a question-answering service.
 
 If the message is a question, do not answer it, \
 just paraphrase it to focus on the question and include any relevant information.\
