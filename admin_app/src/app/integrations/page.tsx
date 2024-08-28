@@ -28,7 +28,7 @@ const IntegrationsPage = () => {
         sx={{
           paddingTop: 6,
           paddingBottom: 10,
-          paddingInline: 10,
+          paddingInline: 4,
           maxWidth: 1050,
         }}
       >
