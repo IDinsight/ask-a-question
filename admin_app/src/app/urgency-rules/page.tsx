@@ -374,7 +374,6 @@ const UrgencyRulesPage = () => {
         lg={sidebarGridWidth - 1}
         sx={{
           display: openSidebar ? "block" : "none",
-          height: "95vh",
         }}
       >
         <UDSidebar closeSidebar={handleSidebarClose} />
