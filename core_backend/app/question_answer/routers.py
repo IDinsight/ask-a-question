@@ -125,6 +125,12 @@ async def search(
             query_refined=user_query_refined_template,
             response=response,
         )
+        if is_unable_to_generate_response(response):
+            failure_reason = response.debug_info["factual_consistency"]
+            response = await retry_search(
+                query_refined=user_query_refined_template, response=response
+            )
+            response.debug_info["past_failure"] = failure_reason
 
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -230,7 +236,6 @@ async def voice_search(
         asession=asession,
         exclude_archived=True,
     )
-
     if user_query.generate_llm_response:
         response = await get_generation_response(
             query_refined=user_query_refined_template,
@@ -343,18 +348,15 @@ def is_unable_to_generate_response(response: QueryResponse) -> bool:
 async def retry_search(
     query_refined: QueryRefined,
     response: QueryResponse | QueryResponseError,
-    user_id: int,
-    n_similar: int,
-    asession: AsyncSession,
-    exclude_archived: bool = True,
 ) -> QueryResponse | QueryResponseError:
     """
-    Retry wrapper for search_base.
+    Retry wrapper for get_generation_response.
     """
 
-    return await search_base(
-        query_refined, response, user_id, n_similar, asession, exclude_archived
-    )
+    metadata = query_refined.query_metadata
+    metadata["failure_reason"] = response.debug_info["factual_consistency"]["reason"]
+    query_refined.query_metadata = metadata
+    return await get_generation_response(query_refined, response)
 
 
 @generate_tts__after
@@ -376,10 +378,13 @@ async def get_generation_response(
         query_id=response.query_id, user_id=query_refined.user_id
     )
 
+    metadata["failure_reason"] = query_refined.query_metadata.get(
+        "failure_reason", None
+    )
+
     response = await generate_llm_query_response(
         query_refined=query_refined, response=response, metadata=metadata
     )
-
     return response
 
 

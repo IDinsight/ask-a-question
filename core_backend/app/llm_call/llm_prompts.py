@@ -177,6 +177,11 @@ _RAG_PROFILE_PROMPT = """\
 You are a helpful question-answering AI. You understand user question and answer their \
 question using the REFERENCE TEXT below.
 """
+RETRY_PROMPT_SUFFIX = """
+If the response above is not aligned with the question, please rectify this by considering \
+the following reason(s) for misalignment: "{failure_reason}". Make necessary adjustments \
+to ensure the answer is aligned with the question.
+"""
 RAG_RESPONSE_PROMPT = (
     _RAG_PROFILE_PROMPT
     + """
@@ -224,6 +229,7 @@ class RAG(BaseModel):
     answer: str
 
     prompt: ClassVar[str] = RAG_RESPONSE_PROMPT
+    retry_prompt: ClassVar[str] = RAG_RESPONSE_PROMPT + RETRY_PROMPT_SUFFIX
 
 
 class AlignmentScore(BaseModel):
