@@ -551,7 +551,10 @@ const CardsGrid = ({
   }
   return (
     <>
-      <Paper elevation={2} sx={{ minHeight: "60vh", width: "100%" }}>
+      <Paper
+        elevation={0}
+        sx={{ minHeight: "60vh", width: "100%", border: 1, borderColor: "lightgrey" }}
+      >
         <Grid container>
           {cards.length === 0 ? (
             <Layout.FlexBox
