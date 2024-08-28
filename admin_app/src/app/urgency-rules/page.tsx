@@ -198,8 +198,8 @@ const UrgencyRulesPage = () => {
               <Typography variant="h4" align="left" color="primary">
                 Urgency Detection
               </Typography>
-              <Typography variant="body1" align="left">
-                Create, edit, and test urgency rules. Messages sent to the urgency
+              <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                Add, edit, and test urgency rules. Messages sent to the urgency
                 detection service will be flagged as urgent if any of the rules apply to
                 the message.
               </Typography>

@@ -102,7 +102,7 @@ const CardsPage = () => {
   }, [accessLevel, token]);
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", height: "100vh" }}>
+    <>
       <Grid container>
         <Grid
           item
@@ -114,72 +114,81 @@ const CardsPage = () => {
             display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
           }}
         >
-          <Box
+          <Layout.FlexBox
             sx={{
-              maxWidth: "1900px",
+              alignItems: "center",
               paddingTop: 6,
               paddingInline: 4,
             }}
           >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
+                width: "100%",
+                maxWidth: "lg",
               }}
             >
-              <Typography variant="h4" align="left" color="primary">
-                Question Answering
-              </Typography>
-              <Typography variant="body1" align="left">
-                Add, edit, and test content for question-answering. Questions sent to
-                the search service will retrieve results from here.
-              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h4" align="left" color="primary">
+                  Question Answering
+                </Typography>
+                <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                  Add, edit, and test content for question-answering. Questions sent to
+                  the search service will retrieve results from here.
+                </Typography>
+              </Box>
+              <Layout.FlexBox
+                sx={{
+                  flexGrow: 1,
+                  alignItems: "center",
+                  paddingTop: 5,
+                }}
+              >
+                <CardsUtilityStrip
+                  editAccess={currAccessLevel === "fullaccess"}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  tags={tags}
+                  filterTags={filterTags}
+                  setFilterTags={setFilterTags}
+                  setSnackMessage={setSnackMessage}
+                />
+                <Layout.Spacer multiplier={1} />
+                <CardsGrid
+                  displayLanguage={displayLanguage}
+                  searchTerm={searchTerm}
+                  tags={tags}
+                  filterTags={filterTags}
+                  openSidebar={openSidebar}
+                  token={token}
+                  accessLevel={currAccessLevel}
+                  setSnackMessage={setSnackMessage}
+                />
+                {!openSidebar && (
+                  <Fab
+                    variant="extended"
+                    sx={{
+                      bgcolor: "orange",
+                      width: "100px",
+                      alignSelf: "flex-end",
+                      marginRight: 2,
+                      marginBottom: 3,
+                    }}
+                    onClick={handleSidebarToggle}
+                  >
+                    <PlayArrowIcon />
+                    <Layout.Spacer horizontal multiplier={0.3} />
+                    Test
+                  </Fab>
+                )}
+              </Layout.FlexBox>
             </Box>
-            <Layout.FlexBox
-              flexGrow={1}
-              alignItems="center"
-              gap={sizes.baseGap}
-              paddingTop={5}
-            >
-              <CardsUtilityStrip
-                editAccess={currAccessLevel === "fullaccess"}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                tags={tags}
-                filterTags={filterTags}
-                setFilterTags={setFilterTags}
-                setSnackMessage={setSnackMessage}
-              />
-              <CardsGrid
-                displayLanguage={displayLanguage}
-                searchTerm={searchTerm}
-                tags={tags}
-                filterTags={filterTags}
-                openSidebar={openSidebar}
-                token={token}
-                accessLevel={currAccessLevel}
-                setSnackMessage={setSnackMessage}
-              />
-              {!openSidebar && (
-                <Fab
-                  variant="extended"
-                  sx={{
-                    bgcolor: "orange",
-                    width: "100px",
-                    alignSelf: "flex-end",
-                    marginRight: 2,
-                    marginBottom: 3,
-                  }}
-                  onClick={handleSidebarToggle}
-                >
-                  <PlayArrowIcon />
-                  <Layout.Spacer horizontal multiplier={0.3} />
-                  Test
-                </Fab>
-              )}
-            </Layout.FlexBox>
-          </Box>
+          </Layout.FlexBox>
         </Grid>
         <Grid
           item
@@ -212,7 +221,7 @@ const CardsPage = () => {
           {snackMessage.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   );
 };
 
@@ -423,7 +432,7 @@ const CardsGrid = ({
     } else if (gridWidth > 900 && gridWidth < 1200) {
       columns = 3;
     } else {
-      columns = 4;
+      columns = 3;
     }
     const maxCards = rows * columns;
 
@@ -542,7 +551,7 @@ const CardsGrid = ({
   }
   return (
     <>
-      <Paper elevation={2} sx={{ minHeight: "60vh" }}>
+      <Paper elevation={2} sx={{ minHeight: "60vh", width: "100%" }}>
         <Grid container>
           {cards.length === 0 ? (
             <Layout.FlexBox
@@ -577,7 +586,7 @@ const CardsGrid = ({
                       xs={12}
                       sm={openSidebar ? 12 : 6}
                       md={openSidebar ? 6 : 4}
-                      lg={openSidebar ? 4 : 3}
+                      lg={openSidebar ? 6 : 4}
                       key={item.content_id}
                       sx={{ display: "grid", alignItems: "stretch" }}
                     >
@@ -614,6 +623,7 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
+      <Layout.Spacer multiplier={1} />
       <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
     </>
   );
