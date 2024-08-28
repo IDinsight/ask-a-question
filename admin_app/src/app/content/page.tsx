@@ -121,7 +121,7 @@ const CardsPage = () => {
             align="left"
             color="primary"
           >
-            Manage Contents
+            Question Answering
           </Typography>
           <Typography
             sx={{ paddingTop: 2, paddingLeft: 3 }}

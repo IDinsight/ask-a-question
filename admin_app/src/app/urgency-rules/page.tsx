@@ -191,7 +191,7 @@ const UrgencyRulesPage = () => {
               align="left"
               color="primary"
             >
-              Urgency Rules
+              Urgency Detection
             </Typography>
             <Typography
               sx={{ paddingLeft: 1, paddingBottom: 2 }}
