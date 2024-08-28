@@ -10,9 +10,8 @@ from typing import List, Literal, Tuple
 import pytest
 import yaml
 
-from core_backend.app.config import ALIGN_SCORE_API, ALIGN_SCORE_THRESHOLD
+from core_backend.app.config import ALIGN_SCORE_THRESHOLD
 from core_backend.app.llm_call.process_output import (
-    _get_alignScore_score,
     _get_llm_align_score,
 )
 
@@ -30,24 +29,6 @@ def read_test_data(file: str) -> List[Tuple]:
     with open(file_path, "r") as f:
         content = yaml.safe_load(f)
         return [(c["context"], *t.values()) for c in content for t in c["tests"]]
-
-
-@pytest.mark.asyncio(scope="module")
-@pytest.mark.parametrize(
-    "context, statement, expected, reason", read_test_data(CONTEXT_RESPONSE_FILE)
-)
-async def test_alignScore(
-    context: str, statement: str, expected: bool, reason: str
-) -> None:
-    """
-    This checks if alignScore returns the correct answer
-    """
-    align_score = await _get_alignScore_score(
-        ALIGN_SCORE_API, {"evidence": context, "claim": statement}
-    )
-    assert (align_score.score > float(ALIGN_SCORE_THRESHOLD)) == expected, (
-        reason + f" {align_score.score}"
-    )
 
 
 @pytest.mark.asyncio(scope="module")

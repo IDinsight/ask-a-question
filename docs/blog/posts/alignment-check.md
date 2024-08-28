@@ -39,14 +39,8 @@ may be reasons - from data governance and privacy rules to costs - for not sendi
 to OpenAI. One option is to use your own
 [locally hosted LLM]("../../components/self_hosted_llms/index.md").
 
-The other option is to use [AlignScore](../../components/align-score/index.md), a model
-built specifically for this use case. It can be deployes as another container that
-exposes an endpoint that AAQ can call to check consistency.
-
-See [docs](../../components/align-score/deployment.md) for how to do this.
 
 ## Doc references
 
 - [Locally hosted LLMs]("../../components/self_hosted_llms/index.md")
 - [Search](../../components/qa-service/search.md)
-- [AlignScore](../../components/align-score/index.md)
