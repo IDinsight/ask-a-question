@@ -184,7 +184,7 @@ class Topic(BaseModel):
     """
 
     topic_id: int
-    topic_samples: list[tuple[str, datetime]]
+    topic_samples: list[dict[str, str]]
     topic_name: str
     topic_popularity: int
 

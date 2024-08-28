@@ -88,11 +88,12 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
             Topic(
                 topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
                 topic_name=topic,
-                topic_samples=topic_samples.values.tolist(),
+                topic_samples=topic_samples.to_dict(orient="records"),
                 topic_popularity=len(topic_df),
             )
         )
-
+    # Sort topic data by key of topic_popularity
+    topic_data = sorted(topic_data, key=lambda x: x.topic_popularity, reverse=True)
     return TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topic_data,

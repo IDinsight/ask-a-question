@@ -2,21 +2,25 @@ import React from "react";
 import Grid from "@mui/material/Unstable_Grid2";
 import Topics from "./insights/Topics";
 import Queries from "./insights/Queries";
-import { dataFromBackend } from "./tempData";
 import Box from "@mui/material/Box";
 import { useState } from "react";
+import { QueryData, Period, TopicModelingResponse } from "../types";
+import { generateNewTopics, fetchTopicsData } from "../api";
+import { useAuth } from "@/utils/auth";
+
 interface InsightProps {
-  timePeriod: string;
+  timePeriod: Period;
 }
-import { QueryData } from "../types";
 
 const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
+  const { token } = useAuth();
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
   const [refreshTimestamp, setRefreshTimestamp] = useState<string>("");
-  const [dataFromBackend, setDataFromBackend] = useState({
+  const [dataFromBackend, setDataFromBackend] = useState<TopicModelingResponse>({
     data: [],
     refreshTimeStamp: "",
+    unclustered_queries: [],
   });
 
   const runRefresh = async () => {
@@ -27,9 +31,16 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   };
 
   React.useEffect(() => {
-    // Call the API to get the data for timePeriod and pass it to setDataFromBackend
-    // set selectedTopicId to the first topic_id (or null)
-    // Add pagination (if easy)
+    if (token) {
+      fetchTopicsData(timePeriod, token).then((dataFromBackend) => {
+        setDataFromBackend(dataFromBackend);
+      });
+    } else {
+      console.log("No token found");
+    }
+  }, [token, timePeriod]);
+
+  React.useEffect(() => {
     if (selectedTopicId !== null) {
       const filterQueries = dataFromBackend.data.find(
         (topic) => topic.topic_id === selectedTopicId,
@@ -37,11 +48,12 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
       if (filterQueries) {
         setTopicQueries(filterQueries.topic_samples);
+        console.log("Selected Topic ID: ", filterQueries.topic_samples);
       }
     } else {
       setTopicQueries([]);
     }
-  }, [selectedTopicId, refreshTimestamp, timePeriod]);
+  }, [dataFromBackend, selectedTopicId, refreshTimestamp, timePeriod]);
 
   const topics = dataFromBackend.data.map(
     ({ topic_id, topic_name, topic_popularity }) => ({

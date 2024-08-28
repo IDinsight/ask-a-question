@@ -39,16 +39,13 @@ const fetchTopicsData = async (period: Period, token: string) => {
 };
 
 const generateNewTopics = async (period: Period, token: string) => {
-  const response = await fetch(
-    `${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/${period}/refresh`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/${period}/refresh`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  ).then((response) => {
+  }).then((response) => {
     if (response.ok) {
       let resp = response.json();
       return resp;

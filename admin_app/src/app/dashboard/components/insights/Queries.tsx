@@ -113,7 +113,7 @@ const Queries: React.FC<QueriesProps> = ({ data, onRefresh, lastRefreshed }) => 
             <TableBody>
               {data.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell width="20%">{row.datetime_utc}</TableCell>
+                  <TableCell width="20%">{row.query_datetime_utc}</TableCell>
                   <TableCell>{row.query_text}</TableCell>
                 </TableRow>
               ))}

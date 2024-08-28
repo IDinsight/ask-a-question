@@ -48,7 +48,7 @@ interface RowDataType extends ContentData {
 
 interface QueryData {
   query_text: string;
-  datetime_utc: string;
+  query_datetime_utc: string;
 }
 
 interface TopicModelingData {
@@ -61,6 +61,7 @@ interface TopicModelingData {
 interface TopicModelingResponse {
   refreshTimeStamp: string;
   data: TopicModelingData[];
+  unclustered_queries: QueryData[];
 }
 
 interface TopicData {
