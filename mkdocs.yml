@@ -46,7 +46,7 @@ nav:
       - Internal components:
           - LLM Proxy Server:
               - components/litellm-proxy/index.md
-          - HuggingFace embeddings:
+          - Hugging Face Embeddings:
               - components/huggingface-embeddings/index.md
               - How to use: components/huggingface-embeddings/how-to-use.md
 

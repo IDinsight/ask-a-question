@@ -49,11 +49,11 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./litellm-proxy/index.md)
 
-- :material-api:{ .lg .middle .red} __Self-hosted HuggingFace Embeddings Model__
+- :material-api:{ .lg .middle .red} __Self-hosted Hugging Face Embeddings Model__
 
     ---
 
-    _(Optional)_ A dockerised huggingface text embeddings model to create vectors
+    _(Optional)_ A dockerised Hugging Face text embeddings model to create vectors
   and perform vector search.
 
     [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)
