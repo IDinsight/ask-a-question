@@ -58,7 +58,7 @@ const Dashboard: React.FC = () => {
         marginTop: 4,
         flexDirection: "row",
         minWidth: "900px",
-        maxWidth: "1500px",
+        maxWidth: "1900px",
       }}
     >
       <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
