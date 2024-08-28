@@ -187,6 +187,7 @@ const LargeScreenNavMenu = () => {
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
+            width: "110px",
             marginLeft: 4,
             marginRight: 8,
           }}

@@ -46,7 +46,7 @@ const ContentViewModal = ({
       <Fade in={!!open}>
         <Box
           sx={{
-            maxWidth: "800px",
+            maxWidth: "md",
             borderRadius: 2,
             backgroundColor: appColors.white,
             padding: sizes.doubleBaseGap,

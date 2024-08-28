@@ -29,7 +29,7 @@ const IntegrationsPage = () => {
           paddingTop: 6,
           paddingBottom: 10,
           paddingInline: 4,
-          maxWidth: 1050,
+          maxWidth: "lg",
         }}
       >
         <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />

@@ -173,7 +173,7 @@ const UrgencyRulesPage = () => {
           sx={{
             alignItems: "center",
             paddingTop: 6,
-            paddingInline: 3,
+            paddingInline: 4,
             gap: sizes.baseGap,
             height: "95vh",
           }}
@@ -183,7 +183,7 @@ const UrgencyRulesPage = () => {
               display: "flex",
               flexDirection: "column",
               width: "100%",
-              maxWidth: "md",
+              maxWidth: "lg",
               minWidth: "sm",
             }}
           >
@@ -191,7 +191,6 @@ const UrgencyRulesPage = () => {
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                paddingLeft: 1,
                 paddingBottom: 2,
                 gap: 2,
               }}
@@ -206,15 +205,10 @@ const UrgencyRulesPage = () => {
               </Typography>
             </Box>
             <Layout.FlexBox
-              key={"utility-strip"}
-              flexDirection={"row"}
-              justifyContent={"flex-right"}
-              alignItems={"right"}
               sx={{
                 display: "flex",
-                alignSelf: "flex-end",
-                paddingInline: sizes.baseGap,
-                gap: sizes.baseGap,
+                flexDirection: "row",
+                justifyContent: "flex-end",
               }}
             >
               <Tooltip title="Add new urgency rule">
@@ -237,7 +231,6 @@ const UrgencyRulesPage = () => {
                 paddingTop: 1,
                 paddingBottom: 10,
                 paddingInline: 3,
-                width: "98%",
                 height: "65vh",
                 overflowY: "auto",
               }}
@@ -389,7 +382,6 @@ const UrgencyRulesPage = () => {
                   bgcolor: "orange",
                   width: "100px",
                   alignSelf: "flex-end",
-                  marginRight: 2,
                   marginTop: 2,
                   marginBottom: 3,
                 }}

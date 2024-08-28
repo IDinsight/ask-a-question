@@ -324,8 +324,8 @@ const ContentBox = ({
       <Layout.Spacer />
       <Layout.FlexBox
         sx={{
-          maxWidth: "800px",
-          minWidth: "300px",
+          maxWidth: "md",
+          minWidth: "sm",
           border: 0.5,
           borderColor: appColors.outline,
           borderRadius: 2,

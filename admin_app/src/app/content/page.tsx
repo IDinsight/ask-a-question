@@ -103,7 +103,7 @@ const CardsPage = () => {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", height: "100vh" }}>
-      <Grid container sx={{ maxWidth: "1900px" }}>
+      <Grid container>
         <Grid
           item
           xs={12}
@@ -112,69 +112,74 @@ const CardsPage = () => {
           lg={12 - sidebarGridWidth + 1}
           sx={{
             display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
-            paddingInline: 2,
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
+              maxWidth: "1900px",
               paddingTop: 6,
-              paddingLeft: 3,
-              gap: 2,
+              paddingInline: 4,
             }}
           >
-            <Typography variant="h4" align="left" color="primary">
-              Question Answering
-            </Typography>
-            <Typography variant="body1" align="left">
-              Add, edit, and test content for question-answering. Questions sent to the
-              search service will retrieve results from here.
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <Typography variant="h4" align="left" color="primary">
+                Question Answering
+              </Typography>
+              <Typography variant="body1" align="left">
+                Add, edit, and test content for question-answering. Questions sent to
+                the search service will retrieve results from here.
+              </Typography>
+            </Box>
+            <Layout.FlexBox
+              flexGrow={1}
+              alignItems="center"
+              gap={sizes.baseGap}
+              paddingTop={5}
+            >
+              <CardsUtilityStrip
+                editAccess={currAccessLevel === "fullaccess"}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                tags={tags}
+                filterTags={filterTags}
+                setFilterTags={setFilterTags}
+                setSnackMessage={setSnackMessage}
+              />
+              <CardsGrid
+                displayLanguage={displayLanguage}
+                searchTerm={searchTerm}
+                tags={tags}
+                filterTags={filterTags}
+                openSidebar={openSidebar}
+                token={token}
+                accessLevel={currAccessLevel}
+                setSnackMessage={setSnackMessage}
+              />
+              {!openSidebar && (
+                <Fab
+                  variant="extended"
+                  sx={{
+                    bgcolor: "orange",
+                    width: "100px",
+                    alignSelf: "flex-end",
+                    marginRight: 2,
+                    marginBottom: 3,
+                  }}
+                  onClick={handleSidebarToggle}
+                >
+                  <PlayArrowIcon />
+                  <Layout.Spacer horizontal multiplier={0.3} />
+                  Test
+                </Fab>
+              )}
+            </Layout.FlexBox>
           </Box>
-          <Layout.FlexBox
-            flexGrow={1}
-            alignItems="center"
-            gap={sizes.baseGap}
-            paddingTop={5}
-          >
-            <CardsUtilityStrip
-              editAccess={currAccessLevel === "fullaccess"}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              tags={tags}
-              filterTags={filterTags}
-              setFilterTags={setFilterTags}
-              setSnackMessage={setSnackMessage}
-            />
-            <CardsGrid
-              displayLanguage={displayLanguage}
-              searchTerm={searchTerm}
-              tags={tags}
-              filterTags={filterTags}
-              openSidebar={openSidebar}
-              token={token}
-              accessLevel={currAccessLevel}
-              setSnackMessage={setSnackMessage}
-            />
-            {!openSidebar && (
-              <Fab
-                variant="extended"
-                sx={{
-                  bgcolor: "orange",
-                  width: "100px",
-                  alignSelf: "flex-end",
-                  marginRight: 2,
-                  marginBottom: 3,
-                }}
-                onClick={handleSidebarToggle}
-              >
-                <PlayArrowIcon />
-                <Layout.Spacer horizontal multiplier={0.3} />
-                Test
-              </Fab>
-            )}
-          </Layout.FlexBox>
         </Grid>
         <Grid
           item
@@ -237,7 +242,6 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "flex-start",
-          paddingInline: sizes.baseGap,
           flexWrap: "wrap",
           gap: sizes.baseGap,
         }}
@@ -538,15 +542,7 @@ const CardsGrid = ({
   }
   return (
     <>
-      <Paper
-        elevation={2}
-        sx={{
-          mx: sizes.baseGap,
-          py: sizes.tinyGap,
-          width: "98%",
-          minHeight: "60vh",
-        }}
-      >
+      <Paper elevation={2} sx={{ minHeight: "60vh" }}>
         <Grid container>
           {cards.length === 0 ? (
             <Layout.FlexBox
