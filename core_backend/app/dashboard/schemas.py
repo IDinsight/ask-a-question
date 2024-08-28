@@ -196,8 +196,8 @@ class TopicsData(BaseModel):
     """
 
     refreshTimeStamp: str
-    topics: list[Topic]
-    unclustered_queries: list[tuple[str, datetime]]
+    data: list[Topic]
+    unclustered_queries: list[dict[str, str]]
 
 
 class UserQuery(BaseModel):

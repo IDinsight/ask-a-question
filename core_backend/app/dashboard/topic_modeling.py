@@ -39,6 +39,8 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
 
     # Establish Query DataFrame
     query_df = pd.DataFrame.from_records([x.model_dump() for x in data])
+    # Convert query_datetime to string
+    query_df["query_datetime_utc"] = query_df["query_datetime_utc"].astype(str)
     docs = query_df["query_text"].tolist()
 
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -56,12 +58,12 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
 
     # Queries with low probability of being in a cluster assigned -1
     query_df.loc[query_df["probs"] < 0.75, "topic_id"] = -1
-
-    unclustered_examples = list(
-        query_df.loc[
-            query_df["topic_id"] == -1, ["query_text", "query_datetime_utc"]
-        ].itertuples(index=False, name=None)
-    )
+    # Unclustered examples is a list of dicts containing
+    # the query_text and query_datetime_utc
+    unclustered_examples = [
+        {"query_text": row.query_text, "query_datetime_utc": row.query_datetime_utc}
+        for row in query_df.loc[query_df["topic_id"] == -1].itertuples()
+    ]
 
     query_df = query_df.loc[query_df["probs"] > 0.8]
 
@@ -93,6 +95,6 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
 
     return TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-        topics=topic_data,
+        data=topic_data,
         unclustered_queries=unclustered_examples,
     )
