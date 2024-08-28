@@ -107,9 +107,9 @@ const Queries: React.FC<QueriesProps> = ({ data }) => {
         <TableContainer sx={{ border: 1, borderColor: grey[300], borderRadius: 1 }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: grey[200] }}>
-                <TableCell>Timestamp</TableCell>
-                <TableCell>User Question</TableCell>
+              <TableRow sx={{ bgcolor: grey[100] }}>
+                <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
