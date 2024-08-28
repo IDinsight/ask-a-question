@@ -23,7 +23,7 @@ from app.question_answer.models import (
     QueryResponseContentDB,
     ResponseFeedbackDB,
 )
-from app.urgency_detection.models import UrgencyQueryDB
+from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from app.users.models import UserDB
 from app.utils import get_key_hash
 from litellm import completion
@@ -50,6 +50,7 @@ MODELS = [
     (ContentFeedbackDB, "feedback_datetime_utc"),
     (QueryResponseContentDB, "created_datetime_utc"),
     (UrgencyQueryDB, "message_datetime_utc"),
+    (UrgencyResponseDB, "response_datetime_utc"),
 ]
 
 parser = argparse.ArgumentParser(
@@ -327,7 +328,6 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
                 date = date_map_dic[row.query_id]
             else:
                 date = random_dates[i]
-
             setattr(row, model[1], date)
             session.merge(row)
         session.commit()
@@ -438,7 +438,7 @@ if __name__ == "__main__":
                 query_id,
                 message_text,
             ): query_id
-            for query_id, message_text in zip(df["query_id"], df["inbound_text"])
+            for query_id, message_text in zip(df["inbound_id"], df["inbound_text"])
         }
         for future in as_completed(future_to_text):
             result = future.result()
