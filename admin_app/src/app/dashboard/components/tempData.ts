@@ -1,67 +1,43 @@
-const topics = [
-  {
-    topic: "Topic 1",
-    count: 10,
-  },
-  {
-    topic: "Topic 2",
-    count: 20,
-  },
-  {
-    topic: "Topic 3",
-    count: 30,
-  },
-  {
-    topic: "Topic 4",
-    count: 40,
-  },
-  {
-    topic: "Topic 5",
-    count: 50,
-  },
-  {
-    topic: "Topic 6",
-    count: 60,
-  },
-  {
-    topic: "Topic 7",
-    count: 70,
-  },
-  {
-    topic: "Topic 8",
-    count: 80,
-  },
-  {
-    topic: "Topic 9",
-    count: 90,
-  },
-  {
-    topic: "Topic 10",
-    count: 100,
-  },
-];
+import { TopicModelingResponse } from "../types";
 
-const queries = [
-  {
-    query: "What is the capital of France?",
-    datetime_utc: "2021-09-01T00:00:00Z",
-  },
-  {
-    query: "What is the capital of Germany?",
-    datetime_utc: "2021-09-01T00:00:00Z",
-  },
-  {
-    query: "What is the capital of Italy?",
-    datetime_utc: "2021-09-01T00:00:00Z",
-  },
-  {
-    query: "What is the capital of Spain?",
-    datetime_utc: "2021-09-01T00:00:00Z",
-  },
-  {
-    query: "What is the capital of Portugal?",
-    datetime_utc: "2021-09-01T00:00:00Z",
-  },
-];
+const dataFromBackend: TopicModelingResponse = {
+  refreshTimeStamp: "2024-08-13T15:55:50.697584Z",
+  data: [
+    {
+      topic_id: 0,
+      topic_samples: [
+        {
+          query_text: "test query",
+          datetime_utc: "2024-08-13T15:55:50.697584Z",
+        },
+        {
+          query_text: "test query",
+          datetime_utc: "2024-08-13T15:55:50.697584Z",
+        },
+      ],
+      topic_name: "XYZ",
+      topic_popularity: 50,
+    },
+    {
+      topic_id: 1,
+      topic_samples: [
+        {
+          query_text: "test query 1.1",
+          datetime_utc: "2024-08-13T15:55:50.697584Z",
+        },
+        {
+          query_text: "test query 1.2",
+          datetime_utc: "2024-08-13T15:55:50.697584Z",
+        },
+        {
+          query_text: "test query 1.3",
+          datetime_utc: "2024-08-13T15:55:50.697584Z",
+        },
+      ],
+      topic_name: "ABC",
+      topic_popularity: 29,
+    },
+  ],
+};
 
-export { topics, queries };
+export { dataFromBackend };

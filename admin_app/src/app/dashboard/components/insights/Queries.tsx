@@ -9,16 +9,13 @@ import TableRow from "@mui/material/TableRow";
 import { grey, orange } from "@mui/material/colors";
 import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
-
-interface QueryData {
-  query: string;
-  datetime_utc: string;
-}
+import { QueryData } from "../../types";
 
 interface QueriesProps {
   data: QueryData[];
+  onRefresh: () => void;
+  lastRefreshed: string;
 }
 
 const AISummary: React.FC = () => {
@@ -65,7 +62,7 @@ const AISummary: React.FC = () => {
   );
 };
 
-const Queries: React.FC<QueriesProps> = ({ data }) => {
+const Queries: React.FC<QueriesProps> = ({ data, onRefresh, lastRefreshed }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Box
@@ -87,7 +84,7 @@ const Queries: React.FC<QueriesProps> = ({ data }) => {
               color: grey[600],
             }}
           >
-            Last run: 2021-10-01 12:00:00
+            Last run: {lastRefreshed}
           </Box>
           <Button
             variant="contained"
@@ -97,6 +94,7 @@ const Queries: React.FC<QueriesProps> = ({ data }) => {
                 bgcolor: orange[700],
               },
             }}
+            onClick={onRefresh}
           >
             Re-run Discovery
           </Button>
@@ -116,7 +114,7 @@ const Queries: React.FC<QueriesProps> = ({ data }) => {
               {data.map((row, index) => (
                 <TableRow key={index}>
                   <TableCell width="20%">{row.datetime_utc}</TableCell>
-                  <TableCell>{row.query}</TableCell>
+                  <TableCell>{row.query_text}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
