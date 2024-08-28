@@ -378,6 +378,11 @@ async def get_search_response(
     #   always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
 
+    if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
+        raise ValueError(
+            "`n_to_crossencoder` must be less than or equal to `n_similar`."
+        )
+
     search_results = await get_similar_content_async(
         user_id=user_id,
         question=query_refined.query_text,  # use latest transformed version of the text
