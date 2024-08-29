@@ -271,7 +271,6 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         sx={{
           flexDirection: "row",
           alignSelf: "flex-end",
-          px: sizes.baseGap,
           gap: sizes.smallGap,
         }}
       >
