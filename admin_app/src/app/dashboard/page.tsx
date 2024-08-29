@@ -18,16 +18,16 @@ type Page = {
 const pages: Page[] = [
   {
     name: "Overview",
-    description: "General overview of users' engagement and satisfaction.",
+    description: "Overview of user engagement and satisfaction",
   },
   {
     name: "Content Performance",
-    description: "Track your contents' performance and identify areas for improvement.",
+    description: "Track performance of contents  and identify areas for improvement",
   },
   {
     name: "Content Gaps",
     description:
-      "Find out what users are asking about to inform creation of new contents.",
+      "Find out what users are asking about to inform creating and updating contents",
   },
 ];
 
@@ -82,17 +82,15 @@ const Dashboard: React.FC = () => {
         maxWidth: "1900px",
       }}
     >
-      <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
-        <Sidebar
-          open={sideBarOpen}
-          setOpen={setSideBarOpen}
-          setDashboardPage={(pageName: PageName) => {
-            const page = pages.find((p) => p.name === pageName);
-            if (page) setDashboardPage(page);
-          }}
-          selectedDashboardPage={dashboardPage.name}
-        />
-      </ClickAwayListener>
+      <Sidebar
+        open={sideBarOpen}
+        setOpen={setSideBarOpen}
+        setDashboardPage={(pageName: PageName) => {
+          const page = pages.find((p) => p.name === pageName);
+          if (page) setDashboardPage(page);
+        }}
+        selectedDashboardPage={dashboardPage.name}
+      />
       <Box
         sx={{
           paddingInline: 3,
@@ -122,9 +120,14 @@ const Dashboard: React.FC = () => {
           >
             <Typography variant="h4" color={appColors.primary}>
               {dashboardPage.name}
-            </Typography>
-            <Typography variant="body1" align="left">
-              {dashboardPage.description}
+              <Typography
+                variant="body1"
+                align="left"
+                color={appColors.darkGrey}
+                component="span"
+              >
+                {" " + dashboardPage.description}
+              </Typography>
             </Typography>
           </Box>
           <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
