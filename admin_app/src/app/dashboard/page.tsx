@@ -16,9 +16,19 @@ type Page = {
 };
 
 const pages: Page[] = [
-  { name: "Overview", description: "Overview of the dashboard" },
-  { name: "Content Performance", description: "Performance of your content" },
-  { name: "Content Gaps", description: "Identify gaps in your content" },
+  {
+    name: "Overview",
+    description: "General overview of users' engagement and satisfaction.",
+  },
+  {
+    name: "Content Performance",
+    description: "Track your contents' performance and identify areas for improvement.",
+  },
+  {
+    name: "Content Gaps",
+    description:
+      "Find out what users are asking about to inform creation of new contents.",
+  },
 ];
 
 const Dashboard: React.FC = () => {
@@ -66,7 +76,7 @@ const Dashboard: React.FC = () => {
     <Box
       sx={{
         display: "flex",
-        marginTop: 4,
+        paddingTop: 6,
         flexDirection: "row",
         minWidth: "900px",
         maxWidth: "1900px",
@@ -85,7 +95,7 @@ const Dashboard: React.FC = () => {
       </ClickAwayListener>
       <Box
         sx={{
-          px: 3,
+          paddingInline: 3,
           height: "100%",
           flexGrow: 1,
           width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
