@@ -62,8 +62,8 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     # the query_text and query_datetime_utc
     unclustered_examples = [
         {
-            "query_text": row.query_text,
-            "query_datetime_utc": row.query_datetime_utc,
+            "query_text": str(row.query_text),
+            "query_datetime_utc": str(row.query_datetime_utc),
         }
         for row in query_df.loc[query_df["topic_id"] == -1].itertuples()
     ]
@@ -86,12 +86,19 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     topics = await asyncio.gather(*tasks)
     print("Topic:", topics, "\n\n")
     for topic, (topic_id, topic_df) in zip(topics, query_df.groupby("topic_id")):
-        topic_samples = topic_df[["query_text", "query_datetime_utc"]][:20]
+        topic_samples_slice = topic_df[["query_text", "query_datetime_utc"]][:20]
+        string_topic_samples = [
+            {
+                "query_text": str(sample["query_text"]),
+                "query_datetime_utc": str(sample["query_datetime_utc"]),
+            }
+            for sample in topic_samples_slice.to_dict(orient="records")
+        ]
         topic_data.append(
             Topic(
                 topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
                 topic_name=topic,
-                topic_samples=topic_samples.to_dict(orient="records"),
+                topic_samples=string_topic_samples,
                 topic_popularity=len(topic_df),
             )
         )
