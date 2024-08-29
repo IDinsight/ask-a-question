@@ -633,22 +633,8 @@ const CardsGrid = ({
               })
           )}
         </Grid>
-        <Typography variant="body1" color={appColors.darkGrey} padding={sizes.baseGap}>
-          Content limit is 50.{" "}
-          <a
-            href="https://docs.ask-a-question.com/latest/contact_us/"
-            style={{
-              textDecoration: "underline",
-              textDecorationColor: appColors.darkGrey,
-              color: appColors.darkGrey,
-            }}
-          >
-            Contact us
-          </a>{" "}
-          for more.
-        </Typography>
       </Paper>
-      <Layout.Spacer multiplier={1} />
+      <Layout.Spacer multiplier={0.75} />
       <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
     </>
   );
