@@ -8,7 +8,6 @@ import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import { appColors } from "@/utils";
-import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 type Page = {
   name: PageName;
@@ -16,9 +15,19 @@ type Page = {
 };
 
 const pages: Page[] = [
-  { name: "Overview", description: "Overview of the dashboard" },
-  { name: "Content Performance", description: "Performance of your content" },
-  { name: "Content Gaps", description: "Identify gaps in your content" },
+  {
+    name: "Overview",
+    description: "Overview of user engagement and satisfaction",
+  },
+  {
+    name: "Content Performance",
+    description: "Track performance of contents  and identify areas for improvement",
+  },
+  {
+    name: "Content Gaps",
+    description:
+      "Find out what users are asking about to inform creating and updating contents",
+  },
 ];
 
 const Dashboard: React.FC = () => {
@@ -66,26 +75,24 @@ const Dashboard: React.FC = () => {
     <Box
       sx={{
         display: "flex",
-        marginTop: 4,
+        paddingTop: 5,
         flexDirection: "row",
         minWidth: "900px",
         maxWidth: "1900px",
       }}
     >
-      <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
-        <Sidebar
-          open={sideBarOpen}
-          setOpen={setSideBarOpen}
-          setDashboardPage={(pageName: PageName) => {
-            const page = pages.find((p) => p.name === pageName);
-            if (page) setDashboardPage(page);
-          }}
-          selectedDashboardPage={dashboardPage.name}
-        />
-      </ClickAwayListener>
+      <Sidebar
+        open={sideBarOpen}
+        setOpen={setSideBarOpen}
+        setDashboardPage={(pageName: PageName) => {
+          const page = pages.find((p) => p.name === pageName);
+          if (page) setDashboardPage(page);
+        }}
+        selectedDashboardPage={dashboardPage.name}
+      />
       <Box
         sx={{
-          px: 3,
+          paddingInline: 3,
           height: "100%",
           flexGrow: 1,
           width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
@@ -113,7 +120,7 @@ const Dashboard: React.FC = () => {
             <Typography variant="h4" color={appColors.primary}>
               {dashboardPage.name}
             </Typography>
-            <Typography variant="body1" align="left">
+            <Typography variant="body1" align="left" color={appColors.darkGrey}>
               {dashboardPage.description}
             </Typography>
           </Box>

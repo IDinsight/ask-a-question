@@ -7,6 +7,7 @@
    <img src="../blog/author-avatars/tanmay.png" width="80" height="80" alt="tanmay" style="border-radius:50%;"><br>
    <strong >Tanmay Verma</strong><br>
    Product Manager<br>
+   <span style="font-size: 0.8em;">AAQ Help and Support: <strong>[aaq@idinsight.org](mailto:aaq@idinsight.org)</strong></span><br>
    <span style="font-size: 0.8em;"><strong>[tanmay.verma@idinsight.org](mailto:tanmay.verma@idinsight.org)</strong></span>
    </p>
 
@@ -41,9 +42,8 @@
    Data Scientist<br>
   <span style="font-size: 0.8em;"><strong >[amir.emami@idinsight.org](mailto:amir.emami@idinsight.org)</strong></span>
   </p>
-  
+
 </div>
 
 !!! info "We are part of IDinsight's DSEM team"
     Read more about DSEM and our work [here](https://www.idinsight.org/methodology/data-science/).
-

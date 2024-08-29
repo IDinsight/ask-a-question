@@ -31,6 +31,7 @@ const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
       zoom: {
         enabled: false,
       },
+      fontFamily: "Inter",
     },
     stroke: {
       width: 3,

@@ -13,6 +13,7 @@ const HeatMap = ({ data }: { data: any }) => {
       id: "usage-heatmap",
       width: "100%",
       height: "100%",
+      fontFamily: "Inter",
     },
     dataLabels: {
       enabled: false,
@@ -25,8 +26,8 @@ const HeatMap = ({ data }: { data: any }) => {
       floating: false,
       style: {
         fontSize: "16px",
-        fontWeight: "bold",
-        fontFamily: undefined,
+        fontWeight: 500,
+        fontFamily: "Inter",
         color: "#263238",
       },
     },
