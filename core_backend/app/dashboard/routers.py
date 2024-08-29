@@ -277,18 +277,15 @@ async def refresh_insights_frequency(
 
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-    try:
-        await refresh_insights(
-            time_frequency=time_frequency,
-            user_db=user_db,
-            request=request,
-            start_date=start_date,
-            asession=asession,
-        )
-        return {"status": "success"}
-    except Exception as e:
-        logger.error(f"Error refreshing insights: {e}")
-        return {"status": "failed"}
+    await refresh_insights(
+        time_frequency=time_frequency,
+        user_db=user_db,
+        request=request,
+        start_date=start_date,
+        asession=asession,
+    )
+
+    return {"status": "success"}
 
 
 async def refresh_insights(
@@ -338,8 +335,8 @@ async def retrieve_insights_frequency(
         topics_data = TopicsData(**parsed_payload)
         return topics_data
 
-    # Currently returning empty topics data if no results
-    # Should be updated
     return TopicsData(
-        n_topics=0, topics=[], refreshTimeStamp="", unclustered_queries=[]
+        refreshTimeStamp="",
+        data=[],
+        unclustered_queries=[],
     )

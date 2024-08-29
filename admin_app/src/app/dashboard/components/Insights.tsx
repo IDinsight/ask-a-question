@@ -17,23 +17,29 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
   const [refreshTimestamp, setRefreshTimestamp] = useState<string>("");
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [dataFromBackend, setDataFromBackend] = useState<TopicModelingResponse>({
     data: [],
     refreshTimeStamp: "",
     unclustered_queries: [],
   });
 
-  const runRefresh = async () => {
-    const date = new Date();
-    await new Promise((f) => setTimeout(f, 1000));
-    setRefreshTimestamp(date.toLocaleString());
-    console.log("Refreshed!", date.toLocaleString());
+  const runRefresh = () => {
+    setRefreshing(true);
+    generateNewTopics(timePeriod, token!).then((_) => {
+      const date = new Date();
+      setRefreshTimestamp(date.toLocaleString());
+      setRefreshing(false);
+    });
   };
 
   React.useEffect(() => {
     if (token) {
       fetchTopicsData(timePeriod, token).then((dataFromBackend) => {
         setDataFromBackend(dataFromBackend);
+        if (dataFromBackend.data.length > 0) {
+          setSelectedTopicId(dataFromBackend.data[0].topic_id);
+        }
       });
     } else {
       console.log("No token found");
@@ -48,7 +54,6 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
       if (filterQueries) {
         setTopicQueries(filterQueries.topic_samples);
-        console.log("Selected Topic ID: ", filterQueries.topic_samples);
       }
     } else {
       setTopicQueries([]);
@@ -72,7 +77,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         sx={{ bgcolor: "white", borderRadius: 2, mx: 0.5, mt: 2, height: 400 }}
       >
         <Grid
-          md={2}
+          md={3}
           sx={{ p: 2, borderRight: 1, borderColor: "grey.300", borderWidth: 2 }}
         >
           <Topics
@@ -81,11 +86,12 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             onClick={setSelectedTopicId}
           />
         </Grid>
-        <Grid md={10} sx={{ p: 2 }}>
+        <Grid md={9} sx={{ p: 2 }}>
           <Queries
             data={topicQueries}
-            onRefresh={runRefresh}
+            onRefreshClick={runRefresh}
             lastRefreshed={dataFromBackend.refreshTimeStamp}
+            refreshing={refreshing}
           />
         </Grid>
       </Grid>

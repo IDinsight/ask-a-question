@@ -11,11 +11,13 @@ import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Button from "@mui/material/Button";
 import { QueryData } from "../../types";
+import CircularProgress from "@mui/material/CircularProgress";
 
 interface QueriesProps {
   data: QueryData[];
-  onRefresh: () => void;
+  onRefreshClick: () => void;
   lastRefreshed: string;
+  refreshing: boolean;
 }
 
 const AISummary: React.FC = () => {
@@ -62,7 +64,20 @@ const AISummary: React.FC = () => {
   );
 };
 
-const Queries: React.FC<QueriesProps> = ({ data, onRefresh, lastRefreshed }) => {
+const Queries: React.FC<QueriesProps> = ({
+  data,
+  onRefreshClick,
+  lastRefreshed,
+  refreshing,
+}) => {
+  const formattedLastRefreshed =
+    lastRefreshed.length > 0
+      ? Intl.DateTimeFormat("en-ZA", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }).format(new Date(lastRefreshed))
+      : "Never";
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Box
@@ -84,45 +99,64 @@ const Queries: React.FC<QueriesProps> = ({ data, onRefresh, lastRefreshed }) => 
               color: grey[600],
             }}
           >
-            Last run: {lastRefreshed}
+            Last run: {formattedLastRefreshed}
           </Box>
           <Button
+            disabled={refreshing}
             variant="contained"
             sx={{
               bgcolor: orange[500],
+              width: 180,
               "&:hover": {
                 bgcolor: orange[700],
               },
             }}
-            onClick={onRefresh}
+            onClick={onRefreshClick}
           >
-            Re-run Discovery
+            {refreshing ? <CircularProgress size={24} /> : "Re-run Discovery"}
           </Button>
         </Box>
       </Box>
       <AISummary />
-      {data.length > 0 ? (
-        <TableContainer sx={{ border: 1, borderColor: grey[300], borderRadius: 1 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: grey[100] }}>
-                <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell width="20%">{row.query_datetime_utc}</TableCell>
-                  <TableCell>{row.query_text}</TableCell>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          overflowY: "scroll",
+          maxHeight: 200,
+        }}
+      >
+        {data.length > 0 ? (
+          <TableContainer sx={{ border: 1, borderColor: grey[300], borderRadius: 1 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow
+                  sx={{ bgcolor: grey[100], position: "sticky", top: 0, zIndex: 1 }}
+                >
+                  <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <Box sx={{ fontSize: 18 }}>No queries found</Box>
-      )}
+              </TableHead>
+              <TableBody>
+                {data.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell width="20%">
+                      {Intl.DateTimeFormat("en-ZA", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      }).format(new Date(row.query_datetime_utc))}
+                    </TableCell>
+                    <TableCell>{row.query_text}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box sx={{ fontSize: 18 }}>No queries found</Box>
+        )}
+      </Box>
     </Box>
   );
 };
