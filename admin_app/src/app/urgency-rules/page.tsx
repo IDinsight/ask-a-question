@@ -172,7 +172,7 @@ const UrgencyRulesPage = () => {
         <Layout.FlexBox
           sx={{
             alignItems: "center",
-            paddingTop: 6,
+            paddingTop: 5,
             paddingInline: 4,
             gap: sizes.baseGap,
             height: "95vh",

@@ -25,7 +25,7 @@ const IntegrationsPage = () => {
     <Layout.FlexBox sx={{ alignItems: "center" }}>
       <Box
         sx={{
-          paddingTop: 6,
+          paddingTop: 5,
           paddingBottom: 10,
           paddingInline: 4,
           maxWidth: "lg",

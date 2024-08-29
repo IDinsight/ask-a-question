@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
     <Box
       sx={{
         display: "flex",
-        paddingTop: 6,
+        paddingTop: 5,
         flexDirection: "row",
         minWidth: "900px",
         maxWidth: "1900px",

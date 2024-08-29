@@ -117,7 +117,7 @@ const CardsPage = () => {
           <Layout.FlexBox
             sx={{
               alignItems: "center",
-              paddingTop: 6,
+              paddingTop: 5,
               paddingInline: 4,
             }}
           >

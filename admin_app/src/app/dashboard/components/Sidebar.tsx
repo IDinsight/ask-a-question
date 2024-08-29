@@ -82,7 +82,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
   ({ open, setOpen, setDashboardPage, selectedDashboardPage }, ref) => {
     return (
       <Drawer open={open} variant="permanent" ref={ref}>
-        <List sx={{ paddingTop: 13 }}>
+        <List sx={{ paddingTop: 12 }}>
           <Box
             sx={{
               display: "flex",
