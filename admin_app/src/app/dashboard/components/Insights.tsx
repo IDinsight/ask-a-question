@@ -84,6 +84,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
+            topicsPerPage={8}
           />
         </Grid>
         <Grid md={9} sx={{ p: 2 }}>
