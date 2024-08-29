@@ -44,7 +44,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
     } else {
       console.log("No token found");
     }
-  }, [token, timePeriod]);
+  }, [token, refreshTimestamp, timePeriod]);
 
   React.useEffect(() => {
     if (selectedTopicId !== null) {
@@ -54,6 +54,8 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
       if (filterQueries) {
         setTopicQueries(filterQueries.topic_samples);
+      } else {
+        setTopicQueries([]);
       }
     } else {
       setTopicQueries([]);
@@ -84,7 +86,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
-            topicsPerPage={8}
+            topicsPerPage={4}
           />
         </Grid>
         <Grid md={9} sx={{ p: 2 }}>

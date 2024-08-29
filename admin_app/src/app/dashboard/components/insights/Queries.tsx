@@ -154,7 +154,9 @@ const Queries: React.FC<QueriesProps> = ({
             </Table>
           </TableContainer>
         ) : (
-          <Box sx={{ fontSize: 18 }}>No queries found</Box>
+          <Box sx={{ fontSize: "small" }}>
+            No queries found. Please re-run discovery
+          </Box>
         )}
       </Box>
     </Box>

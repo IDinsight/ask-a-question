@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -25,10 +25,17 @@ const Topics: React.FC<TopicProps> = ({
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
+    filterPageData(value);
+  };
+  const filterPageData = (value: number) => {
     const start = (value - 1) * topicsPerPage;
     const end = value * topicsPerPage;
     setDataToShow(data.slice(start, end));
   };
+
+  useEffect(() => {
+    filterPageData(1);
+  }, [data]);
 
   return (
     <Box
@@ -92,9 +99,9 @@ const Topics: React.FC<TopicProps> = ({
         }}
       >
         <Pagination
+          defaultPage={1}
           color="primary"
-          showFirstButton
-          showLastButton
+          siblingCount={0}
           page={page}
           onChange={handlePageChange}
           count={Math.ceil(data.length / topicsPerPage)}
