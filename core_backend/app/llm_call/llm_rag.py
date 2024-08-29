@@ -37,7 +37,14 @@ async def get_llm_rag_answer(
     """
 
     metadata = metadata or {}
-    prompt = RAG.prompt.format(context=context, original_language=original_language)
+    if "failure_reason" in metadata and metadata["failure_reason"]:
+        prompt = RAG.retry_prompt.format(
+            context=context,
+            original_language=original_language,
+            failure_reason=metadata["failure_reason"],
+        )
+    else:
+        prompt = RAG.prompt.format(context=context, original_language=original_language)
 
     result = await _ask_llm_async(
         user_message=question,

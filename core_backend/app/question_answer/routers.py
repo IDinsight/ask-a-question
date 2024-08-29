@@ -6,13 +6,14 @@ import os
 from io import BytesIO
 from typing import Tuple
 
+import backoff
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET
+from ..config import ALIGN_SCORE_N_RETRIES, CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -50,6 +51,7 @@ from .models import (
 )
 from .schemas import (
     ContentFeedback,
+    ErrorType,
     QueryAudioResponse,
     QueryBase,
     QueryRefined,
@@ -123,6 +125,12 @@ async def search(
             query_refined=user_query_refined_template,
             response=response,
         )
+        if is_unable_to_generate_response(response):
+            failure_reason = response.debug_info["factual_consistency"]
+            response = await retry_search(
+                query_refined=user_query_refined_template, response=response
+            )
+            response.debug_info["past_failure"] = failure_reason
 
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -228,7 +236,6 @@ async def voice_search(
         asession=asession,
         exclude_archived=True,
     )
-
     if user_query.generate_llm_response:
         response = await get_generation_response(
             query_refined=user_query_refined_template,
@@ -322,6 +329,36 @@ async def get_search_response(
     return response
 
 
+def is_unable_to_generate_response(response: QueryResponse) -> bool:
+    """
+    Check if the response is of type QueryResponseError and caused
+    by low alignment score.
+    """
+    return (
+        isinstance(response, QueryResponseError)
+        and response.error_type == ErrorType.ALIGNMENT_TOO_LOW
+    )
+
+
+@backoff.on_predicate(
+    backoff.expo,
+    max_tries=int(ALIGN_SCORE_N_RETRIES),
+    predicate=is_unable_to_generate_response,
+)
+async def retry_search(
+    query_refined: QueryRefined,
+    response: QueryResponse | QueryResponseError,
+) -> QueryResponse | QueryResponseError:
+    """
+    Retry wrapper for get_generation_response.
+    """
+
+    metadata = query_refined.query_metadata
+    metadata["failure_reason"] = response.debug_info["factual_consistency"]["reason"]
+    query_refined.query_metadata = metadata
+    return await get_generation_response(query_refined, response)
+
+
 @generate_tts__after
 @check_align_score__after
 async def get_generation_response(
@@ -341,10 +378,13 @@ async def get_generation_response(
         query_id=response.query_id, user_id=query_refined.user_id
     )
 
+    metadata["failure_reason"] = query_refined.query_metadata.get(
+        "failure_reason", None
+    )
+
     response = await generate_llm_query_response(
         query_refined=query_refined, response=response, metadata=metadata
     )
-
     return response
 
 
