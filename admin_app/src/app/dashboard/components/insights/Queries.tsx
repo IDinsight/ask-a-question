@@ -18,9 +18,13 @@ interface QueriesProps {
   onRefreshClick: () => void;
   lastRefreshed: string;
   refreshing: boolean;
+  aiSummary: string;
 }
 
-const AISummary: React.FC = () => {
+interface AISummaryProps {
+  aiSummary: string;
+}
+const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
   return (
     <Box
       sx={{
@@ -58,7 +62,7 @@ const AISummary: React.FC = () => {
           textAlign: "left",
         }}
       >
-        Not available
+        {aiSummary}
       </Typography>
     </Box>
   );
@@ -69,6 +73,7 @@ const Queries: React.FC<QueriesProps> = ({
   onRefreshClick,
   lastRefreshed,
   refreshing,
+  aiSummary,
 }) => {
   const formattedLastRefreshed =
     lastRefreshed.length > 0
@@ -117,7 +122,7 @@ const Queries: React.FC<QueriesProps> = ({
           </Button>
         </Box>
       </Box>
-      <AISummary />
+      <AISummary aiSummary={aiSummary} />
       <Box
         sx={{
           display: "flex",

@@ -54,6 +54,7 @@ interface QueryData {
 interface TopicModelingData {
   topic_id: number;
   topic_samples: QueryData[];
+  topic_summary: string;
   topic_name: string;
   topic_popularity: number;
 }

@@ -83,9 +83,10 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
             )
         )
 
-    topics = await asyncio.gather(*tasks)
-    print("Topic:", topics, "\n\n")
-    for topic, (topic_id, topic_df) in zip(topics, query_df.groupby("topic_id")):
+    topic_dicts = await asyncio.gather(*tasks)
+    for topic_dict, (topic_id, topic_df) in zip(
+        topic_dicts, query_df.groupby("topic_id")
+    ):
         topic_samples_slice = topic_df[["query_text", "query_datetime_utc"]][:20]
         string_topic_samples = [
             {
@@ -97,7 +98,8 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
         topic_data.append(
             Topic(
                 topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
-                topic_name=topic,
+                topic_name=topic_dict["topic_title"],
+                topic_summary=topic_dict["topic_summary"],
                 topic_samples=string_topic_samples,
                 topic_popularity=len(topic_df),
             )

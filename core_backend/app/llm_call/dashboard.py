@@ -39,7 +39,7 @@ async def generate_topic_label(
     user_id: int,
     context: str,
     sample_texts: list[str],
-) -> str:
+) -> dict[str, str]:
     """
     Generates topic labels for example queries
     """
@@ -67,7 +67,7 @@ async def generate_topic_label(
                 "Setting topic to 'Unknown'"
             )
         )
-        topic = "Unknown"
+        topic = {"topic_title": "Unknown", "topic_summary": "Not available."}
 
     logger.info(f"Topic label generated for {context}: {topic}")
     return topic

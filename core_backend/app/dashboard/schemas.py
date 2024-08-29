@@ -186,6 +186,7 @@ class Topic(BaseModel):
     topic_id: int
     topic_samples: list[dict[str, str]]
     topic_name: str
+    topic_summary: str
     topic_popularity: int
 
 

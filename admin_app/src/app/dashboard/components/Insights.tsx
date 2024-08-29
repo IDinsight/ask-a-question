@@ -18,6 +18,8 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
   const [refreshTimestamp, setRefreshTimestamp] = useState<string>("");
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [aiSummary, setAiSummary] = useState<string>("");
+
   const [dataFromBackend, setDataFromBackend] = useState<TopicModelingResponse>({
     data: [],
     refreshTimeStamp: "",
@@ -54,11 +56,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
       if (filterQueries) {
         setTopicQueries(filterQueries.topic_samples);
+        setAiSummary(filterQueries.topic_summary);
       } else {
         setTopicQueries([]);
+        setAiSummary("Not available.");
       }
     } else {
       setTopicQueries([]);
+      setAiSummary("Not available.");
     }
   }, [dataFromBackend, selectedTopicId, refreshTimestamp, timePeriod]);
 
@@ -93,6 +98,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           <Queries
             data={topicQueries}
             onRefreshClick={runRefresh}
+            aiSummary={aiSummary}
             lastRefreshed={dataFromBackend.refreshTimeStamp}
             refreshing={refreshing}
           />
