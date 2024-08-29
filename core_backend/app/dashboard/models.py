@@ -36,6 +36,8 @@ from .schemas import (
     UserQuery,
 )
 
+N_SAMPLES_TOPIC_MODELING = 2000
+
 
 async def get_stats_cards(
     *, user_id: int, asession: AsyncSession, start_date: date, end_date: date
@@ -1268,8 +1270,6 @@ async def get_raw_queries(
     list[UserQuery]
         A list of UserQuery objects
     """
-    # You don't need to check if there are at least 2000 queries in the database.
-    # limit(2000) will return all queries if there are fewer than 2000.
 
     statement = (
         select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
@@ -1279,7 +1279,7 @@ async def get_raw_queries(
             & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
         )
         .order_by(func.random())
-        .limit(2000)
+        .limit(N_SAMPLES_TOPIC_MODELING)
     )
 
     result = await asession.execute(statement)

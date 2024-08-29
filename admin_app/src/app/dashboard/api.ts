@@ -55,22 +55,6 @@ const generateNewTopics = async (period: Period, token: string) => {
   });
 };
 
-const getLastUpdatedTimestamp = async (period: Period, token: string) => {
-  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/${period}/last-updated`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    } else {
-      throw new Error("Error fetching last updated timestamp");
-    }
-  });
-};
-
 const getPerformancePageData = async (period: Period, token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}`, {
     method: "GET",
@@ -142,5 +126,4 @@ export {
   getPerformanceDrawerAISummary,
   fetchTopicsData,
   generateNewTopics,
-  getLastUpdatedTimestamp,
 };

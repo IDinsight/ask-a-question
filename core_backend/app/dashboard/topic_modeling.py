@@ -37,16 +37,13 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     if not data:
         return TopicsData(refreshTimeStamp="", data=[], unclustered_queries=[])
 
-    # Establish Query DataFrame
     query_df = pd.DataFrame.from_records([x.model_dump() for x in data])
-    # Convert query_datetime to string
     query_df["query_datetime_utc"] = query_df["query_datetime_utc"].astype(str)
     docs = query_df["query_text"].tolist()
 
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = sentence_model.encode(docs, show_progress_bar=False)
 
-    # Create topic model
     hdbscan_model = HDBSCAN(
         min_cluster_size=15,
         metric="euclidean",
@@ -58,8 +55,6 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
 
     # Queries with low probability of being in a cluster assigned -1
     query_df.loc[query_df["probs"] < 0.75, "topic_id"] = -1
-    # Unclustered examples is a list of dicts containing
-    # the query_text and query_datetime_utc
     unclustered_examples = [
         {
             "query_text": str(row.query_text),
@@ -104,7 +99,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
                 topic_popularity=len(topic_df),
             )
         )
-    # Sort topic data by key of topic_popularity
+
     topic_data = sorted(topic_data, key=lambda x: x.topic_popularity, reverse=True)
     return TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
