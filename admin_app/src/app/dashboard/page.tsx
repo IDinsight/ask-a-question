@@ -7,6 +7,8 @@ import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
+import Insights from "./components/Insights";
+
 import { appColors } from "@/utils";
 
 type Page = {
@@ -46,7 +48,7 @@ const Dashboard: React.FC = () => {
       case "Content Performance":
         return <ContentPerformance timePeriod={timePeriod} />;
       case "Content Gaps":
-        return <div>Coming Soon!</div>;
+        return <Insights timePeriod={timePeriod} />;
       default:
         return <div>Page not found.</div>;
     }

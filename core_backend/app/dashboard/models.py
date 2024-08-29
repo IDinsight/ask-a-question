@@ -1,6 +1,6 @@
 """This module contains functionalities for managing the dashboard statistics."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any, Sequence, cast, get_args
 
 from sqlalchemy import Row, case, desc, func, literal_column, select, text, true
@@ -33,7 +33,10 @@ from .schemas import (
     TopContentTimeSeries,
     UrgencyStats,
     UserFeedback,
+    UserQuery,
 )
+
+N_SAMPLES_TOPIC_MODELING = 2000
 
 
 async def get_stats_cards(
@@ -1245,3 +1248,52 @@ def get_percentage_increase(n_curr: int, n_prev: int) -> float:
         return 0.0
 
     return (n_curr - n_prev) / n_prev
+
+
+async def get_raw_queries(
+    asession: AsyncSession,
+    user_id: int,
+    start_date: date,
+) -> list[UserQuery]:
+    """Retrieve 2000 randomly sampled raw queries (query_text) and their
+    datetime stamps within the specified date range.
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+    user_id
+        The ID of the user to retrieve the queries for.
+    start_date
+        The starting date for the queries.
+    Returns
+    -------
+    list[UserQuery]
+        A list of UserQuery objects
+    """
+
+    statement = (
+        select(QueryDB.query_text, QueryDB.query_datetime_utc, QueryDB.query_id)
+        .where(
+            (QueryDB.user_id == user_id)
+            & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
+        )
+        .order_by(func.random())
+        .limit(N_SAMPLES_TOPIC_MODELING)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    if not rows:
+        query_list = []
+    else:
+        query_list = [
+            UserQuery(
+                query_id=row.query_id,
+                query_text=row.query_text,
+                query_datetime_utc=row.query_datetime_utc,
+            )
+            for row in rows
+        ]
+
+    return query_list

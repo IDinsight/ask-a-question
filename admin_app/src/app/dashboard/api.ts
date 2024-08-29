@@ -21,6 +21,40 @@ const getOverviewPageData = async (period: Period, token: string) => {
   });
 };
 
+const fetchTopicsData = async (period: Period, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/${period}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error fetching Topics data");
+    }
+  });
+};
+
+const generateNewTopics = async (period: Period, token: string) => {
+  return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/insights/${period}/refresh`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((response) => {
+    if (response.ok) {
+      let resp = response.json();
+      return resp;
+    } else {
+      throw new Error("Error generating Topics data");
+    }
+  });
+};
+
 const getPerformancePageData = async (period: Period, token: string) => {
   return fetch(`${NEXT_PUBLIC_BACKEND_URL}/dashboard/performance/${period}`, {
     method: "GET",
@@ -90,4 +124,6 @@ export {
   getPerformancePageData,
   getPerformanceDrawerData,
   getPerformanceDrawerAISummary,
+  fetchTopicsData,
+  generateNewTopics,
 };
