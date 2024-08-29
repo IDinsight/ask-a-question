@@ -116,12 +116,26 @@ const KeyManagement = ({
       <Layout.FlexBox
         flexDirection="column"
         justifyContent="space-between"
-        gap={sizes.doubleBaseGap}
+        gap={sizes.baseGap}
       >
-        <Typography variant="body1">
+        <Typography variant="body1" color={appColors.darkGrey}>
           You will need your API key to interact with AAQ from your chat manager. You
           can generate a new key here, but keep in mind that any old key is invalidated
           if a new key is created.
+        </Typography>
+        <Typography variant="body1" color={appColors.darkGrey}>
+          Daily API limit is 100.{" "}
+          <a
+            href="https://docs.ask-a-question.com/latest/contact_us/"
+            style={{
+              textDecoration: "underline",
+              textDecorationColor: appColors.darkGrey,
+              color: appColors.darkGrey,
+            }}
+          >
+            Contact us
+          </a>{" "}
+          for more.
         </Typography>
         <Layout.FlexBox
           flexDirection="column"
@@ -191,7 +205,7 @@ const Connections = () => {
       <Typography variant="h4" color="primary">
         Connections
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body1" color={appColors.darkGrey}>
         Click on the connection of your choice to see instructions on how to use it with
         AAQ.
       </Typography>

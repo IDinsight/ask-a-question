@@ -271,6 +271,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         sx={{
           flexDirection: "row",
           alignSelf: "flex-end",
+          alignItems: "center",
           gap: sizes.smallGap,
         }}
       >
@@ -552,7 +553,15 @@ const CardsGrid = ({
     <>
       <Paper
         elevation={0}
-        sx={{ minHeight: "60vh", width: "100%", border: 0.5, borderColor: "lightgrey" }}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          minHeight: "60vh",
+          width: "100%",
+          border: 0.5,
+          borderColor: "lightgrey",
+        }}
       >
         <Grid container>
           {cards.length === 0 ? (
@@ -624,6 +633,20 @@ const CardsGrid = ({
               })
           )}
         </Grid>
+        <Typography variant="body1" color={appColors.darkGrey} padding={sizes.baseGap}>
+          Content limit is 50.{" "}
+          <a
+            href="https://docs.ask-a-question.com/latest/contact_us/"
+            style={{
+              textDecoration: "underline",
+              textDecorationColor: appColors.darkGrey,
+              color: appColors.darkGrey,
+            }}
+          >
+            Contact us
+          </a>{" "}
+          for more.
+        </Typography>
       </Paper>
       <Layout.Spacer multiplier={1} />
       <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
