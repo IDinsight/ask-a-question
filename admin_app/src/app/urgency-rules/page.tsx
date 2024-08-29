@@ -226,13 +226,15 @@ const UrgencyRulesPage = () => {
             </Layout.FlexBox>
             <Layout.Spacer />
             <Paper
-              elevation={2}
+              elevation={0}
               sx={{
                 paddingTop: 1,
                 paddingBottom: 10,
                 paddingInline: 3,
                 height: "65vh",
                 overflowY: "auto",
+                border: 0.5,
+                borderColor: "lightgrey",
               }}
             >
               {items.length === 0 ? (

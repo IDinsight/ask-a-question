@@ -553,7 +553,7 @@ const CardsGrid = ({
     <>
       <Paper
         elevation={0}
-        sx={{ minHeight: "60vh", width: "100%", border: 1, borderColor: "lightgrey" }}
+        sx={{ minHeight: "60vh", width: "100%", border: 0.5, borderColor: "lightgrey" }}
       >
         <Grid container>
           {cards.length === 0 ? (
