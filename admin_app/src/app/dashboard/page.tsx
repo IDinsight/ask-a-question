@@ -8,7 +8,6 @@ import { Period, drawerWidth } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import { appColors } from "@/utils";
-import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 type Page = {
   name: PageName;
@@ -120,14 +119,9 @@ const Dashboard: React.FC = () => {
           >
             <Typography variant="h4" color={appColors.primary}>
               {dashboardPage.name}
-              <Typography
-                variant="body1"
-                align="left"
-                color={appColors.darkGrey}
-                component="span"
-              >
-                {" " + dashboardPage.description}
-              </Typography>
+            </Typography>
+            <Typography variant="body1" align="left" color={appColors.darkGrey}>
+              {dashboardPage.description}
             </Typography>
           </Box>
           <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
