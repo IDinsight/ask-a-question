@@ -22,14 +22,15 @@ const LineChart = ({
       text: `Top content in the last ${timePeriod}`,
       align: "left",
       style: {
-        fontSize: "25px",
-        fontWeight: 400,
+        fontSize: "18px",
+        fontWeight: 500,
         color: appColors.black,
       },
     },
     chart: {
       id: "content-performance-timeseries",
       stacked: false,
+      fontFamily: "Inter",
     },
     dataLabels: {
       enabled: false,
