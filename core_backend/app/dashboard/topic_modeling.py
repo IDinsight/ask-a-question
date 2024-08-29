@@ -63,7 +63,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     unclustered_examples = [
         {
             "query_text": row.query_text,
-            "query_datetime_utc": row.query_datetime_utc.isoformat(),
+            "query_datetime_utc": row.query_datetime_utc,
         }
         for row in query_df.loc[query_df["topic_id"] == -1].itertuples()
     ]
