@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
@@ -9,19 +9,41 @@ import Overview from "@/app/dashboard/components/Overview";
 import Performance from "@/app/dashboard/components/Performance";
 import Insights from "./components/Insights";
 import { useState } from "react";
+
 import { appColors } from "@/utils";
-import { ClickAwayListener } from "@mui/base/ClickAwayListener";
+
+type Page = {
+  name: PageName;
+  description: string;
+};
+
+const pages: Page[] = [
+  {
+    name: "Overview",
+    description: "Overview of user engagement and satisfaction",
+  },
+  {
+    name: "Content Performance",
+    description: "Track performance of contents  and identify areas for improvement",
+  },
+  {
+    name: "Content Gaps",
+    description:
+      "Find out what users are asking about to inform creating and updating contents",
+  },
+];
 
 const Dashboard: React.FC = () => {
-  const [dashboardPage, setDashboardPage] = useState<PageName>("Overview");
+  const [dashboardPage, setDashboardPage] = useState<Page>(pages[0]);
   const [timePeriod, setTimePeriod] = useState<Period>("week" as Period);
   const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
+
   const handleTabChange = (_: React.ChangeEvent<{}>, newValue: Period) => {
     setTimePeriod(newValue);
   };
 
   const showPage = () => {
-    switch (dashboardPage) {
+    switch (dashboardPage.name) {
       case "Overview":
         return <Overview timePeriod={timePeriod} />;
       case "Performance":
@@ -29,7 +51,7 @@ const Dashboard: React.FC = () => {
       case "Insights":
         return <Insights timePeriod={timePeriod} />;
       default:
-        return <div>Page not found</div>;
+        return <div>Page not found.</div>;
     }
   };
 
@@ -53,50 +75,63 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <Box sx={{ display: "flex", marginTop: 4, flexDirection: "row" }}>
-        <ClickAwayListener onClickAway={() => setSideBarOpen(false)}>
-          <Sidebar
-            open={sideBarOpen}
-            setOpen={setSideBarOpen}
-            setDashboardPage={setDashboardPage}
-            selectedDashboardPage={dashboardPage}
-          />
-        </ClickAwayListener>
+    <Box
+      sx={{
+        display: "flex",
+        paddingTop: 5,
+        flexDirection: "row",
+        minWidth: "900px",
+        maxWidth: "1900px",
+      }}
+    >
+      <Sidebar
+        open={sideBarOpen}
+        setOpen={setSideBarOpen}
+        setDashboardPage={(pageName: PageName) => {
+          const page = pages.find((p) => p.name === pageName);
+          if (page) setDashboardPage(page);
+        }}
+        selectedDashboardPage={dashboardPage.name}
+      />
+      <Box
+        sx={{
+          paddingInline: 3,
+          height: "100%",
+          flexGrow: 1,
+          width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
+        }}
+      >
         <Box
           sx={{
-            px: 3,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
             height: "100%",
-            flexGrow: 1,
-            width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
           }}
         >
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between",
-              height: "100%",
+              paddingInline: 2,
+              paddingBottom: 1,
+              gap: 2,
+              borderBottom: "1px solid",
+              borderBottomColor: "divider",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                py: 2,
-                borderBottom: "1px solid",
-                borderBottomColor: "divider",
-              }}
-            >
-              <Typography variant="h4" color={appColors.primary}>
-                {dashboardPage}
-              </Typography>
-            </Box>
-            <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
+            <Typography variant="h4" color={appColors.primary}>
+              {dashboardPage.name}
+            </Typography>
+            <Typography variant="body1" align="left" color={appColors.darkGrey}>
+              {dashboardPage.description}
+            </Typography>
           </Box>
+          <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+          <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 

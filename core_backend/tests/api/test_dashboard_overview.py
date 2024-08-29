@@ -287,7 +287,6 @@ class TestHeatmap:
             for i in range(count):
                 query = QueryDB(
                     user_id=1,
-                    session_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{day}_{i}",
                     query_generate_llm_response=False,
@@ -321,7 +320,6 @@ class TestHeatmap:
             for i in range(count):
                 query = QueryDB(
                     user_id=1,
-                    session_id=1,
                     feedback_secret_key="abc123",
                     query_text=f"test_{hour}_{i}",
                     query_generate_llm_response=False,
@@ -512,7 +510,6 @@ class TestTimeSeries:
         for i in range(n_positive + n_negative + n_neutral):
             query = QueryDB(
                 user_id=user_id,
-                session_id=1,
                 feedback_secret_key="abc123",
                 query_text="test message",
                 query_generate_llm_response=False,

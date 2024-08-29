@@ -6,9 +6,8 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Grid from "@mui/material/Grid";
 import { DrawerData } from "@/app/dashboard/types";
 import dynamic from "next/dynamic";
-import { ApexData } from "@/app/dashboard/types";
 import { ApexOptions } from "apexcharts";
-import TypingAnimation from "@/components/Common";
+import TypingAnimation from "@/components/TypingAnimation";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -32,6 +31,7 @@ const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
       zoom: {
         enabled: false,
       },
+      fontFamily: "Inter",
     },
     stroke: {
       width: 3,

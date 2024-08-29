@@ -26,7 +26,3 @@ By clicking on `<json>` at the bottom, they can also see the raw JSON response s
 by the server. This include debugging information that may be useful in understanding behaviour.
 
 ![Playground JSON](../images/playground-json.png){: .blog-img }
-
-## Doc references
-
-- [Playground](../../components/admin-app/playground.md)

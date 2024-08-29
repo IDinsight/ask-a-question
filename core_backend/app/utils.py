@@ -3,6 +3,7 @@
 # pylint: disable=global-statement
 import hashlib
 import logging
+import mimetypes
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -13,7 +14,7 @@ from uuid import uuid4
 
 import aiohttp
 import litellm
-from google.cloud import storage
+from google.cloud import storage  # type: ignore
 from litellm import aembedding
 from redis import asyncio as aioredis
 
@@ -283,45 +284,77 @@ async def update_api_limits(
         await redis.expireat(key, expire_at)
 
 
+def generate_random_filename(extension: str) -> str:
+    """
+    Generate a random filename with the specified extension by concatenating
+    multiple UUIDv4 strings.
+
+    Params:
+        extension (str): The file extension (e.g., '.wav', '.mp3').
+    """
+
+    random_filename = "".join([uuid4().hex for _ in range(5)])
+    return f"{random_filename}{extension}"
+
+
+def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
+    """
+    Get file extension from MIME type.
+
+    Params:
+        mime_type (str): The MIME type of the file.
+    """
+
+    mime_to_extension = {
+        "audio/mpeg": ".mp3",
+        "audio/wav": ".wav",
+        "audio/x-m4a": ".m4a",
+    }
+
+    if mime_type:
+        extension = mime_to_extension.get(mime_type, None)
+        if extension:
+            return extension
+        extension = mimetypes.guess_extension(mime_type)
+        return extension if extension else ".bin"
+
+    return ".bin"
+
+
 async def upload_file_to_gcs(
     bucket_name: str,
     file_stream: BytesIO,
     destination_blob_name: str,
-    content_type: Optional[str],
+    content_type: Optional[str] = None,
 ) -> None:
     """
-    Upload a file stream to a Google Cloud Storage bucket.
+    Upload a file stream to a Google Cloud Storage bucket and make it public.
 
     Params:
         bucket_name (str): The name of the GCS bucket.
         file_stream (BytesIO): The file stream to upload.
-        destination_blob_name (str): The destination blob name in the bucket.
-        content_type (str): The content type of the file.
+        content_type (str): The content type of the file (e.g., 'audio/mpeg').
     """
     client = storage.Client()
     bucket = client.bucket(bucket_name)
+
     blob = bucket.blob(destination_blob_name)
 
     file_stream.seek(0)
-
     blob.upload_from_file(file_stream, content_type=content_type)
 
 
-async def generate_signed_url(bucket_name: str, blob_name: str) -> str:
+async def generate_public_url(bucket_name: str, blob_name: str) -> str:
     """
-    Generate a signed URL for a GCS blob.
+    Generate a public URL for a GCS blob.
 
     Params:
         bucket_name (str): The name of the GCS bucket.
         blob_name (str): The name of the blob in the bucket.
 
     Returns:
-        str: A signed URL that allows access to the GCS file.
+        str: A public URL that allows access to the GCS file.
     """
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
 
-    url = blob.generate_signed_url(expiration=timedelta(seconds=3600), version="v4")
-
-    return url
+    public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
+    return public_url

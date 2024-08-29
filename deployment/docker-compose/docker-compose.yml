@@ -7,14 +7,19 @@ services:
     command: >
       /bin/sh startup.sh
     restart: always
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
+      - ./.gcp_credentials.json:/app/credentials.json
     env_file:
       - .base.env
       - .core_backend.env
+      - .litellm_proxy.env
     environment:
       - REDIS_HOST=redis://redis:6379
       - LITELLM_ENDPOINT=http://litellm_proxy:4000
     depends_on:
       - redis
+
     develop:
       watch:
         - action: rebuild
@@ -59,8 +64,9 @@ services:
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
       - ./.gcp_credentials.json:/app/credentials.json
-    command:
-      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+    ports: # Expose the port to port 4000 for debugging purposes
+      - 4000:4000
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
 
   alignScore:
     image: idinsight/alignscore-base:latest
@@ -106,3 +112,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  temp:

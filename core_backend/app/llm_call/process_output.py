@@ -21,8 +21,10 @@ from ..question_answer.schemas import (
     QueryResponse,
     QueryResponseError,
 )
+from ..question_answer.speech_components.external_voice_components import (
+    generate_tts_on_gcs,
+)
 from ..question_answer.utils import get_context_string_from_search_results
-from ..question_answer.voice_components import generate_tts_on_gcs
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
@@ -43,39 +45,7 @@ class AlignScoreData(TypedDict):
     claim: str
 
 
-def generate_llm_response__after(func: Callable) -> Callable:
-    """
-    Decorator to generate the LLM response.
-
-    Only runs if the generate_llm_response flag is set to True.
-    Requires "search_results" and "original_language" in the response.
-    """
-
-    @wraps(func)
-    async def wrapper(
-        query_refined: QueryRefined,
-        response: QueryResponse | QueryResponseError,
-        *args: Any,
-        **kwargs: Any,
-    ) -> QueryResponse | QueryResponseError:
-        """
-        Generate the LLM response
-        """
-        response = await func(query_refined, response, *args, **kwargs)
-
-        if not query_refined.generate_llm_response:
-            return response
-
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=query_refined.user_id
-        )
-        response = await _generate_llm_response(query_refined, response, metadata)
-        return response
-
-    return wrapper
-
-
-async def _generate_llm_response(
+async def generate_llm_query_response(
     query_refined: QueryRefined,
     response: QueryResponse,
     metadata: Optional[dict] = None,
@@ -112,6 +82,7 @@ async def _generate_llm_response(
     else:
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -146,7 +117,7 @@ def check_align_score__after(func: Callable) -> Callable:
 
         response = await func(query_refined, response, *args, **kwargs)
 
-        if not kwargs.get("generate_llm_response", False):
+        if not query_refined.generate_llm_response:
             return response
 
         metadata = create_langfuse_metadata(
@@ -217,6 +188,7 @@ async def _check_align_score(
         )
         response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
             search_results=response.search_results,
@@ -304,8 +276,12 @@ def generate_tts__after(func: Callable) -> Callable:
             return response
 
         if not isinstance(response, QueryAudioResponse):
+            logger.warning(
+                f"Converting response of type {type(response)} to AudioResponse."
+            )
             response = QueryAudioResponse(
                 query_id=response.query_id,
+                session_id=response.session_id,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
                 search_results=response.search_results,
@@ -341,7 +317,6 @@ async def _generate_tts_response(
         logger.warning("TTS generation skipped due to missing LLM response.")
         return response
 
-    blob_name = f"tts-voice-notes/response_{response.query_id}.mp3"
     try:
         if query_refined.original_language is None:
             error_msg = "Language must be provided to generate speech."
@@ -351,13 +326,13 @@ async def _generate_tts_response(
         tts_file_path = await generate_tts_on_gcs(
             text=response.llm_response,
             language=query_refined.original_language,
-            destination_blob_name=blob_name,
         )
         response.tts_filepath = tts_file_path
     except ValueError as e:
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
         return QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,

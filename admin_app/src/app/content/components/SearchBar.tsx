@@ -9,15 +9,11 @@ export interface SearchBarProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({
-  searchTerm,
-  setSearchTerm,
-}) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm }) => {
   return (
-    <Layout.FlexBox alignItems="center" sx={{ width: "100%" }}>
+    <Layout.FlexBox>
       <TextField
         sx={{
-          width: "100%",
           backgroundColor: appColors.white,
           borderRadius: "5px",
         }}

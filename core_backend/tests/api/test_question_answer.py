@@ -1,6 +1,7 @@
 import os
 import time
 from functools import partial
+from io import BytesIO
 from typing import Any, Dict, List
 
 import pytest
@@ -537,18 +538,16 @@ class TestGenerateResponse:
 
 class TestSTTResponse:
     @pytest.mark.parametrize(
-        "outcome, generate_tts, expected_status_code, mock_response",
+        "outcome, expected_status_code, mock_response",
         [
-            ("correct", True, 200, {"text": "Paris"}),
-            ("correct", False, 200, {"text": "Paris"}),
-            ("incorrect", True, 401, {"error": "Unauthorized"}),
-            ("correct", True, 500, {}),
+            ("correct", 200, {"text": "Paris"}),
+            ("incorrect", 401, {"error": "Unauthorized"}),
+            ("correct", 500, {}),
         ],
     )
     def test_voice_search(
         self,
         outcome: str,
-        generate_tts: bool,
         expected_status_code: int,
         mock_response: dict,
         client: TestClient,
@@ -557,6 +556,12 @@ class TestSTTResponse:
     ) -> None:
         token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
 
+        async def dummy_download_file_from_url(
+            file_url: str,
+        ) -> tuple[BytesIO, str, str]:
+
+            return BytesIO(b"fake audio content"), "audio/mpeg", "mp3"
+
         async def dummy_post_to_speech(file_path: str, endpoint_url: str) -> dict:
             if expected_status_code == 500:
                 raise HTTPException(
@@ -564,23 +569,42 @@ class TestSTTResponse:
                 )
             return mock_response
 
+        async def async_fake_transcribe_audio(*args: Any, **kwargs: Any) -> str:
+            if expected_status_code == 500:
+                raise HTTPException(
+                    status_code=500, detail={"error": "Internal Server Error"}
+                )
+            return "transcribed text"
+
+        async def async_fake_generate_speech(*args: Any, **kwargs: Any) -> str:
+            return "http://example.com/hex-url"
+
+        monkeypatch.setattr(
+            "core_backend.app.question_answer.routers.transcribe_audio",
+            async_fake_transcribe_audio,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.process_output.generate_tts_on_gcs",
+            async_fake_generate_speech,
+        )
         monkeypatch.setattr(
             "core_backend.app.question_answer.routers.post_to_speech",
             dummy_post_to_speech,
         )
+        monkeypatch.setattr(
+            "core_backend.app.question_answer.routers.download_file_from_url",
+            dummy_download_file_from_url,
+        )
 
         temp_dir = "temp"
         os.makedirs(temp_dir, exist_ok=True)
-        file_path = os.path.join(temp_dir, "test.mp3")
 
-        with open(file_path, "wb") as f:
-            f.write(b"fake audio content")
+        file_url = "http://example.com/test.mp3"
 
         response = client.post(
             "/voice-search",
             headers={"Authorization": f"Bearer {token}"},
-            files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
-            data={"generate_tts": str(generate_tts).lower()},
+            params={"file_url": file_url},
         )
 
         assert response.status_code == expected_status_code
@@ -588,16 +612,18 @@ class TestSTTResponse:
         if expected_status_code == 200:
             json_response = response.json()
             assert "llm_response" in json_response
-            if generate_tts:
-                assert "tts_filepath" in json_response
+            assert "tts_filepath" in json_response
+
         elif expected_status_code == 500:
             json_response = response.json()
-            assert "detail" in json_response
+            assert "error" in json_response
             assert response.status_code == 500
 
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        if os.path.exists(temp_dir) and not os.listdir(temp_dir):
+        if os.path.exists(temp_dir):
+            for file_name in os.listdir(temp_dir):
+                file_path = os.path.join(temp_dir, file_name)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
             os.rmdir(temp_dir)
 
 

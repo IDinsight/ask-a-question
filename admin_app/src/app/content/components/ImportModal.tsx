@@ -13,7 +13,7 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { LoadingButton } from "@mui/lab";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
-import { Layout } from "./Layout";
+import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 
 interface CustomError {
@@ -21,13 +21,7 @@ interface CustomError {
   description: string;
 }
 
-const ImportModal = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,10 +49,7 @@ const ImportModal = ({
       // add artifical delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
       try {
-        const response = await apiCalls.bulkUploadContents(
-          selectedFile,
-          token!,
-        );
+        const response = await apiCalls.bulkUploadContents(selectedFile, token!);
         if (response.status === 200) {
           setImportSuccess(true);
           setSelectedFile(null);
@@ -104,17 +95,14 @@ const ImportModal = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
+      aria-labelledby="import-dialog-title"
+      aria-describedby="import-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title" sx={{ minWidth: "800px" }}>
-        Import New Contents
-      </DialogTitle>
+      <DialogTitle id="import-dialog-title">Import New Contents</DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="import-dialog-description">
           <p>
-            You can use this feature to import new contents from a CSV file into
-            AAQ.
+            You can use this feature to import new contents from a CSV file into AAQ.
           </p>
           <p>
             The CSV file should have the following columns:
@@ -158,11 +146,7 @@ const ImportModal = ({
             onChange={handleFileChange}
           />
           <label htmlFor="choose-file">
-            <Button
-              variant="outlined"
-              component="span"
-              startIcon={<NoteAddIcon />}
-            >
+            <Button variant="outlined" component="span" startIcon={<NoteAddIcon />}>
               Attach File
             </Button>
           </label>

@@ -1,13 +1,10 @@
-import {
-  ContentViewModal,
-  ArchiveContentModal,
-} from "@/components/ContentModal";
+import { ContentViewModal, ArchiveContentModal } from "./ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
 import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
 import Link from "next/link";
 import React from "react";
-import { Layout } from "./Layout";
+import { Layout } from "../../../components/Layout";
 import { Tag } from "@/app/content/page";
 
 const ContentCard = ({
@@ -36,8 +33,7 @@ const ContentCard = ({
   editAccess: boolean;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
-  const [openArchiveModal, setOpenArchiveModal] =
-    React.useState<boolean>(false);
+  const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
 
   return (
     <>
@@ -51,16 +47,13 @@ const ContentCard = ({
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            maxHeight: "250px",
           },
           appStyles.hoverShadow,
           appStyles.shadow,
         ]}
       >
-        <Layout.FlexBox
-          flexDirection="row"
-          justifyContent="end"
-          sx={{ width: "98%" }}
-        >
+        <Layout.FlexBox flexDirection="row" justifyContent="end" sx={{ width: "98%" }}>
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
               <Chip
@@ -83,6 +76,8 @@ const ContentCard = ({
               )}
             </Box>
           )}
+          {/* else just a space */}
+          {!tags || tags.length === 0 ? <Box height={"22px"} /> : null}
         </Layout.FlexBox>
         <Typography variant="h6" noWrap={true}>
           {title}
@@ -90,20 +85,17 @@ const ContentCard = ({
         <Typography
           variant="body2"
           color={appColors.darkGrey}
-          sx={appStyles.threeLineEllipsis}
+          sx={appStyles.twoLineEllipsis}
         >
           {text}
         </Typography>
         <Layout.Spacer multiplier={0.5} />
         <Typography variant="body2" color={appColors.darkGrey}>
-          Last updated{" "}
+          Last updated:{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
-            month: "numeric",
+            month: "short",
             year: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: true,
           })}
         </Typography>
         <Layout.Spacer multiplier={0.75} />
