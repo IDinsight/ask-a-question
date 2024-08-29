@@ -35,7 +35,7 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     """
 
     if not data:
-        return TopicsData(refreshTimeStamp="", topics=[], unclustered_queries=[])
+        return TopicsData(refreshTimeStamp="", data=[], unclustered_queries=[])
 
     # Establish Query DataFrame
     query_df = pd.DataFrame.from_records([x.model_dump() for x in data])
@@ -61,7 +61,10 @@ async def topic_model_queries(user_id: int, data: list[UserQuery]) -> TopicsData
     # Unclustered examples is a list of dicts containing
     # the query_text and query_datetime_utc
     unclustered_examples = [
-        {"query_text": row.query_text, "query_datetime_utc": row.query_datetime_utc}
+        {
+            "query_text": row.query_text,
+            "query_datetime_utc": row.query_datetime_utc.isoformat(),
+        }
         for row in query_df.loc[query_df["topic_id"] == -1].itertuples()
     ]
 
