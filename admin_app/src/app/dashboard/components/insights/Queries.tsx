@@ -163,7 +163,7 @@ const Queries: React.FC<QueriesProps> = ({
           </TableContainer>
         ) : (
           <Typography>
-            Run discovery to find topics for the selected time period.
+            Click "Run Discovery" to generate insights for this time period.
           </Typography>
         )}
       </Box>
