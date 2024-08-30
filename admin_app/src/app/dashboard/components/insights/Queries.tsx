@@ -122,7 +122,7 @@ const Queries: React.FC<QueriesProps> = ({
           </Button>
         </Box>
       </Box>
-      <AISummary aiSummary={aiSummary} />
+      {data.length > 0 && <AISummary aiSummary={aiSummary} />}
       <Box
         sx={{
           display: "flex",
