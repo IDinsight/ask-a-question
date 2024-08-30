@@ -1,11 +1,11 @@
 import React from "react";
 
 import {
-  BarChart,
+  Category,
   ChevronLeft,
   ChevronRight,
   Dashboard,
-  Insights,
+  QueryStats,
 } from "@mui/icons-material";
 import {
   Box,
@@ -27,7 +27,7 @@ interface SideBarProps {
   selectedDashboardPage: PageName;
 }
 
-type PageName = "Overview" | "Content Performance" | "Content Gaps";
+type PageName = "Overview" | "Content Performance" | "Query Topics";
 
 interface MenuItem {
   name: PageName;
@@ -35,8 +35,8 @@ interface MenuItem {
 }
 const menuItems: MenuItem[] = [
   { name: "Overview", icon: <Dashboard /> },
-  { name: "Content Performance", icon: <BarChart /> },
-  { name: "Content Gaps", icon: <Insights /> },
+  { name: "Content Performance", icon: <QueryStats /> },
+  { name: "Query Topics", icon: <Category /> },
 ];
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
