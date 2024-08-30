@@ -448,9 +448,9 @@ const CardsGrid = ({
   const getSnackMessage = React.useCallback(
     (action: string | null, content_id: number | null): string | null => {
       if (action === "edit") {
-        return `Content #${content_id} updated`;
+        return `Content updated`;
       } else if (action === "add") {
-        return `Content #${content_id} created`;
+        return `Content created`;
       }
       return null;
     },
@@ -471,7 +471,7 @@ const CardsGrid = ({
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
-      message: `Content #${content_id} removed successfully`,
+      message: `Content removed successfully`,
       color: "success",
     });
   };
@@ -479,7 +479,7 @@ const CardsGrid = ({
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
-      message: `Content #${content_id} deleted successfully`,
+      message: `Content deleted successfully`,
       color: "success",
     });
   };
@@ -618,7 +618,7 @@ const CardsGrid = ({
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(content_id: number) => {
                           setSnackMessage({
-                            message: `Failed to remove content #${content_id}`,
+                            message: `Failed to remove content`,
                             color: "error",
                           });
                         }}
