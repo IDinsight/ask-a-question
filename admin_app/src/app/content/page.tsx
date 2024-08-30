@@ -15,6 +15,8 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Slide,
+  SlideProps,
   Snackbar,
   TextField,
   Tooltip,
@@ -30,7 +32,7 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { appStyles, appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ImportModal } from "./components/ImportModal";
@@ -100,6 +102,10 @@ const CardsPage = () => {
       setCurrAccessLevel("readonly");
     }
   }, [accessLevel, token]);
+
+  const SnackbarSlideTransition = (props: SlideProps) => {
+    return <Slide {...props} direction="up" />;
+  };
 
   return (
     <>
@@ -205,10 +211,11 @@ const CardsPage = () => {
       </Grid>
       <Snackbar
         open={snackMessage.message !== null}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={() => {
           setSnackMessage({ message: null, color: snackMessage.color });
         }}
+        TransitionComponent={SnackbarSlideTransition}
       >
         <Alert
           onClose={() => {
@@ -414,8 +421,6 @@ const CardsGrid = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const searchParams = useSearchParams();
-  const action = searchParams.get("action") || null;
-  const content_id = Number(searchParams.get("content_id")) || null;
 
   const calculateMaxCardsPerPage = () => {
     // set rows as per height of each card and height of grid (approximated from window height)
@@ -445,33 +450,12 @@ const CardsGrid = ({
     return () => window.removeEventListener("resize", calculateMaxCardsPerPage);
   }, []);
 
-  const getSnackMessage = React.useCallback(
-    (action: string | null, content_id: number | null): string | null => {
-      if (action === "edit") {
-        return `Content #${content_id} updated`;
-      } else if (action === "add") {
-        return `Content #${content_id} created`;
-      }
-      return null;
-    },
-    [],
-  );
-
-  React.useEffect(() => {
-    if (action) {
-      setSnackMessage({
-        message: getSnackMessage(action, content_id),
-        color: "success",
-      });
-    }
-  }, [action, content_id, getSnackMessage]);
-
   const [refreshKey, setRefreshKey] = React.useState(0);
   const onSuccessfulArchive = (content_id: number) => {
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
-      message: `Content #${content_id} removed successfully`,
+      message: `Content removed successfully`,
       color: "success",
     });
   };
@@ -479,7 +463,7 @@ const CardsGrid = ({
     setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
-      message: `Content #${content_id} deleted successfully`,
+      message: `Content deleted successfully`,
       color: "success",
     });
   };
@@ -504,6 +488,15 @@ const CardsGrid = ({
           setCards(filteredData);
           setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
           setIsLoading(false);
+
+          const message = localStorage.getItem("editPageSnackMessage");
+          if (message) {
+            setSnackMessage({
+              message: message,
+              color: "success",
+            });
+            localStorage.removeItem("editPageSnackMessage");
+          }
         })
         .catch((error) => {
           console.error("Failed to fetch content:", error);
@@ -618,7 +611,7 @@ const CardsGrid = ({
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(content_id: number) => {
                           setSnackMessage({
-                            message: `Failed to remove content #${content_id}`,
+                            message: `Failed to remove content`,
                             color: "error",
                           });
                         }}

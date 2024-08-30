@@ -160,6 +160,10 @@ const ContentBox = ({
   const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
   const [isSaving, setIsSaving] = React.useState(false);
 
+  const setMainPageSnackMessage = (message: string): void => {
+    localStorage.setItem("editPageSnackMessage", message);
+  };
+
   const router = useRouter();
   React.useEffect(() => {
     const fetchTags = async () => {
@@ -181,6 +185,7 @@ const ContentBox = ({
 
     fetchTags();
   }, [refreshKey]);
+
   const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
 
@@ -215,6 +220,19 @@ const ContentBox = ({
       setIsSaving(false);
     }
   };
+
+  const handleSaveContent = async (content: Content) => {
+    const content_id = await saveContent(content);
+    if (content_id) {
+      {
+        content.content_id
+          ? setMainPageSnackMessage("Content edited successfully")
+          : setMainPageSnackMessage("Content created successfully");
+      }
+      router.push(`/content`);
+    }
+  };
+
   function createEmptyContent(contentTags: Tag[]): Content {
     return {
       content_id: null,
@@ -228,6 +246,7 @@ const ContentBox = ({
       content_metadata: {},
     };
   }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     key: keyof Content,
@@ -242,6 +261,7 @@ const ContentBox = ({
       : setContent({ ...emptyContent, [key]: e.target.value });
     setIsSaved(false);
   };
+
   const handleTagsChange = (updatedTags: Tag[]) => {
     setContentTags(updatedTags);
     setIsSaved(false);
@@ -272,6 +292,7 @@ const ContentBox = ({
       setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
+
   const openDeleteConfirmModal = (tag: Tag) => {
     setTagToDelete(tag);
     setOpenDeleteModal(true);
@@ -289,6 +310,7 @@ const ContentBox = ({
       });
     }
   };
+
   return (
     <Layout.FlexBox>
       <Dialog
@@ -500,15 +522,6 @@ const ContentBox = ({
               } else if (content.content_text === "") {
                 setIsContentEmpty(true);
               } else {
-                const handleSaveContent = async (content: Content) => {
-                  const content_id = await saveContent(content);
-                  if (content_id) {
-                    const actionType = content.content_id ? "edit" : "add";
-                    router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
-                    );
-                  }
-                };
                 handleSaveContent(content);
               }
             }}
