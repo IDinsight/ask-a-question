@@ -17,7 +17,7 @@ interface PerformanceProps {
   timePeriod: Period;
 }
 
-const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
+const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   const { token } = useAuth();
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -173,4 +173,4 @@ const Performance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   );
 };
 
-export default Performance;
+export default ContentPerformance;

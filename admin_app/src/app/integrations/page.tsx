@@ -1,6 +1,6 @@
 "use client";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import { Button, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Layout } from "@/components/Layout";
@@ -9,13 +9,9 @@ import { apiCalls } from "@/utils/api";
 import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
-import {
-  KeyRenewConfirmationModal,
-  NewKeyModal,
-} from "./components/APIKeyModals";
-import ChatManagersGrid from "./components/ChatManagerGrid";
+import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
+import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
-import { OpenInNew } from "@mui/icons-material";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -26,18 +22,19 @@ const IntegrationsPage = () => {
   }, [accessLevel]);
 
   return (
-    <Layout.FlexBox
-      alignItems="center"
-      paddingTop={6}
-      paddingBottom={10}
-      gap={5}
-    >
-      <KeyManagement
-        token={token}
-        editAccess={currAccessLevel === "fullaccess"}
-      />
-      <ChatManagers />
-      <RestAPI />
+    <Layout.FlexBox sx={{ alignItems: "center" }}>
+      <Box
+        sx={{
+          paddingTop: 6,
+          paddingBottom: 10,
+          paddingInline: 4,
+          maxWidth: "lg",
+        }}
+      >
+        <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
+        <Layout.Spacer multiplier={3} />
+        <Connections />
+      </Box>
     </Layout.FlexBox>
   );
 };
@@ -112,12 +109,7 @@ const KeyManagement = ({
   };
 
   return (
-    <Layout.FlexBox
-      key={"key-management"}
-      flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
-      gap={sizes.doubleBaseGap}
-    >
+    <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
         Your API Key
       </Typography>
@@ -127,9 +119,9 @@ const KeyManagement = ({
         gap={sizes.doubleBaseGap}
       >
         <Typography variant="body1">
-          You will need your API key to interact with AAQ from your chat
-          manager. You can generate a new key here, but keep in mind that any
-          old key is invalidated if a new key is created.
+          You will need your API key to interact with AAQ from your chat manager. You
+          can generate a new key here, but keep in mind that any old key is invalidated
+          if a new key is created.
         </Typography>
         <Layout.FlexBox
           flexDirection="column"
@@ -189,60 +181,21 @@ const KeyManagement = ({
   );
 };
 
-const RestAPI = () => {
-  return (
-    <Layout.FlexBox
-      key={"rest-api"}
-      flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
-      gap={sizes.doubleBaseGap}
-    >
-      <Typography variant="h4" color="primary">
-        REST API
-      </Typography>
-      <Typography variant="body1">
-        You can use REST APIs to interact with AAQ from your own application,
-        using the API key generated above as a Bearer token. Click on the link
-        below to see the documentation.
-      </Typography>
-      <Layout.FlexBox
-        flexDirection="column"
-        alignItems={"center"}
-        gap={sizes.baseGap}
-      >
-        <Typography variant="body1">
-          <Button
-            variant="outlined"
-            color="primary"
-            href="https://app.ask-a-question.com/api/docs"
-            target="_blank"
-            rel="noreferrer"
-            endIcon={<OpenInNew />}
-          >
-            REST API Documentation
-          </Button>
-        </Typography>
-      </Layout.FlexBox>
-    </Layout.FlexBox>
-  );
-};
-
-const ChatManagers = () => {
+const Connections = () => {
   return (
     <Layout.FlexBox
       key={"chat-managers"}
       flexDirection="column"
-      sx={{ maxWidth: 700, marginInline: 10 }}
       gap={sizes.doubleBaseGap}
     >
       <Typography variant="h4" color="primary">
-        Chat Managers
+        Connections
       </Typography>
       <Typography variant="body1">
-        Click on the chat manager of your choice to see instructions on how to
-        connect it to AAQ.
+        Click on the connection of your choice to see instructions on how to use it with
+        AAQ.
       </Typography>
-      <ChatManagersGrid />
+      <ConnectionsGrid />
     </Layout.FlexBox>
   );
 };

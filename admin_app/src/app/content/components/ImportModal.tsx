@@ -95,14 +95,12 @@ const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) 
     <Dialog
       open={open}
       onClose={handleClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
+      aria-labelledby="import-dialog-title"
+      aria-describedby="import-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title" sx={{ minWidth: "800px" }}>
-        Import New Contents
-      </DialogTitle>
+      <DialogTitle id="import-dialog-title">Import New Contents</DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="import-dialog-description">
           <p>
             You can use this feature to import new contents from a CSV file into AAQ.
           </p>

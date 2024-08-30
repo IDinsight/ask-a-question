@@ -13,6 +13,7 @@ import Papa from "papaparse";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
+import { Layout } from "@/components/Layout";
 
 const MAX_CARDS_TO_FETCH = 200;
 
@@ -67,21 +68,21 @@ const DownloadModal = ({
     // convert fetched contents to list of json objects
     const list_json_contents = Object.values(raw_json_contents);
     // Convert to ContentDownload structure with tag names and metadata as string
-    const list_json_content_download = (list_json_contents as Content[]).map(
-      (content: Content) => {
-        return {
-          content_id: content.content_id,
-          title: content.content_title,
-          text: content.content_text,
-          tags: content.content_tags.map((tag_id) => tag_dict[tag_id]),
-          content_metadata: JSON.stringify(content.content_metadata),
-          positive_votes: content.positive_votes,
-          negative_votes: content.negative_votes,
-          created_datetime_utc: content.created_datetime_utc,
-          updated_datetime_utc: content.updated_datetime_utc,
-        };
-      },
-    );
+    const list_json_content_download: ContentDownload[] = (
+      list_json_contents as Content[]
+    ).map((content: Content) => {
+      return {
+        content_id: content.content_id,
+        title: content.content_title,
+        text: content.content_text,
+        tags: content.content_tags.map((tag_id) => tag_dict[tag_id]),
+        content_metadata: JSON.stringify(content.content_metadata),
+        positive_votes: content.positive_votes,
+        negative_votes: content.negative_votes,
+        created_datetime_utc: content.created_datetime_utc,
+        updated_datetime_utc: content.updated_datetime_utc,
+      };
+    });
 
     return list_json_content_download;
   };
@@ -138,14 +139,15 @@ const DownloadModal = ({
     <Dialog
       open={open}
       onClose={onClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
+      aria-labelledby="download-dialog-title"
+      aria-describedby="download-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title" sx={{ minWidth: "800px" }}>
+      <DialogTitle id="download-dialog-title">
         Download all contents?
+        <Layout.Spacer horizontal multiplier={50} />
       </DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="download-dialog-description">
           This action will download all contents as a CSV file.
         </DialogContentText>
       </DialogContent>

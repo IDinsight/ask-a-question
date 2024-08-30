@@ -33,9 +33,9 @@ nav:
       - User-facing components:
           - Admin App:
               - components/admin-app/index.md
-              - Question Answering Contents: components/admin-app/manage-content.md
-              - Urgency Detection Rules: components/admin-app/manage-urgency-rules.md
-              - Dashboard: components/admin-app/dashboard.md
+              - Question Answering Contents: components/admin-app/question-answering/index.md
+              - Urgency Detection Rules: components/admin-app/urgency-rules/index.md
+              - Dashboard: components/admin-app/dashboard/index.md
           - Question-Answering Service:
               - components/qa-service/index.md
               - Search: components/qa-service/search.md

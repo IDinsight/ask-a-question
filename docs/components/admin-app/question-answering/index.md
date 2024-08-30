@@ -5,11 +5,11 @@ with questions to ensure the correct responses are fetched before releasing the 
 
 Once logged in, you should see the following screen:
 
-<img src="../manage-content-screenshot.png" alt="manage-content-screenshot" style="border: 1px solid  lightgray;">
+<img src="./manage-content-screenshot.png" alt="manage-content-screenshot" style="border: 1px solid  lightgray;">
 
 When you click the "Test" button, you can use the sidebar to try your questions.
 
-<img src="../manage-content-test-screenshot.png" alt="manage-content-test-screenshot" style="border: 1px solid  lightgray;">
+<img src="./manage-content-test-screenshot.png" alt="manage-content-test-screenshot" style="border: 1px solid  lightgray;">
 
 ## Upcoming features
 
