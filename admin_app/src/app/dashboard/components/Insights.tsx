@@ -88,7 +88,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         sx={{
           display: "flex",
           flexDirection: "row",
-          height: 400,
+          height: 600,
           width: "100%",
           border: 0.5,
           borderColor: "lightgrey",
@@ -107,7 +107,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
-            topicsPerPage={4}
+            topicsPerPage={5}
           />
         </Box>
         <Box

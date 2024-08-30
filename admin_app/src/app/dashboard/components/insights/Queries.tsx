@@ -90,10 +90,12 @@ const Queries: React.FC<QueriesProps> = ({
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
-          mb: 2,
+          marginBottom: 2,
         }}
       >
-        <Box sx={{ fontSize: 22, fontWeight: 700 }}>Example Queries</Box>
+        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+          Example Queries
+        </Typography>
         <Box sx={{ display: "flex", flexDirection: "row" }}>
           <Box
             sx={{
@@ -163,7 +165,7 @@ const Queries: React.FC<QueriesProps> = ({
           </TableContainer>
         ) : (
           <Typography>
-            Run discovery to find topics for the selected time period.
+            Click Run Discovery to find topics for this time period.
           </Typography>
         )}
       </Box>
