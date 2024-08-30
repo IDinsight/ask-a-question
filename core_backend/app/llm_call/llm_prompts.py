@@ -389,3 +389,73 @@ def get_feedback_summary_prompt(content_title: str, content: str) -> str:
         content_title=content_title,
         content=content,
     )
+
+
+class TopicModelLabelling:
+    """
+    Topic model labelling task.
+    """
+
+    class TopicModelLabellingResult(BaseModel):
+        """
+        Pydantic model for the output of the topic model labelling task.
+        """
+
+        topic_title: str
+        topic_summary: str
+
+    _context: str
+
+    _prompt_base: str = textwrap.dedent(
+        """
+        You are a summarization bot designed to condense multiple
+        messages into a topic description specific to {context}. If unknown, respond
+        with topic_title as "Unknown" and topic_summary as "Not available".
+
+        When coming up with topic_title, be very concise.
+        "topic_summary" should be a summary of the topics found in the
+        provided messages. It expands on the topic_title. Restrict it to ONLY
+        summarization. Do not include any additional information.
+        """
+    ).strip()
+
+    _response_prompt: str = textwrap.dedent(
+        """
+        Respond in json string:
+
+        {
+           topic_title: str
+           topic_summary: str
+        }
+        """
+    ).strip()
+
+    def __init__(self, context: str) -> None:
+        """
+        Initialize the topic model labelling task with context.
+        """
+        self._context = context
+
+    def get_prompt(self) -> str:
+        """
+        Returns the prompt for the topic model labelling task.
+        """
+        prompt = self._prompt_base.format(context=self._context)
+
+        return prompt + "\n\n" + self._response_prompt
+
+    def parse_json(self, json_str: str) -> dict[str, str]:
+        """
+        Validates the output of the topic model labelling task.
+        """
+
+        json_str = remove_json_markdown(json_str)
+
+        try:
+            result = TopicModelLabelling.TopicModelLabellingResult.model_validate_json(
+                json_str
+            )
+        except ValueError as e:
+            raise ValueError(f"Error validating the output: {e}") from e
+
+        return result.model_dump()

@@ -177,6 +177,49 @@ class DashboardOverview(BaseModel):
     top_content: list[TopContent]
 
 
+class Topic(BaseModel):
+    """
+    This class is used to define the schema for one topic
+    extracted from the user queries. Used for Insights page.
+    """
+
+    topic_id: int
+    topic_samples: list[dict[str, str]]
+    topic_name: str
+    topic_summary: str
+    topic_popularity: int
+
+
+class TopicsData(BaseModel):
+    """
+    This class is used to define the schema for the a large group
+    of individual Topics. Used for Insights page.
+    """
+
+    refreshTimeStamp: str
+    data: list[Topic]
+    unclustered_queries: list[dict[str, str]]
+
+
+class UserQuery(BaseModel):
+    """
+    This class is used to define the schema for the insights queries
+    """
+
+    query_id: int
+    query_text: str
+    query_datetime_utc: datetime
+
+
+class QueryCollection(BaseModel):
+    """
+    This class is used to define the schema for the insights queries data
+    """
+
+    n_queries: int
+    queries: list[UserQuery]
+
+
 class UserFeedback(BaseModel):
     """
     This class is used to define the schema for the user feedback
