@@ -1,17 +1,17 @@
-import React from "react";
+import { AutoFixHigh } from "@mui/icons-material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { LoadingButton } from "@mui/lab";
 import { Box } from "@mui/material";
+import { grey, orange } from "@mui/material/colors";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import { grey, orange } from "@mui/material/colors";
 import Typography from "@mui/material/Typography";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import Button from "@mui/material/Button";
+import React from "react";
 import { QueryData } from "../../types";
-import CircularProgress from "@mui/material/CircularProgress";
 
 interface QueriesProps {
   data: QueryData[];
@@ -106,20 +106,23 @@ const Queries: React.FC<QueriesProps> = ({
           >
             Last run: {formattedLastRefreshed}
           </Box>
-          <Button
-            disabled={refreshing}
+          <LoadingButton
             variant="contained"
+            startIcon={<AutoFixHigh />}
+            disabled={refreshing}
+            loading={refreshing}
+            loadingPosition="start"
             sx={{
-              bgcolor: orange[500],
+              bgcolor: orange[600],
               width: 180,
               "&:hover": {
-                bgcolor: orange[700],
+                bgcolor: orange[800],
               },
             }}
             onClick={onRefreshClick}
           >
-            {refreshing ? <CircularProgress size={24} /> : "Re-run Discovery"}
-          </Button>
+            {data.length > 0 ? "Rerun Discovery" : "Run Discovery"}
+          </LoadingButton>
         </Box>
       </Box>
       {data.length > 0 && <AISummary aiSummary={aiSummary} />}
@@ -159,9 +162,9 @@ const Queries: React.FC<QueriesProps> = ({
             </Table>
           </TableContainer>
         ) : (
-          <Box sx={{ fontSize: "small" }}>
-            No queries found. Please re-run discovery
-          </Box>
+          <Typography>
+            Run discovery to find topics for the selected time period.
+          </Typography>
         )}
       </Box>
     </Box>
