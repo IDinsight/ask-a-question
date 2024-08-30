@@ -107,7 +107,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
-            topicsPerPage={5}
+            topicsPerPage={8}
           />
         </Box>
         <Box

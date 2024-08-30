@@ -37,7 +37,7 @@ const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
         borderRadius: 2,
         background: "linear-gradient(to bottom, rgba(176,198,255,0.5), #ffffff)",
         p: 2,
-        mb: 3,
+        mb: 1,
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "row", mb: 2 }}>
@@ -90,12 +90,10 @@ const Queries: React.FC<QueriesProps> = ({
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
-          marginBottom: 2,
+          mb: 1,
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          Example Queries
-        </Typography>
+        <Box sx={{ fontSize: 22, fontWeight: 700 }}>Example Queries</Box>
         <Box sx={{ display: "flex", flexDirection: "row" }}>
           <Box
             sx={{
@@ -134,7 +132,7 @@ const Queries: React.FC<QueriesProps> = ({
           flexDirection: "column",
           overflow: "hidden",
           overflowY: "scroll",
-          maxHeight: 200,
+          maxHeight: 410,
         }}
       >
         {data.length > 0 ? (
@@ -165,7 +163,7 @@ const Queries: React.FC<QueriesProps> = ({
           </TableContainer>
         ) : (
           <Typography>
-            Click Run Discovery to find topics for this time period.
+            Run discovery to find topics for the selected time period.
           </Typography>
         )}
       </Box>
