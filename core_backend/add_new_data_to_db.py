@@ -367,7 +367,7 @@ def update_date_of_records(
 
         for i, row in enumerate(rows):
             # Set the date attribute to the random date
-            if hasattr(row, "query_id") and model[0] != UrgencyQueryDB:
+            if hasattr(row, "query_id") and model[0] != UrgencyResponseDB:
                 date = date_map_dic.get(row.query_id, None)
             else:
                 date = random_dates[i]
