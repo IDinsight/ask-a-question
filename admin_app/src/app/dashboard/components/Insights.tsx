@@ -7,6 +7,7 @@ import { useState } from "react";
 import { QueryData, Period, TopicModelingResponse } from "../types";
 import { generateNewTopics, fetchTopicsData } from "../api";
 import { useAuth } from "@/utils/auth";
+import { Paper } from "@mui/material";
 
 interface InsightProps {
   timePeriod: Period;
@@ -76,16 +77,31 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   );
 
   return (
-    <Grid container sx={{ bgcolor: "grey.100", borderRadius: 2, mx: 0.5 }}>
-      <Grid
-        container
-        md={12}
-        columnSpacing={{ xs: 2 }}
-        sx={{ bgcolor: "white", borderRadius: 2, mx: 0.5, mt: 2, height: 400 }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          height: 400,
+          width: "100%",
+          border: 0.5,
+          borderColor: "lightgrey",
+        }}
       >
-        <Grid
-          md={3}
-          sx={{ p: 2, borderRight: 1, borderColor: "grey.300", borderWidth: 2 }}
+        <Box
+          sx={{
+            width: "25%",
+            padding: 2,
+            borderRight: 1,
+            borderColor: "grey.300",
+            borderWidth: 2,
+          }}
         >
           <Topics
             data={topics}
@@ -93,8 +109,13 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             onClick={setSelectedTopicId}
             topicsPerPage={4}
           />
-        </Grid>
-        <Grid md={9} sx={{ p: 2 }}>
+        </Box>
+        <Box
+          sx={{
+            padding: 2,
+            width: "75%",
+          }}
+        >
           <Queries
             data={topicQueries}
             onRefreshClick={runRefresh}
@@ -102,18 +123,18 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             lastRefreshed={dataFromBackend.refreshTimeStamp}
             refreshing={refreshing}
           />
-        </Grid>
-      </Grid>
-      <Grid
-        md={12}
-        height={400}
+        </Box>
+      </Paper>
+      <Paper
+        elevation={0}
         sx={{
-          bgcolor: "white",
-          borderRadius: 2,
-          mx: 0.5,
-          mt: 2,
+          width: "100%",
+          height: "400px",
+          marginTop: 2,
           justifyItems: "center",
           justifySelf: "stretch",
+          border: 0.5,
+          borderColor: "lightgrey",
         }}
       >
         <Box
@@ -125,10 +146,10 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             justifyContent: "center",
           }}
         >
-          -- Chart - Coming Soon! --
+          Chart coming soon!
         </Box>
-      </Grid>
-    </Grid>
+      </Paper>
+    </Box>
   );
 };
 
