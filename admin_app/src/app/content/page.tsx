@@ -103,7 +103,7 @@ const CardsPage = () => {
     }
   }, [accessLevel, token]);
 
-  const SlideTransition = (props: SlideProps) => {
+  const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
   };
 
@@ -215,7 +215,7 @@ const CardsPage = () => {
         onClose={() => {
           setSnackMessage({ message: null, color: snackMessage.color });
         }}
-        TransitionComponent={SlideTransition}
+        TransitionComponent={SnackbarSlideTransition}
       >
         <Alert
           onClose={() => {
@@ -421,8 +421,6 @@ const CardsGrid = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const searchParams = useSearchParams();
-  const action = searchParams.get("action") || null;
-  const content_id = Number(searchParams.get("content_id")) || null;
 
   const calculateMaxCardsPerPage = () => {
     // set rows as per height of each card and height of grid (approximated from window height)
@@ -451,27 +449,6 @@ const CardsGrid = ({
     window.addEventListener("resize", calculateMaxCardsPerPage);
     return () => window.removeEventListener("resize", calculateMaxCardsPerPage);
   }, []);
-
-  const getSnackMessage = React.useCallback(
-    (action: string | null, content_id: number | null): string | null => {
-      if (action === "edit") {
-        return `Content updated`;
-      } else if (action === "add") {
-        return `Content created`;
-      }
-      return null;
-    },
-    [],
-  );
-
-  React.useEffect(() => {
-    if (action) {
-      setSnackMessage({
-        message: getSnackMessage(action, content_id),
-        color: "success",
-      });
-    }
-  }, [action, content_id, getSnackMessage]);
 
   const [refreshKey, setRefreshKey] = React.useState(0);
   const onSuccessfulArchive = (content_id: number) => {
@@ -511,6 +488,15 @@ const CardsGrid = ({
           setCards(filteredData);
           setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
           setIsLoading(false);
+
+          const message = localStorage.getItem("editPageSnackMessage");
+          if (message) {
+            setSnackMessage({
+              message: message,
+              color: "success",
+            });
+            localStorage.removeItem("editPageSnackMessage");
+          }
         })
         .catch((error) => {
           console.error("Failed to fetch content:", error);
