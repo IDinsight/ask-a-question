@@ -15,6 +15,8 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Slide,
+  SlideProps,
   Snackbar,
   TextField,
   Tooltip,
@@ -30,7 +32,7 @@ import type { Content } from "@/app/content/edit/page";
 import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
-import { appStyles, appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
+import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ImportModal } from "./components/ImportModal";
@@ -100,6 +102,10 @@ const CardsPage = () => {
       setCurrAccessLevel("readonly");
     }
   }, [accessLevel, token]);
+
+  const SlideTransition = (props: SlideProps) => {
+    return <Slide {...props} direction="up" />;
+  };
 
   return (
     <>
@@ -205,10 +211,11 @@ const CardsPage = () => {
       </Grid>
       <Snackbar
         open={snackMessage.message !== null}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={() => {
           setSnackMessage({ message: null, color: snackMessage.color });
         }}
+        TransitionComponent={SlideTransition}
       >
         <Alert
           onClose={() => {
