@@ -114,7 +114,7 @@ const Queries: React.FC<QueriesProps> = ({
             loadingPosition="start"
             sx={{
               bgcolor: orange[600],
-              width: 180,
+              width: 190,
               "&:hover": {
                 bgcolor: orange[800],
               },
