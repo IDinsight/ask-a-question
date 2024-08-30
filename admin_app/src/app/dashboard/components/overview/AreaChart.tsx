@@ -13,6 +13,7 @@ const AreaChart = ({ data }: { data: any }) => {
     chart: {
       id: "usage-timeseries",
       stacked: true,
+      fontFamily: "Inter",
     },
     dataLabels: {
       enabled: false,

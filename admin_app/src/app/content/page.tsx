@@ -117,7 +117,7 @@ const CardsPage = () => {
           <Layout.FlexBox
             sx={{
               alignItems: "center",
-              paddingTop: 6,
+              paddingTop: 5,
               paddingInline: 4,
             }}
           >
@@ -271,7 +271,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         sx={{
           flexDirection: "row",
           alignSelf: "flex-end",
-          px: sizes.baseGap,
+          alignItems: "center",
           gap: sizes.smallGap,
         }}
       >
@@ -553,7 +553,15 @@ const CardsGrid = ({
     <>
       <Paper
         elevation={0}
-        sx={{ minHeight: "60vh", width: "100%", border: 1, borderColor: "lightgrey" }}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          minHeight: "60vh",
+          width: "100%",
+          border: 0.5,
+          borderColor: "lightgrey",
+        }}
       >
         <Grid container>
           {cards.length === 0 ? (
@@ -626,7 +634,7 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <Layout.Spacer multiplier={1} />
+      <Layout.Spacer multiplier={0.75} />
       <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
     </>
   );

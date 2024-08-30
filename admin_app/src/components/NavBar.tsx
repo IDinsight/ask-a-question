@@ -257,11 +257,9 @@ const UserDropdown = () => {
         <MenuItem disabled>
           <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
-        {settings.map((setting) => (
-          <MenuItem key={setting} onClick={logout}>
-            <Typography textAlign="center">{setting}</Typography>
-          </MenuItem>
-        ))}
+        <MenuItem key={"logout"} onClick={logout}>
+          <Typography textAlign="center">Logout</Typography>
+        </MenuItem>
       </Menu>
     </Box>
   );
