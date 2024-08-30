@@ -265,7 +265,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <Box sx={{ width: "300px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ width: "300px" }}>
+        <Box sx={{ width: "250px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}

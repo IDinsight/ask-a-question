@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import { useAuth } from "@/utils/auth";
+import { appColors } from "@/utils";
 
 const TestSidebar = ({
   title,
@@ -126,7 +127,7 @@ const TestSidebar = ({
                 token,
               )
             }
-            sx={{ color: generateLLMResponse ? "#5480D1" : "primary" }}
+            sx={{ color: generateLLMResponse ? "#5480D1" : appColors.primary }}
             disabled={loading || question == "" ? true : false}
           >
             {loading ? <CircularProgress size={24} /> : <Send />}
