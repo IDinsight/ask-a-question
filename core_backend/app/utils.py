@@ -304,7 +304,17 @@ def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
     Params:
         mime_type (str): The MIME type of the file.
     """
+
+    mime_to_extension = {
+        "audio/mpeg": ".mp3",
+        "audio/wav": ".wav",
+        "audio/x-m4a": ".m4a",
+    }
+
     if mime_type:
+        extension = mime_to_extension.get(mime_type, None)
+        if extension:
+            return extension
         extension = mimetypes.guess_extension(mime_type)
         return extension if extension else ".bin"
 
