@@ -151,11 +151,11 @@ paraphrase_examples = [
     },
 ]
 PARAPHRASE_PROMPT = f"""You are a high-performing paraphrasing bot. \
-The user has sent a message.
+The user has sent a message for a question-answering service.
 
 If the message is a question, do not answer it, \
-just paraphrase it to remove unecessary information and focus on the question. \
-Remove any irrelevant or offensive words.
+just paraphrase it to focus on the question and include any relevant information.\
+Remove any irrelevant or offensive words
 
 If the input message is not a question, respond with the same message but \
 remove any irrelevant or offensive words.
