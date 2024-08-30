@@ -26,7 +26,7 @@ const pages: Page[] = [
     description: "Track performance of contents  and identify areas for improvement",
   },
   {
-    name: "Content Gaps",
+    name: "Query Topics",
     description:
       "Find out what users are asking about to inform creating and updating contents",
   },
@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
         return <Overview timePeriod={timePeriod} />;
       case "Content Performance":
         return <ContentPerformance timePeriod={timePeriod} />;
-      case "Content Gaps":
+      case "Query Topics":
         return <Insights timePeriod={timePeriod} />;
       default:
         return <div>Page not found.</div>;

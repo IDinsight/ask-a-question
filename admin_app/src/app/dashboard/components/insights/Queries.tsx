@@ -1,17 +1,17 @@
-import React from "react";
+import { AutoFixHigh } from "@mui/icons-material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { LoadingButton } from "@mui/lab";
 import { Box } from "@mui/material";
+import { grey, orange } from "@mui/material/colors";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import { grey, orange } from "@mui/material/colors";
 import Typography from "@mui/material/Typography";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import Button from "@mui/material/Button";
+import React from "react";
 import { QueryData } from "../../types";
-import CircularProgress from "@mui/material/CircularProgress";
 
 interface QueriesProps {
   data: QueryData[];
@@ -37,7 +37,7 @@ const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
         borderRadius: 2,
         background: "linear-gradient(to bottom, rgba(176,198,255,0.5), #ffffff)",
         p: 2,
-        mb: 3,
+        mb: 1,
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "row", mb: 2 }}>
@@ -90,7 +90,7 @@ const Queries: React.FC<QueriesProps> = ({
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
-          mb: 2,
+          mb: 1,
         }}
       >
         <Box sx={{ fontSize: 22, fontWeight: 700 }}>Example Queries</Box>
@@ -106,30 +106,33 @@ const Queries: React.FC<QueriesProps> = ({
           >
             Last run: {formattedLastRefreshed}
           </Box>
-          <Button
-            disabled={refreshing}
+          <LoadingButton
             variant="contained"
+            startIcon={<AutoFixHigh />}
+            disabled={refreshing}
+            loading={refreshing}
+            loadingPosition="start"
             sx={{
-              bgcolor: orange[500],
-              width: 180,
+              bgcolor: orange[600],
+              width: 190,
               "&:hover": {
-                bgcolor: orange[700],
+                bgcolor: orange[800],
               },
             }}
             onClick={onRefreshClick}
           >
-            {refreshing ? <CircularProgress size={24} /> : "Re-run Discovery"}
-          </Button>
+            {data.length > 0 ? "Rerun Discovery" : "Run Discovery"}
+          </LoadingButton>
         </Box>
       </Box>
-      <AISummary aiSummary={aiSummary} />
+      {data.length > 0 && <AISummary aiSummary={aiSummary} />}
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
           overflowY: "scroll",
-          maxHeight: 200,
+          maxHeight: 410,
         }}
       >
         {data.length > 0 ? (
@@ -159,9 +162,9 @@ const Queries: React.FC<QueriesProps> = ({
             </Table>
           </TableContainer>
         ) : (
-          <Box sx={{ fontSize: "small" }}>
-            No queries found. Please re-run discovery
-          </Box>
+          <Typography>
+            Click "Run Discovery" to generate insights for this time period.
+          </Typography>
         )}
       </Box>
     </Box>

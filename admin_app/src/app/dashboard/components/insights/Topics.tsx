@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import ListItemButton from "@mui/material/ListItemButton";
 import { orange } from "@mui/material/colors";
@@ -43,11 +43,13 @@ const Topics: React.FC<TopicProps> = ({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        height: 350,
+        height: "100%",
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
-        <Box sx={{ mb: 1, fontSize: 22, fontWeight: 700 }}>Topics</Box>
+        <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>
+          Topics
+        </Typography>
         {dataToShow.map((topic) => (
           <Box
             key={topic.topic_id}
@@ -76,7 +78,7 @@ const Topics: React.FC<TopicProps> = ({
                 justifyContent: "space-between",
                 borderRadius: 2,
                 my: 0.5,
-                ml: -0.5,
+                marginLeft: -0.5,
               }}
             >
               <Box>{topic.topic_name}</Box>
