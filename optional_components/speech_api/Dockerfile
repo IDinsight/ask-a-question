@@ -7,9 +7,11 @@ ARG HOME_DIR=/usr/src/${NAME}
 ARG PORT=8001
 ARG WHISPER_MODEL_DIR=/whisper_models
 ARG PREFERRED_MODEL=small
+ARG PIPER_MODELS_DIR=/models/piper
 
 RUN apt-get update && apt-get install -y \
     ffmpeg dos2unix \
+    git cmake libsndfile1-dev libasound2-dev wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -18,10 +20,21 @@ RUN useradd -ms /bin/bash -d /usr/src/${NAME} container_user
 RUN mkdir -p ${WHISPER_MODEL_DIR} \
     && chown -R container_user:container_user ${WHISPER_MODEL_DIR}
 
+RUN mkdir -p ${PIPER_MODELS_DIR} \
+    && chown -R container_user:container_user ${PIPER_MODELS_DIR}
+
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 WORKDIR ${HOME_DIR}
+
+RUN apt-get update && apt-get install -y \
+    curl
+
+RUN curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx \
+    && curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx.json \
+    && mv en_US-arctic-medium.onnx /models/piper/ \
+    && mv en_US-arctic-medium.onnx.json /models/piper/
 
 RUN python -c "import os, whisper; whisper.load_model('${PREFERRED_MODEL}', download_root='${WHISPER_MODEL_DIR}')"
 
