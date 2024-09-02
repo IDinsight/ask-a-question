@@ -66,8 +66,6 @@ DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
-# Method: LLM, AlignScore, or None
-ALIGN_SCORE_METHOD = os.environ.get("ALIGN_SCORE_METHOD", "LLM")
 
 
 # Backend paths

@@ -8,7 +8,6 @@ from typing import Any, Callable, Optional, TypedDict
 from pydantic import ValidationError
 
 from ..config import (
-    ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
     LITELLM_MODEL_ALIGNSCORE,
 )
@@ -153,17 +152,9 @@ async def _check_align_score(
         return response
 
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
-
-    if ALIGN_SCORE_METHOD is None:
-        logger.warning("No alignment score method specified.")
-        return response
-    elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
-    else:
-        raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
+    align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
 
     factual_consistency = {
-        "method": ALIGN_SCORE_METHOD,
         "score": align_score.score,
         "reason": align_score.reason,
         "claim": claim,
