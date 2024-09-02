@@ -787,6 +787,7 @@ async def get_ai_answer_summary(
             ContentFeedbackDB.feedback_datetime_utc >= start_date,
             ContentFeedbackDB.feedback_datetime_utc < end_date,
             ContentFeedbackDB.feedback_text.is_not(None),
+            ContentFeedbackDB.feedback_text != "",
         )
         .order_by(ContentFeedbackDB.feedback_datetime_utc.desc())
         .limit(max_feedback_records)
