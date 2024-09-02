@@ -49,20 +49,11 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./litellm-proxy/index.md)
 
-- :material-api:{ .lg .middle .red} __Self-hosted AlignScore Model__
+- :material-api:{ .lg .middle .red} __Self-hosted Hugging Face Embeddings Model__
 
     ---
 
-    _(Optional)_ Use a custom dockerised [AlignScore](https://arxiv.org/abs/2305.16739) model to catch
-    hallucination and check if LLM response is consistent with the context.
-
-    [:octicons-arrow-right-24: More info](./align-score/index.md)
-
-- :material-api:{ .lg .middle .red} __Self-hosted HuggingFace Embeddings Model__
-
-    ---
-
-    _(Optional)_ A dockerised huggingface text embeddings model to create vectors
+    _(Optional)_ A dockerised Hugging Face text embeddings model to create vectors
   and perform vector search.
 
     [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)

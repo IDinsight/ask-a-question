@@ -50,16 +50,3 @@ teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
 
-# alignscore containers (if it is needed)
-# Use port 5002 since port 5001 is used for dev
-setup-alignscore-container:
-	-@docker stop testalignscore
-	-@docker rm testalignscore
-	docker run --name testalignscore \
-		-p 5002:5001 \
-		-d alignscore-base:latest
-	@sleep 10
-
-teardown-alignscore-container:
-	@docker stop testalignscore
-	@docker rm testalignscore

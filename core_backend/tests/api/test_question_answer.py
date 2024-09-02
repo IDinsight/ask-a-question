@@ -821,10 +821,6 @@ class TestAlignScore:
             return AlignmentScore(score=0.2, reason="test - low score")
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output._get_alignScore_score",
-            mock_get_align_score,
-        )
-        monkeypatch.setattr(
             "core_backend.app.llm_call.process_output._get_llm_align_score",
             mock_get_align_score,
         )
@@ -843,10 +839,6 @@ class TestAlignScore:
         async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
             return AlignmentScore(score=0.9, reason="test - high score")
 
-        monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output._get_alignScore_score",
-            mock_get_align_score,
-        )
         monkeypatch.setattr(
             "core_backend.app.llm_call.process_output.ALIGN_SCORE_THRESHOLD",
             0.7,

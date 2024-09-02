@@ -5,12 +5,9 @@ These are functions to check the LLM response
 from functools import wraps
 from typing import Any, Callable, Optional, TypedDict
 
-import aiohttp
 from pydantic import ValidationError
 
 from ..config import (
-    ALIGN_SCORE_API,
-    ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
     LITELLM_MODEL_ALIGNSCORE,
 )
@@ -25,7 +22,7 @@ from ..question_answer.speech_components.external_voice_components import (
     generate_tts_on_gcs,
 )
 from ..question_answer.utils import get_context_string_from_search_results
-from ..utils import create_langfuse_metadata, get_http_client, setup_logger
+from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
 from .utils import (
@@ -155,22 +152,9 @@ async def _check_align_score(
         return response
 
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
-
-    if ALIGN_SCORE_METHOD is None:
-        logger.warning("No alignment score method specified.")
-        return response
-    elif ALIGN_SCORE_METHOD == "AlignScore":
-        if ALIGN_SCORE_API is not None:
-            align_score = await _get_alignScore_score(ALIGN_SCORE_API, align_score_data)
-        else:
-            raise ValueError("Method is AlignScore but ALIGN_SCORE_API is not set.")
-    elif ALIGN_SCORE_METHOD == "LLM":
-        align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
-    else:
-        raise NotImplementedError(f"Unknown method {ALIGN_SCORE_METHOD}")
+    align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
 
     factual_consistency = {
-        "method": ALIGN_SCORE_METHOD,
         "score": align_score.score,
         "reason": align_score.reason,
         "claim": claim,
@@ -200,28 +184,6 @@ async def _check_align_score(
     response.debug_info["factual_consistency"] = factual_consistency.copy()
 
     return response
-
-
-async def _get_alignScore_score(
-    api_url: str, align_score_date: AlignScoreData
-) -> AlignmentScore:
-    """
-    Get the alignment score from the AlignScore API
-    """
-    http_client = get_http_client()
-    assert isinstance(http_client, aiohttp.ClientSession)
-    async with http_client.post(api_url, json=align_score_date) as resp:
-        if resp.status != 200:
-            logger.error(f"AlignScore API request failed with status {resp.status}")
-            raise RuntimeError(
-                f"AlignScore API request failed with status {resp.status}"
-            )
-
-        result = await resp.json()
-    logger.info(f"AlignScore result: {result}")
-    alignment_score = AlignmentScore(score=result["alignscore"], reason="N/A")
-
-    return alignment_score
 
 
 async def _get_llm_align_score(
