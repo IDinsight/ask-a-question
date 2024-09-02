@@ -35,16 +35,16 @@ jobs:
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           git fetch origin gh-pages
-          mike set-default latest
           mike deploy \
             --push \
+            --title="${{ github.ref_name }}" \
             --update-aliases ${{ github.ref_name }} latest
+          mike set-default latest --allow-undefined --push
 
       - name: Add CNAME
         run: |
-          git fetch origin
           git switch gh-pages
-          echo "docs.ask-a-question.com" > CNAME
+          echo "docs.ask-a-question.com" >> CNAME
           git add CNAME
           git commit -m "Add CNAME"
-          git push origin gh-pages
+          git push -f origin gh-pages

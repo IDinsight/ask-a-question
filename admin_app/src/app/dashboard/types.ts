@@ -46,6 +46,31 @@ interface RowDataType extends ContentData {
   id: number;
 }
 
+interface QueryData {
+  query_text: string;
+  query_datetime_utc: string;
+}
+
+interface TopicModelingData {
+  topic_id: number;
+  topic_samples: QueryData[];
+  topic_summary: string;
+  topic_name: string;
+  topic_popularity: number;
+}
+
+interface TopicModelingResponse {
+  refreshTimeStamp: string;
+  data: TopicModelingData[];
+  unclustered_queries: QueryData[];
+}
+
+interface TopicData {
+  topic_id: number;
+  topic_name: string;
+  topic_popularity: number;
+}
+
 export type {
   DrawerData,
   Period,
@@ -54,6 +79,10 @@ export type {
   ApexData,
   TopContentData,
   RowDataType,
+  QueryData,
+  TopicData,
+  TopicModelingData,
+  TopicModelingResponse,
 };
 
 export { drawerWidth };

@@ -39,7 +39,7 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "fullaccess")
 _USER_ID = 1
 
-N_DATAPOINTS = 100
+N_DATAPOINTS = 2000
 URGENCY_RATE = 0.1
 NEGATIVE_FEEDBACK_RATE = 0.1
 
@@ -187,7 +187,7 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
         user_id=_USER_ID,
         session_id=1,
         feedback_secret_key="abc123",  # pragma: allowlist secret
-        query_text="test query",
+        query_text=generate_synthetic_query(),
         query_generate_llm_response=False,
         query_metadata={},
         query_datetime_utc=dt,
@@ -337,6 +337,104 @@ def add_content_data() -> None:
         session.add(content_db)
         session.commit()
         session.close()
+
+
+MATERNAL_HEALTH_TERMS = [
+    # General Terms
+    "pregnancy",
+    "birth",
+    "postpartum",
+    "natal care",
+    "breastfeeding",
+    "midwife",
+    "maternal health",
+    "childbirth",
+    "labor",
+    "delivery",
+    "newborn",
+    "baby",
+    "preterm birth",
+    "gestational diabetes",
+    "ultrasound",
+    "fetal monitoring",
+    "prenatal care",
+    "maternity leave",
+    "family planning",
+    # Medical Conditions
+    "preeclampsia",
+    "eclampsia",
+    "placenta previa",
+    "placental abruption",
+    "hyperemesis gravidarum",
+    "chorioamnionitis",
+    "amniotic fluid embolism",
+    "postpartum hemorrhage",
+    "polyhydramnios",
+    "oligohydramnios",
+    "intrauterine growth restriction",
+    "stillbirth",
+    "hemolytic disease",
+    # Procedures and Tests
+    "amniocentesis",
+    "chorionic villus sampling",
+    "non-stress test",
+    "biophysical profile",
+    "doppler ultrasound",
+    "glucose tolerance test",
+    "cervical check",
+    "internal fetal monitoring",
+    # Support and Care
+    "lactation consultant",
+    "doula",
+    "support group",
+    "parenting classes",
+    "infant care",
+    "postpartum support",
+    "mental health screening",
+    "breastfeeding support",
+    "pediatric care",
+    # Wellness and Lifestyle
+    "nutrition during pregnancy",
+    "exercise during pregnancy",
+    "birth plan",
+    "home birth",
+    "hospital birth",
+    "water birth",
+    "natural birth",
+    "epidural",
+    "pain management",
+    "birthing center",
+    # Emotional and Psychological Aspects
+    "postpartum depression",
+    "anxiety",
+    "parenting stress",
+    "bonding with baby",
+    "maternal bonding",
+    "new parent support",
+    "adjustment to parenthood",
+    "family dynamics",
+]
+
+# Common query templates
+QUERY_TEMPLATES = [
+    "What are the symptoms of {term}?",
+    "How can I manage {term} during pregnancy?",
+    "What is {term} and how does it affect childbirth?",
+    "Where can I find support for {term}?",
+    "What are the latest treatments for {term}?",
+    "Is {term} common during pregnancy?",
+    "How does {term} impact postpartum recovery?",
+    "What should I know about {term} before giving birth?",
+    "Can {term} affect my baby’s health?",
+    "What are the best practices for dealing with {term}?",
+]
+
+
+def generate_synthetic_query() -> str:
+    """Generates a random human-like query related to maternal health."""
+    template = random.choice(QUERY_TEMPLATES)
+    term = random.choice(MATERNAL_HEALTH_TERMS)
+    return template.format(term=term)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from litellm import acompletion
 
 from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_DEFAULT
@@ -11,9 +9,9 @@ logger = setup_logger("LLM_call")
 async def _ask_llm_async(
     user_message: str,
     system_message: str,
-    litellm_model: Optional[str] = LITELLM_MODEL_DEFAULT,
-    litellm_endpoint: Optional[str] = LITELLM_ENDPOINT,
-    metadata: Optional[dict] = None,
+    litellm_model: str | None = LITELLM_MODEL_DEFAULT,
+    litellm_endpoint: str | None = LITELLM_ENDPOINT,
+    metadata: dict | None = None,
     json: bool = False,
 ) -> str:
     """

@@ -1,22 +1,21 @@
 import React from "react";
 
 import {
+  Category,
+  ChevronLeft,
+  ChevronRight,
+  Dashboard,
+  QueryStats,
+} from "@mui/icons-material";
+import {
   Box,
+  IconButton,
   List,
-  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Typography,
-  IconButton,
 } from "@mui/material";
-import {
-  BarChart,
-  ChevronLeft,
-  ChevronRight,
-  Dashboard,
-  Insights,
-} from "@mui/icons-material";
 import MuiDrawer from "@mui/material/Drawer";
 import { CSSObject, styled, Theme } from "@mui/material/styles";
 import { drawerWidth } from "../types";
@@ -28,7 +27,7 @@ interface SideBarProps {
   selectedDashboardPage: PageName;
 }
 
-type PageName = "Overview" | "Performance" | "Insights";
+type PageName = "Overview" | "Content Performance" | "Query Topics";
 
 interface MenuItem {
   name: PageName;
@@ -36,8 +35,8 @@ interface MenuItem {
 }
 const menuItems: MenuItem[] = [
   { name: "Overview", icon: <Dashboard /> },
-  { name: "Performance", icon: <BarChart /> },
-  { name: "Insights", icon: <Insights /> },
+  { name: "Content Performance", icon: <QueryStats /> },
+  { name: "Query Topics", icon: <Category /> },
 ];
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
@@ -83,13 +82,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
   ({ open, setOpen, setDashboardPage, selectedDashboardPage }, ref) => {
     return (
       <Drawer open={open} variant="permanent" ref={ref}>
-        <List sx={{ paddingTop: 13 }}>
+        <List sx={{ paddingTop: 12 }}>
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              flexGrow: 0,
             }}
           >
             <Box
@@ -97,8 +95,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                 justifyContent: "space-between",
                 display: "flex",
                 alignItems: "center",
-                paddingRight: 1,
-                paddingBottom: 1.5,
+                marginLeft: 2.5,
+                marginRight: 1,
+                marginBottom: 1.5,
               }}
             >
               {open ? (
@@ -107,26 +106,19 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                     variant="overline"
                     sx={{
                       display: "flex",
-                      padding: 2,
-                      mx: 1,
-                      py: 1,
                       color: "grey.500",
                     }}
                   >
-                    MAIN MENU
+                    DASHBOARD
                   </Typography>
                   <IconButton onClick={() => setOpen(false)}>
                     <ChevronLeft />
                   </IconButton>
                 </>
               ) : (
-                <Box
-                  sx={{ paddingLeft: 2.5, paddingTop: 0.5, paddingBottom: 0.5 }}
-                >
-                  <IconButton onClick={() => setOpen(true)}>
-                    <ChevronRight />
-                  </IconButton>
-                </Box>
+                <IconButton onClick={() => setOpen(true)}>
+                  <ChevronRight />
+                </IconButton>
               )}
             </Box>
             {menuItems.map((item: MenuItem, i: number) => (
@@ -141,7 +133,6 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   display: "flex",
                   marginLeft: 2,
                   marginBottom: 1,
-                  alignContent: "stretch",
                   width: "90%",
                   borderRadius: 2,
                 }}
@@ -158,28 +149,23 @@ const Sidebar = React.forwardRef<HTMLDivElement, SideBarProps>(
                   }}
                 />
                 <ListItemButton
-                  sx={{ px: 1, borderRadius: 2 }}
+                  sx={{ paddingInline: 1, borderRadius: 2 }}
                   onClick={() => setDashboardPage(item.name)}
                   dense
                 >
                   <ListItemIcon
                     sx={{
                       minWidth: 0,
-                      mr: open ? 3 : "auto",
-                      justifyContent: "center",
-
-                        color:
-                          item.name == selectedDashboardPage
-                            ? "primary.main"
-                            : "secondary.main",
+                      marginRight: 2,
+                      color:
+                        item.name == selectedDashboardPage
+                          ? "primary.main"
+                          : "secondary.main",
                     }}
                   >
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.name}
-                    sx={{ opacity: open ? 1 : 0 }}
-                  />
+                  <ListItemText primary={item.name} sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
               </Box>
             ))}

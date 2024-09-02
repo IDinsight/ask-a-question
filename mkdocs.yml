@@ -33,26 +33,21 @@ nav:
       - User-facing components:
           - Admin App:
               - components/admin-app/index.md
-              - Manage Content: components/admin-app/manage-content.md
-              - Manage Urgency Detection rules: components/admin-app/manage-urgency-rules.md
-              - Test: components/admin-app/playground.md
-              - Dashboard: components/admin-app/dashboard.md
+              - Question Answering Contents: components/admin-app/question-answering/index.md
+              - Urgency Detection Rules: components/admin-app/urgency-rules/index.md
+              - Dashboard: components/admin-app/dashboard/index.md
           - Question-Answering Service:
               - components/qa-service/index.md
               - Search: components/qa-service/search.md
               - Voice Search: components/qa-service/voice-search.md
               - Response Feedback: components/qa-service/response-feedback.md
               - Content Feedback: components/qa-service/content-feedback.md
-          - Urgency Detection:
+          - Urgency Detection Service:
               - components/urgency-detection/index.md
       - Internal components:
           - LLM Proxy Server:
               - components/litellm-proxy/index.md
-          - Align Score:
-              - components/align-score/index.md
-              - Deployment: components/align-score/deployment.md
-              - Testing: components/align-score/testing.md
-          - HuggingFace embeddings:
+          - Hugging Face Embeddings:
               - components/huggingface-embeddings/index.md
               - How to use: components/huggingface-embeddings/how-to-use.md
           - Voice Service:

@@ -115,17 +115,13 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
         variant="h6"
         gutterBottom
         component="div"
-        sx={{ p: 3, py: 2, fontWeight: "bold" }}
+        sx={{ p: 3, py: 2, fontWeight: 500 }}
       >
         Most Sent Content
       </Typography>
       <Box sx={{ mx: 3 }}>
         <TableContainer component={Paper}>
-          <Table
-            sx={{ minWidth: 700 }}
-            size="small"
-            aria-label="top-content-table"
-          >
+          <Table sx={{ minWidth: 700 }} size="small" aria-label="top-content-table">
             <TableHead>
               <TableRow>
                 <StyledTableCell>Content</StyledTableCell>
@@ -161,9 +157,7 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
                   <StyledTableCell align="right">
                     {format(new Date(row.last_updated), "yyyy-MM-dd HH:mm")}
                   </StyledTableCell>
-                  <StyledTableCell align="right">
-                    {row.query_count}
-                  </StyledTableCell>
+                  <StyledTableCell align="right">{row.query_count}</StyledTableCell>
                   <StyledTableCell align="right" sx={{ width: 500 }}>
                     <UpvoteDownvoteBarChart
                       positiveVotes={row.positive_votes}

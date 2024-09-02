@@ -121,6 +121,7 @@ def _process_identified_language_response(
 
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,
@@ -206,6 +207,7 @@ async def _translate_question(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,
@@ -275,6 +277,7 @@ async def _classify_safety(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,
@@ -352,6 +355,7 @@ async def _paraphrase_question(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
             search_results=response.search_results,

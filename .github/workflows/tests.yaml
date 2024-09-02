@@ -11,7 +11,6 @@ env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
-  ALIGN_SCORE_API: http://alignscore:5001/alignscore_base
   REDIS_HOST: redis://redis:6379
 jobs:
   container-job:
@@ -40,15 +39,6 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-      alignscore:
-        image: public.ecr.aws/j3r7b4k0/alignscore-base:latest
-        ports:
-          - 5001:5001
-        options: >-
-          --health-cmd "curl -f http://localhost:5001/healthcheck"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: install dependencies
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all

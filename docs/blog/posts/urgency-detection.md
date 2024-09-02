@@ -74,4 +74,4 @@ and update the `LITELLM_MODEL_URGENCY_DETECT` environment variable to point to y
 
 - [LLM Proxy Server](../../components/litellm-proxy/index.md)
 - [Urgency Detection](../../components/urgency-detection/index.md)
-- [Managing Urgency Rules](../../components/admin-app/manage-urgency-rules.md)
+- [Managing Urgency Rules](../../components/admin-app/urgency-rules/index.md)
