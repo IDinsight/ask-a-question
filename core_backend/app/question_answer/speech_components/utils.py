@@ -1,9 +1,10 @@
 import os
+from io import BytesIO
 
 from pydub import AudioSegment
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
-from ...utils import setup_logger
+from ...utils import get_http_client, setup_logger
 
 logger = setup_logger("Voice utils")
 
@@ -80,3 +81,20 @@ def set_wav_specifications(wav_filename: str) -> str:
 
     logger.info(f"Updated file created: {updated_wav_filename}")
     return updated_wav_filename
+
+
+async def post_to_internal_tts(text: str, endpoint_url: str) -> BytesIO:
+    """
+    Post request to synthesize speech using the internal TTS model.
+    """
+    async with get_http_client() as client:
+        payload = {"text": text}
+        async with client.post(endpoint_url, json=payload) as response:
+            if response.status != 200:
+                error_content = await response.json()
+                logger.error(f"Error from CUSTOM_TTS_ENDPOINT: {error_content}")
+                raise ValueError(f"Error from CUSTOM_TTS_ENDPOINT: {error_content}")
+
+            audio_content = await response.read()
+
+            return BytesIO(audio_content)

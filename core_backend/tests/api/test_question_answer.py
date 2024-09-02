@@ -586,7 +586,7 @@ class TestSTTResponse:
             async_fake_generate_speech,
         )
         monkeypatch.setattr(
-            "core_backend.app.question_answer.routers.post_to_speech",
+            "core_backend.app.question_answer.routers.post_to_speech_stt",
             dummy_post_to_speech,
         )
 

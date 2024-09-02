@@ -8,6 +8,7 @@ ARG PORT=8001
 ARG WHISPER_MODEL_DIR=/whisper_models
 ARG PREFERRED_MODEL=small
 ARG PIPER_MODELS_DIR=/models/piper
+ARG ENG_MODEL_NAME=en_US-arctic-medium.onnx
 
 RUN apt-get update && apt-get install -y \
     ffmpeg dos2unix \
@@ -33,8 +34,8 @@ RUN apt-get update && apt-get install -y \
 
 RUN curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx \
     && curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx.json \
-    && mv en_US-arctic-medium.onnx /models/piper/ \
-    && mv en_US-arctic-medium.onnx.json /models/piper/
+    && mv en_US-arctic-medium.onnx ${PIPER_MODELS_DIR}/ \
+    && mv en_US-arctic-medium.onnx.json ${PIPER_MODELS_DIR}/
 
 RUN python -c "import os, whisper; whisper.load_model('${PREFERRED_MODEL}', download_root='${WHISPER_MODEL_DIR}')"
 
@@ -46,6 +47,8 @@ RUN chown -R container_user:container_user ${HOME_DIR}
 ENV PORT=${PORT}
 ENV WHISPER_MODEL_DIR=${WHISPER_MODEL_DIR}
 ENV PREFERRED_MODEL=${PREFERRED_MODEL}
+ENV PIPER_MODELS_DIR=${PIPER_MODELS_DIR}
+ENV ENG_MODEL_NAME=${MODEL_NAME}
 
 EXPOSE ${PORT}
 

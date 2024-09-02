@@ -12,6 +12,8 @@ from ..config import (
     ALIGN_SCORE_API,
     ALIGN_SCORE_METHOD,
     ALIGN_SCORE_THRESHOLD,
+    CUSTOM_TTS_ENDPOINT,
+    GCS_SPEECH_BUCKET,
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
@@ -24,8 +26,17 @@ from ..question_answer.schemas import (
 from ..question_answer.speech_components.external_voice_components import (
     generate_tts_on_gcs,
 )
+from ..question_answer.speech_components.utils import post_to_internal_tts
 from ..question_answer.utils import get_context_string_from_search_results
-from ..utils import create_langfuse_metadata, get_http_client, setup_logger
+from ..utils import (
+    create_langfuse_metadata,
+    generate_public_url,
+    generate_random_filename,
+    get_file_extension_from_mime_type,
+    get_http_client,
+    setup_logger,
+    upload_file_to_gcs,
+)
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer
 from .utils import (
@@ -352,10 +363,31 @@ async def _generate_tts_response(
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        tts_file_path = await generate_tts_on_gcs(
-            text=response.llm_response,
-            language=query_refined.original_language,
+        if CUSTOM_TTS_ENDPOINT is not None:
+            tts_file = await post_to_internal_tts(
+                text=response.llm_response,
+                endpoint_url=CUSTOM_TTS_ENDPOINT,
+            )
+
+        else:
+            tts_file = await generate_tts_on_gcs(
+                text=response.llm_response,
+                language=query_refined.original_language,
+            )
+
+        content_type = "audio/wav"
+        file_extension = get_file_extension_from_mime_type(content_type)
+        unique_filename = generate_random_filename(file_extension)
+        destination_blob_name = f"tts-voice-notes/{unique_filename}"
+
+        await upload_file_to_gcs(
+            GCS_SPEECH_BUCKET, tts_file, destination_blob_name, content_type
         )
+
+        tts_file_path = await generate_public_url(
+            GCS_SPEECH_BUCKET, destination_blob_name
+        )
+
         response.tts_filepath = tts_file_path
     except ValueError as e:
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")

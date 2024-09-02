@@ -75,7 +75,9 @@ ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
-CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
+CUSTOM_STT_ENDPOINT = os.environ.get("CUSTOM_STT_ENDPOINT", None)
+CUSTOM_TTS_ENDPOINT = os.environ.get("CUSTOM_TTS_ENDPOINT", None)
+
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
