@@ -2,31 +2,21 @@
 
 <div class="grid cards" markdown>
 
-- :material-database:{ .lg .middle .red} __Manage content__
+- :material-database:{ .lg .middle .red} __Question Answering Contents__
 
     ---
 
-    Allows you to view, create, edit, or delete content.
+    Allows you to view, create, edit, delete, or test content.
 
-    [:octicons-arrow-right-24: More info](./manage-content.md)
+    [:octicons-arrow-right-24: More info](./question-answering/index.md)
 
-- :material-database-eye:{ .lg .middle .red} __Manage urgency rules__
-
-    ---
-
-    Allows you to view, create, edit, or delete urgency rules.
-
-    [:octicons-arrow-right-24: More info](./manage-urgency-rules.md)
-
-- :material-chat-question:{ .lg .middle } __Test__
+- :material-database-eye:{ .lg .middle .red} __Urgency Detection Rules__
 
     ---
 
-    Allows you to experiment with the Question-Answering and Urgency Detection.
-    You can use this to simulate a question being asked by a user within a chat
-    window.
+    Allows you to view, create, edit, delete, or test urgency rules.
 
-    [:octicons-arrow-right-24: More info](./playground.md)
+    [:octicons-arrow-right-24: More info](./urgency-rules/index.md)
 
 - :material-view-dashboard:{ .lg .middle } __Dashboard__
 
@@ -35,14 +25,7 @@
     Allows you to see statistics like which content is most frequently being
     used, or the feedback from users on responses provided by the service.
 
-    [:octicons-arrow-right-24: More info](./dashboard.md)
-
-- :material-monitor-dashboard: __Engineer's Dashboard (Coming Soon)__
-
-    ---
-
-    Shows you technical performance of the application like uptime, throughput,
-    response time, and the number of responses by HTTP response codes
+    [:octicons-arrow-right-24: More info](./dashboard/index.md)
 
 </div>
 

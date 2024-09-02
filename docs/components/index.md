@@ -8,6 +8,15 @@ There are 3 main components in Ask-A-Question.
 
 <div class="grid cards" markdown>
 
+- :material-react:{ .lg .middle } __The Admin App__
+
+    ---
+
+    Manage content in the database. Manage urgency detection rules. Test the service's performance.
+    Explore usage dashboards.
+
+    [:octicons-arrow-right-24: More info](./admin-app/index.md)
+
 - :material-api:{ .lg .middle .red} __The Question-Answering Service__
 
     ---
@@ -25,16 +34,6 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./urgency-detection/index.md)
 
-- :material-react:{ .lg .middle } __The Admin App__
-
-    ---
-
-    Manage content in the database. Manage urgency detection rules. Test the service in the playground.
-    Explore usage dashboards.
-
-    [:octicons-arrow-right-24: More info](./admin-app/index.md)
-
-
 </div>
 
 ## Internal Components
@@ -50,20 +49,11 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./litellm-proxy/index.md)
 
-- :material-api:{ .lg .middle .red} __Custom Align Score Model__
+- :material-api:{ .lg .middle .red} __Self-hosted Hugging Face Embeddings Model__
 
     ---
 
-    _(Optional)_ Use a custom dockerised [AlignScore](https://arxiv.org/abs/2305.16739) model to catch
-    hallucination and check if LLM response is consistent with the context.
-
-    [:octicons-arrow-right-24: More info](./align-score/index.md)
-
-- :material-api:{ .lg .middle .red} __Hugging Face embeddings Model__
-
-    ---
-
-    _(Optional)_ A dockerised huggingface text embeddings model to create vectors
+    _(Optional)_ A dockerised Hugging Face text embeddings model to create vectors
   and perform vector search.
 
     [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)

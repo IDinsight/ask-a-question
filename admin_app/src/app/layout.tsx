@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Ask A Question",
-  description: "Admin application to manage content and glean insights",
+  description: "Trustworthy answers for communities. Actionable insights for you.",
 };
 
 export default function RootLayout({

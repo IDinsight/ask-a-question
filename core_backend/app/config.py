@@ -55,10 +55,20 @@ LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
 LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
     "LITELLM_MODEL_DASHBOARD_SUMMARY", "openai/dashboard-summary"
 )
+
+LITELLM_MODEL_TOPIC_MODEL = os.environ.get(
+    "LITELLM_MODEL_TOPIC_MODEL", "openai/topic-label"
+)
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"
 )
+# Cross-encoder
+USE_CROSS_ENCODER = os.environ.get("USE_CROSS_ENCODER", "True")
+CROSS_ENCODER_MODEL = os.environ.get(
+    "CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
+
 # Rate limit variables
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
@@ -66,10 +76,7 @@ DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
-# Method: LLM, AlignScore, or None
-ALIGN_SCORE_METHOD = os.environ.get("ALIGN_SCORE_METHOD", "LLM")
-# if AlignScore, set ALIGN_SCORE_API. If LLM, set LITELLM_MODEL_ALIGNSCORE above.
-ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
+
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")

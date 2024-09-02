@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Annotated, List
+from typing import List
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ContentCreate(BaseModel):
@@ -9,14 +9,16 @@ class ContentCreate(BaseModel):
     Pydantic model for content creation request
     """
 
-    content_title: Annotated[str, StringConstraints(max_length=150)] = Field(
+    content_title: str = Field(
+        max_length=150,
         examples=["Example Content Title"],
     )
-    content_text: Annotated[str, StringConstraints(max_length=2000)] = Field(
-        examples=["This is an example content."]
+    content_text: str = Field(
+        max_length=2000,
+        examples=["This is an example content."],
     )
-    content_tags: list = Field(default=[], examples=[[1, 4]])
-    content_metadata: dict = Field(default={}, examples=[{"key": "optional_value"}])
+    content_tags: list = Field(default=[])
+    content_metadata: dict = Field(default={})
     is_archived: bool = False
 
     model_config = ConfigDict(

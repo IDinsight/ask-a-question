@@ -292,7 +292,11 @@ const getGoogleLoginToken = async (idToken: {
   });
 };
 
-const getEmbeddingsSearch = async (search: string, token: string) => {
+const getSearch = async (
+  question: string,
+  generate_llm_response: boolean,
+  token: string,
+) => {
   const embeddingUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
   return fetch(embeddingUrl, {
     method: "POST",
@@ -300,29 +304,10 @@ const getEmbeddingsSearch = async (search: string, token: string) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ query_text: search, generate_llm_response: false }),
-  })
-    .then((response) => {
-      return response.json().then((data) => {
-        const responseWithStatus = { status: response.status, ...data };
-        return responseWithStatus;
-      });
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      throw error;
-    });
-};
-
-const getLLMResponse = async (search: string, token: string) => {
-  const llmResponseUrl = `${NEXT_PUBLIC_BACKEND_URL}/search`;
-  return fetch(llmResponseUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ query_text: search, generate_llm_response: true }),
+    body: JSON.stringify({
+      query_text: question,
+      generate_llm_response: generate_llm_response,
+    }),
   })
     .then((response) => {
       return response.json().then((data) => {
@@ -477,8 +462,7 @@ export const apiCalls = {
   deleteUrgencyRule,
   getLoginToken,
   getGoogleLoginToken,
-  getEmbeddingsSearch,
-  getLLMResponse,
+  getSearch,
   postResponseFeedback,
   getQuestionStats,
   getUrgencyDetection,

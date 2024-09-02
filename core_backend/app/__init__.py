@@ -1,10 +1,13 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
+import sklearn  # noqa
+import torch  # noqa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess
 from redis import asyncio as aioredis
+from sentence_transformers import CrossEncoder
 
 from . import (
     admin,
@@ -18,7 +21,7 @@ from . import (
     urgency_rules,
     user_tools,
 )
-from .config import DOMAIN, LANGFUSE, REDIS_HOST
+from .config import CROSS_ENCODER_MODEL, DOMAIN, LANGFUSE, REDIS_HOST, USE_CROSS_ENCODER
 from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
@@ -90,7 +93,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     logger.info("Application started")
     app.state.redis = await aioredis.from_url(REDIS_HOST)
+    if USE_CROSS_ENCODER == "True":
+        app.state.crossencoder = CrossEncoder(
+            CROSS_ENCODER_MODEL,
+        )
+
     yield
+
     await app.state.redis.close()
     logger.info("Application finished")
 

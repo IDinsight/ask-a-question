@@ -1,10 +1,12 @@
 """This module contains the FastAPI router for the dashboard endpoints."""
 
+import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Tuple
 
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
+from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -20,6 +22,7 @@ from .models import (
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
+    get_raw_queries,
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
@@ -30,7 +33,9 @@ from .schemas import (
     DashboardPerformance,
     DetailsDrawer,
     TimeFrequency,
+    TopicsData,
 )
+from .topic_modeling import topic_model_queries
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -256,4 +261,82 @@ async def retrieve_overview(
         heatmap=heatmap,
         time_series=time_series,
         top_content=top_content,
+    )
+
+
+@router.get("/insights/{time_frequency}/refresh", response_model=dict)
+async def refresh_insights_frequency(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> dict:
+    """
+    Refresh topic modelling insights for the time period specified.
+    """
+
+    _, start_date = get_frequency_and_startdate(time_frequency)
+
+    await refresh_insights(
+        time_frequency=time_frequency,
+        user_db=user_db,
+        request=request,
+        start_date=start_date,
+        asession=asession,
+    )
+
+    return {"status": "success"}
+
+
+async def refresh_insights(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+    start_date: date,
+    asession: AsyncSession = Depends(get_async_session),
+) -> TopicsData:
+    """
+    Retrieve topic modelling insights for the time period specified
+    and write to Redis.
+    """
+
+    redis = request.app.state.redis
+    time_period_queries = await get_raw_queries(
+        user_id=user_db.user_id,
+        asession=asession,
+        start_date=start_date,
+    )
+    topic_output = await topic_model_queries(user_db.user_id, time_period_queries)
+
+    await redis.set(
+        f"{user_db.username}_insights_{time_frequency}_results",
+        topic_output.model_dump_json(),
+    )
+    return topic_output
+
+
+@router.get("/insights/{time_frequency}", response_model=TopicsData)
+async def retrieve_insights_frequency(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+) -> TopicsData:
+    """
+    Retrieve topic modelling insights for the time period specified.
+    """
+
+    redis = request.app.state.redis
+
+    if await redis.exists(f"{user_db.username}_insights_{time_frequency}_results"):
+        payload = await redis.get(
+            f"{user_db.username}_insights_{time_frequency}_results"
+        )
+        parsed_payload = json.loads(payload)
+        topics_data = TopicsData(**parsed_payload)
+        return topics_data
+
+    return TopicsData(
+        refreshTimeStamp="",
+        data=[],
+        unclustered_queries=[],
     )

@@ -52,16 +52,12 @@ async def transcribe_audio(audio_filename: str) -> str:
 
 async def generate_tts_on_gcs(
     text: str,
-    language: IdentifiedLanguage | None,
+    language: IdentifiedLanguage,
 ) -> BytesIO:
     """
     Converts the provided text to speech using the specified voice model
     using Google Text-to-Speech.
     """
-    if language is None:
-        error_msg = "Language must be provided to generate speech."
-        logger.error(error_msg)
-        raise ValueError(error_msg)
 
     try:
         client = texttospeech.TextToSpeechClient()

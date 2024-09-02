@@ -1,6 +1,7 @@
 import argparse
 import json
 import random
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
@@ -11,11 +12,18 @@ from add_users_to_db import ADMIN_API_KEY
 from app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
-    LITELLM_MODEL_DEFAULT,
+    LITELLM_MODEL_GENERATION,
 )
+from app.contents.models import ContentDB
 from app.database import get_session
-from app.question_answer.models import ContentFeedbackDB, QueryDB, ResponseFeedbackDB
-from app.urgency_detection.models import UrgencyQueryDB
+from app.llm_call.utils import remove_json_markdown
+from app.question_answer.models import (
+    ContentFeedbackDB,
+    QueryDB,
+    QueryResponseContentDB,
+    ResponseFeedbackDB,
+)
+from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from app.users.models import UserDB
 from app.utils import get_key_hash
 from litellm import completion
@@ -29,6 +37,7 @@ urllib3.disable_warnings(InsecureRequestWarning)
 
 try:
     import requests  # type: ignore
+
 except ImportError:
     print(
         "Please install requests library using `pip install requests` "
@@ -39,7 +48,9 @@ MODELS = [
     (QueryDB, "query_datetime_utc"),
     (ResponseFeedbackDB, "feedback_datetime_utc"),
     (ContentFeedbackDB, "feedback_datetime_utc"),
+    (QueryResponseContentDB, "created_datetime_utc"),
     (UrgencyQueryDB, "message_datetime_utc"),
+    (UrgencyResponseDB, "response_datetime_utc"),
 ]
 
 parser = argparse.ArgumentParser(
@@ -54,6 +65,7 @@ parser = argparse.ArgumentParser(
         --api-key <API_KEY> \
         --nb-workers 8 \
         --start-date 01-08-23
+        --end-date 04-09-24
 
 """,
 )
@@ -70,6 +82,16 @@ parser.add_argument(
 parser.add_argument(
     "--start-date",
     help="Start date for the records in the format dd-mm-yy",
+    required=False,
+)
+parser.add_argument(
+    "--end-date",
+    help="End date for the records in the format dd-mm-yy",
+    required=False,
+)
+parser.add_argument(
+    "--subset",
+    help="Subset of the data to use for testing",
     required=False,
 )
 args = parser.parse_args()
@@ -106,7 +128,7 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
     """
 
     response = completion(
-        model=LITELLM_MODEL_DEFAULT,
+        model=LITELLM_MODEL_GENERATION,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
         messages=[{"role": "user", "content": prompt}],
@@ -114,39 +136,46 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
         temperature=0.7,
     )
 
-    # Extract the output from the response
-    feedback_output = response["choices"][0]["message"]["content"].strip()
-    feedback_output = feedback_output.replace("json", "")
-    feedback_output = feedback_output.replace("\n", "").strip()
-
     try:
+        # Extract the output from the response
+        feedback_output = response["choices"][0]["message"]["content"].strip()
+        feedback_output = remove_json_markdown(feedback_output)
         feedback_dict = json.loads(feedback_output)
         if isinstance(feedback_dict, dict) and "output" in feedback_dict:
-
             return feedback_dict
         else:
             raise ValueError("Output is not in the correct format.")
-    except (SyntaxError, ValueError) as e:
+    except Exception as e:
         print(f"Output is not in the correct format.{e}")
         return None
 
 
-def save_single_row(endpoint: str, data: dict) -> dict:
+def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
     """
     Save a single row in the database.
     """
+    try:
+        response = requests.post(
+            endpoint,
+            headers={
+                "accept": "application/json",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {API_KEY}",
+            },
+            json=data,
+            verify=False,
+        )
+        response.raise_for_status()
+        return response.json()
 
-    response = requests.post(
-        endpoint,
-        headers={
-            "accept": "application/json",
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_KEY}",
-        },
-        json=data,
-        verify=False,
-    )
-    return response.json()
+    except Exception as e:
+        if retries > 0:
+            # Implement exponential wait before retrying
+            time.sleep(2 ** (2 - retries))
+            return save_single_row(endpoint, data, retries=retries - 1)
+        else:
+            print(f"Request failed after retries: {e}")
+            return None
 
 
 def process_search(_id: int, text: str) -> tuple | None:
@@ -161,7 +190,7 @@ def process_search(_id: int, text: str) -> tuple | None:
         "generate_tts": False,
     }
     response = save_single_row(endpoint, data)
-    if "search_results" in response:
+    if response and isinstance(response, dict) and "search_results" in response:
         return (
             _id,
             response["query_id"],
@@ -215,7 +244,13 @@ def process_content_feedback(
     if is_off_topic and feedback_sentiment == "positive":
         return None
     # randomly get a content from the search results to provide feedback on
-    content = search_results[str(random.randint(0, 3))]
+    content_num = str(random.randint(0, 3))
+    if not search_results or not isinstance(search_results, dict):
+        return None
+    if content_num not in search_results:
+        return None
+
+    content = search_results[content_num]
 
     # Get content text and use to generate feedback text using LLMs
     content_text = content["title"] + " " + content["text"]
@@ -253,32 +288,65 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
     }
 
     response = save_single_row(endpoint, data)
-    if "is_urgent" in response:
+    if response and "is_urgent" in response:
         return (response["is_urgent"],)
     return None
 
 
-def create_random_datetime_from_string(date_string: str) -> datetime:
+def create_random_datetime(start_date: datetime, end_date: datetime) -> datetime:
     """
-    Create a random datetime from a date in the format "%d-%m-%y
-    to today
+    Create a random datetime from a date within a range
     """
-    date_format = "%d-%m-%y"
 
-    start_date = datetime.strptime(date_string, date_format)
-
-    time_difference = datetime.now() - start_date
+    time_difference = end_date - start_date
     random_number_of_days = random.randint(0, time_difference.days)
 
-    random_number_of_seconds = random.randint(0, 86399)  # Number of seconds in one day
-
+    random_number_of_seconds = random.randint(0, 86399)
     random_datetime = start_date + timedelta(
         days=random_number_of_days, seconds=random_number_of_seconds
     )
     return random_datetime
 
 
-def update_date_of_records(models: list, random_dates: list, api_key: str) -> None:
+def is_within_time_range(date: datetime) -> bool:
+    """
+    Helper function to check if the date is within desired time range.
+    Prioritizing 9am-12pm and 8pm-10pm
+    """
+    if 9 <= date.hour < 12 or 20 <= date.hour < 22:
+        return True
+    return False
+
+
+def generate_distributed_dates(n: int, start: datetime, end: datetime) -> list:
+    """
+    Generate  dates with a specific distribution for the records
+    """
+    dates: list[datetime] = []
+    while len(dates) < n:
+        date = create_random_datetime(start, end)
+
+        # More dates on weekends
+        if date.weekday() >= 5:
+
+            if (
+                is_within_time_range(date) or random.random() < 0.4
+            ):  # Within time range or 30% chance
+                dates.append(date)
+        else:
+            if random.random() < 0.6:
+                if is_within_time_range(date) or random.random() < 0.55:
+                    dates.append(date)
+
+    return dates
+
+
+def update_date_of_records(
+    models: list,
+    api_key: str,
+    start_date: datetime,
+    end_date: datetime,
+) -> None:
     """
     Update the date of the records in the database
     """
@@ -288,28 +356,37 @@ def update_date_of_records(models: list, random_dates: list, api_key: str) -> No
         select(UserDB).where(UserDB.hashed_api_key == hashed_token)
     ).scalar_one()
     queries = [c for c in session.query(QueryDB).all() if c.user_id == user.user_id]
-    if len(queries) > len(random_dates):
-        random_dates = random_dates + [
-            create_random_datetime_from_string(start_date)
-            for _ in range(len(queries) - len(random_dates))
-        ]
+    random_dates = generate_distributed_dates(len(queries), start_date, end_date)
     # Create a dictionary to map the query_id to the random date
     date_map_dic = {queries[i].query_id: random_dates[i] for i in range(len(queries))}
     for model in models:
+        print(f"Updating the date of the records for {model[0].__name__}...")
         session = next(get_session())
 
         rows = [c for c in session.query(model[0]).all() if c.user_id == user.user_id]
 
         for i, row in enumerate(rows):
             # Set the date attribute to the random date
-            if hasattr(row, "query_id"):
-                date = date_map_dic[row.query_id]
+            if hasattr(row, "query_id") and model[0] != UrgencyResponseDB:
+                date = date_map_dic.get(row.query_id, None)
             else:
                 date = random_dates[i]
-
             setattr(row, model[1], date)
             session.merge(row)
         session.commit()
+
+
+def update_date_of_contents(date: datetime) -> None:
+    """
+    Update the date of the content records in the database for consistency
+    """
+    session = next(get_session())
+    contents = session.query(ContentDB).all()
+    for content in contents:
+        content.created_datetime_utc = date
+        content.updated_datetime_utc = date
+        session.merge(content)
+    session.commit()
 
 
 if __name__ == "__main__":
@@ -317,11 +394,26 @@ if __name__ == "__main__":
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
     API_KEY = args.api_key if args.api_key else ADMIN_API_KEY
 
-    start_date = args.start_date if args.start_date else "01-08-23"
+    start_date_string = args.start_date if args.start_date else "01-08-23"
+    end_date_string = args.end_date if args.end_date else None
+    date_format = "%d-%m-%y"
+    start_date = datetime.strptime(start_date_string, date_format)
+    end_date = (
+        datetime.strptime(end_date_string, date_format)
+        if end_date_string
+        else datetime.now()
+    )
+    assert end_date, "Invalid end date. Please provide a valid date. Format is dd-mm-yy"
+    assert (
+        start_date and start_date < end_date
+    ), "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+
+    subset = int(args.subset) if args.subset else None
     path = args.csv
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, nrows=subset)
     saved_queries = defaultdict(list)
     print("Processing search queries...")
+
     # Using multithreading to speed up the process
     with ThreadPoolExecutor(max_workers=NB_WORKERS) as executor:
         future_to_text = {
@@ -398,16 +490,16 @@ if __name__ == "__main__":
                 query_id,
                 message_text,
             ): query_id
-            for query_id, message_text in zip(df["query_id"], df["inbound_text"])
+            for query_id, message_text in zip(df["inbound_id"], df["inbound_text"])
         }
         for future in as_completed(future_to_text):
             result = future.result()
         print("Urgency Detection successfully processed")
 
-    random_dates = [
-        create_random_datetime_from_string(start_date) for _ in range(len(df))
-    ]
     print("Updating the date of the records...")
-    update_date_of_records(MODELS, random_dates, API_KEY)
+    update_date_of_records(MODELS, API_KEY, start_date, end_date)
+
+    print("Updating the date of the content records...")
+    update_date_of_contents(start_date)
     print("All records dates updated successfully.")
     print("All records added successfully.")

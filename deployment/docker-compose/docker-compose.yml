@@ -64,21 +64,9 @@ services:
     volumes:
       - ./litellm_proxy_config.yaml:/app/config.yaml
       - ./.gcp_credentials.json:/app/credentials.json
-    ports: # Expose the port to port 4000 for debugging purposes
-      - 4000:4000
+    ports: # Expose the port to port 4001 for debugging purposes
+      - 4001:4000
     command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
-
-  alignScore:
-    image: idinsight/alignscore-base:latest
-    profiles:
-      - alignScore
-      - optional-components
-    build:
-      context: ../../optional_components/alignScore
-      dockerfile: Dockerfile
-    command: >
-      /usr/local/bin/python server.py --port=5001 --models=base
-    restart: always
 
   huggingface-embeddings:
     # image either refers to locally built image or defaults to the one from the registry
@@ -98,10 +86,6 @@ services:
     restart: always
     env_file:
       - .litellm_proxy.env
-    develop:
-      watch:
-        - action: rebuild
-          path: ../../optional_components/embeddings
 
   redis:
     image: "redis:6.0-alpine"
