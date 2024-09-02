@@ -33,3 +33,14 @@ class SynthesisRequest(BaseModel):
     text: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SynthesisResponse(BaseModel):
+    """
+    Pydantic model for the synthesis response for TTS.
+
+    """
+
+    audio: bytes
+
+    model_config = ConfigDict(from_attributes=True)

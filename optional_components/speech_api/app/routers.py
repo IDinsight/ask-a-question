@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from .schemas import (
     SynthesisRequest,
+    SynthesisResponse,
     TranscriptionRequest,
     TranscriptionResponse,
 )
@@ -12,7 +13,7 @@ from .utils import setup_logger
 from .voice_components import synthesize_speech, transcribe_audio
 
 router = APIRouter()
-logger = setup_logger("Transcribe Endpoint")
+logger = setup_logger("Speech Endpoints")
 
 
 @router.post("/transcribe", response_model=TranscriptionResponse)
@@ -43,7 +44,7 @@ async def transcribe_audio_endpoint(
         )
 
 
-@router.post("/synthesize", response_model=StreamingResponse)
+@router.post("/synthesize", response_model=SynthesisResponse)
 async def synthesize_speech_endpoint(
     request: SynthesisRequest,
 ) -> StreamingResponse | JSONResponse:

@@ -12,7 +12,7 @@ ARG ENG_MODEL_NAME=en_US-arctic-medium.onnx
 
 RUN apt-get update && apt-get install -y \
     ffmpeg dos2unix \
-    git cmake libsndfile1-dev libasound2-dev wget \
+    git cmake libsndfile1-dev libasound2-dev wget libportaudio2\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -48,7 +48,7 @@ ENV PORT=${PORT}
 ENV WHISPER_MODEL_DIR=${WHISPER_MODEL_DIR}
 ENV PREFERRED_MODEL=${PREFERRED_MODEL}
 ENV PIPER_MODELS_DIR=${PIPER_MODELS_DIR}
-ENV ENG_MODEL_NAME=${MODEL_NAME}
+ENV ENG_MODEL_NAME=${ENG_MODEL_NAME}
 
 EXPOSE ${PORT}
 
