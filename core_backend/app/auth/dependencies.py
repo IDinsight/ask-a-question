@@ -12,7 +12,7 @@ from fastapi.security import (
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
@@ -163,6 +163,8 @@ async def rate_limiter(
     """
     Rate limiter for the API calls. Gets daily quota and decrement it
     """
+    if CHECK_API_LIMIT is False:
+        return
     username = user_db.username
     key = f"remaining-calls:{username}"
     redis = request.app.state.redis
@@ -177,4 +179,4 @@ async def rate_limiter(
         nb_remaining = int(nb_remaining)
         if nb_remaining <= 0:
             raise HTTPException(status_code=429, detail="API call limit reached.")
-        await redis.set(key, nb_remaining - 1, keepttl=True)
+        await update_api_limits(redis, username, nb_remaining - 1)
