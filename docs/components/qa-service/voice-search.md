@@ -9,15 +9,8 @@ See OpenAPI specification or [SwaggerUI](index.md/#swaggerui) for more details o
 ## Process flow for End to End Speech Generation
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'messageFontSize': '16px', 'noteMargin': '10px'}}}%%
 sequenceDiagram
-    participant User
-    participant AAQ
-    participant Speech-to-Text
-    participant LLM
-    participant Vector DB
-    participant Text-to-Speech
-
+    autonumber
     User->>AAQ: Audio file URL
     AAQ->>Speech-to-Text: Transcribe audio
     Speech-to-Text->>AAQ: Transcribed text
@@ -27,12 +20,13 @@ sequenceDiagram
     LLM->>AAQ: <Paraphrased question>
     AAQ->>Vector DB: Request N most similar contents in DB
     Vector DB->>AAQ: <N contents with similarity score>
-    AAQ->>LLM: Generate response based on contents
+    AAQ->>Cross-encoder: Re-rank to get top N contents
+    Cross-encoder->>AAQ: <N contents with similarity score>
+    AAQ->>LLM: Generate response based on top N contents
     LLM->>AAQ: <Text response>
     AAQ->>Text-to-Speech: Convert text response to audio
     Text-to-Speech->>AAQ: Audio file URL
     AAQ->>User: Return JSON with text response, audio URL, and N contents
-
 ```
 
 ## Voice Service Integration

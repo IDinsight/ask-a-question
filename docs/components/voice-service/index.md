@@ -7,15 +7,30 @@ The Voice Service component provides voice interaction capabilities within the A
 
 This documentation will guide you through setting up, configuring, and using the Voice Service in various scenarios.
 
-## Key Features
+---
+**Note**
 
-- **Speech Recognition (ASR):** Convert spoken language into text.
-- **Text-to-Speech (TTS):** Generate speech from text using high-quality voice models.
-- **Flexible Integration:** Choose between in-house models and external APIs based on your requirements.
+To use the external speech APIs (Google Cloud's Speech-to-Text and Text-to-Speech), you will need to set up a Google Cloud account and obtain the necessary credentials file to authenticate with Google Cloud. This is essential for accessing and using their services. Alternatively, you can use the
+in-house models if you prefer not to integrate with external APIs.
 
-## Getting Started
+---
 
-To start using the Voice Service, follow the setup instructions in the following sections:
+<div class="grid cards" markdown>
 
-- [In-House Models](./in-house-models.md): Setting up and using the in-house ASR and TTS models.
-- [External APIs](./external-apis.md): Integrating Google Cloud's STT and TTS services.
+- :octicons-gear-16:{ .lg .middle .red} __How to use In-House Models__
+
+    ---
+
+    Follow the steps to set up and use the in-house ASR and TTS models.
+
+    [:octicons-arrow-right-24: More info](./in-house-models.md)
+
+- :octicons-gear-16:{ .lg .middle .red} __How to use External APIs__
+
+    ---
+
+    Learn how to integrate Google Cloud's Speech-to-Text and Text-to-Speech services.
+
+    [:octicons-arrow-right-24: More info](./external-apis.md)
+
+</div>
