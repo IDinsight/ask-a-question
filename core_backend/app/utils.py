@@ -308,7 +308,19 @@ def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
     mime_to_extension = {
         "audio/mpeg": ".mp3",
         "audio/wav": ".wav",
+        "audio/x-wav": ".wav",
         "audio/x-m4a": ".m4a",
+        "audio/aac": ".aac",
+        "audio/ogg": ".ogg",
+        "audio/flac": ".flac",
+        "audio/x-aiff": ".aiff",
+        "audio/aiff": ".aiff",
+        "audio/basic": ".au",
+        "audio/mid": ".midi",
+        "audio/x-midi": ".midi",
+        "audio/webm": ".webm",
+        "audio/x-ms-wma": ".wma",
+        "audio/x-ms-asf": ".asf",
     }
 
     if mime_type:
