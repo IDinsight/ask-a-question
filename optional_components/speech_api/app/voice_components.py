@@ -1,8 +1,8 @@
+import io
 import os
+import wave
 from io import BytesIO
 
-import numpy as np
-import sounddevice as sd
 import whisper
 from piper.voice import PiperVoice
 
@@ -37,34 +37,32 @@ async def transcribe_audio(file_path: str) -> TranscriptionResponse:
         raise ValueError(error_msg) from e
 
 
-async def synthesize_speech(text: str) -> BytesIO:
+async def synthesize_speech(text: str) -> io.BytesIO:
     """
-    Synthesizes speech from text using the specified Piper TTS model
-    and return it as a BytesIO stream.
+    Synthesizes speech from text using the Piper TTS model and returns
+    it as a BytesIO stream.
     """
     try:
+        logger.info(f"Starting speech synthesis process for text: '{text}'")
 
         model_path = os.path.join(PIPER_MODELS_DIR, ENG_MODEL_NAME)
         voice = PiperVoice.load(model_path)
 
-        audio_stream = BytesIO()
+        with wave.open("output.wav", "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(voice.config.sample_rate)
 
-        stream = sd.OutputStream(
-            samplerate=voice.config.sample_rate, channels=1, dtype="int16"
-        )
-        stream.start()
+            voice.synthesize(text, wav_file)
 
-        for audio_bytes in voice.synthesize_stream_raw(text):
-            int_data = np.frombuffer(audio_bytes, dtype=np.int16)
-            audio_stream.write(int_data.tobytes())
+        logger.info("Speech synthesis completed successfully.")
 
-        stream.stop()
-        stream.close()
+        with open("output.wav", "rb") as file:
+            audio_data = file.read()
 
-        audio_stream.seek(0)
+        os.remove("output.wav")
 
-        return audio_stream
-
+        return BytesIO(audio_data)
     except Exception as e:
         error_msg = f"Failed to synthesize speech for text '{text}': {str(e)}"
         logger.error(error_msg)

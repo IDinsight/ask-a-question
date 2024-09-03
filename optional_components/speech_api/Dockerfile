@@ -12,7 +12,7 @@ ARG ENG_MODEL_NAME=en_US-arctic-medium.onnx
 
 RUN apt-get update && apt-get install -y \
     ffmpeg dos2unix \
-    git cmake libsndfile1-dev libasound2-dev wget libportaudio2\
+    git cmake libsndfile1-dev libasound2-dev libportaudio2 curl\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,9 +28,6 @@ COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 WORKDIR ${HOME_DIR}
-
-RUN apt-get update && apt-get install -y \
-    curl
 
 RUN curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx \
     && curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx.json \
