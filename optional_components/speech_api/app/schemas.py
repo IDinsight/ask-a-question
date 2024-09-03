@@ -1,4 +1,21 @@
+from enum import Enum
+
 from pydantic import BaseModel, ConfigDict
+
+
+class IdentifiedLanguage(str, Enum):
+    """
+    Identified language of the user's input.
+    """
+
+    ENGLISH = "ENGLISH"
+    SWAHILI = "SWAHILI"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+    # AFRIKAANS = "AFRIKAANS"
+    HINDI = "HINDI"
+    UNINTELLIGIBLE = "UNINTELLIGIBLE"
+    UNSUPPORTED = "UNSUPPORTED"
 
 
 class TranscriptionRequest(BaseModel):
@@ -31,6 +48,7 @@ class SynthesisRequest(BaseModel):
     """
 
     text: str
+    language: IdentifiedLanguage
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -299,6 +299,7 @@ async def _generate_tts_response(
             tts_file = await post_to_internal_tts(
                 text=response.llm_response,
                 endpoint_url=CUSTOM_TTS_ENDPOINT,
+                language=query_refined.original_language,
             )
 
         else:

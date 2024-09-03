@@ -83,12 +83,14 @@ def set_wav_specifications(wav_filename: str) -> str:
     return updated_wav_filename
 
 
-async def post_to_internal_tts(text: str, endpoint_url: str) -> BytesIO:
+async def post_to_internal_tts(
+    text: str, endpoint_url: str, language: IdentifiedLanguage
+) -> BytesIO:
     """
     Post request to synthesize speech using the internal TTS model.
     """
     async with get_http_client() as client:
-        payload = {"text": text}
+        payload = {"text": text, "language": language}
         async with client.post(endpoint_url, json=payload) as response:
             if response.status != 200:
                 error_content = await response.json()

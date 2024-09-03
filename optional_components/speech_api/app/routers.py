@@ -53,8 +53,9 @@ async def synthesize_speech_endpoint(
     """
     try:
         logger.info(f"Received request to synthesize text: {request.text}")
+        logger.info(f"Language: {request.language}")
 
-        result = await synthesize_speech(request.text)
+        result = await synthesize_speech(request.text, request.language)
         return StreamingResponse(result, media_type="audio/wav")
 
     except Exception as e:

@@ -6,8 +6,14 @@ from io import BytesIO
 import whisper
 from piper.voice import PiperVoice
 
-from .config import ENG_MODEL_NAME, PIPER_MODELS_DIR, PREFERRED_MODEL, WHISPER_MODEL_DIR
-from .schemas import TranscriptionResponse
+from .config import (
+    ENG_MODEL_NAME,
+    PIPER_MODELS_DIR,
+    PREFERRED_MODEL,
+    SWAHILI_MODEL_NAME,
+    WHISPER_MODEL_DIR,
+)
+from .schemas import IdentifiedLanguage, TranscriptionResponse
 from .utils import setup_logger
 
 logger = setup_logger("Whisper ASR")
@@ -37,7 +43,7 @@ async def transcribe_audio(file_path: str) -> TranscriptionResponse:
         raise ValueError(error_msg) from e
 
 
-async def synthesize_speech(text: str) -> io.BytesIO:
+async def synthesize_speech(text: str, language: IdentifiedLanguage) -> io.BytesIO:
     """
     Synthesizes speech from text using the Piper TTS model and returns
     it as a BytesIO stream.
@@ -45,7 +51,11 @@ async def synthesize_speech(text: str) -> io.BytesIO:
     try:
         logger.info(f"Starting speech synthesis process for text: '{text}'")
 
-        model_path = os.path.join(PIPER_MODELS_DIR, ENG_MODEL_NAME)
+        if language == IdentifiedLanguage.ENGLISH:
+            model_path = os.path.join(PIPER_MODELS_DIR, ENG_MODEL_NAME)
+        elif language == IdentifiedLanguage.SWAHILI:
+            model_path = os.path.join(PIPER_MODELS_DIR, SWAHILI_MODEL_NAME)
+
         voice = PiperVoice.load(model_path)
 
         with wave.open("output.wav", "wb") as wav_file:
