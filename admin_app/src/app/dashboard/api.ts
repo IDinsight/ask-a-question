@@ -1,8 +1,6 @@
-import { env } from "next-runtime-env";
 import api from "../../utils/api";
 import { Period } from "./types";
 
-// Get Overview Page Data
 const getOverviewPageData = async (period: Period, token: string) => {
   try {
     const response = await api.get(`/dashboard/overview/${period}`, {
@@ -16,7 +14,6 @@ const getOverviewPageData = async (period: Period, token: string) => {
   }
 };
 
-// Fetch Topics Data
 const fetchTopicsData = async (period: Period, token: string) => {
   try {
     const response = await api.get(`/dashboard/insights/${period}`, {
@@ -30,7 +27,6 @@ const fetchTopicsData = async (period: Period, token: string) => {
   }
 };
 
-// Generate New Topics
 const generateNewTopics = async (period: Period, token: string) => {
   try {
     const response = await api.get(`/dashboard/insights/${period}/refresh`, {
@@ -44,7 +40,6 @@ const generateNewTopics = async (period: Period, token: string) => {
   }
 };
 
-// Get Performance Page Data
 const getPerformancePageData = async (period: Period, token: string) => {
   try {
     const response = await api.get(`/dashboard/performance/${period}`, {
@@ -58,7 +53,6 @@ const getPerformancePageData = async (period: Period, token: string) => {
   }
 };
 
-// Get Performance Drawer Data
 const getPerformanceDrawerData = async (
   period: Period,
   content_id: number,
@@ -76,7 +70,6 @@ const getPerformanceDrawerData = async (
   }
 };
 
-// Get Performance Drawer AI Summary
 const getPerformanceDrawerAISummary = async (
   period: Period,
   content_id: number,
