@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: tests
 
 tests: setup-tests run-tests clean-tests
