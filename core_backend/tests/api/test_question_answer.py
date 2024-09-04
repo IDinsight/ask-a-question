@@ -5,7 +5,6 @@ from io import BytesIO
 from typing import Any, Dict, List
 
 import pytest
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
@@ -542,6 +541,7 @@ class TestSTTResponse:
         [
             ("correct", 200, {"text": "Paris"}),
             ("incorrect", 401, {"error": "Unauthorized"}),
+            ("correct", 400, {"text": "Paris"}),
             ("correct", 500, {}),
         ],
     )
@@ -562,22 +562,27 @@ class TestSTTResponse:
 
             return BytesIO(b"fake audio content"), "audio/mpeg", "mp3"
 
-        async def dummy_post_to_speech(file_path: str, endpoint_url: str) -> dict:
+        async def dummy_post_to_speech_stt(file_path: str, endpoint_url: str) -> dict:
             if expected_status_code == 500:
-                raise HTTPException(
-                    status_code=500, detail={"error": "Internal Server Error"}
-                )
+                raise ValueError("Error from CUSTOM_STT_ENDPOINT")
             return mock_response
+
+        async def dummy_post_to_speech_tts(
+            text: str, endpoint_url: str, language: str
+        ) -> BytesIO:
+            if expected_status_code == 400:
+                raise ValueError("Error from CUSTOM_TTS_ENDPOINT")
+            return BytesIO(b"fake audio content")
 
         async def async_fake_transcribe_audio(*args: Any, **kwargs: Any) -> str:
             if expected_status_code == 500:
-                raise HTTPException(
-                    status_code=500, detail={"error": "Internal Server Error"}
-                )
+                raise ValueError("Error from External STT service")
             return "transcribed text"
 
-        async def async_fake_generate_speech(*args: Any, **kwargs: Any) -> str:
-            return "http://example.com/hex-url"
+        async def async_fake_generate_tts_on_gcs(*args: Any, **kwargs: Any) -> BytesIO:
+            if expected_status_code == 400:
+                raise ValueError("Error from External TTS service")
+            return BytesIO(b"fake audio content")
 
         monkeypatch.setattr(
             "core_backend.app.question_answer.routers.transcribe_audio",
@@ -585,15 +590,19 @@ class TestSTTResponse:
         )
         monkeypatch.setattr(
             "core_backend.app.llm_call.process_output.generate_tts_on_gcs",
-            async_fake_generate_speech,
+            async_fake_generate_tts_on_gcs,
         )
         monkeypatch.setattr(
             "core_backend.app.question_answer.routers.post_to_speech_stt",
-            dummy_post_to_speech,
+            dummy_post_to_speech_stt,
         )
         monkeypatch.setattr(
             "core_backend.app.question_answer.routers.download_file_from_url",
             dummy_download_file_from_url,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.llm_call.process_output.post_to_internal_tts",
+            dummy_post_to_speech_tts,
         )
 
         temp_dir = "temp"
@@ -618,6 +627,11 @@ class TestSTTResponse:
             json_response = response.json()
             assert "error" in json_response
             assert response.status_code == 500
+
+        elif expected_status_code == 400:
+            json_response = response.json()
+            assert "error_message" in json_response
+            assert response.status_code == 400
 
         if os.path.exists(temp_dir):
             for file_name in os.listdir(temp_dir):
