@@ -1,4 +1,3 @@
-import io
 import os
 import wave
 from io import BytesIO
@@ -43,7 +42,7 @@ async def transcribe_audio(file_path: str) -> TranscriptionResponse:
         raise ValueError(error_msg) from e
 
 
-async def synthesize_speech(text: str, language: IdentifiedLanguage) -> io.BytesIO:
+async def synthesize_speech(text: str, language: IdentifiedLanguage) -> BytesIO:
     """
     Synthesizes speech from text using the Piper TTS model and returns
     it as a BytesIO stream.

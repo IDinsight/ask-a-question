@@ -55,12 +55,19 @@ async def synthesize_speech_endpoint(
         logger.info(f"Received request to synthesize text: {request.text}")
         logger.info(f"Language: {request.language}")
 
+        if not request.text.strip():
+            logger.error("The text input is empty.")
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": "Text input cannot be empty."},
+            )
+
         result = await synthesize_speech(request.text, request.language)
         return StreamingResponse(result, media_type="audio/wav")
 
     except Exception as e:
-        logger.error(f"Error during speech synthesis: {str(e)}")
+        logger.error(f"Unexpected error during speech synthesis: {str(e)}")
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": "An unexpected error occurred."},
         )
