@@ -21,7 +21,7 @@ in-house models if you prefer not to integrate with external APIs.
 
     ---
 
-    Follow the steps to set up and use the in-house ASR and TTS models.
+    Follow the steps to set up and use the In-house STT and TTS models.
 
     [:octicons-arrow-right-24: More info](./in-house-models.md)
 

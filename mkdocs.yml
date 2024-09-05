@@ -52,8 +52,8 @@ nav:
               - How to use: components/huggingface-embeddings/how-to-use.md
           - Voice Service:
               - components/voice-service/index.md
-              - in-house models: components/voice-service/in-house-models.md
-              - external Apis: components/voice-service/external-apis.md
+              - In-house models: components/voice-service/in-house-models.md
+              - External Apis: components/voice-service/external-apis.md
 
   - Integrations:
       - integrations/index.md
