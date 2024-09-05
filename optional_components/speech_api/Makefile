@@ -14,7 +14,6 @@ setup-tests:
 	chmod -R 755 $$WHISPER_MODEL_DIR && \
 	mkdir -p $$PIPER_MODELS_DIR && \
 	chmod -R 755 $$PIPER_MODELS_DIR && \
-	pip install -r requirements.txt && \
 	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx && \
 	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx.json && \
 	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/sw/sw_CD/lanfrica/medium/sw_CD-lanfrica-medium.onnx && \
