@@ -11,9 +11,11 @@ const api = axios.create({
   },
 });
 
+import { AxiosResponse, AxiosError } from 'axios';
+
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     if (error.response && error.response.status === 401) {
       console.log("Unauthorized request");
       const currentPath = window.location.pathname;
