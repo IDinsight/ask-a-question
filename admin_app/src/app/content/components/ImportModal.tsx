@@ -9,12 +9,12 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { LoadingButton } from "@mui/lab";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
+import { bulkUploadContents } from "../api";
 
 interface CustomError {
   type: string;
@@ -49,7 +49,7 @@ const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) 
       // add artifical delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
       try {
-        const response = await apiCalls.bulkUploadContents(selectedFile, token!);
+        const response = await bulkUploadContents(selectedFile, token!);
         if (response.status === 200) {
           setImportSuccess(true);
           setSelectedFile(null);
