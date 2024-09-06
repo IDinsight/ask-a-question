@@ -33,4 +33,4 @@ suggestion on how to improve the content.
 ## Want to see more?
 
 Is there a metric or a feature you'd like to see on the dashboard? We'd love to
-hear from you. [Contact us](../../contact_us.md/)!
+hear from you. [Contact us](../../../contact_us.md)!

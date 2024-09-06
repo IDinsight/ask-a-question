@@ -1,17 +1,25 @@
 # Voice Service
 
-The Voice Service component provides voice interaction capabilities within the AAQ system. It supports both speech recognition (ASR) and text-to-speech (TTS) functionalities through two primary methods:
+The Voice Service component provides voice interaction capabilities within the AAQ system. It supports both speech recognition (STT) and text-to-speech (TTS) functionalities through two primary methods:
 
-1. **In-House Models:** Utilize in-house, dockerized models for ASR and TTS to process speech data locally.
+1. **In-House Models:** Utilize in-house, dockerized models for STT and TTS to process speech data locally.
 2. **External APIs:** Integrate with Google Cloud's Speech-to-Text and Text-to-Speech APIs for enhanced flexibility and accuracy.
 
 This documentation will guide you through setting up, configuring, and using the Voice Service in various scenarios.
 
 ---
-**Note**
 
-To use the external speech APIs (Google Cloud's Speech-to-Text and Text-to-Speech), you will need to set up a Google Cloud account and obtain the necessary credentials file to authenticate with Google Cloud. This is essential for accessing and using their services. Alternatively, you can use the
-in-house models if you prefer not to integrate with external APIs.
+??? note "To use the speech service for manual setup and testing, you must have `ffmpeg` installed on your system."
+    for [MacOs](https://phoenixnap.com/kb/ffmpeg-mac) follow this guide.
+
+    for [Windows](https://phoenixnap.com/kb/ffmpeg-windows) follow this guide.
+
+    for [Linux](https://phoenixnap.com/kb/install-ffmpeg-ubuntu) follow this guide.
+
+    Ensure `ffmpeg` is properly installed and accessible in your system's path.
+
+??? note "Using a Combination of Internal and External Models"
+    You have the flexibility to use both internal and external models simultaneously. Set the environment variables accordingly. If one of the environment variables is not set, the system will automatically default to the external model. For information on configuring and using external models, refer to our [External Apis](./external-apis.md) and [In-house Models](./in-house-models.md) guide.
 
 ---
 

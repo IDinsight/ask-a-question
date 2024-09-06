@@ -71,7 +71,9 @@ nav:
   - Contribute:
       - Guidelines: develop/contributing.md
       - Setup: develop/setup.md
-      - Testing: develop/testing.md
+      - Testing:
+          - Backend: develop/testing/core-backend-testing.md
+          - Speech-service: develop/testing/speech-service-testing.md
       - Validation: develop/validation.md
 
   - Contact us:

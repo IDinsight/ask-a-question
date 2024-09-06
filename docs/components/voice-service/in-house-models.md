@@ -1,22 +1,20 @@
 # How to use in-house Speech models
 
-To host the in-house **Speech-to-text** and **Text-to-speech** models we use a custom docker image made for end to end Speech Service.
+This guide outlines the process for hosting and utilizing our custom In-house **Speech-to-Text** and **Text-to-Speech** models using a specialized Docker image designed for end-to-end Speech Service.
 
 ## Prerequisite steps
 
-### **Step 1:** Set up your `Environment Variables`.
+### **Step 1:** Configure `Environment Variables`.
 
-To access the inhouse models u need to make sure that the `CUSTOM_TTS_ENDPOINT` and the `CUSTOM_STT_ENDPOINT` environment variables are set. These should be set in `.core_backend.env` (cf. [Configuring AAQ](../../deployment/config-options.md)).
-??? note "You Can choose to use a combination of both internal and external models"
-    Just set the environment variables accordingly, if one of the environment variable is not set then it will automatically fallback on the external model, for how to configure and use the external models refer to our [External Apis](./external-apis.md) guide.
+To access the in-house models, ensure that the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables are properly set. These should be configured in the `.core_backend.env` file (cf. [Configuring AAQ](../../deployment/config-options.md#configuring-the-backend-core_backend)).
 
 ## Deploying In-house Speech Models
 
-!!! info "Make sure you've performed the [prerequisite steps](#prerequisite-steps) before proceeding."
+!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
 
-To deploy In-house Speech Models , follow the deployment instructions in [QuickSetup](../../deployment/quick-setup.md) with the following additional steps.
+To deploy in-house speech models, follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md) with this additional step:
 
-On _**Step 5:** Run docker-compose_, add `docker-compose.speech.yml -p` to the
+In _**Step 5:** Run docker-compose_, append `docker-compose.speech.yml -p` to the
 docker compose command:
 
 ```shell
@@ -26,22 +24,23 @@ docker-compose.speech.yml -p aaq-stack up -d --build
 
 ## Setting up In-house Models for development
 
-!!! info "Make sure you've performed the [prerequisite steps](#prerequisite-steps) before proceeding."
+!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
 
-follow these steps to [set up your development environment](../../develop/setup.md) for In-house speech models.
+to [set up your development environment](../../develop/setup.md) for In-house speech models follow these steps:
 
-??? note "Currently the in-house Models only work with the [Docker Compose Watch](../../develop/setup.md#set-up-using-docker-compose-watch) setup"
+!!! warning "Currently the in-house Models only work with the [Docker Compose Watch](../../develop/setup.md#set-up-using-docker-compose-watch) setup"
 
-For setting up the Speech service for development with **Docker Compose Watch**
+To configure the Speech service for development with **Docker Compose Watch**
 
-_Run docker-compose_, add `docker-compose.speech.yml -p` to the docker compose command:
+add `docker-compose.speech.yml -p` to the docker compose command:
 
 ```shell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml -f \
 docker-compose.speech.yml -p aaq-stack up -d --build
 ```
 
-## Also see
+## Additional Resources
 
 1. [External Speech Models](./external-apis.md)
-2. [Quick Setup](../../deployment/quick-setup.md)
+2. [Setup for Deployment](../../deployment/quick-setup.md)
+3. [Setup for development](../../develop/setup.md)
