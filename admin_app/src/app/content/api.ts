@@ -107,7 +107,6 @@ const bulkUploadContents = async (file: File, token: string) => {
   }
 };
 
-// Create new tag
 const createTag = async (tag: string, token: string) => {
   try {
     const response = await api.post(
