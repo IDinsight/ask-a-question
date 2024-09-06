@@ -15,7 +15,7 @@
 
 </div>
 
-`/Voice-search` is the End to End Speech endpoint that your application can integrate with:
+`/Voice-search` is the **Optional** End to End Speech endpoint that your application can integrate with:
 
 <div class="grid cards" markdown>
 

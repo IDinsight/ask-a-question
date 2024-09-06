@@ -7,6 +7,9 @@ The Voice Service component provides voice interaction capabilities within the A
 
 This documentation will guide you through setting up, configuring, and using the Voice Service in various scenarios.
 
+??? info "To Access the `/voice-search` endpoint In the question-answer service"
+    You need to set the `TOGGLE_VOICE` environment variable in the `.core_backend.env` (cf. [Configuring AAQ](../../deployment/config-options.md#configuring-the-backend-core_backend))
+
 ---
 
 ??? note "To use the speech service for manual setup and testing, you must have `ffmpeg` installed on your system."
