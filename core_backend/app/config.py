@@ -83,6 +83,7 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
+TOGGLE_SPEECH = os.environ.get("TOGGLE_SPEECH", None)
 CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")

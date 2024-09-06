@@ -13,7 +13,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import CUSTOM_SPEECH_ENDPOINT, GCS_SPEECH_BUCKET, USE_CROSS_ENCODER
+from ..config import (
+    CUSTOM_SPEECH_ENDPOINT,
+    GCS_SPEECH_BUCKET,
+    TOGGLE_SPEECH,
+    USE_CROSS_ENCODER,
+)
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -157,134 +162,137 @@ async def search(
     )
 
 
-@router.post(
-    "/voice-search",
-    response_model=QueryAudioResponse,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": QueryResponseError,
-            "description": "Bad Request",
+if TOGGLE_SPEECH is not None:
+
+    @router.post(
+        "/voice-search",
+        response_model=QueryAudioResponse,
+        responses={
+            status.HTTP_400_BAD_REQUEST: {
+                "model": QueryResponseError,
+                "description": "Bad Request",
+            },
+            status.HTTP_500_INTERNAL_SERVER_ERROR: {
+                "model": QueryResponseError,
+                "description": "Internal Server Error",
+            },
         },
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "model": QueryResponseError,
-            "description": "Internal Server Error",
-        },
-    },
-)
-async def voice_search(
-    file_url: str,
-    request: Request,
-    asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
-) -> QueryAudioResponse | JSONResponse:
-    """
-    Endpoint to transcribe audio from a provided URL,
-    generate an LLM response, by default generate_tts is
-    set to true and return a public random URL of an audio
-    file containing the spoken version of the generated response.
-    """
-    try:
-        file_stream, content_type, file_extension = await download_file_from_url(
-            file_url
-        )
+    )
+    async def voice_search(
+        file_url: str,
+        request: Request,
+        asession: AsyncSession = Depends(get_async_session),
+        user_db: UserDB = Depends(authenticate_key),
+    ) -> QueryAudioResponse | JSONResponse:
+        """
+        Endpoint to transcribe audio from a provided URL,
+        generate an LLM response, by default generate_tts is
+        set to true and return a public random URL of an audio
+        file containing the spoken version of the generated response.
+        """
+        try:
+            file_stream, content_type, file_extension = await download_file_from_url(
+                file_url
+            )
 
-        unique_filename = generate_random_filename(file_extension)
-        destination_blob_name = f"stt-voice-notes/{unique_filename}"
+            unique_filename = generate_random_filename(file_extension)
+            destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
-        await upload_file_to_gcs(
-            GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
-        )
+            await upload_file_to_gcs(
+                GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
+            )
 
-        file_path = f"temp/{unique_filename}"
-        with open(file_path, "wb") as f:
+            file_path = f"temp/{unique_filename}"
+            with open(file_path, "wb") as f:
+                file_stream.seek(0)
+                f.write(file_stream.read())
             file_stream.seek(0)
-            f.write(file_stream.read())
-        file_stream.seek(0)
 
-        if CUSTOM_SPEECH_ENDPOINT is not None:
-            transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
-            transcription_result = transcription["text"]
-        else:
-            transcription_result = await transcribe_audio(file_path)
+            if CUSTOM_SPEECH_ENDPOINT is not None:
+                transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+                transcription_result = transcription["text"]
+            else:
+                transcription_result = await transcribe_audio(file_path)
 
-        user_query = QueryBase(
-            generate_llm_response=True,
-            query_text=transcription_result,
-            query_metadata={},
-        )
+            user_query = QueryBase(
+                generate_llm_response=True,
+                query_text=transcription_result,
+                query_metadata={},
+            )
 
-        (
-            user_query_db,
-            user_query_refined_template,
-            response_template,
-        ) = await get_user_query_and_response(
-            user_id=user_db.user_id,
-            user_query=user_query,
-            asession=asession,
-            generate_tts=True,
-        )
+            (
+                user_query_db,
+                user_query_refined_template,
+                response_template,
+            ) = await get_user_query_and_response(
+                user_id=user_db.user_id,
+                user_query=user_query,
+                asession=asession,
+                generate_tts=True,
+            )
 
-        response = await get_search_response(
-            query_refined=user_query_refined_template,
-            response=response_template,
-            user_id=user_db.user_id,
-            n_similar=int(N_TOP_CONTENT),
-            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
-            asession=asession,
-            exclude_archived=True,
-            request=request,
-        )
-
-        if user_query.generate_llm_response:
-            response = await get_generation_response(
+            response = await get_search_response(
                 query_refined=user_query_refined_template,
-                response=response,
+                response=response_template,
+                user_id=user_db.user_id,
+                n_similar=int(N_TOP_CONTENT),
+                n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+                asession=asession,
+                exclude_archived=True,
+                request=request,
             )
 
-        await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(
-            user_id=user_db.user_id,
-            contents=response.search_results,
-            asession=asession,
-        )
-        await save_content_for_query_to_db(
-            user_id=user_db.user_id,
-            query_id=response.query_id,
-            session_id=user_query.session_id,
-            contents=response.search_results,
-            asession=asession,
-        )
+            if user_query.generate_llm_response:
+                response = await get_generation_response(
+                    query_refined=user_query_refined_template,
+                    response=response,
+                )
 
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            file_stream.close()
+            await save_query_response_to_db(user_query_db, response, asession)
+            await increment_query_count(
+                user_id=user_db.user_id,
+                contents=response.search_results,
+                asession=asession,
+            )
+            await save_content_for_query_to_db(
+                user_id=user_db.user_id,
+                query_id=response.query_id,
+                session_id=user_query.session_id,
+                contents=response.search_results,
+                asession=asession,
+            )
 
-        if type(response) is QueryAudioResponse:
-            return response
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                file_stream.close()
 
-        if type(response) is QueryResponseError:
+            if type(response) is QueryAudioResponse:
+                return response
+
+            if type(response) is QueryResponseError:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content=response.model_dump(),
+                )
+
             return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Internal server error"},
             )
 
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": "Internal server error"},
-        )
+        except ValueError as ve:
+            logger.error(f"ValueError: {str(ve)}")
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"Value error: {str(ve)}"},
+            )
 
-    except ValueError as ve:
-        logger.error(f"ValueError: {str(ve)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": f"Value error: {str(ve)}"},
-        )
-
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": "Internal server error"},
-        )
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Internal server error"},
+            )
 
 
 async def download_file_from_url(file_url: str) -> tuple[BytesIO, str, str]:
