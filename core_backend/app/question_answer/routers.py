@@ -16,7 +16,7 @@ from ..auth.dependencies import authenticate_key, rate_limiter
 from ..config import (
     CUSTOM_SPEECH_ENDPOINT,
     GCS_SPEECH_BUCKET,
-    TOGGLE_SPEECH,
+    TOGGLE_VOICE,
     USE_CROSS_ENCODER,
 )
 from ..contents.models import (
@@ -162,7 +162,7 @@ async def search(
     )
 
 
-if TOGGLE_SPEECH is not None:
+if TOGGLE_VOICE is not None:
 
     @router.post(
         "/voice-search",

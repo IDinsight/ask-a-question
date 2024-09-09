@@ -1,4 +1,5 @@
 #!make
+SHELL := /bin/bash
 
 .PHONY : tests
 
@@ -49,4 +50,3 @@ teardown-redis-test:
 teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
-
