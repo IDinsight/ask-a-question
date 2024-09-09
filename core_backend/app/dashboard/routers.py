@@ -4,6 +4,11 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Tuple
 
+import numpy as np
+from bokeh.embed import json_item
+from bokeh.layouts import column
+from bokeh.models import CheckboxGroup, ColumnDataSource, CustomJS
+from bokeh.plotting import figure
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
 from fastapi.requests import Request
@@ -340,3 +345,51 @@ async def retrieve_insights_frequency(
         data=[],
         unclustered_queries=[],
     )
+
+
+@router.get("/bokeh", response_model=dict)
+def create_plot() -> dict:
+    """Creates a Bokeh plot with a checkbox to toggle the visibility of red points."""
+    # Initial data: 50 blue points
+    x = np.random.random(50)
+    y = np.random.random(50)
+
+    # Preset additional 50 red points
+    x_red = np.random.random(50)
+    y_red = np.random.random(50)
+
+    # Create ColumnDataSource for blue points
+    source_blue = ColumnDataSource(data=dict(x=x, y=y, color=["blue"] * 50))
+
+    # Create ColumnDataSource for red points
+    source_red = ColumnDataSource(data=dict(x=x_red, y=y_red, color=["red"] * 50))
+
+    # Create a figure
+    plot = figure(width=800, height=500)
+
+    # Add blue points to the plot
+    plot.circle("x", "y", radius=0.005, color="color", source=source_blue)
+
+    # Add red points to the plot, initially invisible
+    red_points = plot.circle(
+        "x", "y", radius=0.01, color="color", source=source_red, visible=False
+    )
+
+    # Checkbox group to toggle red points visibility
+    checkbox = CheckboxGroup(labels=["Toggle Red Points"])
+
+    # Callback to toggle the visibility of red points
+    checkbox_callback = CustomJS(
+        args=dict(red_points=red_points),
+        code="""
+        red_points.visible = cb_obj.active.includes(0);
+    """,
+    )
+
+    # Attach the callback to the checkbox group
+    checkbox.js_on_change("active", checkbox_callback)
+
+    # Combine the plot and checkbox group within a layout
+    layout = column(plot, checkbox)
+
+    return json_item(layout, "myplot")

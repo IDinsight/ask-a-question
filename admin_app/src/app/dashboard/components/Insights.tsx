@@ -8,12 +8,14 @@ import { QueryData, Period, TopicModelingResponse } from "../types";
 import { generateNewTopics, fetchTopicsData } from "../api";
 import { useAuth } from "@/utils/auth";
 import { Paper } from "@mui/material";
+import BokehPlot from "./insights/Bokeh";
 
 interface InsightProps {
   timePeriod: Period;
 }
 
 const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
+  const bokehEndpoint = "http://localhost:8000/dashboard/bokeh";
   const { token } = useAuth();
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
@@ -137,17 +139,8 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           borderColor: "lightgrey",
         }}
       >
-        <Box
-          textAlign="center"
-          height="100%"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          Chart coming soon!
-        </Box>
+        {/* Insert BokehPlot here; ensure you have 'endpoint' set to your data source */}
+        <BokehPlot endpoint={bokehEndpoint} />
       </Paper>
     </Box>
   );
