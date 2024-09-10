@@ -92,7 +92,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        platforms: linux/amd64, linux/arm64
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -100,6 +99,7 @@ jobs:
           context: core_backend
           push: true
           tags: ${{ env.REPO }}/core_backend:latest,${{ env.REPO }}/core_backend:${{ env.TAG }}
+          platforms: linux/amd64, linux/arm64
 
       - name: Deploy core_backend container
         id: "compute-ssh"
