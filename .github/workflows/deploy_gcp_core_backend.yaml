@@ -23,7 +23,7 @@ jobs:
       - name: Resolve deployment environment name
         id: set-env
         run: |
-          "env_name=testing" >> "$GITHUB_OUTPUT"
+          echo "env_name=testing" >> "$GITHUB_OUTPUT"
           # if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
           #   echo "env_name=production" >> "$GITHUB_OUTPUT"
           # elif [ "${{ github.ref_name }}" == "main" ]; then
