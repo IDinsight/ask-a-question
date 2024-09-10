@@ -18,7 +18,12 @@ import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { Delete, Edit, Add, PlayArrow, Send } from "@mui/icons-material";
 import { TextField, Typography, Box } from "@mui/material";
-import { apiCalls } from "@/utils/api";
+import {
+  addUrgencyRule,
+  updateUrgencyRule,
+  getUrgencyRuleList,
+  deleteUrgencyRule,
+} from "./api";
 import { useAuth } from "@/utils/auth";
 import { UDSidebar } from "./components/UDSidebar";
 
@@ -52,27 +57,25 @@ const UrgencyRulesPage = () => {
   const addOrUpdateItem = (index: number) => {
     setSaving(true);
     if (items[index].urgency_rule_id === null) {
-      apiCalls
-        .addUrgencyRule(items[index].urgency_rule_text, token!)
-        .then((data: UrgencyRule) => {
+      addUrgencyRule(items[index].urgency_rule_text, token!).then(
+        (data: UrgencyRule) => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        });
+        },
+      );
     } else {
-      apiCalls
-        .updateUrgencyRule(
-          items[index].urgency_rule_id!,
-          items[index].urgency_rule_text,
-          token!,
-        )
-        .then((data: UrgencyRule) => {
-          const newItems = [...items];
-          newItems[index] = data;
-          setItems(newItems);
-          setSaving(false);
-        });
+      updateUrgencyRule(
+        items[index].urgency_rule_id!,
+        items[index].urgency_rule_text,
+        token!,
+      ).then((data: UrgencyRule) => {
+        const newItems = [...items];
+        newItems[index] = data;
+        setItems(newItems);
+        setSaving(false);
+      });
     }
   };
 
@@ -121,7 +124,7 @@ const UrgencyRulesPage = () => {
       setItems(newItems);
       return;
     }
-    apiCalls.deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
+    deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
       newItems.splice(index, 1);
       setItems(newItems);
     });
@@ -136,8 +139,7 @@ const UrgencyRulesPage = () => {
 
   useEffect(() => {
     if (token) {
-      apiCalls
-        .getUrgencyRuleList(token)
+      getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
           console.error(error);
