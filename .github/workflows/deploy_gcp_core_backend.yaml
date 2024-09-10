@@ -6,6 +6,7 @@ on:
       - main
       - testing
       - production
+      - feature-buildx
     paths:
       - "core_backend/**"
       - ".github/workflows/deploy_gcp_core_backend.yaml"
@@ -86,14 +87,19 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
-      - name: Build and push core_backend image
-        working-directory: core_backend
-        run: |
-          docker build \
-            -t ${{ env.REPO }}/core_backend:latest \
-            -t ${{ env.REPO }}/core_backend:${{ env.TAG }} \
-            .
-          docker image push --all-tags ${{ env.REPO }}/core_backend
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        platforms: linux/amd64, linux/arm64
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: core_backend
+          push: true
+          tags: ${{ env.REPO }}/core_backend:latest,${{ env.REPO }}/core_backend:${{ env.TAG }}
 
       - name: Deploy core_backend container
         id: "compute-ssh"
