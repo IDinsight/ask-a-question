@@ -51,6 +51,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           cd core_backend
+          python -m pip install -r requirements.txt
           alembic_history_pr=$(alembic history)
           if echo "${alembic_history_pr}" | grep -q "$ALEMBIC_HEAD_MAIN"; then
               echo "Alembic head revision from main branch exists in PR branch."

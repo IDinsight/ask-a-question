@@ -25,3 +25,4 @@ google-cloud-texttospeech==2.16.5
 google-cloud-speech==2.27.0
 pydub==0.25.1
 sentence-transformers==3.0.1
+scikit-learn==1.5.1
