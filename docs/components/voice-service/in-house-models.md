@@ -30,6 +30,6 @@ docker-compose.speech.yml -p aaq-stack up -d --build
 
 ## Additional Resources
 
-1. [External Speech Models](./external-apis.md)
-2. [Setup for Deployment](../../deployment/quick-setup.md)
-3. [Setup for development](../../develop/setup.md)
+1. [How to use External Speech models](./external-apis.md)
+2. [Quick Setup with Docker Compose](../../deployment/quick-setup.md)
+3. [Setting up your development environment](../../develop/setup.md)
