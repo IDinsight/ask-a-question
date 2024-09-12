@@ -1,50 +1,39 @@
 # How to use External Speech models
 
-This guide outlines the process for utilizing the External Google Cloud [Speech-to-Text](https://cloud.google.com/speech-to-text?hl=en) and [Text-to-Speech](https://cloud.google.com/text-to-speech?hl=en) models designed for end-to-end Speech Service.
+This guide outlines the process for using the external Google Cloud [Speech-to-Text](https://cloud.google.com/speech-to-text?hl=en) and [Text-to-Speech](https://cloud.google.com/text-to-speech?hl=en) speech-to-text and text-to-speech models within AAQ.
 
 ## Prerequisite steps
 
-### **Step 1:** Configure `Environment Variables`.
+### Configure environment variables
 
-To access the in-house models, ensure that the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables are **NOT SET** at all. You will also need to set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable and make sure u have the `.gcp_credentials.json` file so that the You can access the google cloud services. These should be configured in the `.core_backend.env` and `.litellm_proxy.env` files respectively (cf. [Configuring AAQ](../../deployment/config-options.md)).
+To access the in-house models, ensure that the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables are **not set** (i.e. blank).
 
-## Deploying External Speech Models
+You will also need to set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable and make sure you have the `.gcp_credentials.json` file so that the you can access Google Cloud Services. These should be configured in the `.core_backend.env` and `.litellm_proxy.env` files respectively (cf. [Configuring AAQ](../../deployment/config-options.md)).
 
-To deploy external speech models, follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md) , no additional Steps are needed!
+## Using External Speech Models in Deployment
 
-## Setting up External Models for development
+To deploy external speech models, simply follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md). No additional steps are needed.
 
-Follow these steps to [set up your development environment](../../develop/setup.md) for In-house speech models.
+## Setting up External Models for Development
 
----
-**Note**
-For Using the [Manual Setup](../../develop/setup.md#set-up-manually), You will need to add your `gcp_credentials` file manually in your local environment.
-1. First Expose the environment variable `GOOGLE_APPLICATION_CREDENTIALS` from your `.litellm_proxy.env` or set it manually using
-```shell
-conda env config vars set <NAME>=<VALUE>
-```
-2. Place your `gcp_credentials` according to the relative path mentioned in the `GOOGLE_APPLICATION_CREDENTIALS` variable.
+Follow these steps to [set up your development environment](../../develop/setup.md) for external speech models.
 
-??? warning "The `gcp_credentials` file is accessed by the `core_backend` directory so make sure it is accessed w.r.t to the current directory"
-    for example:
+Note: To use the [Manual Setup](../../develop/setup.md#set-up-manually) method, you will need to add your `gcp_credentials` file manually in your local environment as below:
 
-    if u run the command
-    ```shell
-    python core_backend/main.py
-    ```
-    then u will need to place the gcp credentials in the path set by `GOOGLE_APPLICATION_CREDENTIALS` w.r.t the root directory.
+1. Place your `gcp_credentials.json` file inside the `core_backend/` folder.
 
-    if u run the command
-    ```shell
-    cd core_backend
-    python main.py
-    ```
-    then u will need to place the gcp credentials in the path set by `GOOGLE_APPLICATION_CREDENTIALS` w.r.t the core_backend directory.
+2. Run `export GOOGLE_APPLICATION_CREDENTIALS="core_backend/credentials.json"` to set the environment variable.
+
+3. While in the root of the directory, run `python core_backend/main.py`.
+
+
+??? "Do not navigate to `core_backend` folder using `cd core_backend`"
+    If you do this, then you will also have to adjust `GOOGLE_APPLICATION_CREDENTIALS` to be `"/credentials.json"` as it's relative to your terminal.
 
 ---
 
 ## Additional Resources
 
-1. [In-house Speech Models](./in-house-models.md)
-2. [Setup for Deployment](../../deployment/quick-setup.md)
-3. [Setup for development](../../develop/setup.md)
+1. [How to use in-house speech models](./in-house-models.md)
+2. [Quick Setup with Docker Compose](../../deployment/quick-setup.md)
+3. [Setting up your development environment](../../develop/setup.md)

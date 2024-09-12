@@ -1,4 +1,4 @@
-# How to use in-house Speech models
+# How to use in-house speech models
 
 This guide outlines the process for hosting and using our custom in-house **Speech-to-Text** and **Text-to-Speech** models using our specialized Docker image.
 
