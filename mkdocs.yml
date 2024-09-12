@@ -73,7 +73,7 @@ nav:
       - Setup: develop/setup.md
       - Testing:
           - Backend Tests: develop/testing/core-backend-testing.md
-          - Speech-service Tests: develop/testing/speech-service-testing.md
+          - In-house Speech Service Tests: develop/testing/speech-service-testing.md
       - Validation: develop/validation.md
 
   - Contact us:

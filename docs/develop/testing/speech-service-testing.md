@@ -1,6 +1,6 @@
-# Writing and Running Tests for Speech Service
+# Writing and Running Tests for the In-house Speech Service
 
-This guide outlines the process for writing, running, and debugging tests for the Speech Service.
+This guide outlines the process for writing, running, and debugging tests for the in-house Speech Service.
 
 ## Adding new tests
 
@@ -9,7 +9,7 @@ When developing new features for Speech Service, it's crucial to add correspondi
 
 ## Running unit tests
 
-**Environment Setup**
+### Environment Setup
 
 Please use the `aaq-speech` environment to run speech tests. You can create this environment using the following command from the root directory:
 
@@ -17,7 +17,7 @@ Please use the `aaq-speech` environment to run speech tests. You can create this
 make fresh-env-speech
 ```
 
-## Executing Tests
+### Executing Tests
 
 To run the tests, use the following command:
 
@@ -25,16 +25,16 @@ To run the tests, use the following command:
 make tests
 ```
 
-??? info "This command performs the following actions"
+This command performs the following actions:
 
-    1. Creates the required directories
-    2. Downloads the necessary models
-    3. Runs `pytest`
-    4. Cleans up by removing the created models and directories
+1. Creates the required directories
+2. Downloads the necessary models
+3. Runs `pytest`
+4. Cleans up by removing the created models and directories
 
-    This automated process simplifies test execution and cleanup.
+This automated process simplifies test execution and cleanup.
 
-## Debugging unit tests
+### Debugging unit tests
 
 Debugging these tests can be done normally, as no containers are required in the process.
 
