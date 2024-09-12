@@ -13,10 +13,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -ms /bin/bash -d /usr/src/${NAME} container_user
+RUN useradd -ms /bin/bash -d /usr/src/${NAME} container_user \
+    && mkdir -p ${WHISPER_MODEL_DIR} ${HOME_DIR}/temp \
+    && chown -R container_user:container_user ${WHISPER_MODEL_DIR} ${HOME_DIR}/temp \
+    && chmod -R 775 ${HOME_DIR}/temp
 
-RUN mkdir -p ${WHISPER_MODEL_DIR} \
-    && chown -R container_user:container_user ${WHISPER_MODEL_DIR}
 
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu

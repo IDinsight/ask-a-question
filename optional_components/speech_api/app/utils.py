@@ -1,5 +1,8 @@
 import logging
+from io import BytesIO
 from logging import Logger
+
+from pydub import AudioSegment
 
 from .config import LOG_LEVEL
 
@@ -46,3 +49,22 @@ def setup_logger(
     logger.addHandler(handler)
 
     return logger
+
+
+def convert_audio_to_wav(audio_file: BytesIO) -> BytesIO:
+    """
+    Converts an audio file to WAV format with a 16kHz sample rate, mono channel,
+    and 16-bit PCM encoding.
+    """
+
+    audio_file.seek(0)
+    audio = AudioSegment.from_file(audio_file)
+
+    audio = audio.set_frame_rate(16000)
+    audio = audio.set_channels(1)
+    audio = audio.set_sample_width(2)
+
+    wav_io = BytesIO()
+    audio.export(wav_io, format="wav", codec="pcm_s16le")
+    wav_io.seek(0)
+    return wav_io

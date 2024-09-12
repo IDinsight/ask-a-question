@@ -19,7 +19,7 @@ RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user \
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt /requirements.txt
-RUN pip install --no-cache-dir -r /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy the application source code
 COPY . ${HOME_DIR}

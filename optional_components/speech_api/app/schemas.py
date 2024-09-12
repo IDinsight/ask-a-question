@@ -1,15 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
 
-class TranscriptionRequest(BaseModel):
-    """
-    Pydantic model for the transcription request.
-
-    """
-
-    file_path: str
-
-
 class TranscriptionResponse(BaseModel):
     """
     Pydantic model for the transcription response.

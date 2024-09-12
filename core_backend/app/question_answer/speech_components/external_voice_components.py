@@ -17,22 +17,22 @@ from .utils import convert_audio_to_wav, get_gtts_lang_code_and_model
 logger = setup_logger("Voice API")
 
 
-async def transcribe_audio(audio_filename: str) -> str:
+async def transcribe_audio(audio_file: io.BytesIO) -> str:
     """
-    Converts the provided audio file to text using Google's Speech-to-Text API.
-    Ensures the audio file meets the required specifications.
+    Converts the provided audio byte stream to text using Google's Speech-to-Text API.
+
+    The function ensures that the audio stream is converted to the correct WAV format
+    (16-bit PCM, mono, 16kHz) if needed, and then sends it to Google's Speech-to-Text
+    API for transcription. It returns the transcribed text if successful.
     """
-    logger.info(f"Starting transcription for {audio_filename}")
+    logger.info("Starting transcription from byte stream.")
 
     try:
-        wav_filename = convert_audio_to_wav(audio_filename)
-
+        wav_file = convert_audio_to_wav(audio_file)
         client = speech.SpeechClient()
 
-        with io.open(wav_filename, "rb") as audio_file:
-            content = audio_file.read()
-
-        audio = speech.RecognitionAudio(content=content)
+        audio_content = wav_file.read()
+        audio = speech.RecognitionAudio(content=audio_content)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
@@ -46,11 +46,11 @@ async def transcribe_audio(audio_filename: str) -> str:
         for result in response.results:
             transcript += result.alternatives[0].transcript
 
-        logger.info(f"Transcription completed successfully for {audio_filename}.")
+        logger.info("Transcription completed successfully from byte stream.")
         return transcript
 
     except Exception as e:
-        error_msg = f"Failed to transcribe {audio_filename}: {str(e)}"
+        error_msg = f"Failed to transcribe audio stream: {str(e)}"
         logger.error(error_msg)
         raise ValueError(error_msg) from e
 

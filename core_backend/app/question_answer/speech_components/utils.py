@@ -1,4 +1,4 @@
-import os
+from io import BytesIO
 
 from pydub import AudioSegment
 
@@ -33,50 +33,18 @@ def get_gtts_lang_code_and_model(
     return result
 
 
-def convert_audio_to_wav(input_filename: str) -> str:
+def convert_audio_to_wav(audio_file: BytesIO) -> BytesIO:
     """
-    Converts an MP3 or M4A file to a WAV file and ensures the WAV file has
-    the required specifications. Returns an error if the file format is unsupported.
+    Converts an audio file to WAV format with a 16kHz sample rate,
+    mono channel, and 16-bit sample width.
     """
 
-    file_extension = input_filename.lower().split(".")[-1]
+    audio_file.seek(0)
+    audio = AudioSegment.from_file(audio_file)
 
-    supported_formats = ["mp3", "m4a", "wav"]
+    audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
 
-    if file_extension in supported_formats:
-        if file_extension != "wav":
-            audio = AudioSegment.from_file(input_filename, format=file_extension)
-            wav_filename = os.path.splitext(input_filename)[0] + ".wav"
-            audio.export(wav_filename, format="wav")
-            logger.info(f"Conversion complete. Output file: {wav_filename}")
-        else:
-            wav_filename = input_filename
-            logger.info(f"{wav_filename} is already in WAV format.")
-
-        return set_wav_specifications(wav_filename)
-    else:
-        logger.error(
-            f"""Unsupported file format: {file_extension}.\
-    Only MP3, M4A, and WAV formats are supported."""
-        )
-        raise ValueError(
-            f"""Unsupported file format: {file_extension}.\
-    Only MP3, M4A, and WAV formats are supported."""
-        )
-
-
-def set_wav_specifications(wav_filename: str) -> str:
-    """
-    Ensures that the WAV file has a sample rate of 16 kHz, mono channel,
-    and LINEAR16 encoding.
-    """
-    logger.info(f"Ensuring {wav_filename} meets the required WAV specifications.")
-
-    audio = AudioSegment.from_wav(wav_filename)
-    updated_wav_filename = os.path.splitext(wav_filename)[0] + "_updated.wav"
-    audio.set_frame_rate(16000).set_channels(1).export(
-        updated_wav_filename, format="wav", codec="pcm_s16le"
-    )
-
-    logger.info(f"Updated file created: {updated_wav_filename}")
-    return updated_wav_filename
+    wav_io = BytesIO()
+    audio.export(wav_io, format="wav")
+    wav_io.seek(0)
+    return wav_io

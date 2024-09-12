@@ -6,3 +6,4 @@ fastapi==0.109.1
 python-multipart==0.0.9
 litellm==1.40.29
 aiohttp==3.10.2
+pydub==0.25.1

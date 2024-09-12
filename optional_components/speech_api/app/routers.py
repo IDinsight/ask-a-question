@@ -1,10 +1,11 @@
 import os
+from io import BytesIO
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
-from .schemas import TranscriptionRequest, TranscriptionResponse
-from .utils import setup_logger
+from .schemas import TranscriptionResponse
+from .utils import convert_audio_to_wav, setup_logger
 from .voice_components import transcribe_audio
 
 router = APIRouter()
@@ -13,22 +14,32 @@ logger = setup_logger("Transcribe Endpoint")
 
 @router.post("/transcribe", response_model=TranscriptionResponse)
 async def transcribe_audio_endpoint(
-    request: TranscriptionRequest,
+    file: Request,
 ) -> TranscriptionResponse | JSONResponse:
     """
-    Transcribes audio from the specified file path using the Appropriate ASR model.
+    Transcribes audio from the provided file using the appropriate ASR model.
     """
     try:
-        logger.info(f"Received request to transcribe file at: {request.file_path}")
 
-        if not os.path.exists(request.file_path):
-            logger.error(f"File not found: {request.file_path}")
+        file_stream = BytesIO(await file.body())
+
+        wav_io = convert_audio_to_wav(file_stream)
+
+        file_path = "temp/audio.wav"
+        with open(file_path, "wb") as f:
+            f.write(wav_io.getvalue())
+
+        logger.info(f"Received request to transcribe file at: {file_path}")
+
+        if not os.path.exists(file_path):
+            logger.error(f"File not found: {file_path}")
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={"error": "File not found."},
             )
 
-        result = await transcribe_audio(request.file_path)
+        result = await transcribe_audio(file_path)
+
         return result
 
     except Exception as e:

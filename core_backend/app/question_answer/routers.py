@@ -2,10 +2,10 @@
 endpoints.
 """
 
-import os
 from io import BytesIO
 from typing import Tuple
 
+import aiohttp
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
@@ -195,17 +195,11 @@ async def voice_search(
             GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
         )
 
-        file_path = f"temp/{unique_filename}"
-        with open(file_path, "wb") as f:
-            file_stream.seek(0)
-            f.write(file_stream.read())
-        file_stream.seek(0)
-
         if CUSTOM_SPEECH_ENDPOINT is not None:
-            transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+            transcription = await post_to_speech(file_stream, CUSTOM_SPEECH_ENDPOINT)
             transcription_result = transcription["text"]
         else:
-            transcription_result = await transcribe_audio(file_path)
+            transcription_result = await transcribe_audio(file_stream)
 
         user_query = QueryBase(
             generate_llm_response=True,
@@ -255,9 +249,7 @@ async def voice_search(
             asession=asession,
         )
 
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            file_stream.close()
+        file_stream.close()
 
         if type(response) is QueryAudioResponse:
             return response
@@ -316,17 +308,28 @@ async def download_file_from_url(file_url: str) -> tuple[BytesIO, str, str]:
     return file_stream, content_type, file_extension
 
 
-async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
+async def post_to_speech(file: BytesIO, endpoint_url: str) -> dict:
     """
-    Post request the file to the speech endpoint to get the transcription
+    Post the BytesIO file to the speech endpoint to get the transcription.
     """
-    async with get_http_client() as client:
-        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
-            if response.status != 200:
-                error_content = await response.json()
-                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-                raise ValueError(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-            return await response.json()
+    try:
+        file.seek(0)
+        file_content = file.read()
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(endpoint_url, data=file_content) as response:
+                if response.status != 200:
+                    error_content = await response.json()
+                    logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
+                    raise ValueError(
+                        f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}"
+                    )
+
+                return await response.json()
+
+    except Exception as e:
+        logger.error(f"Failed to post file to speech endpoint: {str(e)}")
+        raise ValueError(f"Failed to post file to speech endpoint: {str(e)}") from e
 
 
 @identify_language__before

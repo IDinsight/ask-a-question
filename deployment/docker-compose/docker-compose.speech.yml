@@ -15,5 +15,3 @@ services:
       watch:
         - action: rebuild
           path: ../../optional_components/speech_api
-    volumes:
-      - temp:/usr/src/speech_service/temp
