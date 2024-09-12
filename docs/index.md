@@ -25,7 +25,7 @@
   Containerized app that can be deployed anywhere with minimal setup
 
 - <span class="secondary-color big-font">:material-microphone:</span><br>
-  <strong >Voice (Coming Soon)</strong> <br>
+  <strong >Voice</strong> <br>
   Ask questions and receive answers using voice memos
 
 </div>
