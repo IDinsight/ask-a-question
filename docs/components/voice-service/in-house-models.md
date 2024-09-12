@@ -1,38 +1,27 @@
 # How to use in-house Speech models
 
-This guide outlines the process for hosting and utilizing our custom In-house **Speech-to-Text** and **Text-to-Speech** models using a specialized Docker image designed for end-to-end Speech Service.
+This guide outlines the process for hosting and using our custom in-house **Speech-to-Text** and **Text-to-Speech** models using our specialized Docker image.
 
 ## Prerequisite steps
 
-### **Step 1:** Configure `Environment Variables`.
+### Configure environment variables
 
 To access the in-house models, ensure that the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables are properly set. These should be configured in the `.core_backend.env` file (cf. [Configuring AAQ](../../deployment/config-options.md#configuring-the-backend-core_backend)).
 
-## Deploying In-house Speech Models
-
-!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
+## Using In-house Speech Models in Deployment
 
 To deploy in-house speech models, follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md) with this additional step:
 
-In _**Step 5:** Run docker-compose_, append `docker-compose.speech.yml -p` to the
-docker compose command:
+In "Step 5: Run docker-compose", append `docker-compose.speech.yml -p` to the docker compose command as below:
 
 ```shell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml -f \
 docker-compose.speech.yml -p aaq-stack up -d --build
 ```
 
-## Setting up In-house Models for development
+## Setting Up In-house Models for Development
 
-!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
-
-to [set up your development environment](../../develop/setup.md) for In-house speech models follow these steps:
-
-!!! warning "Currently the in-house Models only work with the [Docker Compose Watch](../../develop/setup.md#set-up-using-docker-compose-watch) setup"
-
-To configure the Speech service for development with **Docker Compose Watch**
-
-add `docker-compose.speech.yml -p` to the docker compose command:
+Currently the in-house models only work with the [Docker Compose Watch](../../develop/setup.md#set-up-using-docker-compose-watch) dev setup. Use the following command:
 
 ```shell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml -f \

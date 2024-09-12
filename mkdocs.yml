@@ -53,7 +53,7 @@ nav:
           - Voice Service:
               - components/voice-service/index.md
               - In-house models: components/voice-service/in-house-models.md
-              - External Apis: components/voice-service/external-apis.md
+              - External APIs: components/voice-service/external-apis.md
 
   - Integrations:
       - integrations/index.md

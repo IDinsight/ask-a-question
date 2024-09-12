@@ -31,18 +31,10 @@ sequenceDiagram
 
 ## Voice Service Integration
 
-For detailed information on how to integrate voice capabilities into your application using AAQ, including setup instructions for both in-house and cloud-based speech services, please refer to our **Voice Service** documentation.
+For detailed information on how to integrate voice capabilities into your application using AAQ, including setup instructions for both in-house and cloud-based speech services, please refer to our [Voice Service documentation](../voice-service/index.md). This documentation covers:
 
-<div class="grid cards" markdown>
+- Setting up the dockerized container for in-house ASR and TTS models
+- Configuring Google Cloud Speech-to-Text and Text-to-Speech integration
+- Best practices for voice input and output in your application
 
-- :material-api:{ .lg .middle } __This documentation covers__
-
-    ---
-
-    - Setting up the dockerized container for in-house ASR and TTS models
-    - Configuring Google Cloud Speech-to-Text and Text-to-Speech integration
-    - Best practices for voice input and output in your application
-
-    [:octicons-arrow-right-24: Explore Voice Service Integration](../voice-service/index.md)
-
-</div>
+[:octicons-arrow-right-24: Explore Voice Service Documentation](../voice-service/index.md)

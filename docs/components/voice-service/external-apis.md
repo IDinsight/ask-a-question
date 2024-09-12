@@ -10,13 +10,9 @@ To access the in-house models, ensure that the `CUSTOM_TTS_ENDPOINT` and `CUSTOM
 
 ## Deploying External Speech Models
 
-!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
-
 To deploy external speech models, follow the deployment instructions in the [QuickSetup](../../deployment/quick-setup.md) , no additional Steps are needed!
 
 ## Setting up External Models for development
-
-!!! info "Ensure you've completed the [prerequisite steps](#prerequisite-steps) before proceeding."
 
 Follow these steps to [set up your development environment](../../develop/setup.md) for In-house speech models.
 
