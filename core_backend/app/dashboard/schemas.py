@@ -211,6 +211,16 @@ class UserQuery(BaseModel):
     query_datetime_utc: datetime
 
 
+class InsightContent(BaseModel):
+    """
+    This class is used to define the schema for contents used in Bokeh plots
+    """
+
+    content_title: str
+    content_text: str
+    content_id: int
+
+
 class QueryCollection(BaseModel):
     """
     This class is used to define the schema for the insights queries data

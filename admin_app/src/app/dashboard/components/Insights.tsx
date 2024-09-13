@@ -127,21 +127,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           />
         </Box>
       </Paper>
-      <Paper
-        elevation={0}
-        sx={{
-          width: "100%",
-          height: "400px",
-          marginTop: 2,
-          justifyItems: "center",
-          justifySelf: "stretch",
-          border: 0.5,
-          borderColor: "lightgrey",
-        }}
-      >
-        {/* Insert BokehPlot here; ensure you have 'endpoint' set to your data source */}
-        <BokehPlot endpoint={bokehEndpoint} />
-      </Paper>
+      <BokehPlot endpoint={bokehEndpoint} />
     </Box>
   );
 };

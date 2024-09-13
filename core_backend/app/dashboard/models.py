@@ -23,6 +23,7 @@ from .schemas import (
     Day,
     DetailsDrawer,
     Heatmap,
+    InsightContent,
     OverviewTimeSeries,
     QueryStats,
     ResponseFeedbackStats,
@@ -1299,3 +1300,43 @@ async def get_raw_queries(
         ]
 
     return query_list
+
+
+async def get_raw_contents(
+    asession: AsyncSession,
+    user_id: int,
+) -> list[InsightContent]:
+    """Retrieve all of the content cards present in the database for the user
+    Parameters
+    ----------
+    asession
+        `AsyncSession` object for database transactions.
+    user_id
+        The ID of the user to retrieve the queries for.
+    start_date
+        The starting date for the queries.
+    Returns
+    -------
+    list[UserQuery]
+        A list of UserQuery objects
+    """
+
+    statement = select(
+        ContentDB.content_title, ContentDB.content_text, ContentDB.content_id
+    ).where(ContentDB.user_id == user_id)
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+    if not rows:
+        content_list = []
+    else:
+        content_list = [
+            InsightContent(
+                content_id=row.content_id,
+                content_text=row.content_text,
+                content_title=row.content_title,
+            )
+            for row in rows
+        ]
+
+    return content_list
