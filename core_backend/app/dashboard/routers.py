@@ -6,8 +6,14 @@ from typing import Annotated, Literal, Tuple
 
 import numpy as np
 from bokeh.embed import json_item
-from bokeh.layouts import column
-from bokeh.models import CheckboxGroup, ColumnDataSource, CustomJS
+from bokeh.layouts import column, row
+from bokeh.models import (
+    CheckboxGroup,
+    ColumnDataSource,
+    CustomJS,
+    DataTable,
+    TableColumn,
+)
 from bokeh.plotting import figure
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
@@ -389,7 +395,15 @@ def create_plot() -> dict:
     # Attach the callback to the checkbox group
     checkbox.js_on_change("active", checkbox_callback)
 
+    columns = [
+        TableColumn(field="text", title="Text"),
+        TableColumn(field="label", title="Origin"),
+        TableColumn(field="cluster", title="Cluster"),
+    ]
+    source = ColumnDataSource(data=dict(text=[], label=[], cluster=[]))
+    data_table = DataTable(source=source, columns=columns, width=800, height=280)
+
     # Combine the plot and checkbox group within a layout
-    layout = column(plot, checkbox)
+    layout = column(row(plot, data_table), checkbox)
 
     return json_item(layout, "myplot")
