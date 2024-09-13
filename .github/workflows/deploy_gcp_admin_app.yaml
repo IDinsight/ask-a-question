@@ -6,6 +6,7 @@ on:
       - main
       - testing
       - production
+      - feature-buildx
     paths:
       - "admin_app/**"
       - ".github/workflows/deploy_gcp_admin_app.yaml"
@@ -29,6 +30,8 @@ jobs:
           else
             echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
+          # TODO: delete this line
+          echo "env_name=testing" >> "$GITHUB_OUTPUT"
 
   DeployAdminAppToGCP:
     needs: [set-env]
@@ -70,14 +73,19 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ secrets.DOCKER_REGISTRY_DOMAIN}}
 
-      - name: Build and push admin_app image
-        working-directory: admin_app
-        run: |
-          docker build \
-            -t ${{ env.REPO }}/admin_app:latest \
-            -t ${{ env.REPO }}/admin_app:${{ env.TAG }} \
-            .
-          docker image push --all-tags ${{ env.REPO }}/admin_app
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: admin_app
+          push: true
+          tags: ${{ env.REPO }}/admin_app:latest,${{ env.REPO }}/admin_app:${{ env.TAG }}
+          platforms: linux/amd64,linux/arm64
 
       - name: Deploy admin_app container
         id: "compute-ssh"
