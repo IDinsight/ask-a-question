@@ -60,7 +60,8 @@ const BokehPlot = ({ endpoint }) => {
         flexDirection: "column",
         alignItems: "center", // Centrally aligns the loading button
         width: "100%", // Ensures that Box takes full width if necessary
-        mt: 2, // Provides margin above the entire component for spacing
+        mt: 2,
+        pb: 2, // Provides margin above the entire component for spacing
       }}
     >
       <LoadingButton
@@ -88,6 +89,7 @@ const BokehPlot = ({ endpoint }) => {
           elevation={1}
           sx={{
             width: "100%",
+            padding: 2, // Adds padding inside the Paper element
             overflow: "hidden", // Hides anything overflowing the Paper
             borderRadius: 2, // Rounds corners of the Paper
           }}
