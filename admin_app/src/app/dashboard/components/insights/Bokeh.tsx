@@ -59,7 +59,6 @@ const BokehPlot = ({ endpoint }) => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center", // Centrally aligns the loading button
-        p: 2, // Padding around the entire BokehPlot component
         width: "100%", // Ensures that Box takes full width if necessary
         mt: 2, // Provides margin above the entire component for spacing
       }}
@@ -89,12 +88,12 @@ const BokehPlot = ({ endpoint }) => {
           elevation={1}
           sx={{
             width: "100%",
-            mt: 2, // Adds top margin to separate the Paper from the button
             overflow: "hidden", // Hides anything overflowing the Paper
             borderRadius: 2, // Rounds corners of the Paper
           }}
         >
           {/* The div where the Bokeh plot will be embedded */}
+
           <div id={plotId} className="bk-root" />
         </Paper>
       )}
