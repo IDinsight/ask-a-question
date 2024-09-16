@@ -3,7 +3,6 @@ endpoints.
 """
 
 import os
-from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, status
@@ -36,8 +35,6 @@ from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
-    get_file_extension_from_mime_type,
-    get_http_client,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -61,6 +58,7 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
+from .speech_components.utils import download_file_from_url, post_to_speech_stt
 
 logger = setup_logger()
 
@@ -285,50 +283,6 @@ async def voice_search(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Internal server error"},
         )
-
-
-async def download_file_from_url(file_url: str) -> tuple[BytesIO, str, str]:
-    """
-    Asynchronously download a file from a given URL using the
-    global aiohttp ClientSession and return its content as a BytesIO object,
-    along with its content type and file extension.
-    """
-    async with get_http_client() as client:
-        try:
-            async with client.get(file_url) as response:
-                if response.status != 200:
-                    error_content = await response.text()
-                    logger.error(f"Failed to download file: {error_content}")
-                    raise ValueError(f"Failed to download file: {error_content}")
-
-                content_type = response.headers.get("Content-Type")
-                if not content_type:
-                    logger.error("Content-Type header missing in response")
-                    raise ValueError("Unable to determine file content type")
-
-                file_stream = BytesIO(await response.read())
-                file_extension = get_file_extension_from_mime_type(content_type)
-
-        except Exception as e:
-            logger.error(f"Error during file download: {str(e)}")
-            raise ValueError(f"Unable to fetch file: {str(e)}") from None
-
-    return file_stream, content_type, file_extension
-
-
-async def post_to_speech_stt(file_path: str, endpoint_url: str) -> dict:
-    """
-    Post request the file to the speech endpoint to get the transcription
-    """
-    async with get_http_client() as client:
-        async with client.post(
-            endpoint_url, json={"stt_file_path": file_path}
-        ) as response:
-            if response.status != 200:
-                error_content = await response.json()
-                logger.error(f"Error from CUSTOM_STT_ENDPOINT: {error_content}")
-                raise ValueError(f"Error from CUSTOM_STT_ENDPOINT: {error_content}")
-            return await response.json()
 
 
 @identify_language__before

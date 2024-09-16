@@ -50,7 +50,7 @@ async def transcribe_audio(audio_filename: str) -> str:
         raise ValueError(error_msg) from e
 
 
-async def generate_tts_on_gcs(
+async def synthesize_speech(
     text: str,
     language: IdentifiedLanguage,
 ) -> BytesIO:

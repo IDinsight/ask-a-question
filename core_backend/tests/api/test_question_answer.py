@@ -537,24 +537,24 @@ class TestGenerateResponse:
 
 class TestSTTResponse:
     @pytest.mark.parametrize(
-        "outcome, expected_status_code, mock_response",
+        "is_authorized, expected_status_code, mock_response",
         [
-            ("correct", 200, {"text": "Paris"}),
-            ("incorrect", 401, {"error": "Unauthorized"}),
-            ("correct", 400, {"text": "Paris"}),
-            ("correct", 500, {}),
+            (True, 200, {"text": "Paris"}),
+            (False, 401, {"error": "Unauthorized"}),
+            (True, 400, {"text": "Paris"}),
+            (True, 500, {}),
         ],
     )
     def test_voice_search(
         self,
-        outcome: str,
+        is_authorized: bool,
         expected_status_code: int,
         mock_response: dict,
         client: TestClient,
         monkeypatch: pytest.MonkeyPatch,
         api_key_user1: str,
     ) -> None:
-        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
+        token = api_key_user1 if is_authorized else "api_key_incorrect"
 
         async def dummy_download_file_from_url(
             file_url: str,
@@ -589,7 +589,7 @@ class TestSTTResponse:
             async_fake_transcribe_audio,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.generate_tts_on_gcs",
+            "core_backend.app.llm_call.process_output.synthesize_speech",
             async_fake_generate_tts_on_gcs,
         )
         monkeypatch.setattr(
@@ -626,12 +626,10 @@ class TestSTTResponse:
         elif expected_status_code == 500:
             json_response = response.json()
             assert "error" in json_response
-            assert response.status_code == 500
 
         elif expected_status_code == 400:
             json_response = response.json()
             assert "error_message" in json_response
-            assert response.status_code == 400
 
         if os.path.exists(temp_dir):
             for file_name in os.listdir(temp_dir):

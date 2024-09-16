@@ -21,7 +21,7 @@ from ..question_answer.schemas import (
     QueryResponseError,
 )
 from ..question_answer.speech_components.external_voice_components import (
-    generate_tts_on_gcs,
+    synthesize_speech,
 )
 from ..question_answer.speech_components.utils import post_to_internal_tts
 from ..question_answer.utils import get_context_string_from_search_results
@@ -309,7 +309,7 @@ async def _generate_tts_response(
             )
 
         else:
-            tts_file = await generate_tts_on_gcs(
+            tts_file = await synthesize_speech(
                 text=response.llm_response,
                 language=query_refined.original_language,
             )
