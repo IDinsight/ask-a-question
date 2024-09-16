@@ -64,6 +64,7 @@ async def generate_llm_query_response(
     Requires "search_results" and "original_language" in the response.
     """
     if isinstance(response, QueryResponseError):
+        logger.warning("LLM generation skipped due to QueryResponseError.")
         return response
 
     if response.search_results is None:
@@ -146,7 +147,8 @@ async def _check_align_score(
     Only runs if the generate_llm_response flag is set to True.
     Requires "llm_response" and "search_results" in the response.
     """
-    if isinstance(response, QueryResponseError) or response.llm_response is None:
+    if isinstance(response, QueryResponseError):
+        logger.warning("Alignment score check skipped due to QueryResponseError.")
         return response
 
     if response.search_results is not None:
@@ -158,7 +160,10 @@ async def _check_align_score(
     if response.llm_response is not None:
         claim = response.llm_response
     else:
-        logger.warning(("No llm_response found in the response."))
+        logger.warning(
+            "No llm_response found in the response "
+            "(should have been caught with QueryResponseError)."
+        )
         return response
 
     align_score_data = AlignScoreData(evidence=evidence, claim=claim)
@@ -247,10 +252,12 @@ def generate_tts__after(func: Callable) -> Callable:
         if not query_refined.generate_tts:
             return response
 
-        if not isinstance(response, QueryAudioResponse):
-            logger.warning(
-                f"Converting response of type {type(response)} to AudioResponse."
-            )
+        if isinstance(response, QueryResponseError):
+            logger.warning("TTS generation skipped due to QueryResponseError.")
+            return response
+
+        if isinstance(response, QueryResponse):
+            logger.info("Converting response type QueryResponse to AudioResponse.")
             response = QueryAudioResponse(
                 query_id=response.query_id,
                 session_id=response.session_id,
@@ -281,12 +288,11 @@ async def _generate_tts_response(
     Requires valid `llm_response` and alignment score in the response.
     """
 
-    if isinstance(response, QueryResponseError):
-        logger.warning("TTS generation skipped due to QueryResponseError.")
-        return response
-
     if response.llm_response is None:
-        logger.warning("TTS generation skipped due to missing LLM response.")
+        logger.warning(
+            "TTS generation skipped due to missing LLM response "
+            "(should have been caught with QueryResponseError)."
+        )
         return response
 
     try:

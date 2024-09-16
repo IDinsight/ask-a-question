@@ -36,13 +36,14 @@ def get_gtts_lang_code_and_model(
 
 def convert_audio_to_wav(input_filename: str) -> str:
     """
-    Converts an MP3 or M4A file to a WAV file and ensures the WAV file has
-    the required specifications. Returns an error if the file format is unsupported.
+    Converts an audio file (MP3, M4A, OGG, FLAC, AAC, WebM, etc.) to a WAV file
+    and ensures the WAV file has the required specifications. Returns an error
+    if the file format is unsupported.
     """
 
     file_extension = input_filename.lower().split(".")[-1]
 
-    supported_formats = ["mp3", "m4a", "wav"]
+    supported_formats = ["mp3", "m4a", "wav", "ogg", "flac", "aac", "aiff", "webm"]
 
     if file_extension in supported_formats:
         if file_extension != "wav":
@@ -56,14 +57,8 @@ def convert_audio_to_wav(input_filename: str) -> str:
 
         return set_wav_specifications(wav_filename)
     else:
-        logger.error(
-            f"""Unsupported file format: {file_extension}.\
-    Only MP3, M4A, and WAV formats are supported."""
-        )
-        raise ValueError(
-            f"""Unsupported file format: {file_extension}.\
-    Only MP3, M4A, and WAV formats are supported."""
-        )
+        logger.error(f"""Unsupported file format: {file_extension}.""")
+        raise ValueError(f"""Unsupported file format: {file_extension}.""")
 
 
 def set_wav_specifications(wav_filename: str) -> str:

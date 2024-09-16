@@ -81,6 +81,7 @@ class ContentDB(Base):
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    temp: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

@@ -72,6 +72,15 @@ jobs:
             admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username
             admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
             admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
+            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
+
+      - name: Copy GCP credentials JSON
+        working-directory: deployment/docker-compose
+        run: |
+          echo '${{ steps.secrets.outputs.gcp-credential-json }}' > .gcp_credentials.json
+          gcloud compute scp .gcp_credentials.json \
+              ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/.gcp_credentials.json \
+              --zone ${{ secrets.DEPLOYMENT_ZONE }}
 
       - name: Configure Docker to use gcloud as a credential helper
         run: |
@@ -107,6 +116,8 @@ jobs:
               --restart always \
               --network aaq-network \
               --name core_backend \
+              -v ~/.gcp_credentials.json:/app/credentials.json \
+              -v temp:/usr/src/aaq_backend/temp \
               -e JWT_SECRET="${{ steps.secrets.outputs.jwt-secret }}" \
               -e NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID="${{ steps.secrets.outputs.google-login-client-id }}" \
               -e DOMAIN="${{ steps.secrets.outputs.domain }}" \
@@ -117,6 +128,7 @@ jobs:
               -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
               -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
+              -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
               -e URGENCY_CLASSIFIER="llm_entailment_classifier" \
               -e REDIS_HOST=redis://redis:6379 \
               -e LANGFUSE=True \
