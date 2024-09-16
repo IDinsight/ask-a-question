@@ -12,6 +12,7 @@ See OpenAPI specification or [SwaggerUI](index.md/#swaggerui) for more details o
 sequenceDiagram
     autonumber
     User->>AAQ: Audio file URL
+    AAQ->>Cloud Storage: save audio to Cloud Storage
     AAQ->>Speech-to-Text: Transcribe audio
     Speech-to-Text->>AAQ: Transcribed text
     AAQ->>LLM: Identify language
@@ -25,6 +26,7 @@ sequenceDiagram
     AAQ->>LLM: Generate response based on top N contents
     LLM->>AAQ: <Text response>
     AAQ->>Text-to-Speech: Convert text response to audio
+    AAQ->>Cloud Storage: Save audio file to Cloud Storage
     Text-to-Speech->>AAQ: Audio file URL
     AAQ->>User: Return JSON with text response, audio URL, and N contents
 ```

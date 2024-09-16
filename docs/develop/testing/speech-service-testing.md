@@ -7,17 +7,7 @@ This guide outlines the process for writing, running, and debugging tests for th
 When developing new features for Speech Service, it's crucial to add corresponding unit tests. These tests should be placed in the following directory:
 `optional_components/speech_api/tests`.
 
-## Running unit tests
-
-**Environment Setup**
-
-Please use the `aaq-speech` environment to run speech tests. You can create this environment using the following command from the root directory:
-
-```shell
-make fresh-env-speech
-```
-
-## Executing Tests
+## Executing unit Tests
 
 To run the tests, use the following command:
 
