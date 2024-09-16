@@ -53,7 +53,7 @@ nav:
           - Voice Service:
               - components/voice-service/index.md
               - In-house models: components/voice-service/in-house-models.md
-              - External Apis: components/voice-service/external-apis.md
+              - External APIs: components/voice-service/external-apis.md
 
   - Integrations:
       - integrations/index.md
@@ -73,7 +73,7 @@ nav:
       - Setup: develop/setup.md
       - Testing:
           - Backend Tests: develop/testing/core-backend-testing.md
-          - Speech-service Tests: develop/testing/speech-service-testing.md
+          - In-house Speech Service Tests: develop/testing/speech-service-testing.md
       - Validation: develop/validation.md
 
   - Contact us:

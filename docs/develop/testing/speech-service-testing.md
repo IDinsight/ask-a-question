@@ -1,6 +1,6 @@
-# Writing and Running Tests for Speech Service
+# Writing and Running Tests for the In-house Speech Service
 
-This guide outlines the process for writing, running, and debugging tests for the Speech Service.
+This guide outlines the process for writing, running, and debugging tests for the in-house Speech Service.
 
 ## Adding new tests
 
@@ -9,24 +9,44 @@ When developing new features for Speech Service, it's crucial to add correspondi
 
 ## Executing unit Tests
 
-To run the tests, use the following command:
+!!! warning "You need to have installed [Docker](https://docs.docker.com/get-docker/)"
+
+To run the unit tests, simply use the following command:
 
 ```shell
 make tests
 ```
 
-??? info "This command performs the following actions"
+This command handles all necessary steps, including:
 
-    1. Creates the required directories
-    2. Downloads the necessary models
-    3. Runs `pytest`
-    4. Cleans up by removing the created models and directories
+1. Building the Docker container for testing
+2. Running the tests inside the container
+3. Cleaning up after the tests are complete
 
-    This automated process simplifies test execution and cleanup.
+The entire process is automated, so you don't need to worry about setting up the environment or cleaning up afterwards.
 
-## Debugging unit tests
+### Debugging unit tests
 
-Debugging these tests can be done normally, as no containers are required in the process.
+For debugging, you can modify the process to run an interactive container:
+
+1. First, build the Docker image:
+
+```shell
+make setup-tests
+```
+2. Then, run an interactive container:
+
+```shell
+docker run -it --rm --name speech_test_container speech_test /bin/bash
+```
+3. Once inside the container, you can run tests manually:
+
+```shell
+pytest --color=yes -rPQ tests/*
+```
+Or run specific tests as needed.
+
+4. Exit the container when done (the container will be automatically removed due to the `--rm` flag).
 
 #### Configs for Visual Studio Code
 
