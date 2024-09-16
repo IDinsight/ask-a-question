@@ -2,8 +2,8 @@ SHELL := /bin/bash
 
 .PHONY: tests build-image run-tests clean-up
 
-IMAGE_NAME := Speech_test
-CONTAINER_NAME := Speech_test_container
+IMAGE_NAME := speech_test
+CONTAINER_NAME := speech_test_container
 
 # Default target to run tests inside Docker container
 tests: setup-tests run-tests clean-tests
