@@ -81,6 +81,7 @@ const BokehPlot = ({ endpoint }) => {
         onClick={togglePlotVisibility}
       >
         {plotVisible ? "Collapse Visualization" : "Show Topic Visualization"}
+        {/* startIcon}={isClicked ? <CheckIcon /> : <ContentCopyIcon />} */}
       </LoadingButton>
 
       {/* Conditionally render the Paper that contains the plot */}
