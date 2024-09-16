@@ -1,28 +1,21 @@
 SHELL := /bin/bash
 
-.PHONY: tests
+.PHONY: tests build-image run-tests clean-up
 
-tests: setup-tests run-tests clean-tests
+IMAGE_NAME := my_test_image
+CONTAINER_NAME := my_test_container
+
+# Default target to run tests inside Docker container
+tests: build-image run-tests clean-up
+
+build-image:
+	docker build -t $(IMAGE_NAME) .
 
 run-tests:
-	@set -a && source ./tests/test.env && set +a && \
-	python -m pytest -rPQ tests
+	docker run --rm --name $(CONTAINER_NAME) \
+		--entrypoint "pytest" \
+		$(IMAGE_NAME) --color=yes -rPQ tests/*
 
-setup-tests:
-	set -a && source ./tests/test.env && set +a && \
-	mkdir -p $$WHISPER_MODEL_DIR && \
-	chmod -R 755 $$WHISPER_MODEL_DIR && \
-	mkdir -p $$PIPER_MODELS_DIR && \
-	chmod -R 755 $$PIPER_MODELS_DIR && \
-	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx && \
-	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/arctic/medium/en_US-arctic-medium.onnx.json && \
-	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/sw/sw_CD/lanfrica/medium/sw_CD-lanfrica-medium.onnx && \
-	curl -OL https://huggingface.co/rhasspy/piper-voices/resolve/main/sw/sw_CD/lanfrica/medium/sw_CD-lanfrica-medium.onnx.json && \
-	mv en_US-arctic-medium.onnx $$PIPER_MODELS_DIR/ && \
-	mv en_US-arctic-medium.onnx.json $$PIPER_MODELS_DIR/ && \
-	mv sw_CD-lanfrica-medium.onnx $$PIPER_MODELS_DIR/ && \
-	mv sw_CD-lanfrica-medium.onnx.json $$PIPER_MODELS_DIR/
-
-clean-tests:
-	@set -a && source ./tests/test.env && set +a && \
-	rm -rf $$WHISPER_MODEL_DIR $$PIPER_MODELS_DIR
+clean-up:
+	docker container prune -f
+	docker image prune -f

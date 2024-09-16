@@ -29,17 +29,6 @@ fresh-env :
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
-# Note: Use `make fresh-env-speech` to install the inhouse Speech model requirements for
-# running the tests in optional_components/speech_api
-fresh-env-speech:
-	conda remove --name aaq-speech --all -y
-	conda create --name aaq-speech python==3.10 -y
-
-	$(CONDA_ACTIVATE) aaq-speech; \
-	pip install -r optional_components/speech_api/requirements.txt --ignore-installed; \
-	pip install -r requirements-dev.txt --ignore-installed; \
-	pre-commit install
-
 # Dev requirements
 setup-dev: setup-db setup-redis add-users-to-db setup-llm-proxy
 teardown-dev: teardown-db teardown-redis teardown-llm-proxy
