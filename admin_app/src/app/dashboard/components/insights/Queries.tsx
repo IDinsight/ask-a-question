@@ -1,7 +1,7 @@
 import { AutoFixHigh } from "@mui/icons-material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { LoadingButton } from "@mui/lab";
-import { Box } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import { grey, orange } from "@mui/material/colors";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";

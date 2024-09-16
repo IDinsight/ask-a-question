@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Box, Paper } from "@mui/material";
-import { embed } from "@bokeh/bokehjs";
 import { LoadingButton } from "@mui/lab";
 import { BubbleChart } from "@mui/icons-material";
 import { grey, orange } from "@mui/material/colors";
@@ -13,43 +12,54 @@ const BokehPlot = ({ endpoint }) => {
   const [plotData, setPlotData] = useState(null);
 
   useEffect(() => {
-    const plotElement = document.getElementById(plotId);
-    if (plotData && plotVisible && plotElement) {
-      plotElement.innerHTML = "";
-      embed.embed_item(plotData, plotId);
-    }
-  }, [plotData, plotVisible, plotId]);
+    let isMounted = true; // To prevent setting state if component is unmounted
 
-  const fetchAndEmbedPlot = () => {
-    setLoadError("");
+    const fetchAndEmbedPlot = async () => {
+      setLoadError("");
 
-    fetch(endpoint)
-      .then((response) => {
+      try {
+        const response = await fetch(endpoint);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
-      })
-      .then((data) => {
-        setPlotData(data); // Save the plot data in state
+        const data = await response.json();
+        if (isMounted) {
+          setPlotData(data);
+          setPlotVisible(true);
+          setLoading(false);
+        }
 
-        setPlotVisible(true);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching the plot: ", error);
-        setLoadError(`Could not load the plot data: ${error.message}`);
-        setPlotVisible(false);
-        setLoading(false);
-      });
-  };
+        // Dynamically import Bokeh and embed the plot
+        const { embed } = await import("@bokeh/bokehjs");
+        const plotElement = document.getElementById(plotId);
+        if (plotElement) {
+          plotElement.innerHTML = "";
+          embed.embed_item(data, plotId);
+        }
+      } catch (error) {
+        console.error("Error fetching the plot:", error);
+        if (isMounted) {
+          setLoadError(`Could not load the plot data: ${error.message}`);
+          setPlotVisible(false);
+          setLoading(false);
+        }
+      }
+    };
+
+    if (loading) {
+      fetchAndEmbedPlot();
+    }
+
+    return () => {
+      isMounted = false; // Cleanup flag on unmount
+    };
+  }, [loading, endpoint, plotId]);
 
   const togglePlotVisibility = () => {
     if (plotVisible) {
       setPlotVisible(false);
     } else {
       setLoading(true);
-      fetchAndEmbedPlot();
     }
   };
 
@@ -58,10 +68,10 @@ const BokehPlot = ({ endpoint }) => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center", // Centrally aligns the loading button
-        width: "100%", // Ensures that Box takes full width if necessary
+        alignItems: "center",
+        width: "100%",
         mt: 2,
-        pb: 2, // Provides margin above the entire component for spacing
+        pb: 2,
       }}
     >
       <LoadingButton
@@ -76,32 +86,27 @@ const BokehPlot = ({ endpoint }) => {
           "&:hover": {
             bgcolor: plotVisible ? grey[700] : orange[800],
           },
-          mb: 2, // Adds bottom margin to the button
+          mb: 2,
         }}
         onClick={togglePlotVisibility}
       >
         {plotVisible ? "Collapse Visualization" : "Show Topic Visualization"}
-        {/* startIcon}={isClicked ? <CheckIcon /> : <ContentCopyIcon />} */}
       </LoadingButton>
 
-      {/* Conditionally render the Paper that contains the plot */}
       {plotVisible && (
         <Paper
           elevation={1}
           sx={{
             width: "100%",
-            padding: 2, // Adds padding inside the Paper element
-            overflow: "hidden", // Hides anything overflowing the Paper
-            borderRadius: 2, // Rounds corners of the Paper
+            padding: 2,
+            overflow: "hidden",
+            borderRadius: 2,
           }}
         >
-          {/* The div where the Bokeh plot will be embedded */}
-
           <div id={plotId} className="bk-root" />
         </Paper>
       )}
 
-      {/* Error message display */}
       {loadError && <Box>Error: {loadError}</Box>}
     </Box>
   );
