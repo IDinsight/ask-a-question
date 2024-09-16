@@ -453,9 +453,7 @@ async def create_plot(request: Request) -> dict:
         width=700,
         height=500,
         tools="pan,wheel_zoom,reset,lasso_select",
-        title="Embeddings Visualization",
-        x_axis_label="X Coordinate",
-        y_axis_label="Y Coordinate",
+        title="Semantic Visualization",
     )
 
     wheel_zoom = plot.select_one(WheelZoomTool)
@@ -516,9 +514,9 @@ async def create_plot(request: Request) -> dict:
 
     # DataTable to display selected points
     columns = [
-        TableColumn(field="text", title="Text"),
-        TableColumn(field="type", title="Type"),
-        TableColumn(field="topic_title", title="Topic"),
+        TableColumn(field="text", title="Text", width=250),
+        TableColumn(field="type", title="Type", width=40),
+        TableColumn(field="topic_title", title="Topic", width=210),
     ]
     data_table_source = ColumnDataSource(data=dict(text=[], type=[], topic_title=[]))
     data_table = DataTable(
