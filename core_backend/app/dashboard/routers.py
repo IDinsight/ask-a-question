@@ -33,6 +33,7 @@ from .models import (
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
+    get_raw_contents,
     get_raw_queries,
     get_stats_cards,
     get_timeseries_top_content,
@@ -317,7 +318,14 @@ async def refresh_insights(
         asession=asession,
         start_date=start_date,
     )
-    topic_output = await topic_model_queries(user_db.user_id, time_period_queries)
+
+    content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
+
+    topic_output = await topic_model_queries(
+        user_id=user_db.user_id,
+        query_data=time_period_queries,
+        content_data=content_data,
+    )
 
     await redis.set(
         f"{user_db.username}_insights_{time_frequency}_results",
@@ -349,7 +357,7 @@ async def retrieve_insights_frequency(
     return TopicsData(
         refreshTimeStamp="",
         data=[],
-        unclustered_queries=[],
+        embeddings_dataframe={},
     )
 
 
@@ -371,7 +379,7 @@ def create_plot() -> dict:
     source_red = ColumnDataSource(data=dict(x=x_red, y=y_red, color=["red"] * 50))
 
     # Create a figure
-    plot = figure(width=800, height=500)
+    plot = figure(width=700, height=500)
 
     # Add blue points to the plot
     plot.circle("x", "y", radius=0.005, color="color", source=source_blue)
@@ -382,7 +390,7 @@ def create_plot() -> dict:
     )
 
     # Checkbox group to toggle red points visibility
-    checkbox = CheckboxGroup(labels=["Toggle Red Points"])
+    checkbox = CheckboxGroup(labels=["Show content cards"])
 
     # Callback to toggle the visibility of red points
     checkbox_callback = CustomJS(
@@ -397,11 +405,11 @@ def create_plot() -> dict:
 
     columns = [
         TableColumn(field="text", title="Text"),
-        TableColumn(field="label", title="Origin"),
+        TableColumn(field="label", title="Type"),
         TableColumn(field="cluster", title="Cluster"),
     ]
     source = ColumnDataSource(data=dict(text=[], label=[], cluster=[]))
-    data_table = DataTable(source=source, columns=columns, width=800, height=280)
+    data_table = DataTable(source=source, columns=columns, width=500, height=280)
 
     # Combine the plot and checkbox group within a layout
     layout = column(row(plot, data_table), checkbox)

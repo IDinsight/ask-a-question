@@ -198,7 +198,7 @@ class TopicsData(BaseModel):
 
     refreshTimeStamp: str
     data: list[Topic]
-    unclustered_queries: list[dict[str, str]]
+    embeddings_dataframe: dict
 
 
 class UserQuery(BaseModel):
