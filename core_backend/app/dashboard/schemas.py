@@ -198,7 +198,6 @@ class TopicsData(BaseModel):
 
     refreshTimeStamp: str
     data: list[Topic]
-    embeddings_dataframe: dict
 
 
 class UserQuery(BaseModel):

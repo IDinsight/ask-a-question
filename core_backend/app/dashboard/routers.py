@@ -1,10 +1,11 @@
 """This module contains the FastAPI router for the dashboard endpoints."""
 
 import json
+import random
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Tuple
 
-import numpy as np
+import pandas as pd
 from bokeh.embed import json_item
 from bokeh.layouts import column, row
 from bokeh.models import (
@@ -12,12 +13,14 @@ from bokeh.models import (
     ColumnDataSource,
     CustomJS,
     DataTable,
+    HoverTool,
     TableColumn,
+    WheelZoomTool,
 )
+from bokeh.palettes import Turbo256
 from bokeh.plotting import figure
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends
-from fastapi.requests import Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -321,11 +324,17 @@ async def refresh_insights(
 
     content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
 
-    topic_output = await topic_model_queries(
+    topic_output, embeddings_df = await topic_model_queries(
         user_id=user_db.user_id,
         query_data=time_period_queries,
         content_data=content_data,
     )
+
+    embeddings_json = embeddings_df.to_json(orient="split")
+
+    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+
+    await redis.set(embeddings_key, embeddings_json)
 
     await redis.set(
         f"{user_db.username}_insights_{time_frequency}_results",
@@ -362,56 +371,225 @@ async def retrieve_insights_frequency(
 
 
 @router.get("/bokeh", response_model=dict)
-def create_plot() -> dict:
-    """Creates a Bokeh plot with a checkbox to toggle the visibility of red points."""
-    # Initial data: 50 blue points
-    x = np.random.random(50)
-    y = np.random.random(50)
+async def create_plot(request: Request) -> dict:
+    """Creates a Bokeh plot based on embeddings data retrieved from Redis."""
+    # Get Redis client
+    redis = request.app.state.redis
 
-    # Preset additional 50 red points
-    x_red = np.random.random(50)
-    y_red = np.random.random(50)
+    # Define the Redis key
+    embeddings_key = "admin_embeddings_week"
 
-    # Create ColumnDataSource for blue points
-    source_blue = ColumnDataSource(data=dict(x=x, y=y, color=["blue"] * 50))
+    # Get the embeddings JSON from Redis
+    embeddings_json = await redis.get(embeddings_key)
+    if embeddings_json is None:
+        # Handle missing data
+        raise HTTPException(status_code=404, detail="Embeddings data not found")
 
-    # Create ColumnDataSource for red points
-    source_red = ColumnDataSource(data=dict(x=x_red, y=y_red, color=["red"] * 50))
+    # Decode and parse the JSON
+    embeddings_json = embeddings_json.decode("utf-8")
+    embeddings_df = pd.read_json(embeddings_json, orient="split")
+    embeddings_df["type"] = embeddings_df["type"].str.capitalize()
 
-    # Create a figure
-    plot = figure(width=700, height=500)
+    # Ensure required columns are present
+    required_columns = ["x_coord", "y_coord", "text", "type", "topic_title"]
+    if not all(col in embeddings_df.columns for col in required_columns):
+        raise HTTPException(
+            status_code=500, detail="Embeddings data missing required columns"
+        )
 
-    # Add blue points to the plot
-    plot.circle("x", "y", radius=0.005, color="color", source=source_blue)
+    # Assign 'grey' color to 'Unknown' or 'Unclassified' topics
+    embeddings_df["color"] = "grey"  # Default color
+    unknown_topics = ["Unknown", "Unclassified"]
+    # Identify known topics
+    known_topics = embeddings_df[
+        ~embeddings_df["topic_title"]
+        .str.lower()
+        .isin([t.lower() for t in unknown_topics])
+    ]["topic_title"].unique()
 
-    # Add red points to the plot, initially invisible
-    red_points = plot.circle(
-        "x", "y", radius=0.01, color="color", source=source_red, visible=False
+    # Randomly assign colors to known topics
+    palette = Turbo256  # Full spectrum color palette
+    random.seed(42)  # Set seed for reproducibility
+    topic_colors = random.sample(palette, len(known_topics))
+    topic_color_map = dict(zip(known_topics, topic_colors))
+
+    # Map colors to embeddings_df
+    embeddings_df.loc[embeddings_df["topic_title"].isin(known_topics), "color"] = (
+        embeddings_df["topic_title"].map(topic_color_map)
     )
 
-    # Checkbox group to toggle red points visibility
+    # Create data sources
+    # Filter queries
+    query_df = embeddings_df[embeddings_df["type"] == "Query"]
+    # Filter contents
+    content_df = embeddings_df[embeddings_df["type"] == "Content"]
+
+    # Create ColumnDataSource for queries
+    source_queries = ColumnDataSource(
+        data=dict(
+            x=query_df["x_coord"],
+            y=query_df["y_coord"],
+            color=query_df["color"],
+            text=query_df["text"].tolist(),
+            type=query_df["type"].tolist(),
+            topic_title=query_df["topic_title"].tolist(),
+        )
+    )
+
+    # Create ColumnDataSource for content
+    source_content = ColumnDataSource(
+        data=dict(
+            x=content_df["x_coord"],
+            y=content_df["y_coord"],
+            color=content_df["color"],
+            text=content_df["text"].tolist(),
+            type=content_df["type"].tolist(),
+            topic_title=content_df["topic_title"].tolist(),
+        )
+    )
+
+    # Create a figure with LassoSelectTool
+    plot = figure(
+        width=700,
+        height=500,
+        tools="pan,wheel_zoom,reset,lasso_select",
+        title="Embeddings Visualization",
+        x_axis_label="X Coordinate",
+        y_axis_label="Y Coordinate",
+    )
+
+    wheel_zoom = plot.select_one(WheelZoomTool)
+    plot.toolbar.active_scroll = wheel_zoom
+
+    # Add query points as circles with size units in data coordinates
+    query_renderer = plot.circle(
+        "x",
+        "y",
+        size=8,  # Adjust size based on your data range
+        color="color",
+        source=source_queries,
+        legend_label="Queries",
+        alpha=0.7,
+    )
+
+    # Add content points as squares with size units in data coordinates,
+    # initially invisible
+    content_renderer = plot.square(
+        "x",
+        "y",
+        size=15,  # Adjust size based on your data range
+        color="navy",
+        source=source_content,
+        visible=False,
+        legend_label="Content",
+        alpha=1.0,
+    )
+
+    # Adjust legend
+    plot.legend.location = "top_left"
+    plot.legend.click_policy = "hide"
+
+    # Checkbox group to toggle content points visibility
     checkbox = CheckboxGroup(labels=["Show content cards"])
 
-    # Callback to toggle the visibility of red points
+    # Callback to toggle the visibility of content points
     checkbox_callback = CustomJS(
-        args=dict(red_points=red_points),
+        args=dict(content_renderer=content_renderer),
         code="""
-        red_points.visible = cb_obj.active.includes(0);
+        content_renderer.visible = cb_obj.active.includes(0);
     """,
     )
 
     # Attach the callback to the checkbox group
     checkbox.js_on_change("active", checkbox_callback)
 
+    # Add hover tool to display text and cluster information
+    hover = HoverTool(
+        tooltips=[
+            ("Text", "@text"),
+            ("Type", "@type"),
+            ("Topic", "@topic_title"),
+        ],
+        renderers=[query_renderer, content_renderer],
+    )
+    plot.add_tools(hover)
+
+    # DataTable to display selected points
     columns = [
         TableColumn(field="text", title="Text"),
-        TableColumn(field="label", title="Type"),
-        TableColumn(field="cluster", title="Cluster"),
+        TableColumn(field="type", title="Type"),
+        TableColumn(field="topic_title", title="Topic"),
     ]
-    source = ColumnDataSource(data=dict(text=[], label=[], cluster=[]))
-    data_table = DataTable(source=source, columns=columns, width=500, height=280)
+    data_table_source = ColumnDataSource(data=dict(text=[], type=[], topic_title=[]))
+    data_table = DataTable(
+        source=data_table_source,
+        columns=columns,
+        width=500,
+        height=500,
+        selectable=True,
+    )
 
-    # Combine the plot and checkbox group within a layout
+    # JavaScript code to synchronize selection and update DataTable
+    sync_selection_code = """
+        // Synchronize selections between query and content sources
+        const indices = [];
+        for (let i = 0; i < source_queries.selected.indices.length; i++) {
+            indices.push(source_queries.selected.indices[i]);
+        }
+        for (let i = 0; i < source_content.selected.indices.length; i++) {
+            indices.push(source_content.selected.indices[i]);
+        }
+
+        // Update DataTable
+        const d_out = data_table_source.data;
+        d_out['text'] = [];
+        d_out['type'] = [];
+        d_out['topic_title'] = [];
+
+        // Add selected query data
+        for (let i of source_queries.selected.indices) {
+            d_out['text'].push(source_queries.data['text'][i]);
+            d_out['type'].push(source_queries.data['type'][i]);
+            d_out['topic_title'].push(source_queries.data['topic_title'][i]);
+        }
+        // Add selected content data
+        for (let i of source_content.selected.indices) {
+            d_out['text'].push(source_content.data['text'][i]);
+            d_out['type'].push(source_content.data['type'][i]);
+            d_out['topic_title'].push(source_content.data['topic_title'][i]);
+        }
+        data_table_source.change.emit();
+    """
+
+    # Attach callbacks to synchronize selections
+    source_queries.selected.js_on_change(
+        "indices",
+        CustomJS(
+            args=dict(
+                source_queries=source_queries,
+                source_content=source_content,
+                data_table_source=data_table_source,
+            ),
+            code=sync_selection_code,
+        ),
+    )
+
+    source_content.selected.js_on_change(
+        "indices",
+        CustomJS(
+            args=dict(
+                source_queries=source_queries,
+                source_content=source_content,
+                data_table_source=data_table_source,
+            ),
+            code=sync_selection_code,
+        ),
+    )
+
+    # Ensure that selection tools affect both data sources
+    plot.renderers.extend([query_renderer, content_renderer])
+
+    # Layout the components
     layout = column(row(plot, data_table), checkbox)
 
     return json_item(layout, "myplot")

@@ -4,6 +4,7 @@ This module contains the main function for the topic modelling pipeline.
 
 import asyncio
 from datetime import datetime, timezone
+from typing import Tuple
 
 import pandas as pd
 from bertopic import BERTopic
@@ -21,7 +22,7 @@ logger = setup_logger()
 
 async def topic_model_queries(
     user_id: int, query_data: list[UserQuery], content_data: list[InsightContent]
-) -> TopicsData:
+) -> Tuple[TopicsData, pd.DataFrame]:
     """Turn a list of raw queries, run them through a BERTopic pipeline
     and return the Data for the front end.
 
@@ -68,11 +69,11 @@ async def topic_model_queries(
     # Prepare BertTopic to model the data
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = sentence_model.encode(results_df["text"], show_progress_bar=False)
-    umap_model = UMAP(n_components=15, n_neighbors=8, min_dist=0.0, metric="cosine")
+    umap_model = UMAP(n_components=2, n_neighbors=15, min_dist=0.0, metric="cosine")
     hdbscan_model = HDBSCAN(
-        min_cluster_size=10,
+        min_cluster_size=20,
         metric="euclidean",
-        cluster_selection_method="leaf",  # Choosing 'leaf' -> smaller cluster
+        cluster_selection_method="eom",  # Choosing 'leaf' -> smaller cluster
         prediction_data=True,
     )
 
@@ -90,7 +91,6 @@ async def topic_model_queries(
     results_df["y_coord"] = reduced_embeddings[:, 1]
 
     # Queries with low probability of being in a cluster assigned -1
-    results_df.loc[results_df["probs"] < 0.5, "topic_id"] = -1
 
     tasks = []
     topic_ids = []
@@ -126,7 +126,7 @@ async def topic_model_queries(
     # Add the title as a column in the results_df
     results_df["topic_title"] = results_df["topic_id"].apply(get_topic_title)
     # Manually set all "Content" type to "Unclassified"
-    results_df.loc[results_df["type"] == "content", "topic_title"] = "Unclassified"
+    results_df.loc[results_df["type"] == "content", "topic_title"] = "Content"
 
     topic_data = []
 
@@ -157,9 +157,9 @@ async def topic_model_queries(
         topic_data, key=lambda x: (x.topic_id == -1, -x.topic_popularity)
     )
 
-    print(topic_data[:-1])
-    return TopicsData(
+    topics_data = TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topic_data,
-        embeddings_dataframe=results_df.to_dict(),
     )
+
+    return topics_data, results_df
