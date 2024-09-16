@@ -36,6 +36,7 @@ async def generate_ai_summary(
 
 
 async def generate_topic_label(
+    topic_id: int,
     user_id: int,
     context: str,
     sample_texts: list[str],
@@ -43,6 +44,9 @@ async def generate_topic_label(
     """
     Generates topic labels for example queries
     """
+    if topic_id == -1:
+        return {"topic_title": "Unclassified", "topic_summary": "Not available."}
+
     metadata = create_langfuse_metadata(feature_name="topic-modeling", user_id=user_id)
     topic_model_labelling = TopicModelLabelling(context)
 

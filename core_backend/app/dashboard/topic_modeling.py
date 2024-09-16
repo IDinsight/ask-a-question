@@ -92,35 +92,49 @@ async def topic_model_queries(
     # Queries with low probability of being in a cluster assigned -1
     results_df.loc[results_df["probs"] < 0.5, "topic_id"] = -1
 
-    topic_data = []
     tasks = []
-    for _, topic_df in results_df.groupby("topic_id"):
-        # Only include the top 5 samples for each topic
-        # and ensure only queries are used for topic labelling
+    topic_ids = []
+
+    for topic_id, topic_df in results_df.groupby("topic_id"):
+        # Only include the top 5 samples for each topic and only queries
         topic_queries = topic_df[topic_df["type"] == "query"]
         selected_queries = topic_queries["text"][:5].tolist()
         tasks.append(
             generate_topic_label(
+                topic_id,
                 user_id,
                 TOPIC_MODELING_CONTEXT,
                 selected_queries,
             )
         )
+        topic_ids.append(topic_id)
 
     topic_dicts = await asyncio.gather(*tasks)
+    topic_labels = {
+        topic_id: topic_dict for topic_id, topic_dict in zip(topic_ids, topic_dicts)
+    }
+
+    def get_topic_title(x: int) -> str:
+        """Get the topic title from the topic_id"""
+
+        if x == -1:
+            return "Unclassified"
+        else:
+            return topic_labels.get(x, {}).get("topic_title", "Unknown Topic")
+
     # The topic_dicts are a list of dictionaries containing the topic title and summary
     # Add the title as a column in the results_df
-    results_df["topic_title"] = results_df["topic_id"].apply(
-        lambda x: topic_dicts[x]["topic_title"] if x != -1 else "Unclassified"
-    )
+    results_df["topic_title"] = results_df["topic_id"].apply(get_topic_title)
     # Manually set all "Content" type to "Unclassified"
     results_df.loc[results_df["type"] == "content", "topic_title"] = "Unclassified"
 
-    for topic_dict, (topic_id, topic_df) in zip(
-        topic_dicts, results_df.groupby("topic_id")
-    ):
+    topic_data = []
+
+    for topic_id, topic_df in results_df.groupby("topic_id"):
+        topic_dict = topic_labels.get(
+            topic_id, {"topic_title": "Unknown", "topic_summary": ""}
+        )
         only_queries = topic_df[topic_df["type"] == "query"]
-        print(only_queries)
         topic_samples_slice = only_queries[["text", "datetime"]][:20]
         string_topic_samples = [
             {
@@ -131,15 +145,19 @@ async def topic_model_queries(
         ]
         topic_data.append(
             Topic(
-                topic_id=int(topic_id) if isinstance(topic_id, int) else -1,
+                topic_id=int(topic_id),
                 topic_name=topic_dict["topic_title"],
                 topic_summary=topic_dict["topic_summary"],
                 topic_samples=string_topic_samples,
                 topic_popularity=len(only_queries),
             )
         )
-    print(results_df)
-    topic_data = sorted(topic_data, key=lambda x: x.topic_popularity, reverse=True)
+
+    topic_data = sorted(
+        topic_data, key=lambda x: (x.topic_id == -1, -x.topic_popularity)
+    )
+
+    print(topic_data[:-1])
     return TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topic_data,
