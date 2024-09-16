@@ -7,6 +7,7 @@ on:
       - "**"
     paths:
       - "optional_components/speech_api/**"
+      - ".github/workflows/test_speech_api.yaml"
 
 env:
   PREFERRED_MODEL: base
@@ -33,12 +34,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r optional_components/speech_api/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r requirements-dev.txt
 
       - name: Run Speech Unit Tests
         env:

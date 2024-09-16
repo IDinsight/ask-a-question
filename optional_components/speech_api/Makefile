@@ -2,13 +2,13 @@ SHELL := /bin/bash
 
 .PHONY: tests build-image run-tests clean-up
 
-IMAGE_NAME := my_test_image
-CONTAINER_NAME := my_test_container
+IMAGE_NAME := Speech_test
+CONTAINER_NAME := Speech_test_container
 
 # Default target to run tests inside Docker container
-tests: build-image run-tests clean-up
+tests: setup-tests run-tests clean-tests
 
-build-image:
+setup-tests:
 	docker build -t $(IMAGE_NAME) .
 
 run-tests:
@@ -16,6 +16,6 @@ run-tests:
 		--entrypoint "pytest" \
 		$(IMAGE_NAME) --color=yes -rPQ tests/*
 
-clean-up:
+clean-tests:
 	docker container prune -f
 	docker image prune -f
