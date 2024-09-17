@@ -246,7 +246,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
         source=data_table_source,
         columns=columns,
         width=500,
-        height=200,
+        height=500,
         selectable=True,
     )
 
