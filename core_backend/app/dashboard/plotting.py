@@ -1,6 +1,6 @@
 """
 This file contains the logic for creating plots with Bokeh. These plots are embedded
-into the front end using BokehJS. See BokehPlot.js for details on how the
+into the front end using BokehJS. See Bokeh.tsx for details on how the
 front end handles the JSON produced by the Python backend.
 """
 
@@ -56,17 +56,17 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
 
     # Define special topics
     special_topics = ["Content"]  # 'Content' is the only special topic now
+    # can add more if needed
 
     # Make 'Unclassified' and 'Content' topics semi-transparent
     embeddings_df["alpha"] = embeddings_df["topic_title"].apply(
         lambda t: 0.6 if t.lower() in ["unclassified", "content"] else 1.0
     )
 
-    # Assign colors to topics
+    # Make topics + unclassified gray and everything else blue
+    # Blue is just a placeholder - will be overwritten later
     embeddings_df["color"] = embeddings_df["topic_title"].apply(
-        lambda t: (
-            "gray" if t.lower() in ["unclassified", "content"] else "blue"
-        )  # Replace "blue" with your desired default color
+        lambda t: ("gray" if t.lower() in ["unclassified", "content"] else "blue")
     )
 
     # Identify known topics excluding special topics and 'Unclassified' (topic_id == -1)
@@ -83,7 +83,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
 
     # Assign colors to known topics
     palette = Turbo256  # Full spectrum color palette
-    random.seed(42)  # Set seed for reproducibility
+    random.seed(42)  # Set seed for reproducibility between re-rendering plot
 
     if len(known_topics) <= len(palette):
         topic_colors = random.sample(palette, len(known_topics))
@@ -151,7 +151,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
         args=dict(multi_select=multi_select),
         code="""
         const indices = [];
-        const data = source.data;  // 'source' is available automatically
+        const data = source.data;
         const topics = data['topic_id'];
         const selected_topics = multi_select.value.map(Number);
 
