@@ -6,7 +6,7 @@ This guide outlines the process for hosting and using our custom in-house **Spee
 
 ### Configure environment variables
 
-To properly set the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables, open the `.core_backend.env` file and locate the lines for these variables. If they're commented out, **uncomment** them. Then, ensure the values are set to the correct endpoint URLs for your in-house TTS and STT models. These URLs should already be configured to allow communication between your main application container and the separate speech model container. Once you've verified or updated the URLs, save the file. This enables your application to use the in-house TTS and STT models instead of external services. (cf. [Configuring AAQ](../../deployment/config-options.md#configuring-the-backend-core_backend)).
+To properly set the `CUSTOM_TTS_ENDPOINT` and `CUSTOM_STT_ENDPOINT` environment variables, open the `.core_backend.env` file and locate the lines for these variables. If they're commented out, uncomment them and ensure their values are set to the correct endpoint URLs for your in-house TTS and STT models (cf. [Configuring AAQ](../../deployment/config-options.md#configuring-the-backend-core_backend)).
 
 ## Using In-house Speech Models in Deployment
 
