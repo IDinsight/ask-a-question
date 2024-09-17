@@ -1,10 +1,10 @@
 """
-This module contains the main function for the topic modelling pipeline.
+This module contains functions for the topic modeling pipeline.
 """
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 from bertopic import BERTopic
@@ -12,7 +12,7 @@ from hdbscan import HDBSCAN
 from sentence_transformers import SentenceTransformer
 from umap import UMAP
 
-from ..llm_call.dashboard import generate_topic_label
+from ..llm_call.dashboard import generate_topic_label  # Adjust import as necessary
 from ..utils import setup_logger
 from .config import TOPIC_MODELING_CONTEXT
 from .schemas import InsightContent, Topic, TopicsData, UserQuery
@@ -21,34 +21,85 @@ logger = setup_logger()
 
 
 async def topic_model_queries(
-    user_id: int, query_data: list[UserQuery], content_data: list[InsightContent]
+    user_id: int, query_data: List[UserQuery], content_data: List[InsightContent]
 ) -> Tuple[TopicsData, pd.DataFrame]:
-    """Turn a list of raw queries, run them through a BERTopic pipeline
-    and return the Data for the front end.
+    """Perform topic modeling on user queries and content data.
 
     Parameters
     ----------
     user_id : int
         The ID of the user making the request.
-    data
+    query_data : List[UserQuery]
         A list of UserQuery objects containing the raw queries and their
-    corresponding datetime stamps.
+        datetime stamps.
+    content_data : List[InsightContent]
+        A list of InsightContent objects containing content data.
 
     Returns
     -------
-    list[tuple[str, datetime]]
-        A list of tuples where each tuple contains the raw query
-    (query_text) and its corresponding datetime stamp (query_datetime_utc).
+    Tuple[TopicsData, pd.DataFrame]
+        A tuple containing TopicsData for the frontend and a DataFrame with embeddings.
     """
     if not query_data:
         logger.info("No queries to cluster")
-        return TopicsData(refreshTimeStamp="", data=[], embeddings_dataframe={})
+        return (
+            TopicsData(
+                refreshTimeStamp="",
+                data=[],
+                unclustered_queries=[],
+                embeddings_dataframe={},
+            ),
+            pd.DataFrame(),
+        )
 
     if not content_data:
         logger.info("No content data to cluster")
-        return TopicsData(refreshTimeStamp="", data=[], embeddings_dataframe={})
+        return (
+            TopicsData(
+                refreshTimeStamp="",
+                data=[],
+                unclustered_queries=[],
+                embeddings_dataframe={},
+            ),
+            pd.DataFrame(),
+        )
 
-    # Set up the dataframes
+    # Prepare dataframes
+    results_df = prepare_dataframes(query_data, content_data)
+
+    # Generate embeddings
+    embeddings = generate_embeddings(results_df["text"].tolist())
+
+    # Fit the BERTopic model
+    topic_model = fit_topic_model(results_df["text"].tolist(), embeddings)
+
+    # Transform documents to get topics and probabilities
+    results_df["topic_id"], results_df["probs"] = topic_model.transform(
+        results_df["text"], embeddings
+    )
+
+    # Add reduced embeddings (for visualization)
+    add_reduced_embeddings(results_df, topic_model)
+
+    # Generate topic labels using LLM
+    topic_labels = await generate_topic_labels_async(results_df, user_id)
+
+    # Add topic titles to the DataFrame
+    results_df["topic_title"] = results_df.apply(
+        lambda row: get_topic_title(row, topic_labels), axis=1
+    )
+
+    # Prepare TopicsData for frontend
+    topics_data = prepare_topics_data(results_df, topic_labels)
+
+    return topics_data, results_df
+
+
+def prepare_dataframes(
+    query_data: List[UserQuery], content_data: List[InsightContent]
+) -> pd.DataFrame:
+    """Prepare a unified DataFrame combining queries and content data."""
+    # Convert to DataFrames
     content_df = pd.DataFrame.from_records([x.model_dump() for x in content_data])
     content_df["type"] = "content"
 
@@ -56,86 +107,130 @@ async def topic_model_queries(
     query_df["type"] = "query"
     query_df["query_datetime_utc"] = query_df["query_datetime_utc"].astype(str)
 
-    # Prepare datetimes column
-    combined_datetimes = query_df["query_datetime_utc"].tolist() + [""] * len(
-        content_df
-    )
-    # Combine all the text together and create a uniform DataFrame
-    full_docs = query_df["query_text"].tolist() + content_df["content_text"].tolist()
-    results_df = pd.DataFrame(full_docs, columns=["text"])
-    results_df["type"] = query_df["type"].tolist() + content_df["type"].tolist()
-    results_df["datetime"] = combined_datetimes
+    # Combine queries and content
+    full_texts = query_df["query_text"].tolist() + content_df["content_text"].tolist()
+    types = query_df["type"].tolist() + content_df["type"].tolist()
+    datetimes = query_df["query_datetime_utc"].tolist() + [""] * len(content_df)
 
-    # Prepare BertTopic to model the data
+    # Create combined DataFrame
+    results_df = pd.DataFrame(
+        {"text": full_texts, "type": types, "datetime": datetimes}
+    )
+
+    return results_df
+
+
+def generate_embeddings(texts: List[str]) -> List[List[float]]:
+    """Generate embeddings for a list of texts using SentenceTransformer."""
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = sentence_model.encode(results_df["text"], show_progress_bar=False)
-    umap_model = UMAP(n_components=2, n_neighbors=15, min_dist=0.0, metric="cosine")
+    embeddings = sentence_model.encode(texts, show_progress_bar=False)
+    return embeddings
+
+
+def fit_topic_model(texts: List[str], embeddings: List[List[float]]) -> BERTopic:
+    """Fit a BERTopic model on the provided texts and embeddings."""
+    umap_model = UMAP(
+        n_components=2,
+        n_neighbors=15,
+        min_dist=0.0,
+        metric="cosine",
+        random_state=42,  # For reproducibility
+    )
     hdbscan_model = HDBSCAN(
         min_cluster_size=20,
         metric="euclidean",
-        cluster_selection_method="eom",  # Choosing 'leaf' -> smaller cluster
+        cluster_selection_method="eom",
         prediction_data=True,
     )
-
-    # Fit the model
-    topic_model = BERTopic(hdbscan_model=hdbscan_model, umap_model=umap_model).fit(
-        full_docs, embeddings
+    topic_model = BERTopic(
+        hdbscan_model=hdbscan_model,
+        umap_model=umap_model,
+        calculate_probabilities=True,
+        verbose=False,
     )
-    results_df["topic_id"], results_df["probs"] = topic_model.transform(
-        results_df["text"], embeddings
-    )
+    topic_model.fit(texts, embeddings)
+    return topic_model
 
-    # Extract reduced embeddings from BertTOPIC model and add to results_df
+
+def add_reduced_embeddings(results_df: pd.DataFrame, topic_model: BERTopic) -> None:
+    """Add reduced embeddings (2D) to the results DataFrame."""
     reduced_embeddings = topic_model.umap_model.embedding_
     results_df["x"] = reduced_embeddings[:, 0]
     results_df["y"] = reduced_embeddings[:, 1]
 
-    # Queries with low probability of being in a cluster assigned -1
 
+async def generate_topic_labels_async(
+    results_df: pd.DataFrame, user_id: int
+) -> Dict[int, Dict[str, str]]:
+    """Generate topic labels asynchronously using an LLM."""
     tasks = []
     topic_ids = []
 
-    for topic_id, topic_df in results_df.groupby("topic_id"):
-        # Only include the top 5 samples for each topic and only queries
-        topic_queries = topic_df[topic_df["type"] == "query"]
-        selected_queries = topic_queries["text"][:5].tolist()
+    # Group by topic_id
+    grouped = results_df.groupby("topic_id")
+
+    for topic_id, topic_df in grouped:
+        if topic_id == -1:
+            continue  # Skip noise/unclassified topics
+
+        # Get top 5 query samples for the topic
+        topic_queries = topic_df[topic_df["type"] == "query"]["text"].head(5).tolist()
+
+        # Create task for generating topic label
         tasks.append(
             generate_topic_label(
                 topic_id,
                 user_id,
                 TOPIC_MODELING_CONTEXT,
-                selected_queries,
+                topic_queries,
             )
         )
         topic_ids.append(topic_id)
 
+    # Run tasks concurrently
     topic_dicts = await asyncio.gather(*tasks)
-    topic_labels = {
-        topic_id: topic_dict for topic_id, topic_dict in zip(topic_ids, topic_dicts)
-    }
 
-    def get_topic_title(x: int) -> str:
-        """Get the topic title from the topic_id"""
+    # Map topic_ids to topic_dicts
+    topic_labels = {tid: tdict for tid, tdict in zip(topic_ids, topic_dicts)}
 
-        if x == -1:
-            return "Unclassified"
-        else:
-            return topic_labels.get(x, {}).get("topic_title", "Unknown Topic")
+    return topic_labels
 
-    # The topic_dicts are a list of dictionaries containing the topic title and summary
-    # Add the title as a column in the results_df
-    results_df["topic_title"] = results_df["topic_id"].apply(get_topic_title)
-    # Manually set all "Content" type to "Unclassified"
-    results_df.loc[results_df["type"] == "content", "topic_title"] = "Content"
 
-    topic_data = []
+def get_topic_title(row: pd.Series, topic_labels: Dict[int, Dict[str, str]]) -> str:
+    """Get the topic title for a given row."""
+    if row["topic_id"] == -1:
+        return "Unclassified"
+    elif row["type"] == "content":
+        return "Content"
+    else:
+        return topic_labels.get(row["topic_id"], {}).get("topic_title", "Unknown Topic")
 
-    for topic_id, topic_df in results_df.groupby("topic_id"):
+
+def prepare_topics_data(
+    results_df: pd.DataFrame, topic_labels: Dict[int, Dict[str, str]]
+) -> TopicsData:
+    """Prepare the TopicsData object for the frontend."""
+    topics_list = []
+    unclassified_queries = []
+
+    # Group by topic_id
+    grouped = results_df.groupby("topic_id")
+
+    for topic_id, topic_df in grouped:
+        only_queries = topic_df[topic_df["type"] == "query"]
+
+        # Collect unclassified queries
+        if topic_id == -1:
+            unclassified_queries.extend(only_queries["text"].tolist())
+            continue
+
+        # Get topic information
         topic_dict = topic_labels.get(
             topic_id, {"topic_title": "Unknown", "topic_summary": ""}
         )
-        only_queries = topic_df[topic_df["type"] == "query"]
-        topic_samples_slice = only_queries[["text", "datetime"]][:20]
+
+        # Get topic samples
+        topic_samples_slice = only_queries[["text", "datetime"]].head(20)
         string_topic_samples = [
             {
                 "query_text": str(sample["text"]),
@@ -143,23 +238,25 @@ async def topic_model_queries(
             }
             for sample in topic_samples_slice.to_dict(orient="records")
         ]
-        topic_data.append(
-            Topic(
-                topic_id=int(topic_id),
-                topic_name=topic_dict["topic_title"],
-                topic_summary=topic_dict["topic_summary"],
-                topic_samples=string_topic_samples,
-                topic_popularity=len(only_queries),
-            )
+
+        # Create Topic object
+        topic = Topic(
+            topic_id=int(topic_id),
+            topic_name=topic_dict["topic_title"],
+            topic_summary=topic_dict["topic_summary"],
+            topic_samples=string_topic_samples,
+            topic_popularity=len(only_queries),
         )
+        topics_list.append(topic)
 
-    topic_data = sorted(
-        topic_data, key=lambda x: (x.topic_id == -1, -x.topic_popularity)
-    )
+    # Sort topics by popularity
+    topics_list = sorted(topics_list, key=lambda x: -x.topic_popularity)
 
+    # Prepare TopicsData
     topics_data = TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-        data=topic_data,
+        data=topics_list,
+        unclustered_queries=unclassified_queries,
     )
 
-    return topics_data, results_df
+    return topics_data
