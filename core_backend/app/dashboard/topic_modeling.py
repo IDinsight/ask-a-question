@@ -87,8 +87,8 @@ async def topic_model_queries(
 
     # Extract reduced embeddings from BertTOPIC model and add to results_df
     reduced_embeddings = topic_model.umap_model.embedding_
-    results_df["x_coord"] = reduced_embeddings[:, 0]
-    results_df["y_coord"] = reduced_embeddings[:, 1]
+    results_df["x"] = reduced_embeddings[:, 0]
+    results_df["y"] = reduced_embeddings[:, 1]
 
     # Queries with low probability of being in a cluster assigned -1
 
