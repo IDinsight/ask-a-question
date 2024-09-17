@@ -357,14 +357,19 @@ async def retrieve_insights_frequency(
     )
 
 
-@router.get("/bokeh", response_model=dict)
-async def create_plot(request: Request) -> dict:
+@router.get("/topic_visualization/{time_frequency}", response_model=dict)
+async def create_plot(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+) -> dict:
     """Creates a Bokeh plot based on embeddings data retrieved from Redis."""
+
     # Get Redis client
     redis = request.app.state.redis
 
     # Define the Redis key
-    embeddings_key = "admin_embeddings_week"
+    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
 
     # Get the embeddings JSON from Redis
     embeddings_json = await redis.get(embeddings_key)

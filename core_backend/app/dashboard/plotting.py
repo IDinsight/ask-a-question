@@ -28,7 +28,6 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
     Create a Bokeh plot with queries and content points, and a DataTable to display
     selected points.
     """
-
     # Ensure required columns are present
     required_columns = ["x", "y", "text", "type", "topic_title"]
     if not all(col in embeddings_df.columns for col in required_columns):
