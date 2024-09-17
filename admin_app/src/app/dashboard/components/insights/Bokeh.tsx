@@ -176,9 +176,8 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                 have currently selected.
               </li>
               <li>
-                Check <strong>Also show content cards</strong> at the top of the plot
-                (or use the interactive legend in the plot) to display/ hide content
-                points by clicking "Content" in the top right.
+                Select the "Content" checkbox in the legend to toggle the visibility of
+                content points (which will appear as squares)
               </li>
             </ul>
           </Typography>

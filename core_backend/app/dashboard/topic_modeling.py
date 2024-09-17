@@ -58,8 +58,6 @@ async def topic_model_queries(
             TopicsData(
                 refreshTimeStamp="",
                 data=[],
-                unclustered_queries=[],
-                embeddings_dataframe={},
             ),
             pd.DataFrame(),
         )
@@ -74,9 +72,8 @@ async def topic_model_queries(
     topic_model = fit_topic_model(results_df["text"].tolist(), embeddings)
 
     # Transform documents to get topics and probabilities
-    results_df["topic_id"], results_df["probs"] = topic_model.transform(
-        results_df["text"], embeddings
-    )
+    topics, _ = topic_model.transform(results_df["text"], embeddings)
+    results_df["topic_id"] = topics
 
     # Add reduced embeddings (for visualization)
     add_reduced_embeddings(results_df, topic_model)
@@ -211,7 +208,6 @@ def prepare_topics_data(
 ) -> TopicsData:
     """Prepare the TopicsData object for the frontend."""
     topics_list = []
-    unclassified_queries = []
 
     # Group by topic_id
     grouped = results_df.groupby("topic_id")
@@ -221,7 +217,6 @@ def prepare_topics_data(
 
         # Collect unclassified queries
         if topic_id == -1:
-            unclassified_queries.extend(only_queries["text"].tolist())
             continue
 
         # Get topic information
@@ -256,7 +251,6 @@ def prepare_topics_data(
     topics_data = TopicsData(
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topics_list,
-        unclustered_queries=unclassified_queries,
     )
 
     return topics_data
