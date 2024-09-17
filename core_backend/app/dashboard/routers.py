@@ -389,6 +389,17 @@ async def create_plot(request: Request) -> dict:
     embeddings_json = embeddings_json.decode("utf-8")
     embeddings_df = pd.read_json(embeddings_json, orient="split")
     embeddings_df["type"] = embeddings_df["type"].str.capitalize()
+    embeddings_df["display_text"] = embeddings_df.apply(
+        lambda row: (
+            row["text"] if row["type"] == "Query" else f"[Content] {row['text']}"
+        ),
+        axis=1,
+    )
+
+    unknown_topics = ["Unknown", "Unclassified"]
+    embeddings_df["alpha"] = embeddings_df["topic_title"].apply(
+        lambda t: 0.6 if t.lower() in [ut.lower() for ut in unknown_topics] else 1.0
+    )
 
     # Ensure required columns are present
     required_columns = ["x_coord", "y_coord", "text", "type", "topic_title"]
@@ -430,9 +441,9 @@ async def create_plot(request: Request) -> dict:
             x=query_df["x_coord"],
             y=query_df["y_coord"],
             color=query_df["color"],
-            text=query_df["text"].tolist(),
-            type=query_df["type"].tolist(),
+            display_text=query_df["display_text"].tolist(),
             topic_title=query_df["topic_title"].tolist(),
+            alpha=query_df["alpha"].tolist(),
         )
     )
 
@@ -442,9 +453,9 @@ async def create_plot(request: Request) -> dict:
             x=content_df["x_coord"],
             y=content_df["y_coord"],
             color=content_df["color"],
-            text=content_df["text"].tolist(),
-            type=content_df["type"].tolist(),
+            display_text=content_df["display_text"].tolist(),
             topic_title=content_df["topic_title"].tolist(),
+            alpha=content_df["alpha"].tolist(),
         )
     )
 
@@ -453,7 +464,6 @@ async def create_plot(request: Request) -> dict:
         width=700,
         height=500,
         tools="pan,wheel_zoom,reset,lasso_select",
-        title="Semantic Visualization",
     )
 
     wheel_zoom = plot.select_one(WheelZoomTool)
@@ -463,11 +473,11 @@ async def create_plot(request: Request) -> dict:
     query_renderer = plot.circle(
         "x",
         "y",
-        size=8,  # Adjust size based on your data range
+        size=6,  # Adjust size based on your data range
         color="color",
         source=source_queries,
         legend_label="Queries",
-        alpha=0.7,
+        alpha="alpha",
     )
 
     # Add content points as squares with size units in data coordinates,
@@ -475,12 +485,13 @@ async def create_plot(request: Request) -> dict:
     content_renderer = plot.square(
         "x",
         "y",
-        size=15,  # Adjust size based on your data range
-        color="navy",
+        size=13,
+        line_color="black",
+        fill_alpha=0,
+        alpha="alpha",
         source=source_content,
         visible=False,
         legend_label="Content",
-        alpha=1.0,
     )
 
     # Adjust legend
@@ -488,8 +499,7 @@ async def create_plot(request: Request) -> dict:
     plot.legend.click_policy = "hide"
 
     # Checkbox group to toggle content points visibility
-    checkbox = CheckboxGroup(labels=["Show content cards"])
-
+    checkbox = CheckboxGroup(labels=["Also show content cards"])
     # Callback to toggle the visibility of content points
     checkbox_callback = CustomJS(
         args=dict(content_renderer=content_renderer),
@@ -504,8 +514,7 @@ async def create_plot(request: Request) -> dict:
     # Add hover tool to display text and cluster information
     hover = HoverTool(
         tooltips=[
-            ("Text", "@text"),
-            ("Type", "@type"),
+            ("Text", "@display_text"),
             ("Topic", "@topic_title"),
         ],
         renderers=[query_renderer, content_renderer],
@@ -519,6 +528,12 @@ async def create_plot(request: Request) -> dict:
         TableColumn(field="topic_title", title="Topic", width=210),
     ]
     data_table_source = ColumnDataSource(data=dict(text=[], type=[], topic_title=[]))
+    # DataTable to display selected points
+    columns = [
+        TableColumn(field="display_text", title="Text", width=250),
+        TableColumn(field="topic_title", title="Topic", width=210),
+    ]
+    data_table_source = ColumnDataSource(data=dict(display_text=[], topic_title=[]))
     data_table = DataTable(
         source=data_table_source,
         columns=columns,
@@ -540,20 +555,17 @@ async def create_plot(request: Request) -> dict:
 
         // Update DataTable
         const d_out = data_table_source.data;
-        d_out['text'] = [];
-        d_out['type'] = [];
+        d_out['display_text'] = [];
         d_out['topic_title'] = [];
 
         // Add selected query data
         for (let i of source_queries.selected.indices) {
-            d_out['text'].push(source_queries.data['text'][i]);
-            d_out['type'].push(source_queries.data['type'][i]);
+            d_out['display_text'].push(source_queries.data['display_text'][i]);
             d_out['topic_title'].push(source_queries.data['topic_title'][i]);
         }
         // Add selected content data
         for (let i of source_content.selected.indices) {
-            d_out['text'].push(source_content.data['text'][i]);
-            d_out['type'].push(source_content.data['type'][i]);
+            d_out['display_text'].push(source_content.data['display_text'][i]);
             d_out['topic_title'].push(source_content.data['topic_title'][i]);
         }
         data_table_source.change.emit();
@@ -587,7 +599,7 @@ async def create_plot(request: Request) -> dict:
     # Ensure that selection tools affect both data sources
     plot.renderers.extend([query_renderer, content_renderer])
 
-    # Layout the components
-    layout = column(row(plot, data_table), checkbox)
+    # Move checkbox to the top of the layout
+    layout = column(checkbox, row(plot, data_table))
 
     return json_item(layout, "myplot")

@@ -1,65 +1,70 @@
-import React, { useState, useEffect } from "react";
-import { Box, Paper } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { BubbleChart } from "@mui/icons-material";
-import { grey, orange } from "@mui/material/colors";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Paper,
+  Box,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CircularProgress from "@mui/material/CircularProgress";
+
+// Import your images with updated names
+import lassoIcon from "./assets/lasso.png";
+import moveIcon from "./assets/move.png"; // Pan tool
+import refreshIcon from "./assets/refresh.png"; // Reset tool
+import scrollZoomIcon from "./assets/scroll_zoom.png"; // Scroll Zoom tool
+import tooltipIcon from "./assets/tooltip.png"; // Hover tool
 
 const BokehPlot = ({ endpoint }) => {
   const [loadError, setLoadError] = useState("");
-  const [plotId] = useState("myplot");
+  const plotId = "myplot";
+  const [plotLoaded, setPlotLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [plotVisible, setPlotVisible] = useState(false);
-  const [plotData, setPlotData] = useState(null);
+  const plotRef = useRef(null);
 
   useEffect(() => {
-    let isMounted = true; // To prevent setting state if component is unmounted
-
-    const fetchAndEmbedPlot = async () => {
-      setLoadError("");
-
-      try {
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (isMounted) {
-          setPlotData(data);
-          setPlotVisible(true);
-          setLoading(false);
-        }
-
-        // Dynamically import Bokeh and embed the plot
-        const { embed } = await import("@bokeh/bokehjs");
-        const plotElement = document.getElementById(plotId);
-        if (plotElement) {
-          plotElement.innerHTML = "";
-          embed.embed_item(data, plotId);
-        }
-      } catch (error) {
-        console.error("Error fetching the plot:", error);
-        if (isMounted) {
-          setLoadError(`Could not load the plot data: ${error.message}`);
-          setPlotVisible(false);
-          setLoading(false);
-        }
-      }
-    };
-
-    if (loading) {
+    if (plotVisible && !plotLoaded) {
       fetchAndEmbedPlot();
     }
+  }, [plotVisible]);
 
-    return () => {
-      isMounted = false; // Cleanup flag on unmount
-    };
-  }, [loading, endpoint, plotId]);
+  const fetchAndEmbedPlot = async () => {
+    setLoadError("");
+    setLoading(true);
 
-  const togglePlotVisibility = () => {
-    if (plotVisible) {
-      setPlotVisible(false);
+    try {
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      // Dynamically import Bokeh and embed the plot
+      const { embed } = await import("@bokeh/bokehjs");
+
+      if (plotRef.current) {
+        plotRef.current.innerHTML = "";
+        embed.embed_item(data, plotId);
+        setPlotLoaded(true);
+      } else {
+        throw new Error(`Plot element with id "${plotId}" not found.`);
+      }
+    } catch (error) {
+      console.error("Error fetching the plot:", error);
+      setLoadError(`Could not load the plot data: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccordionChange = (event, isExpanded) => {
+    if (isExpanded) {
+      setPlotVisible(true);
     } else {
-      setLoading(true);
+      setPlotVisible(false);
     }
   };
 
@@ -74,40 +79,132 @@ const BokehPlot = ({ endpoint }) => {
         pb: 2,
       }}
     >
-      <LoadingButton
-        variant="contained"
-        startIcon={<BubbleChart />}
-        disabled={loading}
-        loading={loading}
-        loadingPosition="start"
-        sx={{
-          bgcolor: plotVisible ? grey[500] : orange[600],
-          width: 300,
-          "&:hover": {
-            bgcolor: plotVisible ? grey[700] : orange[800],
-          },
-          mb: 2,
-        }}
-        onClick={togglePlotVisibility}
-      >
-        {plotVisible ? "Collapse Visualization" : "Show Topic Visualization"}
-      </LoadingButton>
-
-      {plotVisible && (
-        <Paper
-          elevation={1}
-          sx={{
-            width: "100%",
-            padding: 2,
-            overflow: "hidden",
-            borderRadius: 2,
-          }}
+      <Accordion onChange={handleAccordionChange} sx={{ width: "100%" }}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="bokeh-plot-content"
+          id="bokeh-plot-header"
+          sx={{ width: "100%" }}
         >
-          <div id={plotId} className="bk-root" />
-        </Paper>
-      )}
+          <Typography variant="h6">Topic Visualization</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {loadError && (
+            <Box sx={{ color: "error.main", mb: 2 }}>Error: {loadError}</Box>
+          )}
 
-      {loadError && <Box>Error: {loadError}</Box>}
+          {/* Instructions with images */}
+          <Typography variant="body2" style={{ marginTop: "1em" }}>
+            <strong>How to use the plot:</strong>
+            <p>
+              The plot below shows queries and content grouped by their topic
+              similarity. Any ungrouped points/ outliers are shown in grey, while points
+              in the same cluster are shown as the same color. Content points are shown
+              as black boxes. If there are no content points near a query points, you
+              may want to add content so that the query is more likely to be accurately
+              matched to a relevant content point.
+            </p>
+            <ul>
+              <li>
+                Use the mouse wheel to zoom in and out with the{" "}
+                <img
+                  src={scrollZoomIcon.src}
+                  alt="Scroll Zoom"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    verticalAlign: "middle",
+                    margin: "0 2px",
+                  }}
+                />{" "}
+                tool (activated by default). Pan around using the{" "}
+                <img
+                  src={moveIcon.src}
+                  alt="Pan Tool"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    verticalAlign: "middle",
+                    margin: "0 2px",
+                  }}
+                />{" "}
+                tool (activated by default).
+              </li>
+              <li>
+                Hover over points to see the text and topic information using the{" "}
+                <img
+                  src={tooltipIcon.src}
+                  alt="Tooltip"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    verticalAlign: "middle",
+                    margin: "0 2px",
+                  }}
+                />{" "}
+                tool (activated by default). If you want to stop this behaviour, simply
+                de-select the tool in the sidebar.
+              </li>
+              <li>
+                Use the lasso tool{" "}
+                <img
+                  src={lassoIcon.src}
+                  alt="Lasso Tool"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    verticalAlign: "middle",
+                    margin: "0 2px",
+                  }}
+                />{" "}
+                (in the toolbar to the left of the plot) to select multiple points and
+                see their details in the table.
+              </li>
+              <li>
+                Click the reset tool{" "}
+                <img
+                  src={refreshIcon.src}
+                  alt="Reset Tool"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    verticalAlign: "middle",
+                    margin: "0 2px",
+                  }}
+                />{" "}
+                to return the plot to its original state and de-select any points you
+                have currently selected.
+              </li>
+              <li>
+                Check <strong>Also show content cards</strong> at the top of the plot
+                (or use the interactive legend in the plot) to display/ hide content
+                points by clicking "Content" in the top right.
+              </li>
+            </ul>
+          </Typography>
+
+          {loading && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {/* The plot container */}
+          <Paper
+            elevation={1}
+            sx={{
+              width: "100%",
+              padding: 2,
+              overflow: "hidden",
+              borderRadius: 2,
+              mt: 2,
+              display: plotVisible ? "block" : "none",
+            }}
+          >
+            <div id={plotId} className="bk-root" ref={plotRef} />
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
     </Box>
   );
 };
