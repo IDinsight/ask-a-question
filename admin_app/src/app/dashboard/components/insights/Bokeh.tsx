@@ -12,7 +12,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { getEmbeddingData } from "../../api";
 import { Period } from "@/app/dashboard/types";
 
-// Import images from assets foldder
+// Import images from assets folder
 import lassoIcon from "./assets/lasso.png";
 import moveIcon from "./assets/move.png";
 import refreshIcon from "./assets/refresh.png";
@@ -21,7 +21,7 @@ import tooltipIcon from "./assets/tooltip.png";
 
 interface BokehPlotProps {
   timePeriod: Period;
-  token: string;
+  token: string | null;
 }
 
 const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
