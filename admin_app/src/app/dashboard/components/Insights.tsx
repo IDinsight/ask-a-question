@@ -15,7 +15,8 @@ interface InsightProps {
 }
 
 const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
-  const bokehEndpoint = "http://localhost:8000/dashboard/bokeh";
+  const bokehEndpoint =
+    "http://localhost:8000/dashboard/topic_vizualisation/{timePeriod}";
   const { token } = useAuth();
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
@@ -127,7 +128,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           />
         </Box>
       </Paper>
-      <BokehPlot endpoint={bokehEndpoint} />
+      <BokehPlot timePeriod={timePeriod} token={token} />
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, SyntheticEvent } from "react";
 import {
   Accordion,
   AccordionSummary,
@@ -9,21 +9,28 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CircularProgress from "@mui/material/CircularProgress";
+import { getEmbeddingData } from "../../api";
+import { Period } from "@/app/dashboard/types";
 
-// Import your images with updated names
+// Import images from assets foldder
 import lassoIcon from "./assets/lasso.png";
-import moveIcon from "./assets/move.png"; // Pan tool
-import refreshIcon from "./assets/refresh.png"; // Reset tool
-import scrollZoomIcon from "./assets/scroll_zoom.png"; // Scroll Zoom tool
-import tooltipIcon from "./assets/tooltip.png"; // Hover tool
+import moveIcon from "./assets/move.png";
+import refreshIcon from "./assets/refresh.png";
+import scrollZoomIcon from "./assets/scroll_zoom.png";
+import tooltipIcon from "./assets/tooltip.png";
 
-const BokehPlot = ({ endpoint }) => {
+interface BokehPlotProps {
+  timePeriod: Period;
+  token: string;
+}
+
+const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
   const [loadError, setLoadError] = useState("");
   const plotId = "myplot";
   const [plotLoaded, setPlotLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [plotVisible, setPlotVisible] = useState(false);
-  const plotRef = useRef(null);
+  const plotRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (plotVisible && !plotLoaded) {
@@ -34,38 +41,31 @@ const BokehPlot = ({ endpoint }) => {
   const fetchAndEmbedPlot = async () => {
     setLoadError("");
     setLoading(true);
+    if (token) {
+      try {
+        const data = await getEmbeddingData(timePeriod, token);
 
-    try {
-      const response = await fetch(endpoint);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Dynamically import Bokeh and embed the plot
+        const { embed } = await import("@bokeh/bokehjs");
+
+        if (plotRef.current) {
+          plotRef.current.innerHTML = "";
+          embed.embed_item(data, plotId);
+          setPlotLoaded(true);
+        } else {
+          throw new Error(`Plot element with id "${plotId}" not found.`);
+        }
+      } catch (error: any) {
+        console.error("Error fetching the plot:", error);
+        setLoadError(`Could not load the plot data: ${error.message}`);
+      } finally {
+        setLoading(false);
       }
-      const data = await response.json();
-
-      // Dynamically import Bokeh and embed the plot
-      const { embed } = await import("@bokeh/bokehjs");
-
-      if (plotRef.current) {
-        plotRef.current.innerHTML = "";
-        embed.embed_item(data, plotId);
-        setPlotLoaded(true);
-      } else {
-        throw new Error(`Plot element with id "${plotId}" not found.`);
-      }
-    } catch (error) {
-      console.error("Error fetching the plot:", error);
-      setLoadError(`Could not load the plot data: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleAccordionChange = (event, isExpanded) => {
-    if (isExpanded) {
-      setPlotVisible(true);
-    } else {
-      setPlotVisible(false);
-    }
+  const handleAccordionChange = (event: SyntheticEvent, isExpanded: boolean) => {
+    setPlotVisible(isExpanded);
   };
 
   return (
