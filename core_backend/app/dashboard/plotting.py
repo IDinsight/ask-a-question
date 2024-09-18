@@ -7,7 +7,9 @@ front end handles the JSON produced by the Python backend.
 import random
 
 import pandas as pd
+from bokeh.core.types import ID
 from bokeh.embed import json_item
+from bokeh.embed.util import StandaloneEmbedJson
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
@@ -27,7 +29,7 @@ from bokeh.plotting import figure
 from fastapi import HTTPException
 
 
-def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
+def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     """
     Create a Bokeh plot with queries and content points, and a DataTable to display
     selected points, handling duplicate topic titles by using topic_id.
@@ -103,7 +105,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
         embeddings_df[embeddings_df["topic_title"].str.lower() != "content"]
         .groupby(["topic_id", "topic_title"])
         .size()
-        .reset_index(name="counts")
+        .reset_index(level="counts")
     )
 
     # Sort topics by popularity (descending), but place 'Unclassified' at the top
@@ -321,4 +323,4 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
         controls_layout,
     )
 
-    return json_item(layout, "myplot")
+    return json_item(layout, ID("myplot"))
