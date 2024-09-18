@@ -9,7 +9,7 @@ import random
 import pandas as pd
 from bokeh.core.types import ID
 from bokeh.embed import json_item
-from bokeh.embed.util import StandaloneEmbedJson
+from bokeh.embed.standalone import StandaloneEmbedJson
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
