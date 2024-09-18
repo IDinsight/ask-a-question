@@ -132,7 +132,7 @@ const Queries: React.FC<QueriesProps> = ({
           flexDirection: "column",
           overflow: "hidden",
           overflowY: "scroll",
-          maxHeight: 410,
+          maxHeight: 310,
         }}
       >
         {data.length > 0 ? (

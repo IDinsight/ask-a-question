@@ -39,7 +39,6 @@ guard-%:
 
 # Add users to db
 add-users-to-db:
-	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	set -a && \
         source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
         set +a && \

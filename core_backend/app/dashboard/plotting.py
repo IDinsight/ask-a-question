@@ -19,6 +19,7 @@ from bokeh.models import (
     CustomJSFilter,
     DataTable,
     Div,
+    FixedTicker,
     HoverTool,
     MultiSelect,
     TableColumn,
@@ -192,6 +193,18 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     wheel_zoom = plot.select_one({"type": WheelZoomTool})
     plot.toolbar.active_scroll = wheel_zoom
+
+    plot.xaxis.visible = False  # Remove axis numbers
+    plot.yaxis.visible = False
+    plot.xgrid.grid_line_color = "lightgray"  # Keep grid lines visible
+    plot.ygrid.grid_line_color = "lightgray"
+
+    plot.xaxis.ticker = FixedTicker(
+        ticks=[i for i in range(-100, 101, 5)]
+    )  # More frequent ticks every 5 units
+    plot.yaxis.ticker = FixedTicker(
+        ticks=[i for i in range(-100, 101, 5)]
+    )  # More frequent ticks every 5 units
 
     # Add query points as circles
     query_renderer = plot.circle(

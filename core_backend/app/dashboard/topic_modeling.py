@@ -112,7 +112,6 @@ def prepare_dataframes(
     results_df = pd.DataFrame(
         {"text": full_texts, "type": types, "datetime": datetimes}
     )
-
     return results_df
 
 
@@ -126,7 +125,7 @@ def generate_embeddings(texts: List[str]) -> List[List[float]]:
         convert_to_tensor=False,
     )
     embeddings_array = cast(np.ndarray, embeddings)
-    return embeddings_array.tolist()
+    return embeddings_array
 
 
 def fit_topic_model(texts: List[str], embeddings: List[List[float]]) -> BERTopic:
@@ -168,8 +167,9 @@ async def generate_topic_labels_async(
     tasks: List[Coroutine[Any, Any, Dict[str, str]]] = []
     topic_ids: List[int] = []
 
-    # Get unique topic_ids and ensure they are integers
+    # Ensure topic_id is integer type
     results_df["topic_id"] = results_df["topic_id"].astype(int)
+
     # Group by topic_id
     grouped = results_df.groupby("topic_id")
     for topic_id_any, topic_df in grouped:
@@ -190,11 +190,19 @@ async def generate_topic_labels_async(
                 topic_queries,
             )
         )
-    # Run tasks concurrently
-    topic_dicts = await asyncio.gather(*tasks)
+        topic_ids.append(topic_id_int)  # **Add this line to record topic_id**
+
+    if tasks:
+        # Run tasks concurrently
+        topic_dicts = await asyncio.gather(*tasks)
+    else:
+        topic_dicts = []
 
     # Map topic_ids to topic_dicts
     topic_labels = {tid: tdict for tid, tdict in zip(topic_ids, topic_dicts)}
+
+    # Logging for debugging
+    logger.debug(f"Generated topic_labels: {topic_labels}")
 
     return topic_labels
 

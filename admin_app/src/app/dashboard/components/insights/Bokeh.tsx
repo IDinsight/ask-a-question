@@ -93,94 +93,102 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
             <Box sx={{ color: "error.main", mb: 2 }}>Error: {loadError}</Box>
           )}
 
-          {/* Instructions with images */}
-          <Typography variant="body2" style={{ marginTop: "1em" }}>
-            <strong>How to use the plot:</strong>
-            <p>
-              The plot below shows queries and content grouped by their topic
-              similarity. Any ungrouped points/ outliers are shown in grey, while points
-              in the same cluster are shown as the same color. Content points are shown
-              as black boxes. If there are no content points near a query points, you
-              may want to add content so that the query is more likely to be accurately
-              matched to a relevant content point.
-            </p>
-            <ul>
-              <li>
-                Use the mouse wheel to zoom in and out with the{" "}
-                <img
-                  src={scrollZoomIcon.src}
-                  alt="Scroll Zoom"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    verticalAlign: "middle",
-                    margin: "0 2px",
-                  }}
-                />{" "}
-                tool (activated by default). Pan around using the{" "}
-                <img
-                  src={moveIcon.src}
-                  alt="Pan Tool"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    verticalAlign: "middle",
-                    margin: "0 2px",
-                  }}
-                />{" "}
-                tool (activated by default).
-              </li>
-              <li>
-                Hover over points to see the text and topic information using the{" "}
-                <img
-                  src={tooltipIcon.src}
-                  alt="Tooltip"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    verticalAlign: "middle",
-                    margin: "0 2px",
-                  }}
-                />{" "}
-                tool (activated by default). If you want to stop this behaviour, simply
-                de-select the tool in the sidebar.
-              </li>
-              <li>
-                Use the lasso tool{" "}
-                <img
-                  src={lassoIcon.src}
-                  alt="Lasso Tool"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    verticalAlign: "middle",
-                    margin: "0 2px",
-                  }}
-                />{" "}
-                (in the toolbar to the left of the plot) to select multiple points and
-                see their details in the table.
-              </li>
-              <li>
-                Click the reset tool{" "}
-                <img
-                  src={refreshIcon.src}
-                  alt="Reset Tool"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    verticalAlign: "middle",
-                    margin: "0 2px",
-                  }}
-                />{" "}
-                to return the plot to its original state and de-select any points you
-                have currently selected.
-              </li>
-              <li>
-                Select the "Content" checkbox in the legend to toggle the visibility of
-                content points (which will appear as squares)
-              </li>
-            </ul>
-          </Typography>
+          {/* Collapsible Instructions */}
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="body1">
+                <strong>How to use this tool</strong>
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" style={{ marginTop: "1em" }}>
+                <p>
+                  The plot below shows queries and content grouped by their topic
+                  similarity. Any ungrouped points/outliers are shown in grey, while
+                  points in the same cluster are shown as the same color. Content points
+                  are shown as black boxes. If there are no content points near query
+                  points, you may want to add content so that the query is more likely
+                  to be accurately matched to a relevant content point.
+                </p>
+                <ul>
+                  <li>
+                    Use the mouse wheel to zoom in and out with the{" "}
+                    <img
+                      src={scrollZoomIcon.src}
+                      alt="Scroll Zoom"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        verticalAlign: "middle",
+                        margin: "0 2px",
+                      }}
+                    />{" "}
+                    tool (activated by default). Pan around using the{" "}
+                    <img
+                      src={moveIcon.src}
+                      alt="Pan Tool"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        verticalAlign: "middle",
+                        margin: "0 2px",
+                      }}
+                    />{" "}
+                    tool (activated by default).
+                  </li>
+                  <li>
+                    Hover over points to see the text and topic information using the{" "}
+                    <img
+                      src={tooltipIcon.src}
+                      alt="Tooltip"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        verticalAlign: "middle",
+                        margin: "0 2px",
+                      }}
+                    />{" "}
+                    tool (activated by default). If you want to stop this behaviour,
+                    simply de-select the tool in the sidebar.
+                  </li>
+                  <li>
+                    Use the lasso tool{" "}
+                    <img
+                      src={lassoIcon.src}
+                      alt="Lasso Tool"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        verticalAlign: "middle",
+                        margin: "0 2px",
+                      }}
+                    />{" "}
+                    (in the toolbar to the left of the plot) to select multiple points
+                    and see their details in the table.
+                  </li>
+                  <li>
+                    Click the reset tool{" "}
+                    <img
+                      src={refreshIcon.src}
+                      alt="Reset Tool"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        verticalAlign: "middle",
+                        margin: "0 2px",
+                      }}
+                    />{" "}
+                    to return the plot to its original state and de-select any points
+                    you have currently selected.
+                  </li>
+                  <li>
+                    Select the "Content" checkbox in the legend to toggle the visibility
+                    of content points (which will appear as squares)
+                  </li>
+                </ul>
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
 
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

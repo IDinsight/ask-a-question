@@ -37,7 +37,7 @@ from .schemas import (
     UserQuery,
 )
 
-N_SAMPLES_TOPIC_MODELING = 2000
+N_SAMPLES_TOPIC_MODELING = 4000
 
 
 async def get_stats_cards(
