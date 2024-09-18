@@ -46,8 +46,6 @@ async def topic_model_queries(
             TopicsData(
                 refreshTimeStamp="",
                 data=[],
-                unclustered_queries=[],
-                embeddings_dataframe={},
             ),
             pd.DataFrame(),
         )

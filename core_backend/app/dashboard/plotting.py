@@ -188,7 +188,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> dict:
         tools="pan,wheel_zoom,reset,lasso_select",
     )
 
-    wheel_zoom = plot.select_one(WheelZoomTool)
+    wheel_zoom = plot.select_one({"type": WheelZoomTool})
     plot.toolbar.active_scroll = wheel_zoom
 
     # Add query points as circles
