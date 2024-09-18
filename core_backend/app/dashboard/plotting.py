@@ -23,6 +23,7 @@ from bokeh.models import (
     HoverTool,
     MultiSelect,
     TableColumn,
+    TextInput,
     WheelZoomTool,
 )
 from bokeh.palettes import Turbo256
@@ -106,7 +107,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         embeddings_df[embeddings_df["topic_title"].str.lower() != "content"]
         .groupby(["topic_id", "topic_title"])
         .size()
-        .reset_index(name="counts")  # type: ignore
+        .reset_index(name="counts")
     )
 
     # Sort topics by popularity (descending), but place 'Unclassified' at the top
@@ -146,15 +147,15 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         value=[str(tid) for tid in unique_topic_ids],  # All topics selected by default
         options=topic_options,
         size=8,  # Number of visible options (adjust as needed)
-        width=500,  # Adjust the width as needed
+        width=300,  # Adjust the width as needed
     )
 
-    # Define CustomJSFilter for filtering based on selected topic_ids
+    # Define CustomJSFilter for filtering queries based on selected topic_ids
     js_filter = CustomJSFilter(
         args=dict(multi_select=multi_select),
         code="""
         const indices = [];
-        const data = source.data;
+        const data = source.data;  // 'source' is automatically available
         const topics = data['topic_id'];
         const selected_topics = multi_select.value.map(Number);
 
@@ -169,17 +170,53 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     """,
     )
 
+    # --- Add the TextInput widget for content search ---
+    content_search_input = TextInput(value="", title="Search Content:", width=200)
+
+    # Define CustomJSFilter for content search
+    content_search_filter = CustomJSFilter(
+        args=dict(search_input=content_search_input),
+        code="""
+        const indices = [];
+        const data = source.data;  // 'source' is automatically available
+        const texts = data['text'];  // Assuming 'text' contains the content text
+        const search_value = search_input.value.toLowerCase();
+
+        for (let i = 0; i < texts.length; i++) {
+            const text = texts[i].toLowerCase();
+            if (text.includes(search_value)) {
+                indices.push(true);
+            } else {
+                indices.push(false);
+            }
+        }
+        return indices;
+    """,
+    )
+
     # Create views for queries and content
     view_queries = CDSView(filter=js_filter)
-    view_content = CDSView()  # No filter applied to content
+    view_content = CDSView(filter=content_search_filter)
 
-    # Attach 'js_on_change' to trigger re-render for queries only
+    # Attach 'js_on_change' to trigger re-render for queries when
+    # topic selection changes
     multi_select.js_on_change(
         "value",
         CustomJS(
             args=dict(source_queries=source_queries),
             code="""
             source_queries.change.emit();
+        """,
+        ),
+    )
+
+    # Attach 'js_on_change' to TextInput to trigger plot update on input change
+    content_search_input.js_on_change(
+        "value",
+        CustomJS(
+            args=dict(source_content=source_content),
+            code="""
+            source_content.change.emit();
         """,
         ),
     )
@@ -191,20 +228,19 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         tools="pan,wheel_zoom,reset,lasso_select",
     )
 
+    # Set the wheel zoom tool as the active scroll tool
     wheel_zoom = plot.select_one({"type": WheelZoomTool})
     plot.toolbar.active_scroll = wheel_zoom
 
-    plot.xaxis.visible = False  # Remove axis numbers
-    plot.yaxis.visible = False
-    plot.xgrid.grid_line_color = "lightgray"  # Keep grid lines visible
-    plot.ygrid.grid_line_color = "lightgray"
+    # Adjust plot appearance
+    plot.xaxis.visible = False  # Remove x-axis numbers
+    plot.yaxis.visible = False  # Remove y-axis numbers
+    plot.xgrid.grid_line_color = "lightgray"  # Keep x-grid lines visible
+    plot.ygrid.grid_line_color = "lightgray"  # Keep y-grid lines visible
 
-    plot.xaxis.ticker = FixedTicker(
-        ticks=[i for i in range(-100, 101, 5)]
-    )  # More frequent ticks every 5 units
-    plot.yaxis.ticker = FixedTicker(
-        ticks=[i for i in range(-100, 101, 5)]
-    )  # More frequent ticks every 5 units
+    # Add more frequent ticks every 5 units (adjust as needed)
+    plot.xaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 5)])
+    plot.yaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 5)])
 
     # Add query points as circles
     query_renderer = plot.circle(
@@ -217,10 +253,11 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         legend_label="Queries",
         alpha="alpha",
         selection_line_color="black",
-        nonselection_fill_alpha=0.7,
+        selection_line_width=2,
+        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.5
     )
 
-    # Add content points as hollow squares
+    # Add content points as hollow squares with updated view_content
     content_renderer = plot.square(
         "x",
         "y",
@@ -233,7 +270,8 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         legend_label="Content",
         alpha="alpha",
         selection_line_color="black",
-        nonselection_fill_alpha=0.7,
+        selection_line_width=2,
+        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.5
     )
 
     # Adjust legend
@@ -324,13 +362,15 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     )
     deselect_all_button.js_on_click(deselect_all_callback)
 
-    # Adjust the layout
+    # Adjust the layout to include the content search input
+    # Place the content search input to the right of the topic selection (multi_select)
     top_layout = row(plot, data_table)
     controls_layout = column(
         Div(text="<b>Topic Selection and Controls:</b>"),
         row(select_all_button, deselect_all_button),
-        multi_select,
+        row(multi_select, content_search_input),  # Place side by side
     )
+
     layout = column(
         top_layout,
         controls_layout,
