@@ -4,8 +4,9 @@ This module contains functions for the topic modeling pipeline.
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Any, Coroutine, Dict, List, Tuple
+from typing import Any, Coroutine, Dict, List, Tuple, cast
 
+import numpy as np
 import pandas as pd
 from bertopic import BERTopic
 from hdbscan import HDBSCAN
@@ -118,8 +119,14 @@ def prepare_dataframes(
 def generate_embeddings(texts: List[str]) -> List[List[float]]:
     """Generate embeddings for the provided texts using SentenceTransformer."""
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = sentence_model.encode(texts, show_progress_bar=False)
-    return embeddings.tolist()
+    embeddings = sentence_model.encode(
+        texts,
+        show_progress_bar=False,
+        convert_to_numpy=True,
+        convert_to_tensor=False,
+    )
+    embeddings_array = cast(np.ndarray, embeddings)
+    return embeddings_array.tolist()
 
 
 def fit_topic_model(texts: List[str], embeddings: List[List[float]]) -> BERTopic:
@@ -161,9 +168,12 @@ async def generate_topic_labels_async(
     tasks: List[Coroutine[Any, Any, Dict[str, str]]] = []
     topic_ids: List[int] = []
 
+    # Get unique topic_ids and ensure they are integers
+    results_df["topic_id"] = results_df["topic_id"].astype(int)
     # Group by topic_id
     grouped = results_df.groupby("topic_id")
-    for topic_id, topic_df in grouped:
+    for topic_id_any, topic_df in grouped:
+        topic_id = cast(int, topic_id_any)  # For type checking
         if topic_id == -1:  # Skip noise/unclassified topics
             continue
 
@@ -209,6 +219,7 @@ def prepare_topics_data(
     grouped = results_df.groupby("topic_id")
 
     for topic_id, topic_df in grouped:
+        topic_id = cast(int, topic_id)  # For type checking
         only_queries = topic_df[topic_df["type"] == "query"]
 
         # Collect unclassified queries

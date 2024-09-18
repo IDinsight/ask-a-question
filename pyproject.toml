@@ -7,6 +7,7 @@ module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy",
             "gtts", "google.cloud", "bertopic", "hdbscan", "pydub",
             "sklearn", "umap", "bokeh.*"]
 ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.ruff]
 lint.select = ["E", "F", "B", "Q", "I"]
