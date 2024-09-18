@@ -10,19 +10,17 @@ import pandas as pd
 from bokeh.core.types import ID
 from bokeh.embed import json_item
 from bokeh.embed.standalone import StandaloneEmbedJson
-from bokeh.layouts import column, row
+from bokeh.layouts import Spacer, column, row
 from bokeh.models import (
     Button,
     CDSView,
     ColumnDataSource,
     CustomJS,
     CustomJSFilter,
-    DataTable,
     Div,
     FixedTicker,
     HoverTool,
     MultiSelect,
-    TableColumn,
     TextInput,
     WheelZoomTool,
 )
@@ -33,8 +31,9 @@ from fastapi import HTTPException
 
 def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     """
-    Create a Bokeh plot with queries and content points, and a DataTable to display
-    selected points, handling duplicate topic titles by using topic_id.
+    Create a Bokeh plot with queries and content points, and a Div to display
+    selected points organized by topic, handling duplicate topic
+    titles by using topic_id.
     """
     # Ensure required columns are present
     required_columns = ["x", "y", "text", "type", "topic_title", "topic_id"]
@@ -52,23 +51,28 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         axis=1,
     )
 
-    # Combine 'Unknown' topics with 'Unclassified'
+    # Ensure 'Content' entries have 'topic_title' == 'Content' and 'topic_id' == -2
     embeddings_df.loc[
-        embeddings_df["topic_title"].str.lower() == "unknown",
+        embeddings_df["type"].str.lower() == "content",
+        ["topic_id", "topic_title"],
+    ] = [-2, "Content"]
+
+    # Combine 'Unknown' topics with 'Unclassified', excluding 'Content' entries
+    embeddings_df.loc[
+        (embeddings_df["topic_title"].str.lower() == "unknown")
+        & (embeddings_df["type"] != "Content"),
         ["topic_id", "topic_title"],
     ] = [-1, "Unclassified"]
 
     # Define special topics
     special_topics = ["Content"]  # 'Content' is the only special topic now
-    # can add more if needed
 
     # Make 'Unclassified' and 'Content' topics semi-transparent
     embeddings_df["alpha"] = embeddings_df["topic_title"].apply(
         lambda t: 0.6 if t.lower() in ["unclassified", "content"] else 1.0
     )
 
-    # Make topics + unclassified gray and everything else blue
-    # Blue is just a placeholder - will be overwritten later
+    # Make 'Unclassified' and 'Content' topics gray, everything else blue
     embeddings_df["color"] = embeddings_df["topic_title"].apply(
         lambda t: ("gray" if t.lower() in ["unclassified", "content"] else "blue")
     )
@@ -102,9 +106,9 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         embeddings_df["topic_id"].map(topic_color_map)
     )
 
-    # Exclude only 'Content' from topic_counts
+    # Exclude 'Content' from topic_counts
     topic_counts = (
-        embeddings_df[embeddings_df["topic_title"].str.lower() != "content"]
+        embeddings_df[~embeddings_df["topic_title"].str.lower().isin(["content"])]
         .groupby(["topic_id", "topic_title"])
         .size()
         .reset_index(name="counts")
@@ -130,7 +134,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         )
     ]
 
-    # Extract topic IDs excluding 'Content'
+    # Extract topic IDs, excluding 'Content'
     unique_topic_ids = sorted_topics["topic_id"].tolist()
 
     # Separate queries and content
@@ -143,48 +147,34 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Create MultiSelect widget for topic selection
     multi_select = MultiSelect(
-        title="Select Topics:",
+        title="Topics:",
         value=[str(tid) for tid in unique_topic_ids],  # All topics selected by default
         options=topic_options,
-        size=8,  # Number of visible options (adjust as needed)
-        width=300,  # Adjust the width as needed
+        size=12,  # Adjust the size to fit in the horizontal layout
+        width=450,
     )
 
-    # Define CustomJSFilter for filtering queries based on selected topic_ids
-    js_filter = CustomJSFilter(
-        args=dict(multi_select=multi_select),
-        code="""
-        const indices = [];
-        const data = source.data;  // 'source' is automatically available
-        const topics = data['topic_id'];
-        const selected_topics = multi_select.value.map(Number);
-
-        for (let i = 0; i < topics.length; i++) {
-            if (selected_topics.includes(topics[i])) {
-                indices.push(true);
-            } else {
-                indices.push(false);
-            }
-        }
-        return indices;
-    """,
-    )
-
-    # --- Add the TextInput widget for content search ---
+    # Add TextInput widgets for content and query search
     content_search_input = TextInput(value="", title="Search Content:", width=200)
+    query_search_input = TextInput(value="", title="Search Queries:", width=200)
 
-    # Define CustomJSFilter for content search
-    content_search_filter = CustomJSFilter(
-        args=dict(search_input=content_search_input),
+    # Create combined filter for queries
+    queries_filter = CustomJSFilter(
+        args=dict(multi_select=multi_select, search_input=query_search_input),
         code="""
         const indices = [];
-        const data = source.data;  // 'source' is automatically available
-        const texts = data['text'];  // Assuming 'text' contains the content text
+        const data = source.data;
+        const topics = data['topic_id'];
+        const texts = data['text'];
+        const selected_topics = multi_select.value.map(Number);
         const search_value = search_input.value.toLowerCase();
 
-        for (let i = 0; i < texts.length; i++) {
+        for (let i = 0; i < topics.length; i++) {
+            const topic_id = topics[i];
             const text = texts[i].toLowerCase();
-            if (text.includes(search_value)) {
+            const text_match = text.includes(search_value);
+            const topic_match = selected_topics.includes(topic_id);
+            if (topic_match && text_match) {
                 indices.push(true);
             } else {
                 indices.push(false);
@@ -194,30 +184,71 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     """,
     )
 
-    # Create views for queries and content
-    view_queries = CDSView(filter=js_filter)
-    view_content = CDSView(filter=content_search_filter)
+    # Create modified filter for content to always include 'Content' points
+    content_filter = CustomJSFilter(
+        args=dict(multi_select=multi_select, search_input=content_search_input),
+        code="""
+        const indices = [];
+        const data = source.data;
+        const topics = data['topic_id'];
+        const texts = data['text'];
+        const search_value = search_input.value.toLowerCase();
+
+        for (let i = 0; i < topics.length; i++) {
+            const topic_id = topics[i];
+            const text = texts[i].toLowerCase();
+            const text_match = text.includes(search_value);
+            // Include 'Content' points regardless of topic selection
+            if (topic_id === -2 && text_match) {
+                indices.push(true);
+            } else {
+                const selected_topics = multi_select.value.map(Number);
+                const topic_match = selected_topics.includes(topic_id);
+                if (topic_match && text_match) {
+                    indices.push(true);
+                } else {
+                    indices.push(false);
+                }
+            }
+        }
+        return indices;
+    """,
+    )
+
+    # Create views for queries and content using combined filters
+    view_queries = CDSView(filter=queries_filter)
+    view_content = CDSView(filter=content_filter)
 
     # Attach 'js_on_change' to trigger re-render for queries when
-    # topic selection changes
+    # topic selection or query search input changes
     multi_select.js_on_change(
+        "value",
+        CustomJS(
+            args=dict(source_queries=source_queries, source_content=source_content),
+            code="""
+            source_queries.change.emit();
+            source_content.change.emit();
+        """,
+        ),
+    )
+
+    query_search_input.js_on_change(
         "value",
         CustomJS(
             args=dict(source_queries=source_queries),
             code="""
             source_queries.change.emit();
-        """,
+            """,
         ),
     )
 
-    # Attach 'js_on_change' to TextInput to trigger plot update on input change
     content_search_input.js_on_change(
         "value",
         CustomJS(
             args=dict(source_content=source_content),
             code="""
             source_content.change.emit();
-        """,
+            """,
         ),
     )
 
@@ -238,9 +269,9 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     plot.xgrid.grid_line_color = "lightgray"  # Keep x-grid lines visible
     plot.ygrid.grid_line_color = "lightgray"  # Keep y-grid lines visible
 
-    # Add more frequent ticks every 5 units (adjust as needed)
-    plot.xaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 5)])
-    plot.yaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 5)])
+    # Add more frequent ticks every 5 units
+    plot.xaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 3)])
+    plot.yaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 3)])
 
     # Add query points as circles
     query_renderer = plot.circle(
@@ -254,7 +285,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         alpha="alpha",
         selection_line_color="black",
         selection_line_width=2,
-        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.5
+        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.3
     )
 
     # Add content points as hollow squares with updated view_content
@@ -271,72 +302,86 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         alpha="alpha",
         selection_line_color="black",
         selection_line_width=2,
-        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.5
+        nonselection_alpha=0.3,  # Set non-selected points alpha to 0.3
     )
 
     # Adjust legend
     plot.legend.location = "top_left"
     plot.legend.click_policy = "hide"
 
-    # Configure hover tool
+    # Configure hover tool with styling to wrap long text
     hover = HoverTool(
-        tooltips=[
-            ("Text", "@display_text"),
-            ("Topic", "@topic_title"),
-        ],
+        tooltips="""
+        <div style="width:300px; white-space: normal;">
+            <b>Text:</b> @display_text <br>
+            <b>Topic:</b> @topic_title
+        </div>
+        """,
         renderers=[query_renderer, content_renderer],
     )
     plot.add_tools(hover)
 
-    # DataTable to display selected points
-    columns = [
-        TableColumn(field="display_text", title="Text", width=250),
-        TableColumn(field="topic_title", title="Topic", width=210),
-    ]
-    data_table_source = ColumnDataSource(data=dict(display_text=[], topic_title=[]))
-
-    data_table = DataTable(
-        source=data_table_source,
-        columns=columns,
+    # Create a Div to display aggregated selected points organized by topic
+    div = Div(
         width=500,
         height=500,
-        selectable=True,
+        styles={"white-space": "pre-wrap", "overflow-y": "auto"},
     )
 
-    # JavaScript code to synchronize selection and update DataTable
+    # JavaScript code to synchronize selection and update Div
     sync_selection_code = """
         const indices_queries = source_queries.selected.indices;
         const indices_content = source_content.selected.indices;
 
-        const d_out = data_table_source.data;
-        d_out['display_text'] = [];
-        d_out['topic_title'] = [];
+        const data_queries = source_queries.data;
+        const data_content = source_content.data;
 
+        // Aggregate selected points by topic
+        let topics = {};
+        // Process selected queries
         for (let i of indices_queries) {
-            d_out['display_text'].push(source_queries.data['display_text'][i]);
-            d_out['topic_title'].push(source_queries.data['topic_title'][i]);
+            const topic = data_queries['topic_title'][i];
+            const query = data_queries['display_text'][i];
+            if (!(topic in topics)) {
+                topics[topic] = [];
+            }
+            topics[topic].push(query);
         }
-
+        // Process selected content
         for (let i of indices_content) {
-            d_out['display_text'].push(source_content.data['display_text'][i]);
-            d_out['topic_title'].push(source_content.data['topic_title'][i]);
+            const topic = data_content['topic_title'][i];
+            const query = data_content['display_text'][i];
+            if (!(topic in topics)) {
+                topics[topic] = [];
+            }
+            topics[topic].push(query);
         }
-
-        data_table_source.change.emit();
+        // Build HTML content
+        let content = "";
+        for (let topic in topics) {
+            content += "<b>" + topic + "</b><br>";
+            for (let q of topics[topic]) {
+                content += q + "<br>";
+            }
+            content += "<br>";
+        }
+        div.text = content;
     """
 
     # Attach callbacks to synchronize selections
+    sync_selection_callback = CustomJS(
+        args=dict(
+            source_queries=source_queries,
+            source_content=source_content,
+            div=div,
+        ),
+        code=sync_selection_code,
+    )
+
     for source in [source_queries, source_content]:
         source.selected.js_on_change(
             "indices",
-            CustomJS(
-                args=dict(
-                    source_queries=source_queries,
-                    source_content=source_content,
-                    data_table_source=data_table_source,
-                ),
-                code=sync_selection_code,
-            ),
+            sync_selection_callback,
         )
 
     # Create 'Select All' and 'Deselect All' buttons for topics
@@ -362,17 +407,64 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     )
     deselect_all_button.js_on_click(deselect_all_callback)
 
-    # Adjust the layout to include the content search input
-    # Place the content search input to the right of the topic selection (multi_select)
-    top_layout = row(plot, data_table)
-    controls_layout = column(
-        Div(text="<b>Topic Selection and Controls:</b>"),
-        row(select_all_button, deselect_all_button),
-        row(multi_select, content_search_input),  # Place side by side
+    # Adjust widths and alignments for better appearance
+    select_all_button.width = 80
+    deselect_all_button.width = 80
+    multi_select.width = 450  # Increased width by 50%
+    content_search_input.width = 200
+    query_search_input.width = 200
+
+    # Ensure that the MultiSelect is not too tall for the horizontal layout
+    multi_select.size = 12  # Adjust as needed
+
+    # Create Spacers to add space between controls
+    spacer_width = 20  # Adjust the spacer width as needed
+
+    controls_row = row(
+        select_all_button,
+        Spacer(width=spacer_width),
+        deselect_all_button,
+        Spacer(width=spacer_width),
+        multi_select,
+        Spacer(width=spacer_width),
+        content_search_input,
+        Spacer(width=spacer_width),
+        query_search_input,
     )
 
+    # Place the controls under the heading with some vertical spacing
+    controls_layout = column(
+        Div(text="<b>Topic Selection and Controls:</b>"),
+        Spacer(height=10),  # Add vertical space
+        controls_row,
+    )
+
+    # Create titles for the plot and Div
+    plot_title = Div(
+        text="<h4>Content visualization map</h4>",
+        styles={"text-align": "center"},
+        width=plot.width,
+    )
+    div_title = Div(
+        text="<h4>Selected points (use the lasso tool to populate this table)</h4>",
+        styles={"text-align": "center"},
+        width=div.width,
+    )
+
+    # Create columns for the plot and Div with their titles
+    plot_column = column(plot_title, plot)
+    div_column = column(div_title, div)
+
+    # Adjust the Div height to match the plot height
+    div.height = plot.height
+
+    # Place the columns side by side
+    top_layout = row(plot_column, div_column)
+
+    # Include the Div in the top right corner
     layout = column(
         top_layout,
+        Spacer(height=3),  # Add vertical space between top layout and controls
         controls_layout,
     )
 
