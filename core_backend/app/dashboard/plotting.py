@@ -101,15 +101,12 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     )
 
     # Exclude only 'Content' from topic_counts
-    topic_counts: pd.DataFrame = (
+    topic_counts = (
         embeddings_df[embeddings_df["topic_title"].str.lower() != "content"]
         .groupby(["topic_id", "topic_title"])
         .size()
-        .reset_index()
+        .reset_index(name="counts")  # type: ignore
     )
-
-    # Rename the columns manually to include 'counts'
-    topic_counts.columns = ["topic_id", "topic_title", "counts"]
 
     # Sort topics by popularity (descending), but place 'Unclassified' at the top
     is_unclassified = topic_counts["topic_title"].str.lower() == "unclassified"
