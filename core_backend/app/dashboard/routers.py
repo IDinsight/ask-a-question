@@ -353,7 +353,6 @@ async def retrieve_insights_frequency(
     return TopicsData(
         refreshTimeStamp="",
         data=[],
-        embeddings_dataframe={},
     )
 
 
