@@ -115,7 +115,7 @@ def prepare_dataframes(
     return results_df
 
 
-def generate_embeddings(texts: List[str]) -> List[List[float]]:
+def generate_embeddings(texts: List[str]) -> np.ndarray:
     """Generate embeddings for the provided texts using SentenceTransformer."""
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = sentence_model.encode(
