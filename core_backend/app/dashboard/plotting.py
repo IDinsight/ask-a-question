@@ -111,7 +111,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         embeddings_df[~embeddings_df["topic_title"].str.lower().isin(["content"])]
         .groupby(["topic_id", "topic_title"])
         .size()
-        .reset_index(name="counts")  ## type: ignore
+        .reset_index(name="counts")  # type: ignore
     )
 
     # Sort topics by popularity (descending), but place 'Unclassified' at the top

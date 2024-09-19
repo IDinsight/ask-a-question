@@ -118,24 +118,24 @@ def prepare_dataframes(
 def generate_embeddings(texts: List[str]) -> np.ndarray:
     """Generate embeddings for the provided texts using SentenceTransformer."""
     sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = sentence_model.encode(
+    embeddings_any = sentence_model.encode(
         texts,
         show_progress_bar=False,
         convert_to_numpy=True,
         convert_to_tensor=False,
     )
-    embeddings_array = cast(np.ndarray, embeddings)
-    return embeddings_array
+    embeddings = cast(np.ndarray, embeddings_any)  # Needed for MyPy issues
+    return embeddings
 
 
-def fit_topic_model(texts: List[str], embeddings: List[List[float]]) -> BERTopic:
+def fit_topic_model(texts: List[str], embeddings: np.ndarray) -> BERTopic:
     """Fit a BERTopic model on the provided texts and embeddings."""
     umap_model = UMAP(
         n_components=2,
         n_neighbors=15,
         min_dist=0.0,
         metric="cosine",
-        random_state=42,  # For reproducibility
+        random_state=42,
     )
     hdbscan_model = HDBSCAN(
         min_cluster_size=20,
