@@ -1,19 +1,21 @@
-.PHONY: tests
+SHELL := /bin/bash
 
-# Main test target
+.PHONY: tests build-image run-tests clean-up
+
+IMAGE_NAME := speech_test
+CONTAINER_NAME := speech_test_container
+
+# Default target to run tests inside Docker container
 tests: setup-tests run-tests clean-tests
 
-# Test runner
-run-tests:
-	@set -a && source ./tests/test.env && set +a && \
-	python -m pytest -rPQ tests
-
-# Target to create the directory with the correct permissions
 setup-tests:
-	set -a && source ./tests/test.env && set +a && \
-	mkdir -p $$WHISPER_MODEL_DIR && \
-	chmod -R 755 $$WHISPER_MODEL_DIR
+	docker build -t $(IMAGE_NAME) .
+
+run-tests:
+	docker run --rm --name $(CONTAINER_NAME) \
+		--entrypoint "pytest" \
+		$(IMAGE_NAME) --color=yes -rPQ tests/*
 
 clean-tests:
-	@set -a && source ./tests/test.env && set +a && \
-	rm -rf $$WHISPER_MODEL_DIR
+	docker container prune -f
+	docker image prune -f
