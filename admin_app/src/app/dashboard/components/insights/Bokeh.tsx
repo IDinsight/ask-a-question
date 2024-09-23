@@ -12,7 +12,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { getEmbeddingData } from "../../api";
 import { Period } from "@/app/dashboard/types";
 
-// Import images from assets folder
 import lassoIcon from "./assets/lasso.png";
 import moveIcon from "./assets/move.png";
 import refreshIcon from "./assets/refresh.png";
@@ -45,7 +44,6 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
       try {
         const data = await getEmbeddingData(timePeriod, token);
 
-        // Dynamically import Bokeh and embed the plot
         const { embed } = await import("@bokeh/bokehjs");
 
         if (plotRef.current) {
@@ -92,8 +90,6 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           {loadError && (
             <Box sx={{ color: "error.main", mb: 2 }}>Error: {loadError}</Box>
           )}
-
-          {/* Collapsible Instructions */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="body1">
@@ -101,7 +97,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" style={{ marginTop: "1em" }}>
+              <Typography variant="body2">
                 <p>
                   The plot below shows queries and content grouped by their topic
                   similarity. Any ungrouped points/outliers are shown in grey, while
@@ -116,23 +112,13 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                     <img
                       src={scrollZoomIcon.src}
                       alt="Scroll Zoom"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        verticalAlign: "middle",
-                        margin: "0 2px",
-                      }}
+                      style={{ width: "28px", verticalAlign: "middle" }}
                     />{" "}
                     tool (activated by default). Pan around using the{" "}
                     <img
                       src={moveIcon.src}
                       alt="Pan Tool"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        verticalAlign: "middle",
-                        margin: "0 2px",
-                      }}
+                      style={{ width: "28px", verticalAlign: "middle" }}
                     />{" "}
                     tool (activated by default).
                   </li>
@@ -141,12 +127,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                     <img
                       src={tooltipIcon.src}
                       alt="Tooltip"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        verticalAlign: "middle",
-                        margin: "0 2px",
-                      }}
+                      style={{ width: "28px", verticalAlign: "middle" }}
                     />{" "}
                     tool (activated by default). If you want to stop this behaviour,
                     simply de-select the tool in the sidebar.
@@ -156,12 +137,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                     <img
                       src={lassoIcon.src}
                       alt="Lasso Tool"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        verticalAlign: "middle",
-                        margin: "0 2px",
-                      }}
+                      style={{ width: "28px", verticalAlign: "middle" }}
                     />{" "}
                     (in the toolbar to the left of the plot) to select multiple points
                     and see their details in the table.
@@ -171,12 +147,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                     <img
                       src={refreshIcon.src}
                       alt="Reset Tool"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        verticalAlign: "middle",
-                        margin: "0 2px",
-                      }}
+                      style={{ width: "28px", verticalAlign: "middle" }}
                     />{" "}
                     to return the plot to its original state and de-select any points
                     you have currently selected.
@@ -196,7 +167,6 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
             </Box>
           )}
 
-          {/* The plot container */}
           <Paper
             elevation={1}
             sx={{
