@@ -200,10 +200,10 @@ const AdminAlertModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose} disableEscapeKeyDown={true}>
-      <DialogTitle>{"Add Admin User"}</DialogTitle>
+      <DialogTitle>{"Register Admin User"}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          You need to add an admin user before continuing.
+          You need to register admin user before proceeding.
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -223,7 +223,7 @@ const ConfirmationModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>User Created</DialogTitle>
+      <DialogTitle>Admin User Created</DialogTitle>
       <DialogContent>
         <DialogContentText>
           The admin user has been successfully registered.
