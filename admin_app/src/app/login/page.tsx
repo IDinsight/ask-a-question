@@ -26,6 +26,8 @@ import {
   ConfirmationModal,
   RegisterModal,
 } from "./components/RegisterModel";
+import { is } from "date-fns/locale";
+import { LoadingButton } from "@mui/lab";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
@@ -37,6 +39,7 @@ const Login = () => {
 
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   const { login, loginGoogle, loginError } = useAuth();
   const iconStyles = {
     color: appColors.white,
@@ -61,8 +64,9 @@ const Login = () => {
     const fetchRegisterPrompt = async () => {
       const data = await apiCalls.getRegisterOption();
       setShowAdminAlertModal(data.require_register);
+      setIsLoading(false);
     };
-    //fetchRegisterPrompt();
+    fetchRegisterPrompt();
     const handleCredentialResponse = (response: any) => {
       loginGoogle({
         client_id: response.client_id,
@@ -110,7 +114,9 @@ const Login = () => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-  return (
+  return isLoading ? (
+    <LoadingButton />
+  ) : (
     <Grid
       container
       component="main"
@@ -407,7 +413,7 @@ const Login = () => {
             </Button>
           </Box>
         </Box>
-        {/* <AdminAlertModal
+        <AdminAlertModal
           open={showAdminAlertModal}
           onClose={handleAdminModalClose}
           onContinue={handleAdminModalContinue}
@@ -421,7 +427,7 @@ const Login = () => {
         <ConfirmationModal
           open={showConfirmationModal}
           onClose={handleCloseConfirmationModal}
-        /> */}
+        />
       </Grid>
     </Grid>
   );
