@@ -11,12 +11,13 @@ from ..database import get_async_session
 from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
+    get_nb_users,
     save_user_to_db,
     update_user_api_key,
 )
 from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
 from ..utils import generate_key, setup_logger, update_api_limits
-from .schemas import KeyResponse
+from .schemas import KeyResponse, RequireRegisterResponse
 
 TAG_METADATA = {
     "name": "Admin",
@@ -31,18 +32,18 @@ logger = setup_logger()
 @router.post("/", response_model=UserCreate)
 async def create_user(
     user: UserCreateWithPassword,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    # user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreate | None:
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
-    if user_db.user_id != 1:
-        raise HTTPException(
-            status_code=403,
-            detail="This user does not have permission to create new users.",
-        )
+    # if user_db.user_id != 1:
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail="This user does not have permission to create new users.",
+    #     )
 
     try:
         user_new = await save_user_to_db(
@@ -114,3 +115,19 @@ async def get_new_api_key(
         raise HTTPException(
             status_code=500, detail="Error updating user api key"
         ) from e
+
+
+@router.get("/require-register", response_model=RequireRegisterResponse)
+async def is_register_required(
+    asession: AsyncSession = Depends(get_async_session),
+) -> RequireRegisterResponse:
+    """
+    Check it there are any users in the database.
+    If there are no users, registration is required
+    """
+    nb_users = await get_nb_users(asession)
+    if nb_users > 0:
+        require_register = False
+    else:
+        require_register = True
+    return RequireRegisterResponse(require_register=require_register)

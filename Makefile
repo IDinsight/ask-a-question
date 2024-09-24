@@ -30,7 +30,7 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db setup-redis add-users-to-db setup-llm-proxy
+setup-dev: setup-db setup-redis setup-llm-proxy
 teardown-dev: teardown-db teardown-redis teardown-llm-proxy
 
 ## Helper targets

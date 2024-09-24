@@ -166,3 +166,13 @@ async def get_user_by_api_key(
         return user
     except NoResultFound as err:
         raise UserNotFoundError("User with given token does not exist.") from err
+
+
+async def get_nb_users(asession: AsyncSession) -> int:
+    """
+    Retrieves the number of users in the database
+    """
+    stmt = select(UserDB)
+    result = await asession.execute(stmt)
+    users = result.scalars().all()
+    return len(users)
