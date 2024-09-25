@@ -43,7 +43,7 @@ class UserDB(Base):
     )
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
-    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=0)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
