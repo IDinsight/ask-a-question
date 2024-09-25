@@ -33,6 +33,7 @@ user_db = UserDB(
     api_key_updated_datetime_utc=datetime.now(timezone.utc),
     content_quota=ADMIN_CONTENT_QUOTA,
     api_daily_quota=ADMIN_API_DAILY_QUOTA,
+    is_admin=True,
     created_datetime_utc=datetime.now(timezone.utc),
     updated_datetime_utc=datetime.now(timezone.utc),
 )
