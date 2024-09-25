@@ -101,6 +101,7 @@ async def authenticate_or_create_google_user(
                 username=google_email,
                 content_quota=DEFAULT_CONTENT_QUOTA,
                 api_daily_quota=DEFAULT_API_QUOTA,
+                is_admin=False,
             )
             user_db = await save_user_to_db(user, asession)
             await update_api_limits(
