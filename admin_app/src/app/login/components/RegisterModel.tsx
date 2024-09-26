@@ -6,10 +6,8 @@ import {
   Button,
   DialogContent,
   Typography,
-  Alert,
   Grid,
   Avatar,
-  Snackbar,
   DialogTitle,
   DialogContentText,
   DialogActions,
@@ -33,12 +31,11 @@ function RegisterModal({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState({
     username: false,
     password: false,
     confirmPassword: false,
-    confirmPasswordMatch: true,
+    confirmPasswordMatch: false,
   });
   const validateForm = () => {
     const newErrors = {
@@ -56,7 +53,6 @@ function RegisterModal({
     if (validateForm()) {
       console.log("Registering user");
       registerUser(username, password);
-      onClose({}, "");
       onContinue();
     }
   };
@@ -148,43 +144,31 @@ function RegisterModal({
             label="Confirm Password"
             type="password"
             id="confirm-password"
-            error={!errors.confirmPasswordMatch}
+            error={errors.confirmPasswordMatch}
             value={confirmPassword}
-            helperText={!errors.confirmPasswordMatch ? "Passwords do not match" : " "}
+            helperText={errors.confirmPasswordMatch ? "Passwords do not match" : " "}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
-          <Box mt={2} width="100%">
+          <Box
+            mt={2}
+            width="100%"
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+          >
             <Button
               onClick={handleRegister}
               type="submit"
+              fullWidth
               variant="contained"
-              sx={{ width: "120px", mr: 1 }}
+              sx={{ maxWidth: "120px" }}
             >
               Register
             </Button>
           </Box>
         </Box>
       </DialogContent>
-      <Snackbar
-        open={snackMessage !== null}
-        autoHideDuration={4000}
-        onClose={() => {
-          setSnackMessage(null);
-        }}
-      >
-        <Alert
-          onClose={() => {
-            setSnackMessage(null);
-          }}
-          severity={
-            snackMessage?.toLowerCase().includes("successfully") ? "success" : "error"
-          }
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackMessage}
-        </Alert>
-      </Snackbar>
     </Dialog>
   );
 }
