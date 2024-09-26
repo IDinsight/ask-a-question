@@ -13,7 +13,7 @@ class UserCreate(BaseModel):
     username: str
     content_quota: Optional[int] = None
     api_daily_quota: Optional[int] = None
-    is_admin: bool
+    is_admin: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 
