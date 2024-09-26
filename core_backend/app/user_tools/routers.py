@@ -18,6 +18,7 @@ from ..users.models import (
 from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
 from ..utils import generate_key, setup_logger, update_api_limits
 from .schemas import KeyResponse, RequireRegisterResponse
+from .utils import generate_recovery_codes
 
 TAG_METADATA = {
     "name": "Admin",
@@ -39,16 +40,13 @@ async def create_user(
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
-    # if user_db.user_id != 1:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="This user does not have permission to create new users.",
-    #     )
 
     try:
+        recovery_codes = generate_recovery_codes() if user.is_admin else None
         user_new = await save_user_to_db(
             user=user,
             asession=asession,
+            recovery_codes=recovery_codes,
         )
         await update_api_limits(
             request.app.state.redis, user_new.username, user_new.api_daily_quota

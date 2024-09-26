@@ -1,11 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import (
-    DateTime,
-    Integer,
-    String,
-    select,
-)
+from sqlalchemy import ARRAY, Column, DateTime, Integer, String, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
@@ -40,8 +35,10 @@ class UserDB(Base):
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    recovery_codes = Column(ARRAY(String), nullable=True)
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -57,6 +54,7 @@ class UserDB(Base):
 async def save_user_to_db(
     user: UserCreateWithPassword | UserCreate,
     asession: AsyncSession,
+    recovery_codes: list[str] | None = None,
 ) -> UserDB:
     """
     Saves a user in the database
