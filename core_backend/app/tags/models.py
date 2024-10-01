@@ -91,7 +91,6 @@ async def update_tag_in_db(
         tag_id=tag_id,
         user_id=user_id,
         tag_name=tag.tag_name,
-        created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )
 

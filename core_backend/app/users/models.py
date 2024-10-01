@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Integer,
     String,
@@ -42,6 +43,7 @@ class UserDB(Base):
     )
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -83,6 +85,7 @@ async def save_user_to_db(
         username=user.username,
         content_quota=user.content_quota,
         api_daily_quota=user.api_daily_quota,
+        is_admin=user.is_admin,
         hashed_password=hashed_password,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
@@ -133,6 +136,22 @@ async def get_user_by_username(
         ) from err
 
 
+async def get_user_by_id(
+    user_id: int,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Retrieves a user by user_id
+    """
+    stmt = select(UserDB).where(UserDB.user_id == user_id)
+    result = await asession.execute(stmt)
+    try:
+        user = result.scalar_one()
+        return user
+    except NoResultFound as err:
+        raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
+
+
 async def get_content_quota_by_userid(
     user_id: int,
     asession: AsyncSession,
@@ -166,3 +185,44 @@ async def get_user_by_api_key(
         return user
     except NoResultFound as err:
         raise UserNotFoundError("User with given token does not exist.") from err
+
+
+async def update_user_in_db(
+    user_id: int,
+    user: UserCreate,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Updates a user in the database.
+    """
+    user_db = UserDB(
+        user_id=user_id,
+        username=user.username,
+        is_admin=user.is_admin,
+        content_quota=user.content_quota,
+        api_daily_quota=user.api_daily_quota,
+        updated_datetime_utc=datetime.now(timezone.utc),
+    )
+    user_db = await asession.merge(user_db)
+
+    await asession.commit()
+    await asession.refresh(user_db)
+
+    return user_db
+
+
+async def is_username_valid(
+    username: str,
+    asession: AsyncSession,
+) -> bool:
+    """
+    Checks if a username is valid. A new username is valid if it doesn't already exist
+    in the database.
+    """
+    stmt = select(UserDB).where(UserDB.username == username)
+    result = await asession.execute(stmt)
+    try:
+        result.one()
+        return False
+    except NoResultFound:
+        return True
