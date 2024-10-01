@@ -5,7 +5,7 @@ import ListItemButton from "@mui/material/ListItemButton";
 import { orange } from "@mui/material/colors";
 import Pagination from "@mui/material/Pagination";
 import { useState } from "react";
-import { TopicData } from "../../types"; // Ensure this import is correct
+import { TopicData } from "../../types";
 
 interface TopicProps {
   data?: TopicData[]; // Make data optional
