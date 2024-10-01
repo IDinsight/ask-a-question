@@ -93,9 +93,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           )}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body1">
-                <strong>How to use this tool</strong>
-              </Typography>
+              <Typography variant="body1">How to use this tool</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2">
