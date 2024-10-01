@@ -91,7 +91,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           {loadError && (
             <Box sx={{ color: "error.main", mb: 2 }}>Error: {loadError}</Box>
           )}
-          <Accordion>
+          <Accordion elevation={0}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="body1">How to use this tool</Typography>
             </AccordionSummary>
