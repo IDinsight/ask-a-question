@@ -411,7 +411,7 @@ class TopicModelLabelling:
         """
         You are a summarization bot designed to condense multiple
         messages into a topic description specific to {context}. You may
-        encounter queries that are related to something other than maternal health.
+        encounter queries that are related to something other than {context}.
         Do your best to describe these too. If there is no common thread at all, respond
         with topic_title as "Unknown" and topic_summary as "Not available".
 

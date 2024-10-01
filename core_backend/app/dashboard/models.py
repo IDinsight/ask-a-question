@@ -19,11 +19,11 @@ from ..question_answer.models import (
 from ..urgency_detection.models import UrgencyResponseDB
 from .config import GENERATE_AI_ANSWER
 from .schemas import (
+    BokehContentItem,
     ContentFeedbackStats,
     Day,
     DetailsDrawer,
     Heatmap,
-    InsightContent,
     OverviewTimeSeries,
     QueryStats,
     ResponseFeedbackStats,
@@ -1305,7 +1305,7 @@ async def get_raw_queries(
 async def get_raw_contents(
     asession: AsyncSession,
     user_id: int,
-) -> list[InsightContent]:
+) -> list[BokehContentItem]:
     """Retrieve all of the content cards present in the database for the user
     Parameters
     ----------
@@ -1331,7 +1331,7 @@ async def get_raw_contents(
         content_list = []
     else:
         content_list = [
-            InsightContent(
+            BokehContentItem(
                 content_id=row.content_id,
                 content_text=row.content_text,
                 content_title=row.content_title,

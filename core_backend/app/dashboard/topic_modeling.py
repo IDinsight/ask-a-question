@@ -16,13 +16,13 @@ from umap import UMAP
 from ..llm_call.dashboard import generate_topic_label  # Adjust import as necessary
 from ..utils import setup_logger
 from .config import TOPIC_MODELING_CONTEXT
-from .schemas import InsightContent, Topic, TopicsData, UserQuery
+from .schemas import BokehContentItem, Topic, TopicsData, UserQuery
 
 logger = setup_logger()
 
 
 async def topic_model_queries(
-    user_id: int, query_data: List[UserQuery], content_data: List[InsightContent]
+    user_id: int, query_data: List[UserQuery], content_data: List[BokehContentItem]
 ) -> Tuple[TopicsData, pd.DataFrame]:
     """Perform topic modeling on user queries and content data.
 
@@ -33,8 +33,8 @@ async def topic_model_queries(
     query_data : List[UserQuery]
         A list of UserQuery objects containing the raw queries and their
         datetime stamps.
-    content_data : List[InsightContent]
-        A list of InsightContent objects containing content data.
+    content_data : List[BokehContentItem]
+        A list of BokehContentItem objects containing content data.
 
     Returns
     -------
@@ -92,7 +92,7 @@ async def topic_model_queries(
 
 
 def prepare_dataframes(
-    query_data: List[UserQuery], content_data: List[InsightContent]
+    query_data: List[UserQuery], content_data: List[BokehContentItem]
 ) -> pd.DataFrame:
     """Prepare a unified DataFrame combining queries and content data."""
     # Convert to DataFrames
