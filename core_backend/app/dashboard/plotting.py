@@ -111,7 +111,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         embeddings_df[~embeddings_df["topic_title"].str.lower().isin(["content"])]
         .groupby(["topic_id", "topic_title"])
         .size()
-        .reset_index(name="counts")  # type: ignore
+        .reset_index(name="counts")
     )
 
     # Sort topics by popularity (descending), but place 'Unclassified' at the top
@@ -147,16 +147,15 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Create MultiSelect widget for topic selection
     multi_select = MultiSelect(
-        title="Topics:",
         value=[str(tid) for tid in unique_topic_ids],  # All topics selected by default
         options=topic_options,
-        size=12,  # Adjust the size to fit in the horizontal layout
-        width=450,
+        width=360,
+        height=600,
     )
 
     # Add TextInput widgets for content and query search
-    content_search_input = TextInput(value="", title="Search Content:", width=200)
-    query_search_input = TextInput(value="", title="Search Queries:", width=200)
+    content_search_input = TextInput(value="", title="Search Content:", width=300)
+    query_search_input = TextInput(value="", title="Search Queries:", width=300)
 
     # Create combined filter for queries
     queries_filter = CustomJSFilter(
@@ -219,8 +218,8 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     view_queries = CDSView(filter=queries_filter)
     view_content = CDSView(filter=content_filter)
 
-    # Attach 'js_on_change' to trigger re-render for queries when
-    # topic selection or query search input changes
+    # Attach 'js_on_change' to trigger re-render for queries when topic selection or
+    # query search input changes
     multi_select.js_on_change(
         "value",
         CustomJS(
@@ -254,9 +253,9 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Create the plot
     plot = figure(
-        width=700,
-        height=500,
         tools="pan,wheel_zoom,reset,lasso_select",
+        height=610,
+        width=750,
     )
 
     # Set the wheel zoom tool as the active scroll tool
@@ -269,7 +268,7 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     plot.xgrid.grid_line_color = "lightgray"  # Keep x-grid lines visible
     plot.ygrid.grid_line_color = "lightgray"  # Keep y-grid lines visible
 
-    # Add more frequent ticks every 5 units
+    # Add more frequent ticks every 3 units
     plot.xaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 3)])
     plot.yaxis.ticker = FixedTicker(ticks=[i for i in range(-100, 101, 3)])
 
@@ -323,9 +322,9 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Create a Div to display aggregated selected points organized by topic
     div = Div(
-        width=500,
-        height=500,
         styles={"white-space": "pre-wrap", "overflow-y": "auto"},
+        sizing_mode="stretch_width",
+        height=350,  # Reduced height by ~30%
     )
 
     # JavaScript code to synchronize selection and update Div
@@ -385,8 +384,8 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
         )
 
     # Create 'Select All' and 'Deselect All' buttons for topics
-    select_all_button = Button(label="Select All", width=80, height=30)
-    deselect_all_button = Button(label="Deselect All", width=80, height=30)
+    select_all_button = Button(label="Select All", width=100, height=30)
+    deselect_all_button = Button(label="Deselect All", width=100, height=30)
 
     # JavaScript callbacks for the buttons
     select_all_callback = CustomJS(
@@ -407,65 +406,53 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
     )
     deselect_all_button.js_on_click(deselect_all_callback)
 
-    # Adjust widths and alignments for better appearance
-    select_all_button.width = 80
-    deselect_all_button.width = 80
-    multi_select.width = 450  # Increased width by 50%
-    content_search_input.width = 200
-    query_search_input.width = 200
-
-    # Ensure that the MultiSelect is not too tall for the horizontal layout
-    multi_select.size = 12  # Adjust as needed
-
-    # Create Spacers to add space between controls
-    spacer_width = 20  # Adjust the spacer width as needed
-
-    controls_row = row(
-        select_all_button,
-        Spacer(width=spacer_width),
-        deselect_all_button,
-        Spacer(width=spacer_width),
+    # Create the left column: Buttons and Scrollable topics
+    left_column = column(
+        Div(text="<b>Topics:</b>", margin=(0, 0, 0, 0)),
+        row(select_all_button, deselect_all_button, sizing_mode="fixed"),
+        Spacer(height=13),  # Padding so that layout looks neatest
         multi_select,
-        Spacer(width=spacer_width),
-        content_search_input,
-        Spacer(width=spacer_width),
-        query_search_input,
     )
 
-    # Place the controls under the heading with some vertical spacing
-    controls_layout = column(
-        Div(text="<b>Topic Selection and Controls:</b>"),
-        Spacer(height=10),  # Add vertical space
-        controls_row,
+    # Create the search bars row
+    search_bars = column(
+        row(
+            content_search_input,
+            Spacer(width=104),  # For padding purposes again
+            query_search_input,
+            sizing_mode="stretch_width",
+            margin=(0, 0, 11, 0),
+        ),
     )
 
-    # Create titles for the plot and Div
-    plot_title = Div(
-        text="<h4>Content visualization map</h4>",
-        styles={"text-align": "center"},
-        width=plot.width,
-    )
-    div_title = Div(
-        text="<h4>Selected points (use the lasso tool to populate this table)</h4>",
-        styles={"text-align": "center"},
-        width=div.width,
+    # Create the right column: Search bars and plot
+    right_column = column(
+        search_bars,
+        plot,
     )
 
-    # Create columns for the plot and Div with their titles
-    plot_column = column(plot_title, plot)
-    div_column = column(div_title, div)
+    # Combine the left and right columns into the top layout
+    top_layout = row(
+        left_column,
+        right_column,
+        sizing_mode="stretch_width",
+    )
 
-    # Adjust the Div height to match the plot height
-    div.height = plot.height
+    # Create the data table (Div) with full width below the top layout
+    div_layout = column(
+        Div(
+            text="<h4>Selected points (use the lasso tool to populate this table)</h4>",
+            styles={"text-align": "center"},
+        ),
+        div,
+        sizing_mode="stretch_width",
+    )
 
-    # Place the columns side by side
-    top_layout = row(plot_column, div_column)
-
-    # Include the Div in the top right corner
+    # Create the overall layout
     layout = column(
         top_layout,
-        Spacer(height=3),  # Add vertical space between top layout and controls
-        controls_layout,
+        div_layout,
+        sizing_mode="stretch_width",
     )
 
     return json_item(layout, ID("myplot"))
