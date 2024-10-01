@@ -24,6 +24,7 @@ interface QueriesProps {
 interface AISummaryProps {
   aiSummary: string;
 }
+
 const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
   return (
     <Box
@@ -84,7 +85,8 @@ const Queries: React.FC<QueriesProps> = ({
       : "Never";
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Header and Refresh Button */}
       <Box
         sx={{
           display: "flex",
@@ -125,18 +127,29 @@ const Queries: React.FC<QueriesProps> = ({
           </LoadingButton>
         </Box>
       </Box>
+
+      {/* AI Summary */}
       {data.length > 0 && <AISummary aiSummary={aiSummary} />}
+
+      {/* Table Container */}
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          overflowY: "scroll",
-          maxHeight: 310,
+          flexGrow: 1, // Adjust height dynamically to handle the sidebar being toggled
         }}
       >
         {data.length > 0 ? (
-          <TableContainer sx={{ border: 1, borderColor: grey[300], borderRadius: 1 }}>
+          <TableContainer
+            sx={{
+              flexGrow: 1, // Fills available space as per above
+              border: 1,
+              borderColor: grey[300],
+              borderRadius: 1,
+              overflowY: "auto",
+            }}
+          >
             <Table size="small">
               <TableHead>
                 <TableRow
