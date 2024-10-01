@@ -108,7 +108,9 @@ def produce_bokeh_plot(embeddings_df: pd.DataFrame) -> StandaloneEmbedJson:
 
     # Exclude 'Content' from topic_counts
     topic_counts = (
-        embeddings_df[~embeddings_df["topic_title"].str.lower().isin(["content"])]
+        embeddings_df[
+            ~embeddings_df["topic_title"].str.lower().isin(["content"])
+        ]  # type: ignore
         .groupby(["topic_id", "topic_title"])
         .size()
         .reset_index(name="counts")
