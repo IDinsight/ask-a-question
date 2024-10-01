@@ -55,7 +55,8 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
         }
       } catch (error: any) {
         console.error("Error fetching the plot:", error);
-        setLoadError(`Could not load the plot data: ${error.message}`);
+        setLoadError(`There was a system failure. Ensure you have both content and queries present
+          and clicked the "Generate Insights" button.`);
       } finally {
         setLoading(false);
       }
@@ -168,7 +169,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           )}
 
           <Paper
-            elevation={1}
+            elevation={0}
             sx={{
               width: "100%",
               padding: 2,
