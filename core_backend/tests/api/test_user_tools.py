@@ -1,6 +1,11 @@
+import pytest
 from fastapi.testclient import TestClient
 
-from core_backend.tests.api.conftest import TEST_USER_API_KEY_2
+from .conftest import (
+    TEST_ADMIN_USERNAME,
+    TEST_USER_API_KEY_2,
+    TEST_USERNAME,
+)
 
 
 class TestUserCreation:
@@ -15,6 +20,7 @@ class TestUserCreation:
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
+                "is_admin": False,
             },
         )
 
@@ -32,6 +38,7 @@ class TestUserCreation:
                 "username": "test_username_5",
                 "password": "password",
                 "content_quota": 50,
+                "is_admin": False,
             },
         )
 
@@ -52,6 +59,105 @@ class TestUserCreation:
 
         assert response.status_code == 403
 
+    def test_admin_create_admin_user(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.post(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": "test_username_7",
+                "password": "password",
+                "content_quota": 50,
+                "is_admin": True,
+            },
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert "is_admin" in json_response
+        assert json_response["is_admin"] is True
+
+
+class TestUserUpdate:
+
+    def test_admin_update_user(
+        self, client: TestClient, admin_user: int, fullaccess_token_admin: str
+    ) -> None:
+        content_quota = 1500
+        response = client.put(
+            f"/user/{admin_user}",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": TEST_ADMIN_USERNAME,
+                "content_quota": content_quota,
+                "is_admin": True,
+            },
+        )
+
+        assert response.status_code == 200
+
+        response = client.get(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["content_quota"] == content_quota
+
+    def test_admin_update_other_user(
+        self,
+        client: TestClient,
+        user1: int,
+        fullaccess_token_admin: str,
+        fullaccess_token: str,
+    ) -> None:
+        content_quota = 1500
+        response = client.put(
+            f"/user/{user1}",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": TEST_USERNAME,
+                "content_quota": content_quota,
+                "is_admin": False,
+            },
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["content_quota"] == content_quota
+
+    @pytest.mark.parametrize(
+        "is_same_user",
+        [
+            (True),
+            (False),
+        ],
+    )
+    def test_non_admin_update_user(
+        self,
+        client: TestClient,
+        is_same_user: bool,
+        user1: int,
+        user2: int,
+        fullaccess_token_user2: str,
+    ) -> None:
+        user_id = user1 if is_same_user else user2
+        response = client.put(
+            f"/user/{user_id}",
+            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            json={
+                "username": TEST_USERNAME,
+                "content_quota": 1500,
+                "is_admin": False,
+            },
+        )
+        assert response.status_code == 403
+
 
 class TestUserFetching:
     def test_get_user(self, client: TestClient, fullaccess_token: str) -> None:
@@ -66,6 +172,8 @@ class TestUserFetching:
             "user_id",
             "username",
             "content_quota",
+            "is_admin",
+            "api_daily_quota",
             "api_key_first_characters",
             "api_key_updated_datetime_utc",
             "created_datetime_utc",

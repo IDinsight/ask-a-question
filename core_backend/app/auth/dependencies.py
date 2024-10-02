@@ -101,6 +101,7 @@ async def authenticate_or_create_google_user(
                 username=google_email,
                 content_quota=DEFAULT_CONTENT_QUOTA,
                 api_daily_quota=DEFAULT_API_QUOTA,
+                is_admin=False,
             )
             user_db = await save_user_to_db(user, asession)
             await update_api_limits(
@@ -137,6 +138,18 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
                 raise credentials_exception from err
     except InvalidTokenError as err:
         raise credentials_exception from err
+
+
+def get_admin_user(user: Annotated[UserDB, Depends(get_current_user)]) -> UserDB:
+    """
+    Get the current user from the access token and check if it is an admin.
+    """
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+    return user
 
 
 def create_access_token(username: str) -> str:
