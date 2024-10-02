@@ -8,6 +8,7 @@ import { QueryData, Period, TopicModelingResponse } from "../types";
 import { generateNewTopics, fetchTopicsData } from "../api";
 import { useAuth } from "@/utils/auth";
 import { Paper } from "@mui/material";
+import BokehPlot from "./insights/Bokeh";
 
 interface InsightProps {
   timePeriod: Period;
@@ -88,7 +89,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         sx={{
           display: "flex",
           flexDirection: "row",
-          height: 600,
+          height: 500,
           width: "100%",
           border: 0.5,
           borderColor: "lightgrey",
@@ -107,7 +108,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
-            topicsPerPage={8}
+            topicsPerPage={7}
           />
         </Box>
         <Box
@@ -125,30 +126,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           />
         </Box>
       </Paper>
-      <Paper
-        elevation={0}
-        sx={{
-          width: "100%",
-          height: "400px",
-          marginTop: 2,
-          justifyItems: "center",
-          justifySelf: "stretch",
-          border: 0.5,
-          borderColor: "lightgrey",
-        }}
-      >
-        <Box
-          textAlign="center"
-          height="100%"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          Chart coming soon!
-        </Box>
-      </Paper>
+      <BokehPlot timePeriod={timePeriod} token={token} />
     </Box>
   );
 };

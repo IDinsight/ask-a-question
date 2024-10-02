@@ -59,12 +59,12 @@ parser = argparse.ArgumentParser(
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
 
     (example)
-    python add_new_dummy_data.py \
+    python add_new_dummy_data_to_db.py \
         --csv generated_questions.csv \
         --host http://localhost:8000 \
         --api-key <API_KEY> \
         --nb-workers 8 \
-        --start-date 01-08-23
+        --start-date 01-08-23 \
         --end-date 04-09-24
 
 """,
@@ -464,10 +464,10 @@ if __name__ == "__main__":
                 srch_res,
                 fbk_stmt,
                 fbk_key,
-                gen_fbk_txt,
+                False,
                 is_off,
             ): query_id
-            for query_id, text, srch_res, fbk_stmt, fbk_key, gen_fbk_txt, is_off in zip(
+            for query_id, text, srch_res, fbk_stmt, fbk_key, _, is_off in zip(
                 df["query_id"],
                 df["inbound_text"],
                 df["search_results"],

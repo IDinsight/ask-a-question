@@ -62,6 +62,9 @@ EXPOSE ${PORT}
 # Download cross-encoder model
 RUN python -c "from transformers import AutoModel; AutoModel.from_pretrained('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 
+# Download sentence-transformers model
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+
 # Define the command to run the application
 
 CMD ["./startup.sh"]
