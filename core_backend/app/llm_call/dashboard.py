@@ -2,21 +2,15 @@
 These are LLM functions used by the dashboard.
 """
 
-import os
-
 from bertopic import BERTopic
 
 from ..config import LITELLM_MODEL_DASHBOARD_SUMMARY, LITELLM_MODEL_TOPIC_MODEL
+from ..dashboard.config import DISABLE_DASHBOARD_LLM
 from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import TopicModelLabelling, get_feedback_summary_prompt
 from .utils import _ask_llm_async
 
 logger = setup_logger("DASHBOARD AI SUMMARY")
-
-# Check if LLM functionalities are disabled
-DISABLE_DASHBOARD_LLM = (
-    os.environ.get("DISABLE_DASHBOARD_LLM", "false").lower() == "true"
-)
 
 
 async def generate_ai_summary(
