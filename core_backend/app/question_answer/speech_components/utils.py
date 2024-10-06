@@ -1,5 +1,5 @@
 import os
-
+import whisper
 from pydub import AudioSegment
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
@@ -10,13 +10,30 @@ logger = setup_logger("Voice utils")
 # Add language codes and voice models according to
 # https://cloud.google.com/text-to-speech/docs/voices
 
-lang_code_mapping = {
+lang_code_mapping_tts = {
     IdentifiedLanguage.ENGLISH: ("en-US", "Neural2-D"),
     # IdentifiedLanguage.SWAHILI: ("sw-TZ", "Neural2-D"), # no support for swahili
     IdentifiedLanguage.HINDI: ("hi-IN", "Neural2-D"),
     # Add more languages and models as needed
 }
 
+language_code_mapping_stt = {
+    "en": "en-IN",  # English (India)
+    "hi": "hi-IN",  # Hindi (India)
+    # Add more language mappings as needed
+}
+
+def detect_language(file_path: str) -> str:
+    """
+    Uses Whisper's tiny model to detect the language of the audio file.
+    """
+    model = whisper.load_model("tiny", download_root="/whisper_models")
+    logger.info(f"Detecting language for {file_path} using Whisper tiny model.")
+    result = model.transcribe(file_path)
+    detected_language = result["language"]
+    logger.info(f"Detected language: {detected_language}")
+    google_language_code = language_code_mapping_stt.get(detected_language, "en-US")
+    return google_language_code
 
 def get_gtts_lang_code_and_model(
     identified_language: IdentifiedLanguage,
@@ -26,7 +43,7 @@ def get_gtts_lang_code_and_model(
     and voice model names.
     """
 
-    result = lang_code_mapping.get(identified_language)
+    result = lang_code_mapping_tts.get(identified_language)
     if result is None:
         raise ValueError(f"Unsupported language: {identified_language}")
 
