@@ -1,5 +1,6 @@
 import os
-import whisper
+
+import whisper  # type: ignore
 from pydub import AudioSegment
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
@@ -23,6 +24,7 @@ language_code_mapping_stt = {
     # Add more language mappings as needed
 }
 
+
 def detect_language(file_path: str) -> str:
     """
     Uses Whisper's tiny model to detect the language of the audio file.
@@ -34,6 +36,7 @@ def detect_language(file_path: str) -> str:
     logger.info(f"Detected language: {detected_language}")
     google_language_code = language_code_mapping_stt.get(detected_language, "en-US")
     return google_language_code
+
 
 def get_gtts_lang_code_and_model(
     identified_language: IdentifiedLanguage,
