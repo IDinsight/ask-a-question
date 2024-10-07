@@ -12,7 +12,7 @@ from ...utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from .utils import convert_audio_to_wav, get_gtts_lang_code_and_model, detect_language
+from .utils import convert_audio_to_wav, detect_language, get_gtts_lang_code_and_model
 
 logger = setup_logger("Voice API")
 
