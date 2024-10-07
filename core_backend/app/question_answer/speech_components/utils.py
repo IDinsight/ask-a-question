@@ -1,6 +1,6 @@
 import os
 
-from faster_whisper import WhisperModel
+from faster_whisper import WhisperModel  # type: ignore
 from pydub import AudioSegment
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
