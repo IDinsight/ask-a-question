@@ -27,4 +27,4 @@ pydub==0.25.1
 sentence-transformers==3.0.1
 scikit-learn==1.5.1
 bokeh==3.5.1
-openai-whisper==20231117
+faster-whisper==1.0.3

@@ -72,7 +72,7 @@ RUN python -c "from transformers import AutoModel; AutoModel.from_pretrained('cr
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
 
 # Download whisper model for language detection
-RUN python -c "import os, whisper; whisper.load_model('tiny', download_root='${WHISPER_MODEL_DIR}')"
+RUN python -c "from faster_whisper import WhisperModel; model = WhisperModel('tiny', download_root='${WHISPER_MODEL_DIR}')"
 
 # Define the command to run the application
 

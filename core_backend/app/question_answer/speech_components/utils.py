@@ -1,6 +1,6 @@
 import os
 
-import whisper  # type: ignore
+from faster_whisper import WhisperModel
 from pydub import AudioSegment
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
@@ -27,14 +27,19 @@ language_code_mapping_stt = {
 
 def detect_language(file_path: str) -> str:
     """
-    Uses Whisper's tiny model to detect the language of the audio file.
+    Uses Faster Whisper's tiny model to detect the language of the audio file.
     """
-    model = whisper.load_model("tiny", download_root="/whisper_models")
-    logger.info(f"Detecting language for {file_path} using Whisper tiny model.")
-    result = model.transcribe(file_path)
-    detected_language = result["language"]
+    model = WhisperModel("tiny", download_root="/whisper_models")
+
+    logger.info(f"Detecting language for {file_path} using Faster Whisper tiny model.")
+
+    segments, info = model.transcribe(file_path)
+
+    detected_language = info.language
     logger.info(f"Detected language: {detected_language}")
+
     google_language_code = language_code_mapping_stt.get(detected_language, "en-US")
+
     return google_language_code
 
 
