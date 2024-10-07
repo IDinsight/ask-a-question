@@ -65,6 +65,38 @@ async def create_user(
         ) from e
 
 
+@router.post("/register-first-user", response_model=UserCreate)
+async def create_first_user(
+    user: UserCreateWithPassword,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreate | None:
+    """
+    Create first admin user when there are no users in the DB.
+    """
+
+    nb_users = await get_nb_users(asession)
+    if nb_users > 0:
+        raise HTTPException(
+            status_code=400, detail="There are already users in the database."
+        )
+
+    user_new = await save_user_to_db(
+        user=user,
+        asession=asession,
+    )
+    await update_api_limits(
+        request.app.state.redis, user_new.username, user_new.api_daily_quota
+    )
+
+    return UserCreate(
+        username=user_new.username,
+        is_admin=user_new.is_admin,
+        content_quota=user_new.content_quota,
+        api_daily_quota=user_new.api_daily_quota,
+    )
+
+
 @router.put("/rotate-key", response_model=KeyResponse)
 async def get_new_api_key(
     user_db: Annotated[UserDB, Depends(get_current_user)],
