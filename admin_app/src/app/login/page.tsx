@@ -25,8 +25,7 @@ import {
   AdminAlertModal,
   ConfirmationModal,
   RegisterModal,
-} from "./components/RegisterModel";
-import { is } from "date-fns/locale";
+} from "./components/RegisterModal";
 import { LoadingButton } from "@mui/lab";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
@@ -115,7 +114,10 @@ const Login = () => {
     setShowConfirmationModal(false);
   };
   return isLoading ? (
-    <LoadingButton />
+    <Grid>
+      {" "}
+      <LoadingButton />
+    </Grid>
   ) : (
     <Grid
       container
