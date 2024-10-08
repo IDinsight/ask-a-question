@@ -17,7 +17,7 @@ from ..question_answer.models import (
     ResponseFeedbackDB,
 )
 from ..urgency_detection.models import UrgencyResponseDB
-from .config import GENERATE_AI_ANSWER
+from .config import DISABLE_DASHBOARD_LLM
 from .schemas import (
     BokehContentItem,
     ContentFeedbackStats,
@@ -774,8 +774,8 @@ async def get_ai_answer_summary(
     Get AI answer summary
     """
 
-    if not GENERATE_AI_ANSWER:
-        return "Not Available"
+    if DISABLE_DASHBOARD_LLM:
+        return "Dashboard LLM features have been disabled in your backend configuration"
 
     user_feedback = (
         select(

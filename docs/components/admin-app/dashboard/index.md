@@ -26,6 +26,12 @@ suggestion on how to improve the content.
 
 ![Dashboard Screenshot](./dashboard-pg2-drawer.jpeg)
 
+## AI Features
+
+Several parts of the dashboard use AI to provide LLM summaries and accurate topic labels. However,
+if data privacy is a concern a version of the dashboard that requires zero LLM calls (while maintaing all
+other features) can be activated by setting `DISABLE_DASHBOARD_LLM=True` in your core_backend.env
+
 ## Content Gaps
 
 :construction: Stay tuned for the "Content Gaps" section.
