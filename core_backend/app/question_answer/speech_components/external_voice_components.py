@@ -12,7 +12,7 @@ from ...utils import (
     setup_logger,
     upload_file_to_gcs,
 )
-from .utils import convert_audio_to_wav, get_gtts_lang_code_and_model
+from .utils import convert_audio_to_wav, detect_language, get_gtts_lang_code_and_model
 
 logger = setup_logger("Voice API")
 
@@ -25,6 +25,7 @@ async def transcribe_audio(audio_filename: str) -> str:
     logger.info(f"Starting transcription for {audio_filename}")
 
     try:
+        detected_language = detect_language(audio_filename)
         wav_filename = convert_audio_to_wav(audio_filename)
 
         client = speech.SpeechClient()
@@ -36,7 +37,7 @@ async def transcribe_audio(audio_filename: str) -> str:
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code="en-US",  # Checkout language codes here:
+            language_code=detected_language,  # Checkout language codes here:
             # https://cloud.google.com/speech-to-text/docs/languages
         )
 
