@@ -1,0 +1,1899 @@
+{
+  "version": "6",
+  "id": "cm0kvkmff000mbpnz6gm24gmn",
+  "name": "AAQ Demo Flow",
+  "events": [
+    {
+      "id": "qavx97atb4togrq0xug8wj79",
+      "outgoingEdgeId": "k9sul7i98nworlh6d4uxte1c",
+      "graphCoordinates": {
+        "x": -1086.13,
+        "y": 792.94
+      },
+      "type": "start"
+    }
+  ],
+  "groups": [
+    {
+      "id": "iaeukwphmrpyt5s5v3glulx9",
+      "title": "Error code check",
+      "graphCoordinates": {
+        "x": 772.4,
+        "y": 643.04
+      },
+      "blocks": [
+        {
+          "id": "b4102ebfksgvftjfrnnmxw5s",
+          "outgoingEdgeId": "s82g3wrxu22zwy0qqlb59o1o",
+          "type": "Condition",
+          "items": [
+            {
+              "id": "gh22zote1d0gxrqv3w07zere",
+              "outgoingEdgeId": "jpwamzh7e3v7cbycd4d4dfmx",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "kc02rv4fmotpfxcmu61led1g",
+                    "variableId": "vbw8rtvc14i95k2gyuw6jkgl9",
+                    "comparisonOperator": "Equal to",
+                    "value": "200"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "g2e6n7jl79ia0qkmjz3m8uca",
+              "outgoingEdgeId": "zqzsx96nywc3meta8639r54e",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "g2kykspppnbwy2b9qaw0u846",
+                    "variableId": "vbw8rtvc14i95k2gyuw6jkgl9",
+                    "comparisonOperator": "Equal to",
+                    "value": "400"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b6h79k17uph6tv163fp4ww92",
+      "title": "results",
+      "graphCoordinates": {
+        "x": 1684.73,
+        "y": 31.19
+      },
+      "blocks": [
+        {
+          "id": "kvdsjqbpeyhoy27n88b28wg7",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "{{llm_response}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Search results:"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "1. {{faq_0_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "2. {{faq_1_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "3. {{faq_2_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Would you like to read any search result in full?"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "If your question is not answered, you can send it to the helpdesk team."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "lr9ynhlq1fx3xzc8rqglfxke",
+          "type": "choice input",
+          "items": [
+            {
+              "id": "b9sxvuy02a3rb6lfmx81dg6k",
+              "outgoingEdgeId": "wc1lwom13ezm0vlgnagi8pgg",
+              "content": "Show 1"
+            },
+            {
+              "id": "bmiyhil5bpnr3ab4jc1986li",
+              "outgoingEdgeId": "as4hekid30qxqth7ib21fz8l",
+              "content": "Show 2"
+            },
+            {
+              "id": "esfmyuj5tnxkzg49bjf5dgha",
+              "outgoingEdgeId": "rfstxez6sgf9gp83adm572eb",
+              "content": "Show 3"
+            },
+            {
+              "id": "a4zjtigescrxj3jfbbykxenh",
+              "outgoingEdgeId": "t8z5on2oh2ywb7af2d4tu6kb",
+              "content": "Doesn't answer my question"
+            },
+            {
+              "id": "gbr5fyvapma50daorfwndot0",
+              "outgoingEdgeId": "u539bo5989iz8zcfmojrngji",
+              "content": "Ask another question"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fktq0ro76qce1y3b5fjtk3ib",
+      "title": "full-faq-0",
+      "graphCoordinates": {
+        "x": 2483.21,
+        "y": -213.71
+      },
+      "blocks": [
+        {
+          "id": "pkyzsbz1q8w6536h5k98pgy3",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "bold": true,
+                    "text": "{{faq_0_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "{{faq_0_text}}"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "xty9i2m7njwaa9i6vfavaa65",
+          "outgoingEdgeId": "mbo1jpebhn7irrcf6m9yuw3f",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vefpa71b8an7gno6u1xkpum1m",
+            "expressionToEvaluate": "{{faq_0_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rgbfdl4n39a8uroatlqdvu9d",
+      "title": "full-faq-1",
+      "graphCoordinates": {
+        "x": 2515.53,
+        "y": 148.62
+      },
+      "blocks": [
+        {
+          "id": "jjo2d8zzkzb7nrg635454uk2",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "bold": true,
+                    "text": "{{faq_1_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "{{faq_1_text}}"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "a1d8z6z04lr9nf1lkktynjbr",
+          "outgoingEdgeId": "mrxqztukomcc04w254lfivur",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vefpa71b8an7gno6u1xkpum1m",
+            "expressionToEvaluate": "{{faq_1_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "z3a5hoqyo4x3agzlgd38bhxt",
+      "title": "full-faq-2",
+      "graphCoordinates": {
+        "x": 2566.08,
+        "y": 417.97
+      },
+      "blocks": [
+        {
+          "id": "pii5sbopoi0j4irym1aaaoxc",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "bold": true,
+                    "text": "{{faq_2_title}}"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "{{faq_2_text}}"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "jgqjcxazdc4rtgq62eywmacy",
+          "outgoingEdgeId": "uyfxwt3q6bvmo02imz2xq88v",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vefpa71b8an7gno6u1xkpum1m",
+            "expressionToEvaluate": "{{faq_2_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "io4zz7aaqfb4m4os8qe905lx",
+      "title": "feedback",
+      "graphCoordinates": {
+        "x": 2982.61,
+        "y": -154.95
+      },
+      "blocks": [
+        {
+          "id": "bb6elzdmscgffcegoi4ia4s0",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Was that result helpful?"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "n4199k12u27lembzpepr8vbc",
+          "type": "choice input",
+          "items": [
+            {
+              "id": "pcj7lsoveuhvoka4b0p00u40",
+              "outgoingEdgeId": "azbkuhgqi5bgljhpw2d6443j",
+              "content": "👍 Helpful"
+            },
+            {
+              "id": "xwawnel9cir2t30iiwmvoe2m",
+              "outgoingEdgeId": "j6j0d6sxkcz00ek8vyfzw986",
+              "content": "👎 Not helpful"
+            },
+            {
+              "id": "fo5rlhuebfge5oc7l23pe8fs",
+              "outgoingEdgeId": "fy3irzszkqp4tn0uzua8yama",
+              "content": "Go back"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ppg0t1w2dkd7lsvakqlxvas2",
+      "title": "Greet",
+      "graphCoordinates": {
+        "x": -449,
+        "y": 793.97
+      },
+      "blocks": [
+        {
+          "id": "ixazc3psy5otynshi86qlgqt",
+          "outgoingEdgeId": "t0bpkz06ddxffmaue28int1r",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "bold": true,
+                    "text": "Welcome to Ask-A-Question! 👋"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ie984t4iihzxkidi5ifh63e2",
+      "title": "Guardrail fail check",
+      "graphCoordinates": {
+        "x": 1215.05,
+        "y": 764.83
+      },
+      "blocks": [
+        {
+          "id": "hybetvl1cwon22tnar3swl7i",
+          "outgoingEdgeId": "ixagm8aeunyum6kcd7qf5fee",
+          "type": "Condition",
+          "items": [
+            {
+              "id": "zuizzs9tn64yxc923m3qouwg",
+              "outgoingEdgeId": "woxh6blky5idh1brezy4w695",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "ut77yr3zpj1y0t9i720qm4uq",
+                    "variableId": "vlei7dx8z1ip9ia56aqoigp4r",
+                    "comparisonOperator": "Equal to",
+                    "value": "unintelligible_input"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "bkprnyyea879pa6xo2dgtacm",
+              "outgoingEdgeId": "sg1k5vyak05ckq41r52z7n56",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "nmat39w1vuln05yg2ahu05se",
+                    "variableId": "vlei7dx8z1ip9ia56aqoigp4r",
+                    "comparisonOperator": "Equal to",
+                    "value": "unsupported_language"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bb9f1lyaxbq17n6hxcyr55vt",
+      "title": "Setup positive feedback",
+      "graphCoordinates": {
+        "x": 3428.7,
+        "y": -278.86
+      },
+      "blocks": [
+        {
+          "id": "tux3d96csckfhmamyl8n2khh",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vzuw4kdl8bwsdo5wzlzxg1beq",
+            "expressionToEvaluate": "\"positive\""
+          }
+        },
+        {
+          "id": "dqx9l7qcgpkleqpxz2ufdbtu",
+          "outgoingEdgeId": "h6nzzze4hq5d7jr7qzbl4hqn",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Thanks for the feedback!"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ho2f74is7c525af6a48tl3s1",
+      "title": "Group #18",
+      "graphCoordinates": {
+        "x": 3425.44,
+        "y": -6.86
+      },
+      "blocks": [
+        {
+          "id": "rsh8avwwkn5okj2m2hf1pnzu",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vzuw4kdl8bwsdo5wzlzxg1beq",
+            "expressionToEvaluate": "\"negative\""
+          }
+        },
+        {
+          "id": "fttnv3sue3u2n44l9zxqjf60",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Would you like to provide feedback?"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "rh89r97u3en8swyje8kjulvs",
+          "type": "choice input",
+          "items": [
+            {
+              "id": "vh941xxk6zvsah1i6ddpep6z",
+              "outgoingEdgeId": "chz55prrckjtp0iekwsd587s",
+              "content": "Yes"
+            },
+            {
+              "id": "ul1uqt7bqcj7fsxmfwfque5o",
+              "outgoingEdgeId": "ck7aagwwtcs0g1hhe17ued2m",
+              "content": "No"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "k0va6pfa1w3z1djh1nfql3ax",
+      "title": "ask-question",
+      "graphCoordinates": {
+        "x": -78.15,
+        "y": 794.94
+      },
+      "blocks": [
+        {
+          "id": "xrmot7tnxas0bqx7qcqg6nht",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "What's your question?"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "veamu35i9o7dsudej2rszwdb",
+          "type": "text input",
+          "options": {
+            "labels": {
+              "placeholder": "Type your question...",
+              "button": "Ask"
+            },
+            "variableId": "va4cf7oi765cqxyiu6vhbl6hc",
+            "isLong": false
+          }
+        },
+        {
+          "id": "i6qpo663lu28p5569f8m1bvv",
+          "outgoingEdgeId": "o5w8gdx4yj75mds498ygfptk",
+          "type": "Condition",
+          "items": [
+            {
+              "id": "civ8sgwttkrhdyc1d7fn6fsx",
+              "outgoingEdgeId": "ra2r6u2bi9tkttbsxdncx1sx",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "j0z2b5p38tpxeykhg9tage18",
+                    "variableId": "va4cf7oi765cqxyiu6vhbl6hc",
+                    "comparisonOperator": "Matches regex",
+                    "value": "[Ee]xit"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ybi1hh9t2hh5x3j7nrg6rqqr",
+      "title": "API  - Search",
+      "graphCoordinates": {
+        "x": 430.96,
+        "y": 644.96
+      },
+      "blocks": [
+        {
+          "id": "ypbw90npti8yx57vu786npx3",
+          "outgoingEdgeId": "iwsqe9xpheinktprm6oaq3fv",
+          "type": "Webhook",
+          "options": {
+            "variablesForTest": [
+              {
+                "id": "nbnq71cs6pwxk6g33laj5i3h",
+                "variableId": "va4cf7oi765cqxyiu6vhbl6hc",
+                "value": "Is a headache normal during pregnancy?"
+              }
+            ],
+            "responseVariableMapping": [
+              {
+                "id": "xzvwgfq8nghdm8bqxyfcexm7",
+                "variableId": "vbw8rtvc14i95k2gyuw6jkgl9",
+                "bodyPath": "statusCode"
+              },
+              {
+                "id": "w6t1vom4px5c0eg5nlf7z89d",
+                "variableId": "vhkl8184lefqkmwo5vrayu34s",
+                "bodyPath": "data.query_id"
+              },
+              {
+                "id": "ljgsq0liuioyomsb3rtznxro",
+                "variableId": "vt1wrr2l2q2vyyhqy9hrekheu",
+                "bodyPath": "data.feedback_secret_key"
+              },
+              {
+                "id": "ypm25mc7ttnilef7n0faive5",
+                "variableId": "vxuhgq18vgindfna3wkw0mtue",
+                "bodyPath": "data.llm_response"
+              },
+              {
+                "id": "vggpvh0sb7ahrsgoagbh5gul",
+                "variableId": "vm7sz1az4icc829bfcsrtmamj",
+                "bodyPath": "data.search_results[\"0\"].title"
+              },
+              {
+                "id": "lrpts4knz1xdvu0kzpbp8vqi",
+                "variableId": "vfh2d4k2oe6tqh6o0qx3cqlp3",
+                "bodyPath": "data.search_results[\"0\"].text"
+              },
+              {
+                "id": "lu0c4d0ahnja4vnuk5oa4r95",
+                "variableId": "vdjhcqxd9emlifxh02sf19t83",
+                "bodyPath": "data.search_results[\"0\"].id"
+              },
+              {
+                "id": "zh8747gmkfsevh0m62u3d3xj",
+                "variableId": "vtu807l7ux1pgr0j2nv3cait7",
+                "bodyPath": "data.search_results[\"1\"].title"
+              },
+              {
+                "id": "tbloj57zamnl7d1dtnp428zt",
+                "variableId": "vfkf5sa4p27nrvyqt87amwu9r",
+                "bodyPath": "data.search_results[\"1\"].text"
+              },
+              {
+                "id": "l6xhc9ltw2622cur5w73fq8p",
+                "variableId": "vfqfy86udxp4mo1rwf30l4m8j",
+                "bodyPath": "data.search_results[\"1\"].id"
+              },
+              {
+                "id": "d3bn6i9xjom9tre24dk9aocr",
+                "variableId": "vowdld9zy6ct8ci810o7rruuy",
+                "bodyPath": "data.search_results[\"2\"].title"
+              },
+              {
+                "id": "mabf0g8vz6xu9irgptr1269r",
+                "variableId": "vd9hrvcd5qm98hspeqh45qr6p",
+                "bodyPath": "data.search_results[\"2\"].text"
+              },
+              {
+                "id": "bkyq73g0qz2fism1fvipb0rw",
+                "variableId": "vyi7ft2ng9ku2ts9mr87c4ezt",
+                "bodyPath": "data.search_results[\"2\"].id"
+              },
+              {
+                "id": "rmq0rs37g0npwsx5w5gz3zn3",
+                "variableId": "vlei7dx8z1ip9ia56aqoigp4r",
+                "bodyPath": "data.error_type"
+              }
+            ],
+            "isAdvancedConfig": true,
+            "isCustomBody": true,
+            "webhook": {
+              "queryParams": [],
+              "headers": [
+                {
+                  "id": "m5int03hbvngokud0rvmdn7i",
+                  "key": "accept",
+                  "value": "application/json"
+                },
+                {
+                  "id": "tk7msct2xnyx9scporoc65ua",
+                  "key": "Authorization",
+                  "value": "Bearer {{aaq_api_key}}"
+                }
+              ],
+              "url": "https://{{aaq_base_url}}/api/search",
+              "body": "{\n  \"query_text\": \"{{question}}\",\n  \"query_metadata\": {},\n  \"generate_llm_response\": true\n}"
+            },
+            "timeout": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "ob6mvhlksptf7v4e04ugo4z1",
+      "title": "Gibberish error",
+      "graphCoordinates": {
+        "x": 1716.2,
+        "y": 1125.57
+      },
+      "blocks": [
+        {
+          "id": "jd9yp1blg7q1fqs91en3djvs",
+          "outgoingEdgeId": "sj51ebjkg37bwalnqhkkie5d",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Sorry, we couldn't understand that..."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "dtkbtzklp8uchh0jop9psjle",
+      "title": "Language error",
+      "graphCoordinates": {
+        "x": 1674.53,
+        "y": 1342.1
+      },
+      "blocks": [
+        {
+          "id": "m1oi5qhrhi4m6p6d8ni6p47j",
+          "outgoingEdgeId": "jp44h0vd7s5fhvakvdftekz2",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Sorry, I only support English, Hindi, and Swahili at the moment."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "mfulwg4skgjkrdbfgjqs6hek",
+      "title": "System error",
+      "graphCoordinates": {
+        "x": 1021.93,
+        "y": 1206.67
+      },
+      "blocks": [
+        {
+          "id": "x64szbvldn6wmhs6c1d9bpi1",
+          "outgoingEdgeId": "w62gizws4byp54isy4y74t4c",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Sorry, there was a system error."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "jtzqo0kd6gwnf1aulveuf6rh",
+      "title": "another-question?",
+      "graphCoordinates": {
+        "x": 2441.91,
+        "y": 1294.72
+      },
+      "blocks": [
+        {
+          "id": "y6l2ozir0f6qk4dv4v22e46k",
+          "outgoingEdgeId": "s2mq0bjmfskh88xrhtcngy8t",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Would you like to ask another question?"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wt6qh4s2zg0o48q8tfnovgjc",
+      "title": "Group #24",
+      "graphCoordinates": {
+        "x": 1592.06,
+        "y": -216.97
+      },
+      "blocks": [
+        {
+          "id": "o0b9rz8is346jeyuar8bws44",
+          "outgoingEdgeId": "e30faynsk1djzikbc50vy8t2",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vxuhgq18vgindfna3wkw0mtue",
+            "expressionToEvaluate": "\"I'm not able to answer that directly, but the FAQs below might help.\""
+          }
+        }
+      ]
+    },
+    {
+      "id": "om72ckgpnk1n0k2fjykvsu8b",
+      "title": "API - Negative response feedback",
+      "graphCoordinates": {
+        "x": 2109.71,
+        "y": 690.65
+      },
+      "blocks": [
+        {
+          "id": "slu28kpvo6dkrhuk7zp883ck",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Sorry about that... Would you like to try asking a different question?"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "voy7nsnhr1rn0xbbb196z8tu",
+          "outgoingEdgeId": "qoiv98q2rp2pre3wjlzblbuf",
+          "type": "Webhook",
+          "options": {
+            "variablesForTest": [
+              {
+                "id": "mcl54mn9uvjsr8yzq3b7y8kd",
+                "variableId": "vhkl8184lefqkmwo5vrayu34s",
+                "value": "1504"
+              },
+              {
+                "id": "mv6vwzdfu4td40571fo3zk89",
+                "variableId": "vt1wrr2l2q2vyyhqy9hrekheu",
+                "value": "34d9ac33b7804c96a749b8e88614f6f3"
+              }
+            ],
+            "responseVariableMapping": [],
+            "isAdvancedConfig": true,
+            "isCustomBody": true,
+            "webhook": {
+              "queryParams": [],
+              "headers": [
+                {
+                  "id": "m5int03hbvngokud0rvmdn7i",
+                  "key": "accept",
+                  "value": "application/json"
+                },
+                {
+                  "id": "tk7msct2xnyx9scporoc65ua",
+                  "key": "Authorization",
+                  "value": "Bearer {{aaq_api_key}}"
+                }
+              ],
+              "url": "https://{{aaq_base_url}}/api/response-feedback",
+              "body": "{\n  \"query_id\": \"{{query_id}}\",\n  \"feedback_sentiment\": \"negative\",\n  \"feedback_secret_key\": \"{{feedback_secret_key}}\"\n}"
+            },
+            "timeout": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "l88ypgbequ9dyjzj4qwpzmpi",
+      "title": "Goodbye",
+      "graphCoordinates": {
+        "x": 3268.18,
+        "y": 1190.9
+      },
+      "blocks": [
+        {
+          "id": "i1og5qqz75xduflxg6fi3igr",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Thanks for using AAQ. Send any message to start another session."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "mh659z2h4px9oyjnw6u9s23c",
+      "title": "Set feedback text",
+      "graphCoordinates": {
+        "x": 3811.81,
+        "y": -18.33
+      },
+      "blocks": [
+        {
+          "id": "jg7nbcuvq2zw3st09e726msz",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Please type your feedback"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "y0s1ix0bamjt16rdr97l1sxk",
+          "type": "text input",
+          "options": {
+            "variableId": "vfmzpicxqlu3nuv4a8plkahyf"
+          }
+        },
+        {
+          "id": "qs1rn5619u2v6btlsd2vca4c",
+          "outgoingEdgeId": "cvdx38real3ndz2e2z33u9kr",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Thanks, your feedback has been recorded."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "he3en3pxp2phz37t9em3up6s",
+      "title": "Set feedback text to null",
+      "graphCoordinates": {
+        "x": 3811.72,
+        "y": 348.49
+      },
+      "blocks": [
+        {
+          "id": "pirsv2t3hp4stja7eux73z3n",
+          "outgoingEdgeId": "xyyylq2wgj3vqtfun1p7qo5q",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vfmzpicxqlu3nuv4a8plkahyf",
+            "expressionToEvaluate": "null"
+          }
+        }
+      ]
+    },
+    {
+      "id": "oyrjch3skwylak37yn31hwr5",
+      "title": "API - Content Feedback",
+      "graphCoordinates": {
+        "x": 4165.37,
+        "y": -86.41
+      },
+      "blocks": [
+        {
+          "id": "i3ad9w4s3nval6iwggrm2x2i",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "{{selected_faq_id}}"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "xo2cfhrrcvuegd2qvzzept0f",
+          "outgoingEdgeId": "blhrvl9la7o701vhza3rvm7c",
+          "type": "Webhook",
+          "options": {
+            "variablesForTest": [
+              {
+                "id": "nbnq71cs6pwxk6g33laj5i3h",
+                "variableId": "vhkl8184lefqkmwo5vrayu34s",
+                "value": "1504"
+              },
+              {
+                "id": "y9ietdonow6ogctpbaj7od1z",
+                "variableId": "vt1wrr2l2q2vyyhqy9hrekheu",
+                "value": "34d9ac33b7804c96a749b8e88614f6f3"
+              },
+              {
+                "id": "h7dp7300vss3h6sciz5dvxqv",
+                "variableId": "vfmzpicxqlu3nuv4a8plkahyf",
+                "value": "bad content"
+              },
+              {
+                "id": "tumk1yhxznmtnqbzhjm951vk",
+                "variableId": "vefpa71b8an7gno6u1xkpum1m",
+                "value": "1"
+              },
+              {
+                "id": "qg33ivhwhy0a1jxx5modlco3",
+                "variableId": "vzuw4kdl8bwsdo5wzlzxg1beq",
+                "value": "negative"
+              }
+            ],
+            "responseVariableMapping": [],
+            "isAdvancedConfig": true,
+            "isCustomBody": true,
+            "webhook": {
+              "queryParams": [],
+              "headers": [
+                {
+                  "id": "m5int03hbvngokud0rvmdn7i",
+                  "key": "accept",
+                  "value": "application/json"
+                },
+                {
+                  "id": "tk7msct2xnyx9scporoc65ua",
+                  "key": "Authorization",
+                  "value": "Bearer {{aaq_api_key}}"
+                }
+              ],
+              "url": "https://{{aaq_base_url}}/api/content-feedback",
+              "body": "{\n  \"query_id\": \"{{query_id}}\",\n  \"feedback_sentiment\": \"{{content_feedback_sentiment}}\",\n  \"feedback_text\": \"{{content_feedback_text}}\",\n  \"feedback_secret_key\": \"{{feedback_secret_key}}\",\n  \"content_id\": {{selected_faq_id}}\n}"
+            },
+            "timeout": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "xr8sy1nx3q7jsrl587c5xd29",
+      "title": "Group #37",
+      "graphCoordinates": {
+        "x": 4533.25,
+        "y": 21.38
+      },
+      "blocks": [
+        {
+          "id": "w5xpwfcbg254suyi7tl6qzto",
+          "outgoingEdgeId": "psc2jxv4a5sawa0628wc27oz",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Going back to menu"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "pqvysnbsbiy3fed22u4s43wv",
+      "title": "Group #35",
+      "graphCoordinates": {
+        "x": 2830.57,
+        "y": 1032.17
+      },
+      "blocks": [
+        {
+          "id": "jnbbmeqxw1366m5uxkr01ypl",
+          "type": "choice input",
+          "items": [
+            {
+              "id": "vgsgz8m2s7swxq2hv6kof4ua",
+              "outgoingEdgeId": "h0te1mcbo2wpdkaxe1w16i0b",
+              "content": "Ask another question"
+            },
+            {
+              "id": "un7fvoc3uo3vc7ngcka9w8e7",
+              "outgoingEdgeId": "mofmflp9ccznp087zn25ilba",
+              "content": "Exit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ijpmwtxeur7zewf3o3yk0vlo",
+      "title": "API - Urgency Detection",
+      "graphCoordinates": {
+        "x": 59.11,
+        "y": 1256.79
+      },
+      "blocks": [
+        {
+          "id": "l1t8wuy3ozo3k1hq0t0jj4c3",
+          "type": "Webhook",
+          "options": {
+            "variablesForTest": [
+              {
+                "id": "kj874vcd1roz5k7fxlhbbtte",
+                "variableId": "va4cf7oi765cqxyiu6vhbl6hc",
+                "value": "blurred"
+              }
+            ],
+            "responseVariableMapping": [
+              {
+                "id": "c6yo9qnycrr8f83dzn10j8zj",
+                "variableId": "vjwdjb1x18grxuj75nfsllh7h",
+                "bodyPath": "data.is_urgent"
+              },
+              {
+                "id": "t4js4gqbvo05twxlck6ngv2r"
+              }
+            ],
+            "isAdvancedConfig": true,
+            "isCustomBody": true,
+            "webhook": {
+              "headers": [
+                {
+                  "id": "su3v0nv6d0v3tkbt7gliecvj",
+                  "key": "accept",
+                  "value": "application/json"
+                },
+                {
+                  "id": "uiet5o2pgxru17q5m2bskl06",
+                  "key": "Authorization",
+                  "value": "Bearer {{aaq_api_key}}"
+                }
+              ],
+              "url": "https://{{aaq_base_url}}/api/urgency-detect",
+              "body": "{\n  \"message_text\": \"{{question}}\"\n}"
+            }
+          }
+        },
+        {
+          "id": "cmegu3yhlicrotm6ywh51mvp",
+          "outgoingEdgeId": "qlupxzjz4gyk0pfrcav85h7j",
+          "type": "Condition",
+          "items": [
+            {
+              "id": "efa8dbqvcm3dt21mpbewgpvq",
+              "outgoingEdgeId": "yq8jphrq1zo0i3im2fc4t7k2",
+              "content": {
+                "comparisons": [
+                  {
+                    "id": "kc02rv4fmotpfxcmu61led1g",
+                    "variableId": "vjwdjb1x18grxuj75nfsllh7h",
+                    "comparisonOperator": "Equal to",
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cdu39efyjma0m7rpyidwd959",
+      "title": "Urgency message",
+      "graphCoordinates": {
+        "x": 277.36,
+        "y": 1606.03
+      },
+      "blocks": [
+        {
+          "id": "czw8dwrn45zpun6b1rtexspr",
+          "outgoingEdgeId": "fzifbueqmfh26ox2vphocj8f",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "❗It sounds like this might be serious."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "czrrt01cwq8icujttiuie72v",
+      "title": "Set API URL and key",
+      "graphCoordinates": {
+        "x": -809.64,
+        "y": 792.25
+      },
+      "blocks": [
+        {
+          "id": "tk3je7sszj1ukeokbe6l32i5",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vtu1rhpl006x7v657fy36248o",
+            "expressionToEvaluate": "\"app.ask-a-question.com\""
+          }
+        },
+        {
+          "id": "eo852z48r0icox8n7zpttafh",
+          "outgoingEdgeId": "pbk2b31xw6tfszaqrzj24co9",
+          "type": "Set variable",
+          "options": {
+            "variableId": "vrupe2u3qrl2ir905hsh6te9o",
+            "expressionToEvaluate": "YOUR_API_KEY"
+          }
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "as4hekid30qxqth7ib21fz8l",
+      "from": {
+        "blockId": "lr9ynhlq1fx3xzc8rqglfxke",
+        "itemId": "bmiyhil5bpnr3ab4jc1986li"
+      },
+      "to": {
+        "groupId": "rgbfdl4n39a8uroatlqdvu9d"
+      }
+    },
+    {
+      "id": "woxh6blky5idh1brezy4w695",
+      "from": {
+        "blockId": "hybetvl1cwon22tnar3swl7i",
+        "itemId": "zuizzs9tn64yxc923m3qouwg"
+      },
+      "to": {
+        "groupId": "ob6mvhlksptf7v4e04ugo4z1",
+        "blockId": "jd9yp1blg7q1fqs91en3djvs"
+      }
+    },
+    {
+      "id": "sg1k5vyak05ckq41r52z7n56",
+      "from": {
+        "blockId": "hybetvl1cwon22tnar3swl7i",
+        "itemId": "bkprnyyea879pa6xo2dgtacm"
+      },
+      "to": {
+        "groupId": "dtkbtzklp8uchh0jop9psjle",
+        "blockId": "m1oi5qhrhi4m6p6d8ni6p47j"
+      }
+    },
+    {
+      "id": "mbo1jpebhn7irrcf6m9yuw3f",
+      "from": {
+        "blockId": "xty9i2m7njwaa9i6vfavaa65"
+      },
+      "to": {
+        "groupId": "io4zz7aaqfb4m4os8qe905lx"
+      }
+    },
+    {
+      "id": "mrxqztukomcc04w254lfivur",
+      "from": {
+        "blockId": "a1d8z6z04lr9nf1lkktynjbr"
+      },
+      "to": {
+        "groupId": "io4zz7aaqfb4m4os8qe905lx"
+      }
+    },
+    {
+      "id": "uyfxwt3q6bvmo02imz2xq88v",
+      "from": {
+        "blockId": "jgqjcxazdc4rtgq62eywmacy"
+      },
+      "to": {
+        "groupId": "io4zz7aaqfb4m4os8qe905lx"
+      }
+    },
+    {
+      "id": "cjolhabnawczsfmlsc5wi1kg",
+      "from": {
+        "blockId": "b8v51rprddy6pc51zkbo0ine"
+      },
+      "to": {
+        "groupId": "iaeukwphmrpyt5s5v3glulx9"
+      }
+    },
+    {
+      "id": "zqzsx96nywc3meta8639r54e",
+      "from": {
+        "blockId": "b4102ebfksgvftjfrnnmxw5s",
+        "itemId": "g2e6n7jl79ia0qkmjz3m8uca"
+      },
+      "to": {
+        "groupId": "ie984t4iihzxkidi5ifh63e2",
+        "blockId": "hybetvl1cwon22tnar3swl7i"
+      }
+    },
+    {
+      "id": "ny48vp0t3tssw7fo7i1tn169",
+      "from": {
+        "blockId": "fh5kbn5j1mywcvvrn8wgafvh"
+      },
+      "to": {
+        "groupId": "bb9f1lyaxbq17n6hxcyr55vt"
+      }
+    },
+    {
+      "id": "ronj75ivigj9r8gzjp6bbdg2",
+      "from": {
+        "blockId": "hp94ri6a8nakzub1ofh8pvvv"
+      },
+      "to": {
+        "groupId": "jtzqo0kd6gwnf1aulveuf6rh"
+      }
+    },
+    {
+      "id": "sj51ebjkg37bwalnqhkkie5d",
+      "from": {
+        "blockId": "jd9yp1blg7q1fqs91en3djvs"
+      },
+      "to": {
+        "groupId": "jtzqo0kd6gwnf1aulveuf6rh"
+      }
+    },
+    {
+      "id": "jp44h0vd7s5fhvakvdftekz2",
+      "from": {
+        "blockId": "m1oi5qhrhi4m6p6d8ni6p47j"
+      },
+      "to": {
+        "groupId": "jtzqo0kd6gwnf1aulveuf6rh"
+      }
+    },
+    {
+      "id": "w62gizws4byp54isy4y74t4c",
+      "from": {
+        "blockId": "x64szbvldn6wmhs6c1d9bpi1"
+      },
+      "to": {
+        "groupId": "jtzqo0kd6gwnf1aulveuf6rh"
+      }
+    },
+    {
+      "id": "o9725a6gf7otc1wj3kfmoz6l",
+      "from": {
+        "blockId": "jkfs25olgsxhh20psu1bshyz"
+      },
+      "to": {
+        "groupId": "ybi1hh9t2hh5x3j7nrg6rqqr"
+      }
+    },
+    {
+      "id": "rg1grz40szlcglfhg54jctqg",
+      "from": {
+        "blockId": "jnbpl192am0zt4g0vfwizyj3"
+      },
+      "to": {
+        "groupId": "ybi1hh9t2hh5x3j7nrg6rqqr"
+      }
+    },
+    {
+      "id": "rfstxez6sgf9gp83adm572eb",
+      "from": {
+        "blockId": "lr9ynhlq1fx3xzc8rqglfxke",
+        "itemId": "esfmyuj5tnxkzg49bjf5dgha"
+      },
+      "to": {
+        "groupId": "z3a5hoqyo4x3agzlgd38bhxt"
+      }
+    },
+    {
+      "id": "jpwamzh7e3v7cbycd4d4dfmx",
+      "from": {
+        "blockId": "b4102ebfksgvftjfrnnmxw5s",
+        "itemId": "gh22zote1d0gxrqv3w07zere"
+      },
+      "to": {
+        "groupId": "b6h79k17uph6tv163fp4ww92"
+      }
+    },
+    {
+      "id": "ixagm8aeunyum6kcd7qf5fee",
+      "from": {
+        "blockId": "hybetvl1cwon22tnar3swl7i"
+      },
+      "to": {
+        "groupId": "wt6qh4s2zg0o48q8tfnovgjc"
+      }
+    },
+    {
+      "id": "e30faynsk1djzikbc50vy8t2",
+      "from": {
+        "blockId": "o0b9rz8is346jeyuar8bws44"
+      },
+      "to": {
+        "groupId": "b6h79k17uph6tv163fp4ww92"
+      }
+    },
+    {
+      "id": "t8z5on2oh2ywb7af2d4tu6kb",
+      "from": {
+        "blockId": "lr9ynhlq1fx3xzc8rqglfxke",
+        "itemId": "a4zjtigescrxj3jfbbykxenh"
+      },
+      "to": {
+        "groupId": "om72ckgpnk1n0k2fjykvsu8b"
+      }
+    },
+    {
+      "id": "mofmflp9ccznp087zn25ilba",
+      "from": {
+        "blockId": "jnbbmeqxw1366m5uxkr01ypl",
+        "itemId": "un7fvoc3uo3vc7ngcka9w8e7"
+      },
+      "to": {
+        "groupId": "l88ypgbequ9dyjzj4qwpzmpi",
+        "blockId": "i1og5qqz75xduflxg6fi3igr"
+      }
+    },
+    {
+      "id": "azbkuhgqi5bgljhpw2d6443j",
+      "from": {
+        "blockId": "n4199k12u27lembzpepr8vbc",
+        "itemId": "pcj7lsoveuhvoka4b0p00u40"
+      },
+      "to": {
+        "groupId": "bb9f1lyaxbq17n6hxcyr55vt"
+      }
+    },
+    {
+      "id": "j6j0d6sxkcz00ek8vyfzw986",
+      "from": {
+        "blockId": "n4199k12u27lembzpepr8vbc",
+        "itemId": "xwawnel9cir2t30iiwmvoe2m"
+      },
+      "to": {
+        "groupId": "ho2f74is7c525af6a48tl3s1"
+      }
+    },
+    {
+      "id": "chz55prrckjtp0iekwsd587s",
+      "from": {
+        "blockId": "rh89r97u3en8swyje8kjulvs",
+        "itemId": "vh941xxk6zvsah1i6ddpep6z"
+      },
+      "to": {
+        "groupId": "mh659z2h4px9oyjnw6u9s23c"
+      }
+    },
+    {
+      "id": "ck7aagwwtcs0g1hhe17ued2m",
+      "from": {
+        "blockId": "rh89r97u3en8swyje8kjulvs",
+        "itemId": "ul1uqt7bqcj7fsxmfwfque5o"
+      },
+      "to": {
+        "groupId": "he3en3pxp2phz37t9em3up6s"
+      }
+    },
+    {
+      "id": "iwsqe9xpheinktprm6oaq3fv",
+      "from": {
+        "blockId": "ypbw90npti8yx57vu786npx3"
+      },
+      "to": {
+        "groupId": "iaeukwphmrpyt5s5v3glulx9"
+      }
+    },
+    {
+      "id": "xyyylq2wgj3vqtfun1p7qo5q",
+      "from": {
+        "blockId": "pirsv2t3hp4stja7eux73z3n"
+      },
+      "to": {
+        "groupId": "oyrjch3skwylak37yn31hwr5"
+      }
+    },
+    {
+      "id": "vlvlw0tgl189xvmrraglv01l",
+      "from": {
+        "blockId": "co13dapb7o9cnuwuuctz73ub"
+      },
+      "to": {
+        "groupId": "oyrjch3skwylak37yn31hwr5"
+      }
+    },
+    {
+      "id": "wc1lwom13ezm0vlgnagi8pgg",
+      "from": {
+        "blockId": "lr9ynhlq1fx3xzc8rqglfxke",
+        "itemId": "b9sxvuy02a3rb6lfmx81dg6k"
+      },
+      "to": {
+        "groupId": "fktq0ro76qce1y3b5fjtk3ib"
+      }
+    },
+    {
+      "id": "blhrvl9la7o701vhza3rvm7c",
+      "from": {
+        "blockId": "xo2cfhrrcvuegd2qvzzept0f"
+      },
+      "to": {
+        "groupId": "xr8sy1nx3q7jsrl587c5xd29"
+      }
+    },
+    {
+      "id": "s2mq0bjmfskh88xrhtcngy8t",
+      "from": {
+        "blockId": "y6l2ozir0f6qk4dv4v22e46k"
+      },
+      "to": {
+        "groupId": "pqvysnbsbiy3fed22u4s43wv"
+      }
+    },
+    {
+      "id": "x5vcmtxl2qk5mgb6kbfltj8c",
+      "from": {
+        "blockId": "p207p8q01y8md7m1hjf1lj2w",
+        "itemId": "eaakna8oeq264hwnnc5qekif"
+      },
+      "to": {
+        "groupId": "pqvysnbsbiy3fed22u4s43wv"
+      }
+    },
+    {
+      "id": "xv3ety2wkov7bi2aqn8u69j1",
+      "from": {
+        "blockId": "rio76k7glo7e7h2ak2wp3wpg"
+      },
+      "to": {
+        "groupId": "pqvysnbsbiy3fed22u4s43wv"
+      }
+    },
+    {
+      "id": "h6nzzze4hq5d7jr7qzbl4hqn",
+      "from": {
+        "blockId": "dqx9l7qcgpkleqpxz2ufdbtu"
+      },
+      "to": {
+        "groupId": "oyrjch3skwylak37yn31hwr5"
+      }
+    },
+    {
+      "id": "cvdx38real3ndz2e2z33u9kr",
+      "from": {
+        "blockId": "qs1rn5619u2v6btlsd2vca4c"
+      },
+      "to": {
+        "groupId": "oyrjch3skwylak37yn31hwr5"
+      }
+    },
+    {
+      "id": "yq8jphrq1zo0i3im2fc4t7k2",
+      "from": {
+        "blockId": "cmegu3yhlicrotm6ywh51mvp",
+        "itemId": "efa8dbqvcm3dt21mpbewgpvq"
+      },
+      "to": {
+        "groupId": "cdu39efyjma0m7rpyidwd959"
+      }
+    },
+    {
+      "id": "fzifbueqmfh26ox2vphocj8f",
+      "from": {
+        "blockId": "czw8dwrn45zpun6b1rtexspr"
+      },
+      "to": {
+        "groupId": "ybi1hh9t2hh5x3j7nrg6rqqr"
+      }
+    },
+    {
+      "id": "qlupxzjz4gyk0pfrcav85h7j",
+      "from": {
+        "blockId": "cmegu3yhlicrotm6ywh51mvp"
+      },
+      "to": {
+        "groupId": "ybi1hh9t2hh5x3j7nrg6rqqr"
+      }
+    },
+    {
+      "id": "ra2r6u2bi9tkttbsxdncx1sx",
+      "from": {
+        "blockId": "i6qpo663lu28p5569f8m1bvv",
+        "itemId": "civ8sgwttkrhdyc1d7fn6fsx"
+      },
+      "to": {
+        "groupId": "l88ypgbequ9dyjzj4qwpzmpi"
+      }
+    },
+    {
+      "id": "u539bo5989iz8zcfmojrngji",
+      "from": {
+        "blockId": "lr9ynhlq1fx3xzc8rqglfxke",
+        "itemId": "gbr5fyvapma50daorfwndot0"
+      },
+      "to": {
+        "groupId": "k0va6pfa1w3z1djh1nfql3ax"
+      }
+    },
+    {
+      "id": "fy3irzszkqp4tn0uzua8yama",
+      "from": {
+        "blockId": "n4199k12u27lembzpepr8vbc",
+        "itemId": "fo5rlhuebfge5oc7l23pe8fs"
+      },
+      "to": {
+        "groupId": "b6h79k17uph6tv163fp4ww92"
+      }
+    },
+    {
+      "id": "psc2jxv4a5sawa0628wc27oz",
+      "from": {
+        "blockId": "w5xpwfcbg254suyi7tl6qzto"
+      },
+      "to": {
+        "groupId": "b6h79k17uph6tv163fp4ww92"
+      }
+    },
+    {
+      "id": "h0te1mcbo2wpdkaxe1w16i0b",
+      "from": {
+        "blockId": "jnbbmeqxw1366m5uxkr01ypl",
+        "itemId": "vgsgz8m2s7swxq2hv6kof4ua"
+      },
+      "to": {
+        "groupId": "k0va6pfa1w3z1djh1nfql3ax"
+      }
+    },
+    {
+      "id": "s82g3wrxu22zwy0qqlb59o1o",
+      "from": {
+        "blockId": "b4102ebfksgvftjfrnnmxw5s"
+      },
+      "to": {
+        "groupId": "mfulwg4skgjkrdbfgjqs6hek"
+      }
+    },
+    {
+      "id": "o5w8gdx4yj75mds498ygfptk",
+      "from": {
+        "blockId": "i6qpo663lu28p5569f8m1bvv"
+      },
+      "to": {
+        "groupId": "ijpmwtxeur7zewf3o3yk0vlo"
+      }
+    },
+    {
+      "id": "t0bpkz06ddxffmaue28int1r",
+      "from": {
+        "blockId": "ixazc3psy5otynshi86qlgqt"
+      },
+      "to": {
+        "groupId": "k0va6pfa1w3z1djh1nfql3ax"
+      }
+    },
+    {
+      "id": "k9sul7i98nworlh6d4uxte1c",
+      "from": {
+        "eventId": "qavx97atb4togrq0xug8wj79"
+      },
+      "to": {
+        "groupId": "czrrt01cwq8icujttiuie72v"
+      }
+    },
+    {
+      "id": "pbk2b31xw6tfszaqrzj24co9",
+      "from": {
+        "blockId": "eo852z48r0icox8n7zpttafh"
+      },
+      "to": {
+        "groupId": "ppg0t1w2dkd7lsvakqlxvas2"
+      }
+    },
+    {
+      "id": "qoiv98q2rp2pre3wjlzblbuf",
+      "from": {
+        "blockId": "voy7nsnhr1rn0xbbb196z8tu"
+      },
+      "to": {
+        "groupId": "pqvysnbsbiy3fed22u4s43wv"
+      }
+    }
+  ],
+  "variables": [
+    {
+      "id": "va4cf7oi765cqxyiu6vhbl6hc",
+      "name": "question"
+    },
+    {
+      "id": "vhkl8184lefqkmwo5vrayu34s",
+      "name": "query_id"
+    },
+    {
+      "id": "vbw8rtvc14i95k2gyuw6jkgl9",
+      "name": "status_code"
+    },
+    {
+      "id": "vxuhgq18vgindfna3wkw0mtue",
+      "name": "llm_response"
+    },
+    {
+      "id": "vt1wrr2l2q2vyyhqy9hrekheu",
+      "name": "feedback_secret_key"
+    },
+    {
+      "id": "vm7sz1az4icc829bfcsrtmamj",
+      "name": "faq_0_title"
+    },
+    {
+      "id": "vowdld9zy6ct8ci810o7rruuy",
+      "name": "faq_2_title"
+    },
+    {
+      "id": "vtu807l7ux1pgr0j2nv3cait7",
+      "name": "faq_1_title"
+    },
+    {
+      "id": "vfh2d4k2oe6tqh6o0qx3cqlp3",
+      "name": "faq_0_text"
+    },
+    {
+      "id": "vfkf5sa4p27nrvyqt87amwu9r",
+      "name": "faq_1_text"
+    },
+    {
+      "id": "vd9hrvcd5qm98hspeqh45qr6p",
+      "name": "faq_2_text"
+    },
+    {
+      "id": "vlei7dx8z1ip9ia56aqoigp4r",
+      "name": "error_type"
+    },
+    {
+      "id": "vt7vroht91au93oon39l63znt",
+      "name": "feedback_sentiment"
+    },
+    {
+      "id": "vdjhcqxd9emlifxh02sf19t83",
+      "name": "faq_0_id"
+    },
+    {
+      "id": "vfqfy86udxp4mo1rwf30l4m8j",
+      "name": "faq_1_id"
+    },
+    {
+      "id": "vyi7ft2ng9ku2ts9mr87c4ezt",
+      "name": "faq_2_id"
+    },
+    {
+      "id": "vefpa71b8an7gno6u1xkpum1m",
+      "name": "selected_faq_id"
+    },
+    {
+      "id": "vfmzpicxqlu3nuv4a8plkahyf",
+      "name": "content_feedback_text"
+    },
+    {
+      "id": "vpx9n8zdr8ro3bowdm9ji5z5d",
+      "name": "response_feedback_sentiment"
+    },
+    {
+      "id": "vzuw4kdl8bwsdo5wzlzxg1beq",
+      "name": "content_feedback_sentiment"
+    },
+    {
+      "id": "vjwdjb1x18grxuj75nfsllh7h",
+      "name": "is_urgent"
+    },
+    {
+      "id": "vtu1rhpl006x7v657fy36248o",
+      "name": "aaq_base_url"
+    },
+    {
+      "id": "vrupe2u3qrl2ir905hsh6te9o",
+      "name": "aaq_api_key"
+    }
+  ],
+  "theme": {
+    "general": {
+      "font": {
+        "type": "Google"
+      },
+      "background": {
+        "type": "Color",
+        "content": "#ECE5DD"
+      }
+    },
+    "chat": {
+      "hostAvatar": {
+        "isEnabled": false,
+        "url": "data:image/svg+xml;utf8,<svg fill='%23213a73' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. --><path d='M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM169.8 165.3c7.9-22.3 29.1-37.3 52.8-37.3h58.3c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24V250.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1H222.6c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z'/></svg>"
+      },
+      "guestAvatar": {
+        "isEnabled": false
+      },
+      "hostBubbles": {
+        "backgroundColor": "#FFFFFF",
+        "color": "#000000"
+      },
+      "guestBubbles": {
+        "backgroundColor": "#128C7e"
+      },
+      "buttons": {
+        "backgroundColor": "#128C7e",
+        "color": "#FFFFFF"
+      },
+      "inputs": {
+        "backgroundColor": "#FFFFFF",
+        "color": "#000000",
+        "placeholderColor": "#666460"
+      },
+      "roundness": "large"
+    }
+  },
+  "selectedThemeTemplateId": null,
+  "settings": {
+    "general": {
+      "isBrandingEnabled": false
+    },
+    "metadata": {
+      "title": "AAQ",
+      "description": "Ask-A-Question",
+      "favIconUrl": "data:image/svg+xml;utf8,<svg fill='%230042DA' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 384 512'><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. --><path d='M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM105.8 229.3c7.9-22.3 29.1-37.3 52.8-37.3h58.3c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L216 328.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24V314.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1H158.6c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM160 416a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z'/></svg>"
+    },
+    "whatsApp": {
+      "isEnabled": false
+    }
+  },
+  "createdAt": "2024-09-02T10:46:03.914Z",
+  "updatedAt": "2024-09-02T11:04:20.176Z",
+  "icon": null,
+  "folderId": null,
+  "publicId": null,
+  "customDomain": null,
+  "workspaceId": "clt303gbn0001xc9u2u8nkszj",
+  "resultsTablePreferences": null,
+  "isArchived": false,
+  "isClosed": false,
+  "whatsAppCredentialsId": null,
+  "riskLevel": null
+}
