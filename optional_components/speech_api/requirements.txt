@@ -4,5 +4,5 @@ openai-whisper==20231117
 ffmpeg-python==0.2.0
 fastapi==0.109.1
 python-multipart==0.0.9
-litellm==1.40.29
+litellm==1.44.8
 aiohttp==3.10.2
