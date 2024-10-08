@@ -37,14 +37,6 @@ teardown-dev: teardown-db teardown-redis teardown-llm-proxy
 guard-%:
 	@if [ -z '${${*}}' ]; then echo 'ERROR: environment variable $* not set' && exit 1; fi
 
-# Add users to db
-add-users-to-db:
-	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
-	set -a && \
-        source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
-        set +a && \
-	python core_backend/add_users_to_db.py
-
 # Dev db
 setup-db:
 	-@docker stop postgres-local
