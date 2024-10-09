@@ -27,6 +27,16 @@ class UserCreateWithPassword(UserCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserCreateWithCode(UserCreate):
+    """
+    Pydantic model for user creation with recovery codes for adminuser account recovery
+    """
+
+    recovery_codes: list[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserRetrieve(BaseModel):
     """
     Pydantic model for user retrieval

@@ -82,10 +82,11 @@ async def save_user_to_db(
         content_quota=user.content_quota,
         api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
+        recovery_codes=recovery_codes,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )
-
+    print(user_db.recovery_codes)
     asession.add(user_db)
     await asession.commit()
     await asession.refresh(user_db)

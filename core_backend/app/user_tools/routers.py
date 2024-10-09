@@ -15,7 +15,11 @@ from ..users.models import (
     save_user_to_db,
     update_user_api_key,
 )
-from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
+from ..users.schemas import (
+    UserCreateWithCode,
+    UserCreateWithPassword,
+    UserRetrieve,
+)
 from ..utils import generate_key, setup_logger, update_api_limits
 from .schemas import KeyResponse, RequireRegisterResponse
 from .utils import generate_recovery_codes
@@ -30,19 +34,19 @@ router = APIRouter(prefix="/user", tags=["Admin"])
 logger = setup_logger()
 
 
-@router.post("/", response_model=UserCreate)
+@router.post("/", response_model=UserCreateWithCode)
 async def create_user(
     user: UserCreateWithPassword,
     # user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> UserCreate | None:
+) -> UserCreateWithCode | None:
     """
     Create user endpoint. Can only be used by user with ID 1.
     """
 
     try:
-        recovery_codes = generate_recovery_codes() if user.is_admin else None
+        recovery_codes = generate_recovery_codes()
         user_new = await save_user_to_db(
             user=user,
             asession=asession,
@@ -52,10 +56,11 @@ async def create_user(
             request.app.state.redis, user_new.username, user_new.api_daily_quota
         )
 
-        return UserCreate(
+        return UserCreateWithCode(
             username=user_new.username,
             content_quota=user_new.content_quota,
             api_daily_quota=user_new.api_daily_quota,
+            recovery_codes=recovery_codes,
         )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")

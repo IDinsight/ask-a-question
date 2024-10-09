@@ -221,4 +221,55 @@ const ConfirmationModal = ({
     </Dialog>
   );
 };
+interface RecoveryCode {
+  code: string;
+}
+
+const FinalModal = ({
+  isOpen,
+  recoveryCodes,
+  onClose,
+}: {
+  isOpen: boolean;
+  recoveryCodes: RecoveryCode[];
+  onClose: () => void;
+}) => {
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const handleCopyCodes = () => {
+    // Logic to copy recovery codes to the clipboard
+    // For demonstration purposes, this will simulate copying the first code
+    const codesToCopy = recoveryCodes.map((code) => code.code).join("\n");
+    navigator.clipboard.writeText(codesToCopy).then(
+      () => {
+        setHasCopied(true);
+      },
+      (err) => {
+        console.error("Could not copy text: ", err);
+      },
+    );
+  };
+
+  return (
+    <Modal isOpen={isOpen} onRequestClose={onClose} contentLabel="Recovery Codes Modal">
+      <h2>User Successfully Created!</h2>
+      <div>
+        <p>Please save these recovery codes somewhere safe:</p>
+        <ul>
+          {recoveryCodes.map((code, index) => (
+            <li key={index}>{code.code}</li>
+          ))}
+        </ul>
+        <button onClick={handleCopyCodes} disabled={hasCopied}>
+          {hasCopied ? "Copied!" : "Copy Codes"}
+        </button>
+        <p>
+          Make sure to copy and store these in a secure location. You will need them to
+          recover your account if you forget your password.
+        </p>
+      </div>
+      <button onClick={onClose}>I have saved the codes</button>
+    </Modal>
+  );
+};
 export { AdminAlertModal, RegisterModal, ConfirmationModal };

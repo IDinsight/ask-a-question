@@ -2,7 +2,7 @@ import secrets
 import string
 
 
-def generate_recovery_codes(num_codes: int = 5, code_length: int = 10) -> list[str]:
+def generate_recovery_codes(num_codes: int = 5, code_length: int = 20) -> list[str]:
     """
     Generate recovery codes for the admin user
     """
