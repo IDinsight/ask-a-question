@@ -11,15 +11,20 @@ import {
   DialogTitle,
   DialogContentText,
   DialogActions,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Layout } from "@/components/Layout";
 
+interface User {
+  username: string;
+}
 interface RegisterModalProps {
   open: boolean;
   onClose: (event: {}, reason: string) => void;
   onContinue: () => void;
-  registerUser: (username: string, password: string) => void;
+  registerUser: (username: string, password: string) => Promise<User>;
 }
 
 function RegisterModal({
@@ -31,6 +36,7 @@ function RegisterModal({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [snackMessage, setSnackMessage] = useState("Hihi");
   const [errors, setErrors] = React.useState({
     username: false,
     password: false,
@@ -47,13 +53,22 @@ function RegisterModal({
     setErrors(newErrors);
     return Object.values(newErrors).every((value) => value === false);
   };
-  const handleRegister = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     console.log("Starting user");
     if (validateForm()) {
       console.log("Registering user");
-      registerUser(username, password);
-      onContinue();
+
+      const data = await registerUser(username, password);
+      if (data && data.username) {
+        onContinue();
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          username: true,
+        }));
+        setSnackMessage("Unexpected response from the server.");
+      }
     }
   };
 
@@ -169,6 +184,25 @@ function RegisterModal({
           </Box>
         </Box>
       </DialogContent>
+      <Box>
+        <Snackbar
+          autoHideDuration={4000}
+          onClose={() => {
+            setSnackMessage("");
+          }}
+        >
+          <Alert
+            onClose={() => {
+              setSnackMessage("");
+            }}
+            severity="error"
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {snackMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
     </Dialog>
   );
 }

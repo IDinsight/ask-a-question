@@ -27,6 +27,19 @@ const fetchTopicsData = async (period: Period, token: string) => {
   }
 };
 
+const getEmbeddingData = async (period: Period, token: string) => {
+  try {
+    const response = await api.get(`/dashboard/topic_visualization/${period}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching dashboard embedding data");
+  }
+};
+
 const generateNewTopics = async (period: Period, token: string) => {
   try {
     const response = await api.get(`/dashboard/insights/${period}/refresh`, {
@@ -89,6 +102,7 @@ const getPerformanceDrawerAISummary = async (
     throw new Error("Error fetching dashboard performance drawer AI summary");
   }
 };
+
 export {
   getOverviewPageData,
   getPerformancePageData,
@@ -96,4 +110,5 @@ export {
   getPerformanceDrawerAISummary,
   fetchTopicsData,
   generateNewTopics,
+  getEmbeddingData,
 };

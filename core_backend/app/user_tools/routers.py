@@ -6,16 +6,20 @@ from fastapi.requests import Request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_admin_user, get_current_user
 from ..database import get_async_session
 from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
     get_nb_users,
+    get_user_by_id,
+    is_username_valid,
     save_user_to_db,
     update_user_api_key,
+    update_user_in_db,
 )
 from ..users.schemas import (
+    UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
     UserRetrieve,
@@ -37,12 +41,12 @@ logger = setup_logger()
 @router.post("/", response_model=UserCreateWithCode)
 async def create_user(
     user: UserCreateWithPassword,
-    # user_db: Annotated[UserDB, Depends(get_current_user)],
+    admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreateWithCode | None:
     """
-    Create user endpoint. Can only be used by user with ID 1.
+    Create user endpoint. Can only be used by admin users.
     """
 
     try:
@@ -58,6 +62,7 @@ async def create_user(
 
         return UserCreateWithCode(
             username=user_new.username,
+            is_admin=user_new.is_admin,
             content_quota=user_new.content_quota,
             api_daily_quota=user_new.api_daily_quota,
             recovery_codes=recovery_codes,
@@ -69,22 +74,35 @@ async def create_user(
         ) from e
 
 
-@router.get("/", response_model=UserRetrieve)
-async def get_user(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
-) -> UserRetrieve | None:
+@router.post("/register-first-user", response_model=UserCreate)
+async def create_first_user(
+    user: UserCreateWithPassword,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreate | None:
     """
-    Get user endpoint. Returns the user object for the requester.
+    Create first admin user when there are no users in the DB.
     """
 
-    return UserRetrieve(
-        user_id=user_db.user_id,
-        username=user_db.username,
-        content_quota=user_db.content_quota,
-        api_key_first_characters=user_db.api_key_first_characters,
-        api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
-        created_datetime_utc=user_db.created_datetime_utc,
-        updated_datetime_utc=user_db.updated_datetime_utc,
+    nb_users = await get_nb_users(asession)
+    if nb_users > 0:
+        raise HTTPException(
+            status_code=400, detail="There are already users in the database."
+        )
+
+    user_new = await save_user_to_db(
+        user=user,
+        asession=asession,
+    )
+    await update_api_limits(
+        request.app.state.redis, user_new.username, user_new.api_daily_quota
+    )
+
+    return UserCreate(
+        username=user_new.username,
+        is_admin=user_new.is_admin,
+        content_quota=user_new.content_quota,
+        api_daily_quota=user_new.api_daily_quota,
     )
 
 
@@ -134,3 +152,62 @@ async def is_register_required(
     else:
         require_register = True
     return RequireRegisterResponse(require_register=require_register)
+
+
+@router.put("/{user_id}", response_model=UserRetrieve)
+async def update_user(
+    user_id: int,
+    user: UserCreate,
+    admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserRetrieve | None:
+    """
+    Update user endpoint.
+    """
+
+    user_db = await get_user_by_id(user_id=user_id, asession=asession)
+    if not user_db:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if user.username != user_db.username:
+        if not await is_username_valid(user.username, asession):
+            raise HTTPException(
+                status_code=400,
+                detail=f"User with username {user.username} already exists.",
+            )
+
+    updated_user = await update_user_in_db(
+        user_id=user_id, user=user, asession=asession
+    )
+    return UserRetrieve(
+        user_id=updated_user.user_id,
+        username=updated_user.username,
+        content_quota=updated_user.content_quota,
+        api_daily_quota=user_db.api_daily_quota,
+        is_admin=user_db.is_admin,
+        api_key_first_characters=updated_user.api_key_first_characters,
+        api_key_updated_datetime_utc=updated_user.api_key_updated_datetime_utc,
+        created_datetime_utc=updated_user.created_datetime_utc,
+        updated_datetime_utc=updated_user.updated_datetime_utc,
+    )
+
+
+@router.get("/", response_model=UserRetrieve)
+async def get_user(
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+) -> UserRetrieve | None:
+    """
+    Get user endpoint. Returns the user object for the requester.
+    """
+
+    return UserRetrieve(
+        user_id=user_db.user_id,
+        username=user_db.username,
+        content_quota=user_db.content_quota,
+        api_daily_quota=user_db.api_daily_quota,
+        is_admin=user_db.is_admin,
+        api_key_first_characters=user_db.api_key_first_characters,
+        api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
+        created_datetime_utc=user_db.created_datetime_utc,
+        updated_datetime_utc=user_db.updated_datetime_utc,
+    )

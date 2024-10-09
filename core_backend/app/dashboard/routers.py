@@ -4,9 +4,9 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Tuple
 
+import pandas as pd
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends
-from fastapi.requests import Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -22,11 +22,13 @@ from .models import (
     get_content_details,
     get_heatmap,
     get_overview_timeseries,
+    get_raw_contents,
     get_raw_queries,
     get_stats_cards,
     get_timeseries_top_content,
     get_top_content,
 )
+from .plotting import produce_bokeh_plot
 from .schemas import (
     AIFeedbackSummary,
     DashboardOverview,
@@ -306,7 +308,20 @@ async def refresh_insights(
         asession=asession,
         start_date=start_date,
     )
-    topic_output = await topic_model_queries(user_db.user_id, time_period_queries)
+
+    content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
+
+    topic_output, embeddings_df = await topic_model_queries(
+        user_id=user_db.user_id,
+        query_data=time_period_queries,
+        content_data=content_data,
+    )
+
+    embeddings_json = embeddings_df.to_json(orient="split")
+
+    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+
+    await redis.set(embeddings_key, embeddings_json)
 
     await redis.set(
         f"{user_db.username}_insights_{time_frequency}_results",
@@ -338,5 +353,33 @@ async def retrieve_insights_frequency(
     return TopicsData(
         refreshTimeStamp="",
         data=[],
-        unclustered_queries=[],
     )
+
+
+@router.get("/topic_visualization/{time_frequency}", response_model=dict)
+async def create_plot(
+    time_frequency: DashboardTimeFilter,
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+    request: Request,
+) -> dict:
+    """Creates a Bokeh plot based on embeddings data retrieved from Redis."""
+
+    # Get Redis client
+    redis = request.app.state.redis
+
+    # Define the Redis key
+    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+
+    # Get the embeddings JSON from Redis
+    embeddings_json = await redis.get(embeddings_key)
+    if embeddings_json is None:
+        # Handle missing data
+        raise HTTPException(status_code=404, detail="Embeddings data not found")
+
+    # Decode and parse the JSON
+    embeddings_json = embeddings_json.decode("utf-8")
+    embeddings_df = pd.read_json(embeddings_json, orient="split")
+
+    # Create the Bokeh plot
+    bokeh_plot_json = produce_bokeh_plot(embeddings_df)
+    return bokeh_plot_json

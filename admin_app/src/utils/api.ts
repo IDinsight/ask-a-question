@@ -66,19 +66,19 @@ const getLoginToken = async (username: string, password: string) => {
     throw new Error("Error fetching login token");
   }
 };
+
 const registerUser = async (username: string, password: string) => {
   try {
     const response = await api.post(
-      "/user",
-      { username: username, password: password },
+      "/user/register-first-user",
+      { username, password, is_admin: true },
       {
         headers: { "Content-Type": "application/json" },
       },
     );
     return response.data;
   } catch (error) {
-    console.log(error);
-    throw new Error("Error fetching login token");
+    console.error(error);
   }
 };
 const getGoogleLoginToken = async (idToken: {
