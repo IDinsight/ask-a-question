@@ -5,8 +5,9 @@ disallow_untyped_defs = true
 module = ['litellm', "nltk", "alignscore","pgvector.sqlalchemy",
             "google.auth.transport", "google.oauth2",
             "gtts", "google.cloud", "bertopic", "hdbscan", "pydub",
-            "sklearn"]
+            "sklearn", "umap", "bokeh.*"]
 ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.ruff]
 lint.select = ["E", "F", "B", "Q", "I"]
