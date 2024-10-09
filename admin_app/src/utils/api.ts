@@ -12,7 +12,6 @@ const api = axios.create({
 });
 
 import { AxiosResponse, AxiosError } from "axios";
-import { is } from "date-fns/locale";
 
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
