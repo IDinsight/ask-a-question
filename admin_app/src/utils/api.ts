@@ -40,6 +40,15 @@ const getUser = async (token: string) => {
   }
 };
 
+const getRegisterOption = async () => {
+  try {
+    const response = await api.get("/user/require-register");
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching register option");
+  }
+};
+
 const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
@@ -58,6 +67,20 @@ const getLoginToken = async (username: string, password: string) => {
   }
 };
 
+const registerUser = async (username: string, password: string) => {
+  try {
+    const response = await api.post(
+      "/user/register-first-user",
+      { username, password, is_admin: true },
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
 const getGoogleLoginToken = async (idToken: {
   client_id: string;
   credential: string;
@@ -140,11 +163,13 @@ const getUrgencyDetection = async (search: string, token: string) => {
 };
 
 export const apiCalls = {
+  registerUser,
   getUser,
   getLoginToken,
   getGoogleLoginToken,
   getSearch,
   postResponseFeedback,
   getUrgencyDetection,
+  getRegisterOption,
 };
 export default api;
