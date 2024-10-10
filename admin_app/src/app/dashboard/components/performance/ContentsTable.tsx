@@ -1,14 +1,24 @@
 import { RowDataType } from "@/app/dashboard/types";
-import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Pagination from "@mui/material/Pagination";
 import TextField from "@mui/material/TextField";
-import Grid from "@mui/material/Unstable_Grid2";
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+
+import theme from "@/theme";
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
+import React from "react";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -180,113 +190,71 @@ const ContentsTable = ({
   };
 
   return (
-    <Grid container columns={14} sx={{ mt: 3 }} columnSpacing={{ xs: 0 }}>
-      <Grid
-        container
-        spacing={2}
-        md={14}
-        columns={14}
-        sx={{
-          border: 1,
-          borderColor: "secondary.main",
-          mt: 3,
-          fontSize: "small",
-          fontWeight: 700,
-        }}
-      >
-        <Grid md={6}>Content Title</Grid>
-        <Grid md={2}>Daily Average Sent</Grid>
-        <Grid md={2}>Upvotes</Grid>
-        <Grid md={2}>Downvotes</Grid>
-        <Grid md={2}>Trend</Grid>
-      </Grid>
-      <Grid
-        container
-        spacing={2}
-        md={14}
-        columns={14}
-        sx={{
-          border: 1,
-          borderTop: 0,
-          borderColor: "secondary.main",
-          mt: 1,
-        }}
-      >
-        <Grid xs={6} sx={{ height: 20 }}>
-          <TextField
-            id="content-search"
-            placeholder="Search"
-            size="small"
-            sx={{
-              width: "90%",
-              mt: -0.4,
-              maxHeight: 20,
-              marginRight: 1,
-              bgcolor: "white",
-              "& .MuiOutlinedInput-root": {},
-            }}
-            onChange={(e) => setItemsToDisplay(filterRowsByTitle(e.target.value))}
-            margin="none"
-            inputProps={{
-              style: {
-                height: 30,
-                backgroundColor: "white",
-                padding: "0 14px",
-              },
-            }}
-          />
-          <FilterAltOutlinedIcon fontSize="small" sx={{ fontWeight: 300 }} />
-        </Grid>
-        <Grid xs={2} display="flex" alignItems="center">
-          <SortButton onClick={() => onSort("query_count")} />
-        </Grid>
-        <Grid xs={2} display="flex" alignItems="center">
-          <SortButton onClick={() => onSort("positive_votes")} />
-        </Grid>
-        <Grid xs={2} display="flex" alignItems="center">
-          <SortButton onClick={() => onSort("negative_votes")} />
-        </Grid>
-        <Grid xs={2} display="flex" alignItems="center">
-          <SortButton onClick={() => onSort("query_count_timeseries")} />
-        </Grid>
-      </Grid>
-
-      {itemsToDisplay.map((row) => (
-        <Grid
-          container
-          key={row.id}
-          spacing={2}
-          md={14}
-          columns={14}
-          onClick={() => onClick(row.id)}
-          sx={{
-            border: 1,
-            borderTop: 0,
-            borderColor: "secondary.main",
-            borderBottomColor: "grey.300",
-            bgcolor: "white",
-            mt: 1,
-            fontSize: "small",
-            fontWeight: 300,
-            "&:hover": {
-              boxShadow: "0px 0px 8px rgba(211, 211, 211, 0.75)",
-              zIndex: "1000",
-              cursor: "pointer",
-            },
-          }}
-        >
-          <Grid md={6}>{row.title}</Grid>
-          <Grid md={2}>{row.query_count}</Grid>
-          <Grid md={2}>{row.positive_votes}</Grid>
-          <Grid md={2}>{row.negative_votes}</Grid>
-          <Grid md={2}>
-            <QueryCountTimeSeries
-              queryCount={row.query_count_timeseries}
-              isIncreasing={percentageIncrease(row.query_count_timeseries) > 0}
-            />
-          </Grid>
-        </Grid>
-      ))}
+    <TableContainer component={Paper} sx={{ marginTop: 3 }}>
+      <Table>
+        <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
+          <TableRow>
+            <TableCell>Content Title</TableCell>
+            <TableCell>Daily Average Sent</TableCell>
+            <TableCell>Upvotes</TableCell>
+            <TableCell>Downvotes</TableCell>
+            <TableCell>Trend</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell style={{ paddingTop: 0 }}>
+              <TextField
+                id="content-search"
+                placeholder="Search"
+                size="small"
+                sx={{
+                  width: "90%",
+                  marginTop: 1.5,
+                  bgcolor: "white",
+                }}
+                onChange={(e) => setItemsToDisplay(filterRowsByTitle(e.target.value))}
+              />
+            </TableCell>
+            <TableCell>
+              <SortButton onClick={() => onSort("query_count")} />
+            </TableCell>
+            <TableCell>
+              <SortButton onClick={() => onSort("positive_votes")} />
+            </TableCell>
+            <TableCell>
+              <SortButton onClick={() => onSort("negative_votes")} />
+            </TableCell>
+            <TableCell>
+              <SortButton onClick={() => onSort("query_count_timeseries")} />
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {itemsToDisplay.map((row) => (
+            <TableRow
+              key={row.id}
+              onClick={() => onClick(row.id)}
+              sx={{
+                "&:hover": {
+                  boxShadow: "0px 0px 8px rgba(211, 211, 211, 0.75)",
+                  zIndex: "1000",
+                  cursor: "pointer",
+                },
+              }}
+            >
+              <TableCell style={{ width: "35%" }}>{row.title}</TableCell>
+              <TableCell style={{ width: "15%" }}>{row.query_count}</TableCell>
+              <TableCell style={{ width: "10%" }}>{row.positive_votes}</TableCell>
+              <TableCell style={{ width: "10%" }}>{row.negative_votes}</TableCell>
+              <TableCell style={{ width: "30%" }}>
+                <QueryCountTimeSeries
+                  queryCount={row.query_count_timeseries}
+                  isIncreasing={percentageIncrease(row.query_count_timeseries) > 0}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       <Box
         justifyContent="center"
         justifySelf={"center"}
@@ -295,7 +263,8 @@ const ContentsTable = ({
           display: "flex",
           flexDirection: "row",
           flexGrow: 1,
-          mt: 3,
+          marginTop: 2,
+          marginBottom: 4,
         }}
       >
         <Pagination
@@ -307,7 +276,7 @@ const ContentsTable = ({
           count={Math.ceil(rows.length / rowsPerPage)}
         />
       </Box>
-    </Grid>
+    </TableContainer>
   );
 };
 

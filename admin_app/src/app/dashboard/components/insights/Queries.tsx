@@ -12,6 +12,7 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React from "react";
 import { QueryData } from "../../types";
+import theme from "@/theme";
 
 interface QueriesProps {
   data: QueryData[];
@@ -151,10 +152,8 @@ const Queries: React.FC<QueriesProps> = ({
             }}
           >
             <Table size="small">
-              <TableHead>
-                <TableRow
-                  sx={{ bgcolor: grey[100], position: "sticky", top: 0, zIndex: 1 }}
-                >
+              <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
+                <TableRow sx={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
                   <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
                 </TableRow>
