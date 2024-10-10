@@ -1,5 +1,4 @@
 import { RowDataType } from "@/app/dashboard/types";
-import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -9,8 +8,8 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
+import theme from "@/theme";
 import {
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -20,7 +19,6 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
-import theme from "@/theme";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -194,15 +192,15 @@ const ContentsTable = ({
   return (
     <TableContainer component={Paper} sx={{ marginTop: 3 }}>
       <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: theme.palette.lightgray.main }}>
+        <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
+          <TableRow>
             <TableCell>Content Title</TableCell>
             <TableCell>Daily Average Sent</TableCell>
             <TableCell>Upvotes</TableCell>
             <TableCell>Downvotes</TableCell>
             <TableCell>Trend</TableCell>
           </TableRow>
-          <TableRow sx={{ backgroundColor: theme.palette.lightgray.main }}>
+          <TableRow>
             <TableCell style={{ paddingTop: 0 }}>
               <TextField
                 id="content-search"
