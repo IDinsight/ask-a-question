@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
+import theme from "@/theme";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -194,14 +195,14 @@ const ContentsTable = ({
     <TableContainer component={Paper} sx={{ marginTop: 3 }}>
       <Table>
         <TableHead>
-          <TableRow>
+          <TableRow sx={{ backgroundColor: theme.palette.lightgray.main }}>
             <TableCell>Content Title</TableCell>
             <TableCell>Daily Average Sent</TableCell>
             <TableCell>Upvotes</TableCell>
             <TableCell>Downvotes</TableCell>
             <TableCell>Trend</TableCell>
           </TableRow>
-          <TableRow>
+          <TableRow sx={{ backgroundColor: theme.palette.lightgray.main }}>
             <TableCell style={{ paddingTop: 0 }}>
               <TextField
                 id="content-search"
@@ -209,7 +210,7 @@ const ContentsTable = ({
                 size="small"
                 sx={{
                   width: "90%",
-                  // height: "20px",
+                  marginTop: 1.5,
                   bgcolor: "white",
                 }}
                 onChange={(e) => setItemsToDisplay(filterRowsByTitle(e.target.value))}
