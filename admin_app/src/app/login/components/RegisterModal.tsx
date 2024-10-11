@@ -19,11 +19,12 @@ import { Layout } from "@/components/Layout";
 
 interface User {
   username: string;
+  recovery_codes: string[];
 }
 interface RegisterModalProps {
   open: boolean;
   onClose: (event: {}, reason: string) => void;
-  onContinue: () => void;
+  onContinue: (recoveryCodes: string[]) => void;
   registerUser: (username: string, password: string) => Promise<User>;
 }
 
@@ -55,13 +56,11 @@ function RegisterModal({
   };
   const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    console.log("Starting user");
     if (validateForm()) {
       console.log("Registering user");
-
       const data = await registerUser(username, password);
       if (data && data.username) {
-        onContinue();
+        onContinue(data.recovery_codes);
       } else {
         setErrors((prevErrors) => ({
           ...prevErrors,
@@ -232,20 +231,48 @@ const AdminAlertModal = ({
     </Dialog>
   );
 };
+
 const ConfirmationModal = ({
   open,
   onClose,
+  recoveryCodes,
 }: {
   open: boolean;
   onClose: () => void;
+  recoveryCodes: string[];
 }) => {
+  const [copySuccess, setCopySuccess] = useState("");
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(recoveryCodes.join("\n"));
+      setCopySuccess("Copied!");
+    } catch (err) {
+      setCopySuccess("Failed to copy!");
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Admin User Created</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          The admin user has been successfully registered.
+          The admin user has been successfully registered. Please save the recovery
+          codes below. You will not be able to see them again.
         </DialogContentText>
+        <TextField
+          fullWidth
+          multiline
+          margin="normal"
+          value={recoveryCodes ? recoveryCodes.join("\n") : ""}
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+        <Button onClick={handleCopyToClipboard} color="primary">
+          Copy Recovery Codes
+        </Button>
+        {copySuccess && <p>{copySuccess}</p>}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
@@ -255,55 +282,5 @@ const ConfirmationModal = ({
     </Dialog>
   );
 };
-interface RecoveryCode {
-  code: string;
-}
 
-const FinalModal = ({
-  isOpen,
-  recoveryCodes,
-  onClose,
-}: {
-  isOpen: boolean;
-  recoveryCodes: RecoveryCode[];
-  onClose: () => void;
-}) => {
-  const [hasCopied, setHasCopied] = useState(false);
-
-  const handleCopyCodes = () => {
-    // Logic to copy recovery codes to the clipboard
-    // For demonstration purposes, this will simulate copying the first code
-    const codesToCopy = recoveryCodes.map((code) => code.code).join("\n");
-    navigator.clipboard.writeText(codesToCopy).then(
-      () => {
-        setHasCopied(true);
-      },
-      (err) => {
-        console.error("Could not copy text: ", err);
-      },
-    );
-  };
-
-  return (
-    <Modal isOpen={isOpen} onRequestClose={onClose} contentLabel="Recovery Codes Modal">
-      <h2>User Successfully Created!</h2>
-      <div>
-        <p>Please save these recovery codes somewhere safe:</p>
-        <ul>
-          {recoveryCodes.map((code, index) => (
-            <li key={index}>{code.code}</li>
-          ))}
-        </ul>
-        <button onClick={handleCopyCodes} disabled={hasCopied}>
-          {hasCopied ? "Copied!" : "Copy Codes"}
-        </button>
-        <p>
-          Make sure to copy and store these in a secure location. You will need them to
-          recover your account if you forget your password.
-        </p>
-      </div>
-      <button onClick={onClose}>I have saved the codes</button>
-    </Modal>
-  );
-};
 export { AdminAlertModal, RegisterModal, ConfirmationModal };
