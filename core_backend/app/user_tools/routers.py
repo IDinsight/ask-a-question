@@ -50,23 +50,8 @@ async def create_user(
     """
 
     try:
-        recovery_codes = generate_recovery_codes()
-        user_new = await save_user_to_db(
-            user=user,
-            asession=asession,
-            recovery_codes=recovery_codes,
-        )
-        await update_api_limits(
-            request.app.state.redis, user_new.username, user_new.api_daily_quota
-        )
-
-        return UserCreateWithCode(
-            username=user_new.username,
-            is_admin=user_new.is_admin,
-            content_quota=user_new.content_quota,
-            api_daily_quota=user_new.api_daily_quota,
-            recovery_codes=recovery_codes,
-        )
+        user_new = await add_user(user, request, asession)
+        return user_new
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")
         raise HTTPException(
@@ -74,12 +59,12 @@ async def create_user(
         ) from e
 
 
-@router.post("/register-first-user", response_model=UserCreate)
+@router.post("/register-first-user", response_model=UserCreateWithCode)
 async def create_first_user(
     user: UserCreateWithPassword,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> UserCreate | None:
+) -> UserCreateWithCode | None:
     """
     Create first admin user when there are no users in the DB.
     """
@@ -90,20 +75,12 @@ async def create_first_user(
             status_code=400, detail="There are already users in the database."
         )
 
-    user_new = await save_user_to_db(
-        user=user,
-        asession=asession,
-    )
-    await update_api_limits(
-        request.app.state.redis, user_new.username, user_new.api_daily_quota
-    )
-
-    return UserCreate(
-        username=user_new.username,
-        is_admin=user_new.is_admin,
-        content_quota=user_new.content_quota,
-        api_daily_quota=user_new.api_daily_quota,
-    )
+    user.is_admin = True
+    user.api_daily_quota = None
+    user.content_quota = None
+    user_new = await add_user(user, request, asession)
+    print(user_new)
+    return user_new
 
 
 @router.put("/rotate-key", response_model=KeyResponse)
@@ -210,4 +187,30 @@ async def get_user(
         api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
         created_datetime_utc=user_db.created_datetime_utc,
         updated_datetime_utc=user_db.updated_datetime_utc,
+    )
+
+
+async def add_user(
+    user: UserCreateWithPassword, request: Request, asession: AsyncSession
+) -> UserCreateWithCode | None:
+    """
+    Function to create a user.
+    """
+
+    recovery_codes = generate_recovery_codes()
+    user_new = await save_user_to_db(
+        user=user,
+        asession=asession,
+        recovery_codes=recovery_codes,
+    )
+    await update_api_limits(
+        request.app.state.redis, user_new.username, user_new.api_daily_quota
+    )
+
+    return UserCreateWithCode(
+        username=user_new.username,
+        is_admin=user_new.is_admin,
+        content_quota=user_new.content_quota,
+        api_daily_quota=user_new.api_daily_quota,
+        recovery_codes=recovery_codes,
     )
