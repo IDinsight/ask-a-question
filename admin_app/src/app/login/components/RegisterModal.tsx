@@ -12,7 +12,6 @@ import {
   DialogContentText,
   DialogActions,
   Alert,
-  Snackbar,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Layout } from "@/components/Layout";
@@ -36,7 +35,7 @@ function RegisterModal({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [snackMessage, setSnackMessage] = useState("Hihi");
+  const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = React.useState({
     username: false,
     password: false,
@@ -55,7 +54,6 @@ function RegisterModal({
   };
   const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    console.log("Starting user");
     if (validateForm()) {
       console.log("Registering user");
 
@@ -63,11 +61,7 @@ function RegisterModal({
       if (data && data.username) {
         onContinue();
       } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          username: true,
-        }));
-        setSnackMessage("Unexpected response from the server.");
+        setErrorMessage("Unexpected response from the server.");
       }
     }
   };
@@ -123,6 +117,13 @@ function RegisterModal({
             padding: "24px",
           }}
         >
+          <Box>
+            {errorMessage && errorMessage != "" && (
+              <Alert severity="error" sx={{ marginBottom: 2 }}>
+                {errorMessage}
+              </Alert>
+            )}
+          </Box>
           <TextField
             margin="normal"
             error={errors.username}
@@ -184,25 +185,6 @@ function RegisterModal({
           </Box>
         </Box>
       </DialogContent>
-      <Box>
-        <Snackbar
-          autoHideDuration={4000}
-          onClose={() => {
-            setSnackMessage("");
-          }}
-        >
-          <Alert
-            onClose={() => {
-              setSnackMessage("");
-            }}
-            severity="error"
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {snackMessage}
-          </Alert>
-        </Snackbar>
-      </Box>
     </Dialog>
   );
 }
