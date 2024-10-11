@@ -1,13 +1,23 @@
-import Drawer from "@mui/material/Drawer";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Divider from "@mui/material/Divider";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import Grid from "@mui/material/Grid";
 import { DrawerData } from "@/app/dashboard/types";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
 import TypingAnimation from "@/components/TypingAnimation";
+import theme from "@/theme";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
+import Typography from "@mui/material/Typography";
+import { ApexOptions } from "apexcharts";
+import dynamic from "next/dynamic";
+import React from "react";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -203,83 +213,45 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
           </Typography>
         </Box>
 
-        <Grid
-          container
-          columns={13}
-          sx={{
-            mt: 2,
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center",
-            borderBottom: 1,
-            borderTop: 1,
-            borderColor: "secondary.main",
-            backgroundColor: "lightgray.main",
-            fontSize: "small",
-            fontWeight: 600,
-            lineHeight: "32px",
-          }}
-        >
-          <Grid item md={3} sx={{ px: 1 }}>
-            Timestamp
-          </Grid>
-          <Grid item md={5} sx={{ px: 1 }}>
-            User Question
-          </Grid>
-          <Grid item md={5} sx={{ px: 1 }}>
-            User Feedback
-          </Grid>
-        </Grid>
-        {data.user_feedback.map((feedback) => (
-          <Grid
-            container
-            columns={13}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              justifyItems: "left",
-              borderBottom: 1,
-              borderColor: "secondary.main",
-              fontSize: "x-small",
-              lineHeight: "32px",
-              overflow: "hidden",
-              py: 0.5,
-            }}
-          >
-            <Grid item md={3} sx={{ px: 1, lineHeight: "20px" }}>
-              {Intl.DateTimeFormat("en-ZA", {
-                dateStyle: "short",
-                timeStyle: "short",
-              }).format(new Date(feedback.timestamp))}
-            </Grid>
-            <Grid
-              item
-              md={5}
-              sx={{
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-                px: 1,
-                lineHeight: "20px",
-              }}
-            >
-              {feedback.question}
-            </Grid>
-            <Grid
-              item
-              md={5}
-              sx={{
-                px: 1,
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-                lineHeight: "20px",
-              }}
-            >
-              {feedback.feedback}
-            </Grid>
-          </Grid>
-        ))}
+        <TableContainer component={Paper} sx={{ mt: 2 }}>
+          <Table aria-label="user feedback table">
+            <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
+              <TableRow>
+                <TableCell sx={{ fontSize: "small", width: "20%" }}>
+                  Timestamp
+                </TableCell>
+                <TableCell sx={{ fontSize: "small", width: "40%" }}>
+                  User Question
+                </TableCell>
+                <TableCell sx={{ fontSize: "small", width: "40%" }}>
+                  User Feedback
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.user_feedback.map((feedback) => (
+                <TableRow
+                  key={feedback.timestamp}
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: "secondary.main",
+                    fontSize: "x-small",
+                    overflow: "hidden",
+                  }}
+                >
+                  <TableCell>
+                    {Intl.DateTimeFormat("en-ZA", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date(feedback.timestamp))}
+                  </TableCell>
+                  <TableCell>{feedback.question}</TableCell>
+                  <TableCell>{feedback.feedback}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
     </Drawer>
   );

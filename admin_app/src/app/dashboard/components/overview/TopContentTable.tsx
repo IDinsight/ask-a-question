@@ -1,16 +1,15 @@
-import * as React from "react";
-import { styled } from "@mui/material/styles";
+import { TopContentData } from "@/app/dashboard/types";
+import theme from "@/theme";
+import { appColors } from "@/utils/index";
+import { Box, Typography } from "@mui/material";
+import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
-import TableCell, { tableCellClasses } from "@mui/material/TableCell";
+import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import { TopContentData } from "@/app/dashboard/types";
 import { format } from "date-fns";
-import { Box, Typography } from "@mui/material";
-import { appColors } from "@/utils/index";
 import dynamic from "next/dynamic";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
@@ -85,27 +84,6 @@ const UpvoteDownvoteBarChart = ({
   );
 };
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.lightgray.main,
-    color: theme.palette.lightgray.dark,
-    fontWeight: "bold",
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:nth-of-type(odd)": {
-    backgroundColor: theme.palette.action.hover,
-  },
-  // hide last border
-  "&:last-child td, &:last-child th": {
-    border: 0,
-  },
-}));
-
 const isDeleted = (title: string) => title.startsWith("[DELETED]");
 
 const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
@@ -122,25 +100,23 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
       <Box sx={{ mx: 3 }}>
         <TableContainer component={Paper}>
           <Table sx={{ minWidth: 700 }} size="small" aria-label="top-content-table">
-            <TableHead>
+            <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
               <TableRow>
-                <StyledTableCell>Content</StyledTableCell>
-                <StyledTableCell align="right">Last Updated</StyledTableCell>
-                <StyledTableCell align="right" style={{ whiteSpace: "nowrap" }}>
+                <TableCell>Content</TableCell>
+                <TableCell align="right">Last Updated</TableCell>
+                <TableCell align="right" style={{ whiteSpace: "nowrap" }}>
                   Total Sent
-                </StyledTableCell>
-                <StyledTableCell align="right">
-                  All-time upvotes vs. downvotes
-                </StyledTableCell>
+                </TableCell>
+                <TableCell align="right">All-time upvotes vs. downvotes</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row, i) => (
-                <StyledTableRow
+                <TableRow
                   key={i}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
-                  <StyledTableCell component="th" scope="row">
+                  <TableCell component="th" scope="row">
                     {isDeleted(row.title) ? (
                       <span
                         style={{
@@ -153,18 +129,18 @@ const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
                     ) : (
                       row.title
                     )}
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
+                  </TableCell>
+                  <TableCell align="right">
                     {format(new Date(row.last_updated), "yyyy-MM-dd HH:mm")}
-                  </StyledTableCell>
-                  <StyledTableCell align="right">{row.query_count}</StyledTableCell>
-                  <StyledTableCell align="right" sx={{ width: 500 }}>
+                  </TableCell>
+                  <TableCell align="right">{row.query_count}</TableCell>
+                  <TableCell align="right" sx={{ width: 500 }}>
                     <UpvoteDownvoteBarChart
                       positiveVotes={row.positive_votes}
                       negativeVotes={row.negative_votes}
                     />
-                  </StyledTableCell>
-                </StyledTableRow>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>
