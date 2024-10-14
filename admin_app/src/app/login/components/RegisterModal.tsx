@@ -1,20 +1,18 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  Box,
-  TextField,
-  Button,
-  DialogContent,
-  Typography,
-  Grid,
-  Avatar,
-  DialogTitle,
-  DialogContentText,
-  DialogActions,
-  Alert,
-} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Layout } from "@/components/Layout";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useState } from "react";
 
 interface User {
   username: string;
@@ -69,47 +67,9 @@ function RegisterModal({
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
       <DialogContent>
-        <Box>
-          <Grid
-            item
-            sx={{
-              display: { xs: "none", sm: "flex", md: "flex" },
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
-              <LockOutlinedIcon />
-            </Avatar>
-          </Grid>
-          <Grid
-            item
-            sx={{
-              display: { xs: "flex", sm: "none", md: "none" },
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img
-              src="../../logo-light.png"
-              alt="Logo"
-              style={{
-                minWidth: "200px",
-                maxWidth: "80%",
-                marginBottom: 80,
-              }}
-            />
-            <Layout.Spacer multiplier={4} />
-          </Grid>
-          <Typography variant="h5" align="center">
-            Register
-          </Typography>
-        </Box>
-
         <Box
           component="form"
           noValidate
-          width={"300px"}
           sx={{
             display: "flex",
             flexDirection: "column",
@@ -117,6 +77,12 @@ function RegisterModal({
             padding: "24px",
           }}
         >
+          <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
+            Register
+          </Typography>
           <Box>
             {errorMessage && errorMessage != "" && (
               <Alert severity="error" sx={{ marginBottom: 2 }}>
@@ -206,14 +172,15 @@ const AdminAlertModal = ({
           You need to register admin user before proceeding.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onContinue} color="primary" autoFocus>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+        <Button onClick={onContinue} color="primary" variant="contained" autoFocus>
           Continue
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
+
 const ConfirmationModal = ({
   open,
   onClose,
@@ -229,7 +196,7 @@ const ConfirmationModal = ({
           The admin user has been successfully registered.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary">
           Back to Login
         </Button>
@@ -237,4 +204,4 @@ const ConfirmationModal = ({
     </Dialog>
   );
 };
-export { AdminAlertModal, RegisterModal, ConfirmationModal };
+export { AdminAlertModal, ConfirmationModal, RegisterModal };
