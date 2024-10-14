@@ -11,6 +11,7 @@ from ..database import get_async_session
 from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
+    get_number_of_users,
     get_user_by_id,
     is_username_valid,
     save_user_to_db,
@@ -19,7 +20,7 @@ from ..users.models import (
 )
 from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
 from ..utils import generate_key, setup_logger, update_api_limits
-from .schemas import KeyResponse
+from .schemas import KeyResponse, RequireRegisterResponse
 
 TAG_METADATA = {
     "name": "Admin",
@@ -64,6 +65,38 @@ async def create_user(
         ) from e
 
 
+@router.post("/register-first-user", response_model=UserCreate)
+async def create_first_user(
+    user: UserCreateWithPassword,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreate | None:
+    """
+    Create first admin user when there are no users in the DB.
+    """
+
+    nb_users = await get_number_of_users(asession)
+    if nb_users > 0:
+        raise HTTPException(
+            status_code=400, detail="There are already users in the database."
+        )
+
+    user_new = await save_user_to_db(
+        user=user,
+        asession=asession,
+    )
+    await update_api_limits(
+        request.app.state.redis, user_new.username, user_new.api_daily_quota
+    )
+
+    return UserCreate(
+        username=user_new.username,
+        is_admin=user_new.is_admin,
+        content_quota=user_new.content_quota,
+        api_daily_quota=user_new.api_daily_quota,
+    )
+
+
 @router.put("/rotate-key", response_model=KeyResponse)
 async def get_new_api_key(
     user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -94,6 +127,22 @@ async def get_new_api_key(
         raise HTTPException(
             status_code=500, detail="Error updating user api key"
         ) from e
+
+
+@router.get("/require-register", response_model=RequireRegisterResponse)
+async def is_register_required(
+    asession: AsyncSession = Depends(get_async_session),
+) -> RequireRegisterResponse:
+    """
+    Check it there are any users in the database.
+    If there are no users, registration is required
+    """
+    nb_users = await get_number_of_users(asession)
+    if nb_users > 0:
+        require_register = False
+    else:
+        require_register = True
+    return RequireRegisterResponse(require_register=require_register)
 
 
 @router.put("/{user_id}", response_model=UserRetrieve)
