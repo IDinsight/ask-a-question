@@ -17,6 +17,7 @@ from ..question_answer.models import (
     ResponseFeedbackDB,
 )
 from ..urgency_detection.models import UrgencyResponseDB
+from ..utils import setup_logger
 from .config import DISABLE_DASHBOARD_LLM
 from .schemas import (
     BokehContentItem,
@@ -38,6 +39,9 @@ from .schemas import (
 )
 
 N_SAMPLES_TOPIC_MODELING = 4000
+
+
+logger = setup_logger()
 
 
 async def get_stats_cards(
@@ -769,13 +773,14 @@ async def get_ai_answer_summary(
     end_date: date,
     max_feedback_records: int,
     asession: AsyncSession,
-) -> str:
+) -> str | None:
     """
     Get AI answer summary
     """
 
     if DISABLE_DASHBOARD_LLM:
-        return "Dashboard LLM features have been disabled in your backend configuration"
+        logger.info("LLM functionality is disabled. Returning default message.")
+        return None
 
     user_feedback = (
         select(

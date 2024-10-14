@@ -18,14 +18,10 @@ async def generate_ai_summary(
     content_title: str,
     content_text: str,
     feedback: list[str],
-) -> str:
+) -> str | None:
     """
     Generates AI summary for Page 2 of the dashboard.
     """
-    if DISABLE_DASHBOARD_LLM:
-        logger.info("LLM functionality is disabled. Returning default message.")
-        return """LLM functionality disabled on the backend. Please check your
-    environment configuration if you wish to enable this feature"""
 
     metadata = create_langfuse_metadata(feature_name="dashboard", user_id=user_id)
     ai_feedback_summary_prompt = get_feedback_summary_prompt(
