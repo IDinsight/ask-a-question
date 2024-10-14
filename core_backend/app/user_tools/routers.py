@@ -11,7 +11,7 @@ from ..database import get_async_session
 from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
-    get_nb_users,
+    get_number_of_users,
     get_user_by_id,
     is_username_valid,
     save_user_to_db,
@@ -75,7 +75,7 @@ async def create_first_user(
     Create first admin user when there are no users in the DB.
     """
 
-    nb_users = await get_nb_users(asession)
+    nb_users = await get_number_of_users(asession)
     if nb_users > 0:
         raise HTTPException(
             status_code=400, detail="There are already users in the database."
@@ -137,7 +137,7 @@ async def is_register_required(
     Check it there are any users in the database.
     If there are no users, registration is required
     """
-    nb_users = await get_nb_users(asession)
+    nb_users = await get_number_of_users(asession)
     if nb_users > 0:
         require_register = False
     else:

@@ -228,7 +228,7 @@ async def is_username_valid(
         return True
 
 
-async def get_nb_users(asession: AsyncSession) -> int:
+async def get_number_of_users(asession: AsyncSession) -> int:
     """
     Retrieves the number of users in the database
     """
