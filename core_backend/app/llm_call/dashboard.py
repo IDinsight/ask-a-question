@@ -20,7 +20,7 @@ async def generate_ai_summary(
     feedback: list[str],
 ) -> str:
     """
-    Generates AI summary for the dashboard.
+    Generates AI summary for Page 2 of the dashboard.
     """
     if DISABLE_DASHBOARD_LLM:
         logger.info("LLM functionality is disabled. Returning default message.")
