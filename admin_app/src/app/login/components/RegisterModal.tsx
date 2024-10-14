@@ -81,7 +81,7 @@ function RegisterModal({
             <LockOutlinedIcon />
           </Avatar>
           <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
-            Register
+            Register Admin User
           </Typography>
           <Box>
             {errorMessage && errorMessage != "" && (
@@ -119,7 +119,6 @@ function RegisterModal({
             onChange={(e) => setPassword(e.target.value)}
           />
           <TextField
-            margin="normal"
             required
             fullWidth
             name="confirm-password"
@@ -132,7 +131,7 @@ function RegisterModal({
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <Box
-            mt={2}
+            mt={1}
             width="100%"
             display="flex"
             flexDirection="column"
@@ -166,10 +165,10 @@ const AdminAlertModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose} disableEscapeKeyDown={true}>
-      <DialogTitle>{"Register Admin User"}</DialogTitle>
+      <DialogTitle>{"Initial Setup"}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          You need to register admin user before proceeding.
+          You need to register an admin user before proceeding.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
@@ -191,9 +190,10 @@ const ConfirmationModal = ({
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Admin User Created</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ maxWidth: "500px" }}>
         <DialogContentText>
-          The admin user has been successfully registered.
+          The admin user has been successfully registered. You can now login using the
+          new credentials.
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
