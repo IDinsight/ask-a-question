@@ -95,7 +95,6 @@ async def save_user_to_db(
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )
-    print(user_db.recovery_codes)
     asession.add(user_db)
     await asession.commit()
     await asession.refresh(user_db)
@@ -241,3 +240,28 @@ async def get_nb_users(asession: AsyncSession) -> int:
     result = await asession.execute(stmt)
     users = result.scalars().all()
     return len(users)
+
+
+async def reset_user_password_in_db(
+    admin_user_id: int,
+    user_id: int,
+    user: UserCreateWithPassword | UserCreate,
+    asession: AsyncSession,
+    recovery_codes: list[str] | None = None,
+) -> UserDB:
+    """
+    Saves a user in the database
+    """
+
+    hashed_password = get_password_salted_hash(user.password)
+    user_db = UserDB(
+        username=user.username,
+        hashed_password=hashed_password,
+        recovery_codes=user.recovery_codes,
+        updated_datetime_utc=datetime.now(timezone.utc),
+    )
+    user_db = asession.merge(user_db)
+    await asession.commit()
+    await asession.refresh(user_db)
+
+    return user_db

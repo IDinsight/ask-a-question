@@ -52,3 +52,14 @@ class UserRetrieve(BaseModel):
     updated_datetime_utc: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserResetPassword(BaseModel):
+    """
+    Pydantic model for user password reset
+    """
+
+    username: str
+    password: str
+    recovery_code: str
+    model_config = ConfigDict(from_attributes=True)

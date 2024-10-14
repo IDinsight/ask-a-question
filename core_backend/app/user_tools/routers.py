@@ -22,6 +22,7 @@ from ..users.schemas import (
     UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
+    UserResetPassword,
     UserRetrieve,
 )
 from ..utils import generate_key, setup_logger, update_api_limits
@@ -188,6 +189,29 @@ async def get_user(
         created_datetime_utc=user_db.created_datetime_utc,
         updated_datetime_utc=user_db.updated_datetime_utc,
     )
+
+
+@router.put("/reset-password", response_model=UserCreateWithCode)
+async def reset_password(
+    user: UserResetPassword,
+    user_db: Annotated[UserDB, Depends(get_admin_user)],
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreateWithCode | None:
+    """
+    Reset password endpoint. Takes a user object, generates a new password,
+    replaces the old one in the database, and returns a user object
+    with the new password.
+    """
+    user_to_update = await get_user_by_id(user_id=user_db.user_id, asession=asession)
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    is_recovery_code_correct = user.recovery_code in user_to_update.recovery_codes
+    if not is_recovery_code_correct:
+        raise HTTPException(status_code=400, detail="Recovery code is incorrect.")
+    user.recovery_codes.remove(user.recovery_code)
+    return None
 
 
 async def add_user(
