@@ -43,6 +43,7 @@ from core_backend.app.utils import get_key_hash, get_password_salted_hash
 TEST_ADMIN_USERNAME = "admin"
 TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_API_KEY = "admin_api_key"
+TEST_ADMIN_RECOVERY_CODES = ["code1", "code2", "code3", "code4", "code5"]
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
@@ -91,6 +92,7 @@ def admin_user(client: TestClient, db_session: Session) -> Generator:
         content_quota=None,
         api_daily_quota=None,
         is_admin=True,
+        recovery_codes=TEST_ADMIN_RECOVERY_CODES,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )

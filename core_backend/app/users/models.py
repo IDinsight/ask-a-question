@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     ARRAY,
     Boolean,
-    Column,
     DateTime,
     Integer,
     String,
@@ -15,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
 from ..utils import get_key_hash, get_password_salted_hash, get_random_string
-from .schemas import UserCreate, UserCreateWithPassword
+from .schemas import UserCreate, UserCreateWithPassword, UserResetPassword
 
 PASSWORD_LENGTH = 12
 
@@ -43,7 +42,7 @@ class UserDB(Base):
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    recovery_codes = Column(ARRAY(String), nullable=True)
+    recovery_codes: Mapped[list] = mapped_column(ARRAY(String), nullable=True)
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -232,7 +231,7 @@ async def is_username_valid(
         return True
 
 
-async def get_nb_users(asession: AsyncSession) -> int:
+async def get_number_of_users(asession: AsyncSession) -> int:
     """
     Retrieves the number of users in the database
     """
@@ -243,9 +242,8 @@ async def get_nb_users(asession: AsyncSession) -> int:
 
 
 async def reset_user_password_in_db(
-    admin_user_id: int,
     user_id: int,
-    user: UserCreateWithPassword | UserCreate,
+    user: UserResetPassword,
     asession: AsyncSession,
     recovery_codes: list[str] | None = None,
 ) -> UserDB:
@@ -255,12 +253,12 @@ async def reset_user_password_in_db(
 
     hashed_password = get_password_salted_hash(user.password)
     user_db = UserDB(
-        username=user.username,
+        user_id=user_id,
         hashed_password=hashed_password,
-        recovery_codes=user.recovery_codes,
+        recovery_codes=recovery_codes,
         updated_datetime_utc=datetime.now(timezone.utc),
     )
-    user_db = asession.merge(user_db)
+    user_db = await asession.merge(user_db)
     await asession.commit()
     await asession.refresh(user_db)
 

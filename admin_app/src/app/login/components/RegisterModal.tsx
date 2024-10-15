@@ -1,21 +1,18 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  Box,
-  TextField,
-  Button,
-  DialogContent,
-  Typography,
-  Grid,
-  Avatar,
-  DialogTitle,
-  DialogContentText,
-  DialogActions,
-  Alert,
-  Snackbar,
-} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Layout } from "@/components/Layout";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useState } from "react";
 
 interface User {
   username: string;
@@ -37,7 +34,7 @@ function RegisterModal({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [snackMessage, setSnackMessage] = useState("Hihi");
+  const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = React.useState({
     username: false,
     password: false,
@@ -58,15 +55,12 @@ function RegisterModal({
     event.preventDefault();
     if (validateForm()) {
       console.log("Registering user");
+
       const data = await registerUser(username, password);
       if (data && data.username) {
         onContinue(data.recovery_codes);
       } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          username: true,
-        }));
-        setSnackMessage("Unexpected response from the server.");
+        setErrorMessage("Unexpected response from the server.");
       }
     }
   };
@@ -74,47 +68,9 @@ function RegisterModal({
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
       <DialogContent>
-        <Box>
-          <Grid
-            item
-            sx={{
-              display: { xs: "none", sm: "flex", md: "flex" },
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
-              <LockOutlinedIcon />
-            </Avatar>
-          </Grid>
-          <Grid
-            item
-            sx={{
-              display: { xs: "flex", sm: "none", md: "none" },
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img
-              src="../../logo-light.png"
-              alt="Logo"
-              style={{
-                minWidth: "200px",
-                maxWidth: "80%",
-                marginBottom: 80,
-              }}
-            />
-            <Layout.Spacer multiplier={4} />
-          </Grid>
-          <Typography variant="h5" align="center">
-            Register
-          </Typography>
-        </Box>
-
         <Box
           component="form"
           noValidate
-          width={"300px"}
           sx={{
             display: "flex",
             flexDirection: "column",
@@ -122,6 +78,19 @@ function RegisterModal({
             padding: "24px",
           }}
         >
+          <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
+            Register Admin User
+          </Typography>
+          <Box>
+            {errorMessage && errorMessage != "" && (
+              <Alert severity="error" sx={{ marginBottom: 2 }}>
+                {errorMessage}
+              </Alert>
+            )}
+          </Box>
           <TextField
             margin="normal"
             error={errors.username}
@@ -151,7 +120,6 @@ function RegisterModal({
             onChange={(e) => setPassword(e.target.value)}
           />
           <TextField
-            margin="normal"
             required
             fullWidth
             name="confirm-password"
@@ -164,7 +132,7 @@ function RegisterModal({
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <Box
-            mt={2}
+            mt={1}
             width="100%"
             display="flex"
             flexDirection="column"
@@ -183,25 +151,6 @@ function RegisterModal({
           </Box>
         </Box>
       </DialogContent>
-      <Box>
-        <Snackbar
-          autoHideDuration={4000}
-          onClose={() => {
-            setSnackMessage("");
-          }}
-        >
-          <Alert
-            onClose={() => {
-              setSnackMessage("");
-            }}
-            severity="error"
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {snackMessage}
-          </Alert>
-        </Snackbar>
-      </Box>
     </Dialog>
   );
 }
@@ -217,14 +166,14 @@ const AdminAlertModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose} disableEscapeKeyDown={true}>
-      <DialogTitle>{"Register Admin User"}</DialogTitle>
+      <DialogTitle>{"Initial Setup"}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          You need to register admin user before proceeding.
+          You need to register an admin user before proceeding.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onContinue} color="primary" autoFocus>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+        <Button onClick={onContinue} color="primary" variant="contained" autoFocus>
           Continue
         </Button>
       </DialogActions>
