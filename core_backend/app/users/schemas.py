@@ -28,7 +28,7 @@ class UserCreateWithPassword(UserCreate):
 
 class UserCreateWithCode(UserCreate):
     """
-    Pydantic model for user creation with recovery codes for adminuser account recovery
+    Pydantic model for user creation with recovery codes for user account recovery
     """
 
     recovery_codes: list[str]

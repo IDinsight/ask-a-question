@@ -94,7 +94,6 @@ const Login = () => {
 
   useEffect(() => {
     if (recoveryCodes.length > 0) {
-      // Only show confirmation if there are recovery codes
       setShowConfirmationModal(true);
     } else {
       setShowConfirmationModal(false);

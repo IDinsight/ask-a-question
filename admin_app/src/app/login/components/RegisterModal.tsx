@@ -223,7 +223,7 @@ const ConfirmationModal = ({
         </Button>
         {copySuccess && <p>{copySuccess}</p>}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary">
           Back to Login
         </Button>
