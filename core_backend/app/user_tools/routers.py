@@ -11,16 +11,26 @@ from ..database import get_async_session
 from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
+    UserNotFoundError,
     get_number_of_users,
     get_user_by_id,
+    get_user_by_username,
     is_username_valid,
+    reset_user_password_in_db,
     save_user_to_db,
     update_user_api_key,
     update_user_in_db,
 )
-from ..users.schemas import UserCreate, UserCreateWithPassword, UserRetrieve
+from ..users.schemas import (
+    UserCreate,
+    UserCreateWithCode,
+    UserCreateWithPassword,
+    UserResetPassword,
+    UserRetrieve,
+)
 from ..utils import generate_key, setup_logger, update_api_limits
 from .schemas import KeyResponse, RequireRegisterResponse
+from .utils import generate_recovery_codes
 
 TAG_METADATA = {
     "name": "Admin",
@@ -32,32 +42,20 @@ router = APIRouter(prefix="/user", tags=["Admin"])
 logger = setup_logger()
 
 
-@router.post("/", response_model=UserCreate)
+@router.post("/", response_model=UserCreateWithCode)
 async def create_user(
     user: UserCreateWithPassword,
     admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> UserCreate | None:
+) -> UserCreateWithCode | None:
     """
     Create user endpoint. Can only be used by admin users.
     """
 
     try:
-        user_new = await save_user_to_db(
-            user=user,
-            asession=asession,
-        )
-        await update_api_limits(
-            request.app.state.redis, user_new.username, user_new.api_daily_quota
-        )
-
-        return UserCreate(
-            username=user_new.username,
-            is_admin=user_new.is_admin,
-            content_quota=user_new.content_quota,
-            api_daily_quota=user_new.api_daily_quota,
-        )
+        user_new = await add_user(user, request, asession)
+        return user_new
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")
         raise HTTPException(
@@ -65,12 +63,12 @@ async def create_user(
         ) from e
 
 
-@router.post("/register-first-user", response_model=UserCreate)
+@router.post("/register-first-user", response_model=UserCreateWithCode)
 async def create_first_user(
     user: UserCreateWithPassword,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-) -> UserCreate | None:
+) -> UserCreateWithCode | None:
     """
     Create first admin user when there are no users in the DB.
     """
@@ -81,20 +79,11 @@ async def create_first_user(
             status_code=400, detail="There are already users in the database."
         )
 
-    user_new = await save_user_to_db(
-        user=user,
-        asession=asession,
-    )
-    await update_api_limits(
-        request.app.state.redis, user_new.username, user_new.api_daily_quota
-    )
-
-    return UserCreate(
-        username=user_new.username,
-        is_admin=user_new.is_admin,
-        content_quota=user_new.content_quota,
-        api_daily_quota=user_new.api_daily_quota,
-    )
+    user.is_admin = True
+    user.api_daily_quota = None
+    user.content_quota = None
+    user_new = await add_user(user, request, asession)
+    return user_new
 
 
 @router.put("/rotate-key", response_model=KeyResponse)
@@ -145,6 +134,56 @@ async def is_register_required(
     return RequireRegisterResponse(require_register=require_register)
 
 
+@router.put("/reset-password", response_model=UserRetrieve)
+async def reset_password(
+    user: UserResetPassword,
+    admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserRetrieve:
+    """
+    Reset password endpoint. Takes a user object, generates a new password,
+    replaces the old one in the database, and returns the updated user object.
+    """
+    try:
+        user_to_update = await get_user_by_username(
+            username=user.username, asession=asession
+        )
+
+        is_recovery_code_correct = user.recovery_code in user_to_update.recovery_codes
+
+        if not is_recovery_code_correct:
+            raise HTTPException(status_code=400, detail="Recovery code is incorrect.")
+        updated_recovery_codes = [
+            val for val in user_to_update.recovery_codes if val != user.recovery_code
+        ]
+        updated_user = await reset_user_password_in_db(
+            user_id=user_to_update.user_id,
+            user=user,
+            recovery_codes=updated_recovery_codes,
+            asession=asession,
+        )
+        return UserRetrieve(
+            user_id=updated_user.user_id,
+            username=updated_user.username,
+            content_quota=updated_user.content_quota,
+            api_daily_quota=updated_user.api_daily_quota,
+            is_admin=updated_user.is_admin,
+            api_key_first_characters=updated_user.api_key_first_characters,
+            api_key_updated_datetime_utc=updated_user.api_key_updated_datetime_utc,
+            created_datetime_utc=updated_user.created_datetime_utc,
+            updated_datetime_utc=updated_user.updated_datetime_utc,
+        )
+    except UserAlreadyExistsError as e:
+        logger.error(f"Error resetting password: {e}")
+        raise HTTPException(
+            status_code=400, detail="User with that username already exists."
+        ) from e
+
+    except UserNotFoundError as v:
+        logger.error(f"Error resetting password: {v}")
+        raise HTTPException(status_code=404, detail="User not found.") from v
+
+
 @router.put("/{user_id}", response_model=UserRetrieve)
 async def update_user(
     user_id: int,
@@ -174,8 +213,8 @@ async def update_user(
         user_id=updated_user.user_id,
         username=updated_user.username,
         content_quota=updated_user.content_quota,
-        api_daily_quota=user_db.api_daily_quota,
-        is_admin=user_db.is_admin,
+        api_daily_quota=updated_user.api_daily_quota,
+        is_admin=updated_user.is_admin,
         api_key_first_characters=updated_user.api_key_first_characters,
         api_key_updated_datetime_utc=updated_user.api_key_updated_datetime_utc,
         created_datetime_utc=updated_user.created_datetime_utc,
@@ -201,4 +240,30 @@ async def get_user(
         api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
         created_datetime_utc=user_db.created_datetime_utc,
         updated_datetime_utc=user_db.updated_datetime_utc,
+    )
+
+
+async def add_user(
+    user: UserCreateWithPassword, request: Request, asession: AsyncSession
+) -> UserCreateWithCode | None:
+    """
+    Function to create a user.
+    """
+
+    recovery_codes = generate_recovery_codes()
+    user_new = await save_user_to_db(
+        user=user,
+        asession=asession,
+        recovery_codes=recovery_codes,
+    )
+    await update_api_limits(
+        request.app.state.redis, user_new.username, user_new.api_daily_quota
+    )
+
+    return UserCreateWithCode(
+        username=user_new.username,
+        is_admin=user_new.is_admin,
+        content_quota=user_new.content_quota,
+        api_daily_quota=user_new.api_daily_quota,
+        recovery_codes=recovery_codes,
     )

@@ -16,11 +16,12 @@ import React, { useState } from "react";
 
 interface User {
   username: string;
+  recovery_codes: string[];
 }
 interface RegisterModalProps {
   open: boolean;
   onClose: (event: {}, reason: string) => void;
-  onContinue: () => void;
+  onContinue: (recoveryCodes: string[]) => void;
   registerUser: (username: string, password: string) => Promise<User>;
 }
 
@@ -57,7 +58,7 @@ function RegisterModal({
 
       const data = await registerUser(username, password);
       if (data && data.username) {
-        onContinue();
+        onContinue(data.recovery_codes);
       } else {
         setErrorMessage("Unexpected response from the server.");
       }
@@ -183,18 +184,44 @@ const AdminAlertModal = ({
 const ConfirmationModal = ({
   open,
   onClose,
+  recoveryCodes,
 }: {
   open: boolean;
   onClose: () => void;
+  recoveryCodes: string[];
 }) => {
+  const [copySuccess, setCopySuccess] = useState("");
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(recoveryCodes.join("\n"));
+      setCopySuccess("Copied!");
+    } catch (err) {
+      setCopySuccess("Failed to copy!");
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Admin User Created</DialogTitle>
-      <DialogContent sx={{ maxWidth: "500px" }}>
+      <DialogContent>
         <DialogContentText>
-          The admin user has been successfully registered. You can now login using the
-          new credentials.
+          The admin user has been successfully registered. Please save the recovery
+          codes below. You will not be able to see them again.
         </DialogContentText>
+        <TextField
+          fullWidth
+          multiline
+          margin="normal"
+          value={recoveryCodes ? recoveryCodes.join("\n") : ""}
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+        <Button onClick={handleCopyToClipboard} color="primary">
+          Copy Recovery Codes
+        </Button>
+        {copySuccess && <p>{copySuccess}</p>}
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary">
@@ -204,4 +231,5 @@ const ConfirmationModal = ({
     </Dialog>
   );
 };
-export { AdminAlertModal, ConfirmationModal, RegisterModal };
+
+export { AdminAlertModal, RegisterModal, ConfirmationModal };
