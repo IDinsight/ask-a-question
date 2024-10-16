@@ -149,9 +149,7 @@ async def reset_password(
             username=user.username, asession=asession
         )
 
-        is_recovery_code_correct = user.recovery_code in user_to_update.recovery_codes
-
-        if not is_recovery_code_correct:
+        if user.recovery_code not in user_to_update.recovery_codes:
             raise HTTPException(status_code=400, detail="Recovery code is incorrect.")
         updated_recovery_codes = [
             val for val in user_to_update.recovery_codes if val != user.recovery_code
