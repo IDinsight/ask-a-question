@@ -171,11 +171,6 @@ async def reset_password(
             created_datetime_utc=updated_user.created_datetime_utc,
             updated_datetime_utc=updated_user.updated_datetime_utc,
         )
-    except UserAlreadyExistsError as e:
-        logger.error(f"Error resetting password: {e}")
-        raise HTTPException(
-            status_code=400, detail="User with that username already exists."
-        ) from e
 
     except UserNotFoundError as v:
         logger.error(f"Error resetting password: {v}")

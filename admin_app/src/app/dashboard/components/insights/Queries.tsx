@@ -57,6 +57,7 @@ const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
       </Box>
       <Typography
         sx={{
+          whiteSpace: "pre-wrap",
           lineHeight: "15px",
           fontWeight: 300,
           fontSize: "small",
@@ -117,7 +118,7 @@ const Queries: React.FC<QueriesProps> = ({
             loadingPosition="start"
             sx={{
               bgcolor: orange[600],
-              width: 190,
+              width: 220,
               "&:hover": {
                 bgcolor: orange[800],
               },

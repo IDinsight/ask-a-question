@@ -215,7 +215,6 @@ const ConfirmationModal = ({
           The admin user has been successfully registered. Please save the recovery
           codes below. You will not be able to see them again.
         </DialogContentText>
-
         <TextField
           fullWidth
           multiline
@@ -232,7 +231,6 @@ const ConfirmationModal = ({
           }}
         />
 
-        {/* Center the Copy button */}
         <Box display="flex" justifyContent="center" mt={2}>
           <Button
             variant="contained"
