@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    ARRAY,
     Boolean,
     DateTime,
     Integer,
@@ -14,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..models import Base
 from ..utils import get_key_hash, get_password_salted_hash, get_random_string
-from .schemas import UserCreate, UserCreateWithPassword, UserResetPassword
+from .schemas import UserCreate, UserCreateWithPassword
 
 PASSWORD_LENGTH = 12
 
@@ -42,7 +41,6 @@ class UserDB(Base):
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    recovery_codes: Mapped[list] = mapped_column(ARRAY(String), nullable=True)
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -61,7 +59,6 @@ class UserDB(Base):
 async def save_user_to_db(
     user: UserCreateWithPassword | UserCreate,
     asession: AsyncSession,
-    recovery_codes: list[str] | None = None,
 ) -> UserDB:
     """
     Saves a user in the database
@@ -90,10 +87,10 @@ async def save_user_to_db(
         api_daily_quota=user.api_daily_quota,
         is_admin=user.is_admin,
         hashed_password=hashed_password,
-        recovery_codes=recovery_codes,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )
+
     asession.add(user_db)
     await asession.commit()
     await asession.refresh(user_db)
@@ -239,27 +236,3 @@ async def get_number_of_users(asession: AsyncSession) -> int:
     result = await asession.execute(stmt)
     users = result.scalars().all()
     return len(users)
-
-
-async def reset_user_password_in_db(
-    user_id: int,
-    user: UserResetPassword,
-    asession: AsyncSession,
-    recovery_codes: list[str] | None = None,
-) -> UserDB:
-    """
-    Saves a user in the database
-    """
-
-    hashed_password = get_password_salted_hash(user.password)
-    user_db = UserDB(
-        user_id=user_id,
-        hashed_password=hashed_password,
-        recovery_codes=recovery_codes,
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    user_db = await asession.merge(user_db)
-    await asession.commit()
-    await asession.refresh(user_db)
-
-    return user_db

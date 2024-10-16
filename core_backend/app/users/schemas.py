@@ -26,16 +26,6 @@ class UserCreateWithPassword(UserCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserCreateWithCode(UserCreate):
-    """
-    Pydantic model for user creation with recovery codes for user account recovery
-    """
-
-    recovery_codes: list[str]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserRetrieve(BaseModel):
     """
     Pydantic model for user retrieval
@@ -51,15 +41,4 @@ class UserRetrieve(BaseModel):
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserResetPassword(BaseModel):
-    """
-    Pydantic model for user password reset
-    """
-
-    username: str
-    password: str
-    recovery_code: str
     model_config = ConfigDict(from_attributes=True)

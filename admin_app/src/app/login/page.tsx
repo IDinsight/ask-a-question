@@ -40,7 +40,6 @@ const Login = () => {
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const { login, loginGoogle, loginError } = useAuth();
-  const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const iconStyles = {
     color: appColors.white,
     width: { xs: "30%", lg: "40%" },
@@ -92,14 +91,6 @@ const Login = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (recoveryCodes.length > 0) {
-      setShowConfirmationModal(true);
-    } else {
-      setShowConfirmationModal(false);
-    }
-  }, [recoveryCodes]);
-
   const handleAdminModalClose = (event: {}, reason: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowAdminAlertModal(false);
@@ -115,8 +106,8 @@ const Login = () => {
     setShowAdminAlertModal(false);
     setShowRegisterModal(true);
   };
-  const handleRegisterModalContinue = (newRecoveryCodes: string[]) => {
-    setRecoveryCodes(newRecoveryCodes);
+  const handleRegisterModalContinue = () => {
+    setShowConfirmationModal(true);
     setShowRegisterModal(false);
   };
   const handleCloseConfirmationModal = () => {
@@ -438,7 +429,6 @@ const Login = () => {
         <ConfirmationModal
           open={showConfirmationModal}
           onClose={handleCloseConfirmationModal}
-          recoveryCodes={recoveryCodes}
         />
       </Grid>
     </Grid>
