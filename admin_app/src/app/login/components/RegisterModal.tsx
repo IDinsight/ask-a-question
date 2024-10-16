@@ -1,3 +1,5 @@
+import CheckIcon from "@mui/icons-material/Check";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Alert,
@@ -190,14 +192,18 @@ const ConfirmationModal = ({
   onClose: () => void;
   recoveryCodes: string[];
 }) => {
-  const [copySuccess, setCopySuccess] = useState("");
+  const [isClicked, setIsClicked] = useState(false);
+
+  const handleClose = () => {
+    setIsClicked(false);
+    onClose();
+  };
 
   const handleCopyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(recoveryCodes.join("\n"));
-      setCopySuccess("Copied!");
     } catch (err) {
-      setCopySuccess("Failed to copy!");
+      console.error("Failed to copy recovery codes: ", err);
     }
   };
 
@@ -216,15 +222,32 @@ const ConfirmationModal = ({
           value={recoveryCodes ? recoveryCodes.join("\n") : ""}
           InputProps={{
             readOnly: true,
+            sx: {
+              textAlign: "center",
+            },
+          }}
+          inputProps={{
+            style: { textAlign: "center" },
           }}
         />
-        <Button onClick={handleCopyToClipboard} color="primary">
-          Copy Recovery Codes
-        </Button>
-        {copySuccess && <p>{copySuccess}</p>}
+
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              handleCopyToClipboard();
+              setIsClicked(true);
+            }}
+            startIcon={isClicked ? <CheckIcon /> : <ContentCopyIcon />}
+            style={{ paddingLeft: "20px", paddingRight: "20px" }}
+          >
+            {isClicked ? "Copied" : "Copy"}
+          </Button>
+        </Box>
       </DialogContent>
+
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={handleClose} color="primary" variant="contained" autoFocus>
           Back to Login
         </Button>
       </DialogActions>
