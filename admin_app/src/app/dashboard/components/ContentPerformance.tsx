@@ -50,7 +50,13 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
       });
 
       getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
-        setDrawerAISummary(response.ai_summary);
+        if (response.ai_summary) {
+          setDrawerAISummary(response.ai_summary);
+        } else {
+          setDrawerAISummary(
+            "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
+          );
+        }
       });
     }
   };
