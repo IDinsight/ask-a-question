@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import sqlalchemy as sa
 from sqlalchemy import (
     ARRAY,
     Boolean,
@@ -45,7 +46,7 @@ class UserDB(Base):
     recovery_codes: Mapped[list] = mapped_column(ARRAY(String), nullable=True)
     content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
-    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -231,11 +232,11 @@ async def is_username_valid(
         return True
 
 
-async def get_number_of_users(asession: AsyncSession) -> int:
+async def get_number_of_admin_users(asession: AsyncSession) -> int:
     """
-    Retrieves the number of users in the database
+    Retrieves the number of admin users in the database
     """
-    stmt = select(UserDB)
+    stmt = select(UserDB).where(UserDB.is_admin == sa.true())
     result = await asession.execute(stmt)
     users = result.scalars().all()
     return len(users)
