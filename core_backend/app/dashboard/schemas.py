@@ -197,6 +197,7 @@ class TopicsData(BaseModel):
     of individual Topics. Used for Insights page.
     """
 
+    status: Literal["not_started", "in_progress", "completed", "error"]
     refreshTimeStamp: str
     data: list[Topic]
 

@@ -51,6 +51,7 @@ async def topic_model_queries(
         logger.info("No queries to cluster")
         return (
             TopicsData(
+                status="error",
                 refreshTimeStamp="",
                 data=[],
             ),
@@ -61,6 +62,7 @@ async def topic_model_queries(
         logger.info("No content data to cluster")
         return (
             TopicsData(
+                status="error",
                 refreshTimeStamp="",
                 data=[],
             ),
@@ -271,6 +273,7 @@ def prepare_topics_data(
 
     # Prepare TopicsData
     topics_data = TopicsData(
+        status="completed",
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topics_list,
     )
