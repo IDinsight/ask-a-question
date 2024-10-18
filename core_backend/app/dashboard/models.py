@@ -1265,8 +1265,10 @@ async def get_raw_queries(
     user_id: int,
     start_date: date,
 ) -> list[UserQuery]:
-    """Retrieve 2000 randomly sampled raw queries (query_text) and their
-    datetime stamps within the specified date range.
+    """
+    Retrieve N_SAMPLES_TOPIC_MODELING randomly sampled raw queries (query_text) and
+    their datetime stamps within the specified date range.
+
     Parameters
     ----------
     asession
@@ -1275,6 +1277,7 @@ async def get_raw_queries(
         The ID of the user to retrieve the queries for.
     start_date
         The starting date for the queries.
+
     Returns
     -------
     list[UserQuery]
