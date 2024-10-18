@@ -1,14 +1,12 @@
-import React from "react";
-import Grid from "@mui/material/Unstable_Grid2";
-import Topics from "./insights/Topics";
-import Queries from "./insights/Queries";
-import Box from "@mui/material/Box";
-import { useState } from "react";
-import { QueryData, Period, TopicModelingResponse } from "../types";
-import { generateNewTopics, fetchTopicsData } from "../api";
 import { useAuth } from "@/utils/auth";
 import { Paper } from "@mui/material";
+import Box from "@mui/material/Box";
+import React, { useState } from "react";
+import { fetchTopicsData, generateNewTopics } from "../api";
+import { Period, QueryData, TopicModelingResponse } from "../types";
 import BokehPlot from "./insights/Bokeh";
+import Queries from "./insights/Queries";
+import Topics from "./insights/Topics";
 
 interface InsightProps {
   timePeriod: Period;
@@ -23,8 +21,9 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   const [aiSummary, setAiSummary] = useState<string>("");
 
   const [dataFromBackend, setDataFromBackend] = useState<TopicModelingResponse>({
-    data: [],
+    status: "not_started",
     refreshTimeStamp: "",
+    data: [],
     unclustered_queries: [],
   });
 
@@ -41,7 +40,17 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
     if (token) {
       fetchTopicsData(timePeriod, token).then((dataFromBackend) => {
         setDataFromBackend(dataFromBackend);
-        if (dataFromBackend.data.length > 0) {
+        if (dataFromBackend.status === "in_progress") {
+          setRefreshing(true);
+        }
+        if (dataFromBackend.status === "not_started") {
+          setRefreshing(false);
+        }
+        if (dataFromBackend.status === "error") {
+          // add error popup later
+          setRefreshing(false);
+        }
+        if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
           setSelectedTopicId(dataFromBackend.data[0].topic_id);
         }
       });
