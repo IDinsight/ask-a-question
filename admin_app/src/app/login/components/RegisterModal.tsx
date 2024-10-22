@@ -213,7 +213,10 @@ const ConfirmationModal = ({
       <DialogContent>
         <DialogContentText>
           The admin user has been successfully registered. Please save the recovery
-          codes below. You will not be able to see them again.
+          codes below as you will need them to reset passwords in the future.
+          <br />
+          <br />
+          You will not be able to see them again.
         </DialogContentText>
         <TextField
           fullWidth
