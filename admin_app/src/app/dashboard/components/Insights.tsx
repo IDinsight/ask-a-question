@@ -47,7 +47,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           setRefreshing(false);
         }
         if (dataFromBackend.status === "error") {
-          // add error popup later
+          // [TODO] add error popup later
           setRefreshing(false);
         }
         if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
