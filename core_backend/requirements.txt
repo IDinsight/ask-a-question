@@ -28,3 +28,4 @@ sentence-transformers==3.0.1
 scikit-learn==1.5.1
 bokeh==3.5.1
 faster-whisper==1.0.3
+sentry-sdk[fastapi]==2.17.0

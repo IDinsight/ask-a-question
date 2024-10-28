@@ -95,3 +95,9 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 
 # Google Cloud storage
 GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
+
+# Sentry config
+SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+SENTRY_TRACES_SAMPLE_RATE = os.environ.get(
+    "SENTRY_TRACES_SAMPLE_RATE", 1.0
+)  # 1.0 means 100% of traces are sent to Sentry
