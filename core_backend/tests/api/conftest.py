@@ -528,11 +528,11 @@ def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.speech_components.external_voice_components.upload_file_to_gcs",
+        "core_backend.app.llm_call.process_output.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.speech_components.external_voice_components.generate_public_url",
+        "core_backend.app.llm_call.process_output.generate_public_url",
         async_fake_generate_public_url,
     )
 
