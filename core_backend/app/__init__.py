@@ -168,7 +168,7 @@ def create_app() -> FastAPI:
     app.mount("/metrics", metrics_app)
 
     if not SENTRY_DSN or SENTRY_DSN == "" or SENTRY_DSN == "https://...":
-        logger.warn("No SENTRY_DSN provided. Sentry is disabled.")
+        logger.warning("No SENTRY_DSN provided. Sentry is disabled.")
     else:
         sentry_sdk.init(
             dsn=SENTRY_DSN,
