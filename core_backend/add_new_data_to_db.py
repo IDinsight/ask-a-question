@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import urllib3
-from add_users_to_db import ADMIN_API_KEY
 from app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -59,12 +58,12 @@ parser = argparse.ArgumentParser(
     python add_content_to_db.py [-h] --csv CSV --domain DOMAIN [--language LANGUAGE]
 
     (example)
-    python add_new_dummy_data.py \
+    python add_new_dummy_data_to_db.py \
         --csv generated_questions.csv \
         --host http://localhost:8000 \
         --api-key <API_KEY> \
         --nb-workers 8 \
-        --start-date 01-08-23
+        --start-date 01-08-23 \
         --end-date 04-09-24
 
 """,
@@ -73,7 +72,7 @@ parser.add_argument(
     "--csv", help="Path to the CSV containing example questions ", required=True
 )
 parser.add_argument("--host", help="Your hosted AAQ url", required=True)
-parser.add_argument("--api-key", help="Your AAQ API key", required=False)
+parser.add_argument("--api-key", help="Your AAQ API key", required=True)
 parser.add_argument(
     "--nb-workers",
     help="Number of workers to use for parallel processing",
@@ -94,6 +93,7 @@ parser.add_argument(
     help="Subset of the data to use for testing",
     required=False,
 )
+
 args = parser.parse_args()
 
 
@@ -392,7 +392,7 @@ def update_date_of_contents(date: datetime) -> None:
 if __name__ == "__main__":
     HOST = args.host
     NB_WORKERS = int(args.nb_workers) if args.nb_workers else 8
-    API_KEY = args.api_key if args.api_key else ADMIN_API_KEY
+    API_KEY = args.api_key
 
     start_date_string = args.start_date if args.start_date else "01-08-23"
     end_date_string = args.end_date if args.end_date else None
@@ -464,10 +464,10 @@ if __name__ == "__main__":
                 srch_res,
                 fbk_stmt,
                 fbk_key,
-                gen_fbk_txt,
+                False,
                 is_off,
             ): query_id
-            for query_id, text, srch_res, fbk_stmt, fbk_key, gen_fbk_txt, is_off in zip(
+            for query_id, text, srch_res, fbk_stmt, fbk_key, _, is_off in zip(
                 df["query_id"],
                 df["inbound_text"],
                 df["search_results"],

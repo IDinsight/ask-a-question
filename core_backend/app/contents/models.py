@@ -81,7 +81,6 @@ class ContentDB(Base):
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    temp: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -212,7 +211,6 @@ async def update_content_in_db(
         content_text=content.content_text,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
-        created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
         is_archived=content.is_archived,
     )

@@ -20,14 +20,27 @@ import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
+import { apiCalls } from "@/utils/api";
+import {
+  AdminAlertModal,
+  ConfirmationModal,
+  RegisterModal,
+} from "./components/RegisterModal";
+import { LoadingButton } from "@mui/lab";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
 
 const Login = () => {
+  const [showRegisterModal, setShowRegisterModal] = React.useState(false);
+  const [showAdminAlertModal, setShowAdminAlertModal] = React.useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
+
   const [isUsernameEmpty, setIsUsernameEmpty] = React.useState(false);
   const [isPasswordEmpty, setIsPasswordEmpty] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   const { login, loginGoogle, loginError } = useAuth();
+  const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const iconStyles = {
     color: appColors.white,
     width: { xs: "30%", lg: "40%" },
@@ -39,12 +52,7 @@ const Login = () => {
     const data = new FormData(event.currentTarget);
     const username = data.get("username") as string;
     const password = data.get("password") as string;
-    if (
-      username === "" ||
-      password === "" ||
-      username === null ||
-      password === null
-    ) {
+    if (username === "" || password === "" || username === null || password === null) {
       username === "" || username === null ? setIsUsernameEmpty(true) : null;
       password === "" || password === null ? setIsPasswordEmpty(true) : null;
     } else {
@@ -53,6 +61,12 @@ const Login = () => {
   };
 
   useEffect(() => {
+    const fetchRegisterPrompt = async () => {
+      const data = await apiCalls.getRegisterOption();
+      setShowAdminAlertModal(data.require_register);
+      setIsLoading(false);
+    };
+    fetchRegisterPrompt();
     const handleCredentialResponse = (response: any) => {
       loginGoogle({
         client_id: response.client_id,
@@ -78,8 +92,51 @@ const Login = () => {
     }
   }, []);
 
-  return (
-    <Grid container component="main" sx={{ height: "100vh" }}>
+  useEffect(() => {
+    if (recoveryCodes.length > 0) {
+      setShowConfirmationModal(true);
+    } else {
+      setShowConfirmationModal(false);
+    }
+  }, [recoveryCodes]);
+
+  const handleAdminModalClose = (event: {}, reason: string) => {
+    if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+      setShowAdminAlertModal(false);
+    }
+  };
+  const handleRegisterModalClose = (event: {}, reason: string) => {
+    if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+      setShowRegisterModal(false);
+    }
+  };
+
+  const handleAdminModalContinue = () => {
+    setShowAdminAlertModal(false);
+    setShowRegisterModal(true);
+  };
+  const handleRegisterModalContinue = (newRecoveryCodes: string[]) => {
+    setRecoveryCodes(newRecoveryCodes);
+    setShowRegisterModal(false);
+  };
+  const handleCloseConfirmationModal = () => {
+    setShowConfirmationModal(false);
+  };
+  return isLoading ? (
+    <Grid>
+      {" "}
+      <LoadingButton />
+    </Grid>
+  ) : (
+    <Grid
+      container
+      component="main"
+      sx={{
+        height: "100vh",
+        filter: showRegisterModal || showAdminAlertModal ? "blur(8px)" : "none",
+        transition: "filter 0.3s",
+      }}
+    >
       <CssBaseline />
       <Grid
         item
@@ -150,8 +207,8 @@ const Login = () => {
               }}
               fontWeight={{ sm: "600", md: "500" }}
             >
-              Integrate automated question answering into your chatbot in 3
-              simple steps:
+              Integrate automated question answering into your chatbot in 3 simple
+              steps:
             </Typography>
           </Box>
 
@@ -186,9 +243,7 @@ const Login = () => {
                   }}
                 >
                   {index === 0 && <PostAddIcon sx={iconStyles} />}
-                  {index === 1 && (
-                    <QuestionAnswerOutlinedIcon sx={iconStyles} />
-                  )}
+                  {index === 1 && <QuestionAnswerOutlinedIcon sx={iconStyles} />}
                   {index === 2 && (
                     <PowerOutlinedIcon
                       sx={{ ...iconStyles, transform: "rotate(90deg)" }}
@@ -240,16 +295,7 @@ const Login = () => {
           </Box>
         </Box>
       </Grid>
-      <Grid
-        item
-        xs={12}
-        sm={7}
-        md={5}
-        lg={4}
-        component={Paper}
-        elevation={6}
-        square
-      >
+      <Grid item xs={12} sm={7} md={5} lg={4} component={Paper} elevation={6} square>
         <Box
           sx={{
             my: 8,
@@ -378,6 +424,22 @@ const Login = () => {
             </Button>
           </Box>
         </Box>
+        <AdminAlertModal
+          open={showAdminAlertModal}
+          onClose={handleAdminModalClose}
+          onContinue={handleAdminModalContinue}
+        />
+        <RegisterModal
+          open={showRegisterModal}
+          onClose={handleRegisterModalClose}
+          onContinue={handleRegisterModalContinue}
+          registerUser={apiCalls.registerUser}
+        />
+        <ConfirmationModal
+          open={showConfirmationModal}
+          onClose={handleCloseConfirmationModal}
+          recoveryCodes={recoveryCodes}
+        />
       </Grid>
     </Grid>
   );
