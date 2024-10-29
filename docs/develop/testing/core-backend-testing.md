@@ -9,14 +9,14 @@ If you are writing new features, you should also add unit tests. Tests are under
 
 ??? warning "Don't run `pytest` directly"
     Unless you have updated your environment variables and started a testing instance
-    of postrges, the tests will end up writing to your dev environment :weary_cat:
+    of postgres, the tests will end up writing to your dev environment :weary_cat:
 
 Run tests using:
 
     make tests
 
-This target starts up new postgres and qdrant containers for testing. It also sets the
-correct environment variables, runs `pytest`, and then destroys the containers.
+This target starts up new postgres and redis containers for testing. It also sets the
+correct environment variables, runs `pytest`, and then destroys the containers once done.
 
 ### Debugging unit tests
 

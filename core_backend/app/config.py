@@ -73,6 +73,7 @@ CROSS_ENCODER_MODEL = os.environ.get(
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
 DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
+CHECK_API_LIMIT = os.environ.get("CHECK_API_LIMIT", True)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
@@ -82,7 +83,9 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
-CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
+CUSTOM_STT_ENDPOINT = os.environ.get("CUSTOM_STT_ENDPOINT", None)
+CUSTOM_TTS_ENDPOINT = os.environ.get("CUSTOM_TTS_ENDPOINT", None)
+
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 

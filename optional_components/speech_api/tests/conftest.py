@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from speech_api.main import app
+from ..main import app
 
 
 @pytest.fixture

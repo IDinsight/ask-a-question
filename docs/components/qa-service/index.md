@@ -15,6 +15,22 @@
 
 </div>
 
+`/Voice-search` is the **Optional** End to End Speech endpoint that your application can integrate with:
+
+<div class="grid cards" markdown>
+
+- :material-api:{ .lg .middle } __Voice-Search__
+
+    ---
+
+    Enables voice-based searching by accepting an audio file URL.
+    Supports both in-house and Cloud based Solutions for transcription and Speech Synthesis.
+    Returns an LLM-generated response as both text and an audio file URL.
+
+    [:octicons-arrow-right-24: More info](./voice-search.md)
+
+</div>
+
 ## Capturing Feedback
 
 The service also provides two endpoint to capture feedback from users. One to capture

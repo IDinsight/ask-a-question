@@ -12,7 +12,7 @@ from fastapi.security import (
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
@@ -101,6 +101,7 @@ async def authenticate_or_create_google_user(
                 username=google_email,
                 content_quota=DEFAULT_CONTENT_QUOTA,
                 api_daily_quota=DEFAULT_API_QUOTA,
+                is_admin=False,
             )
             user_db = await save_user_to_db(user, asession)
             await update_api_limits(
@@ -139,6 +140,18 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         raise credentials_exception from err
 
 
+def get_admin_user(user: Annotated[UserDB, Depends(get_current_user)]) -> UserDB:
+    """
+    Get the current user from the access token and check if it is an admin.
+    """
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+    return user
+
+
 def create_access_token(username: str) -> str:
     """
     Create an access token for the user
@@ -163,6 +176,8 @@ async def rate_limiter(
     """
     Rate limiter for the API calls. Gets daily quota and decrement it
     """
+    if CHECK_API_LIMIT is False:
+        return
     username = user_db.username
     key = f"remaining-calls:{username}"
     redis = request.app.state.redis
@@ -177,4 +192,4 @@ async def rate_limiter(
         nb_remaining = int(nb_remaining)
         if nb_remaining <= 0:
             raise HTTPException(status_code=429, detail="API call limit reached.")
-        await redis.set(key, nb_remaining - 1, keepttl=True)
+        await update_api_limits(redis, username, nb_remaining - 1)

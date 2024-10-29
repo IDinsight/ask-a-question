@@ -2,7 +2,6 @@
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft, Delete } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
@@ -24,6 +23,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import {
+  createContent,
+  createTag,
+  deleteTag,
+  editContent,
+  getContent,
+  getTagList,
+} from "../api";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -57,7 +64,7 @@ const AddEditContentPage = () => {
       setIsLoading(false);
       return;
     } else {
-      apiCalls.getContent(content_id, token!).then((data) => {
+      getContent(content_id, token!).then((data) => {
         setContent(data);
         setIsLoading(false);
       });
@@ -98,13 +105,13 @@ const AddEditContentPage = () => {
             content={content}
             setContent={setContent}
             getTagList={() => {
-              return apiCalls.getTagList(token!);
+              return getTagList(token!);
             }}
             addTag={(tag: string) => {
-              return apiCalls.createTag(tag, token!);
+              return createTag(tag, token!);
             }}
             deleteTag={(tag_id: number) => {
-              return apiCalls.deleteTag(tag_id, token!);
+              return deleteTag(tag_id, token!);
             }}
             isSaved={isSaved}
             setIsSaved={setIsSaved}
@@ -199,8 +206,8 @@ const ContentBox = ({
     try {
       const result =
         content.content_id === null
-          ? await apiCalls.createContent(body, token!)
-          : await apiCalls.editContent(content.content_id, body, token!);
+          ? await createContent(body, token!)
+          : await editContent(content.content_id, body, token!);
       setIsSaved(true);
       setSaveError(false);
       return result.content_id;

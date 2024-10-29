@@ -58,4 +58,13 @@ There are 3 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./huggingface-embeddings/index.md)
 
+
+- :material-api:{ .lg .middle .red} __Voice Service__
+
+    ---
+
+    _(Optional)_ Supports both in-house and cloud-based solutions for Automatic Speech Recognition (ASR) and Text-to-Speech (TTS)
+
+    [:octicons-arrow-right-24: More info](./voice-service/index.md)
+
 </div>

@@ -59,6 +59,7 @@ def temp_user_token_and_quota(
         hashed_password=get_password_salted_hash("temp_password"),
         hashed_api_key=get_key_hash("temp_api_key"),
         content_quota=content_quota,
+        is_admin=False,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )
