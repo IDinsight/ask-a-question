@@ -12,7 +12,7 @@ env:
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
   REDIS_HOST: redis://redis:6379
-  TOGGLE_VOICE: True
+  ENABLE_VOICE_SEARCH: True
 
 jobs:
   container-job:
@@ -57,7 +57,7 @@ jobs:
         env:
           PROMETHEUS_MULTIPROC_DIR: /tmp
           REDIS_HOST: ${{ env.REDIS_HOST }}
-          TOGGLE_VOICE: ${{ env.TOGGLE_VOICE }}
+          ENABLE_VOICE_SEARCH: ${{ env.ENABLE_VOICE_SEARCH }}
         run: |
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
