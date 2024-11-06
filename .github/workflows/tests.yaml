@@ -12,7 +12,7 @@ env:
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
   REDIS_HOST: redis://redis:6379
-  TOGGLE_VOICE: custom
+  TOGGLE_VOICE: True
 
 jobs:
   container-job:
