@@ -9,21 +9,20 @@ date: 2024-09-09
 
 # From Thought to Speech: Introducing AAQ's New Voice Service
 
-We're excited to unveil our new **End-to-End Speech Service** for AAQ! This powerful component brings seamless voice interaction to your Q&A flows. Powered by advanced AI, it integrates Text-to-Speech and Speech-to-Text capabilities, allowing you to easily create dynamic voice experiences through AAQ.
-
-From voice-driven Q&A to automated communication, our service takes voice capabilities to new heights. Get ready to transform how you interact with AAQ!
+We're excited to unveil our new **End-to-End Speech Service** for AAQ! This powerful component allows you to seamlessly ask your questions on your device and recieve a spoken response back. Powered by advanced AI it integrates Text-to-Speech and Speech-to-Text capabilities, allowing you to easily create dynamic voice experiences through AAQ.
 
 <!-- more -->
 
-Take a look at it in action integrated with the [Typebot](https://typebot.io/) chatflow manager:
+Take a look at it it in action, integrating with a typical WhatsApp chat via the [Typebot](https://typebot.io/) chatflow manager:
 
 ![Voice-workflow](../images/voice-workflow.gif){: .blog-img }
+*A demonstration using the E2E speech pipeline to ask AAQ --- what should I eat during pregnancy ---*
 
 ## **Why did we build this?**
 
 As voice-driven interactions become the norm for providing accessibility and ease of use, we recognized the need to extend beyond text-based solutions.
 
-In many developing and third-world countries, voice communication is often preferred over text for a variety of reasons. Voice is inherently more intuitive, making it accessible to individuals with limited exposure to technology. Additionally, in regions with lower literacy rates, relying on text-based interactions can present barriers. By focusing on voice, we provide a solution that feels natural, immediate, and inclusive.
+In many developing countries, voice communication is often preferred over text for a variety of reasons. Voice is inherently more intuitive, making it accessible to individuals with limited exposure to technology. Additionally, in regions with lower literacy rates, relying on text-based interactions can present barriers. By focusing on voice, we provide a solution that feels natural, immediate, and inclusive.
 
 Our in-house Speech Service uses cutting-edge AI models, enabling real-time speech synthesis and transcription with remarkable accuracy across multiple languages, giving users a seamless and consistent voice experience.
 
@@ -33,7 +32,7 @@ At the heart of AAQ's speech capabilities lies the `/voice-search` endpoint. Thi
 
 ![/voice-search-endpoint](../images/voice-search.png){: .blog-img }
 
-The `/voice-search` endpoint expects a URL of a voice file stored in any public cloud storage. It processes this audio input and returns a structured response, enabling seamless integration of voice interactions into your applications.
+The `/voice-search` endpoint expects a URL of a voice file stored in any public cloud storage. It processes this audio input and returns a structured response, enabling enabling hassle-free integration of voice interactions into your applications.
 
 Here's an example of the response model returned by the endpoint:
 
@@ -68,7 +67,7 @@ This straightforward yet powerful interface allows developers to easily incorpor
 We're committed to continuously improving our Speech Service. Here are some exciting changes on our roadmap:
 
 1. **<u>Faster Inference Times:</u>** We're working on optimizing our AI models and infrastructure to reduce latency and provide even quicker responses.
-2. **<u>Expanded Language Support:</u>** To make our service more versatile and robust, we plan to significantly increase the number of supported languages, ensuring broader global accessibility.
+2. **<u>Expanded Language Support:</u>** We aim to serve underrepresented languages, enhancing accessibility for global users by significantly increasing our language offerings.
 3. **<u>Enhanced Customization Options:</u>** We aim to introduce more customization features, allowing users to fine-tune voice characteristics like accent, speed, and emotion to better suit their specific use cases.
 
 Stay tuned for these updates as we strive to make our Speech Service even more powerful and user-friendly!
