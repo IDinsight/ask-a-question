@@ -257,6 +257,14 @@ const UserDropdown = () => {
         <MenuItem disabled>
           <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
+        <MenuItem
+          key={"user-management"}
+          onClick={() => {
+            router.push("/user-management");
+          }}
+        >
+          <Typography textAlign="center">User management</Typography>
+        </MenuItem>
         <MenuItem key={"logout"} onClick={logout}>
           <Typography textAlign="center">Logout</Typography>
         </MenuItem>

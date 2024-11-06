@@ -1,0 +1,291 @@
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useState } from "react";
+import { UserBody, UserBodyPassword } from "../api";
+
+interface UseFormFields {
+  username?: string;
+  password?: string;
+  confirmPassword?: string;
+  contentLimit?: string;
+  apiCallLimit?: string;
+  is_admin?: boolean | false;
+}
+
+const useForm = (fields: Array<keyof UseFormFields>, initialUser?: UseFormFields) => {
+  const initialFormData: UseFormFields = fields.reduce((data, field) => {
+    const fieldValue =
+      initialUser && initialUser[field] !== undefined ? initialUser[field] : "";
+    return {
+      ...data,
+      [field]: fieldValue,
+    };
+  }, {} as UseFormFields);
+
+  const initialErrors = fields.reduce(
+    (errorState, field) => {
+      errorState[field] = false;
+      return errorState;
+    },
+    {} as Record<keyof UseFormFields, boolean> & {
+      confirmPasswordMatch: boolean;
+    },
+  );
+  initialErrors.confirmPasswordMatch = false;
+
+  const [formData, setFormData] = useState<UseFormFields>(initialFormData);
+  const [errors, setErrors] = useState(initialErrors);
+  const validateForm = () => {
+    const newErrors = {
+      ...fields.reduce(
+        (errorState, field) => {
+          switch (field) {
+            case "username":
+              errorState.username = formData.username === "";
+              break;
+            case "password":
+              errorState.password = formData.password === "";
+              break;
+            case "confirmPassword":
+              errorState.confirmPassword = formData.confirmPassword === "";
+              break;
+            case "contentLimit":
+              errorState.contentLimit = formData.contentLimit === "";
+              break;
+            case "apiCallLimit":
+              errorState.apiCallLimit = formData.apiCallLimit === "";
+              break;
+          }
+          return errorState;
+        },
+        {} as Record<keyof UseFormFields, boolean> & {
+          confirmPasswordMatch: boolean;
+        },
+      ),
+    };
+
+    newErrors.confirmPasswordMatch = formData.password !== formData.confirmPassword;
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((value) => value === false);
+  };
+
+  const handleInputChange =
+    (field: keyof UseFormFields) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = field === "is_admin" ? event.target.checked : event.target.value;
+      setFormData((prevData) => ({ ...prevData, [field]: value }));
+    };
+  return { formData, setFormData, errors, validateForm, handleInputChange };
+};
+interface UserModalProps {
+  open: boolean;
+  onClose: () => void;
+  onContinue: (data: any) => void;
+  registerUser: (user: UserBodyPassword) => Promise<any>;
+  fields?: Array<keyof UseFormFields>;
+  title?: string;
+  buttonTitle?: string;
+  user?: UserBody;
+}
+
+const UserModal = ({
+  open,
+  onClose,
+  onContinue,
+  registerUser,
+  fields = ["username", "password", "confirmPassword"],
+  title = "Register User",
+  buttonTitle = "Register",
+  user,
+}: UserModalProps) => {
+  const { formData, setFormData, errors, validateForm, handleInputChange } = useForm(
+    fields,
+    user,
+  );
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  React.useEffect(() => {
+    if (user) {
+      setFormData({
+        ...formData,
+        username: user.username,
+        is_admin: user.is_admin || false,
+        contentLimit: user.content_quota ? user.content_quota.toString() : "",
+        apiCallLimit: user.api_daily_quota ? user.api_daily_quota.toString() : "",
+      });
+    }
+  }, [user]);
+  const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (validateForm()) {
+      const user = {
+        username: formData.username,
+        is_admin: formData.is_admin || false,
+        content_quota: parseInt(formData.contentLimit!),
+        api_daily_quota: parseInt(formData.apiCallLimit!),
+      } as UserBodyPassword;
+      console.log(user, "user");
+      const data = await registerUser(user);
+
+      if (data && data.username) {
+        onContinue(data.recovery_codes);
+      } else {
+        setErrorMessage("Unexpected response from the server.");
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
+      <DialogContent>
+        <Box
+          component="form"
+          noValidate
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "24px",
+          }}
+        >
+          <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
+            {title}
+          </Typography>
+          {errorMessage && (
+            <Alert severity="error" sx={{ marginBottom: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+          {fields.includes("username") && (
+            <TextField
+              margin="normal"
+              error={errors.username}
+              helperText={errors.username ? "Please enter a username" : " "}
+              required
+              fullWidth
+              label="Username"
+              value={formData.username}
+              onChange={handleInputChange("username")}
+            />
+          )}
+          {fields.includes("password") && (
+            <TextField
+              margin="normal"
+              error={errors.password}
+              helperText={errors.password ? "Please enter a password" : " "}
+              required
+              fullWidth
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange("password")}
+            />
+          )}
+          {fields.includes("confirmPassword") && (
+            <TextField
+              margin="normal"
+              error={errors.confirmPasswordMatch}
+              helperText={errors.confirmPasswordMatch ? "Passwords do not match" : " "}
+              required
+              fullWidth
+              label="Confirm Password"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleInputChange("confirmPassword")}
+            />
+          )}
+          {fields.includes("contentLimit") && fields.includes("apiCallLimit") && (
+            <Box display="flex" justifyContent="space-between" width="100%" mt={2}>
+              <TextField
+                margin="normal"
+                error={errors.contentLimit}
+                helperText={errors.contentLimit ? "Enter content limit" : " "}
+                required
+                label="Content Limit"
+                type="number"
+                sx={{ width: "48%" }}
+                value={formData.contentLimit}
+                onChange={handleInputChange("contentLimit")}
+              />
+              <TextField
+                margin="normal"
+                error={errors.apiCallLimit}
+                helperText={errors.apiCallLimit ? "Enter API call limit" : " "}
+                required
+                label="API Call Limit"
+                type="number"
+                sx={{ width: "48%" }}
+                value={formData.apiCallLimit}
+                onChange={handleInputChange("apiCallLimit")}
+              />
+            </Box>
+          )}
+          {fields.includes("is_admin") && (
+            <Box
+              display="flex"
+              alignItems="center"
+              mt={2}
+              width="100%"
+              sx={{ justifyContent: "flex-start" }}
+            >
+              <Checkbox
+                checked={formData.is_admin || false}
+                onChange={handleInputChange("is_admin")}
+                sx={{ marginRight: 1 }}
+              />
+              <Typography variant="body1">Admin User</Typography>
+            </Box>
+          )}
+          <Box mt={1} width="100%" display="flex" justifyContent="center">
+            <Button
+              onClick={handleRegister}
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ maxWidth: "120px" }}
+            >
+              {buttonTitle}
+            </Button>
+          </Box>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+};
+const CreateUserModal = (props: Omit<UserModalProps, "fields">) => (
+  <UserModal
+    {...props}
+    fields={[
+      "username",
+      "password",
+      "confirmPassword",
+      "contentLimit",
+      "apiCallLimit",
+      "is_admin",
+    ]}
+  />
+);
+
+const EditUserModal = (props: Omit<UserModalProps, "fields">) => (
+  <UserModal
+    {...props}
+    fields={["username", "contentLimit", "apiCallLimit", "is_admin"]}
+  />
+);
+
+export { UserModal, CreateUserModal, EditUserModal };
+export type { UserModalProps };

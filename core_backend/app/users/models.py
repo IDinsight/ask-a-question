@@ -191,6 +191,19 @@ async def get_user_by_api_key(
         raise UserNotFoundError("User with given token does not exist.") from err
 
 
+async def get_all_users(
+    asession: AsyncSession,
+) -> list[UserDB]:
+    """
+    Retrieves all users
+    """
+
+    stmt = select(UserDB)
+    result = await asession.execute(stmt)
+    users = result.scalars().all()
+    return users
+
+
 async def update_user_in_db(
     user_id: int,
     user: UserCreate,
