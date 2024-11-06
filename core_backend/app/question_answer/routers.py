@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import authenticate_key, rate_limiter
 from ..config import (
     CUSTOM_SPEECH_ENDPOINT,
+    ENABLE_VOICE_SEARCH,
     GCS_SPEECH_BUCKET,
-    TOGGLE_VOICE,
     USE_CROSS_ENCODER,
 )
 from ..contents.models import (
@@ -162,7 +162,7 @@ async def search(
     )
 
 
-if TOGGLE_VOICE is not None:
+if ENABLE_VOICE_SEARCH:
 
     @router.post(
         "/voice-search",
