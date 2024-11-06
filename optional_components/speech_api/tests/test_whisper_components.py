@@ -1,6 +1,9 @@
+from io import BytesIO
+
 import pytest
 
-from ..app.voice_components import transcribe_audio
+from ..app.schemas import IdentifiedLanguage
+from ..app.voice_components import synthesize_speech, transcribe_audio
 
 
 @pytest.mark.asyncio
@@ -32,3 +35,29 @@ class TestTranscribeAudio:
             for keyword in expected_keywords:
                 assert keyword in response.text
             assert response.language == expected_language
+
+
+@pytest.mark.asyncio
+class TestSynthesizeSpeech:
+
+    @pytest.mark.parametrize(
+        "text, language, expected_exception",
+        [
+            ("This is a test.", IdentifiedLanguage.ENGLISH, None),
+            ("Hii ni jaribio.", IdentifiedLanguage.SWAHILI, None),
+            ("ఇది ఒక పరీక్ష", IdentifiedLanguage.UNSUPPORTED, ValueError),
+        ],
+    )
+    async def test_synthesize_speech(
+        self,
+        text: str,
+        language: IdentifiedLanguage,
+        expected_exception: type[Exception] | None,
+    ) -> None:
+        if expected_exception:
+            with pytest.raises(expected_exception):
+                await synthesize_speech(text, language)
+        else:
+            result = await synthesize_speech(text, language)
+            assert isinstance(result, BytesIO)
+            assert len(result.getvalue()) > 0

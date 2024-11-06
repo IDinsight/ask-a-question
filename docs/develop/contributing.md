@@ -83,4 +83,4 @@ notification to the committers.
 
 If you haven't already, see [Setup](./setup.md) on how to set up the complete
 development environment for AAQ. Otherwise, you can check out
-[how to test the AAQ codebase](./testing.md).
+[how to test the AAQ codebase](./testing/core-backend-testing.md).

@@ -3,7 +3,6 @@ endpoints.
 """
 
 import os
-from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, status
@@ -14,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
 from ..config import (
-    CUSTOM_SPEECH_ENDPOINT,
+    CUSTOM_STT_ENDPOINT,
     ENABLE_VOICE_SEARCH,
     GCS_SPEECH_BUCKET,
     USE_CROSS_ENCODER,
@@ -41,8 +40,6 @@ from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
-    get_file_extension_from_mime_type,
-    get_http_client,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -66,6 +63,7 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
+from .speech_components.utils import download_file_from_url, post_to_speech_stt
 
 logger = setup_logger()
 
@@ -201,16 +199,16 @@ if ENABLE_VOICE_SEARCH:
             await upload_file_to_gcs(
                 GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
             )
-
             file_path = f"temp/{unique_filename}"
             with open(file_path, "wb") as f:
                 file_stream.seek(0)
                 f.write(file_stream.read())
             file_stream.seek(0)
 
-            if CUSTOM_SPEECH_ENDPOINT is not None:
-                transcription = await post_to_speech(file_path, CUSTOM_SPEECH_ENDPOINT)
+            if CUSTOM_STT_ENDPOINT is not None:
+                transcription = await post_to_speech_stt(file_path, CUSTOM_STT_ENDPOINT)
                 transcription_result = transcription["text"]
+
             else:
                 transcription_result = await transcribe_audio(file_path)
 
@@ -293,48 +291,6 @@ if ENABLE_VOICE_SEARCH:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": "Internal server error"},
             )
-
-
-async def download_file_from_url(file_url: str) -> tuple[BytesIO, str, str]:
-    """
-    Asynchronously download a file from a given URL using the
-    global aiohttp ClientSession and return its content as a BytesIO object,
-    along with its content type and file extension.
-    """
-    async with get_http_client() as client:
-        try:
-            async with client.get(file_url) as response:
-                if response.status != 200:
-                    error_content = await response.text()
-                    logger.error(f"Failed to download file: {error_content}")
-                    raise ValueError(f"Failed to download file: {error_content}")
-
-                content_type = response.headers.get("Content-Type")
-                if not content_type:
-                    logger.error("Content-Type header missing in response")
-                    raise ValueError("Unable to determine file content type")
-
-                file_stream = BytesIO(await response.read())
-                file_extension = get_file_extension_from_mime_type(content_type)
-
-        except Exception as e:
-            logger.error(f"Error during file download: {str(e)}")
-            raise ValueError(f"Unable to fetch file: {str(e)}") from None
-
-    return file_stream, content_type, file_extension
-
-
-async def post_to_speech(file_path: str, endpoint_url: str) -> dict:
-    """
-    Post request the file to the speech endpoint to get the transcription
-    """
-    async with get_http_client() as client:
-        async with client.post(endpoint_url, json={"file_path": file_path}) as response:
-            if response.status != 200:
-                error_content = await response.json()
-                logger.error(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-                raise ValueError(f"Error from CUSTOM_SPEECH_ENDPOINT: {error_content}")
-            return await response.json()
 
 
 @identify_language__before

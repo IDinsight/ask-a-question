@@ -7,13 +7,13 @@ import {
   DialogTitle,
 } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import Papa from "papaparse";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
 import { Layout } from "@/components/Layout";
+import { getContentList, getTagList } from "../api";
 
 const MAX_CARDS_TO_FETCH = 200;
 
@@ -50,7 +50,7 @@ const DownloadModal = ({
 
   const fetchAndTransformContents = async () => {
     // fetch all contents
-    const raw_json_contents = await apiCalls.getContentList({
+    const raw_json_contents = await getContentList({
       token: token!,
       skip: 0,
       limit: MAX_CARDS_TO_FETCH,
@@ -59,7 +59,7 @@ const DownloadModal = ({
       return [];
     }
     // fetch all tags (to be able to map tag IDs to tag names)
-    const tags_json = await apiCalls.getTagList(token!);
+    const tags_json = await getTagList(token!);
     const tag_list = Object.values<Tag>(tags_json);
     const tag_dict = tag_list.reduce((acc: Record<string, string>, tag: Tag) => {
       acc[tag.tag_id] = tag.tag_name;

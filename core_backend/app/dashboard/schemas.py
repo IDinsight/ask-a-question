@@ -198,7 +198,6 @@ class TopicsData(BaseModel):
 
     refreshTimeStamp: str
     data: list[Topic]
-    unclustered_queries: list[dict[str, str]]
 
 
 class UserQuery(BaseModel):
@@ -209,6 +208,16 @@ class UserQuery(BaseModel):
     query_id: int
     query_text: str
     query_datetime_utc: datetime
+
+
+class BokehContentItem(BaseModel):
+    """
+    This class is used to define the schema for contents used in Bokeh plots
+    """
+
+    content_title: str
+    content_text: str
+    content_id: int
 
 
 class QueryCollection(BaseModel):
@@ -257,4 +266,4 @@ class AIFeedbackSummary(BaseModel):
     This class is used to define the schema for the AI feedback summary
     """
 
-    ai_summary: str
+    ai_summary: str | None

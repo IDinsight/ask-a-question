@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
+import sentry_sdk
 import sklearn  # noqa
 import torch  # noqa
 from fastapi import FastAPI
@@ -21,7 +22,15 @@ from . import (
     urgency_rules,
     user_tools,
 )
-from .config import CROSS_ENCODER_MODEL, DOMAIN, LANGFUSE, REDIS_HOST, USE_CROSS_ENCODER
+from .config import (
+    CROSS_ENCODER_MODEL,
+    DOMAIN,
+    LANGFUSE,
+    REDIS_HOST,
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+    USE_CROSS_ENCODER,
+)
 from .prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
@@ -158,4 +167,14 @@ def create_app() -> FastAPI:
     metrics_app = create_metrics_app()
     app.mount("/metrics", metrics_app)
 
+    if not SENTRY_DSN or SENTRY_DSN == "" or SENTRY_DSN == "https://...":
+        logger.warning("No SENTRY_DSN provided. Sentry is disabled.")
+    else:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=float(SENTRY_TRACES_SAMPLE_RATE),
+            _experiments={
+                "continuous_profiling_auto_start": True,
+            },
+        )
     return app

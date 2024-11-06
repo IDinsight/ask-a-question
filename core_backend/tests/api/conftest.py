@@ -43,6 +43,7 @@ from core_backend.app.utils import get_key_hash, get_password_salted_hash
 TEST_ADMIN_USERNAME = "admin"
 TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_API_KEY = "admin_api_key"
+TEST_ADMIN_RECOVERY_CODES = ["code1", "code2", "code3", "code4", "code5"]
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"
 TEST_USER_API_KEY = "test_api_key"
@@ -90,6 +91,8 @@ def admin_user(client: TestClient, db_session: Session) -> Generator:
         hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
         content_quota=None,
         api_daily_quota=None,
+        is_admin=True,
+        recovery_codes=TEST_ADMIN_RECOVERY_CODES,
         created_datetime_utc=datetime.utcnow(),
         updated_datetime_utc=datetime.utcnow(),
     )
@@ -129,6 +132,7 @@ def user(
             "password": TEST_PASSWORD,
             "content_quota": TEST_CONTENT_QUOTA,
             "api_daily_quota": TEST_API_QUOTA,
+            "is_admin": False,
         },
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
@@ -139,6 +143,7 @@ def user(
             "password": TEST_PASSWORD_2,
             "content_quota": TEST_CONTENT_QUOTA_2,
             "api_daily_quota": TEST_API_QUOTA_2,
+            "is_admin": False,
         },
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
@@ -310,12 +315,14 @@ def temp_user_api_key_and_api_quota(
             "password": "temp_password",
             "content_quota": 50,
             "api_daily_quota": api_daily_quota,
+            "is_admin": False,
         }
     else:
         json = {
             "username": username,
             "password": "temp_password",
             "content_quota": 50,
+            "is_admin": False,
         }
 
     client.post(
@@ -521,11 +528,11 @@ def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.speech_components.external_voice_components.upload_file_to_gcs",
+        "core_backend.app.llm_call.process_output.upload_file_to_gcs",
         async_fake_upload_file_to_gcs,
     )
     monkeysession.setattr(
-        "core_backend.app.question_answer.speech_components.external_voice_components.generate_public_url",
+        "core_backend.app.llm_call.process_output.generate_public_url",
         async_fake_generate_public_url,
     )
 

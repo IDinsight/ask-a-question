@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import React, { MouseEvent, useEffect, useState } from "react";
 
 import {
@@ -33,14 +32,14 @@ import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
+import { getContentList, getTagList, archiveContent } from "./api";
 import { useAuth } from "@/utils/auth";
 import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
-const MAX_CARDS_TO_FETCH = 200;
+const MAX_CARDS_TO_FETCH = 500;
 const CARD_HEIGHT = 250;
 
 export interface Tag {
@@ -89,7 +88,7 @@ const CardsPage = () => {
     if (token) {
       const fetchTags = async () => {
         if (token) {
-          const data = await apiCalls.getTagList(token);
+          const data = await getTagList(token);
           setTags(data);
         } else {
           setTags([]);
@@ -420,8 +419,6 @@ const CardsGrid = ({
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const searchParams = useSearchParams();
-
   const calculateMaxCardsPerPage = () => {
     // set rows as per height of each card and height of grid (approximated from window height)
     const gridHeight = window.innerHeight * 0.8;
@@ -470,8 +467,7 @@ const CardsGrid = ({
 
   React.useEffect(() => {
     if (token) {
-      apiCalls
-        .getContentList({ token: token, skip: 0, limit: MAX_CARDS_TO_FETCH })
+      getContentList({ token: token, skip: 0, limit: MAX_CARDS_TO_FETCH })
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
@@ -616,7 +612,7 @@ const CardsGrid = ({
                           });
                         }}
                         archiveContent={(content_id: number) => {
-                          return apiCalls.archiveContent(content_id, token!);
+                          return archiveContent(content_id, token!);
                         }}
                         editAccess={accessLevel === "fullaccess"}
                       />
