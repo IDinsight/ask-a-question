@@ -15,8 +15,6 @@ import { Content } from "../edit/page";
 import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
 
-const MAX_CARDS_TO_FETCH = 200;
-
 interface ContentDownload {
   content_id: number | null;
   title: string;
@@ -53,7 +51,6 @@ const DownloadModal = ({
     const raw_json_contents = await getContentList({
       token: token!,
       skip: 0,
-      limit: MAX_CARDS_TO_FETCH,
     });
     if (raw_json_contents.length === 0) {
       return [];
