@@ -200,15 +200,17 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
-  const { logout, user } = useAuth();
+  const { logout, user, role } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+  const [persistedRole, setPersistedRole] = React.useState<string | null>(null);
 
   useEffect(() => {
     // Save user to local storage when it changes
-    if (user) {
+    if (user && role) {
       localStorage.setItem("user", user);
+      localStorage.setItem("role", role);
     }
   }, [user]);
 
@@ -217,6 +219,10 @@ const UserDropdown = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setPersistedUser(storedUser);
+    }
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) {
+      setPersistedRole(storedRole);
     }
   }, []);
 
@@ -260,8 +266,11 @@ const UserDropdown = () => {
         <MenuItem
           key={"user-management"}
           onClick={() => {
-            router.push("/user-management");
+            if (persistedRole === "admin") {
+              router.push("/user-management");
+            }
           }}
+          disabled={persistedRole !== "admin"}
         >
           <Typography textAlign="center">User management</Typography>
         </MenuItem>

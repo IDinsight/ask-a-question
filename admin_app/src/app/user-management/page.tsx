@@ -20,7 +20,7 @@ import { appColors } from "@/utils";
 import { Layout } from "@/components/Layout";
 
 const UserManagement: React.FC = () => {
-  const { token } = useAuth();
+  const { token, role } = useAuth();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -65,6 +65,16 @@ const UserManagement: React.FC = () => {
     setCurrentUser(user);
     setShowEditModal(true);
   };
+
+  if (role !== "admin") {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Typography variant="h4" color="error">
+          [403] Access Denied
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Grid container sx={{ padding: 3 }}>
@@ -116,7 +126,7 @@ const UserManagement: React.FC = () => {
           >
             <List>
               {users.map((user, index) => (
-                <Layout.FlexBox>
+                <Layout.FlexBox key={user.user_id}>
                   <UserCardNew
                     index={index}
                     username={user.username}

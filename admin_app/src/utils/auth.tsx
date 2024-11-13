@@ -7,6 +7,7 @@ type AuthContextType = {
   token: string | null;
   user: string | null;
   accessLevel: "readonly" | "fullaccess";
+  role: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
   logout: () => void;
@@ -27,6 +28,7 @@ type AuthProviderProps = {
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
@@ -57,7 +59,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/";
 
     try {
-      const { access_token, access_level } = await apiCalls.getLoginToken(
+      const { access_token, access_level, role } = await apiCalls.getLoginToken(
         username,
         password,
       );
@@ -66,6 +68,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(username);
       setToken(access_token);
       setAccessLevel(access_level);
+      setUserRole(role);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -118,15 +121,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     token: token,
     user: user,
     accessLevel: accessLevel,
+    role: userRole,
     loginError: loginError,
     login: login,
     loginGoogle: loginGoogle,
     logout: logout,
   };
 
-  return (
-    <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

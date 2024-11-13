@@ -34,6 +34,29 @@ def temp_user_reset_password(
     yield (username, recovery_codes)
 
 
+class TestGetAllUsers:
+    def test_get_all_users(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.get(
+            "/user/all",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+        )
+
+        assert response.status_code == 200
+        json_response = response.json()
+        assert len(json_response) > 0
+
+    def test_get_all_users_non_admin(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
+        response = client.get(
+            "/user/all",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == 403
+
+
 class TestUserCreation:
 
     def test_admin_create_user(
@@ -128,6 +151,7 @@ class TestUserUpdate:
         )
         assert response.status_code == 200
         json_response = response.json()
+        print(json_response)
         assert json_response["content_quota"] == content_quota
 
     def test_admin_update_other_user(

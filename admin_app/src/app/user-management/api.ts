@@ -34,7 +34,7 @@ const createUser = async (user: UserBodyPassword, token: string) => {
 };
 const getUserList = async (token: string) => {
   try {
-    const response = await api.get("/user/", {
+    const response = await api.get("/user/all", {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

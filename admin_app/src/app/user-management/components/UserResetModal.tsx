@@ -60,7 +60,6 @@ const UserResetModal = ({ open, onClose, resetPassword, user }: UserModalProps) 
     const password = data.get("password") as string;
     const confirmPassword = data.get("confirm-password") as string;
     if (isFormValid(recoveryCode, password, confirmPassword)) {
-      console.log("resetting password", user?.username, recoveryCode, password);
       resetPassword(user?.username, recoveryCode, password);
       onClose();
     }

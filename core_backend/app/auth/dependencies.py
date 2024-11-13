@@ -74,8 +74,11 @@ async def authenticate_credentials(
         try:
             user_db = await get_user_by_username(username, asession)
             if verify_password_salted_hash(password, user_db.hashed_password):
+                role = "admin" if user_db.is_admin else "user"
                 # hardcode "fullaccess" now, but may use it in the future
-                return AuthenticatedUser(username=username, access_level="fullaccess")
+                return AuthenticatedUser(
+                    username=username, access_level="fullaccess", role=role
+                )
             else:
                 return None
         except UserNotFoundError:
@@ -93,8 +96,9 @@ async def authenticate_or_create_google_user(
     ) as asession:
         try:
             user_db = await get_user_by_username(google_email, asession)
+            role = "admin" if user_db.is_admin else "user"
             return AuthenticatedUser(
-                username=user_db.username, access_level="fullaccess"
+                username=user_db.username, access_level="fullaccess", role=role
             )
         except UserNotFoundError:
             user = UserCreate(
@@ -107,8 +111,9 @@ async def authenticate_or_create_google_user(
             await update_api_limits(
                 request.app.state.redis, user_db.username, user_db.api_daily_quota
             )
+            role = "admin" if user_db.is_admin else "user"
             return AuthenticatedUser(
-                username=user_db.username, access_level="fullaccess"
+                username=user_db.username, access_level="fullaccess", role=role
             )
 
 

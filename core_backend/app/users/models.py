@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy import (
@@ -193,7 +194,7 @@ async def get_user_by_api_key(
 
 async def get_all_users(
     asession: AsyncSession,
-) -> list[UserDB]:
+) -> Sequence[UserDB]:
     """
     Retrieves all users
     """

@@ -41,6 +41,7 @@ async def login(
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,
+        role=user.role,
     )
 
 

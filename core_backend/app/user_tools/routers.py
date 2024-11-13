@@ -87,7 +87,7 @@ async def create_first_user(
     return user_new
 
 
-@router.get("/", response_model=list[UserRetrieve])
+@router.get("/all", response_model=list[UserRetrieve])
 async def retrieve_users(
     admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
     asession: AsyncSession = Depends(get_async_session),
