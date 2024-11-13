@@ -1,5 +1,6 @@
 import api from "@/utils/api";
 interface UserBody {
+  sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
   username: string;
   is_admin: boolean;
@@ -21,7 +22,7 @@ const editUser = async (user_id: number, user: UserBody, token: string) => {
   }
 };
 
-const createUser = async (user: UserBody, token: string) => {
+const createUser = async (user: UserBodyPassword, token: string) => {
   try {
     const response = await api.post("/user/", user, {
       headers: { Authorization: `Bearer ${token}` },
@@ -80,12 +81,12 @@ const registerUser = async (username: string, password: string) => {
 };
 const resetPassword = async (
   username: string,
-  password: string,
   recovery_code: string,
+  password: string,
   token: string,
 ) => {
   try {
-    const response = await api.post(
+    const response = await api.put(
       "/user/reset-password",
       { username, password, recovery_code },
       {
@@ -101,5 +102,13 @@ const resetPassword = async (
   }
 };
 
-export { createUser, editUser, getUserList, getUser, getRegisterOption, registerUser };
+export {
+  createUser,
+  editUser,
+  getUserList,
+  getUser,
+  getRegisterOption,
+  registerUser,
+  resetPassword,
+};
 export type { UserBody, UserBodyPassword };

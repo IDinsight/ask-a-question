@@ -10,7 +10,11 @@ import React from "react";
 import { UserModal } from "@/app/user-management/components/UserCreateModal";
 import type { UserModalProps } from "@/app/user-management/components/UserCreateModal";
 const RegisterModal = (props: Omit<UserModalProps, "fields">) => (
-  <UserModal {...props} fields={["username", "password", "confirmPassword"]} />
+  <UserModal
+    {...props}
+    fields={["username", "password", "confirmPassword"]}
+    showCancel={false}
+  />
 );
 const AdminAlertModal = ({
   open,

@@ -435,8 +435,9 @@ const Login = () => {
           open={showRegisterModal}
           onClose={handleRegisterModalClose}
           onContinue={handleRegisterModalContinue}
-          registerUser={(user: UserBodyPassword) => {
-            return registerUser(user.username, user.password);
+          registerUser={(user: UserBodyPassword | UserBody) => {
+            const newUser = user as UserBodyPassword;
+            return registerUser(newUser.username, newUser.password);
           }}
         />
         <ConfirmationModal

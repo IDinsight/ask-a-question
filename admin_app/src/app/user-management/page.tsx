@@ -9,27 +9,29 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { UserCard, UserCardNew } from "./components/UserCard";
-import { editUser, getUserList } from "./api";
+import { UserCardNew } from "./components/UserCard";
+import { editUser, getUserList, resetPassword, UserBodyPassword } from "./api";
 import { useAuth } from "@/utils/auth";
 import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { createUser, UserBody } from "./api";
 import { UserResetModal } from "./components/UserResetModal";
 import { appColors } from "@/utils";
+import { Layout } from "@/components/Layout";
+
 const UserManagement: React.FC = () => {
   const { token } = useAuth();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showUserResetModal, setShowUserResetModal] = React.useState(false);
-  const [userToEdit, setUserToEdit] = React.useState<UserBody | undefined>(undefined);
+  const [currentUser, setCurrentUser] = React.useState<UserBody | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
   React.useEffect(() => {
-    getUserList(token!).then((data) => {
+    getUserList(token!).then((data: UserBody[]) => {
       const sortedData = data.sort((a: UserBody, b: UserBody) =>
         a.username.localeCompare(b.username),
       );
@@ -55,12 +57,12 @@ const UserManagement: React.FC = () => {
   };
 
   const handleResetPassword = (user: UserBody) => {
-    setUserToEdit(user);
+    setCurrentUser(user);
     setShowUserResetModal(true);
   };
 
   const handleEditUser = (user: UserBody) => {
-    setUserToEdit(user);
+    setCurrentUser(user);
     setShowEditModal(true);
   };
 
@@ -101,7 +103,8 @@ const UserManagement: React.FC = () => {
           <Paper
             elevation={0}
             sx={{
-              width: "100%",
+              marginLeft: 10,
+              marginRight: 10,
               paddingTop: 1,
               paddingBottom: 10,
               paddingInline: 3,
@@ -111,32 +114,50 @@ const UserManagement: React.FC = () => {
               borderColor: "lightgrey",
             }}
           >
-            {users.map((user, index) => {
-              const isLastItem = index === users.length - 1;
-
-              return (
-                //   <Grid item xs={12} sm={6} md={4} lg={3} key={user.user_id}>
-                //     {/* <UserCard
-                //     username={user.username}
-                //     isAdmin={user.is_admin}
-                //     onResetPassword={() => handleResetPassword(user)}
-                //     onEditUser={() => handleEditUser(user)}
-                //   /> */}
-                <List>
+            <List>
+              {users.map((user, index) => (
+                <Layout.FlexBox>
                   <UserCardNew
                     index={index}
                     username={user.username}
                     isAdmin={user.is_admin}
-                    isLastItem={isLastItem}
+                    isLastItem={index === users.length - 1}
                     hoveredIndex={hoveredIndex}
                     setHoveredIndex={setHoveredIndex}
                     onResetPassword={() => handleResetPassword(user)}
                     onEditUser={() => handleEditUser(user)}
                   />
-                </List>
-                //    </Grid>
-              );
-            })}
+                  <EditUserModal
+                    open={showEditModal}
+                    onClose={() => {
+                      setShowEditModal(false);
+                    }}
+                    user={currentUser!}
+                    onContinue={handleEditModalContinue}
+                    registerUser={(userToEdit: UserBody) => {
+                      return editUser(currentUser!.user_id!, userToEdit, token!);
+                    }}
+                    title={`Edit User: ${currentUser?.username}`}
+                    buttonTitle="Confirm"
+                  />
+                  <UserResetModal
+                    open={showUserResetModal}
+                    onClose={() => {
+                      setShowUserResetModal(false);
+                    }}
+                    onContinue={() => {}}
+                    resetPassword={(
+                      username: string,
+                      recoveryCode: string,
+                      password: string,
+                    ) => {
+                      return resetPassword(username, recoveryCode, password, token!);
+                    }}
+                    user={currentUser!}
+                  />
+                </Layout.FlexBox>
+              ))}
+            </List>
 
             <CreateUserModal
               open={showCreateModal}
@@ -144,41 +165,19 @@ const UserManagement: React.FC = () => {
                 setShowCreateModal(false);
               }}
               onContinue={handleRegisterModalContinue}
-              registerUser={(user) => {
-                return createUser(user, token!);
+              registerUser={(user: UserBodyPassword | UserBody) => {
+                return createUser(user as UserBodyPassword, token!);
               }}
               buttonTitle="Confirm"
             />
-            <EditUserModal
-              open={showEditModal}
-              onClose={() => {
-                setShowEditModal(false);
-              }}
-              user={userToEdit}
-              onContinue={handleEditModalContinue}
-              registerUser={(user) => {
-                return editUser(userToEdit!.user_id!, user, token!);
-              }}
-              title={`Edit User: ${userToEdit?.username}`}
-              buttonTitle="Confirm"
-            />
+
             <ConfirmationModal
               open={showConfirmationModal}
               onClose={() => {
                 setShowConfirmationModal(false);
               }}
               recoveryCodes={recoveryCodes}
-            />
-            <UserResetModal
-              open={showUserResetModal}
-              onClose={() => {
-                setShowUserResetModal(false);
-              }}
-              onContinue={() => {}}
-              registerUser={(user) => {
-                return editUser(userToEdit!.user_id!, user, token!);
-              }}
-              user={userToEdit}
+              dialogTitle="User Created"
             />
           </Paper>
         )}

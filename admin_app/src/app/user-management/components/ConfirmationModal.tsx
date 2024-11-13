@@ -15,11 +15,14 @@ const ConfirmationModal = ({
   open,
   onClose,
   recoveryCodes,
+  dialogTitle = "Admin User Created",
+
   closeButtonText = "Close",
 }: {
   open: boolean;
   onClose: () => void;
   recoveryCodes: string[];
+  dialogTitle?: string;
   closeButtonText?: string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
@@ -39,11 +42,11 @@ const ConfirmationModal = ({
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Admin User Created</DialogTitle>
+      <DialogTitle>{dialogTitle}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          The admin user has been successfully registered. Please save the recovery
-          codes below. You will not be able to see them again.
+          The user has been successfully registered. Please save the recovery codes
+          below. You will not be able to see them again.
         </DialogContentText>
         <TextField
           fullWidth

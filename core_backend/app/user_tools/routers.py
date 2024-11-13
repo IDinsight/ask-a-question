@@ -214,7 +214,6 @@ async def update_user(
     """
     Update user endpoint.
     """
-
     user_db = await get_user_by_id(user_id=user_id, asession=asession)
     if not user_db:
         raise HTTPException(status_code=404, detail="User not found.")

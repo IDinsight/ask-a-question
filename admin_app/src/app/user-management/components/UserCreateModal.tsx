@@ -59,12 +59,6 @@ const useForm = (fields: Array<keyof UseFormFields>, initialUser?: UseFormFields
             case "confirmPassword":
               errorState.confirmPassword = formData.confirmPassword === "";
               break;
-            case "contentLimit":
-              errorState.contentLimit = formData.contentLimit === "";
-              break;
-            case "apiCallLimit":
-              errorState.apiCallLimit = formData.apiCallLimit === "";
-              break;
           }
           return errorState;
         },
@@ -91,10 +85,11 @@ interface UserModalProps {
   open: boolean;
   onClose: () => void;
   onContinue: (data: any) => void;
-  registerUser: (user: UserBodyPassword) => Promise<any>;
+  registerUser: (user: UserBodyPassword | UserBody) => Promise<any>;
   fields?: Array<keyof UseFormFields>;
   title?: string;
   buttonTitle?: string;
+  showCancel?: boolean;
   user?: UserBody;
 }
 
@@ -106,6 +101,7 @@ const UserModal = ({
   fields = ["username", "password", "confirmPassword"],
   title = "Register User",
   buttonTitle = "Register",
+  showCancel = true,
   user,
 }: UserModalProps) => {
   const { formData, setFormData, errors, validateForm, handleInputChange } = useForm(
@@ -129,14 +125,23 @@ const UserModal = ({
   const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (validateForm()) {
-      const user = {
-        username: formData.username,
-        is_admin: formData.is_admin || false,
-        content_quota: parseInt(formData.contentLimit!),
-        api_daily_quota: parseInt(formData.apiCallLimit!),
-      } as UserBodyPassword;
-      console.log(user, "user");
-      const data = await registerUser(user);
+      console.log(user, "formData");
+      const newUser = user
+        ? ({
+            username: formData.username,
+            is_admin: formData.is_admin || false,
+
+            content_quota: parseInt(formData.contentLimit!),
+            api_daily_quota: parseInt(formData.apiCallLimit!),
+          } as UserBody)
+        : ({
+            username: formData.username,
+            is_admin: formData.is_admin || false,
+            password: formData.password,
+            content_quota: parseInt(formData.contentLimit!),
+            api_daily_quota: parseInt(formData.apiCallLimit!),
+          } as UserBodyPassword);
+      const data = await registerUser(newUser);
 
       if (data && data.username) {
         onContinue(data.recovery_codes);
@@ -251,6 +256,16 @@ const UserModal = ({
             </Box>
           )}
           <Box mt={1} width="100%" display="flex" justifyContent="center">
+            {showCancel && (
+              <Button
+                onClick={() => onClose()}
+                type="submit"
+                fullWidth
+                sx={{ maxWidth: "120px" }}
+              >
+                Cancel
+              </Button>
+            )}
             <Button
               onClick={handleRegister}
               type="submit"
