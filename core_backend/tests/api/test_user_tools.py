@@ -151,7 +151,6 @@ class TestUserUpdate:
         )
         assert response.status_code == 200
         json_response = response.json()
-        print(json_response)
         assert json_response["content_quota"] == content_quota
 
     def test_admin_update_other_user(
