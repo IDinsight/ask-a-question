@@ -125,7 +125,6 @@ const UserModal = ({
   const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (validateForm()) {
-      console.log(user, "formData");
       const newUser = user
         ? ({
             username: formData.username,
