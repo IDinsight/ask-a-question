@@ -39,7 +39,6 @@ import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
-const MAX_CARDS_TO_FETCH = 500;
 const CARD_HEIGHT = 250;
 
 export interface Tag {
@@ -467,7 +466,7 @@ const CardsGrid = ({
 
   React.useEffect(() => {
     if (token) {
-      getContentList({ token: token, skip: 0, limit: MAX_CARDS_TO_FETCH })
+      getContentList({ token: token, skip: 0 })
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =

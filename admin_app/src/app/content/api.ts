@@ -8,7 +8,7 @@ interface ContentBody {
 const getContentList = async ({
   token,
   skip = 0,
-  limit = 200,
+  limit = 0,
 }: {
   token: string;
   skip?: number;
