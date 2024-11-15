@@ -23,7 +23,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref_name }}" == "main" ]; then
+          elif [ "${{ github.ref_name }}" == "release" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
             echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
