@@ -29,7 +29,8 @@ repos:
     hooks:
       - id: mypy
         exclude: ^data/|^scripts/
-        additional_dependencies: [types-PyYAML==6.0.12.12, types-python-dateutil, redis]
+        additional_dependencies:
+          [types-PyYAML==6.0.12.12, types-python-dateutil, redis, types-requests]
         args: [--ignore-missing-imports, --explicit-package-base]
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v3.0.3" # Use the sha / tag you want to point at
