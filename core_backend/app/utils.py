@@ -6,6 +6,7 @@ import logging
 import mimetypes
 import os
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import Logger
@@ -370,3 +371,18 @@ async def generate_public_url(bucket_name: str, blob_name: str) -> str:
 
     public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
     return public_url
+
+
+def generate_random_int32() -> int:
+    """Generate a random 32-bit signed integer.
+
+    Returns
+    -------
+    int
+        A random 32-bit signed integer.
+    """
+
+    rand_int = int(uuid.uuid4().int & (1 << 32) - 1)  # Mask to fit in 32 bits
+    if rand_int >= 2**31:  # Convert to signed 32-bit integer
+        rand_int -= 2**32
+    return rand_int
