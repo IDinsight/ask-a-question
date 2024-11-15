@@ -13,6 +13,7 @@ class AuthenticatedUser(BaseModel):
 
     username: str
     access_level: AccessLevel
+    role: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,5 +38,6 @@ class AuthenticationDetails(BaseModel):
     token_type: TokenType
     access_level: AccessLevel
     username: str
+    role: str
 
     model_config = ConfigDict(from_attributes=True)

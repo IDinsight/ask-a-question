@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy import (
@@ -189,6 +190,19 @@ async def get_user_by_api_key(
         return user
     except NoResultFound as err:
         raise UserNotFoundError("User with given token does not exist.") from err
+
+
+async def get_all_users(
+    asession: AsyncSession,
+) -> Sequence[UserDB]:
+    """
+    Retrieves all users
+    """
+
+    stmt = select(UserDB)
+    result = await asession.execute(stmt)
+    users = result.scalars().all()
+    return users
 
 
 async def update_user_in_db(
