@@ -2,7 +2,6 @@
 
 import json
 import re
-from textwrap import dedent
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
@@ -107,10 +106,8 @@ async def _get_chat_response(
     original_message_params: dict[str, Any],
     redis_client: aioredis.Redis,
     session_id: str,
-    use_zero_shot_cot: bool = False,
 ) -> str:
-    """Get the appropriate response and update the chat history. This method also wraps
-    potential Zero-Shot CoT calls.
+    """Get the appropriate response and update the chat history.
 
     Parameters
     ----------
@@ -126,17 +123,12 @@ async def _get_chat_response(
         The Redis client.
     session_id
         The session ID for the chat.
-    use_zero_shot_cot
-        Specifies whether to use Zero-Shot CoT to answer the query.
 
     Returns
     -------
     str
         The appropriate chat response.
     """
-
-    if use_zero_shot_cot:
-        original_message_params["prompt"] += "\n\nLet's think step by step."
 
     prompt = format_prompt(
         prompt=original_message_params["prompt"],
@@ -296,6 +288,7 @@ def append_system_message_to_chat_history(
     model: str,
     model_context_length: int,
     session_id: str,
+    system_message: Optional[str] = None,
     total_tokens_for_next_generation: int,
 ) -> list[dict[str, str]]:
     """Append the system message to the chat history.
@@ -311,6 +304,8 @@ def append_system_message_to_chat_history(
         length for the model (i.e, maximum number of input + output tokens).
     session_id
         The session ID for the chat.
+    system_message
+        The system message to be added to the beginning of the chat history.
     total_tokens_for_next_generation
         The total number of tokens during text generation.
 
@@ -321,36 +316,7 @@ def append_system_message_to_chat_history(
     """
 
     chat_history = chat_history or []
-    system_message = dedent(
-        """You are an AI assistant designed to help expecting and new mothers with
-        their questions/concerns related to prenatal and newborn care. You interact
-        with mothers via a chat interface.
-
-        For each message from a mother, follow these steps:
-
-        1. Determine the Type of Message:
-            - Follow-up Message: These are messages that build upon the conversation so
-            far and/or seeks more information on a previously discussed
-            question/concern.
-            - Clarification Message: These are messages that seek to clarify something
-            that was previously mentioned in the conversation.
-            - New Message: These are messages that introduce a new topic that was not
-            previously discussed in the conversation.
-
-        2. Obtain More Information to Help Address the Message:
-            - Keep in mind the context given by the conversation history thus far.
-            - Use the conversation history and the Type of Message to formulate a
-            precise query to execute against a vector database that contains
-            information relevant to the current message.
-            - Ensure the query is specific and accurately reflects the mother's
-            information needs.
-            - Use specific keywords that captures the semantic meaning of the mother's
-            information needs.
-
-        Output the vector database query between the tags <Query> and </Query>, without
-        any additional text.
-        """
-    )
+    system_message = system_message or "You are a helpful assistant."
     return append_message_to_chat_history(
         chat_history=chat_history,
         content=system_message,
@@ -398,7 +364,6 @@ async def get_chat_response(
     original_message_params: str | dict[str, Any],
     redis_client: aioredis.Redis,
     session_id: str,
-    use_zero_shot_cot: bool = False,
 ) -> str:
     """Get the appropriate chat response.
 
@@ -419,8 +384,6 @@ async def get_chat_response(
         The Redis client.
     session_id
         The session ID for the chat.
-    use_zero_shot_cot
-        Specifies whether to use Zero-Shot CoT to answer the query.
 
     Returns
     -------
@@ -455,7 +418,6 @@ async def get_chat_response(
         original_message_params={"prompt": formatted_prompt},
         redis_client=redis_client,
         session_id=session_id,
-        use_zero_shot_cot=use_zero_shot_cot,
     )
 
 
@@ -466,6 +428,7 @@ async def init_chat_history(
     redis_client: aioredis.Redis,
     reset: bool,
     session_id: Optional[str] = None,
+    system_message: Optional[str] = None,
 ) -> tuple[str, str, list[dict[str, str]], str]:
     """Initialize the chat history. Chat history initialization involves initializing
     both the chat parameters **and** the chat history for the session. Thus, chat
@@ -488,6 +451,8 @@ async def init_chat_history(
     session_id
         The session ID for the chat. If `None`, then a randomly generated session ID
         will be used.
+    system_message
+        The system message to be added to the beginning of the chat history.
 
     Returns
     -------
@@ -540,6 +505,7 @@ async def init_chat_history(
         model=chat_params["model"],
         model_context_length=chat_params["max_input_tokens"],
         session_id=session_id,
+        system_message=system_message,
         total_tokens_for_next_generation=chat_params["max_output_tokens"],
     )
     await redis_client.set(session_id, json.dumps(chat_history))
