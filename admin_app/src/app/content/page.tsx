@@ -569,7 +569,7 @@ const CardsGrid = ({
                 </Typography>
               </p>
               <p>
-                <Typography variant="h6" color={appColors.darkGrey}>
+                <Typography variant="body1" color={appColors.darkGrey}>
                   Try adding new content or changing your search or tag filters.
                 </Typography>
               </p>
