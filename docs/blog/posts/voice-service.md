@@ -16,7 +16,7 @@ We're excited to unveil our new **End-to-End Speech Service** for AAQ! This powe
 Take a look at it it in action, integrating with a typical WhatsApp chat via the [Typebot](https://typebot.io/) chatflow manager:
 
 ![Voice-workflow](../images/voice-workflow.gif){: .blog-img }
-*A demonstration using the E2E speech pipeline to ask AAQ --- what should I eat during pregnancy ---*
+<p style="text-align:center"><em>A demonstration using the E2E speech pipeline to ask AAQ "What should I eat during pregnancy?"<em></p>
 
 ## **Why did we build this?**
 
@@ -54,7 +54,7 @@ Here's an example of the response model returned by the endpoint:
             "distance": 0.2,
         },
     },
-    "feedback_secret_key": "secret-key-12345-abcde",
+    "feedback_secret_key": "secret-key-12345-abcde",  // pragma: allowlist secret
     "debug_info": {"example": "debug-info"},
     "tts_filepath": "https://storage.googleapis.com/example-bucket/random_uuid_filename.mp3"
 }
