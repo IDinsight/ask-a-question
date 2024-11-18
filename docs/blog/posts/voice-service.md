@@ -54,7 +54,7 @@ Here's an example of the response model returned by the endpoint:
             "distance": 0.2,
         },
     },
-    "feedback_secret_key": "secret-key-12345-abcde",  // pragma: allowlist secret
+    "feedback_secret_key": "secret-key-12345-abcde",
     "debug_info": {"example": "debug-info"},
     "tts_filepath": "https://storage.googleapis.com/example-bucket/random_uuid_filename.mp3"
 }
