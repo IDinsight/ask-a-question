@@ -34,7 +34,7 @@ const createUser = async (user: UserBodyPassword, token: string) => {
 };
 const getUserList = async (token: string) => {
   try {
-    const response = await api.get("/user/all", {
+    const response = await api.get("/user/", {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -45,7 +45,7 @@ const getUserList = async (token: string) => {
 
 const getUser = async (token: string) => {
   try {
-    const response = await api.get("/user/", {
+    const response = await api.get("/user/current-user", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -87,8 +87,8 @@ async def create_first_user(
     return user_new
 
 
-@router.get("/all", response_model=list[UserRetrieve])
-async def retrieve_users(
+@router.get("/", response_model=list[UserRetrieve])
+async def retrieve_all_users(
     admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UserRetrieve] | None:
@@ -241,7 +241,7 @@ async def update_user(
     )
 
 
-@router.get("/", response_model=UserRetrieve)
+@router.get("/current-user", response_model=UserRetrieve)
 async def get_user(
     user_db: Annotated[UserDB, Depends(get_current_user)],
 ) -> UserRetrieve | None:

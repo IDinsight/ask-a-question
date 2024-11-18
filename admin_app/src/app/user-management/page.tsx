@@ -9,7 +9,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { UserCardNew } from "./components/UserCard";
+import { UserCard } from "./components/UserCard";
 import { editUser, getUserList, resetPassword, UserBodyPassword } from "./api";
 import { useAuth } from "@/utils/auth";
 import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
@@ -66,7 +66,7 @@ const UserManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
-  if (role !== "admin") {
+  if (!role) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <Typography variant="h4" color="error">
@@ -127,7 +127,7 @@ const UserManagement: React.FC = () => {
             <List>
               {users.map((user, index) => (
                 <Layout.FlexBox key={user.user_id}>
-                  <UserCardNew
+                  <UserCard
                     index={index}
                     username={user.username}
                     isAdmin={user.is_admin}

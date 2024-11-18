@@ -204,13 +204,13 @@ const UserDropdown = () => {
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
-  const [persistedRole, setPersistedRole] = React.useState<string | null>(null);
+  const [persistedRole, setPersistedRole] = React.useState<boolean | null>(null);
 
   useEffect(() => {
     // Save user to local storage when it changes
-    if (user && role) {
+    if (user) {
       localStorage.setItem("user", user);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", String(role));
     }
   }, [user]);
 
@@ -222,9 +222,9 @@ const UserDropdown = () => {
     }
     const storedRole = localStorage.getItem("role");
     if (storedRole) {
-      setPersistedRole(storedRole);
+      setPersistedRole(Boolean(storedRole));
     }
-  }, []);
+  }, [user]);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -266,11 +266,11 @@ const UserDropdown = () => {
         <MenuItem
           key={"user-management"}
           onClick={() => {
-            if (persistedRole === "admin") {
+            if (persistedRole) {
               router.push("/user-management");
             }
           }}
-          disabled={persistedRole !== "admin"}
+          disabled={!persistedRole}
         >
           <Typography textAlign="center">User management</Typography>
         </MenuItem>

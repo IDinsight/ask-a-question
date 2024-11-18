@@ -176,7 +176,7 @@ const UserModal = ({
           )}
           {fields.includes("username") && (
             <TextField
-              margin="normal"
+              margin="none"
               error={errors.username}
               helperText={errors.username ? "Please enter a username" : " "}
               required
@@ -188,7 +188,7 @@ const UserModal = ({
           )}
           {fields.includes("password") && (
             <TextField
-              margin="normal"
+              margin="none"
               error={errors.password}
               helperText={errors.password ? "Please enter a password" : " "}
               required
@@ -201,7 +201,7 @@ const UserModal = ({
           )}
           {fields.includes("confirmPassword") && (
             <TextField
-              margin="normal"
+              margin="none"
               error={errors.confirmPasswordMatch}
               helperText={errors.confirmPasswordMatch ? "Passwords do not match" : " "}
               required
@@ -215,7 +215,7 @@ const UserModal = ({
           {fields.includes("contentLimit") && fields.includes("apiCallLimit") && (
             <Box display="flex" justifyContent="space-between" width="100%" mt={2}>
               <TextField
-                margin="normal"
+                margin="none"
                 error={errors.contentLimit}
                 helperText={errors.contentLimit ? "Enter content limit" : " "}
                 required
@@ -226,7 +226,7 @@ const UserModal = ({
                 onChange={handleInputChange("contentLimit")}
               />
               <TextField
-                margin="normal"
+                margin="none"
                 error={errors.apiCallLimit}
                 helperText={errors.apiCallLimit ? "Enter API call limit" : " "}
                 required

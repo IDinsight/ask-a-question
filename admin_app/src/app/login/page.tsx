@@ -102,12 +102,12 @@ const Login = () => {
     }
   }, [recoveryCodes]);
 
-  const handleAdminModalClose = (event?: {}, reason?: string) => {
+  const handleAdminModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowAdminAlertModal(false);
     }
   };
-  const handleRegisterModalClose = (event?: {}, reason?: string) => {
+  const handleRegisterModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowRegisterModal(false);
     }

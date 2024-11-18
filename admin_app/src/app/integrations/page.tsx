@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import { format } from "date-fns";
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
 
