@@ -135,7 +135,7 @@ async def chat(
     returned that includes the search results as well as the details of the failure.
     """
 
-    reset_user_assistant_chat_history = False  # For testing purposes only
+    reset_user_assistant_chat_history = True  # For testing purposes only
     user_query.session_id = 666  # For testing purposes only
 
     # 1.
