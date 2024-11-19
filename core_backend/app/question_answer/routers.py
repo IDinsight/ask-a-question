@@ -13,7 +13,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import CUSTOM_STT_ENDPOINT, GCS_SPEECH_BUCKET, USE_CROSS_ENCODER
+from ..config import (
+    CUSTOM_STT_ENDPOINT,
+    GCS_SPEECH_BUCKET,
+    REDIS_CHAT_CACHE_EXPIRY_TIME,
+    USE_CROSS_ENCODER,
+)
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -33,9 +38,11 @@ from ..llm_call.process_output import (
     generate_tts__after,
 )
 from ..llm_call.utils import (
-    append_message_to_chat_history,
+    append_content_to_chat_history,
+    append_messages_to_chat_history,
     get_chat_response,
     init_chat_history,
+    log_chat_history,
     strip_tags,
 )
 from ..question_answer.utils import get_context_string_from_search_results
@@ -44,7 +51,6 @@ from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
-    generate_random_int32,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -105,35 +111,34 @@ async def chat(
     """Chat endpoint manages a conversation between the user and the LLM agent. The
     conversation history is stored in a Redis cache. The process is as follows:
 
-    1. Assign a default session ID if not provided.
-    2. Get the refined user query and response templates. Ensure that
-        `generate_llm_response` is set to `True` for the chat manager.
-    3. Initialize the chat history for the search query chat cache and the user query
-        chat cache. NB: The chat parameters for the search query chat are the same as
-        the chat parameters for the user query chat.
-    4. Get the chat response for the search query chat. The search query chat contains
-        a system message that is designed to construct a refined search query using the
-        original user query and the conversation history from the user query chat
-        (**without** the user query chat's system message).
-    5. Get the search results from the database.
-    6a. If we are generating an LLM response, then we get the LLM generation response
+    1. Get the refined user query and response templates.
+    2. Initialize the search query and user assistant chat histories. NB: The chat
+        parameters for the search query chat are the same as the chat parameters for
+        the user assistant chat.
+    3. Invoke the LLM to construct a relevant database search query that is
+        contextualized on the latest user message and the user assistant chat history.
+        The search query chat contains a system message that instructs the LLM to
+        construct a refined search query using the latest user message and the
+        conversation history from the user assistant chat (**without** the user
+        assistant chat's system message).
+    4. Get the search results from the database.
+    5a. If we are generating an LLM response, then get the LLM generation response
         using the chat history as additional context.
-    6b. If we are not generating an LLM response, then directly append the user query
-        and the search results to the user query chat history. NB: In this case, the
-        system message has no effect on the chat history.
-    7. Update the user query chat cache with the updated chat history. NB: There is no
-        need to update the search query chat cache since the chat history for the
-        search query conversation uses the chat history from the user query
-        conversation.
+    5b. If we are not generating an LLM response, then directly append the user query
+        and the search results to the user assistant chat history. NB: In this case,
+        the system message has no effect on the user assistant chat.
+    6. Update the user assistant chat cache with the updated chat history. NB: There is
+        no need to update the search query chat cache since the chat history for the
+        search query conversation uses the chat history from the user assistant chat.
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
     """
 
-    # 1.
-    user_query.session_id = user_query.session_id or generate_random_int32()
+    reset_user_assistant_chat_history = False  # For testing purposes only
+    user_query.session_id = 666  # For testing purposes only
 
-    # 2.
+    # 1.
     (
         user_query_db,
         user_query_refined_template,
@@ -145,46 +150,67 @@ async def chat(
         generate_tts=False,
     )
 
-    # 3.
+    # 2.
     redis_client = request.app.state.redis
     session_id = str(user_query_db.session_id)
     chat_cache_key = f"chatCache:{session_id}"
     chat_params_cache_key = f"chatParamsCache:{session_id}"
-    chat_search_query_cache_key = f"chatSearchQueryCache:{session_id}"
-    _, _, chat_search_query_history, chat_params, _ = await init_chat_history(
-        chat_cache_key=chat_search_query_cache_key,
-        chat_params_cache_key=chat_params_cache_key,
-        redis_client=redis_client,
-        reset=True,
-        session_id=session_id,
-        system_message=(
-            ChatHistory.system_message_construct_search_query
-            if user_query_refined_template.generate_llm_response
-            else None
-        ),
-    )
-    _, _, chat_history, _, _ = await init_chat_history(
+
+    logger.info(f"Using chat cache ID: {chat_cache_key}")
+    logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
+    logger.info(f"{reset_user_assistant_chat_history = }")
+
+    _, _, user_assistant_chat_history, chat_params, _ = await init_chat_history(
         chat_cache_key=chat_cache_key,
         chat_params_cache_key=chat_params_cache_key,
         redis_client=redis_client,
-        reset=False,
+        reset=reset_user_assistant_chat_history,
         session_id=session_id,
         system_message=ChatHistory.system_message_generate_response.format(
             failure_message=RAG_FAILURE_MESSAGE,
             original_language=user_query_refined_template.original_language,
         ),
     )
+    model = str(chat_params["model"])
+    model_context_length = int(chat_params["max_input_tokens"])
+    total_tokens_for_next_generation = int(chat_params["max_output_tokens"])
+    search_query_chat_history: list[dict[str, str | None]] = []
+    append_content_to_chat_history(
+        chat_history=search_query_chat_history,
+        content=ChatHistory.system_message_construct_search_query,
+        model=model,
+        model_context_length=model_context_length,
+        name=session_id,
+        role="system",
+        total_tokens_for_next_generation=total_tokens_for_next_generation,
+    )
 
-    # 4.
-    index = 1 if chat_history[0].get("role", None) == "system" else 0
-    chat_search_query_history, new_query_text = await get_chat_response(
-        chat_history=chat_search_query_history + chat_history[index:],
+    # 3.
+    index = 1 if user_assistant_chat_history[0]["role"] == "system" else 0
+    search_query_chat_history += user_assistant_chat_history[index:]
+
+    log_chat_history(
+        chat_history=user_assistant_chat_history,
+        context="USER ASSISTANT CHAT HISTORY AT START",
+    )
+    log_chat_history(
+        chat_history=search_query_chat_history,
+        context="SEARCH QUERY CHAT HISTORY AT START",
+    )
+
+    new_query_text = await get_chat_response(
+        chat_history=search_query_chat_history,
         chat_params=chat_params,
-        original_message_params=user_query_refined_template.query_text,
+        message_params=user_query_refined_template.query_text,
         session_id=session_id,
     )
 
-    # 5.
+    log_chat_history(
+        chat_history=search_query_chat_history,
+        context="SEARCH QUERY CHAT HISTORY AFTER CONSTRUCTING NEW SEARCH QUERY",
+    )
+
+    # 4.
     new_query_text = strip_tags(tag="Query", text=new_query_text)[0]
     user_query_refined_template.query_text = new_query_text
     response = await get_search_response(
@@ -199,48 +225,52 @@ async def chat(
         paraphrase=False,  # No need to paraphrase the search query again
     )
 
-    # 6a.
+    # 5a.
     if user_query_refined_template.generate_llm_response:
-        response, chat_history = await get_generation_response(
+        response, user_assistant_chat_history = await get_generation_response(
             query_refined=user_query_refined_template,
             response=response,
-            chat_history=chat_history,
+            use_chat_history=True,
+            chat_history=user_assistant_chat_history,
             chat_params=chat_params,
             session_id=session_id,
         )
-    # 6b.
+    # 5b.
     else:
-        chat_history = append_message_to_chat_history(
-            chat_history=chat_history,
-            message={
-                "content": user_query_refined_template.query_text_original,
-                "name": session_id,
-                "role": "user",
-            },
-            model=chat_params["model"],
-            model_context_length=chat_params["max_input_tokens"],
-            total_tokens_for_next_generation=chat_params["max_output_tokens"],
-        )
-        content = get_context_string_from_search_results(response.search_results)
-        chat_history = append_message_to_chat_history(
-            chat_history=chat_history,
-            message={
-                "content": content,
-                "role": "assistant",
-            },
-            model=chat_params["model"],
-            model_context_length=chat_params["max_input_tokens"],
-            total_tokens_for_next_generation=chat_params["max_output_tokens"],
+        append_messages_to_chat_history(
+            chat_history=user_assistant_chat_history,
+            messages=[
+                {
+                    "content": user_query_refined_template.query_text_original,
+                    "name": session_id,
+                    "role": "user",
+                },
+                {
+                    "content": get_context_string_from_search_results(
+                        response.search_results
+                    ),
+                    "name": session_id,
+                    "role": "assistant",
+                },
+            ],
+            model=model,
+            model_context_length=model_context_length,
+            total_tokens_for_next_generation=total_tokens_for_next_generation,
         )
 
-    # 7.
-    await redis_client.set(chat_cache_key, json.dumps(chat_history))
-    chat_history_at_end = await redis_client.get(chat_cache_key)
-    chat_search_query_history_at_end = await redis_client.get(
-        chat_search_query_cache_key
+    # 6.
+    await redis_client.set(
+        chat_cache_key,
+        json.dumps(user_assistant_chat_history),
+        ex=REDIS_CHAT_CACHE_EXPIRY_TIME,
     )
-    print(f"\n{chat_history_at_end = }\n")
-    print(f"\n{chat_search_query_history_at_end = }\n")
+    user_assistant_chat_history_at_end = json.loads(
+        await redis_client.get(chat_cache_key)
+    )
+    log_chat_history(
+        chat_history=user_assistant_chat_history_at_end,
+        context="USER ASSISTANT CHAT HISTORY AT END",
+    )
 
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -594,10 +624,11 @@ def rerank_search_results(
 async def get_generation_response(
     query_refined: QueryRefined,
     response: QueryResponse,
-    chat_history: Optional[list[dict[str, str]]] = None,
+    use_chat_history: bool = False,
+    chat_history: Optional[list[dict[str, str | None]]] = None,
     chat_params: Optional[dict[str, Any]] = None,
     session_id: Optional[str] = None,
-) -> tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str]]]]:
+) -> tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str | None]]]]:
     """Generate a response using an LLM given a query with search results. If
     `chat_history` and `chat_params` are provided, then the response is generated
     based on the chat history.
@@ -611,12 +642,14 @@ async def get_generation_response(
         The refined query object.
     response
         The query response object.
+    use_chat_history
+        Specifies whether to generate a response using the chat history.
     chat_history
-        The chat history.
+        The chat history. Required if `use_chat_history` is True.
     chat_params
-        The chat parameters.
+        The chat parameters. Required if `use_chat_history` is True.
     session_id
-        The session ID for the chat.
+        The session ID for the chat. Required if `use_chat_history` is True.
 
     Returns
     -------
@@ -638,6 +671,7 @@ async def get_generation_response(
         query_refined=query_refined,
         response=response,
         session_id=session_id,
+        use_chat_history=use_chat_history,
     )
     return response, chat_history
 

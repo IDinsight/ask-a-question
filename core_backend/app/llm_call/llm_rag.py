@@ -11,7 +11,7 @@ from ..utils import setup_logger
 from .llm_prompts import RAG, IdentifiedLanguage
 from .utils import (
     _ask_llm_async,
-    append_message_to_chat_history,
+    append_messages_to_chat_history,
     get_chat_response,
     remove_json_markdown,
     strip_tags,
@@ -52,7 +52,7 @@ async def get_llm_rag_answer(
         system_message=prompt,
         litellm_model=LITELLM_MODEL_GENERATION,
         metadata=metadata,
-        json=True,
+        json_=True,
     )
 
     result = remove_json_markdown(result)
@@ -68,13 +68,13 @@ async def get_llm_rag_answer(
 
 async def get_llm_rag_answer_with_chat_history(
     *,
-    chat_history: list[dict[str, str]],
+    chat_history: list[dict[str, str | None]],
     chat_params: dict[str, Any],
     context: str,
     metadata: dict | None = None,
     question: str,
     session_id: str,
-) -> tuple[RAG, list[dict[str, str]]]:
+) -> tuple[RAG, list[dict[str, str | None]]]:
     """Get an answer from the LLM model using RAG with chat history.
 
     Parameters
@@ -110,12 +110,12 @@ async def get_llm_rag_answer_with_chat_history(
     =====================================
     """
     )
-    chat_history, content = await get_chat_response(
+    content = await get_chat_response(
         chat_history=chat_history,
         chat_params=chat_params,
-        original_message_params=content,
+        message_params=content,
         session_id=session_id,
-        json=True,
+        json_=True,
         metadata=metadata or {},
     )
     result = strip_tags(tag="JSON", text=content)[0]
@@ -128,17 +128,15 @@ async def get_llm_rag_answer_with_chat_history(
 
     # First pop is the assistant response.
     _, last_user_content = chat_history.pop(), chat_history.pop()
+
+    # Revert the last user content to the original question.
     last_user_content["content"] = question
-    chat_history = append_message_to_chat_history(
+    append_messages_to_chat_history(
         chat_history=chat_history,
-        message=last_user_content,
-        model=chat_params["model"],
-        model_context_length=chat_params["max_input_tokens"],
-        total_tokens_for_next_generation=chat_params["max_output_tokens"],
-    )
-    chat_history = append_message_to_chat_history(
-        chat_history=chat_history,
-        message={"content": response.answer, "role": "assistant"},
+        messages=[
+            last_user_content,
+            {"content": response.answer, "name": session_id, "role": "assistant"},
+        ],
         model=chat_params["model"],
         model_context_length=chat_params["max_input_tokens"],
         total_tokens_for_next_generation=chat_params["max_output_tokens"],
