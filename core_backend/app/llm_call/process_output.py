@@ -35,10 +35,7 @@ from ..utils import (
 )
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer, get_llm_rag_answer_with_chat_history
-from .utils import (
-    _ask_llm_async,
-    remove_json_markdown,
-)
+from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger("OUTPUT RAILS")
 
@@ -54,13 +51,14 @@ class AlignScoreData(TypedDict):
 
 async def generate_llm_query_response(
     *,
-    chat_history: Optional[list[dict[str, str]]] = None,
+    chat_history: Optional[list[dict[str, str | None]]] = None,
     chat_params: Optional[dict[str, Any]] = None,
     metadata: Optional[dict] = None,
     query_refined: QueryRefined,
     response: QueryResponse,
     session_id: Optional[str] = None,
-) -> tuple[QueryResponse, Optional[list[dict[str, str]]]]:
+    use_chat_history: bool = False,
+) -> tuple[QueryResponse, Optional[list[dict[str, str | None]]]]:
     """Generate the LLM response. If `chat_history`, `chat_params`, and `session_id`
     are provided, then the response is generated based on the chat history.
 
@@ -82,6 +80,8 @@ async def generate_llm_query_response(
         The query response object.
     session_id
         The session ID for the chat.
+    use_chat_history
+        Specifies whether to use the chat history when generating the response.
 
     Returns
     -------
@@ -100,7 +100,8 @@ async def generate_llm_query_response(
         return response, chat_history
 
     context = get_context_string_from_search_results(response.search_results)
-    if isinstance(chat_history, list) and chat_history:
+    if use_chat_history:
+        assert isinstance(chat_history, list) and chat_history
         assert isinstance(chat_params, dict) and chat_params
         assert isinstance(session_id, str) and session_id
         rag_response, chat_history = await get_llm_rag_answer_with_chat_history(
@@ -249,7 +250,7 @@ async def _get_llm_align_score(
         system_message=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
-        json=True,
+        json_=True,
     )
 
     try:
