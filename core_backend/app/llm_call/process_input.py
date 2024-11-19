@@ -316,9 +316,10 @@ def paraphrase_question__before(func: Callable) -> Callable:
             query_id=response.query_id, user_id=query_refined.user_id
         )
 
-        query_refined, response = await _paraphrase_question(
-            query_refined, response, metadata=metadata
-        )
+        if kwargs.get("paraphrase", True):
+            query_refined, response = await _paraphrase_question(
+                query_refined, response, metadata=metadata
+            )
         response = await func(query_refined, response, *args, **kwargs)
 
         return response
