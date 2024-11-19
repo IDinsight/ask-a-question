@@ -10,8 +10,11 @@ from litellm import acompletion, token_counter
 from termcolor import colored
 
 from ..config import (
+    LITELLM_API_KEY,
     LITELLM_ENDPOINT,
+    LITELLM_MODEL_CHAT,
     LITELLM_MODEL_DEFAULT,
+    REDIS_CHAT_CACHE_EXPIRY_TIME,
 )
 from ..utils import generate_random_int32, setup_logger
 
@@ -88,84 +91,14 @@ async def _ask_llm_async(
     llm_response_raw = await acompletion(
         model=litellm_model,
         messages=messages,
-        # api_base=litellm_endpoint,
-        # api_key=LITELLM_API_KEY,
+        api_base=litellm_endpoint,
+        api_key=LITELLM_API_KEY,
         metadata=metadata,
         **extra_kwargs,
         **llm_generation_params,
     )
     logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")
     return llm_response_raw.choices[0].message.content
-
-
-async def _get_chat_response(
-    *,
-    chat_cache_key: str,
-    chat_history: list[dict[str, str]],
-    chat_params: dict[str, Any],
-    original_message_params: dict[str, Any],
-    redis_client: aioredis.Redis,
-    session_id: str,
-) -> str:
-    """Get the appropriate response and update the chat history.
-
-    Parameters
-    ----------
-    chat_cache_key
-        The chat cache key.
-    chat_history
-        The chat history buffer.
-    chat_params
-        Dictionary containing the chat parameters.
-    original_message_params
-        Dictionary containing the original message parameters.
-    redis_client
-        The Redis client.
-    session_id
-        The session ID for the chat.
-
-    Returns
-    -------
-    str
-        The appropriate chat response.
-    """
-
-    prompt = format_prompt(
-        prompt=original_message_params["prompt"],
-        prompt_kws=original_message_params.get("prompt_kws", None),
-    )
-    chat_history = append_message_to_chat_history(
-        chat_history=chat_history,
-        content=prompt,
-        model=chat_params["model"],
-        model_context_length=chat_params["max_input_tokens"],
-        name=session_id,
-        role="user",
-        total_tokens_for_next_generation=chat_params["max_output_tokens"],
-    )
-    content = await _ask_llm_async(
-        # litellm_model=LITELLM_MODEL_CHAT,
-        litellm_model="gpt-4o-mini",
-        llm_generation_params={
-            "frequency_penalty": 0.0,
-            "max_tokens": chat_params["max_output_tokens"],
-            "n": 1,
-            "presence_penalty": 0.0,
-            "temperature": 0.7,
-            "top_p": 0.9,
-        },
-        messages=chat_history,
-    )
-    chat_history = append_message_to_chat_history(
-        chat_history=chat_history,
-        message={"content": content, "role": "assistant"},
-        model=chat_params["model"],
-        model_context_length=chat_params["max_input_tokens"],
-        total_tokens_for_next_generation=chat_params["max_output_tokens"],
-    )
-
-    await redis_client.set(chat_cache_key, json.dumps(chat_history))
-    return content
 
 
 def _truncate_chat_history(
@@ -266,8 +199,8 @@ def append_message_to_chat_history(
         The chat history buffer with the message appended.
     """
 
-    roles = ["assistant", "function", "system", "user"]
     if not message:
+        roles = ["assistant", "function", "system", "user"]
         assert name, "`name` is required if `message` is `None`."
         assert len(name) <= 64, f"`name` must be <= 64 characters: {name}"
         assert role in roles, f"Invalid role: {role}. Valid roles are: {roles}"
@@ -280,52 +213,6 @@ def append_message_to_chat_history(
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
     return chat_history
-
-
-def append_system_message_to_chat_history(
-    *,
-    chat_history: Optional[list[dict[str, str]]] = None,
-    model: str,
-    model_context_length: int,
-    session_id: str,
-    system_message: Optional[str] = None,
-    total_tokens_for_next_generation: int,
-) -> list[dict[str, str]]:
-    """Append the system message to the chat history.
-
-    Parameters
-    ----------
-    chat_history
-        The chat history buffer.
-    model
-        The name of the LLM model.
-    model_context_length
-        The maximum number of tokens allowed for the model. This is the context window
-        length for the model (i.e, maximum number of input + output tokens).
-    session_id
-        The session ID for the chat.
-    system_message
-        The system message to be added to the beginning of the chat history.
-    total_tokens_for_next_generation
-        The total number of tokens during text generation.
-
-    Returns
-    -------
-    list[dict[str, str]]
-        The chat history buffer with the system message appended.
-    """
-
-    chat_history = chat_history or []
-    system_message = system_message or "You are a helpful assistant."
-    return append_message_to_chat_history(
-        chat_history=chat_history,
-        content=system_message,
-        model=model,
-        model_context_length=model_context_length,
-        name=session_id,
-        role="system",
-        total_tokens_for_next_generation=total_tokens_for_next_generation,
-    )
 
 
 def format_prompt(
@@ -359,50 +246,38 @@ def format_prompt(
 
 async def get_chat_response(
     *,
-    chat_cache_key: Optional[str] = None,
-    chat_params_cache_key: Optional[str] = None,
+    chat_history: Optional[list[dict[str, str]]] = None,
+    chat_params: dict[str, Any],
     original_message_params: str | dict[str, Any],
-    redis_client: aioredis.Redis,
     session_id: str,
-) -> str:
+    **kwargs: Any,
+) -> tuple[list[dict[str, str]], str]:
     """Get the appropriate chat response.
 
     Parameters
     ----------
-    chat_cache_key
-        The chat cache key. If `None`, then the key is constructed using the session ID.
-    chat_params_cache_key
-        The chat parameters cache key. If `None`, then the key is constructed using the
-        session ID.
+    chat_history
+        The chat history buffer.
+    chat_params
+        Dictionary containing the chat parameters.
     original_message_params
         Dictionary containing the original message parameters or a string containing
         the message itself. If a dictionary, then the dictionary must contain the key
         `prompt` and, optionally, the key `prompt_kws`. `prompt` contains the prompt
         for the LLM. If `prompt_kws` is specified, then it is a dictionary whose
         <key, value> pairs will be used to string format `prompt`.
-    redis_client
-        The Redis client.
     session_id
         The session ID for the chat.
+    kwargs
+        Additional keyword arguments for `_ask_llm_async`.
 
     Returns
     -------
-    str
-        The appropriate chat response.
+    tuple[list[dict[str, str]], str]
+        The chat history and the response from the LLM model.
     """
 
-    (chat_cache_key, chat_params_cache_key, chat_history, session_id) = (
-        await init_chat_history(
-            chat_cache_key=chat_cache_key,
-            chat_params_cache_key=chat_params_cache_key,
-            redis_client=redis_client,
-            reset=False,
-            session_id=session_id,
-        )
-    )
-    assert (
-        isinstance(chat_history, list) and chat_history
-    ), f"Empty chat history for session: {session_id}"
+    chat_history = chat_history or []
 
     if isinstance(original_message_params, str):
         original_message_params = {"prompt": original_message_params}
@@ -411,14 +286,41 @@ async def get_chat_response(
         prompt=original_message_params["prompt"], prompt_kws=prompt_kws
     )
 
-    return await _get_chat_response(
-        chat_cache_key=chat_cache_key,
+    model = chat_params["model"]
+    model_context_length = chat_params["max_input_tokens"]
+    total_tokens_for_next_generation = chat_params["max_output_tokens"]
+
+    chat_history = append_message_to_chat_history(
         chat_history=chat_history,
-        chat_params=json.loads(await redis_client.get(chat_params_cache_key)),
-        original_message_params={"prompt": formatted_prompt},
-        redis_client=redis_client,
-        session_id=session_id,
+        content=formatted_prompt,
+        model=model,
+        model_context_length=model_context_length,
+        name=session_id,
+        role="user",
+        total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
+    content = await _ask_llm_async(
+        litellm_model=LITELLM_MODEL_CHAT,
+        llm_generation_params={
+            "frequency_penalty": 0.0,
+            "max_tokens": total_tokens_for_next_generation,
+            "n": 1,
+            "presence_penalty": 0.0,
+            "temperature": 0.7,
+            "top_p": 0.9,
+        },
+        messages=chat_history,
+        **kwargs,
+    )
+    chat_history = append_message_to_chat_history(
+        chat_history=chat_history,
+        message={"content": content, "role": "assistant"},
+        model=model,
+        model_context_length=model_context_length,
+        total_tokens_for_next_generation=total_tokens_for_next_generation,
+    )
+
+    return chat_history, content
 
 
 async def init_chat_history(
@@ -429,10 +331,10 @@ async def init_chat_history(
     reset: bool,
     session_id: Optional[str] = None,
     system_message: Optional[str] = None,
-) -> tuple[str, str, list[dict[str, str]], str]:
+) -> tuple[str, str, list[dict[str, str]], dict[str, Any], str]:
     """Initialize the chat history. Chat history initialization involves initializing
-    both the chat parameters **and** the chat history for the session. Thus, chat
-    parameters are assumed to be constant for a given session.
+    both the chat parameters **and** the chat history for the session. Chat parameters
+    are assumed to be static for a given session.
 
     Parameters
     ----------
@@ -452,65 +354,82 @@ async def init_chat_history(
         The session ID for the chat. If `None`, then a randomly generated session ID
         will be used.
     system_message
-        The system message to be added to the beginning of the chat history.
+        The system message to be added to the beginning of the chat history. If `None`,
+        then a default system message is used.
 
     Returns
     -------
-    tuple[str, str, list[dict[str, Any]], str]
-        The chat cache key, chat parameters cache key, chat history, and session ID.
+    tuple[str, str, list[dict[str, str]], dict[str, Any], str]
+        The chat cache key, the chat parameters cache key, the chat history, the chat
+        parameters, and the session ID.
     """
 
     session_id = session_id or str(generate_random_int32())
+    system_message = system_message or "You are a helpful assistant."
 
-    # Get the chat parameters for the session from the LLM model info endpoint or the
-    # Redis cache.
-    chat_params_cache_key = chat_params_cache_key or f"chatParamsCache:{session_id}"
-    chat_params_exists = await redis_client.exists(chat_params_cache_key)
-    if not chat_params_exists:
-        model_info_endpoint = LITELLM_ENDPOINT.rstrip("/") + "/model/info"
-        model_info = requests.get(
-            model_info_endpoint, headers={"accept": "application/json"}
-        ).json()
-        for dict_ in model_info["data"]:
-            if dict_["model_name"] == "chat":
-                chat_params = dict_["model_info"]
-                assert "model" not in chat_params
-                chat_params["model"] = dict_["litellm_params"]["model"]
-                await redis_client.set(chat_params_cache_key, json.dumps(chat_params))
-                break
-
-    # Get the chat history for the session from the Redis cache.
+    # Get the chat history and chat parameters for the session.
     chat_cache_key = chat_cache_key or f"chatCache:{session_id}"
+    chat_params_cache_key = chat_params_cache_key or f"chatParamsCache:{session_id}"
     chat_cache_exists = await redis_client.exists(chat_cache_key)
+    chat_params_cache_exists = await redis_client.exists(chat_params_cache_key)
     chat_history = (
         json.loads(await redis_client.get(chat_cache_key)) if chat_cache_exists else []
     )
+    chat_params = (
+        json.loads(await redis_client.get(chat_params_cache_key))
+        if chat_params_cache_exists
+        else []
+    )
 
-    if chat_history and reset is False:
+    if chat_history and chat_params and reset is False:
         logger.info(
-            f"Chat history is already initialized for session: {session_id}. Using "
-            f"existing chat history."
+            f"Chat history and chat parameters are already initialized for session: "
+            f"{session_id}. Using existing values."
         )
-        return chat_cache_key, chat_params_cache_key, chat_history, session_id
+        return (
+            chat_cache_key,
+            chat_params_cache_key,
+            chat_history,
+            chat_params,
+            session_id,
+        )
+
+    # Get the chat parameters for the session.
+    logger.info(f"Initializing chat parameters for session: {session_id}")
+    model_info_endpoint = LITELLM_ENDPOINT.rstrip("/") + "/model/info"
+    model_info = requests.get(
+        model_info_endpoint, headers={"accept": "application/json"}
+    ).json()
+    for dict_ in model_info["data"]:
+        if dict_["model_name"] == "chat":
+            chat_params = dict_["model_info"]
+            assert "model" not in chat_params
+            chat_params["model"] = dict_["litellm_params"]["model"]
+            await redis_client.set(
+                chat_params_cache_key,
+                json.dumps(chat_params),
+                ex=REDIS_CHAT_CACHE_EXPIRY_TIME,
+            )
+            break
+    logger.info(f"Finished initializing chat parameters for session: {session_id}")
 
     logger.info(f"Initializing chat history for session: {session_id}")
-    assert not chat_history or reset is True, (
-        f"Non-empty chat history during initialization: {chat_history}\n"
-        f"Set 'reset' to `True` to initialize chat history."
-    )
     chat_params = json.loads(await redis_client.get(chat_params_cache_key))
-    assert isinstance(chat_params, dict) and chat_params
-
-    chat_history = append_system_message_to_chat_history(
+    assert isinstance(chat_params, dict) and chat_params, f"{chat_params = }"
+    chat_history = append_message_to_chat_history(
+        chat_history=[],
+        content=system_message,
         model=chat_params["model"],
         model_context_length=chat_params["max_input_tokens"],
-        session_id=session_id,
-        system_message=system_message,
+        name=session_id,
+        role="system",
         total_tokens_for_next_generation=chat_params["max_output_tokens"],
     )
-    await redis_client.set(session_id, json.dumps(chat_history))
+    await redis_client.set(
+        chat_cache_key, json.dumps(chat_history), ex=REDIS_CHAT_CACHE_EXPIRY_TIME
+    )
     logger.info(f"Finished initializing chat history for session: {session_id}")
-    return chat_cache_key, chat_params_cache_key, chat_history, session_id
+    return chat_cache_key, chat_params_cache_key, chat_history, chat_params, session_id
 
 
 async def log_chat_history(
@@ -535,13 +454,6 @@ async def log_chat_history(
         The session ID for the chat.
     """
 
-    role_to_color = {
-        "system": "red",
-        "user": "green",
-        "assistant": "blue",
-        "function": "magenta",
-    }
-
     if context:
         logger.info(f"\n###Chat history for session {session_id}: {context}###")
     else:
@@ -551,17 +463,23 @@ async def log_chat_history(
     chat_history = (
         json.loads(await redis_client.get(chat_cache_key)) if chat_cache_exists else []
     )
+    role_to_color = {
+        "system": "red",
+        "user": "green",
+        "assistant": "blue",
+        "function": "magenta",
+    }
     for message in chat_history:
         role, content = message["role"], message["content"]
         name = message.get("name", session_id)
         function_call = message.get("function_call", None)
         role_color = role_to_color[role]
         if role in ["system", "user"]:
-            logger.info(colored(f"\n{role}:\n{content}\n", role_color))
+            print(colored(f"\n{role}:\n{content}\n", role_color))
         elif role == "assistant":
-            logger.info(colored(f"\n{role}:\n{function_call or content}\n", role_color))
+            print(colored(f"\n{role}:\n{function_call or content}\n", role_color))
         elif role == "function":
-            logger.info(colored(f"\n{role}:\n({name}): {content}\n", role_color))
+            print(colored(f"\n{role}:\n({name}): {content}\n", role_color))
 
 
 def remove_json_markdown(text: str) -> str:
@@ -594,6 +512,7 @@ async def reset_chat_history(
     logger.info(f"Resetting chat history for session: {session_id}")
     chat_cache_key = chat_cache_key or f"chatCache:{session_id}"
     await redis_client.delete(chat_cache_key)
+    logger.info(f"Finished resetting chat history for session: {session_id}")
 
 
 def strip_tags(*, tag: str, text: str) -> list[str]:
