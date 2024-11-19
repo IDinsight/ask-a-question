@@ -471,9 +471,9 @@ class ChatHistory:
         their questions/concerns related to prenatal and newborn care. You interact
         with mothers via a chat interface.
 
-        For each message from a mother, follow these steps:
+        Your task is to analyze the mother's LATEST MESSAGE by following these steps:
 
-        1. Determine the Type of Message:
+        1. Determine the Type of the Mother's LATEST MESSAGE:
             - Follow-up Message: These are messages that build upon the conversation so
             far and/or seeks more information on a previously discussed
             question/concern.
@@ -482,13 +482,14 @@ class ChatHistory:
             - New Message: These are messages that introduce a new topic that was not
             previously discussed in the conversation.
 
-        2. Obtain More Information to Help Address the Message:
+        2. Obtain More Information to Help Address the Mother's LATEST MESSAGE:
             - Keep in mind the context given by the conversation history thus far.
-            - Use the conversation history and the Type of Message to formulate a
-            precise query to execute against a vector database that contains
-            information relevant to the current message.
-            - Ensure the query is specific and accurately reflects the mother's
-            information needs.
+            - Use the conversation history and the Type of the Mother's LATEST MESSAGE
+            to formulate a precise query to execute against a vector database in order
+            to retrieve the most relevant information that can address the mother's
+            latest message given the context of the conversation history.
+            - Ensure the vector database query is specific and accurately reflects the
+            mother's information needs.
             - Use specific keywords that captures the semantic meaning of the mother's
             information needs.
 
@@ -496,7 +497,7 @@ class ChatHistory:
         database query between the tags <Query> and </Query>, without any additional
         text.
         """
-    )
+    ).strip()
     system_message_generate_response = textwrap.dedent(
         """You are an AI assistant designed to help expecting and new mothers with
         their questions/concerns related to prenatal and newborn care. You interact
@@ -549,4 +550,4 @@ class ChatHistory:
         Output the JSON response between tags <JSON> and </JSON>, without any
         additional text.
         """
-    )
+    ).strip()
