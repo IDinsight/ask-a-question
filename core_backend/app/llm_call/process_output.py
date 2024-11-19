@@ -34,7 +34,7 @@ from ..utils import (
     upload_file_to_gcs,
 )
 from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
-from .llm_rag import get_llm_rag_answer
+from .llm_rag import get_llm_rag_answer, get_llm_rag_answer_with_chat_history
 from .utils import (
     _ask_llm_async,
     remove_json_markdown,
@@ -53,40 +53,76 @@ class AlignScoreData(TypedDict):
 
 
 async def generate_llm_query_response(
+    *,
+    chat_history: Optional[list[dict[str, str]]] = None,
+    chat_params: Optional[dict[str, Any]] = None,
+    metadata: Optional[dict] = None,
     query_refined: QueryRefined,
     response: QueryResponse,
-    metadata: Optional[dict] = None,
-) -> QueryResponse:
-    """
-    Generate the LLM response.
+    session_id: Optional[str] = None,
+) -> tuple[QueryResponse, Optional[list[dict[str, str]]]]:
+    """Generate the LLM response. If `chat_history`, `chat_params`, and `session_id`
+    are provided, then the response is generated based on the chat history.
 
-    Only runs if the generate_llm_response flag is set to True.
+    Only runs if the `generate_llm_response` flag is set to `True`.
     Requires "search_results" and "original_language" in the response.
+
+    Parameters
+    ----------
+    chat_history
+        The chat history. If not `None`, then `chat_params` and `session_id` must also
+        be specified.
+    chat_params
+        The chat parameters.
+    metadata
+        Additional metadata to provide to the LLM model.
+    query_refined
+        The refined query object.
+    response
+        The query response object.
+    session_id
+        The session ID for the chat.
+
+    Returns
+    -------
+    QueryResponse
+        The query response object.
     """
+
     if isinstance(response, QueryResponseError):
         logger.warning("LLM generation skipped due to QueryResponseError.")
-        return response
-
+        return response, chat_history
     if response.search_results is None:
         logger.warning("No search_results found in the response.")
-        return response
+        return response, chat_history
     if query_refined.original_language is None:
         logger.warning("No original_language found in the query.")
-        return response
+        return response, chat_history
 
     context = get_context_string_from_search_results(response.search_results)
-    rag_response = await get_llm_rag_answer(
-        # use the original query text
-        question=query_refined.query_text_original,
-        context=context,
-        original_language=query_refined.original_language,
-        metadata=metadata,
-    )
+    if isinstance(chat_history, list) and chat_history:
+        assert isinstance(chat_params, dict) and chat_params
+        assert isinstance(session_id, str) and session_id
+        rag_response, chat_history = await get_llm_rag_answer_with_chat_history(
+            chat_history=chat_history,
+            chat_params=chat_params,
+            context=context,
+            metadata=metadata,
+            question=query_refined.query_text_original,
+            session_id=session_id,
+        )
+    else:
+        rag_response = await get_llm_rag_answer(
+            # use the original query text
+            question=query_refined.query_text_original,
+            context=context,
+            original_language=query_refined.original_language,
+            metadata=metadata,
+        )
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = rag_response.answer
-
     else:
         response = QueryResponseError(
             query_id=response.query_id,
@@ -101,7 +137,7 @@ async def generate_llm_query_response(
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = None
 
-    return response
+    return response, chat_history
 
 
 def check_align_score__after(func: Callable) -> Callable:
@@ -118,21 +154,21 @@ def check_align_score__after(func: Callable) -> Callable:
         response: QueryResponse | QueryResponseError,
         *args: Any,
         **kwargs: Any,
-    ) -> QueryResponse | QueryResponseError:
+    ) -> tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str]]]]:
         """
         Check the alignment score
         """
 
-        response = await func(query_refined, response, *args, **kwargs)
+        response, chat_history = await func(query_refined, response, *args, **kwargs)
 
         if not query_refined.generate_llm_response:
-            return response
+            return response, chat_history
 
         metadata = create_langfuse_metadata(
             query_id=response.query_id, user_id=query_refined.user_id
         )
         response = await _check_align_score(response, metadata)
-        return response
+        return response, chat_history
 
     return wrapper
 
@@ -242,19 +278,19 @@ def generate_tts__after(func: Callable) -> Callable:
         response: QueryAudioResponse | QueryResponseError,
         *args: Any,
         **kwargs: Any,
-    ) -> QueryAudioResponse | QueryResponseError:
+    ) -> tuple[QueryAudioResponse | QueryResponseError, Optional[list[dict[str, str]]]]:
         """
         Wrapper function to check conditions before generating TTS.
         """
 
-        response = await func(query_refined, response, *args, **kwargs)
+        response, chat_history = await func(query_refined, response, *args, **kwargs)
 
         if not query_refined.generate_tts:
-            return response
+            return response, chat_history
 
         if isinstance(response, QueryResponseError):
             logger.warning("TTS generation skipped due to QueryResponseError.")
-            return response
+            return response, chat_history
 
         if isinstance(response, QueryResponse):
             logger.info("Converting response type QueryResponse to AudioResponse.")
@@ -273,7 +309,7 @@ def generate_tts__after(func: Callable) -> Callable:
             response,
         )
 
-        return response
+        return response, chat_history
 
     return wrapper
 
