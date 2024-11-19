@@ -2,8 +2,9 @@
 endpoints.
 """
 
+import json
 import os
-from typing import Tuple
+from typing import Any, Optional, Tuple
 
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
@@ -19,6 +20,7 @@ from ..contents.models import (
     update_votes_in_db,
 )
 from ..database import get_async_session
+from ..llm_call.llm_prompts import RAG_FAILURE_MESSAGE, ChatHistory
 from ..llm_call.process_input import (
     classify_safety__before,
     identify_language__before,
@@ -30,11 +32,19 @@ from ..llm_call.process_output import (
     generate_llm_query_response,
     generate_tts__after,
 )
+from ..llm_call.utils import (
+    append_message_to_chat_history,
+    get_chat_response,
+    init_chat_history,
+    strip_tags,
+)
+from ..question_answer.utils import get_context_string_from_search_results
 from ..schemas import QuerySearchResult
 from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
+    generate_random_int32,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -86,20 +96,44 @@ router = APIRouter(
         }
     },
 )
-async def search(
+async def chat(
     user_query: QueryBase,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
-    """
-    Search endpoint finds the most similar content to the user query and optionally
-    generates a single-turn LLM response.
+    """Chat endpoint manages a conversation between the user and the LLM agent. The
+    conversation history is stored in a Redis cache. The process is as follows:
+
+    1. Assign a default session ID if not provided.
+    2. Get the refined user query and response templates. Ensure that
+        `generate_llm_response` is set to `True` for the chat manager.
+    3. Initialize the chat history for the search query chat cache and the user query
+        chat cache. NB: The chat parameters for the search query chat are the same as
+        the chat parameters for the user query chat.
+    4. Get the chat response for the search query chat. The search query chat contains
+        a system message that is designed to construct a refined search query using the
+        original user query and the conversation history from the user query chat
+        (**without** the user query chat's system message).
+    5. Get the search results from the database.
+    6a. If we are generating an LLM response, then we get the LLM generation response
+        using the chat history as additional context.
+    6b. If we are not generating an LLM response, then directly append the user query
+        and the search results to the user query chat history. NB: In this case, the
+        system message has no effect on the chat history.
+    7. Update the user query chat cache with the updated chat history. NB: There is no
+        need to update the search query chat cache since the chat history for the
+        search query conversation uses the chat history from the user query
+        conversation.
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
     """
 
+    # 1.
+    user_query.session_id = user_query.session_id or generate_random_int32()
+
+    # 2.
     (
         user_query_db,
         user_query_refined_template,
@@ -110,6 +144,49 @@ async def search(
         asession=asession,
         generate_tts=False,
     )
+
+    # 3.
+    redis_client = request.app.state.redis
+    session_id = str(user_query_db.session_id)
+    chat_cache_key = f"chatCache:{session_id}"
+    chat_params_cache_key = f"chatParamsCache:{session_id}"
+    chat_search_query_cache_key = f"chatSearchQueryCache:{session_id}"
+    _, _, chat_search_query_history, chat_params, _ = await init_chat_history(
+        chat_cache_key=chat_search_query_cache_key,
+        chat_params_cache_key=chat_params_cache_key,
+        redis_client=redis_client,
+        reset=True,
+        session_id=session_id,
+        system_message=(
+            ChatHistory.system_message_construct_search_query
+            if user_query_refined_template.generate_llm_response
+            else None
+        ),
+    )
+    _, _, chat_history, _, _ = await init_chat_history(
+        chat_cache_key=chat_cache_key,
+        chat_params_cache_key=chat_params_cache_key,
+        redis_client=redis_client,
+        reset=False,
+        session_id=session_id,
+        system_message=ChatHistory.system_message_generate_response.format(
+            failure_message=RAG_FAILURE_MESSAGE,
+            original_language=user_query_refined_template.original_language,
+        ),
+    )
+
+    # 4.
+    index = 1 if chat_history[0].get("role", None) == "system" else 0
+    chat_search_query_history, new_query_text = await get_chat_response(
+        chat_history=chat_search_query_history + chat_history[index:],
+        chat_params=chat_params,
+        original_message_params=user_query_refined_template.query_text,
+        session_id=session_id,
+    )
+
+    # 5.
+    new_query_text = strip_tags(tag="Query", text=new_query_text)[0]
+    user_query_refined_template.query_text = new_query_text
     response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
@@ -119,13 +196,51 @@ async def search(
         asession=asession,
         exclude_archived=True,
         request=request,
+        paraphrase=False,  # No need to paraphrase the search query again
     )
 
-    if user_query.generate_llm_response:
-        response = await get_generation_response(
+    # 6a.
+    if user_query_refined_template.generate_llm_response:
+        response, chat_history = await get_generation_response(
             query_refined=user_query_refined_template,
             response=response,
+            chat_history=chat_history,
+            chat_params=chat_params,
+            session_id=session_id,
         )
+    # 6b.
+    else:
+        chat_history = append_message_to_chat_history(
+            chat_history=chat_history,
+            message={
+                "content": user_query_refined_template.query_text_original,
+                "name": session_id,
+                "role": "user",
+            },
+            model=chat_params["model"],
+            model_context_length=chat_params["max_input_tokens"],
+            total_tokens_for_next_generation=chat_params["max_output_tokens"],
+        )
+        content = get_context_string_from_search_results(response.search_results)
+        chat_history = append_message_to_chat_history(
+            chat_history=chat_history,
+            message={
+                "content": content,
+                "role": "assistant",
+            },
+            model=chat_params["model"],
+            model_context_length=chat_params["max_input_tokens"],
+            total_tokens_for_next_generation=chat_params["max_output_tokens"],
+        )
+
+    # 7.
+    await redis_client.set(chat_cache_key, json.dumps(chat_history))
+    chat_history_at_end = await redis_client.get(chat_cache_key)
+    chat_search_query_history_at_end = await redis_client.get(
+        chat_search_query_cache_key
+    )
+    print(f"\n{chat_history_at_end = }\n")
+    print(f"\n{chat_search_query_history_at_end = }\n")
 
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
@@ -153,6 +268,85 @@ async def search(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": "Internal server error"},
     )
+
+
+# @router.post(
+#     "/search",
+#     response_model=QueryResponse,
+#     responses={
+#         status.HTTP_400_BAD_REQUEST: {
+#             "model": QueryResponseError,
+#             "description": "Guardrail failure",
+#         }
+#     },
+# )
+# async def search(
+#     user_query: QueryBase,
+#     request: Request,
+#     asession: AsyncSession = Depends(get_async_session),
+#     user_db: UserDB = Depends(authenticate_key),
+# ) -> QueryResponse | JSONResponse:
+#     """
+#     Search endpoint finds the most similar content to the user query and optionally
+#     generates a single-turn LLM response.
+#
+#     If any guardrails fail, the embeddings search is still done and an error 400 is
+#     returned that includes the search results as well as the details of the failure.
+#     """
+#
+#     (
+#         user_query_db,
+#         user_query_refined_template,
+#         response_template,
+#     ) = await get_user_query_and_response(
+#         user_id=user_db.user_id,
+#         user_query=user_query,
+#         asession=asession,
+#         generate_tts=False,
+#     )
+#     response = await get_search_response(
+#         query_refined=user_query_refined_template,
+#         response=response_template,
+#         user_id=user_db.user_id,
+#         n_similar=int(N_TOP_CONTENT),
+#         n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+#         asession=asession,
+#         exclude_archived=True,
+#         request=request,
+#     )
+#
+#     if user_query.generate_llm_response:
+#         response = await get_generation_response(
+#             query_refined=user_query_refined_template,
+#             response=response,
+#         )
+#
+#     await save_query_response_to_db(user_query_db, response, asession)
+#     await increment_query_count(
+#         user_id=user_db.user_id,
+#         contents=response.search_results,
+#         asession=asession,
+#     )
+#     await save_content_for_query_to_db(
+#         user_id=user_db.user_id,
+#         session_id=user_query.session_id,
+#         query_id=response.query_id,
+#         contents=response.search_results,
+#         asession=asession,
+#     )
+#
+#     if type(response) is QueryResponse:
+#         return response
+#
+#     if type(response) is QueryResponseError:
+#         return JSONResponse(
+#             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+#         )
+#
+#     return JSONResponse(
+#         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         content={"message": "Internal server error"},
+#     )
 
 
 @router.post(
@@ -234,7 +428,7 @@ async def voice_search(
         )
 
         if user_query.generate_llm_response:
-            response = await get_generation_response(
+            response, _ = await get_generation_response(
                 query_refined=user_query_refined_template,
                 response=response,
             )
@@ -298,12 +492,13 @@ async def get_search_response(
     asession: AsyncSession,
     request: Request,
     exclude_archived: bool = True,
+    paraphrase: bool = True,  # Used by `paraphrase_question__before` decorator
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
     If any guardrails fail, the embeddings search is still done and a
-    `QueryResponseError` object is returned that includes the search
-    results as well as the details of the failure.
+    `QueryResponseError` object is returned that includes the search results as well as
+    the details of the failure.
 
     Parameters
     ----------
@@ -323,20 +518,30 @@ async def get_search_response(
         The FastAPI request object.
     exclude_archived
         Specifies whether to exclude archived content.
+    paraphrase
+        Specifies whether to paraphrase the query text. This parameter is used by the
+        `paraphrase_question__before` decorator.
 
     Returns
     -------
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
+    Raises
+    ------
+    ValueError
+        If the cross encoder is being used and `n_to_crossencoder` is greater than
+        `n_similar`.
     """
+
     # No checks for errors:
     #   always do the embeddings search even if some guardrails have failed
     metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
 
     if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
         raise ValueError(
-            "`n_to_crossencoder` must be less than or equal to `n_similar`."
+            f"`n_to_crossencoder`({n_to_crossencoder}) must be less than or equal to "
+            f"`n_similar`({n_similar})."
         )
 
     search_results = await get_similar_content_async(
@@ -348,7 +553,7 @@ async def get_search_response(
         exclude_archived=exclude_archived,
     )
 
-    if USE_CROSS_ENCODER and (len(search_results) > 1):
+    if USE_CROSS_ENCODER and len(search_results) > 1:
         search_results = rerank_search_results(
             n_similar=n_similar,
             search_results=search_results,
@@ -389,25 +594,52 @@ def rerank_search_results(
 async def get_generation_response(
     query_refined: QueryRefined,
     response: QueryResponse,
-) -> QueryResponse | QueryResponseError:
-    """
-    Generate a response using an LLM given a query with search results.
+    chat_history: Optional[list[dict[str, str]]] = None,
+    chat_params: Optional[dict[str, Any]] = None,
+    session_id: Optional[str] = None,
+) -> tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str]]]]:
+    """Generate a response using an LLM given a query with search results. If
+    `chat_history` and `chat_params` are provided, then the response is generated
+    based on the chat history.
 
     Only runs if the generate_llm_response flag is set to True.
     Requires "search_results" and "original_language" in the response.
+
+    Parameters
+    ----------
+    query_refined
+        The refined query object.
+    response
+        The query response object.
+    chat_history
+        The chat history.
+    chat_params
+        The chat parameters.
+    session_id
+        The session ID for the chat.
+
+    Returns
+    -------
+    tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str]]]
+        The response object and the chat history.
     """
+
     if not query_refined.generate_llm_response:
-        return response
+        return response, chat_history
 
     metadata = create_langfuse_metadata(
         query_id=response.query_id, user_id=query_refined.user_id
     )
 
-    response = await generate_llm_query_response(
-        query_refined=query_refined, response=response, metadata=metadata
+    response, chat_history = await generate_llm_query_response(
+        chat_history=chat_history,
+        chat_params=chat_params,
+        metadata=metadata,
+        query_refined=query_refined,
+        response=response,
+        session_id=session_id,
     )
-
-    return response
+    return response, chat_history
 
 
 async def get_user_query_and_response(
