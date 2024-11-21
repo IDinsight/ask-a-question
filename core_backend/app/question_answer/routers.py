@@ -25,7 +25,7 @@ from ..contents.models import (
     update_votes_in_db,
 )
 from ..database import get_async_session
-from ..llm_call.llm_prompts import RAG_FAILURE_MESSAGE, ChatHistory
+from ..llm_call.llm_prompts import ChatHistory
 from ..llm_call.process_input import (
     classify_safety__before,
     identify_language__before,
@@ -43,7 +43,6 @@ from ..llm_call.utils import (
     get_chat_response,
     init_chat_history,
     log_chat_history,
-    strip_tags,
 )
 from ..question_answer.utils import get_context_string_from_search_results
 from ..schemas import QuerySearchResult
@@ -135,7 +134,7 @@ async def chat(
     returned that includes the search results as well as the details of the failure.
     """
 
-    reset_user_assistant_chat_history = True  # For testing purposes only
+    reset_user_assistant_chat_history = False  # For testing purposes only
     user_query.session_id = 666  # For testing purposes only
 
     # 1.
@@ -166,10 +165,6 @@ async def chat(
         redis_client=redis_client,
         reset=reset_user_assistant_chat_history,
         session_id=session_id,
-        system_message=ChatHistory.system_message_generate_response.format(
-            failure_message=RAG_FAILURE_MESSAGE,
-            original_language=user_query_refined_template.original_language,
-        ),
     )
     model = str(chat_params["model"])
     model_context_length = int(chat_params["max_input_tokens"])
@@ -198,12 +193,16 @@ async def chat(
         context="SEARCH QUERY CHAT HISTORY AT START",
     )
 
-    new_query_text = await get_chat_response(
+    search_query_json_str = await get_chat_response(
         chat_history=search_query_chat_history,
         chat_params=chat_params,
         message_params=user_query_refined_template.query_text,
         session_id=session_id,
     )
+    search_query_json_response = ChatHistory.parse_json(
+        chat_type="search", json_str=search_query_json_str
+    )
+    message_type = search_query_json_response["message_type"]
 
     log_chat_history(
         chat_history=search_query_chat_history,
@@ -211,8 +210,7 @@ async def chat(
     )
 
     # 4.
-    new_query_text = strip_tags(tag="Query", text=new_query_text)[0]
-    user_query_refined_template.query_text = new_query_text
+    user_query_refined_template.query_text = search_query_json_response["query"]
     response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
@@ -233,10 +231,12 @@ async def chat(
             use_chat_history=True,
             chat_history=user_assistant_chat_history,
             chat_params=chat_params,
+            message_type=message_type,
             session_id=session_id,
         )
     # 5b.
     else:
+        response.message_type = message_type
         append_messages_to_chat_history(
             chat_history=user_assistant_chat_history,
             messages=[
@@ -627,6 +627,7 @@ async def get_generation_response(
     use_chat_history: bool = False,
     chat_history: Optional[list[dict[str, str | None]]] = None,
     chat_params: Optional[dict[str, Any]] = None,
+    message_type: Optional[str] = None,
     session_id: Optional[str] = None,
 ) -> tuple[QueryResponse | QueryResponseError, Optional[list[dict[str, str | None]]]]:
     """Generate a response using an LLM given a query with search results. If
@@ -648,6 +649,8 @@ async def get_generation_response(
         The chat history. Required if `use_chat_history` is True.
     chat_params
         The chat parameters. Required if `use_chat_history` is True.
+    message_type
+        The type of the user's latest message. Required if `use_chat_history` is True.
     session_id
         The session ID for the chat. Required if `use_chat_history` is True.
 
@@ -667,6 +670,7 @@ async def get_generation_response(
     response, chat_history = await generate_llm_query_response(
         chat_history=chat_history,
         chat_params=chat_params,
+        message_type=message_type,
         metadata=metadata,
         query_refined=query_refined,
         response=response,

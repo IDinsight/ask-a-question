@@ -8,13 +8,12 @@ from pydantic import ValidationError
 
 from ..config import LITELLM_MODEL_GENERATION
 from ..utils import setup_logger
-from .llm_prompts import RAG, IdentifiedLanguage
+from .llm_prompts import RAG, RAG_FAILURE_MESSAGE, ChatHistory, IdentifiedLanguage
 from .utils import (
     _ask_llm_async,
     append_messages_to_chat_history,
     get_chat_response,
     remove_json_markdown,
-    strip_tags,
 )
 
 logger = setup_logger("RAG")
@@ -71,11 +70,14 @@ async def get_llm_rag_answer_with_chat_history(
     chat_history: list[dict[str, str | None]],
     chat_params: dict[str, Any],
     context: str,
+    message_type: str,
     metadata: dict | None = None,
+    original_language: IdentifiedLanguage,
     question: str,
     session_id: str,
 ) -> tuple[RAG, list[dict[str, str | None]]]:
-    """Get an answer from the LLM model using RAG with chat history.
+    """Get an answer from the LLM model using RAG with chat history. The system message
+    for the chat history is updated with the message type during this function call.
 
     Parameters
     ----------
@@ -85,8 +87,12 @@ async def get_llm_rag_answer_with_chat_history(
         The chat parameters.
     context
         The context to provide to the LLM model.
+    message_type
+        The type of the user's latest message.
     metadata
         Additional metadata to provide to the LLM model.
+    original_language
+        The original language of the question.
     question
         The question to ask the LLM model.
     session_id
@@ -98,6 +104,14 @@ async def get_llm_rag_answer_with_chat_history(
         The RAG response object and the updated chat history.
     """
 
+    if chat_history[0]["role"] == "system":
+        chat_history[0]["content"] = (
+            ChatHistory.system_message_generate_response.format(
+                failure_message=RAG_FAILURE_MESSAGE,
+                message_type=message_type,
+                original_language=original_language,
+            )
+        )
     content = (
         question
         + f""""\n\n
@@ -118,8 +132,7 @@ async def get_llm_rag_answer_with_chat_history(
         json_=True,
         metadata=metadata or {},
     )
-    result = strip_tags(tag="JSON", text=content)[0]
-    result = remove_json_markdown(result)
+    result = remove_json_markdown(content)
     try:
         response = RAG.model_validate_json(result)
     except ValidationError as e:
