@@ -53,6 +53,7 @@ async def generate_llm_query_response(
     *,
     chat_history: Optional[list[dict[str, str | None]]] = None,
     chat_params: Optional[dict[str, Any]] = None,
+    message_type: Optional[str] = None,
     metadata: Optional[dict] = None,
     query_refined: QueryRefined,
     response: QueryResponse,
@@ -68,10 +69,11 @@ async def generate_llm_query_response(
     Parameters
     ----------
     chat_history
-        The chat history. If not `None`, then `chat_params` and `session_id` must also
-        be specified.
+        The chat history. Required if `use_chat_history` is True.
     chat_params
-        The chat parameters.
+        The chat parameters. Required if `use_chat_history` is True.
+    message_type
+        The type of the user's latest message. Required if `use_chat_history` is True.
     metadata
         Additional metadata to provide to the LLM model.
     query_refined
@@ -79,7 +81,7 @@ async def generate_llm_query_response(
     response
         The query response object.
     session_id
-        The session ID for the chat.
+        The session ID for the chat. Required if `use_chat_history` is True.
     use_chat_history
         Specifies whether to use the chat history when generating the response.
 
@@ -103,12 +105,15 @@ async def generate_llm_query_response(
     if use_chat_history:
         assert isinstance(chat_history, list) and chat_history
         assert isinstance(chat_params, dict) and chat_params
+        assert isinstance(message_type, str) and message_type
         assert isinstance(session_id, str) and session_id
         rag_response, chat_history = await get_llm_rag_answer_with_chat_history(
             chat_history=chat_history,
             chat_params=chat_params,
             context=context,
+            message_type=message_type,
             metadata=metadata,
+            original_language=query_refined.original_language,
             question=query_refined.query_text_original,
             session_id=session_id,
         )
@@ -130,6 +135,7 @@ async def generate_llm_query_response(
             session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
+            message_type=message_type,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
@@ -137,6 +143,7 @@ async def generate_llm_query_response(
         )
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = None
+    response.message_type = message_type
 
     return response, chat_history
 

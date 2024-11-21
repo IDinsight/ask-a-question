@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -58,6 +58,7 @@ class QueryResponse(BaseModel):
     session_id: int | None = Field(None, exclude=True)
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
+    message_type: Optional[str] = None
 
     search_results: Dict[int, QuerySearchResult] | None = Field(
         examples=[

@@ -1,7 +1,6 @@
 """This module contains utility functions related to LLM calls."""
 
 import json
-import re
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
@@ -549,24 +548,3 @@ async def reset_chat_history(
     chat_cache_key = chat_cache_key or f"chatCache:{session_id}"
     await redis_client.delete(chat_cache_key)
     logger.info(f"Finished resetting chat history for session: {session_id}")
-
-
-def strip_tags(*, tag: str, text: str) -> list[str]:
-    """Remove tags from `text`.
-
-    Parameters
-    ----------
-    tag
-        The tag to be stripped.
-    text
-        The input text.
-
-    Returns
-    -------
-    list[str]
-        text: The stripped text.
-    """
-
-    assert tag
-    matches = re.findall(rf"<{tag}>\s*([\s\S]*?)\s*</{tag}>", text)
-    return matches if matches else [text]
