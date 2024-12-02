@@ -130,9 +130,10 @@ class OverviewTimeSeries(BaseModel):
     This class is used to define the schema for the line chart
     """
 
-    urgent: dict[str, int]
-    not_urgent_escalated: dict[str, int]
-    not_urgent_not_escalated: dict[str, int]
+    urgent_only: dict[str, int]
+    urgent_and_downvoted: dict[str, int]
+    downvoted_only: dict[str, int]
+    neither: dict[str, int]
 
 
 class TopContentBase(BaseModel):
