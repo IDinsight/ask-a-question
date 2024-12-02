@@ -133,7 +133,7 @@ class OverviewTimeSeries(BaseModel):
     urgent_only: dict[str, int]
     urgent_and_downvoted: dict[str, int]
     downvoted_only: dict[str, int]
-    neither: dict[str, int]
+    normal: dict[str, int]
 
 
 class TopContentBase(BaseModel):
