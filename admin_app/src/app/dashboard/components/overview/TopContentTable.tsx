@@ -23,13 +23,11 @@ const UpvoteDownvoteBarChart = ({
   positiveVotes: number;
   negativeVotes: number;
 }) => {
-  const positiveVotesPercentage = Math.round(
-    (positiveVotes / (positiveVotes + negativeVotes)) * 100,
-  );
-  const negativeVotesPercentage = Math.round(
-    (negativeVotes / (positiveVotes + negativeVotes)) * 100,
-  );
-
+  const totalVotes = positiveVotes + negativeVotes;
+  const positiveVotesPercentage =
+    totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
+  const negativeVotesPercentage =
+    totalVotes > 0 ? Math.round((negativeVotes / totalVotes) * 100) : 0;
   return (
     <ReactApexcharts
       options={{
