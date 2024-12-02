@@ -165,17 +165,28 @@ async def get_overview_timeseries(
         The queries count timeseries.
     """
 
-    query_ts = await get_timeseries_query(
-        user_id, asession, start_date, end_date, frequency
-    )
-    urgency_ts = await get_timeseries_urgency(
+    timeseries = await get_stacked_bar_timeseries(
         user_id, asession, start_date, end_date, frequency
     )
 
+    # Extract the individual time series for each category
+    urgent_and_downvoted = {
+        time_period: data["urgent_and_downvoted"]
+        for time_period, data in timeseries.items()
+    }
+    urgent_only = {
+        time_period: data["urgent_only"] for time_period, data in timeseries.items()
+    }
+    downvoted_only = {
+        time_period: data["downvoted_only"] for time_period, data in timeseries.items()
+    }
+    normal = {time_period: data["normal"] for time_period, data in timeseries.items()}
+
     return OverviewTimeSeries(
-        urgent=urgency_ts,
-        not_urgent_escalated=query_ts["escalated"],
-        not_urgent_not_escalated=query_ts["not_escalated"],
+        urgent_and_downvoted=urgent_and_downvoted,
+        urgent_only=urgent_only,
+        downvoted_only=downvoted_only,
+        normal=normal,
     )
 
 
@@ -316,52 +327,55 @@ async def get_timeseries_query(
         Dictionary whose keys are "escalated" and "not_escalated" and whose values are
         dictionaries containing the count of queries over time for each category.
     """
-
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
+    # Subquery to get feedback counts per query
+    feedback_subquery = select(
+        ResponseFeedbackDB.query_id,
+        ResponseFeedbackDB.feedback_sentiment,
+    ).subquery()
+
+    # Main query to get total queries and categorize them
     statement = (
         select(
             ts_labels.c.time_period,
-            func.coalesce(
-                func.count(
-                    case(
-                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
-                        else_=None,
-                    )
-                ),
-                0,
+            func.count(QueryDB.query_id).label("total_queries"),
+            func.sum(
+                case(
+                    (feedback_subquery.c.feedback_sentiment == "negative", 1),
+                    else_=0,
+                )
             ).label("negative_feedback_count"),
-            func.coalesce(
-                func.count(
-                    case(
-                        (ResponseFeedbackDB.feedback_sentiment != "negative", 1),
-                        else_=None,
-                    )
-                ),
-                0,
-            ).label("non_negative_feedback_count"),
         )
         .select_from(ts_labels)
         .outerjoin(
-            ResponseFeedbackDB,
-            func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
+            QueryDB,
+            func.date_trunc(interval_str, QueryDB.query_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
-        .where(ResponseFeedbackDB.query.has(user_id=user_id))
+        .outerjoin(
+            feedback_subquery,
+            feedback_subquery.c.query_id == QueryDB.query_id,
+        )
+        .where(QueryDB.user_id == user_id)
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
 
     result = await asession.execute(statement)
     rows = result.fetchall()
-    escalated = dict()
-    not_escalated = dict()
+    escalated = {}
+    not_escalated = {}
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+
     for row in rows:
-        escalated[row.time_period.strftime(format_str)] = row.negative_feedback_count
-        not_escalated[row.time_period.strftime(format_str)] = (
-            row.non_negative_feedback_count
-        )
+        time_period = row.time_period.strftime(format_str)
+        negative_feedback_count = row.negative_feedback_count or 0
+        total_queries = row.total_queries or 0
+        not_negative_feedback_count = total_queries - negative_feedback_count
+
+        escalated[time_period] = negative_feedback_count
+        not_escalated[time_period] = not_negative_feedback_count
 
     return dict(escalated=escalated, not_escalated=not_escalated)
 
@@ -403,7 +417,6 @@ async def get_timeseries_urgency(
     dict[str, int]
         Dictionary containing the count of urgent queries over time.
     """
-
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
     statement = (
@@ -422,19 +435,20 @@ async def get_timeseries_urgency(
         .select_from(ts_labels)
         .outerjoin(
             UrgencyResponseDB,
-            func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
-            == func.date_trunc(interval_str, ts_labels.c.time_period),
+            and_(
+                func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
+                == func.date_trunc(interval_str, ts_labels.c.time_period),
+                UrgencyResponseDB.query.has(user_id=user_id),
+            ),
         )
-        .where(ResponseFeedbackDB.query.has(user_id=user_id))
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
-
-    await asession.execute(statement)
     result = await asession.execute(statement)
     rows = result.fetchall()
 
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+
     return {row.time_period.strftime(format_str): row.n_urgent for row in rows}
 
 
@@ -1345,3 +1359,135 @@ async def get_raw_contents(
         ]
 
     return content_list
+
+
+async def get_stacked_bar_timeseries(
+    user_id: int,
+    asession: AsyncSession,
+    start_date: date,
+    end_date: date,
+    frequency: TimeFrequency,
+) -> dict[str, dict[str, int]]:
+    """Retrieve timeseries data for the stacked bar chart."""
+
+    interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
+
+    # Subquery to get feedback flags per query
+    feedback_subquery = (
+        select(
+            ResponseFeedbackDB.query_id,
+            func.max(
+                case(
+                    (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                    else_=0,
+                )
+            ).label("is_downvoted"),
+        )
+        .group_by(ResponseFeedbackDB.query_id)
+        .subquery()
+    )
+
+    # Subquery to get urgency flags per query
+    urgency_subquery = (
+        select(
+            UrgencyResponseDB.query_id,
+            func.max(
+                case(
+                    (UrgencyResponseDB.is_urgent == true(), 1),
+                    else_=0,
+                )
+            ).label("is_urgent"),
+        )
+        .group_by(UrgencyResponseDB.query_id)
+        .subquery()
+    )
+
+    # Join QueryDB with feedback and urgency flags
+    query_with_flags = (
+        select(
+            QueryDB.query_id,
+            QueryDB.query_datetime_utc,
+            func.coalesce(feedback_subquery.c.is_downvoted, 0).label("is_downvoted"),
+            func.coalesce(urgency_subquery.c.is_urgent, 0).label("is_urgent"),
+        )
+        .outerjoin(feedback_subquery, feedback_subquery.c.query_id == QueryDB.query_id)
+        .outerjoin(urgency_subquery, urgency_subquery.c.query_id == QueryDB.query_id)
+        .where(
+            QueryDB.user_id == user_id,
+            QueryDB.query_datetime_utc >= start_date,
+            QueryDB.query_datetime_utc < end_date,
+        )
+        .subquery()
+    )
+
+    # Main query to get counts per category per time period
+    statement = (
+        select(
+            ts_labels.c.time_period,
+            func.sum(
+                case(
+                    (
+                        (query_with_flags.c.is_urgent == 1)
+                        & (query_with_flags.c.is_downvoted == 1),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("urgent_and_downvoted"),
+            func.sum(
+                case(
+                    (
+                        (query_with_flags.c.is_urgent == 1)
+                        & (query_with_flags.c.is_downvoted == 0),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("urgent_only"),
+            func.sum(
+                case(
+                    (
+                        (query_with_flags.c.is_urgent == 0)
+                        & (query_with_flags.c.is_downvoted == 1),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("downvoted_only"),
+            func.sum(
+                case(
+                    (
+                        (query_with_flags.c.is_urgent == 0)
+                        & (query_with_flags.c.is_downvoted == 0),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("normal"),
+        )
+        .select_from(ts_labels)
+        .outerjoin(
+            query_with_flags,
+            func.date_trunc(interval_str, query_with_flags.c.query_datetime_utc)
+            == ts_labels.c.time_period,
+        )
+        .group_by(ts_labels.c.time_period)
+        .order_by(ts_labels.c.time_period)
+    )
+
+    result = await asession.execute(statement)
+    rows = result.fetchall()
+
+    format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
+
+    timeseries = {
+        row.time_period.strftime(format_str): {
+            "urgent_and_downvoted": row.urgent_and_downvoted,
+            "urgent_only": row.urgent_only,
+            "downvoted_only": row.downvoted_only,
+            "normal": row.normal,
+        }
+        for row in rows
+    }
+
+    return timeseries
