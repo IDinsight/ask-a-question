@@ -2,22 +2,12 @@
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
-
+import { ApexSeriesData } from "../../types";
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-interface DataPoint {
-  x: number;
-  y: number;
-}
-
-interface SeriesData {
-  name: string;
-  data: DataPoint[];
-}
-
-const StackedBarChart = ({ data }: { data: SeriesData[] }) => {
+const StackedBarChart = ({ data }: { data: ApexSeriesData[] }) => {
   const options: ApexOptions = {
     chart: {
       type: "bar",
