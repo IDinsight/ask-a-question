@@ -31,7 +31,7 @@ const StackedBarChart = ({ data }: { data: SeriesData[] }) => {
     xaxis: {
       type: "datetime",
       labels: {
-        datetimeUTC: false,
+        datetimeUTC: true,
       },
     },
     yaxis: {
