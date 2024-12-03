@@ -44,6 +44,7 @@ export const appColors = {
   yellow: "#FFC700",
   green: "#018786",
   dashboardUrgent: "#E91E63",
+  dashboardPurple: "#800080",
   dashboardSecondary: "#546E7A",
   dashboardLightGray: "#B0BEC5",
   dashboardPrimary: "#2E93FA",
