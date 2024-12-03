@@ -309,6 +309,16 @@ async def refresh_insights(
         start_date=start_date,
     )
 
+    # set the key to "in_progress" to help with front-end loading UX
+    await redis.set(
+        f"{user_db.username}_insights_{time_frequency}_results",
+        TopicsData(
+            status="in_progress",
+            refreshTimeStamp="",
+            data=[],
+        ).model_dump_json(),
+    )
+
     content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
 
     topic_output, embeddings_df = await topic_model_queries(
@@ -351,6 +361,7 @@ async def retrieve_insights_frequency(
         return topics_data
 
     return TopicsData(
+        status="not_started",
         refreshTimeStamp="",
         data=[],
     )
