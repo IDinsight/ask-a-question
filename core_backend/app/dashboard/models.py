@@ -1477,9 +1477,7 @@ async def get_stacked_bar_timeseries(
 
     result = await asession.execute(statement)
     rows = result.fetchall()
-
     format_str = "%Y-%m-%dT%H:%M:%S.000000Z"  # ISO 8601 format (required by frontend)
-
     timeseries = {
         row.time_period.strftime(format_str): {
             "urgent_and_downvoted": row.urgent_and_downvoted,
