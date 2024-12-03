@@ -7,7 +7,7 @@ psycopg2==2.9.9
 asyncpg==0.28.0
 litellm==1.40.29
 sqlalchemy[asyncio]==2.0.20
-python-multipart==0.0.7
+python-multipart==0.0.18
 pyjwt[crypto]==2.8.0
 prometheus_client==0.19.0
 google-api-python-client==2.129.0
@@ -18,7 +18,6 @@ pandas-stubs==2.2.2.240603
 types-openpyxl==3.1.4.20240621
 redis==5.0.8
 python-dateutil==2.8.2
-gTTS==2.5.1
 bertopic==0.16.3
 google-cloud-storage==2.18.2
 google-cloud-texttospeech==2.16.5
@@ -28,3 +27,4 @@ sentence-transformers==3.0.1
 scikit-learn==1.5.1
 bokeh==3.5.1
 faster-whisper==1.0.3
+sentry-sdk[fastapi]==2.17.0

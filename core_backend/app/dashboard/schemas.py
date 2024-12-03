@@ -266,4 +266,4 @@ class AIFeedbackSummary(BaseModel):
     This class is used to define the schema for the AI feedback summary
     """
 
-    ai_summary: str
+    ai_summary: str | None

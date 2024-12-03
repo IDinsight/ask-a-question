@@ -3,6 +3,7 @@ This module contains functions for the topic modeling pipeline.
 """
 
 import asyncio
+import os
 from datetime import datetime, timezone
 from typing import Any, Coroutine, Dict, List, Tuple, cast
 
@@ -19,6 +20,11 @@ from .config import TOPIC_MODELING_CONTEXT
 from .schemas import BokehContentItem, Topic, TopicsData, UserQuery
 
 logger = setup_logger()
+
+# Check if LLM functionalities are disabled for dashboard
+DISABLE_DASHBOARD_LLM = (
+    os.environ.get("DISABLE_DASHBOARD_LLM", "false").lower() == "true"
+)
 
 
 async def topic_model_queries(
@@ -77,8 +83,8 @@ async def topic_model_queries(
     # Add reduced embeddings (for visualization)
     add_reduced_embeddings(results_df, topic_model)
 
-    # Generate topic labels using LLM
-    topic_labels = await generate_topic_labels_async(results_df, user_id)
+    # Generate topic labels using LLM or alternative method
+    topic_labels = await generate_topic_labels_async(results_df, user_id, topic_model)
 
     # Add topic titles to the DataFrame
     results_df["topic_title"] = results_df.apply(
@@ -161,9 +167,9 @@ def add_reduced_embeddings(results_df: pd.DataFrame, topic_model: BERTopic) -> N
 
 
 async def generate_topic_labels_async(
-    results_df: pd.DataFrame, user_id: int
+    results_df: pd.DataFrame, user_id: int, topic_model: BERTopic
 ) -> Dict[int, Dict[str, str]]:
-    """Generate topic labels asynchronously using an LLM."""
+    """Generate topic labels asynchronously using an LLM or alternative method."""
     tasks: List[Coroutine[Any, Any, Dict[str, str]]] = []
     topic_ids: List[int] = []
 
@@ -188,9 +194,10 @@ async def generate_topic_labels_async(
                 user_id,
                 TOPIC_MODELING_CONTEXT,
                 topic_queries,
+                topic_model=topic_model,
             )
         )
-        topic_ids.append(topic_id_int)  # **Add this line to record topic_id**
+        topic_ids.append(topic_id_int)
 
     if tasks:
         # Run tasks concurrently
@@ -226,8 +233,8 @@ def prepare_topics_data(
     # Group by topic_id
     grouped = results_df.groupby("topic_id")
 
-    for topic_id, topic_df in grouped:
-        topic_id = cast(int, topic_id)  # For type checking
+    for topic_id_any, topic_df in grouped:
+        topic_id = cast(int, topic_id_any)  # For type checking
         only_queries = topic_df[topic_df["type"] == "query"]
 
         # Collect unclassified queries

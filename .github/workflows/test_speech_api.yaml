@@ -7,10 +7,14 @@ on:
       - "**"
     paths:
       - "optional_components/speech_api/**"
+      - ".github/workflows/test_speech_api.yaml"
 
 env:
   PREFERRED_MODEL: base
   WHISPER_MODEL_DIR: whisper_models
+  PIPER_MODELS_DIR: models/piper
+  ENG_MODEL_NAME: en_US-arctic-medium.onnx
+  SWAHILI_MODEL_NAME: sw_CD-lanfrica-medium.onnx
 
 jobs:
   test:
@@ -31,20 +35,13 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r optional_components/speech_api/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r requirements-dev.txt
-          python -m pip install pytest
-
       - name: Run Speech Unit Tests
         env:
           PREFERRED_MODEL: ${{ env.PREFERRED_MODEL }}
           WHISPER_MODEL_DIR: ${{ env.WHISPER_MODEL_DIR }}
+          PIPER_MODELS_DIR: ${{ env.PIPER_MODELS_DIR }}
+          ENG_MODEL_NAME: ${{ env.ENG_MODEL_NAME }}
+          SWAHILI_MODEL_NAME: ${{ env.SWAHILI_MODEL_NAME }}
         run: |
-          mkdir -p $WHISPER_MODEL_DIR
           cd optional_components/speech_api
-          python -m pytest
-          cd ../..
-          rm -rf $WHISPER_MODEL_DIR
+          make tests

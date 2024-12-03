@@ -83,7 +83,9 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
-CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
+CUSTOM_STT_ENDPOINT = os.environ.get("CUSTOM_STT_ENDPOINT", None)
+CUSTOM_TTS_ENDPOINT = os.environ.get("CUSTOM_TTS_ENDPOINT", None)
+
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
@@ -95,3 +97,9 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 
 # Google Cloud storage
 GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
+
+# Sentry config
+SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+SENTRY_TRACES_SAMPLE_RATE = os.environ.get(
+    "SENTRY_TRACES_SAMPLE_RATE", 1.0
+)  # 1.0 means 100% of traces are sent to Sentry
