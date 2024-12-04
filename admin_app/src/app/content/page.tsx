@@ -205,6 +205,7 @@ const CardsPage = () => {
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />
+          <SearchSidebar closeSidebar={handleSidebarClose} />
         </Grid>
       </Grid>
       <Snackbar
