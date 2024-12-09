@@ -68,10 +68,8 @@ const UserManagement: React.FC = () => {
 
   if (!role) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h4" color="error">
-          [403] Access Denied
-        </Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+        <Typography variant="h6">[403] Access Denied</Typography>
       </Box>
     );
   }
