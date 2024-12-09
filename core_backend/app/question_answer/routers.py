@@ -376,9 +376,9 @@ def rerank_search_results(
         [(query_text, content.title + "\n" + content.text) for content in contents]
     )
 
-    sorted_by_score = [v for _, v in sorted(zip(scores, contents), reverse=True)][
-        :n_similar
-    ]
+    sorted_by_score = [
+        v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+    ][:n_similar]
     reranked_search_results = dict(enumerate(sorted_by_score))
 
     return reranked_search_results
