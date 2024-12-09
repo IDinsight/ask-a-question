@@ -20,7 +20,7 @@ import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 
 const UserManagement: React.FC = () => {
-  const { token, role } = useAuth();
+  const { token, username, role } = useAuth();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -66,7 +66,7 @@ const UserManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
-  if (!role) {
+  if (role !== "admin") {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
         <Typography variant="h6">[403] Access Denied</Typography>
@@ -164,6 +164,7 @@ const UserManagement: React.FC = () => {
                       setShowEditModal(false);
                     }}
                     user={currentUser!}
+                    isLoggedUser={currentUser?.username === username}
                     onContinue={handleEditModalContinue}
                     registerUser={(userToEdit: UserBody) => {
                       return editUser(currentUser!.user_id!, userToEdit, token!);

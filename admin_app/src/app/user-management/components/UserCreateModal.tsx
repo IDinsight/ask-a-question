@@ -91,6 +91,7 @@ interface UserModalProps {
   buttonTitle?: string;
   showCancel?: boolean;
   user?: UserBody;
+  isLoggedUser?: boolean;
 }
 
 const UserModal = ({
@@ -103,6 +104,7 @@ const UserModal = ({
   buttonTitle = "Register",
   showCancel = true,
   user,
+  isLoggedUser = false,
 }: UserModalProps) => {
   const { formData, setFormData, errors, validateForm, handleInputChange } = useForm(
     fields,
@@ -243,6 +245,7 @@ const UserModal = ({
               sx={{ justifyContent: "flex-start" }}
             >
               <Checkbox
+                disabled={isLoggedUser}
                 checked={formData.is_admin || false}
                 onChange={handleInputChange("is_admin")}
               />

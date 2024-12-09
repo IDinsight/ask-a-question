@@ -5,9 +5,9 @@ import { ReactNode, createContext, useContext, useState } from "react";
 
 type AuthContextType = {
   token: string | null;
-  user: string | null;
+  username: string | null;
   accessLevel: "readonly" | "fullaccess";
-  role: boolean | null;
+  role: "admin" | "user" | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
   logout: () => void;
@@ -27,14 +27,15 @@ type AuthProviderProps = {
 };
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const getInitialRole = () => {
     if (typeof window !== "undefined") {
-      return Boolean(localStorage.getItem("role"));
+      const role = localStorage.getItem("role");
+      return role === "admin" || role === "user" ? role : null;
     }
     return null;
   };
-  const [userRole, setUserRole] = useState<boolean | null>(getInitialRole);
+  const [userRole, setUserRole] = useState<"admin" | "user" | null>(getInitialRole);
 
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
@@ -69,13 +70,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         username,
         password,
       );
+      const role = is_admin ? "admin" : "user";
       localStorage.setItem("token", access_token);
       localStorage.setItem("accessLevel", access_level);
-      localStorage.setItem("role", is_admin);
-      setUser(username);
+      localStorage.setItem("role", role);
+      setUsername(username);
       setToken(access_token);
       setAccessLevel(access_level);
-      setUserRole(is_admin);
+      setUserRole(role);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -102,12 +104,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     apiCalls
       .getGoogleLoginToken({ client_id: client_id, credential: credential })
       .then(({ access_token, access_level, username, is_admin }) => {
+        const role = is_admin ? "admin" : "user";
         localStorage.setItem("token", access_token);
         localStorage.setItem("accessLevel", access_level);
-        localStorage.setItem("role", is_admin);
-        setUser(username);
+
+        localStorage.setItem("role", role);
+        setUsername(username);
         setToken(access_token);
-        setUserRole(is_admin);
+        setUserRole(role);
         setAccessLevel(access_level);
         router.push(sourcePage);
       })
@@ -121,7 +125,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("role");
-    setUser(null);
+    setUsername(null);
     setToken(null);
     setUserRole(null);
     setAccessLevel("readonly");
@@ -130,7 +134,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const authValue: AuthContextType = {
     token: token,
-    user: user,
+    username: username,
     accessLevel: accessLevel,
     role: userRole,
     loginError: loginError,
