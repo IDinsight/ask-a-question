@@ -159,21 +159,18 @@ const UserModal = ({
           sx={{
             display: "flex",
             flexDirection: "column",
+            gap: 1,
             alignItems: "center",
-            padding: "24px",
+            padding: 3,
           }}
         >
-          <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+          <Avatar sx={{ bgcolor: "secondary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
-          <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
+          <Typography variant="h5" align="center" marginBottom={5}>
             {title}
           </Typography>
-          {errorMessage && (
-            <Alert severity="error" sx={{ marginBottom: 2 }}>
-              {errorMessage}
-            </Alert>
-          )}
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
           {fields.includes("username") && (
             <TextField
               margin="none"
@@ -213,7 +210,7 @@ const UserModal = ({
             />
           )}
           {fields.includes("contentLimit") && fields.includes("apiCallLimit") && (
-            <Box display="flex" justifyContent="space-between" width="100%" mt={2}>
+            <Box display="flex" justifyContent="space-between" width="100%">
               <TextField
                 margin="none"
                 error={errors.contentLimit}
@@ -242,19 +239,25 @@ const UserModal = ({
             <Box
               display="flex"
               alignItems="center"
-              mt={2}
               width="100%"
               sx={{ justifyContent: "flex-start" }}
             >
               <Checkbox
                 checked={formData.is_admin || false}
                 onChange={handleInputChange("is_admin")}
-                sx={{ marginRight: 1 }}
               />
               <Typography variant="body1">Admin User</Typography>
             </Box>
           )}
-          <Box mt={1} width="100%" display="flex" justifyContent="center">
+          <Box
+            width="100%"
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 2,
+              gap: 2,
+            }}
+          >
             {showCancel && (
               <Button
                 onClick={() => onClose()}
