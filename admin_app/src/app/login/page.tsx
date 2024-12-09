@@ -20,12 +20,14 @@ import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import {
-  AdminAlertModal,
-  ConfirmationModal,
-  RegisterModal,
-} from "./components/RegisterModal";
+  getRegisterOption,
+  registerUser,
+  UserBody,
+  UserBodyPassword,
+} from "@/app/user-management/api";
+import { AdminAlertModal, RegisterModal } from "./components/RegisterModal";
+import { ConfirmationModal } from "@/app/user-management/components/ConfirmationModal";
 import { LoadingButton } from "@mui/lab";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
@@ -62,7 +64,7 @@ const Login = () => {
 
   useEffect(() => {
     const fetchRegisterPrompt = async () => {
-      const data = await apiCalls.getRegisterOption();
+      const data = await getRegisterOption();
       setShowAdminAlertModal(data.require_register);
       setIsLoading(false);
     };
@@ -100,12 +102,12 @@ const Login = () => {
     }
   }, [recoveryCodes]);
 
-  const handleAdminModalClose = (event: {}, reason: string) => {
+  const handleAdminModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowAdminAlertModal(false);
     }
   };
-  const handleRegisterModalClose = (event: {}, reason: string) => {
+  const handleRegisterModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowRegisterModal(false);
     }
@@ -433,12 +435,16 @@ const Login = () => {
           open={showRegisterModal}
           onClose={handleRegisterModalClose}
           onContinue={handleRegisterModalContinue}
-          registerUser={apiCalls.registerUser}
+          registerUser={(user: UserBodyPassword | UserBody) => {
+            const newUser = user as UserBodyPassword;
+            return registerUser(newUser.username, newUser.password);
+          }}
         />
         <ConfirmationModal
           open={showConfirmationModal}
           onClose={handleCloseConfirmationModal}
           recoveryCodes={recoveryCodes}
+          closeButtonText="Back to Login"
         />
       </Grid>
     </Grid>

@@ -200,17 +200,24 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
-  const { logout, user } = useAuth();
+  const { logout, username, role } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+  const [persistedRole, setPersistedRole] = React.useState<"admin" | "user" | null>(
+    null,
+  );
 
   useEffect(() => {
     // Save user to local storage when it changes
-    if (user) {
-      localStorage.setItem("user", user);
+    if (username) {
+      localStorage.setItem("user", username);
     }
-  }, [user]);
+    // Save role to local storage when it changes
+    if (role != null) {
+      localStorage.setItem("role", role);
+    }
+  }, [username]);
 
   useEffect(() => {
     // Retrieve user from local storage on component mount
@@ -218,7 +225,13 @@ const UserDropdown = () => {
     if (storedUser) {
       setPersistedUser(storedUser);
     }
-  }, []);
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) {
+      if (storedRole === "admin" || storedRole === "user") {
+        setPersistedRole(storedRole);
+      }
+    }
+  }, [username]);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -257,6 +270,16 @@ const UserDropdown = () => {
         <MenuItem disabled>
           <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
+        {persistedRole === "admin" && (
+          <MenuItem
+            key={"user-management"}
+            onClick={() => {
+              router.push("/user-management");
+            }}
+          >
+            <Typography textAlign="center">User management</Typography>
+          </MenuItem>
+        )}
         <MenuItem key={"logout"} onClick={logout}>
           <Typography textAlign="center">Logout</Typography>
         </MenuItem>
