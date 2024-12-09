@@ -4,9 +4,9 @@ import {
   Box,
   Button,
   CircularProgress,
-  Grid,
   List,
   Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { UserCard } from "./components/UserCard";
@@ -16,7 +16,7 @@ import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { createUser, UserBody } from "./api";
 import { UserResetModal } from "./components/UserResetModal";
-import { appColors } from "@/utils";
+import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 
 const UserManagement: React.FC = () => {
@@ -75,34 +75,59 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <Grid container sx={{ padding: 3 }}>
-      <Grid
-        item
-        xs={12}
+    <Layout.FlexBox
+      sx={{
+        alignItems: "center",
+        paddingTop: 5,
+        paddingInline: 4,
+        gap: sizes.baseGap,
+        height: "95vh",
+      }}
+    >
+      <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingBottom: 2,
+          flexDirection: "column",
+          width: "100%",
+          maxWidth: "lg",
+          minWidth: "sm",
         }}
       >
-        <Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            paddingBottom: 2,
+            gap: 2,
+          }}
+        >
           <Typography variant="h4">Manage User</Typography>
           <Typography variant="body1" align="left" color={appColors.darkGrey}>
             Add and edit user passwords.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            setShowCreateModal(true);
+        <Layout.FlexBox
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "flex-end",
           }}
         >
-          Add User
-        </Button>
-      </Grid>
-      <Grid item xs={12}>
+          <Tooltip title="Add new user">
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  setShowCreateModal(true);
+                }}
+              >
+                Add User
+              </Button>
+            </>
+          </Tooltip>
+        </Layout.FlexBox>
+        <Layout.Spacer />
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
             <CircularProgress size={24} />
@@ -111,8 +136,6 @@ const UserManagement: React.FC = () => {
           <Paper
             elevation={0}
             sx={{
-              marginLeft: 10,
-              marginRight: 10,
               paddingTop: 1,
               paddingBottom: 10,
               paddingInline: 3,
@@ -189,8 +212,8 @@ const UserManagement: React.FC = () => {
             />
           </Paper>
         )}
-      </Grid>
-    </Grid>
+      </Box>
+    </Layout.FlexBox>
   );
 };
 

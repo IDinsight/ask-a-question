@@ -43,6 +43,7 @@ const UserCard: React.FC<UserCardProps> = ({
           borderBottom: 1,
           borderColor: "divider",
           marginBottom: 2,
+          paddingBottom: 1,
           overflowWrap: "break-word",
           hyphens: "auto",
           whiteSpace: "pre-wrap",
