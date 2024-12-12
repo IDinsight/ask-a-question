@@ -62,7 +62,7 @@ jobs:
         uses: "google-github-actions/get-secretmanager-secrets@v2"
         with:
           secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain  # pragma: allowlist secret
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain 
             jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret  # pragma: allowlist secret
             google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id  # pragma: allowlist secret
             langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key  # pragma: allowlist secret
