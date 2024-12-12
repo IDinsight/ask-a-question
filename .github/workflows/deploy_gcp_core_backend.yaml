@@ -62,17 +62,17 @@ jobs:
         uses: "google-github-actions/get-secretmanager-secrets@v2"
         with:
           secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
-            jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret
-            google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id
-            langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key
-            langfuse-public-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-public-key
-            db-host:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-host
-            db-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-password
-            admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username
-            admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
-            admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
-            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain      # pragma: allowlist secret
+            jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret  # pragma: allowlist secret
+            google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id # pragma: allowlist secret
+            langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key # pragma: allowlist secret
+            langfuse-public-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-public-key # pragma: allowlist secret
+            db-host:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-host # pragma: allowlist secret
+            db-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-password # pragma: allowlist secret
+            admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username # pragma: allowlist secret
+            admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password # pragma: allowlist secret
+            admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key # pragma: allowlist secret
+            gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json # pragma: allowlist secret
 
       - name: Copy GCP credentials JSON
         working-directory: deployment/docker-compose

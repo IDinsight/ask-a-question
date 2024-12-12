@@ -21,6 +21,7 @@ resource "google_compute_instance" "vm_instance" {
 
     initialize_params {
       image = "cos-cloud/cos-113-18244-85-49"
+      size  = 100
     }
   }
 

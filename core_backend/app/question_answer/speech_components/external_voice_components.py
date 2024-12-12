@@ -3,14 +3,9 @@ from io import BytesIO
 
 from google.cloud import speech, texttospeech
 
-from ...config import GCS_SPEECH_BUCKET
 from ...llm_call.llm_prompts import IdentifiedLanguage
 from ...utils import (
-    generate_public_url,
-    generate_random_filename,
-    get_file_extension_from_mime_type,
     setup_logger,
-    upload_file_to_gcs,
 )
 from .utils import convert_audio_to_wav, detect_language, get_gtts_lang_code_and_model
 
@@ -56,18 +51,14 @@ async def transcribe_audio(audio_filename: str) -> str:
         raise ValueError(error_msg) from e
 
 
-async def generate_tts_on_gcs(
+async def synthesize_speech(
     text: str,
-    language: IdentifiedLanguage | None,
-) -> str:
+    language: IdentifiedLanguage,
+) -> BytesIO:
     """
     Converts the provided text to speech using the specified voice model
-    and saves it as an mp3 file on Google Cloud Storage using Google Text-to-Speech.
+    using Google Text-to-Speech.
     """
-    if language is None:
-        error_msg = "Language must be provided to generate speech."
-        logger.error(error_msg)
-        raise ValueError(error_msg)
 
     try:
         client = texttospeech.TextToSpeechClient()
@@ -82,31 +73,15 @@ async def generate_tts_on_gcs(
         )
 
         audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3
+            audio_encoding=texttospeech.AudioEncoding.LINEAR16
         )
 
         response = client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
 
-        mp3_file = BytesIO(response.audio_content)
-        content_type = "audio/mpeg"
-
-        file_extension = get_file_extension_from_mime_type(content_type)
-        unique_filename = generate_random_filename(file_extension)
-
-        destination_blob_name = f"tts-voice-notes/{unique_filename}"
-
-        await upload_file_to_gcs(
-            GCS_SPEECH_BUCKET, mp3_file, destination_blob_name, content_type
-        )
-
-        public_url = await generate_public_url(GCS_SPEECH_BUCKET, destination_blob_name)
-
-        logger.info(
-            f"Speech generated successfully. Saved to {destination_blob_name} in GCS."
-        )
-        return public_url
+        wav_file = BytesIO(response.audio_content)
+        return wav_file
 
     except Exception as e:
         error_msg = f"Failed to generate speech: {str(e)}"

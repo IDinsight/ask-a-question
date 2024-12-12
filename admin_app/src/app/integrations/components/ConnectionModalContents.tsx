@@ -45,7 +45,7 @@ const TypebotModalContent: React.FC = () => {
           variant="outlined"
           color="primary"
           startIcon={<DownloadIcon />}
-          href="https://github.com/IDinsight/ask-a-question/blob/e75c7fec20373a8db5f5c8771b069aa7fac576a8/chat_managers/typebot/llm_response_flow.json"
+          href="https://github.com/IDinsight/ask-a-question/blob/e75c7fec20373a8db5f5c8771b069aa7fac576a8/chat_managers/typebot/typebot_demo_flow.json"
           target="_blank"
           rel="noopener noreferrer"
         >

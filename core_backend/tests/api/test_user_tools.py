@@ -1,11 +1,60 @@
+import random
+import string
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 
 from .conftest import (
+    TEST_ADMIN_RECOVERY_CODES,
     TEST_ADMIN_USERNAME,
     TEST_USER_API_KEY_2,
     TEST_USERNAME,
 )
+
+
+@pytest.fixture(scope="function")
+def temp_user_reset_password(
+    client: TestClient,
+    fullaccess_token_admin: str,
+    request: pytest.FixtureRequest,
+) -> Generator[tuple[str, list[str]], None, None]:
+    json = {
+        "username": request.param["username"],
+        "password": request.param["password"],
+        "is_admin": False,
+    }
+    response = client.post(
+        "/user",
+        json=json,
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+    username = response.json()["username"]
+    recovery_codes = response.json()["recovery_codes"]
+    yield (username, recovery_codes)
+
+
+class TestGetAllUsers:
+    def test_get_all_users(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.get(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+        )
+
+        assert response.status_code == 200
+        json_response = response.json()
+        assert len(json_response) > 0
+
+    def test_get_all_users_non_admin(
+        self, client: TestClient, fullaccess_token: str
+    ) -> None:
+        response = client.get(
+            "/user/",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+        )
+        assert response.status_code == 403
 
 
 class TestUserCreation:
@@ -97,7 +146,7 @@ class TestUserUpdate:
         assert response.status_code == 200
 
         response = client.get(
-            "/user/",
+            "/user/current-user",
             headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
         )
         assert response.status_code == 200
@@ -124,7 +173,7 @@ class TestUserUpdate:
         assert response.status_code == 200
 
         response = client.get(
-            "/user/",
+            "/user/current-user",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
         assert response.status_code == 200
@@ -159,10 +208,132 @@ class TestUserUpdate:
         assert response.status_code == 403
 
 
+class TestUserPasswordReset:
+
+    @pytest.mark.parametrize(
+        "temp_user_reset_password",
+        [
+            {
+                "username": "temp_user_reset",
+                "password": "test_password",  # pragma: allowlist secret
+            },
+        ],
+        indirect=True,
+    )
+    def test_reset_password(
+        self,
+        client: TestClient,
+        fullaccess_token_admin: str,
+        temp_user_reset_password: tuple[str, list[str]],
+    ) -> None:
+        username, recovery_codes = temp_user_reset_password
+        for code in recovery_codes:
+            letters = string.ascii_letters
+            random_string = "".join(random.choice(letters) for i in range(8))
+            response = client.put(
+                "/user/reset-password",
+                headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+                json={
+                    "username": username,
+                    "password": random_string,
+                    "recovery_code": code,
+                },
+            )
+
+            assert response.status_code == 200
+
+        response = client.put(
+            "/user/reset-password",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": "temp_user_reset",
+                "password": "password",
+                "recovery_code": code,
+            },
+        )
+
+        assert response.status_code == 400
+
+    @pytest.mark.parametrize(
+        "temp_user_reset_password",
+        [
+            {
+                "username": "temp_user_reset_non_admin",
+                "password": "test_password",  # pragma: allowlist secret,
+            }
+        ],
+        indirect=True,
+    )
+    def test_non_admin_user_reset_password(
+        self,
+        client: TestClient,
+        fullaccess_token: str,
+        temp_user_reset_password: tuple[str, list[str]],
+    ) -> None:
+        username, recovery_codes = temp_user_reset_password
+
+        response = client.put(
+            "/user/reset-password",
+            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            json={
+                "username": username,
+                "password": "password",
+                "recovery_code": recovery_codes[1],
+            },
+        )
+
+        assert response.status_code == 403
+
+    def test_admin_user_reset_own_password(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.put(
+            "/user/reset-password",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": TEST_ADMIN_USERNAME,
+                "password": "password",
+                "recovery_code": TEST_ADMIN_RECOVERY_CODES[0],
+            },
+        )
+
+        assert response.status_code == 200
+
+    def test_reset_password_invalid_recovery_code(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.put(
+            "/user/reset-password",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": TEST_USERNAME,
+                "password": "password",
+                "recovery_code": "12345",
+            },
+        )
+
+        assert response.status_code == 400
+
+    def test_reset_password_invalid_user(
+        self, client: TestClient, fullaccess_token_admin: str
+    ) -> None:
+        response = client.put(
+            "/user/reset-password",
+            headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+            json={
+                "username": "invalid_username",
+                "password": "password",
+                "recovery_code": "1234",
+            },
+        )
+
+        assert response.status_code == 404
+
+
 class TestUserFetching:
     def test_get_user(self, client: TestClient, fullaccess_token: str) -> None:
         response = client.get(
-            "/user/",
+            "/user/current-user",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
         )
 

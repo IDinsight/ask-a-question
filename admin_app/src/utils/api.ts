@@ -27,19 +27,6 @@ api.interceptors.response.use(
   },
 );
 
-const getUser = async (token: string) => {
-  try {
-    const response = await api.get("/user/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching user info");
-  }
-};
-
 const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
@@ -140,7 +127,6 @@ const getUrgencyDetection = async (search: string, token: string) => {
 };
 
 export const apiCalls = {
-  getUser,
   getLoginToken,
   getGoogleLoginToken,
   getSearch,

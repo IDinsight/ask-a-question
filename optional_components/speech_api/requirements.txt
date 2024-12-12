@@ -5,4 +5,9 @@ ffmpeg-python==0.2.0
 fastapi==0.109.1
 python-multipart==0.0.9
 litellm==1.40.29
-aiohttp==3.10.2
+aiohttp==3.10.11
+sounddevice==0.5.0
+soundfile==0.12.1
+piper-tts==1.2.0
+pytest==7.4.2
+pytest-asyncio==0.23.2
