@@ -445,11 +445,13 @@ async def init_chat_history(
     model_info = requests.get(
         model_info_endpoint, headers={"accept": "application/json"}
     ).json()
+    print("model_info", model_info)
     for dict_ in model_info["data"]:
         if dict_["model_name"] == "chat":
             chat_params = dict_["model_info"]
             assert "model" not in chat_params
             chat_params["model"] = dict_["litellm_params"]["model"]
+            print(chat_params)
             await redis_client.set(
                 chat_params_cache_key,
                 json.dumps(chat_params),

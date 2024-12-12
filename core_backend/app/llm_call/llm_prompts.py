@@ -522,6 +522,8 @@ class ChatHistory:
             2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you
             understand the most useful information related to the user's LATEST
             MESSAGE.
+            3. If there is not enough information in the conversation history answer
+            based on the provided ADDITIONAL RELEVANT INFORMATION.
 
             When you have completed the above steps, you will then write a JSON, whose
             TypeScript Interface is given below:

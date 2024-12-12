@@ -25,6 +25,7 @@ import {
 import { appColors, sizes } from "@/utils";
 import CloseIcon from "@mui/icons-material/Close";
 import KeyIcon from "@mui/icons-material/Key";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -63,7 +64,7 @@ const PersistentSearchBar = ({
   onSend: (queryText: string, queryType: QueryType) => void;
   openApiKeyDialog: () => void;
 }) => {
-  const [selectedOption, setSelectedOption] = useState<QueryType>("embeddings-search");
+  const [selectedOption, setSelectedOption] = useState<QueryType>("llm-response");
   const [queryText, setQueryText] = useState<string>("");
 
   const handleSelectChange = (event: SelectChangeEvent<unknown>) => {
@@ -139,11 +140,11 @@ const PersistentSearchBar = ({
                     },
                   }}
                 >
-                  <MenuItem value="embeddings-search" autoFocus={true}>
-                    <Typography variant="caption">Embedding Search</Typography>
-                  </MenuItem>
-                  <MenuItem value="llm-response">
+                  <MenuItem value="llm-response" autoFocus={true}>
                     <Typography variant="caption">LLM Search</Typography>
+                  </MenuItem>
+                  <MenuItem value="embeddings-search">
+                    <Typography variant="caption">Embedding Search</Typography>
                   </MenuItem>
                 </Select>
 
@@ -155,7 +156,7 @@ const PersistentSearchBar = ({
                   }}
                   onClick={openApiKeyDialog}
                 >
-                  <KeyIcon />
+                  <RestartAltIcon />
                 </IconButton>
               </InputAdornment>
             ),

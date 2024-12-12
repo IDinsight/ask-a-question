@@ -25,12 +25,14 @@ const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [sessionId, setSessionId] = useState<number>(
+    Math.floor(Math.random() * 1000000),
+  );
   const bottomRef = useRef<HTMLDivElement>(null); // Ref to scroll to bottom of chat
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages]);
+  }, [messages, loading]);
 
   const processEmbeddingsSearchResponse = (response: any) => {
     const contentResponse = response.content_response;
@@ -60,7 +62,6 @@ const Page = () => {
 
   const processLLMSearchResponse = (response: any) => {
     const llmResponse = response.llm_response;
-    console.log(response);
     const responseText = llmResponse
       ? llmResponse
       : `No response. Reason: "${response.debug_info.reason}". See JSON for details.`;
@@ -93,55 +94,42 @@ const Page = () => {
       return;
     }
 
+    const newMessage: UserMessage = {
+      dateTime: new Date().toISOString(),
+      type: "question",
+      content: queryText,
+    };
+
+    // Optimistically update the UI first
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
     setLoading(true);
 
-    // TODO: Add loading component
-
-    if (currApiKey === null || currApiKey === "") {
-      setError("API Key not set. Please set the API key.");
-      setLoading(false);
-      return;
-    } else {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          dateTime: new Date().toISOString(),
-          type: "question",
-          content: queryText,
-        } as UserMessage,
-      ]);
-      if (queryType === "embeddings-search") {
-        apiCalls
-          .getChat(queryText, true, token!)
-          .then((response) => {
-            processEmbeddingsSearchResponse(response);
-          })
-          .catch((error: Error) => {
-            setError("Embeddings search failed.");
-            processErrorMessage(error);
-            console.error(error);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      } else if (queryType === "llm-response") {
-        apiCalls
-          .getChat(queryText, true, token!)
-          .then((response) => {
-            processLLMSearchResponse(response);
-          })
-          .catch((error: Error) => {
-            setError("LLM Response failed.");
-            processErrorMessage(error);
-            console.error(error);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      } else {
-        throw new Error("Invalid search option selected");
-      }
-    }
+    const apiCallPromise =
+      queryType === "embeddings-search"
+        ? apiCalls.getChat(queryText, false, token!, sessionId)
+        : queryType === "llm-response"
+        ? apiCalls.getChat(queryText, true, token!, sessionId) // If the second boolean parameter is to indicate a different query type, it should differ here
+        : Promise.reject(new Error("Invalid search option selected"));
+    apiCallPromise
+      .then((response) => {
+        if (queryType === "embeddings-search") {
+          processEmbeddingsSearchResponse(response);
+        } else if (queryType === "llm-response") {
+          processLLMSearchResponse(response);
+        }
+      })
+      .catch((error: Error) => {
+        const errorMessage =
+          queryType === "embeddings-search"
+            ? "Embeddings search failed."
+            : "LLM Response failed.";
+        setError(errorMessage);
+        processErrorMessage(error);
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -154,7 +142,8 @@ const Page = () => {
   };
 
   const handleDialogOpen = () => {
-    setOpenDialog(true);
+    setSessionId(Math.floor(Math.random() * 1000000));
+    setMessages([]);
   };
 
   const handleSaveToken = (token: string) => {
@@ -186,7 +175,7 @@ const Page = () => {
       display="flex"
       flexDirection="column"
       alignItems="center"
-      sx={{ height: "100vh", width: "100%", pb: 10 }}
+      sx={{ height: "100vh", width: "100%", pb: 10, pt: 10 }}
     >
       <Box
         mb={10}

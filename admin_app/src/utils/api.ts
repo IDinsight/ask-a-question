@@ -127,7 +127,7 @@ const getChat = async (
   question: string,
   generate_llm_response: boolean,
   token: string,
-  session_id?: string,
+  session_id?: number,
 ): Promise<{ status: number; data?: any; error?: any }> => {
   try {
     const response = await api.post(
@@ -135,6 +135,7 @@ const getChat = async (
       {
         query_text: question,
         generate_llm_response,
+        session_id,
       },
       {
         headers: { Authorization: `Bearer ${token}` },

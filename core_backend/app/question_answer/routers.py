@@ -135,7 +135,7 @@ async def chat(
     """
 
     reset_user_assistant_chat_history = False  # For testing purposes only
-    user_query.session_id = 666  # For testing purposes only
+    # user_query.session_id = 666  # For testing purposes only
 
     # 1.
     (
@@ -158,7 +158,6 @@ async def chat(
     logger.info(f"Using chat cache ID: {chat_cache_key}")
     logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
     logger.info(f"{reset_user_assistant_chat_history = }")
-
     _, _, user_assistant_chat_history, chat_params, _ = await init_chat_history(
         chat_cache_key=chat_cache_key,
         chat_params_cache_key=chat_params_cache_key,
@@ -285,7 +284,7 @@ async def chat(
         contents=response.search_results,
         asession=asession,
     )
-
+    print(response)
     if type(response) is QueryResponse:
         return response
 
