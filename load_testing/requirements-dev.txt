@@ -13,7 +13,7 @@ greenlet==3.0.3
 idna==3.7
 importlib_metadata==8.0.0
 itsdangerous==2.2.0
-Jinja2==3.1.4
+Jinja2==3.1.5
 locust==2.29.1
 MarkupSafe==2.1.5
 msgpack==1.0.8
