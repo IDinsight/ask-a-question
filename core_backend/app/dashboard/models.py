@@ -270,10 +270,17 @@ def get_time_labels_query(
             interval_str = "week"
         case TimeFrequency.Hour:
             interval_str = "hour"
+        case TimeFrequency.Month:
+            interval_str = "month"
         case _:
             raise ValueError("Invalid frequency")
 
-    extra_interval = "hour" if interval_str == "hour" else "day"
+    if interval_str == "hour":
+        extra_interval = "hour"
+    elif interval_str == "month":
+        extra_interval = "month"
+    else:
+        extra_interval = "day"
     return interval_str, (
         select(
             func.date_trunc(interval_str, literal_column("period_start")).label(
