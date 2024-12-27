@@ -3,11 +3,28 @@ import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
 import { ApexSeriesData } from "../../types";
+
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-const StackedBarChart = ({ data }: { data: ApexSeriesData[] }) => {
+const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+interface StackedBarChartProps {
+  data: ApexSeriesData[];
+  showDayOfWeek?: boolean;
+}
+
+const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }) => {
+  // If weekly, don't use datetime axis - otherwise do.
+  const xaxisType = showDayOfWeek ? undefined : "datetime";
+
+  // Formatter for weekly day-of-week labels.
+  const weeklyFormatter = (val: string) => {
+    const d = new Date(val);
+    return `${dayOfWeek[d.getDay()]}, ${d.getDate()}`;
+  };
+
   const options: ApexOptions = {
     chart: {
       type: "bar",
@@ -15,28 +32,22 @@ const StackedBarChart = ({ data }: { data: ApexSeriesData[] }) => {
       stackType: "normal",
       fontFamily: "Inter",
     },
-    dataLabels: {
-      enabled: false,
-    },
+    dataLabels: { enabled: false },
     xaxis: {
-      type: "datetime",
+      type: xaxisType as any,
       labels: {
-        datetimeUTC: true,
+        formatter: showDayOfWeek ? weeklyFormatter : undefined, // Defaults work for datetime
       },
     },
     yaxis: {
-      title: {
-        text: "Number of Queries",
-      },
+      title: { text: "Number of Queries" },
       min: 0,
       forceNiceScale: true,
     },
     legend: {
       position: "top",
       horizontalAlign: "left",
-      markers: {
-        shape: "circle",
-      },
+      markers: { shape: "circle" },
     },
     colors: [
       appColors.dashboardPurple, // Urgent + downvoted -> purple
@@ -44,19 +55,11 @@ const StackedBarChart = ({ data }: { data: ApexSeriesData[] }) => {
       appColors.dashboardPrimary, // Normal -> green
       appColors.dashboardUpvote, // Urgent only -> faded red
     ],
-    tooltip: {
-      x: {
-        format: "dd MMM yyyy",
-      },
-    },
     noData: {
       text: "No data available",
       align: "center",
       verticalAlign: "middle",
-      style: {
-        color: "#444",
-        fontSize: "14px",
-      },
+      style: { color: "#444", fontSize: "14px" },
     },
   };
 

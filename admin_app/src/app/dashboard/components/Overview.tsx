@@ -180,7 +180,10 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
           bgcolor="white"
           sx={{ flexGrow: 1, borderRadius: 1, minWidth: 250, height: 450 }}
         >
-          <StackedBarChart data={timeseriesData} />
+          <StackedBarChart
+            data={timeseriesData}
+            showDayOfWeek={timePeriod === "week"}
+          />
         </Box>
         <Box
           bgcolor="white"
