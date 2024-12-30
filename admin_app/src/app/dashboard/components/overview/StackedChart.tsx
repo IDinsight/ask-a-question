@@ -8,20 +8,12 @@ const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 interface StackedBarChartProps {
   data: ApexSeriesData[];
   showDayOfWeek?: boolean;
 }
 
 const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }) => {
-  // Formatter for weekly day-of-week labels.
-  const weeklyFormatter = (val: string) => {
-    const d = new Date(val);
-    return `${dayOfWeek[d.getDay()]}, ${d.getDate()}`;
-  };
-
   const options: ApexOptions = {
     chart: {
       type: "bar",
