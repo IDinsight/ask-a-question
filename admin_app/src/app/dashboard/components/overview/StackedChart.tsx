@@ -16,9 +16,6 @@ interface StackedBarChartProps {
 }
 
 const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }) => {
-  // If weekly, don't use datetime axis - otherwise do.
-  const xaxisType = showDayOfWeek ? undefined : "datetime";
-
   // Formatter for weekly day-of-week labels.
   const weeklyFormatter = (val: string) => {
     const d = new Date(val);
@@ -34,9 +31,9 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }
     },
     dataLabels: { enabled: false },
     xaxis: {
-      type: xaxisType as any,
+      type: "datetime",
       labels: {
-        formatter: showDayOfWeek ? weeklyFormatter : undefined, // Defaults work for datetime
+        format: showDayOfWeek ? "ddd d" : undefined,
       },
     },
     yaxis: {
