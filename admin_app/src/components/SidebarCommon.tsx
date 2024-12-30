@@ -111,7 +111,10 @@ const TestSidebar = ({
                 <Checkbox
                   checked={generateLLMResponse}
                   onChange={toggleGenerateLLMResponse}
-                  sx={{ color: "#5480D1", "&.Mui-checked": { color: "#5480D1" } }}
+                  sx={{
+                    color: "#5480D1",
+                    "&.Mui-checked": { color: "#5480D1" },
+                  }}
                 />
               }
               label="Also generate AI response"

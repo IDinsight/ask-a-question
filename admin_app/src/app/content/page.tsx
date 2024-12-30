@@ -38,6 +38,8 @@ import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
+import { ChatSideBar } from "./components/ChatSideBar";
+import { apiCalls } from "@/utils/api";
 
 const CARD_HEIGHT = 250;
 
@@ -75,13 +77,22 @@ const CardsPage = () => {
   }>({ message: null, color: undefined });
 
   const [openSidebar, setOpenSideBar] = useState(false);
+  const [openChatSidebar, setOpenChatSideBar] = useState(false);
   const handleSidebarToggle = () => {
+    setOpenChatSideBar(false);
     setOpenSideBar(!openSidebar);
   };
-  const handleSidebarClose = () => {
+  const handleChatSidebarToggle = () => {
     setOpenSideBar(false);
+    setOpenChatSideBar(!openChatSidebar);
   };
-  const sidebarGridWidth = openSidebar ? 5 : 0;
+  const handleChatSidebarClose = () => {
+    setOpenChatSideBar(false);
+  };
+  const handleSidebarClose = () => {
+    setOpenChatSideBar(false);
+  };
+  const sidebarGridWidth = openSidebar || openChatSidebar ? 5 : 0;
 
   React.useEffect(() => {
     if (token) {
@@ -115,7 +126,10 @@ const CardsPage = () => {
           md={12 - sidebarGridWidth}
           lg={12 - sidebarGridWidth + 1}
           sx={{
-            display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+            display:
+              openSidebar || openChatSidebar
+                ? { xs: "none", sm: "none", md: "block" }
+                : "block",
           }}
         >
           <Layout.FlexBox
@@ -168,28 +182,54 @@ const CardsPage = () => {
                   searchTerm={searchTerm}
                   tags={tags}
                   filterTags={filterTags}
-                  openSidebar={openSidebar}
+                  openSidebar={openSidebar || openChatSidebar}
                   token={token}
                   accessLevel={currAccessLevel}
                   setSnackMessage={setSnackMessage}
                 />
-                {!openSidebar && (
-                  <Fab
-                    variant="extended"
-                    sx={{
-                      bgcolor: "orange",
-                      width: "100px",
-                      alignSelf: "flex-end",
-                      marginRight: 2,
-                      marginBottom: 3,
-                    }}
-                    onClick={handleSidebarToggle}
-                  >
-                    <PlayArrowIcon />
-                    <Layout.Spacer horizontal multiplier={0.3} />
-                    Test
-                  </Fab>
-                )}
+                <Box
+                  sx={{
+                    display: "grid",
+                    placeItems: "end", // Shortcut for align-items and justify-items together
+                    height: "100%", // Adjust the height as required
+                    direction: "row", // Set flex direction to column
+                    flexGrow: 1,
+                    justifyContent: "flex-end", // Aligns items to the bottom
+                    alignItems: "flex-end", // Aligns items to the right
+                    paddingTop: 5,
+                  }}
+                >
+                  {!openSidebar && (
+                    <Fab
+                      variant="extended"
+                      sx={{
+                        bgcolor: "orange",
+                        width: "100px",
+                        marginBottom: 2, // Dealing with flex column, margin bottom is used
+                      }}
+                      onClick={handleSidebarToggle}
+                    >
+                      <PlayArrowIcon />
+                      <Layout.Spacer horizontal multiplier={0.3} />
+                      Test search
+                    </Fab>
+                  )}
+                  {!openChatSidebar && (
+                    <Fab
+                      variant="extended"
+                      sx={{
+                        bgcolor: "orange",
+                        width: "100px",
+                        marginBottom: 3,
+                      }}
+                      onClick={handleChatSidebarToggle}
+                    >
+                      <PlayArrowIcon />
+                      <Layout.Spacer horizontal multiplier={0.3} />
+                      Test chat
+                    </Fab>
+                  )}
+                </Box>
               </Layout.FlexBox>
             </Box>
           </Layout.FlexBox>
@@ -205,7 +245,24 @@ const CardsPage = () => {
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />
-          <SearchSidebar closeSidebar={handleSidebarClose} />
+        </Grid>
+        <Grid
+          item
+          xs={openChatSidebar ? 12 : 0}
+          sm={openChatSidebar ? 12 : 0}
+          md={sidebarGridWidth}
+          lg={sidebarGridWidth - 1}
+          sx={{
+            display: openChatSidebar ? "block" : "none",
+          }}
+        >
+          <ChatSideBar
+            closeSidebar={handleChatSidebarClose}
+            showLLMResponseToggle={true}
+            getResponse={(question: string, generateLLMResponse, session_id) => {
+              return apiCalls.getChat(question, true, token!, session_id);
+            }}
+          />
         </Grid>
       </Grid>
       <Snackbar
