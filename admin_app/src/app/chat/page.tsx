@@ -62,6 +62,7 @@ const Page = () => {
 
   const processLLMSearchResponse = (response: any) => {
     const llmResponse = response.llm_response;
+    console.log;
     const responseText = llmResponse
       ? llmResponse
       : `No response. Reason: "${response.debug_info.reason}". See JSON for details.`;

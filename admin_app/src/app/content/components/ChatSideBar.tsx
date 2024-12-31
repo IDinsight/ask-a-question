@@ -18,6 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import TypingAnimation from "@/components/TypingAnimation";
 
 import { appColors, sizes } from "@/utils";
 
@@ -75,10 +76,6 @@ const ChatSideBar = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setQuestion(event.target.value);
-  };
-
-  const toggleGenerateLLMResponse = () => {
-    setGenerateLLMResponse((prev) => !prev);
   };
 
   const processErrorMessage = (error: Error) => {
@@ -162,7 +159,16 @@ const ChatSideBar = ({
         {messages.map((message, index) => (
           <MessageBox key={index} {...message} />
         ))}
+        {loading ? <TypingAnimation /> : null}
         <div ref={bottomRef}></div>
+      </Box>
+      <Box display="flex" justifyContent="flex-end" margin={1}>
+        <Tooltip title="Reset conversation" aria-label="reset">
+          <IconButton onClick={handleReset} sx={{ color: appColors.primary }}>
+            <RestartAltIcon />
+            <Typography variant="body2">Reset chat</Typography>
+          </IconButton>
+        </Tooltip>
       </Box>
       <Box
         sx={{
@@ -179,7 +185,7 @@ const ChatSideBar = ({
           value={question}
           onChange={handleQuestionChange}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
+            if (event.key === "Enter" && loading === false) {
               handleSendClick();
             }
           }}
@@ -188,14 +194,9 @@ const ChatSideBar = ({
         <Box
           display="flex"
           flexDirection="row"
-          justifyContent="space-between"
+          justifyContent="flex-end"
           paddingTop={2}
         >
-          <Tooltip title="Reset conversation" aria-label="reset">
-            <IconButton onClick={handleReset} sx={{ color: "#5480D1" }}>
-              <RestartAltIcon />
-            </IconButton>
-          </Tooltip>
           <IconButton
             onClick={handleSendClick}
             sx={{ color: generateLLMResponse ? "#5480D1" : appColors.primary }}
