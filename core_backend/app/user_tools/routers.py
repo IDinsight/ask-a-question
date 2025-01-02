@@ -12,6 +12,7 @@ from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
     UserNotFoundError,
+    get_all_users,
     get_number_of_admin_users,
     get_user_by_id,
     get_user_by_username,
@@ -84,6 +85,32 @@ async def create_first_user(
     user.content_quota = None
     user_new = await add_user(user, request, asession)
     return user_new
+
+
+@router.get("/", response_model=list[UserRetrieve])
+async def retrieve_all_users(
+    admin_user_db: Annotated[UserDB, Depends(get_admin_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[UserRetrieve] | None:
+    """
+    Get all users endpoint. Returns a list of all user objects.
+    """
+
+    users = await get_all_users(asession)
+    return [
+        UserRetrieve(
+            user_id=user.user_id,
+            username=user.username,
+            content_quota=user.content_quota,
+            api_daily_quota=user.api_daily_quota,
+            is_admin=user.is_admin,
+            api_key_first_characters=user.api_key_first_characters,
+            api_key_updated_datetime_utc=user.api_key_updated_datetime_utc,
+            created_datetime_utc=user.created_datetime_utc,
+            updated_datetime_utc=user.updated_datetime_utc,
+        )
+        for user in users
+    ]
 
 
 @router.put("/rotate-key", response_model=KeyResponse)
@@ -187,7 +214,6 @@ async def update_user(
     """
     Update user endpoint.
     """
-
     user_db = await get_user_by_id(user_id=user_id, asession=asession)
     if not user_db:
         raise HTTPException(status_code=404, detail="User not found.")
@@ -215,7 +241,7 @@ async def update_user(
     )
 
 
-@router.get("/", response_model=UserRetrieve)
+@router.get("/current-user", response_model=UserRetrieve)
 async def get_user(
     user_db: Annotated[UserDB, Depends(get_current_user)],
 ) -> UserRetrieve | None:

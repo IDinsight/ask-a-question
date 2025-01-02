@@ -1,6 +1,12 @@
 {$DOMAIN:localhost} {
     handle_path {$BACKEND_ROOT_PATH:}/* {
-        reverse_proxy core_backend:8000
+        reverse_proxy core_backend:8000 {
+            transport http {
+                dial_timeout 100s
+                read_timeout 100s
+                write_timeout 100s
+            }
+        }
     }
 
     handle {
