@@ -174,8 +174,8 @@ async def get_overview_timeseries(
 
     return OverviewTimeSeries(
         urgent=urgency_ts,
-        not_urgent_escalated=query_ts["escalated"],
-        not_urgent_not_escalated=query_ts["not_escalated"],
+        downvoted=query_ts["escalated"],
+        normal=query_ts["not_escalated"],
     )
 
 

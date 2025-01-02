@@ -132,8 +132,8 @@ class OverviewTimeSeries(BaseModel):
     """
 
     urgent: dict[str, int]
-    not_urgent_escalated: dict[str, int]
-    not_urgent_not_escalated: dict[str, int]
+    downvoted: dict[str, int]
+    normal: dict[str, int]
 
 
 class TopContentBase(BaseModel):
