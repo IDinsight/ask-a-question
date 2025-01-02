@@ -102,26 +102,42 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   };
 
   const parseTimeseriesData = (timeseriesData: InputSeriesData) => {
-    const categories = [
-      "urgent_and_downvoted",
-      "urgent_only",
-      "downvoted_only",
-      "normal",
+    // We want 3 series but arranged into 2 groups.
+    // "downvoted" + "normal" -> group1
+    // "urgent" -> group2
+
+    // Hard-code the categories in the order we want to render them
+    const categories = ["normal", "downvoted", "urgent"];
+
+    // Create empty series with correct group assignments
+    const seriesData: ApexSeriesData[] = [
+      {
+        name: "Normal",
+        group: "group1",
+        data: [],
+      },
+      {
+        name: "Downvoted",
+        group: "group1",
+        data: [],
+      },
+      {
+        name: "Urgent",
+        group: "group2",
+        data: [],
+      },
     ];
+    // Get the timestamps from one of the categories (they should match)
+    const sampleCategory = "normal"; // or "downvoted"
+    const timeStamps = Object.keys(timeseriesData[sampleCategory] || {});
 
-    const seriesData: ApexSeriesData[] = categories.map((category) => ({
-      // Convert snake_case to Title Case e.g. urgent_and_downvoted -> Urgent And Downvoted
-      name: category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-      data: [],
-    }));
-    // Use "normal" category to get timestamps out (all categories have the same timestamps)
-    const timeStamps = Object.keys(timeseriesData.normal);
-
+    // Build up .data arrays
     timeStamps.forEach((stamp) => {
       const date = new Date(stamp).getTime();
-      categories.forEach((category, index) => {
+
+      categories.forEach((category, idx) => {
         const value = Number(timeseriesData[category]?.[stamp]) || 0;
-        seriesData[index].data.push({
+        seriesData[idx].data.push({
           x: date,
           y: value,
         });

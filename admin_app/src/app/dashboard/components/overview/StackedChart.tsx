@@ -18,7 +18,6 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }
     chart: {
       type: "bar",
       stacked: true,
-      stackType: "normal",
       fontFamily: "Inter",
     },
     dataLabels: { enabled: false },
@@ -40,10 +39,9 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }
       markers: { shape: "circle" },
     },
     colors: [
-      appColors.dashboardPurple, // Urgent + downvoted -> purple
-      appColors.dashboardDownvote, // Downvoted only -> blue
-      appColors.dashboardPrimary, // Normal -> green
-      appColors.dashboardUpvote, // Urgent only -> faded red
+      appColors.dashboardUpvote, // normal -> green
+      appColors.dashboardDownvote, // downvoted -> light red
+      appColors.dashboardUrgent, // urgent -> bright red
     ],
     noData: {
       text: "No data available",

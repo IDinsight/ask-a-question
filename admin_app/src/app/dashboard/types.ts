@@ -41,6 +41,7 @@ interface ApexTSDataPoint {
 interface ApexSeriesData {
   name: string;
   data: ApexTSDataPoint[];
+  group: string;
 }
 
 interface ContentData {
