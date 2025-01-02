@@ -83,6 +83,7 @@ class TimeFrequency(str, Enum):
     Day = "Day"
     Week = "Week"
     Hour = "Hour"
+    Month = "Month"
 
 
 def has_all_days(d: dict[str, int]) -> dict[str, int]:

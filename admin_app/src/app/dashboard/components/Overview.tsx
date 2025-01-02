@@ -1,10 +1,7 @@
 import { getOverviewPageData } from "@/app/dashboard/api";
-import AreaChart from "@/app/dashboard/components/overview/AreaChart";
+import StackedBarChart from "@/app/dashboard/components/overview/StackedChart";
 import HeatMap from "@/app/dashboard/components/overview/HeatMap";
-import {
-  StatCard,
-  StatCardProps,
-} from "@/app/dashboard/components/overview/StatCard";
+import { StatCard, StatCardProps } from "@/app/dashboard/components/overview/StatCard";
 import TopContentTable from "@/app/dashboard/components/overview/TopContentTable";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/utils/auth";
@@ -16,7 +13,14 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import { Box } from "@mui/material";
 import { format } from "date-fns";
 import React, { useEffect } from "react";
-import { ApexData, DayHourUsageData, Period, TopContentData } from "../types";
+import {
+  ApexData,
+  ApexSeriesData,
+  InputSeriesData,
+  DayHourUsageData,
+  Period,
+  TopContentData,
+} from "../types";
 
 interface OverviewProps {
   timePeriod: Period;
@@ -25,37 +29,61 @@ interface OverviewProps {
 const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   const { token } = useAuth();
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
-  const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([]);
-  const [timeseriesData, setTimeseriesData] = React.useState<ApexData[]>([]);
+  const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([
+    { name: "", data: [] },
+  ]);
+  const [timeseriesData, setTimeseriesData] = React.useState<ApexSeriesData[]>([
+    { name: "", data: [] },
+  ]);
   const [topContentData, setTopContentData] = React.useState<TopContentData[]>([]);
 
-  useEffect(() => {
-    if (token) {
-      getOverviewPageData(timePeriod, token).then((data) => {
-        parseCardData(data.stats_cards, timePeriod);
-        parseHeatmapData(data.heatmap);
-        parseTimeseriesData(data.time_series);
-        setTopContentData(data.top_content);
-      });
-    } else {
-      parseCardData([], timePeriod);
-      parseHeatmapData({});
-      parseTimeseriesData({});
-      setTopContentData([]);
-    }
-  }, [timePeriod, token]);
+  const parseCardData = (statsCardsData: Record<string, any>, timePeriod: Period) => {
+    const {
+      content_feedback_stats,
+      query_stats,
+      response_feedback_stats,
+      urgency_stats,
+    } = statsCardsData;
 
-  const getLocalTime = (time: string) => {
-    // Convert UTC time to local time
-    const date = format(new Date(), "yyyy-MM-dd");
-    const UTCDateTimeString = `${date}T${time}:00.000000Z`;
-    const localDateTimeString = new Date(UTCDateTimeString);
-    const localTimeString = localDateTimeString.toLocaleString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    return localTimeString;
+    const statCardData: StatCardProps[] = [
+      {
+        title: "Total Queries",
+        value: query_stats.n_questions,
+        percentageChange: query_stats.percentage_increase,
+        Icon: ChatBubbleOutlineIcon,
+        period: timePeriod,
+      },
+      {
+        title: "Downvoted Responses",
+        value: response_feedback_stats.n_negative,
+        percentageChange: response_feedback_stats.percentage_negative_increase,
+        Icon: ThumbDownOffAltIcon,
+        period: timePeriod,
+      },
+      {
+        title: "Urgent Queries",
+        value: urgency_stats.n_urgent,
+        percentageChange: urgency_stats.percentage_increase,
+        Icon: NewReleasesOutlinedIcon,
+        period: timePeriod,
+      },
+      {
+        title: "Content Upvotes",
+        value: content_feedback_stats.n_positive,
+        percentageChange: content_feedback_stats.percentage_positive_increase,
+        Icon: ThumbUpIcon,
+        period: timePeriod,
+      },
+      {
+        title: "Content Downvotes",
+        value: content_feedback_stats.n_negative,
+        percentageChange: content_feedback_stats.percentage_negative_increase,
+        Icon: ThumbDownIcon,
+        period: timePeriod,
+      },
+    ];
+
+    setStatCardData(statCardData);
   };
 
   const parseHeatmapData = (heatmapData: DayHourUsageData) => {
@@ -73,111 +101,67 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     setHeatmapData(parsedData);
   };
 
-  const parseTimeseriesData = (timeseriesData: Record<string, any>) => {
-    const { urgent, not_urgent_escalated, not_urgent_not_escalated } = timeseriesData;
-
-    const urgent_data = Object.entries(urgent).map(([period, n_urgent]) => {
-      const date = new Date(period);
-      return {
-        x: String(date),
-        y: n_urgent as number,
-      };
-    });
-
-    const escalated_data = Object.entries(not_urgent_escalated).map(
-      ([period, n_urgent]) => {
-        const date = new Date(period);
-        return {
-          x: String(date),
-          y: n_urgent as number,
-        };
-      }
-    );
-
-    const total_queries = Object.entries(not_urgent_not_escalated).map(
-      ([period, n_urgent]) => {
-        const date = new Date(period);
-        return {
-          x: String(date),
-          y: n_urgent as number,
-        };
-      }
-    );
-
-    const seriesData = [
-      { name: "Urgent", data: urgent_data },
-      { name: "Downvoted Responses", data: escalated_data },
-      { name: "Queries", data: total_queries },
+  const parseTimeseriesData = (timeseriesData: InputSeriesData) => {
+    const categories = [
+      "urgent_and_downvoted",
+      "urgent_only",
+      "downvoted_only",
+      "normal",
     ];
+
+    const seriesData: ApexSeriesData[] = categories.map((category) => ({
+      // Convert snake_case to Title Case e.g. urgent_and_downvoted -> Urgent And Downvoted
+      name: category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      data: [],
+    }));
+    // Use "normal" category to get timestamps out (all categories have the same timestamps)
+    const timeStamps = Object.keys(timeseriesData.normal);
+
+    timeStamps.forEach((stamp) => {
+      const date = new Date(stamp).getTime();
+      categories.forEach((category, index) => {
+        const value = Number(timeseriesData[category]?.[stamp]) || 0;
+        seriesData[index].data.push({
+          x: date,
+          y: value,
+        });
+      });
+    });
 
     setTimeseriesData(seriesData);
   };
 
-  const parseCardData = (statsCardsData: Record<string, any>, timePeriod: Period) => {
-    const {
-      content_feedback_stats,
-      query_stats,
-      response_feedback_stats,
-      urgency_stats,
-    } = statsCardsData;
-
-    const statCardData: StatCardProps[] = [];
-    statCardData.push({
-      title: "Total Queries",
-      value: query_stats.n_questions,
-      percentageChange: query_stats.percentage_increase,
-      Icon: ChatBubbleOutlineIcon,
-      period: timePeriod,
+  const getLocalTime = (time: string) => {
+    const date = format(new Date(), "yyyy-MM-dd");
+    const UTCDateTimeString = `${date}T${time}:00.000000Z`;
+    const localDateTimeString = new Date(UTCDateTimeString);
+    return localDateTimeString.toLocaleString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     });
-
-    // "Total Downvoted Responses"
-    statCardData.push({
-      title: "Downvoted Responses",
-      value: response_feedback_stats.n_negative,
-      percentageChange: response_feedback_stats.percentage_negative_increase,
-      Icon: ThumbDownOffAltIcon,
-      period: timePeriod,
-    });
-
-    // Total Urgent Queries
-    statCardData.push({
-      title: "Urgent Queries",
-      value: urgency_stats.n_urgent,
-      percentageChange: urgency_stats.percentage_increase,
-      Icon: NewReleasesOutlinedIcon,
-      period: timePeriod,
-    });
-
-    // Total Upvotes
-    statCardData.push({
-      title: "Content Upvotes",
-      value: content_feedback_stats.n_positive,
-      percentageChange: content_feedback_stats.percentage_positive_increase,
-      Icon: ThumbUpIcon,
-      period: timePeriod,
-    });
-
-    // Total Downvotes
-    statCardData.push({
-      title: "Content Downvotes",
-      value: content_feedback_stats.n_negative,
-      percentageChange: content_feedback_stats.percentage_negative_increase,
-      Icon: ThumbDownIcon,
-      period: timePeriod,
-    });
-
-    setStatCardData(statCardData);
   };
+
+  useEffect(() => {
+    if (token) {
+      getOverviewPageData(timePeriod, token).then((data) => {
+        parseCardData(data.stats_cards, timePeriod);
+        parseHeatmapData(data.heatmap);
+        parseTimeseriesData(data.time_series);
+        setTopContentData(data.top_content);
+      });
+    } else {
+      setStatCardData([]);
+      setHeatmapData([]);
+      setTimeseriesData([]);
+      setTopContentData([]);
+    }
+  }, [timePeriod, token]);
 
   return (
     <>
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "stretch",
-          gap: 2,
-        }}
+        sx={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: 2 }}
       >
         {statCardData.map((data, index) => (
           <StatCard {...data} key={index} />
@@ -194,23 +178,16 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
       >
         <Box
           bgcolor="white"
-          sx={{
-            flexGrow: 1,
-            borderRadius: 1,
-            minWidth: 250,
-            height: 450,
-          }}
+          sx={{ flexGrow: 1, borderRadius: 1, minWidth: 250, height: 450 }}
         >
-          <AreaChart data={timeseriesData} />
+          <StackedBarChart
+            data={timeseriesData}
+            showDayOfWeek={timePeriod === "week"}
+          />
         </Box>
         <Box
           bgcolor="white"
-          sx={{
-            flexGrow: 0,
-            borderRadius: 1,
-            width: 300,
-            height: 450,
-          }}
+          sx={{ flexGrow: 0, borderRadius: 1, width: 300, height: 450 }}
         >
           <HeatMap data={heatmapData} />
         </Box>

@@ -192,7 +192,7 @@ def get_frequency_and_startdate(
                 months=-1
             )
         case "year":
-            return TimeFrequency.Week, datetime.now(timezone.utc) + relativedelta(
+            return TimeFrequency.Month, datetime.now(timezone.utc) + relativedelta(
                 years=-1
             )
         case _:
