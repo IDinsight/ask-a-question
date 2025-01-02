@@ -259,6 +259,8 @@ def get_time_labels_query(
             interval_str = "week"
         case TimeFrequency.Hour:
             interval_str = "hour"
+        case TimeFrequency.Month:
+            interval_str = "month"
         case _:
             raise ValueError("Invalid frequency")
 
