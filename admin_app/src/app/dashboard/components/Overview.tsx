@@ -33,7 +33,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
     { name: "", data: [] },
   ]);
   const [timeseriesData, setTimeseriesData] = React.useState<ApexSeriesData[]>([
-    { name: "", data: [] },
+    { name: "", data: [], group: "" },
   ]);
   const [topContentData, setTopContentData] = React.useState<TopContentData[]>([]);
 
