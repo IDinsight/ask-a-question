@@ -28,6 +28,22 @@ interface ApexData {
   zIndex?: number;
 }
 
+interface InputSeriesData {
+  [category: string]: {
+    [timestamp: string]: number;
+  };
+}
+interface ApexTSDataPoint {
+  x: number;
+  y: number;
+}
+
+interface ApexSeriesData {
+  name: string;
+  data: ApexTSDataPoint[];
+  group: string;
+}
+
 interface ContentData {
   title: string;
   query_count: number;
@@ -77,6 +93,8 @@ export type {
   TimeFrame,
   DayHourUsageData,
   ApexData,
+  ApexSeriesData,
+  InputSeriesData,
   TopContentData,
   RowDataType,
   QueryData,
