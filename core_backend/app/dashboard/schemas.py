@@ -197,8 +197,10 @@ class TopicsData(BaseModel):
     of individual Topics. Used for Insights page.
     """
 
+    status: Literal["not_started", "in_progress", "completed", "error"]
     refreshTimeStamp: str
     data: list[Topic]
+    error_message: str | None = None
 
 
 class UserQuery(BaseModel):

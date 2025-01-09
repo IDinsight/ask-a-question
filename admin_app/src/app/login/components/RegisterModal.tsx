@@ -9,6 +9,7 @@ import {
 import React from "react";
 import { UserModal } from "@/app/user-management/components/UserCreateModal";
 import type { UserModalProps } from "@/app/user-management/components/UserCreateModal";
+
 const RegisterModal = (props: Omit<UserModalProps, "fields">) => (
   <UserModal
     {...props}
@@ -16,6 +17,7 @@ const RegisterModal = (props: Omit<UserModalProps, "fields">) => (
     showCancel={false}
   />
 );
+
 const AdminAlertModal = ({
   open,
   onClose,

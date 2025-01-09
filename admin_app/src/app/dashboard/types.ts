@@ -75,7 +75,10 @@ interface TopicModelingData {
   topic_popularity: number;
 }
 
+type Status = "not_started" | "in_progress" | "completed" | "error";
+
 interface TopicModelingResponse {
+  status: Status;
   refreshTimeStamp: string;
   data: TopicModelingData[];
   unclustered_queries: QueryData[];

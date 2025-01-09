@@ -49,7 +49,7 @@ const generateNewTopics = async (period: Period, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error generating Topics data");
+    throw new Error("Error kicking off new topic generation");
   }
 };
 
