@@ -301,43 +301,56 @@ async def refresh_insights(
     Retrieve topic modelling insights for the time period specified
     and write to Redis.
     """
-
     redis = request.app.state.redis
-    time_period_queries = await get_raw_queries(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=start_date,
-    )
+    try:
+        time_period_queries = await get_raw_queries(
+            user_id=user_db.user_id,
+            asession=asession,
+            start_date=start_date,
+        )
 
-    # set the key to "in_progress" to help with front-end loading UX
-    await redis.set(
-        f"{user_db.username}_insights_{time_frequency}_results",
-        TopicsData(
-            status="in_progress",
-            refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-            data=[],
-        ).model_dump_json(),
-    )
+        # set the key to "in_progress" to help with front-end loading UX
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            TopicsData(
+                status="in_progress",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+            ).model_dump_json(),
+        )
 
-    content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
+        content_data = await get_raw_contents(
+            user_id=user_db.user_id, asession=asession
+        )
 
-    topic_output, embeddings_df = await topic_model_queries(
-        user_id=user_db.user_id,
-        query_data=time_period_queries,
-        content_data=content_data,
-    )
+        topic_output, embeddings_df = await topic_model_queries(
+            user_id=user_db.user_id,
+            query_data=time_period_queries,
+            content_data=content_data,
+        )
 
-    embeddings_json = embeddings_df.to_json(orient="split")
+        embeddings_json = embeddings_df.to_json(orient="split")
 
-    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+        embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
 
-    await redis.set(embeddings_key, embeddings_json)
+        await redis.set(embeddings_key, embeddings_json)
 
-    await redis.set(
-        f"{user_db.username}_insights_{time_frequency}_results",
-        topic_output.model_dump_json(),
-    )
-    return topic_output
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            topic_output.model_dump_json(),
+        )
+        return topic_output
+    except Exception as e:
+        # set the key to "error" to help with front-end loading UX
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            TopicsData(
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+            ).model_dump_json(),
+        )
+        raise e
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)
