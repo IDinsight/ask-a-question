@@ -314,7 +314,7 @@ async def refresh_insights(
         f"{user_db.username}_insights_{time_frequency}_results",
         TopicsData(
             status="in_progress",
-            refreshTimeStamp="",
+            refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
             data=[],
         ).model_dump_json(),
     )
