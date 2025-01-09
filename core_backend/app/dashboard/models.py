@@ -3,7 +3,7 @@
 from datetime import date, datetime, timezone
 from typing import Any, Sequence, cast, get_args
 
-from sqlalchemy import Row, case, desc, func, literal_column, select, text, true
+from sqlalchemy import Row, case, desc, func, literal_column, or_, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import and_
 from sqlalchemy.sql.expression import Subquery
@@ -289,7 +289,8 @@ async def get_timeseries_query(
     end_date: date,
     frequency: TimeFrequency,
 ) -> dict[str, dict[str, int]]:
-    """Retrieve the timeseries corresponding to escalated and not escalated queries
+    """
+    Retrieve the timeseries corresponding to escalated and not escalated queries
     over the specified time period.
 
     NB: The SQLAlchemy statement below selects time periods from `ts_labels` and counts
@@ -314,16 +315,30 @@ async def get_timeseries_query(
 
     Returns
     -------
-    dict[str, dict[str, int]]
+     dict[str, dict[str, int]]
         Dictionary whose keys are "escalated" and "not_escalated" and whose values are
         dictionaries containing the count of queries over time for each category.
+        {
+          "escalated": { "2025-01-01T00:00:00.000000Z": 5, ... },
+          "not_escalated": { "2025-01-01T00:00:00.000000Z": 12, ... },
+        }
     """
 
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
+    # In this pattern:
+    # 1) We outer-join Query so that each date bin always has all queries (including
+    # those with no feedback).
+    # 2) We outer-join ResponseFeedbackDB so that queries with no feedback show up
+    # with NULL feedback_sentiment.
+    # 3) CASE statement counts all NULL or non-'negative' as
+    # "non_negative_feedback_count", and 'negative' feedback
+    # as "negative_feedback_count".
+
     statement = (
         select(
             ts_labels.c.time_period,
+            # Count of negative
             func.coalesce(
                 func.count(
                     case(
@@ -333,10 +348,17 @@ async def get_timeseries_query(
                 ),
                 0,
             ).label("negative_feedback_count"),
+            # Count of non-negative or no feedback at all
             func.coalesce(
                 func.count(
                     case(
-                        (ResponseFeedbackDB.feedback_sentiment != "negative", 1),
+                        (
+                            or_(
+                                ResponseFeedbackDB.feedback_sentiment.is_(None),
+                                ResponseFeedbackDB.feedback_sentiment != "negative",
+                            ),
+                            1,
+                        ),
                         else_=None,
                     )
                 ),
@@ -345,11 +367,17 @@ async def get_timeseries_query(
         )
         .select_from(ts_labels)
         .outerjoin(
-            ResponseFeedbackDB,
-            func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
+            QueryDB,
+            func.date_trunc(interval_str, QueryDB.query_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
-        .where(ResponseFeedbackDB.query.has(user_id=user_id))
+        .where(QueryDB.user_id == user_id)
+        # Outer-join feedback so that queries with no feedback have a NULL
+        # feedback_sentiment
+        .outerjoin(
+            ResponseFeedbackDB,
+            ResponseFeedbackDB.query_id == QueryDB.query_id,
+        )
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
