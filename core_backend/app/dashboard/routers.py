@@ -279,7 +279,7 @@ async def refresh_insights_frequency(
 
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-    await refresh_insights(
+    topic_output = await refresh_insights(
         time_frequency=time_frequency,
         user_db=user_db,
         request=request,
@@ -287,7 +287,7 @@ async def refresh_insights_frequency(
         asession=asession,
     )
 
-    return {"status": "success"}
+    return topic_output.dict()
 
 
 async def refresh_insights(
@@ -330,9 +330,7 @@ async def refresh_insights(
         )
 
         embeddings_json = embeddings_df.to_json(orient="split")
-
         embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
-
         await redis.set(embeddings_key, embeddings_json)
 
         await redis.set(
@@ -340,18 +338,9 @@ async def refresh_insights(
             topic_output.model_dump_json(),
         )
         return topic_output
+
     except Exception as e:
-        # set the key to "error" to help with front-end loading UX
         logger.warning(f"Topic modelling system error: {str(e)}")
-        await redis.set(
-            f"{user_db.username}_insights_{time_frequency}_results",
-            TopicsData(
-                status="error",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                data=[],
-                error_message="Topic modelling experienced a system error",
-            ).model_dump_json(),
-        )
         raise e
 
 

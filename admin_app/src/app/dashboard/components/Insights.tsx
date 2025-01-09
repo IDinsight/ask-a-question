@@ -38,9 +38,15 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   const runRefresh = () => {
     setRefreshing(true);
     generateNewTopics(timePeriod, token!)
-      .then((_) => {
+      .then((dataFromBackend) => {
         const date = new Date();
         setRefreshTimestamp(date.toLocaleString());
+        if (dataFromBackend.status === "error") {
+          setSnackMessage({
+            message: dataFromBackend.error_message,
+            color: "error",
+          });
+        }
         setRefreshing(false);
       })
       .catch((error) => {
@@ -67,7 +73,6 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           setRefreshing(false);
         }
         if (dataFromBackend.status === "error") {
-          setSnackMessage({ message: dataFromBackend.error_message, color: "error" });
           setRefreshing(false);
         }
         if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
@@ -158,15 +163,15 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
       <BokehPlot timePeriod={timePeriod} token={token} />
       <Snackbar
         open={snackMessage.message !== null}
-        autoHideDuration={4000}
+        autoHideDuration={3000}
         onClose={() => {
-          setSnackMessage({ message: null, color: snackMessage.color });
+          setSnackMessage({ message: null, color: undefined });
         }}
         TransitionComponent={SnackbarSlideTransition}
       >
         <Alert
           onClose={() => {
-            setSnackMessage({ message: null, color: snackMessage.color });
+            setSnackMessage({ message: null, color: undefined });
           }}
           severity={snackMessage.color}
           variant="filled"
