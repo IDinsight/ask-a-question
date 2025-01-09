@@ -315,7 +315,7 @@ async def get_timeseries_query(
 
     Returns
     -------
-     dict[str, dict[str, int]]
+    dict[str, dict[str, int]]
         Dictionary whose keys are "escalated" and "not_escalated" and whose values are
         dictionaries containing the count of queries over time for each category.
         {
