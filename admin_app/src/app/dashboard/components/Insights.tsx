@@ -370,8 +370,10 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
       <Snackbar
         open={snackMessage.message !== null}
-        autoHideDuration={5000}
-        onClose={() => setSnackMessage({ message: null, color: undefined })}
+        autoHideDuration={3000}
+        onClose={() => {
+          setSnackMessage({ message: null, color: undefined });
+        }}
         TransitionComponent={SnackbarSlideTransition}
       >
         <Alert
