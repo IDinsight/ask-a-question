@@ -1,5 +1,5 @@
 import { useAuth } from "@/utils/auth";
-import { Paper } from "@mui/material";
+import { Alert, Paper, Slide, SlideProps, Snackbar } from "@mui/material";
 import Box from "@mui/material/Box";
 import React, { useState } from "react";
 import { fetchTopicsData, generateNewTopics } from "../api";
@@ -27,13 +27,29 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
     unclustered_queries: [],
   });
 
+  const SnackbarSlideTransition = (props: SlideProps) => {
+    return <Slide {...props} direction="up" />;
+  };
+  const [snackMessage, setSnackMessage] = React.useState<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>({ message: null, color: undefined });
+
   const runRefresh = () => {
     setRefreshing(true);
-    generateNewTopics(timePeriod, token!).then((_) => {
-      const date = new Date();
-      setRefreshTimestamp(date.toLocaleString());
-      setRefreshing(false);
-    });
+    generateNewTopics(timePeriod, token!)
+      .then((_) => {
+        const date = new Date();
+        setRefreshTimestamp(date.toLocaleString());
+        setRefreshing(false);
+      })
+      .catch((error) => {
+        setSnackMessage({
+          message: "Error kicking off new topic generation",
+          color: "error",
+        });
+        setRefreshing(false);
+      });
   };
 
   React.useEffect(() => {
@@ -44,10 +60,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           setRefreshing(true);
         }
         if (dataFromBackend.status === "not_started") {
+          setSnackMessage({
+            message: "No topics yet. Please run discovery.",
+            color: "warning",
+          });
           setRefreshing(false);
         }
         if (dataFromBackend.status === "error") {
-          // [TODO] add error popup later
+          setSnackMessage({ message: "Error fetching topics data", color: "error" });
           setRefreshing(false);
         }
         if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
@@ -136,6 +156,25 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         </Box>
       </Paper>
       <BokehPlot timePeriod={timePeriod} token={token} />
+      <Snackbar
+        open={snackMessage.message !== null}
+        autoHideDuration={4000}
+        onClose={() => {
+          setSnackMessage({ message: null, color: snackMessage.color });
+        }}
+        TransitionComponent={SnackbarSlideTransition}
+      >
+        <Alert
+          onClose={() => {
+            setSnackMessage({ message: null, color: snackMessage.color });
+          }}
+          severity={snackMessage.color}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackMessage.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
