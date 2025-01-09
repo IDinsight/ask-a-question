@@ -342,12 +342,14 @@ async def refresh_insights(
         return topic_output
     except Exception as e:
         # set the key to "error" to help with front-end loading UX
+        logger.warning(f"Topic modelling system error: {str(e)}")
         await redis.set(
             f"{user_db.username}_insights_{time_frequency}_results",
             TopicsData(
                 status="error",
                 refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
                 data=[],
+                error_message="Topic modelling experienced a system error",
             ).model_dump_json(),
         )
         raise e

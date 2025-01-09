@@ -45,7 +45,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
       })
       .catch((error) => {
         setSnackMessage({
-          message: "Error kicking off new topic generation",
+          message: "There was a system error.",
           color: "error",
         });
         setRefreshing(false);
@@ -67,7 +67,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           setRefreshing(false);
         }
         if (dataFromBackend.status === "error") {
-          setSnackMessage({ message: "Error fetching topics data", color: "error" });
+          setSnackMessage({ message: dataFromBackend.error_message, color: "error" });
           setRefreshing(false);
         }
         if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
