@@ -303,6 +303,9 @@ async def refresh_insights(
     """
     Retrieve topic modelling insights for the time period specified
     and write to Redis.
+
+    Returns None since this function is called by a background task +
+    only ever writes to Redis.
     """
     redis = request.app.state.redis
 
