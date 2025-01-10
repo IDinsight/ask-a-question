@@ -25,7 +25,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   const [aiSummary, setAiSummary] = useState<string>("");
   // We define all time periods upfront
   const timePeriods: Period[] = ["day", "week", "month", "year"];
-  // State to hold fetched data per timePeriod
+  // State to hold fetched data for all timePeriods
   const [dataByTimePeriod, setDataByTimePeriod] = useState<
     Record<string, TopicModelingResponse>
   >({});
