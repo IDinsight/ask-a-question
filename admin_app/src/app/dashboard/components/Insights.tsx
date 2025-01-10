@@ -3,6 +3,7 @@ import { useAuth } from "@/utils/auth";
 import { Alert, Paper, Slide, SlideProps, Snackbar, Box } from "@mui/material";
 import { fetchTopicsData, generateNewTopics } from "../api";
 import { Period, QueryData, TopicModelingResponse, Status } from "../types";
+
 import BokehPlot from "./insights/Bokeh";
 import Queries from "./insights/Queries";
 import Topics from "./insights/Topics";
@@ -44,6 +45,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
   };
 
   const [snackMessage, setSnackMessage] = useState<{
+
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>({ message: null, color: undefined });
@@ -190,6 +192,49 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
             ...prev,
             [period]: dataFromBackendResponse,
           }));
+          
+  const runRefresh = () => {
+    setRefreshing(true);
+    generateNewTopics(timePeriod, token!)
+      .then((dataFromBackend) => {
+        const date = new Date();
+        setRefreshTimestamp(date.toLocaleString());
+        if (dataFromBackend.status === "error") {
+          setSnackMessage({
+            message: dataFromBackend.error_message,
+            color: "error",
+          });
+        }
+        setRefreshing(false);
+      })
+      .catch((error) => {
+        setSnackMessage({
+          message: "There was a system error.",
+          color: "error",
+        });
+        setRefreshing(false);
+      });
+  };
+
+  React.useEffect(() => {
+    if (token) {
+      fetchTopicsData(timePeriod, token).then((dataFromBackend) => {
+        setDataFromBackend(dataFromBackend);
+        if (dataFromBackend.status === "in_progress") {
+          setRefreshing(true);
+        }
+        if (dataFromBackend.status === "not_started") {
+          setSnackMessage({
+            message: "No topics yet. Please run discovery.",
+            color: "warning",
+          });
+          setRefreshing(false);
+        }
+        if (dataFromBackend.status === "error") {
+          setRefreshing(false);
+        }
+        if (dataFromBackend.status === "completed" && dataFromBackend.data.length > 0) {
+          setSelectedTopicId(dataFromBackend.data[0].topic_id);
         }
       });
     });
@@ -333,6 +378,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           variant="filled"
           severity={snackMessage.color}
           onClose={() => setSnackMessage({ message: null, color: undefined })}
+
           sx={{ width: "100%" }}
         >
           {snackMessage.message}

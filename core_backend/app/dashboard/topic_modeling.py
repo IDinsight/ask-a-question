@@ -56,6 +56,7 @@ async def topic_model_queries(
                 data=[],
                 error_message="No queries to cluster",
                 failure_step="Run topic modeling",
+
             ),
             pd.DataFrame(),
         )
@@ -84,6 +85,7 @@ async def topic_model_queries(
                 error_message="""Not enough data to cluster.
                 Please provide at least 500 total queries and content items.""",
                 failure_step="Run topic modeling",
+
             ),
             pd.DataFrame(),
         )
