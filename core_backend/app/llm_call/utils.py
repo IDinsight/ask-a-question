@@ -415,6 +415,10 @@ async def init_chat_history(
     # Get the chat history and chat parameters for the session.
     chat_cache_key = chat_cache_key or f"chatCache:{session_id}"
     chat_params_cache_key = chat_params_cache_key or f"chatParamsCache:{session_id}"
+
+    logger.info(f"Using chat cache ID: {chat_cache_key}")
+    logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
+
     chat_cache_exists = await redis_client.exists(chat_cache_key)
     chat_params_cache_exists = await redis_client.exists(chat_params_cache_key)
     chat_history = (
