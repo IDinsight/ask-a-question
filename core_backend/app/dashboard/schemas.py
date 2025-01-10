@@ -204,7 +204,6 @@ class TopicsData(BaseModel):
     failure_step: str | None = None
 
 
-
 class UserQuery(BaseModel):
     """
     This class is used to define the schema for the insights queries

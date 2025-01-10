@@ -280,7 +280,6 @@ async def refresh_insights_frequency(
 
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-
     # Start the task in the background
     background_tasks.add_task(
         refresh_insights,
@@ -292,7 +291,6 @@ async def refresh_insights_frequency(
     )
 
     return {"detail": "Refresh task started in background."}
-
 
 
 async def refresh_insights(
@@ -362,7 +360,6 @@ async def refresh_insights(
                 failure_step=step if step else None,
             ).model_dump_json(),
         )
-
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)
