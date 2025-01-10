@@ -98,25 +98,30 @@ const Topics: React.FC<TopicProps> = ({
             </ListItemButton>
           </Box>
         ))}
+        {data.length === 0 && (
+          <Typography sx={{ mt: 2 }}>No topics available.</Typography>
+        )}
       </Box>
-      <Box
-        justifyContent="center"
-        alignItems="flex-end"
-        sx={{
-          display: "flex",
-          mt: 3,
-          flexGrow: 0,
-        }}
-      >
-        <Pagination
-          defaultPage={1}
-          color="primary"
-          siblingCount={0}
-          page={page}
-          onChange={handlePageChange}
-          count={data.length > 0 ? Math.ceil(data.length / topicsPerPage) : 1}
-        />
-      </Box>
+      {data.length > topicsPerPage && (
+        <Box
+          justifyContent="center"
+          alignItems="flex-end"
+          sx={{
+            display: "flex",
+            mt: 3,
+            flexGrow: 0,
+          }}
+        >
+          <Pagination
+            defaultPage={1}
+            color="primary"
+            siblingCount={0}
+            page={page}
+            onChange={handlePageChange}
+            count={Math.ceil(data.length / topicsPerPage)}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
