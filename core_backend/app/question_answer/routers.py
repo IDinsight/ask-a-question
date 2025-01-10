@@ -169,7 +169,7 @@ async def search(
     returned that includes the search results as well as the details of the failure.
     """
 
-    (user_query_db, user_query_refined_template, response_template) = (
+    user_query_db, user_query_refined_template, response_template = (
         await get_user_query_and_response(
             user_id=user_db.user_id,
             user_query=user_query,
@@ -218,10 +218,12 @@ async def search(
 
     if type(response) is QueryResponse:
         return response
+
     if type(response) is QueryResponseError:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": "Internal server error"},
