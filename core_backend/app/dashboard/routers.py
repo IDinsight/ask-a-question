@@ -6,7 +6,7 @@ from typing import Annotated, Literal, Tuple
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -271,6 +271,7 @@ async def refresh_insights_frequency(
     time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
+    background_tasks: BackgroundTasks,
     asession: AsyncSession = Depends(get_async_session),
 ) -> dict:
     """
@@ -279,7 +280,9 @@ async def refresh_insights_frequency(
 
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-    topic_output = await refresh_insights(
+    # Start the task in the background
+    background_tasks.add_task(
+        refresh_insights,
         time_frequency=time_frequency,
         user_db=user_db,
         request=request,
@@ -287,7 +290,7 @@ async def refresh_insights_frequency(
         asession=asession,
     )
 
-    return topic_output.dict()
+    return {"detail": "Refresh task started in background."}
 
 
 async def refresh_insights(
@@ -296,29 +299,31 @@ async def refresh_insights(
     request: Request,
     start_date: date,
     asession: AsyncSession = Depends(get_async_session),
-) -> TopicsData:
+) -> None:
     """
     Retrieve topic modelling insights for the time period specified
     and write to Redis.
     """
     redis = request.app.state.redis
+
+    # set the key to "in_progress" to help with front-end loading UX
+    await redis.set(
+        f"{user_db.username}_insights_{time_frequency}_results",
+        TopicsData(
+            status="in_progress",
+            refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+            data=[],
+        ).model_dump_json(),
+    )
+
     try:
+        step = "Retrieve queries"
         time_period_queries = await get_raw_queries(
             user_id=user_db.user_id,
             asession=asession,
             start_date=start_date,
         )
-
-        # set the key to "in_progress" to help with front-end loading UX
-        await redis.set(
-            f"{user_db.username}_insights_{time_frequency}_results",
-            TopicsData(
-                status="in_progress",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                data=[],
-            ).model_dump_json(),
-        )
-
+        step = "Retrieve contents"
         content_data = await get_raw_contents(
             user_id=user_db.user_id, asession=asession
         )
@@ -328,7 +333,7 @@ async def refresh_insights(
             query_data=time_period_queries,
             content_data=content_data,
         )
-
+        step = "Write to Redis"
         embeddings_json = embeddings_df.to_json(orient="split")
         embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
         await redis.set(embeddings_key, embeddings_json)
@@ -337,11 +342,21 @@ async def refresh_insights(
             f"{user_db.username}_insights_{time_frequency}_results",
             topic_output.model_dump_json(),
         )
-        return topic_output
+        return
 
     except Exception as e:
-        logger.warning(f"Topic modelling system error: {str(e)}")
-        raise e
+        error_msg = f"{str(e)}"
+        logger.error(error_msg)
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            TopicsData(
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+                error_message=error_msg,
+                failure_step=step if step else None,
+            ).model_dump_json(),
+        )
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)
