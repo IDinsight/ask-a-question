@@ -6,7 +6,6 @@ from typing import Any, Optional
 import redis.asyncio as aioredis
 import requests
 from litellm import acompletion, token_counter
-from termcolor import colored
 
 from ..config import (
     LITELLM_API_KEY,
@@ -501,24 +500,16 @@ def log_chat_history(
         logger.info(f"\n###Chat history: {context}###")
     else:
         logger.info("\n###Chat history###")
-    role_to_color = {
-        "system": "red",
-        "user": "green",
-        "assistant": "blue",
-        "function": "magenta",
-    }
     for message in chat_history:
         role, content = message["role"], message.get("content", None)
-        assert role in role_to_color.keys()
         name = message.get("name", "")
         function_call = message.get("function_call", None)
-        role_color = role_to_color[role]
         if role in ["system", "user"]:
-            logger.info(colored(f"\n{role}:\n{content}\n", role_color))
+            logger.info(f"\n{role}:\n{content}\n")
         elif role == "assistant":
-            logger.info(colored(f"\n{role}:\n{function_call or content}\n", role_color))
+            logger.info(f"\n{role}:\n{function_call or content}\n")
         else:
-            logger.info(colored(f"\n{role}:\n({name}): {content}\n", role_color))
+            logger.info(f"\n{role}:\n({name}): {content}\n")
 
 
 def remove_json_markdown(text: str) -> str:
