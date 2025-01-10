@@ -4,7 +4,7 @@ endpoints.
 
 import json
 import os
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
@@ -42,7 +42,6 @@ from ..llm_call.utils import (
     append_messages_to_chat_history,
     get_chat_response,
     init_chat_history,
-    log_chat_history,
 )
 from ..question_answer.utils import get_context_string_from_search_results
 from ..schemas import QuerySearchResult
@@ -50,6 +49,7 @@ from ..users.models import UserDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
+    get_random_int32,
     setup_logger,
     upload_file_to_gcs,
 )
@@ -92,7 +92,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/search",
+    "/chat",
     response_model=QueryResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -106,6 +106,7 @@ async def chat(
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
+    reset_chat_history: bool = False,
 ) -> QueryResponse | JSONResponse:
     """Chat endpoint manages a conversation between the user and the LLM agent. The
     conversation history is stored in a Redis cache. The process is as follows:
@@ -120,7 +121,8 @@ async def chat(
         construct a refined search query using the latest user message and the
         conversation history from the user assistant chat (**without** the user
         assistant chat's system message).
-    4. Get the search results from the database.
+    4. Get the search results from the database. NB: There is no need to paraphrase the
+        search query again since it is done in step 3.
     5a. If we are generating an LLM response, then get the LLM generation response
         using the chat history as additional context.
     5b. If we are not generating an LLM response, then directly append the user query
@@ -132,10 +134,25 @@ async def chat(
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
-    """
 
-    reset_user_assistant_chat_history = False  # For testing purposes only
-    user_query.session_id = 666  # For testing purposes only
+    Parameters
+    ----------
+    user_query
+        The user query object.
+    request
+        The FastAPI request object.
+    asession
+        The `AsyncSession` object for database transactions.
+    user_db
+        The user database object.
+    reset_chat_history
+        Specifies whether to reset the chat history.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse
+        The query response object or an appropriate JSON response.
+    """
 
     # 1.
     (
@@ -143,27 +160,27 @@ async def chat(
         user_query_refined_template,
         response_template,
     ) = await get_user_query_and_response(
+        asession=asession,
+        assign_session_id=True,
+        generate_tts=False,
         user_id=user_db.user_id,
         user_query=user_query,
-        asession=asession,
-        generate_tts=False,
     )
 
     # 2.
     redis_client = request.app.state.redis
-    session_id = str(user_query_db.session_id)
+    session_id = str(response_template.session_id)
     chat_cache_key = f"chatCache:{session_id}"
     chat_params_cache_key = f"chatParamsCache:{session_id}"
 
     logger.info(f"Using chat cache ID: {chat_cache_key}")
     logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
-    logger.info(f"{reset_user_assistant_chat_history = }")
 
     _, _, user_assistant_chat_history, chat_params, _ = await init_chat_history(
         chat_cache_key=chat_cache_key,
         chat_params_cache_key=chat_params_cache_key,
         redis_client=redis_client,
-        reset=reset_user_assistant_chat_history,
+        reset=reset_chat_history,
         session_id=session_id,
     )
     model = str(chat_params["model"])
@@ -183,16 +200,6 @@ async def chat(
     # 3.
     index = 1 if user_assistant_chat_history[0]["role"] == "system" else 0
     search_query_chat_history += user_assistant_chat_history[index:]
-
-    log_chat_history(
-        chat_history=user_assistant_chat_history,
-        context="USER ASSISTANT CHAT HISTORY AT START",
-    )
-    log_chat_history(
-        chat_history=search_query_chat_history,
-        context="SEARCH QUERY CHAT HISTORY AT START",
-    )
-
     search_query_json_str = await get_chat_response(
         chat_history=search_query_chat_history,
         chat_params=chat_params,
@@ -203,11 +210,6 @@ async def chat(
         chat_type="search", json_str=search_query_json_str
     )
     message_type = search_query_json_response["message_type"]
-
-    log_chat_history(
-        chat_history=search_query_chat_history,
-        context="SEARCH QUERY CHAT HISTORY AFTER CONSTRUCTING NEW SEARCH QUERY",
-    )
 
     # 4.
     user_query_refined_template.query_text = search_query_json_response["query"]
@@ -220,11 +222,11 @@ async def chat(
         asession=asession,
         exclude_archived=True,
         request=request,
-        paraphrase=False,  # No need to paraphrase the search query again
+        paraphrase=False,
     )
 
     # 5a.
-    if user_query_refined_template.generate_llm_response:
+    if user_query.generate_llm_response:
         response, user_assistant_chat_history = await get_generation_response(
             query_refined=user_query_refined_template,
             response=response,
@@ -264,119 +266,74 @@ async def chat(
         json.dumps(user_assistant_chat_history),
         ex=REDIS_CHAT_CACHE_EXPIRY_TIME,
     )
-    user_assistant_chat_history_at_end = json.loads(
-        await redis_client.get(chat_cache_key)
-    )
-    log_chat_history(
-        chat_history=user_assistant_chat_history_at_end,
-        context="USER ASSISTANT CHAT HISTORY AT END",
-    )
 
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(
-        user_id=user_db.user_id,
-        contents=response.search_results,
+    return await return_query_response(
         asession=asession,
+        response=response,
+        user_db=user_db,
+        user_query=user_query,
+        user_query_db=user_query_db,
     )
-    await save_content_for_query_to_db(
+
+
+@router.post(
+    "/search",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+async def search(
+    user_query: QueryBase,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+) -> QueryResponse | JSONResponse:
+    """
+    Search endpoint finds the most similar content to the user query and optionally
+    generates a single-turn LLM response.
+
+    If any guardrails fail, the embeddings search is still done and an error 400 is
+    returned that includes the search results as well as the details of the failure.
+    """
+
+    (
+        user_query_db,
+        user_query_refined_template,
+        response_template,
+    ) = await get_user_query_and_response(
         user_id=user_db.user_id,
-        session_id=user_query.session_id,
-        query_id=response.query_id,
-        contents=response.search_results,
+        user_query=user_query,
         asession=asession,
+        generate_tts=False,
+    )
+    response = await get_search_response(
+        query_refined=user_query_refined_template,
+        response=response_template,
+        user_id=user_db.user_id,
+        n_similar=int(N_TOP_CONTENT),
+        n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+        asession=asession,
+        exclude_archived=True,
+        request=request,
     )
 
-    if type(response) is QueryResponse:
-        return response
-
-    if type(response) is QueryResponseError:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+    if user_query.generate_llm_response:
+        response, _ = await get_generation_response(
+            query_refined=user_query_refined_template,
+            response=response,
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"message": "Internal server error"},
+    return await return_query_response(
+        asession=asession,
+        response=response,
+        user_db=user_db,
+        user_query=user_query,
+        user_query_db=user_query_db,
     )
-
-
-# @router.post(
-#     "/search",
-#     response_model=QueryResponse,
-#     responses={
-#         status.HTTP_400_BAD_REQUEST: {
-#             "model": QueryResponseError,
-#             "description": "Guardrail failure",
-#         }
-#     },
-# )
-# async def search(
-#     user_query: QueryBase,
-#     request: Request,
-#     asession: AsyncSession = Depends(get_async_session),
-#     user_db: UserDB = Depends(authenticate_key),
-# ) -> QueryResponse | JSONResponse:
-#     """
-#     Search endpoint finds the most similar content to the user query and optionally
-#     generates a single-turn LLM response.
-#
-#     If any guardrails fail, the embeddings search is still done and an error 400 is
-#     returned that includes the search results as well as the details of the failure.
-#     """
-#
-#     (
-#         user_query_db,
-#         user_query_refined_template,
-#         response_template,
-#     ) = await get_user_query_and_response(
-#         user_id=user_db.user_id,
-#         user_query=user_query,
-#         asession=asession,
-#         generate_tts=False,
-#     )
-#     response = await get_search_response(
-#         query_refined=user_query_refined_template,
-#         response=response_template,
-#         user_id=user_db.user_id,
-#         n_similar=int(N_TOP_CONTENT),
-#         n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
-#         asession=asession,
-#         exclude_archived=True,
-#         request=request,
-#     )
-#
-#     if user_query.generate_llm_response:
-#         response = await get_generation_response(
-#             query_refined=user_query_refined_template,
-#             response=response,
-#         )
-#
-#     await save_query_response_to_db(user_query_db, response, asession)
-#     await increment_query_count(
-#         user_id=user_db.user_id,
-#         contents=response.search_results,
-#         asession=asession,
-#     )
-#     await save_content_for_query_to_db(
-#         user_id=user_db.user_id,
-#         session_id=user_query.session_id,
-#         query_id=response.query_id,
-#         contents=response.search_results,
-#         asession=asession,
-#     )
-#
-#     if type(response) is QueryResponse:
-#         return response
-#
-#     if type(response) is QueryResponseError:
-#         return JSONResponse(
-#             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
-#         )
-#
-#     return JSONResponse(
-#         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#         content={"message": "Internal server error"},
-#     )
 
 
 @router.post(
@@ -681,24 +638,28 @@ async def get_generation_response(
 
 
 async def get_user_query_and_response(
+    *,
+    asession: AsyncSession,
+    assign_session_id: bool = False,
+    generate_tts: bool,
     user_id: int,
     user_query: QueryBase,
-    asession: AsyncSession,
-    generate_tts: bool,
-) -> Tuple[QueryDB, QueryRefined, QueryResponse]:
+) -> tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
     and response objects to pass on.
 
     Parameters
     ----------
+    asession
+        `AsyncSession` object for database transactions.
+    assign_session_id
+        Specifies whether to assign a session ID if not provided.
+    generate_tts
+        Specifies whether to generate a TTS audio response
     user_id
         The ID of the user making the query.
     user_query
         The user query database object.
-    asession
-        `AsyncSession` object for database transactions.
-    generate_tts
-        Specifies whether to generate a TTS audio response
 
     Returns
     -------
@@ -706,6 +667,10 @@ async def get_user_query_and_response(
         The user query database object, the refined query object, and the response
         object.
     """
+
+    if assign_session_id:
+        user_query.session_id = user_query.session_id or get_random_int32()
+        logger.info(f"Session ID: {user_query.session_id}")
 
     # save query to db
     user_query_db = await save_user_query_to_db(
@@ -828,4 +793,57 @@ async def content_feedback(
                 f"for Content: {feedback_db.content_id}"
             )
         },
+    )
+
+
+async def return_query_response(
+    *,
+    asession: AsyncSession,
+    response: QueryResponse | QueryResponseError,
+    user_db: UserDB,
+    user_query: QueryBase,
+    user_query_db: QueryDB,
+) -> QueryResponse | JSONResponse:
+    """Save the query response to the database and return the appropriate response.
+
+    Parameters
+    ----------
+    asession
+        The `AsyncSession` object for database transactions.
+    response
+        The query response object.
+    user_db
+        The user database object.
+    user_query
+        The user query object.
+    user_query_db
+        The user query database object.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse
+        The query response object or an appropriate JSON response.
+    """
+
+    await save_query_response_to_db(user_query_db, response, asession)
+    await increment_query_count(
+        user_id=user_db.user_id, contents=response.search_results, asession=asession
+    )
+    await save_content_for_query_to_db(
+        user_id=user_db.user_id,
+        session_id=user_query.session_id,
+        query_id=response.query_id,
+        contents=response.search_results,
+        asession=asession,
+    )
+
+    if type(response) is QueryResponse:
+        return response
+    if type(response) is QueryResponseError:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+        )
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"message": "Internal server error"},
     )
