@@ -141,6 +141,11 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
           clearInterval(pollingTimerRef.current[periodKey]!);
           pollingTimerRef.current[periodKey] = null;
 
+          setSnackMessage({
+            message: "Topic analysis successful for period: " + period,
+            color: "success",
+          });
+
           if (period === timePeriod) {
             updateUIForCurrentTimePeriod(dataFromBackendResponse);
           }
