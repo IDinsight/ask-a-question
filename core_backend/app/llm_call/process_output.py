@@ -51,7 +51,6 @@ class AlignScoreData(TypedDict):
 
 async def generate_llm_query_response(
     *,
-    chat_query_params: dict[str, Any],
     metadata: Optional[dict] = None,
     query_refined: QueryRefined,
     response: QueryResponse,
@@ -64,8 +63,6 @@ async def generate_llm_query_response(
 
     Parameters
     ----------
-    chat_query_params
-        The chat query parameters.
     metadata
         Additional metadata to provide to the LLM model.
     query_refined
@@ -79,6 +76,7 @@ async def generate_llm_query_response(
         The updated response object and the chat history.
     """
 
+    chat_query_params = query_refined.chat_query_params or {}
     chat_history = chat_query_params.get("chat_history", [])
     if isinstance(response, QueryResponseError):
         logger.warning("LLM generation skipped due to QueryResponseError.")

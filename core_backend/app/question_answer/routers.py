@@ -496,16 +496,12 @@ async def get_generation_response(
         query_id=response.query_id, user_id=query_refined.user_id
     )
 
-    chat_query_params = query_refined.chat_query_params or {}
     response, chat_history = await generate_llm_query_response(
-        chat_query_params=chat_query_params,
-        metadata=metadata,
-        query_refined=query_refined,
-        response=response,
+        query_refined=query_refined, response=response, metadata=metadata
     )
-    if chat_query_params and chat_history:
-        chat_cache_key = chat_query_params["chat_cache_key"]
-        redis_client = chat_query_params["redis_client"]
+    if query_refined.chat_query_params and chat_history:
+        chat_cache_key = query_refined.chat_query_params["chat_cache_key"]
+        redis_client = query_refined.chat_query_params["redis_client"]
         await redis_client.set(
             chat_cache_key, json.dumps(chat_history), ex=REDIS_CHAT_CACHE_EXPIRY_TIME
         )
