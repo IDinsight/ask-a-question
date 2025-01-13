@@ -244,7 +244,8 @@ const MessageBox = (message: Message) => {
     px: 3,
     borderRadius: "20px",
     bgcolor:
-      message.type === "question" ? appColors.secondary : appColors.dashboardSecondary,
+      message.type === "question" ? appColors.lightGrey : appColors.dashboardPrimary,
+    color: message.type === "question" ? "black" : "white",
     boxShadow: 0,
     maxWidth: "75%",
     wordBreak: "break-word",
