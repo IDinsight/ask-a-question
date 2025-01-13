@@ -11,7 +11,7 @@ env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
   POSTGRES_DB: postgres-test-db
-  REDIS_HOST: redis
+  REDIS_HOST: redis://redis:6379
 jobs:
   container-job:
     runs-on: ubuntu-20.04
@@ -59,7 +59,7 @@ jobs:
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
-            ALIGN_SCORE_API=$ALIGN_SCORE_API
+            ALIGN_SCORE_API=$ALIGN_SCORE_API REDIS_HOST=redis
           python -m alembic upgrade head
           python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
           python -m pytest -m "not rails and not alembic" tests
