@@ -710,7 +710,7 @@ async def init_user_query_and_chat_histories(
     # 2.
     chat_cache_key = f"chatCache:{session_id}"
     chat_params_cache_key = f"chatParamsCache:{session_id}"
-    _, _, user_assistant_chat_history, chat_params, _ = await init_chat_history(
+    _, _, user_assistant_chat_history, chat_params = await init_chat_history(
         chat_cache_key=chat_cache_key,
         chat_params_cache_key=chat_params_cache_key,
         redis_client=redis_client,

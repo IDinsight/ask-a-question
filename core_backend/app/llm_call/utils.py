@@ -380,7 +380,7 @@ async def init_chat_history(
     reset: bool,
     session_id: str,
     system_message: str = "You are a helpful assistant.",
-) -> tuple[str, str, list[dict[str, str | None]], dict[str, Any], str]:
+) -> tuple[str, str, list[dict[str, str | None]], dict[str, Any]]:
     """Initialize the chat history. Chat history initialization involves initializing
     both the chat parameters **and** the chat history for the session. Chat parameters
     are assumed to be static for a given session.
@@ -406,9 +406,9 @@ async def init_chat_history(
 
     Returns
     -------
-    tuple[str, str, list[dict[str, str]], dict[str, Any], str]
-        The chat cache key, the chat parameters cache key, the chat history, the chat
-        parameters, and the session ID.
+    tuple[str, str, list[dict[str, str]], dict[str, Any]]
+        The chat cache key, the chat parameters cache key, the chat history, and the
+        chat parameters.
     """
 
     # Get the chat history and chat parameters for the session.
@@ -434,13 +434,7 @@ async def init_chat_history(
             f"Chat history and chat parameters are already initialized for session: "
             f"{session_id}. Using existing values."
         )
-        return (
-            chat_cache_key,
-            chat_params_cache_key,
-            chat_history,
-            chat_params,
-            session_id,
-        )
+        return chat_cache_key, chat_params_cache_key, chat_history, chat_params
 
     # Get the chat parameters for the session.
     logger.info(f"Initializing chat parameters for session: {session_id}")
@@ -478,7 +472,7 @@ async def init_chat_history(
         chat_cache_key, json.dumps(chat_history), ex=REDIS_CHAT_CACHE_EXPIRY_TIME
     )
     logger.info(f"Finished initializing chat history for session: {session_id}")
-    return chat_cache_key, chat_params_cache_key, chat_history, chat_params, session_id
+    return chat_cache_key, chat_params_cache_key, chat_history, chat_params
 
 
 def log_chat_history(
