@@ -167,6 +167,10 @@ async def search(
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
+
+    NB: There is no need to paraphrase the search query for the search response if chat
+    is being used since the chat endpoint first constructs the search query using the
+    latest user message and the conversation history from the user assistant chat.
     """
 
     user_query_db, user_query_refined_template, response_template = (
@@ -177,14 +181,7 @@ async def search(
             generate_tts=False,
         )
     )
-    if user_query.chat_query_params:
-        user_query_refined_template.query_text = user_query.chat_query_params.pop(
-            "search_query"
-        )
 
-    # NB: There is no need to paraphrase the search query if chat is being used since
-    # the chat endpoint first constructs the search query using the latest user message
-    # and the conversation history from the user assistant chat.
     response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,
@@ -570,6 +567,9 @@ async def get_user_query_and_response(
         generate_tts=generate_tts,
         query_text_original=user_query.query_text,
     )
+    if user_query.chat_query_params:
+        user_query_refined.query_text = user_query.chat_query_params.pop("search_query")
+
     # prepare placeholder response object
     response_template = QueryResponse(
         query_id=user_query_db.query_id,
