@@ -4,7 +4,6 @@ endpoints.
 
 import json
 import os
-from typing import Any, Optional
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
@@ -167,13 +166,9 @@ async def search(
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
-
-    NB: There is no need to paraphrase the search query for the search response if chat
-    is being used since the chat endpoint first constructs the search query using the
-    latest user message and the conversation history from the user assistant chat.
     """
 
-    (user_query_db, user_query_refined_template, response_template) = (
+    user_query_db, user_query_refined_template, response_template = (
         await get_user_query_and_response(
             user_id=user_db.user_id,
             user_query=user_query,
@@ -191,14 +186,12 @@ async def search(
         asession=asession,
         exclude_archived=True,
         request=request,
-        paraphrase=not user_query.chat_query_params,
     )
 
     if user_query.generate_llm_response:
         response = await get_generation_response(
             query_refined=user_query_refined_template,
             response=response,
-            chat_query_params=user_query.chat_query_params,
         )
 
     await save_query_response_to_db(user_query_db, response, asession)
@@ -372,7 +365,6 @@ async def get_search_response(
     asession: AsyncSession,
     request: Request,
     exclude_archived: bool = True,
-    paraphrase: bool = True,  # Used by `paraphrase_question__before` decorator
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -398,9 +390,6 @@ async def get_search_response(
         The FastAPI request object.
     exclude_archived
         Specifies whether to exclude archived content.
-    paraphrase
-        Specifies whether to paraphrase the query text. This parameter is used by the
-        `paraphrase_question__before` decorator.
 
     Returns
     -------
@@ -474,7 +463,6 @@ def rerank_search_results(
 async def get_generation_response(
     query_refined: QueryRefined,
     response: QueryResponse,
-    chat_query_params: Optional[dict[str, Any]] = None,
 ) -> QueryResponse | QueryResponseError:
     """Generate a response using an LLM given a query with search results. If
     `chat_history` and `chat_params` are provided, then the response is generated
@@ -494,9 +482,6 @@ async def get_generation_response(
         The refined query object.
     response
         The query response object.
-    chat_query_params
-        Dictionary containing chat query parameters. If specified, then the chat
-        history is used in the response generation.
 
     Returns
     -------
@@ -511,7 +496,7 @@ async def get_generation_response(
         query_id=response.query_id, user_id=query_refined.user_id
     )
 
-    chat_query_params = chat_query_params or {}
+    chat_query_params = query_refined.chat_query_params or {}
     response, chat_history = await generate_llm_query_response(
         chat_query_params=chat_query_params,
         metadata=metadata,
@@ -569,8 +554,10 @@ async def get_user_query_and_response(
         generate_tts=generate_tts,
         query_text_original=user_query.query_text,
     )
-    if user_query.chat_query_params:
-        user_query_refined.query_text = user_query.chat_query_params.pop("search_query")
+    if user_query_refined.chat_query_params:
+        user_query_refined.query_text = user_query_refined.chat_query_params.pop(
+            "search_query"
+        )
 
     # prepare placeholder response object
     response_template = QueryResponse(
