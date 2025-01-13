@@ -173,7 +173,7 @@ async def search(
     latest user message and the conversation history from the user assistant chat.
     """
 
-    user_query_db, user_query_refined_template, response_template = (
+    (user_query_db, user_query_refined_template, response_template) = (
         await get_user_query_and_response(
             user_id=user_db.user_id,
             user_query=user_query,
@@ -203,7 +203,9 @@ async def search(
 
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
-        user_id=user_db.user_id, contents=response.search_results, asession=asession
+        user_id=user_db.user_id,
+        contents=response.search_results,
+        asession=asession,
     )
     await save_content_for_query_to_db(
         user_id=user_db.user_id,
