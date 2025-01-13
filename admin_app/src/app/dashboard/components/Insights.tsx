@@ -73,7 +73,6 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
 
     generateNewTopics(period, token!)
       .then((response) => {
-        // Show user feedback via Snackbar
         setSnackMessage({
           message: response.detail,
           color: "info",
@@ -216,14 +215,13 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
       });
     });
 
-    // Cleanup polling timers on unmount
+    // Cleanup polling timers
     return () => {
       Object.values(pollingTimerRef.current).forEach((timer) => {
         if (timer) clearInterval(timer);
       });
       pollingTimerRef.current = {};
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   /**
@@ -348,7 +346,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         <Box sx={{ padding: 2, width: "75%" }}>
           <Queries
             data={topicQueries}
-            onRefreshClick={() => runRefresh(timePeriod)} // Refresh button triggers new generation
+            onRefreshClick={() => runRefresh(timePeriod)}
             aiSummary={aiSummary}
             lastRefreshed={currentData.refreshTimeStamp}
             refreshing={currentRefreshing}
@@ -356,7 +354,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod }) => {
         </Box>
       </Paper>
 
-      {/* Bokeh scatter plot below */}
+      {/* Bokeh scatter plot */}
       <BokehPlot timePeriod={timePeriod} token={token} />
 
       {/* Snackbars for success/warning/error messages */}
