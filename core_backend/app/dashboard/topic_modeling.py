@@ -48,21 +48,25 @@ async def topic_model_queries(
         A tuple containing TopicsData for the frontend and a DataFrame with embeddings.
     """
     if not query_data:
-        logger.info("No queries to cluster")
+        logger.warning("No queries to cluster")
         return (
             TopicsData(
+                status="error",
                 refreshTimeStamp="",
                 data=[],
+                error_message="No queries to cluster",
             ),
             pd.DataFrame(),
         )
 
     if not content_data:
-        logger.info("No content data to cluster")
+        logger.warning("No content data to cluster")
         return (
             TopicsData(
+                status="error",
                 refreshTimeStamp="",
                 data=[],
+                error_message="No content data to cluster",
             ),
             pd.DataFrame(),
         )
@@ -271,6 +275,7 @@ def prepare_topics_data(
 
     # Prepare TopicsData
     topics_data = TopicsData(
+        status="completed",
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topics_list,
     )

@@ -83,6 +83,7 @@ class TimeFrequency(str, Enum):
     Day = "Day"
     Week = "Week"
     Hour = "Hour"
+    Month = "Month"
 
 
 def has_all_days(d: dict[str, int]) -> dict[str, int]:
@@ -131,8 +132,8 @@ class OverviewTimeSeries(BaseModel):
     """
 
     urgent: dict[str, int]
-    not_urgent_escalated: dict[str, int]
-    not_urgent_not_escalated: dict[str, int]
+    downvoted: dict[str, int]
+    normal: dict[str, int]
 
 
 class TopContentBase(BaseModel):
@@ -196,8 +197,10 @@ class TopicsData(BaseModel):
     of individual Topics. Used for Insights page.
     """
 
+    status: Literal["not_started", "in_progress", "completed", "error"]
     refreshTimeStamp: str
     data: list[Topic]
+    error_message: str | None = None
 
 
 class UserQuery(BaseModel):

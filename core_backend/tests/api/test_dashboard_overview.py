@@ -12,6 +12,7 @@ from core_backend.app.contents.models import ContentDB
 from core_backend.app.dashboard.models import (
     get_content_feedback_stats,
     get_heatmap,
+    get_overview_timeseries,
     get_query_count_stats,
     get_response_feedback_stats,
     get_timeseries_query,
@@ -19,7 +20,7 @@ from core_backend.app.dashboard.models import (
     get_top_content,
     get_urgency_stats,
 )
-from core_backend.app.dashboard.schemas import TimeFrequency
+from core_backend.app.dashboard.schemas import OverviewTimeSeries, TimeFrequency
 from core_backend.app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
@@ -598,6 +599,46 @@ class TestTimeSeries:
         )
 
         assert sum(list(urgency_ts.values())) == n_urgent
+
+    @pytest.mark.parametrize(
+        "create_data, period",
+        [
+            ("last_day", "last_day"),
+            ("last_week", "last_week"),
+            ("last_month", "last_month"),
+            ("last_year", "last_year"),
+        ],
+        indirect=["create_data"],
+    )
+    async def test_full_overview_timeseries_format(
+        self, create_data: pytest.FixtureRequest, period: str, asession: AsyncSession
+    ) -> None:
+        today = datetime.now(timezone.utc)
+        previous_date, frequency = get_previous_date_and_frequency(period)
+
+        overview_ts = await get_overview_timeseries(
+            1,
+            asession,
+            previous_date,
+            today,
+            frequency=frequency,
+        )
+
+        assert isinstance(overview_ts, OverviewTimeSeries)
+
+        assert hasattr(overview_ts, "urgent")
+        assert hasattr(overview_ts, "downvoted")
+        assert hasattr(overview_ts, "normal")
+
+        assert isinstance(overview_ts.urgent, dict)
+        assert isinstance(overview_ts.downvoted, dict)
+        assert isinstance(overview_ts.normal, dict)
+
+        # Quick check for types of keys and vals
+        if overview_ts.urgent:
+            first_ts_key = next(iter(overview_ts.urgent.keys()))
+            assert isinstance(first_ts_key, str)
+            assert isinstance(overview_ts.urgent[first_ts_key], int)
 
 
 def get_previous_date_and_frequency(period: str) -> Tuple[datetime, TimeFrequency]:

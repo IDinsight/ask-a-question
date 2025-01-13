@@ -192,7 +192,7 @@ def get_frequency_and_startdate(
                 months=-1
             )
         case "year":
-            return TimeFrequency.Week, datetime.now(timezone.utc) + relativedelta(
+            return TimeFrequency.Month, datetime.now(timezone.utc) + relativedelta(
                 years=-1
             )
         case _:
@@ -279,7 +279,7 @@ async def refresh_insights_frequency(
 
     _, start_date = get_frequency_and_startdate(time_frequency)
 
-    await refresh_insights(
+    topic_output = await refresh_insights(
         time_frequency=time_frequency,
         user_db=user_db,
         request=request,
@@ -287,7 +287,7 @@ async def refresh_insights_frequency(
         asession=asession,
     )
 
-    return {"status": "success"}
+    return topic_output.dict()
 
 
 async def refresh_insights(
@@ -301,33 +301,47 @@ async def refresh_insights(
     Retrieve topic modelling insights for the time period specified
     and write to Redis.
     """
-
     redis = request.app.state.redis
-    time_period_queries = await get_raw_queries(
-        user_id=user_db.user_id,
-        asession=asession,
-        start_date=start_date,
-    )
+    try:
+        time_period_queries = await get_raw_queries(
+            user_id=user_db.user_id,
+            asession=asession,
+            start_date=start_date,
+        )
 
-    content_data = await get_raw_contents(user_id=user_db.user_id, asession=asession)
+        # set the key to "in_progress" to help with front-end loading UX
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            TopicsData(
+                status="in_progress",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+            ).model_dump_json(),
+        )
 
-    topic_output, embeddings_df = await topic_model_queries(
-        user_id=user_db.user_id,
-        query_data=time_period_queries,
-        content_data=content_data,
-    )
+        content_data = await get_raw_contents(
+            user_id=user_db.user_id, asession=asession
+        )
 
-    embeddings_json = embeddings_df.to_json(orient="split")
+        topic_output, embeddings_df = await topic_model_queries(
+            user_id=user_db.user_id,
+            query_data=time_period_queries,
+            content_data=content_data,
+        )
 
-    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+        embeddings_json = embeddings_df.to_json(orient="split")
+        embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+        await redis.set(embeddings_key, embeddings_json)
 
-    await redis.set(embeddings_key, embeddings_json)
+        await redis.set(
+            f"{user_db.username}_insights_{time_frequency}_results",
+            topic_output.model_dump_json(),
+        )
+        return topic_output
 
-    await redis.set(
-        f"{user_db.username}_insights_{time_frequency}_results",
-        topic_output.model_dump_json(),
-    )
-    return topic_output
+    except Exception as e:
+        logger.warning(f"Topic modelling system error: {str(e)}")
+        raise e
 
 
 @router.get("/insights/{time_frequency}", response_model=TopicsData)
@@ -351,6 +365,7 @@ async def retrieve_insights_frequency(
         return topics_data
 
     return TopicsData(
+        status="not_started",
         refreshTimeStamp="",
         data=[],
     )

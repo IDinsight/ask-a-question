@@ -28,6 +28,22 @@ interface ApexData {
   zIndex?: number;
 }
 
+interface InputSeriesData {
+  [category: string]: {
+    [timestamp: string]: number;
+  };
+}
+interface ApexTSDataPoint {
+  x: number;
+  y: number;
+}
+
+interface ApexSeriesData {
+  name: string;
+  data: ApexTSDataPoint[];
+  group: string;
+}
+
 interface ContentData {
   title: string;
   query_count: number;
@@ -59,7 +75,10 @@ interface TopicModelingData {
   topic_popularity: number;
 }
 
+type Status = "not_started" | "in_progress" | "completed" | "error";
+
 interface TopicModelingResponse {
+  status: Status;
   refreshTimeStamp: string;
   data: TopicModelingData[];
   unclustered_queries: QueryData[];
@@ -77,6 +96,8 @@ export type {
   TimeFrame,
   DayHourUsageData,
   ApexData,
+  ApexSeriesData,
+  InputSeriesData,
   TopContentData,
   RowDataType,
   QueryData,
