@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
@@ -20,6 +19,7 @@ from core_backend.app.config import (
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
     PGVECTOR_VECTOR_SIZE,
+    REDIS_HOST,
 )
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
@@ -563,7 +563,7 @@ async def redis_client() -> AsyncGenerator[aioredis.Redis, None]:
         Redis client for testing.
     """
 
-    rclient = await aioredis.from_url(os.getenv("REDIS_HOST"), decode_responses=True)
+    rclient = await aioredis.from_url(REDIS_HOST, decode_responses=True)
 
     await rclient.flushdb()
 
