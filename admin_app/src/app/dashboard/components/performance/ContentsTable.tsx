@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
+import { appColors } from "@/utils";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -60,7 +61,7 @@ const QueryCountTimeSeries = ({
         show: false,
       },
     },
-    colors: isIncreasing ? ["#4CAF50"] : ["#FF1654"],
+    colors: appColors.dashboardBlueShades,
   };
   return (
     <ReactApexcharts
