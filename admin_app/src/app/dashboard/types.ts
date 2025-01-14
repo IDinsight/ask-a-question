@@ -82,6 +82,8 @@ interface TopicModelingResponse {
   refreshTimeStamp: string;
   data: TopicModelingData[];
   unclustered_queries: QueryData[];
+  error_message: string;
+  failure_step: string;
 }
 
 interface TopicData {
@@ -104,6 +106,7 @@ export type {
   TopicData,
   TopicModelingData,
   TopicModelingResponse,
+  Status,
 };
 
 export { drawerWidth };

@@ -52,9 +52,10 @@ async def topic_model_queries(
         return (
             TopicsData(
                 status="error",
-                refreshTimeStamp="",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
                 data=[],
                 error_message="No queries to cluster",
+                failure_step="Run topic modeling",
             ),
             pd.DataFrame(),
         )
@@ -64,9 +65,25 @@ async def topic_model_queries(
         return (
             TopicsData(
                 status="error",
-                refreshTimeStamp="",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
                 data=[],
                 error_message="No content data to cluster",
+                failure_step="Run topic modeling",
+            ),
+            pd.DataFrame(),
+        )
+    n_queries = len(query_data)
+    n_contents = len(content_data)
+    if not sum([n_queries, n_contents]) >= 500:
+        logger.warning("Not enough data to cluster")
+        return (
+            TopicsData(
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+                error_message="""Not enough data to cluster.
+                Please provide at least 500 total queries and content items.""",
+                failure_step="Run topic modeling",
             ),
             pd.DataFrame(),
         )
@@ -97,7 +114,6 @@ async def topic_model_queries(
 
     # Prepare TopicsData for frontend
     topics_data = prepare_topics_data(results_df, topic_labels)
-
     return topics_data, results_df
 
 
