@@ -75,24 +75,35 @@ const Login = () => {
         credential: response.credential,
       });
     };
-    window.google.accounts.id.initialize({
-      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
-      callback: (data) => handleCredentialResponse(data),
-      state_cookie_domain: "https://example.com",
-    });
+    const initGoogleSignIn = () => {
+      if (window.google && NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID) {
+        window.google.accounts.id.initialize({
+          client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
+          callback: handleCredentialResponse,
+          state_cookie_domain: "https://example.com",
+        });
 
-    const signinDiv = document.getElementById("signinDiv");
-
-    if (signinDiv) {
-      window.google.accounts.id.renderButton(signinDiv, {
-        type: "standard",
-        shape: "pill",
-        theme: "outline",
-        size: "large",
-        width: 275,
-      });
+        const signinDiv = document.getElementById("signinDiv");
+        if (signinDiv) {
+          window.google.accounts.id.renderButton(signinDiv, {
+            type: "standard",
+            shape: "pill",
+            theme: "outline",
+            size: "large",
+            width: 275,
+          });
+        }
+      }
+    };
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.onload = initGoogleSignIn;
+      document.body.appendChild(script);
+    } else {
+      initGoogleSignIn();
     }
-  }, []);
+  }, [NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID]);
 
   useEffect(() => {
     if (recoveryCodes.length > 0) {
