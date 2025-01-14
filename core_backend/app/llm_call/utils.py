@@ -154,10 +154,10 @@ def _truncate_chat_history(
         logger.warning("Empty chat history after truncating chat messages!")
 
 
-def append_content_to_chat_history(
+def append_message_content_to_chat_history(
     *,
     chat_history: list[dict[str, str | None]],
-    content: Optional[str] = None,
+    message_content: Optional[str] = None,
     model: str,
     model_context_length: int,
     name: str,
@@ -165,15 +165,15 @@ def append_content_to_chat_history(
     total_tokens_for_next_generation: int,
     truncate_history: bool = True,
 ) -> None:
-    """Append a single message to the chat history.
+    """Append a single message content to the chat history.
 
     Parameters
     ----------
     chat_history
         The chat history buffer.
-    content
-        The contents of the message. `content` is required for all messages, and may be
-        null for assistant messages with function calls.
+    message_content
+        The contents of the message. `message_content` is required for all messages,
+        and may be null for assistant messages with function calls.
     model
         The name of the LLM model.
     model_context_length
@@ -198,9 +198,9 @@ def append_content_to_chat_history(
     assert role in roles, f"Invalid role: {role}. Valid roles are: {roles}"
     if role not in ["assistant", "function"]:
         assert (
-            content is not None
-        ), "`content` can only be `None` for `assistant` and `function` roles."
-    message = {"content": content, "name": name, "role": role}
+            message_content is not None
+        ), "`message_content` can only be `None` for `assistant` and `function` roles."
+    message = {"content": message_content, "name": name, "role": role}
     chat_history.append(message)
     if truncate_history:
         _truncate_chat_history(
@@ -245,9 +245,9 @@ def append_messages_to_chat_history(
         name = message.get("name", None)
         role = message.get("role", None)
         assert name and role
-        append_content_to_chat_history(
+        append_message_content_to_chat_history(
             chat_history=chat_history,
-            content=message.get("content", None),
+            message_content=message.get("content", None),
             model=model,
             model_context_length=model_context_length,
             name=name,
@@ -337,16 +337,16 @@ async def get_chat_response(
         prompt=message_params["prompt"], prompt_kws=prompt_kws
     )
 
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=formatted_prompt,
+        message_content=formatted_prompt,
         model=model,
         model_context_length=model_context_length,
         name=session_id,
         role="user",
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
-    content = await _ask_llm_async(
+    message_content = await _ask_llm_async(
         litellm_model=LITELLM_MODEL_CHAT,
         llm_generation_params={
             "frequency_penalty": 0.0,
@@ -359,9 +359,9 @@ async def get_chat_response(
         messages=chat_history,
         **kwargs,
     )
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=content,
+        message_content=message_content,
         model=model,
         model_context_length=model_context_length,
         name=session_id,
@@ -369,7 +369,7 @@ async def get_chat_response(
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
 
-    return content
+    return message_content
 
 
 async def init_chat_history(
@@ -459,9 +459,9 @@ async def init_chat_history(
     chat_params = json.loads(await redis_client.get(chat_params_cache_key))
     assert isinstance(chat_params, dict) and chat_params, f"{chat_params = }"
     chat_history = []
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=system_message,
+        message_content=system_message,
         model=chat_params["model"],
         model_context_length=chat_params["max_input_tokens"],
         name=session_id,

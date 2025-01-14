@@ -38,7 +38,7 @@ from ..llm_call.process_output import (
     generate_tts__after,
 )
 from ..llm_call.utils import (
-    append_content_to_chat_history,
+    append_message_content_to_chat_history,
     get_chat_response,
     init_chat_history,
 )
@@ -722,9 +722,9 @@ async def init_user_query_and_chat_histories(
 
     # 3.
     search_query_chat_history: list[dict[str, str | None]] = []
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=search_query_chat_history,
-        content=ChatHistory.system_message_construct_search_query,
+        message_content=ChatHistory.system_message_construct_search_query,
         model=str(chat_params["model"]),
         model_context_length=int(chat_params["max_input_tokens"]),
         name=session_id,
