@@ -42,7 +42,7 @@ async def detect_urgency(
         system_message=prompt,
         litellm_model=LITELLM_MODEL_URGENCY_DETECT,
         metadata=metadata,
-        json=True,
+        json_=True,
     )
 
     try:

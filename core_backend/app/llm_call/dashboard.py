@@ -87,7 +87,7 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
         system_message=topic_model_labelling.get_prompt(),
         litellm_model=LITELLM_MODEL_TOPIC_MODEL,
         metadata=metadata,
-        json=True,
+        json_=True,
     )
 
     try:

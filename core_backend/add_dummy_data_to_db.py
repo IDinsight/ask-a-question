@@ -15,12 +15,12 @@ from sqlalchemy.orm import Session
 # Append the framework path. NB: This is required if this script is invoked from the
 # command line. However, it is not necessary if it is imported from a pip install.
 if __name__ == "__main__":
-    PACKAGE_PATH = str(Path(__file__).resolve())
-    PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("scripts"))
-    PACKAGE_PATH = PACKAGE_PATH_SPLIT[0]
+    PACKAGE_PATH_ROOT = str(Path(__file__).resolve())
+    PACKAGE_PATH_SPLIT = PACKAGE_PATH_ROOT.split(os.path.join("core_backend"))
+    PACKAGE_PATH = Path(PACKAGE_PATH_SPLIT[0]) / "core_backend"
     if PACKAGE_PATH not in sys.path:
         print(f"Appending '{PACKAGE_PATH}' to system path...")
-        sys.path.append(PACKAGE_PATH)
+        sys.path.append(str(PACKAGE_PATH))
 
 
 from app.config import PGVECTOR_VECTOR_SIZE

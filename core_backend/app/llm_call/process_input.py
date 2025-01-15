@@ -300,6 +300,10 @@ async def _classify_safety(
 def paraphrase_question__before(func: Callable) -> Callable:
     """
     Decorator to paraphrase the question.
+
+    NB: There is no need to paraphrase the search query for the search response if chat
+    is being used since the chat endpoint first constructs the search query using the
+    latest user message and the conversation history from the user assistant chat.
     """
 
     @wraps(func)
@@ -316,9 +320,10 @@ def paraphrase_question__before(func: Callable) -> Callable:
             query_id=response.query_id, user_id=query_refined.user_id
         )
 
-        query_refined, response = await _paraphrase_question(
-            query_refined, response, metadata=metadata
-        )
+        if not query_refined.chat_query_params:
+            query_refined, response = await _paraphrase_question(
+                query_refined, response, metadata=metadata
+            )
         response = await func(query_refined, response, *args, **kwargs)
 
         return response
