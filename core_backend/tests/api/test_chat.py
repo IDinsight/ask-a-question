@@ -47,7 +47,6 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
         '{"message_type": "NEW", "query": "stomachache and possible remedies"}'
     )
 
-    # Patching the functions
     with (
         patch(
             "core_backend.app.question_answer.routers.init_chat_history",
@@ -70,7 +69,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
         chat_query_params = user_query.chat_query_params
         assert isinstance(chat_query_params, dict)
 
-        # Assertions
+        # Check that the mocked functions were called as expected.
         mock_init_chat_history.assert_called_once_with(
             chat_cache_key=f"chatCache:{user_query.session_id}",
             chat_params_cache_key=f"chatParamsCache:{user_query.session_id}",
@@ -79,6 +78,9 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
             session_id=str(user_query.session_id),
         )
         mock_get_chat_response.assert_called_once()
+
+        # After initialization, the user query object should have the following
+        # attributes set correctly.
         assert user_query.generate_llm_response is True
         assert user_query.query_text == query_text
         assert (
@@ -93,13 +95,11 @@ async def test__ask_llm_async() -> None:
     messages nor system message and user message is supplied.
     """
 
-    # Mock return values
     mock_object = MagicMock()
     mock_object.llm_response_raw.choices = [MagicMock()]
     mock_object.llm_response_raw.choices[0].message.content = "FooBar"
     mock_acompletion_return_value = mock_object
 
-    # Patching the functions
     with (
         patch(
             "core_backend.app.llm_call.utils.acompletion", new_callable=AsyncMock
@@ -107,7 +107,9 @@ async def test__ask_llm_async() -> None:
     ):
         mock_acompletion.return_value = mock_acompletion_return_value
 
-        # Call the function under test
+        # Call the function under test. These calls should raise an `AssertionError`
+        # because the function is called either without appropriate arguments or with
+        # missing arguments.
         with pytest.raises(AssertionError):
             _ = await _ask_llm_async()
             _ = await _ask_llm_async(system_message="FooBar")
@@ -127,6 +129,7 @@ def test__truncate_chat_history() -> None:
     )
     assert len(chat_history) == 0
 
+    # Non-empty chat that fits within the model context length should not be truncated.
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -141,7 +144,12 @@ def test__truncate_chat_history() -> None:
         total_tokens_for_next_generation=50,
     )
     assert len(chat_history) == 1
+    assert chat_history[0]["content"] == "You are a helpful assistant."
+    assert chat_history[0]["role"] == "system"
 
+    # Chat history that exceeds the model context length should be truncated. In this
+    # case, however, since the chat history only has a system message, the system
+    # message should NOT be truncated.
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -154,8 +162,11 @@ def test__truncate_chat_history() -> None:
         model_context_length=100,
         total_tokens_for_next_generation=150,
     )
-    assert len(chat_history) == 0
+    assert len(chat_history) == 1
+    assert chat_history[0]["role"] == "system"
+    assert chat_history[0]["content"] == "You are a helpful assistant."
 
+    # Exact model context length should not be truncated.
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -170,7 +181,9 @@ def test__truncate_chat_history() -> None:
         total_tokens_for_next_generation=0,
     )
     assert chat_history[0]["content"] == "You are a helpful assistant."
+    assert chat_history[0]["role"] == "system"
 
+    # Check truncation of 1 message in the chat history for system-user roles.
     chat_history = [
         {
             "content": "FooBar",
@@ -190,6 +203,7 @@ def test__truncate_chat_history() -> None:
     )
     assert len(chat_history) == 1 and chat_history[0]["content"] == "FooBar"
 
+    # Check truncation of 1 message in the chat history for user-user roles.
     chat_history = [
         {
             "content": "FooBar",
@@ -216,6 +230,8 @@ def test__truncate_chat_history() -> None:
 def test_append_message_content_to_chat_history() -> None:
     """Test appending messages to chat histories."""
 
+    # Should have expected message appended to chat history without any truncation even
+    # with truncate_history set to True.
     chat_history: list[dict[str, str | None]] = [
         {
             "content": "You are a helpful assistant.",
@@ -236,8 +252,11 @@ def test_append_message_content_to_chat_history() -> None:
         len(chat_history) == 2
         and chat_history[1]["role"] == "user"
         and chat_history[1]["content"] == "What is the meaning of life?"
+        and chat_history[1]["name"] == "123"
     )
 
+    # Should have expected message appended to chat history without any truncation even
+    # if the total tokens for next generation exceeds the model context length.
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -260,6 +279,7 @@ def test_append_message_content_to_chat_history() -> None:
         and chat_history[1]["content"] == "What is the meaning of life?"
     )
 
+    # Check that empty message content with assistant role is correctly appended.
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -281,6 +301,8 @@ def test_append_message_content_to_chat_history() -> None:
         and chat_history[1]["content"] is None
     )
 
+    # This should fail because message content is not provided and the role is not
+    # "assistant" or "function".
     chat_history = [
         {
             "content": "You are a helpful assistant.",
@@ -308,7 +330,6 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
         The Redis client instance.
     """
 
-    # Mock return values
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "data": [
@@ -325,7 +346,6 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
         ],
     }
 
-    # Patching the functions
     with patch(
         "core_backend.app.llm_call.utils.requests.get", return_value=mock_response
     ):
@@ -336,6 +356,9 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
                 redis_client=redis_client, reset=False, session_id=session_id
             )
         )
+
+        # Check that attributes are generated correctly and that the chat history is
+        # initialized with the system message.
         assert chat_cache_key == f"chatCache:{session_id}"
         assert chat_params_cache_key == f"chatParamsCache:{session_id}"
         assert chat_history == [
@@ -351,6 +374,8 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             for x in ["max_input_tokens", "max_output_tokens", "model"]
         )
 
+        # Check that initialization with reset=False does not clear existing chat
+        # history.
         altered_chat_history = chat_history + [
             {
                 "content": "What is the meaning of life?",
@@ -375,6 +400,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             },
         ]
 
+    # Check that initialization with reset=True clears existing chat history.
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "data": [

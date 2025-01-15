@@ -144,12 +144,14 @@ def _truncate_chat_history(
     index = 1 if chat_history[0]["role"] == "system" else 0
     while remaining_tokens <= 0 and chat_history:
         index = min(len(chat_history) - 1, index)
-        chat_history_tokens -= token_counter(
-            messages=[chat_history.pop(index)], model=model
-        )
+        last_message = chat_history.pop(index)
+        chat_history_tokens -= token_counter(messages=[last_message], model=model)
         remaining_tokens = model_context_length - (
             chat_history_tokens + total_tokens_for_next_generation
         )
+        if remaining_tokens <= 0 and not chat_history:
+            chat_history.append(last_message)
+            break
     if not chat_history:
         logger.warning("Empty chat history after truncating chat messages!")
 
