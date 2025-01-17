@@ -17,11 +17,13 @@ from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
+    add_user_workspace_role,
+    create_workspace,
     get_user_by_api_key,
     get_user_by_username,
     save_user_to_db,
 )
-from ..users.schemas import UserCreate
+from ..users.schemas import UserCreate, UserRoles
 from ..utils import (
     setup_logger,
     update_api_limits,
@@ -44,12 +46,24 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> UserDB:
+    """Authenticate using basic bearer token. Used for calling the question-answering
+    endpoints. In case the JWT token is provided instead of the API key, it will fall
+    back to the JWT token authentication.
+
+    Parameters
+    ----------
+    credentials
+        The bearer token.
+
+    Returns
+    -------
+    UserDB
+        The user object.
     """
-    Authenticate using basic bearer token. Used for calling
-    the question-answering endpoints. In case the JWT token is
-    provided instead of the API key, it will fall back to JWT
-    """
+
     token = credentials.credentials
+    print(f"{token = }")
+    input()
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
@@ -63,60 +77,100 @@ async def authenticate_key(
 
 
 async def authenticate_credentials(
-    *, username: str, password: str
+    *, password: str, username: str
 ) -> Optional[AuthenticatedUser]:
+    """Authenticate user using username and password.
+
+    Parameters
+    ----------
+    password
+        User password.
+    username
+        User username.
+
+    Returns
+    -------
+    Optional[AuthenticatedUser]
+        Authenticated user if the user is authenticated, otherwise None.
     """
-    Authenticate user using username and password.
-    """
+
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
         try:
-            user_db = await get_user_by_username(username, asession)
+            user_db = await get_user_by_username(asession=asession, username=username)
             if verify_password_salted_hash(password, user_db.hashed_password):
-                # hardcode "fullaccess" now, but may use it in the future
-                return AuthenticatedUser(
-                    username=username,
-                    access_level="fullaccess",
-                    is_admin=user_db.is_admin,
-                )
-            else:
-                return None
+                # Hardcode "fullaccess" now, but may use it in the future.
+                return AuthenticatedUser(access_level="fullaccess", username=username)
+            return None
         except UserNotFoundError:
             return None
 
 
 async def authenticate_or_create_google_user(
-    *, request: Request, google_email: str
-) -> Optional[AuthenticatedUser]:
+    *,
+    google_email: str,
+    request: Request,
+    user_role: UserRoles,
+    workspace_name: Optional[str] = None,
+) -> AuthenticatedUser:
+    """Check if user exists in the `UserDB` table. If not, create the `UserDB` object.
+
+    Parameters
+    ----------
+    google_email
+        Google email address.
+    request
+        The request object.
+    user_role
+        The user role to assign to the Google login user.
+    workspace_name
+        The workspace name to create for the Google login user. If not specified, then
+        the default workspace name is the next available workspace ID.
+
+    Returns
+    -------
+    AuthenticatedUser
+        The authenticated user object.
     """
-    Check if user exists in Db. If not, create user
-    """
+
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
         try:
-            user_db = await get_user_by_username(google_email, asession)
+            user_db = await get_user_by_username(
+                asession=asession, username=google_email
+            )
             return AuthenticatedUser(
-                username=user_db.username,
-                access_level="fullaccess",
-                is_admin=user_db.is_admin,
+                access_level="fullaccess", username=user_db.username
             )
         except UserNotFoundError:
-            user = UserCreate(
-                username=google_email,
-                content_quota=DEFAULT_CONTENT_QUOTA,
+            user = UserCreate(username=google_email)
+            user_db = await save_user_to_db(asession=asession, user=user)
+
+            # Create the workspace.
+            workspace_new = await create_workspace(
                 api_daily_quota=DEFAULT_API_QUOTA,
-                is_admin=False,
+                asession=asession,
+                content_quota=DEFAULT_CONTENT_QUOTA,
+                workspace_name=workspace_name,
             )
-            user_db = await save_user_to_db(user, asession)
+
+            # Assign user to the specified workspace with the specified role.
+            _ = await add_user_workspace_role(
+                asession=asession,
+                user=user_db,
+                user_role=user_role,
+                workspace=workspace_new,
+            )
+
             await update_api_limits(
-                request.app.state.redis, user_db.username, user_db.api_daily_quota
+                api_daily_quota=DEFAULT_API_QUOTA,
+                redis=request.app.state.redis,
+                workspace_name=workspace_new.workspace_name,
             )
             return AuthenticatedUser(
-                username=user_db.username,
-                access_level="fullaccess",
-                is_admin=user_db.is_admin,
+                access_level="fullaccess", username=user_db.username
             )
 
 
@@ -140,24 +194,14 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             get_sqlalchemy_async_engine(), expire_on_commit=False
         ) as asession:
             try:
-                user_db = await get_user_by_username(username, asession)
+                user_db = await get_user_by_username(
+                    asession=asession, username=username
+                )
                 return user_db
             except UserNotFoundError as err:
                 raise credentials_exception from err
     except InvalidTokenError as err:
         raise credentials_exception from err
-
-
-def get_admin_user(user: Annotated[UserDB, Depends(get_current_user)]) -> UserDB:
-    """
-    Get the current user from the access token and check if it is an admin.
-    """
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions",
-        )
-    return user
 
 
 def create_access_token(username: str) -> str:

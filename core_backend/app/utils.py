@@ -279,20 +279,28 @@ def encode_api_limit(api_limit: int | None) -> int | str:
 
 
 async def update_api_limits(
-    redis: aioredis.Redis, username: str, api_daily_quota: int | None
+    *, api_daily_quota: int | None, redis: aioredis.Redis, workspace_name: str
 ) -> None:
+    """Update the API limits for the workspace in Redis.
+
+    Parameters
+    ----------
+    api_daily_quota
+        The daily API quota for the workspace.
+    redis
+        The Redis instance.
+    workspace_name
+        The name of the workspace.
     """
-    Update the api limits for user in Redis
-    """
+
     now = datetime.now(timezone.utc)
     next_midnight = (now + timedelta(days=1)).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
-    key = f"remaining-calls:{username}"
+    key = f"remaining-calls:{workspace_name}"
     expire_at = int(next_midnight.timestamp())
     await redis.set(key, encode_api_limit(api_daily_quota))
     if api_daily_quota is not None:
-
         await redis.expireat(key, expire_at)
 
 

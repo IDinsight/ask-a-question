@@ -24,7 +24,7 @@ class TestUsers:
             api_daily_quota=200,
             is_admin=False,
         )
-        saved_user = await save_user_to_db(user, asession)
+        saved_user = await save_user_to_db(user=user, asession=asession)
         assert saved_user.username == "test_username_3"
 
     async def test_save_user_to_db_existing_user(self, asession: AsyncSession) -> None:
@@ -35,15 +35,17 @@ class TestUsers:
             is_admin=False,
         )
         with pytest.raises(UserAlreadyExistsError):
-            await save_user_to_db(user, asession)
+            await save_user_to_db(user=user, asession=asession)
 
     async def test_get_user_by_username(self, asession: AsyncSession) -> None:
-        retrieved_user = await get_user_by_username(TEST_USERNAME, asession)
+        retrieved_user = await get_user_by_username(
+            asession=asession, username=TEST_USERNAME
+        )
         assert retrieved_user.username == TEST_USERNAME
 
     async def test_get_user_by_username_no_user(self, asession: AsyncSession) -> None:
         with pytest.raises(UserNotFoundError):
-            await get_user_by_username("nonexistent", asession)
+            await get_user_by_username(asession=asession, username="nonexistent")
 
     async def test_get_user_by_api_key(
         self, api_key_user1: str, asession: AsyncSession
@@ -62,7 +64,7 @@ class TestUsers:
             api_daily_quota=200,
             is_admin=False,
         )
-        saved_user = await save_user_to_db(user, asession)
+        saved_user = await save_user_to_db(user=user, asession=asession)
         assert saved_user.hashed_api_key is None
 
         updated_user = await update_user_api_key(saved_user, "new_key", asession)
