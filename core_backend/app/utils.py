@@ -271,8 +271,17 @@ def get_http_client() -> aiohttp.ClientSession:
 
 
 def encode_api_limit(api_limit: int | None) -> int | str:
-    """
-    Encode the api limit for redis
+    """Encode the API limit for Redis.
+
+    Parameters
+    ----------
+    api_limit
+        The daily API limit.
+
+    Returns
+    -------
+    int | str
+        The encoded API limit.
     """
 
     return int(api_limit) if api_limit is not None else "None"

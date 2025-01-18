@@ -18,7 +18,8 @@ from ..users.models import (
     UserDB,
     UserNotFoundError,
     add_user_workspace_role,
-    create_workspace,
+    check_if_workspace_exists,
+    get_or_create_workspace,
     get_user_by_api_key,
     get_user_by_username,
     save_user_to_db,
@@ -78,7 +79,7 @@ async def authenticate_key(
 
 async def authenticate_credentials(
     *, password: str, username: str
-) -> Optional[AuthenticatedUser]:
+) -> AuthenticatedUser | None:
     """Authenticate user using username and password.
 
     Parameters
@@ -90,7 +91,7 @@ async def authenticate_credentials(
 
     Returns
     -------
-    Optional[AuthenticatedUser]
+    AuthenticatedUser | None
         Authenticated user if the user is authenticated, otherwise None.
     """
 
@@ -108,13 +109,13 @@ async def authenticate_credentials(
 
 
 async def authenticate_or_create_google_user(
-    *,
-    google_email: str,
-    request: Request,
-    user_role: UserRoles,
-    workspace_name: Optional[str] = None,
-) -> AuthenticatedUser:
+    *, google_email: str, request: Request, workspace_name: Optional[str] = None
+) -> AuthenticatedUser | None:
     """Check if user exists in the `UserDB` table. If not, create the `UserDB` object.
+
+    NB: When a Google user is created, the workspace that is requested by the user
+    cannot exist. If the workspace exists, then the Google user must be created by an
+    ADMIN of that workspace.
 
     Parameters
     ----------
@@ -122,16 +123,20 @@ async def authenticate_or_create_google_user(
         Google email address.
     request
         The request object.
-    user_role
-        The user role to assign to the Google login user.
     workspace_name
         The workspace name to create for the Google login user. If not specified, then
         the default workspace name is the next available workspace ID.
 
     Returns
     -------
-    AuthenticatedUser
-        The authenticated user object.
+    AuthenticatedUser | None
+        Authenticated user if the user is authenticated or a new user is created. None
+        if a new user is being created and the requested workspace already exists.
+
+    Raises
+    ------
+    WorkspaceAlreadyExistsError
+        If the workspace requested by the Google user already exists.
     """
 
     async with AsyncSession(
@@ -145,29 +150,41 @@ async def authenticate_or_create_google_user(
                 access_level="fullaccess", username=user_db.username
             )
         except UserNotFoundError:
-            user = UserCreate(username=google_email)
-            user_db = await save_user_to_db(asession=asession, user=user)
+            # Check if the workspace requested by the Google user exists.
+            workspace_db = check_if_workspace_exists(
+                asession=asession, workspace_name=workspace_name
+            )
+            if workspace_db is not None:
+                return None
 
-            # Create the workspace.
-            workspace_new = await create_workspace(
+            # Create the new workspace.
+            workspace_db_new = await get_or_create_workspace(
                 api_daily_quota=DEFAULT_API_QUOTA,
                 asession=asession,
                 content_quota=DEFAULT_CONTENT_QUOTA,
                 workspace_name=workspace_name,
             )
 
+            # Create the new user object with the specified role and workspace name.
+            user = UserCreate(
+                role=UserRoles.ADMIN,
+                username=google_email,
+                workspace_name=workspace_db_new.workspace_name,
+            )
+            user_db = await save_user_to_db(asession=asession, user=user)
+
             # Assign user to the specified workspace with the specified role.
             _ = await add_user_workspace_role(
                 asession=asession,
-                user=user_db,
-                user_role=user_role,
-                workspace=workspace_new,
+                user_db=user_db,
+                user_role=user.role,
+                workspace_db=workspace_db_new,
             )
 
             await update_api_limits(
                 api_daily_quota=DEFAULT_API_QUOTA,
                 redis=request.app.state.redis,
-                workspace_name=workspace_new.workspace_name,
+                workspace_name=workspace_db_new.workspace_name,
             )
             return AuthenticatedUser(
                 access_level="fullaccess", username=user_db.username

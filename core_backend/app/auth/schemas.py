@@ -17,7 +17,7 @@ class AuthenticationDetails(BaseModel):
     access_token: str
     token_type: TokenType
     username: str
-    is_admin: bool = True,  # Hack fix for frontend
+    is_admin: bool = True,  # HACK FIX FOR FRONTEND
 
     model_config = ConfigDict(from_attributes=True)
 

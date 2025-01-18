@@ -30,9 +30,17 @@ class UserRoles(Enum):
 
 
 class UserCreate(BaseModel):
-    """Pydantic model for user creation."""
+    """Pydantic model for user creation.
 
+    NB: When a user is created, the user must be assigned to a workspace and a role
+    within that workspace. The only exception is if the user is the first user to be
+    created, in which case the user will be assigned to the default workspace of
+    "SUPER ADMIN" with a default role of "ADMIN".
+    """
+
+    role: Optional[UserRoles] = None
     username: str
+    workspace_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -56,12 +64,19 @@ class UserCreateWithCode(UserCreate):
 
 
 class UserRetrieve(BaseModel):
-    """Pydantic model for user retrieval."""
+    """Pydantic model for user retrieval.
+
+    NB: When a user is retrieved, a mapping between the workspaces that the user
+    belongs to and the roles within those workspaces should also be returned.
+    """
 
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
-    user_id: int
     username: str
+    user_id: int
+    user_workspace_ids: list[int]
+    user_workspace_names: list[str]
+    user_workspace_roles: list[UserRoles]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -81,13 +96,16 @@ class WorkspaceCreate(BaseModel):
 
     api_daily_quota: Optional[int] = None
     content_quota: Optional[int] = None
+    user_name: str
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class WorkspaceRetrieve(BaseModel):
-    """Pydantic model for workspace retrieval."""
+    """Pydantic model for workspace retrieval.
+    XXX MAYBE NOT NEEDED
+    """
 
     api_daily_quota: Optional[int] =  None
     api_key_first_characters: Optional[str]

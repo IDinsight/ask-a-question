@@ -61,7 +61,7 @@ async def login(
         access_token=create_access_token(user.username),
         token_type="bearer",
         username=user.username,
-        is_admin=True,  # Hack fix for frontend
+        is_admin=True,  # HACK FIX FOR FRONTEND
     )
 
 
@@ -69,11 +69,14 @@ async def login(
 async def login_google(
     request: Request,
     login_data: GoogleLoginData,
-    user_role: UserRoles = UserRoles.ADMIN,
     workspace_name: Optional[str] = None,
 ) -> AuthenticationDetails:
     """Verify Google token and check if user exists. If user does not exist, create
-    user and return JWT token for user
+    user and return JWT token for the user.
+
+    NB: When a user logs in with Google, the user is assigned the role of "ADMIN" by
+    default. Otherwise, the user should be created by an ADMIN of an existing workspace
+    and assigned a role within that workspace.
 
     Parameters
     ----------
@@ -81,9 +84,6 @@ async def login_google(
         The request object.
     login_data
         A Pydantic model containing the Google token.
-    user_role
-        The user role to assign to the Google login user. If not specified, the default
-        user role is ADMIN.
     workspace_name
         The workspace name to create for the Google login user. If not specified, then
         the default workspace name is the next available workspace ID.
@@ -99,7 +99,8 @@ async def login_google(
     ValueError
         If the Google token is invalid.
     HTTPException
-        If the Google token is invalid or if a new user cannot be created.
+        If the workspace requested by the Google user already exists or if the Google
+        token is invalid.
     """
 
     try:
@@ -116,15 +117,13 @@ async def login_google(
         ) from e
 
     user = await authenticate_or_create_google_user(
-        google_email=idinfo["email"],
-        request=request,
-        user_role=user_role,
-        workspace_name=workspace_name,
+        google_email=idinfo["email"], request=request, workspace_name=workspace_name
     )
-    if not user:
+    if user is None:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unable to create new user",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workspace '{workspace_name}' already exists. Contact the admin of "
+                   f"that workspace to create an account for you."
         )
 
     return AuthenticationDetails(
@@ -132,5 +131,5 @@ async def login_google(
         access_token=create_access_token(user.username),
         token_type="bearer",
         username=user.username,
-        is_admin=True,  # Hack fix for frontend
+        is_admin=True,  # HACK FIX FOR FRONTEND
     )
