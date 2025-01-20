@@ -6,7 +6,6 @@ from typing import Any, Optional
 import redis.asyncio as aioredis
 import requests
 from litellm import acompletion, token_counter
-from termcolor import colored
 
 from ..config import (
     LITELLM_API_KEY,
@@ -155,10 +154,10 @@ def _truncate_chat_history(
         logger.warning("Empty chat history after truncating chat messages!")
 
 
-def append_content_to_chat_history(
+def append_message_content_to_chat_history(
     *,
     chat_history: list[dict[str, str | None]],
-    content: Optional[str] = None,
+    message_content: Optional[str] = None,
     model: str,
     model_context_length: int,
     name: str,
@@ -166,15 +165,15 @@ def append_content_to_chat_history(
     total_tokens_for_next_generation: int,
     truncate_history: bool = True,
 ) -> None:
-    """Append a single message to the chat history.
+    """Append a single message content to the chat history.
 
     Parameters
     ----------
     chat_history
         The chat history buffer.
-    content
-        The contents of the message. `content` is required for all messages, and may be
-        null for assistant messages with function calls.
+    message_content
+        The contents of the message. `message_content` is required for all messages,
+        and may be null for assistant messages with function calls.
     model
         The name of the LLM model.
     model_context_length
@@ -199,9 +198,9 @@ def append_content_to_chat_history(
     assert role in roles, f"Invalid role: {role}. Valid roles are: {roles}"
     if role not in ["assistant", "function"]:
         assert (
-            content is not None
-        ), "`content` can only be `None` for `assistant` and `function` roles."
-    message = {"content": content, "name": name, "role": role}
+            message_content is not None
+        ), "`message_content` can only be `None` for `assistant` and `function` roles."
+    message = {"content": message_content, "name": name, "role": role}
     chat_history.append(message)
     if truncate_history:
         _truncate_chat_history(
@@ -246,9 +245,9 @@ def append_messages_to_chat_history(
         name = message.get("name", None)
         role = message.get("role", None)
         assert name and role
-        append_content_to_chat_history(
+        append_message_content_to_chat_history(
             chat_history=chat_history,
-            content=message.get("content", None),
+            message_content=message.get("content", None),
             model=model,
             model_context_length=model_context_length,
             name=name,
@@ -338,16 +337,16 @@ async def get_chat_response(
         prompt=message_params["prompt"], prompt_kws=prompt_kws
     )
 
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=formatted_prompt,
+        message_content=formatted_prompt,
         model=model,
         model_context_length=model_context_length,
         name=session_id,
         role="user",
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
-    content = await _ask_llm_async(
+    message_content = await _ask_llm_async(
         litellm_model=LITELLM_MODEL_CHAT,
         llm_generation_params={
             "frequency_penalty": 0.0,
@@ -360,9 +359,9 @@ async def get_chat_response(
         messages=chat_history,
         **kwargs,
     )
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=content,
+        message_content=message_content,
         model=model,
         model_context_length=model_context_length,
         name=session_id,
@@ -370,7 +369,7 @@ async def get_chat_response(
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
 
-    return content
+    return message_content
 
 
 async def init_chat_history(
@@ -381,7 +380,7 @@ async def init_chat_history(
     reset: bool,
     session_id: str,
     system_message: str = "You are a helpful assistant.",
-) -> tuple[str, str, list[dict[str, str | None]], dict[str, Any], str]:
+) -> tuple[str, str, list[dict[str, str | None]], dict[str, Any]]:
     """Initialize the chat history. Chat history initialization involves initializing
     both the chat parameters **and** the chat history for the session. Chat parameters
     are assumed to be static for a given session.
@@ -407,14 +406,18 @@ async def init_chat_history(
 
     Returns
     -------
-    tuple[str, str, list[dict[str, str]], dict[str, Any], str]
-        The chat cache key, the chat parameters cache key, the chat history, the chat
-        parameters, and the session ID.
+    tuple[str, str, list[dict[str, str]], dict[str, Any]]
+        The chat cache key, the chat parameters cache key, the chat history, and the
+        chat parameters.
     """
 
     # Get the chat history and chat parameters for the session.
     chat_cache_key = chat_cache_key or f"chatCache:{session_id}"
     chat_params_cache_key = chat_params_cache_key or f"chatParamsCache:{session_id}"
+
+    logger.info(f"Using chat cache ID: {chat_cache_key}")
+    logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
+
     chat_cache_exists = await redis_client.exists(chat_cache_key)
     chat_params_cache_exists = await redis_client.exists(chat_params_cache_key)
     chat_history = (
@@ -431,13 +434,7 @@ async def init_chat_history(
             f"Chat history and chat parameters are already initialized for session: "
             f"{session_id}. Using existing values."
         )
-        return (
-            chat_cache_key,
-            chat_params_cache_key,
-            chat_history,
-            chat_params,
-            session_id,
-        )
+        return chat_cache_key, chat_params_cache_key, chat_history, chat_params
 
     # Get the chat parameters for the session.
     logger.info(f"Initializing chat parameters for session: {session_id}")
@@ -445,13 +442,11 @@ async def init_chat_history(
     model_info = requests.get(
         model_info_endpoint, headers={"accept": "application/json"}
     ).json()
-    print("model_info", model_info)
     for dict_ in model_info["data"]:
         if dict_["model_name"] == "chat":
             chat_params = dict_["model_info"]
             assert "model" not in chat_params
             chat_params["model"] = dict_["litellm_params"]["model"]
-            print(chat_params)
             await redis_client.set(
                 chat_params_cache_key,
                 json.dumps(chat_params),
@@ -464,9 +459,9 @@ async def init_chat_history(
     chat_params = json.loads(await redis_client.get(chat_params_cache_key))
     assert isinstance(chat_params, dict) and chat_params, f"{chat_params = }"
     chat_history = []
-    append_content_to_chat_history(
+    append_message_content_to_chat_history(
         chat_history=chat_history,
-        content=system_message,
+        message_content=system_message,
         model=chat_params["model"],
         model_context_length=chat_params["max_input_tokens"],
         name=session_id,
@@ -477,7 +472,7 @@ async def init_chat_history(
         chat_cache_key, json.dumps(chat_history), ex=REDIS_CHAT_CACHE_EXPIRY_TIME
     )
     logger.info(f"Finished initializing chat history for session: {session_id}")
-    return chat_cache_key, chat_params_cache_key, chat_history, chat_params, session_id
+    return chat_cache_key, chat_params_cache_key, chat_history, chat_params
 
 
 def log_chat_history(
@@ -499,24 +494,16 @@ def log_chat_history(
         logger.info(f"\n###Chat history: {context}###")
     else:
         logger.info("\n###Chat history###")
-    role_to_color = {
-        "system": "red",
-        "user": "green",
-        "assistant": "blue",
-        "function": "magenta",
-    }
     for message in chat_history:
         role, content = message["role"], message.get("content", None)
-        assert role in role_to_color.keys()
         name = message.get("name", "")
         function_call = message.get("function_call", None)
-        role_color = role_to_color[role]
         if role in ["system", "user"]:
-            logger.info(colored(f"\n{role}:\n{content}\n", role_color))
+            logger.info(f"\n{role}:\n{content}\n")
         elif role == "assistant":
-            logger.info(colored(f"\n{role}:\n{function_call or content}\n", role_color))
+            logger.info(f"\n{role}:\n{function_call or content}\n")
         else:
-            logger.info(colored(f"\n{role}:\n({name}): {content}\n", role_color))
+            logger.info(f"\n{role}:\n({name}): {content}\n")
 
 
 def remove_json_markdown(text: str) -> str:

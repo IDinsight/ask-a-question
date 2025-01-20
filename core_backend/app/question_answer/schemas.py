@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -17,6 +17,9 @@ class QueryBase(BaseModel):
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
     session_id: SkipJsonSchema[int | None] = Field(default=None, exclude=True)
+    chat_query_params: Optional[dict[str, Any]] = Field(
+        default=None, description="Query parameters for chat"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,12 +58,12 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: int | None = Field(None, exclude=True)
+    session_id: int | None = Field(None, exclude=False)
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
     message_type: Optional[str] = None
 
-    search_results: Dict[int, QuerySearchResult] | None = Field(
+    search_results: dict[int, QuerySearchResult] | None = Field(
         examples=[
             {
                 "0": {
