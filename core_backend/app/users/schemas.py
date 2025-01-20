@@ -72,9 +72,8 @@ class UserRetrieve(BaseModel):
 
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
-    username: str
     user_id: int
-    user_workspace_ids: list[int]
+    username: str
     user_workspace_names: list[str]
     user_workspace_roles: list[UserRoles]
 
@@ -92,11 +91,12 @@ class UserResetPassword(BaseModel):
 
 
 class WorkspaceCreate(BaseModel):
-    """Pydantic model for workspace creation."""
+    """Pydantic model for workspace creation.
+    XXX MAYBE NOT NEEDED
+    """
 
     api_daily_quota: Optional[int] = None
     content_quota: Optional[int] = None
-    user_name: str
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)

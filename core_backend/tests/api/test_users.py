@@ -67,6 +67,8 @@ class TestUsers:
         saved_user = await save_user_to_db(user=user, asession=asession)
         assert saved_user.hashed_api_key is None
 
-        updated_user = await update_user_api_key(saved_user, "new_key", asession)
+        updated_user = await update_user_api_key(
+            user_db=saved_user, new_api_key="new_key", asession=asession
+        )
         assert updated_user.hashed_api_key is not None
         assert updated_user.hashed_api_key == get_key_hash("new_key")

@@ -1,5 +1,7 @@
+"""This module contains authentication dependencies for the FastAPI application."""
+
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Dict, Optional, Union
+from typing import Annotated, Dict, Union
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -17,12 +19,14 @@ from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
+    WorkspaceDB,
+    WorkspaceNotFoundError,
     add_user_workspace_role,
-    check_if_workspace_exists,
-    get_or_create_workspace,
+    create_workspace,
     get_user_by_api_key,
     get_user_by_username,
-    save_user_to_db,
+    get_workspace_by_workspace_name,
+    save_user_to_db, WorkspaceAlreadyExistsError,
 )
 from ..users.schemas import UserCreate, UserRoles
 from ..utils import (
@@ -109,34 +113,25 @@ async def authenticate_credentials(
 
 
 async def authenticate_or_create_google_user(
-    *, google_email: str, request: Request, workspace_name: Optional[str] = None
+    *, google_email: str, request: Request
 ) -> AuthenticatedUser | None:
-    """Check if user exists in the `UserDB` table. If not, create the `UserDB` object.
+    f"""Check if user exists in the `UserDB` table. If not, create the `UserDB` object.
 
-    NB: When a Google user is created, the workspace that is requested by the user
-    cannot exist. If the workspace exists, then the Google user must be created by an
-    ADMIN of that workspace.
-
+    NB: When a Google user is created, their workspace name defaults to 
+    `Workspace_{google_email}` with a default role of "ADMIN".
+    
     Parameters
     ----------
     google_email
         Google email address.
     request
         The request object.
-    workspace_name
-        The workspace name to create for the Google login user. If not specified, then
-        the default workspace name is the next available workspace ID.
 
     Returns
     -------
     AuthenticatedUser | None
         Authenticated user if the user is authenticated or a new user is created. None
         if a new user is being created and the requested workspace already exists.
-
-    Raises
-    ------
-    WorkspaceAlreadyExistsError
-        If the workspace requested by the Google user already exists.
     """
 
     async with AsyncSession(
@@ -150,20 +145,17 @@ async def authenticate_or_create_google_user(
                 access_level="fullaccess", username=user_db.username
             )
         except UserNotFoundError:
-            # Check if the workspace requested by the Google user exists.
-            workspace_db = check_if_workspace_exists(
-                asession=asession, workspace_name=workspace_name
-            )
-            if workspace_db is not None:
+            # Create the default workspace for the Google user.
+            try:
+                workspace_name = f"Workspace_{google_email}"
+                workspace_db_new = await create_workspace(
+                    api_daily_quota=DEFAULT_API_QUOTA,
+                    asession=asession,
+                    content_quota=DEFAULT_CONTENT_QUOTA,
+                    workspace_name=workspace_name,
+                )
+            except WorkspaceAlreadyExistsError:
                 return None
-
-            # Create the new workspace.
-            workspace_db_new = await get_or_create_workspace(
-                api_daily_quota=DEFAULT_API_QUOTA,
-                asession=asession,
-                content_quota=DEFAULT_CONTENT_QUOTA,
-                workspace_name=workspace_name,
-            )
 
             # Create the new user object with the specified role and workspace name.
             user = UserCreate(
@@ -192,9 +184,24 @@ async def authenticate_or_create_google_user(
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
+    """Get the current user from the access token.
+
+    Parameters
+    ----------
+    token
+        The access token.
+
+    Returns
+    -------
+    UserDB
+        The user object.
+
+    Raises
+    ------
+    HTTPException
+        If the credentials are invalid.
     """
-    Get the current user from the access token
-    """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -206,7 +213,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         if username is None:
             raise credentials_exception
 
-        # fetch user from database
+        # Fetch user from database.
         async with AsyncSession(
             get_sqlalchemy_async_engine(), expire_on_commit=False
         ) as asession:
@@ -216,6 +223,53 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
                 )
                 return user_db
             except UserNotFoundError as err:
+                raise credentials_exception from err
+    except InvalidTokenError as err:
+        raise credentials_exception from err
+
+
+async def get_current_workspace(
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> WorkspaceDB:
+    """Get the current workspace from the access token.
+
+    Parameters
+    ----------
+    token
+        The access token.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace object.
+
+    Raises
+    ------
+    HTTPException
+        If the credentials are invalid.
+    """
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        workspace_name = payload.get("sub")
+        if workspace_name is None:
+            raise credentials_exception
+
+        # Fetch workspace from database.
+        async with AsyncSession(
+            get_sqlalchemy_async_engine(), expire_on_commit=False
+        ) as asession:
+            try:
+                workspace_db = await get_workspace_by_workspace_name(
+                    asession=asession, workspace_name=workspace_name
+                )
+                return workspace_db
+            except WorkspaceNotFoundError as err:
                 raise credentials_exception from err
     except InvalidTokenError as err:
         raise credentials_exception from err

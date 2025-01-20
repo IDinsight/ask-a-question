@@ -1,14 +1,11 @@
 """This module contains the FastAPI router for user authentication endpoints."""
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from ..users.schemas import UserRoles
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
@@ -61,15 +58,12 @@ async def login(
         access_token=create_access_token(user.username),
         token_type="bearer",
         username=user.username,
-        is_admin=True,  # HACK FIX FOR FRONTEND
     )
 
 
 @router.post("/login-google")
 async def login_google(
-    request: Request,
-    login_data: GoogleLoginData,
-    workspace_name: Optional[str] = None,
+    request: Request, login_data: GoogleLoginData
 ) -> AuthenticationDetails:
     """Verify Google token and check if user exists. If user does not exist, create
     user and return JWT token for the user.
@@ -84,9 +78,6 @@ async def login_google(
         The request object.
     login_data
         A Pydantic model containing the Google token.
-    workspace_name
-        The workspace name to create for the Google login user. If not specified, then
-        the default workspace name is the next available workspace ID.
 
     Returns
     -------
@@ -116,14 +107,13 @@ async def login_google(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         ) from e
 
-    user = await authenticate_or_create_google_user(
-        google_email=idinfo["email"], request=request, workspace_name=workspace_name
-    )
+    gmail = idinfo["email"]
+    user = await authenticate_or_create_google_user(google_email=gmail, request=request)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Workspace '{workspace_name}' already exists. Contact the admin of "
-                   f"that workspace to create an account for you."
+            detail=f"Workspace for '{gmail}' already exists. Contact the admin of that "
+                   f"workspace to create an account for you."
         )
 
     return AuthenticationDetails(
@@ -131,5 +121,4 @@ async def login_google(
         access_token=create_access_token(user.username),
         token_type="bearer",
         username=user.username,
-        is_admin=True,  # HACK FIX FOR FRONTEND
     )

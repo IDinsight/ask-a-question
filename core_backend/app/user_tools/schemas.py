@@ -7,7 +7,7 @@ class KeyResponse(BaseModel):
     """Pydantic model for key response."""
 
     new_api_key: str
-    username: str
+    workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
 
