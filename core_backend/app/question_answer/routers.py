@@ -300,7 +300,7 @@ async def voice_search(
         )
 
         if user_query.generate_llm_response:
-            response, _ = await get_generation_response(
+            response = await get_generation_response(
                 query_refined=user_query_refined_template,
                 response=response,
             )
@@ -364,7 +364,6 @@ async def get_search_response(
     asession: AsyncSession,
     request: Request,
     exclude_archived: bool = True,
-    paraphrase: bool = True,  # Used by `paraphrase_question__before` decorator
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -390,9 +389,6 @@ async def get_search_response(
         The FastAPI request object.
     exclude_archived
         Specifies whether to exclude archived content.
-    paraphrase
-        Specifies whether to paraphrase the query text. This parameter is used by the
-        `paraphrase_question__before` decorator.
 
     Returns
     -------
