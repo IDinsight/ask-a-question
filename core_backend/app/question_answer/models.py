@@ -215,7 +215,6 @@ async def save_query_response_to_db(
     QueryResponseDB
         The user query response database object.
     """
-    print(type(response))
     if type(response) is QueryResponse:
         user_query_responses_db = QueryResponseDB(
             query_id=user_query_db.query_id,

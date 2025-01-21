@@ -21,6 +21,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import TypingAnimation from "@/components/TypingAnimation";
 
 import { appColors, sizes } from "@/utils";
+import { set } from "date-fns";
 
 interface ResponseSummary {
   index: string;
@@ -56,7 +57,7 @@ const ChatSideBar = ({
   getResponse: (
     question: string,
     generateLLMResponse: boolean,
-    session_id: number,
+    session_id?: number,
   ) => Promise<any>;
 }) => {
   const [loading, setLoading] = useState(false);
@@ -64,9 +65,7 @@ const ChatSideBar = ({
   const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionId, setSessionId] = useState<number>(
-    Math.floor(Math.random() * 10000000),
-  );
+  const [sessionId, setSessionId] = useState<number | null>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null); // Ref to scroll to bottom of chat
 
   useEffect(() => {
@@ -91,7 +90,7 @@ const ChatSideBar = ({
   };
   const handleReset = () => {
     setMessages([]);
-    setSessionId(Math.floor(Math.random() * 10000000));
+    setSessionId(null);
   };
   const handleSendClick = () => {
     setQuestion("");
@@ -104,7 +103,9 @@ const ChatSideBar = ({
       } as UserMessage,
     ]);
     setLoading(true);
-    const responsePromise = getResponse(question, generateLLMResponse, sessionId);
+    const responsePromise = sessionId
+      ? getResponse(question, generateLLMResponse, sessionId)
+      : getResponse(question, generateLLMResponse);
     responsePromise
       .then((response) => {
         const responseMessage = {
@@ -114,6 +115,7 @@ const ChatSideBar = ({
           json: response,
         } as ResponseMessage;
         setMessages((prevMessages) => [...prevMessages, responseMessage]);
+        setSessionId(response.session_id);
       })
 
       .catch((error: Error) => {
@@ -268,6 +270,7 @@ const MessageBox = (message: Message) => {
           width: sizes.icons.medium,
           height: sizes.icons.medium,
           bgcolor: "primary.main",
+          alignSelf: "flex-end",
           order: avatarOrder,
         }}
       >

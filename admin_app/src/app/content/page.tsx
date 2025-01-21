@@ -189,14 +189,11 @@ const CardsPage = () => {
                 />
                 <Box
                   sx={{
-                    display: "grid",
-                    placeItems: "end", // Shortcut for align-items and justify-items together
-                    height: "100%", // Adjust the height as required
-                    direction: "row", // Set flex direction to column
-                    flexGrow: 1,
-                    justifyContent: "flex-end", // Aligns items to the bottom
-                    alignItems: "flex-end", // Aligns items to the right
-                    paddingTop: 5,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "flex-end",
+                    justifyContent: "flex-end",
+                    p: 1,
                   }}
                 >
                   {!openSidebar && (
@@ -204,8 +201,6 @@ const CardsPage = () => {
                       variant="extended"
                       sx={{
                         bgcolor: "orange",
-                        width: "100px",
-                        marginBottom: 2, // Dealing with flex column, margin bottom is used
                       }}
                       onClick={handleSidebarToggle}
                     >
@@ -219,8 +214,7 @@ const CardsPage = () => {
                       variant="extended"
                       sx={{
                         bgcolor: "orange",
-                        width: "100px",
-                        marginBottom: 3,
+                        ml: 2,
                       }}
                       onClick={handleChatSidebarToggle}
                     >
@@ -260,7 +254,9 @@ const CardsPage = () => {
             closeSidebar={handleChatSidebarClose}
             showLLMResponseToggle={true}
             getResponse={(question: string, generateLLMResponse, session_id) => {
-              return apiCalls.getChat(question, true, token!, session_id);
+              return session_id
+                ? apiCalls.getChat(question, true, token!, session_id)
+                : apiCalls.getChat(question, true, token!);
             }}
           />
         </Grid>
