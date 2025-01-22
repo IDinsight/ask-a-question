@@ -100,21 +100,6 @@ class WorkspaceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WorkspaceRetrieve(BaseModel):
-    """Pydantic model for workspace retrieval."""
-
-    api_daily_quota: Optional[int] =  None
-    api_key_first_characters: Optional[str]
-    api_key_updated_datetime_utc: Optional[datetime]
-    content_quota: Optional[int] = None
-    created_datetime_utc: datetime
-    updated_datetime_utc: datetime
-    workspace_id: int
-    workspace_name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class WorkspaceUpdate(BaseModel):
     """Pydantic model for workspace updates."""
 
