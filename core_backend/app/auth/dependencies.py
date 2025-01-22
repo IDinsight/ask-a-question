@@ -226,9 +226,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             get_sqlalchemy_async_engine(), expire_on_commit=False
         ) as asession:
             try:
-                print(f"Trying to get user: {username}")
-                print(f"{payload = }")
-                input()
                 user_db = await get_user_by_username(
                     asession=asession, username=username
                 )
