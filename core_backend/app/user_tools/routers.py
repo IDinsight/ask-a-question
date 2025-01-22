@@ -86,7 +86,7 @@ async def create_user(
     The process is as follows:
 
     1. Parameters for the endpoint are checked first.
-    2.  If the user does not exist, then create the user and add the user to the
+    2. If the user does not exist, then create the user and add the user to the
         specified workspace with the specified role.
     3. If the user exists, then add the user to the specified workspace with the
         specified role.
@@ -113,14 +113,15 @@ async def create_user(
 
     # HACK FIX FOR FRONTEND: This is to simulate a call to the `create_workspaces`
     # endpoint.
+    # workspace_temp_name = "Workspace_2"
     # user_temp = UserCreate(
     #     role=UserRoles.ADMIN,
     #     username="Doesn't matter",
-    #     workspace_name="Workspace_2",
+    #     workspace_name=workspace_temp_name,
     # )
     # _ = await create_workspace(asession=asession, user=user_temp)
     # user.role = UserRoles.ADMIN
-    # user.workspace_name = "Workspace_2"
+    # user.workspace_name = workspace_temp_name
     # HACK FIX FOR FRONTEND: This is to simulate a call to the `create_workspace`
     # endpoint.
 
