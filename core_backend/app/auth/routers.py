@@ -51,7 +51,7 @@ async def login(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect username or password.",
         )
     return AuthenticationDetails(
         access_level=user.access_level,
@@ -104,7 +104,7 @@ async def login_google(
             raise ValueError("Wrong issuer.")
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token."
         ) from e
 
     gmail = idinfo["email"]

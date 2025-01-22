@@ -9,6 +9,7 @@ from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -16,7 +17,7 @@ from ..config import CHECK_CONTENT_LIMIT
 from ..database import get_async_session
 from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate, TagRetrieve
-from ..users.models import UserDB, get_content_quota_by_userid
+from ..users.models import UserDB, WorkspaceDB, WorkspaceNotFoundError
 from ..utils import setup_logger
 from .models import (
     ContentDB,
@@ -663,8 +664,8 @@ async def _check_content_quota_availability(
     """
 
     # get content_quota value for this user from UserDB
-    content_quota = await get_content_quota_by_userid(
-        user_id=user_id, asession=asession
+    content_quota = await get_content_quota_by_workspace_id(
+        asession=asession, workspace_id=None  # FIX
     )
 
     # if content_quota is None, then there is no limit
@@ -797,3 +798,37 @@ def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
     )
 
     return tag_retrieve
+
+
+async def get_content_quota_by_workspace_id(
+    *, asession: AsyncSession, workspace_id: int
+) -> int:
+    """Retrieve a workspace content quota by workspace ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The workspace ID to retrieve the content quota for.
+
+    Returns
+    -------
+    int
+        The content quota for the workspace.
+
+    Raises
+    ------
+    WorkspaceNotFoundError
+        If the workspace ID does not exist.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_id == workspace_id)
+    result = await asession.execute(stmt)
+    try:
+        content_quota = result.scalar_one().content_quota
+        return content_quota
+    except NoResultFound as err:
+        raise WorkspaceNotFoundError(
+            f"Workspace ID {workspace_id} does not exist."
+        ) from err

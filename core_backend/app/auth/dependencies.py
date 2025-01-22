@@ -12,6 +12,8 @@ from fastapi.security import (
     OAuth2PasswordBearer,
 )
 from jwt.exceptions import InvalidTokenError
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
@@ -23,13 +25,13 @@ from ..users.models import (
     WorkspaceNotFoundError,
     add_user_workspace_role,
     create_workspace,
-    get_user_by_api_key,
     get_user_by_username,
     get_workspace_by_workspace_name,
-    save_user_to_db, WorkspaceAlreadyExistsError,
+    save_user_to_db,
 )
 from ..users.schemas import UserCreate, UserRoles
 from ..utils import (
+    get_key_hash,
     setup_logger,
     update_api_limits,
     verify_password_salted_hash,
@@ -115,11 +117,12 @@ async def authenticate_credentials(
 async def authenticate_or_create_google_user(
     *, google_email: str, request: Request
 ) -> AuthenticatedUser | None:
-    f"""Check if user exists in the `UserDB` table. If not, create the `UserDB` object.
+    """Check if user exists in the `UserDB` database. If not, create the `UserDB`
+    object.
 
     NB: When a Google user is created, their workspace name defaults to 
-    `Workspace_{google_email}` with a default role of "ADMIN".
-    
+    `Workspace_{google_email}` with a default role of ADMIN.
+
     Parameters
     ----------
     google_email
@@ -145,24 +148,29 @@ async def authenticate_or_create_google_user(
                 access_level="fullaccess", username=user_db.username
             )
         except UserNotFoundError:
+            # Create the new user object with the specified role and workspace name.
+            workspace_name = f"Workspace_{google_email}"
+            user = UserCreate(
+                role=UserRoles.ADMIN,
+                username=google_email,
+                workspace_name=workspace_name,
+            )
+
             # Create the default workspace for the Google user.
             try:
-                workspace_name = f"Workspace_{google_email}"
+                _ = await get_workspace_by_workspace_name(
+                    asession=asession, workspace_name=workspace_name
+                )
+                return None
+            except WorkspaceNotFoundError:
                 workspace_db_new = await create_workspace(
                     api_daily_quota=DEFAULT_API_QUOTA,
                     asession=asession,
                     content_quota=DEFAULT_CONTENT_QUOTA,
-                    workspace_name=workspace_name,
+                    user=user,
                 )
-            except WorkspaceAlreadyExistsError:
-                return None
 
-            # Create the new user object with the specified role and workspace name.
-            user = UserCreate(
-                role=UserRoles.ADMIN,
-                username=google_email,
-                workspace_name=workspace_db_new.workspace_name,
-            )
+            # Save the user to the `UserDB` database.
             user_db = await save_user_to_db(asession=asession, user=user)
 
             # Assign user to the specified workspace with the specified role.
@@ -218,6 +226,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             get_sqlalchemy_async_engine(), expire_on_commit=False
         ) as asession:
             try:
+                print(f"Trying to get user: {username}")
+                print(f"{payload = }")
+                input()
                 user_db = await get_user_by_username(
                     asession=asession, username=username
                 )
@@ -273,6 +284,39 @@ async def get_current_workspace(
                 raise credentials_exception from err
     except InvalidTokenError as err:
         raise credentials_exception from err
+
+
+# XXX
+async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
+    """Retrieve a user by token.
+
+    Parameters
+    ----------
+    asession
+        The async session to use for the database connection.
+    token
+        The token to use for the query.
+
+    Returns
+    -------
+    UserDB
+        The user object retrieved from the database.
+
+    Raises
+    ------
+    UserNotFoundError
+        If the user with the specified token does not exist.
+    """
+
+    hashed_token = get_key_hash(token)
+
+    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
+    result = await asession.execute(stmt)
+    try:
+        user = result.scalar_one()
+        return user
+    except NoResultFound as err:
+        raise UserNotFoundError("User with given token does not exist.") from err
 
 
 def create_access_token(username: str) -> str:

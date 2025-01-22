@@ -10,9 +10,9 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    and_,
     exists,
     select,
-    update,
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,29 +21,39 @@ from sqlalchemy.types import Enum as SQLAlchemyEnum
 
 from ..models import Base
 from ..utils import get_key_hash, get_password_salted_hash, get_random_string
-from .schemas import UserCreate, UserCreateWithPassword, UserResetPassword, UserRoles
+from .schemas import (
+    UserCreate,
+    UserCreateWithPassword,
+    UserResetPassword,
+    UserRoles,
+    WorkspaceUpdate,
+)
 
 PASSWORD_LENGTH = 12
-
-
-class UserNotFoundError(Exception):
-    """Exception raised when a user is not found in the database."""
 
 
 class UserAlreadyExistsError(Exception):
     """Exception raised when a user already exists in the database."""
 
 
+class UserNotFoundError(Exception):
+    """Exception raised when a user is not found in the database."""
+
+
+class UserNotFoundInWorkspaceError(Exception):
+    """Exception raised when a user is not found in a workspace in the database."""
+
+
 class UserWorkspaceRoleAlreadyExistsError(Exception):
     """Exception raised when a user workspace role already exists in the database."""
 
 
-class WorkspaceNotFoundError(Exception):
-    """Exception raised when a workspace is not found in the database."""
-
-
 class WorkspaceAlreadyExistsError(Exception):
     """Exception raised when a workspace already exists in the database."""
+
+
+class WorkspaceNotFoundError(Exception):
+    """Exception raised when a workspace is not found in the database."""
 
 
 class UserDB(Base):
@@ -244,6 +254,32 @@ async def add_user_workspace_role(
     return user_workspace_role_db
 
 
+async def check_if_user_exists(
+    *,
+    asession: AsyncSession,
+    user: UserCreate | UserCreateWithPassword | UserResetPassword,
+) -> UserDB | None:
+    """Check if a user exists in the `UserDB` database.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user
+        The user object to check in the database.
+
+    Returns
+    -------
+    UserDB | None
+        The user object if it exists in the database, otherwise `None`.
+    """
+
+    stmt = select(UserDB).where(UserDB.username == user.username)
+    result = await asession.execute(stmt)
+    user = result.scalar_one_or_none()
+    return user
+
+
 async def check_if_users_exist(*, asession: AsyncSession) -> bool:
     """Check if users exist in the `UserDB` database.
 
@@ -287,11 +323,10 @@ async def create_workspace(
     api_daily_quota: Optional[int] = None,
     asession: AsyncSession,
     content_quota: Optional[int] = None,
-    workspace_name: str,
+    user: UserCreate,
 ) -> WorkspaceDB:
-    """Create a workspace in the `WorkspaceDB` database.
-
-    NB: The assumption here is that this function is invoked by an ADMIN user.
+    """Create a workspace in the `WorkspaceDB` database. If the workspace already
+    exists, then it is returned.
 
     Parameters
     ----------
@@ -301,69 +336,36 @@ async def create_workspace(
         The SQLAlchemy async session to use for all database connections.
     content_quota
         The content quota for the workspace.
-    workspace_name
-        The name of the workspace to create. If not specified, then the default
-        workspace name is the next available workspace ID.
+    user
+        The user object creating the workspace.
 
     Returns
     -------
     WorkspaceDB
         The workspace object saved in the database.
-
-    Raises
-    ------
-    WorkspaceAlreadyExistsError
-        If the workspace with the same name already exists in the `WorkspaceDB`
-    database.
     """
 
+    assert user.role == UserRoles.ADMIN, "Only ADMIN users can create workspaces."
+    workspace_name = user.workspace_name
     try:
-        _ = await get_workspace_by_workspace_name(
+        workspace_db = await get_workspace_by_workspace_name(
             asession=asession, workspace_name=workspace_name
         )
-        raise WorkspaceAlreadyExistsError(
-            f"Workspace '{workspace_name}' already exists."
-        )
+        return workspace_db
     except WorkspaceNotFoundError:
-        pass
+        workspace_db = WorkspaceDB(
+            api_daily_quota=api_daily_quota,
+            content_quota=content_quota,
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_name=workspace_name,
+        )
 
-    workspace_db = WorkspaceDB(
-        api_daily_quota=api_daily_quota,
-        content_quota=content_quota,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-        workspace_name=workspace_name,
-    )
+        asession.add(workspace_db)
+        await asession.commit()
+        await asession.refresh(workspace_db)
 
-    asession.add(workspace_db)
-    await asession.commit()
-    await asession.refresh(workspace_db)
-
-    return workspace_db
-
-
-async def get_all_user_roles_in_workspaces(
-    *, asession: AsyncSession
-) -> Sequence[UserDB]:
-    """Get all user roles in all workspaces.
-
-    Parameters
-    ----------
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Returns
-    -------
-    Sequence[UserDB]
-        A sequence of user objects with their roles in the workspaces.
-    """
-
-    stmt = select(UserDB).options(joinedload(UserDB.workspace_roles).joinedload(
-        UserWorkspaceRoleDB.workspace)
-    )
-    result = await asession.execute(stmt)
-    users = result.unique().scalars().all()
-    return users
+        return workspace_db
 
 
 async def get_user_by_id(*, asession: AsyncSession, user_id: int) -> UserDB:
@@ -428,40 +430,6 @@ async def get_user_by_username(*, asession: AsyncSession, username: str) -> User
         ) from err
 
 
-async def get_user_role_in_workspace(
-    *, asession: AsyncSession, user_db: UserDB, workspace_db: WorkspaceDB
-) -> UserRoles | None:
-    """Check if a user already exists with a specified role in the
-    `UserWorkspaceRoleDB` table.
-
-    Parameters
-    ----------
-    asession
-        The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object to check.
-    workspace_db
-        The workspace object to check.
-
-    Returns
-    -------
-    UserRoles | None
-        The user role of the user in the workspace. Returns `None` if the user does not
-        exist in the workspace.
-    """
-
-    stmt = (
-        select(UserWorkspaceRoleDB.user_role)
-        .where(
-            UserWorkspaceRoleDB.user_id == user_db.user_id,
-            UserWorkspaceRoleDB.workspace_id == workspace_db.workspace_id,
-        )
-    )
-    result = await asession.execute(stmt)
-    user_role = result.scalar_one_or_none()
-    return user_role
-
-
 async def get_user_role_in_all_workspaces(
     *, asession: AsyncSession, user_db: UserDB
 ) -> Sequence[Row[tuple[str, UserRoles]]]:
@@ -491,37 +459,38 @@ async def get_user_role_in_all_workspaces(
     )
 
     result = await asession.execute(stmt)
-    workspace_roles = result.fetchall()
-    return workspace_roles
+    user_roles = result.fetchall()
+    return user_roles
 
 
-async def get_user_workspaces(
-    *, asession: AsyncSession, user_db: UserDB
-) -> Sequence[WorkspaceDB]:
-    """Retrieve all workspaces that a user belongs to.
+async def get_user_role_in_workspace(
+    *, asession: AsyncSession, user_db: UserDB, workspace_db: WorkspaceDB
+) -> UserRoles | None:
+    """Retrieve the workspace a user belongs to and their role in the workspace.
 
     Parameters
     ----------
     asession
         The SQLAlchemy async session to use for all database connections.
     user_db
-        The user object to use for retrieving workspaces.
+        The user object to check.
+    workspace_db
+        The workspace object to check.
 
     Returns
     -------
-    Sequence[WorkspaceDB]
-        A sequence of workspace objects that the user belongs to.
+    UserRoles | None
+        The user role of the user in the workspace. Returns `None` if the user does not
+        exist in the workspace.
     """
 
-    result = await asession.execute(
-        select(WorkspaceDB)
-        .join(
-            UserWorkspaceRoleDB,
-            WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id,
-        )
-        .where(UserWorkspaceRoleDB.user_id == user_db.user_id)
+    stmt = select(UserWorkspaceRoleDB.user_role).where(
+        UserWorkspaceRoleDB.user_id == user_db.user_id,
+        UserWorkspaceRoleDB.workspace_id == workspace_db.workspace_id,
     )
-    return result.scalars().all()
+    result = await asession.execute(stmt)
+    user_role = result.scalar_one_or_none()
+    return user_role
 
 
 async def get_users_and_roles_by_workspace_name(
@@ -560,6 +529,40 @@ async def get_users_and_roles_by_workspace_name(
     return result.fetchall()
 
 
+async def get_workspace_by_workspace_id(
+    *, asession: AsyncSession, workspace_id: int
+) -> WorkspaceDB:
+    """Retrieve a workspace by workspace ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The workspace ID to use for the query.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace object retrieved from the database.
+
+    Raises
+    ------
+    WorkspaceNotFoundError
+        If the workspace with the specified workspace ID does not exist.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_id == workspace_id)
+    result = await asession.execute(stmt)
+    try:
+        workspace_db = result.scalar_one()
+        return workspace_db
+    except NoResultFound as err:
+        raise WorkspaceNotFoundError(
+            f"Workspace with ID {workspace_id} does not exist."
+        ) from err
+
+
 async def get_workspace_by_workspace_name(
     *, asession: AsyncSession, workspace_name: str
 ) -> WorkspaceDB:
@@ -594,9 +597,48 @@ async def get_workspace_by_workspace_name(
         ) from err
 
 
+async def get_workspaces_by_user_role(
+    *, asession: AsyncSession, user_db: UserDB, user_role: UserRoles
+) -> Sequence[WorkspaceDB]:
+    """Retrieve all workspaces for the user with the specified role.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object to get workspaces for.
+    user_role
+        The role of the user in the workspace.
+
+    Returns
+    -------
+    Sequence[WorkspaceDB]
+        A sequence of workspace objects that the user belongs to with the specified
+        role.
+    """
+
+    stmt = (
+        select(WorkspaceDB)
+        .join(
+            UserWorkspaceRoleDB,
+            WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id,
+        )
+        .where(
+            and_(
+                UserWorkspaceRoleDB.user_id == user_db.user_id,
+                UserWorkspaceRoleDB.user_role == user_role,
+            )
+        )
+        .options(joinedload(WorkspaceDB.users))
+    )
+    result = await asession.execute(stmt)
+    return result.unique().scalars().all()
+
+
 async def is_username_valid(*, asession: AsyncSession, username: str) -> bool:
-    """Check if a username is valid. A new username is valid if it doesn't already
-    exist in the database.
+    """Check if a username is valid. A username is valid if it doesn't already exist in
+    the database.
 
     Parameters
     ----------
@@ -683,17 +725,11 @@ async def save_user_to_db(
         If a user with the same username already exists in the database.
     """
 
-    # Check if user with same username already exists.
-    stmt = select(UserDB).where(UserDB.username == user.username)
-    result = await asession.execute(stmt)
-    try:
-        result.one()
+    existing_user = await check_if_user_exists(asession=asession, user=user)
+    if existing_user is not None:
         raise UserAlreadyExistsError(
             f"User with username {user.username} already exists."
         )
-    except NoResultFound:
-        pass
-
     if isinstance(user, UserCreateWithPassword):
         hashed_password = get_password_salted_hash(user.password)
     else:
@@ -754,52 +790,56 @@ async def update_user_role_in_workspace(
     user_db: UserDB,
     workspace_db: WorkspaceDB,
 ) -> None:
-    """Update a user's role in the specified workspace.
+    """Update a user's role in a given workspace.
 
     Parameters
     ----------
     asession
         The SQLAlchemy async session to use for all database connections.
     new_role
-        The new role to update the user to.
+        The new role to assign to the user in the workspace.
     user_db
         The user object to update the role for.
     workspace_db
-        The workspace object to update the user role in.
+        The workspace object to update the role for.
 
     Raises
     ------
-    ValueError
-        If the new role is invalid.
+    UserNotFoundInWorkspaceError
+        If the user is not found in the workspace.
     """
 
     try:
-        _ = await add_user_workspace_role(
-            asession=asession,
-            user_db=user_db,
-            user_role=new_role,
-            workspace_db=workspace_db,
-        )
-    except UserWorkspaceRoleAlreadyExistsError:
+        # Query the UserWorkspaceRoleDB to check if the association exists.
         stmt = (
-            update(UserWorkspaceRoleDB)
-            .where(
-                UserWorkspaceRoleDB.user_id == (
-                    select(UserDB.user_id)
-                    .where(UserDB.username == user_db.username)
-                    .scalar_subquery()
-                ),
-                UserWorkspaceRoleDB.workspace_id == (
-                    select(WorkspaceDB.workspace_id)
-                    .where(WorkspaceDB.workspace_name == workspace_db.workspace_name)
-                    .scalar_subquery()
-                ),
+            select(UserWorkspaceRoleDB)
+            .options(
+                joinedload(UserWorkspaceRoleDB.user),
+                joinedload(UserWorkspaceRoleDB.workspace),
             )
-            .values(user_role=new_role)
-            .execution_options(synchronize_session="fetch")
+            .where(
+                UserWorkspaceRoleDB.user_id == user_db.user_id,
+                UserWorkspaceRoleDB.workspace_id == workspace_db.workspace_id
+            )
         )
         result = await asession.execute(stmt)
-        assert result.rowcount == 1
+        user_workspace_role_db = result.scalar_one()
+
+        # Update the role.
+        user_workspace_role_db.user_role = new_role
+        user_workspace_role_db.updated_datetime_utc = datetime.now(timezone.utc)
+
+        # Commit the transaction.
+        await asession.commit()
+        await asession.refresh(user_workspace_role_db)
+    except NoResultFound:
+        raise UserNotFoundInWorkspaceError(
+            f"User '{user_db.username}' not found in workspace "
+            f"'{workspace_db.workspace_name}'."
+        )
+    except Exception as e:
+        await asession.rollback()
+        raise e
 
 
 async def update_workspace_api_key(
@@ -819,7 +859,7 @@ async def update_workspace_api_key(
     Returns
     -------
     WorkspaceDB
-        The workspace object saved in the database after API key update.
+        The workspace object updated in the database after API key update.
     """
 
     workspace_db.hashed_api_key = get_key_hash(new_api_key)
@@ -833,50 +873,33 @@ async def update_workspace_api_key(
     return workspace_db
 
 
-# XXX
-async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
-    """Retrieve a user by token.
+async def update_workspace_quotas(
+    *, asession: AsyncSession, workspace: WorkspaceUpdate, workspace_db: WorkspaceDB
+) -> WorkspaceDB:
+    """Update workspace quotas.
 
     Parameters
     ----------
     asession
-        The async session to use for the database connection.
-    token
-        The token to use for the query.
+        The SQLAlchemy async session to use for all database connections.
+    workspace
+        The workspace object containing the updated quotas.
+    workspace_db
+        The workspace object to update the API key for.
 
     Returns
     -------
-    UserDB
-        The user object retrieved from the database.
-
-    Raises
-    ------
-    UserNotFoundError
-        If the user with the specified token does not exist.
+    WorkspaceDB
+        The workspace object updated in the database after updating quotas.
     """
 
-    hashed_token = get_key_hash(token)
+    assert workspace.api_daily_quota is None or workspace.api_daily_quota > 0
+    assert workspace.content_quota is None or workspace.content_quota > 0
+    workspace_db.api_daily_quota = workspace.api_daily_quota
+    workspace_db.content_quota = workspace.content_quota
+    workspace_db.updated_datetime_utc = datetime.now(timezone.utc)
 
-    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
-    result = await asession.execute(stmt)
-    try:
-        user = result.scalar_one()
-        return user
-    except NoResultFound as err:
-        raise UserNotFoundError("User with given token does not exist.") from err
+    await asession.commit()
+    await asession.refresh(workspace_db)
 
-
-async def get_content_quota_by_userid(
-    user_id: int,
-    asession: AsyncSession,
-) -> int:
-    """
-    Retrieves a user's content quota by user_id
-    """
-    stmt = select(UserDB).where(UserDB.user_id == user_id)
-    result = await asession.execute(stmt)
-    try:
-        content_quota = result.scalar_one().content_quota
-        return content_quota
-    except NoResultFound as err:
-        raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
+    return workspace_db

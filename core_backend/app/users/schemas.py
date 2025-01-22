@@ -91,9 +91,7 @@ class UserResetPassword(BaseModel):
 
 
 class WorkspaceCreate(BaseModel):
-    """Pydantic model for workspace creation.
-    XXX MAYBE NOT NEEDED
-    """
+    """Pydantic model for workspace creation."""
 
     api_daily_quota: Optional[int] = None
     content_quota: Optional[int] = None
@@ -103,9 +101,7 @@ class WorkspaceCreate(BaseModel):
 
 
 class WorkspaceRetrieve(BaseModel):
-    """Pydantic model for workspace retrieval.
-    XXX MAYBE NOT NEEDED
-    """
+    """Pydantic model for workspace retrieval."""
 
     api_daily_quota: Optional[int] =  None
     api_key_first_characters: Optional[str]
@@ -115,5 +111,14 @@ class WorkspaceRetrieve(BaseModel):
     updated_datetime_utc: datetime
     workspace_id: int
     workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkspaceUpdate(BaseModel):
+    """Pydantic model for workspace updates."""
+
+    api_daily_quota: Optional[int] = None
+    content_quota: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
