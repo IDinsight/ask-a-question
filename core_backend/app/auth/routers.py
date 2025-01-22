@@ -1,4 +1,4 @@
-"""This module contains the FastAPI router for user authentication endpoints."""
+"""This module contains FastAPI routers for user authentication endpoints."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
@@ -55,7 +55,7 @@ async def login(
         )
     return AuthenticationDetails(
         access_level=user.access_level,
-        access_token=create_access_token(user.username),
+        access_token=create_access_token(username=user.username),
         token_type="bearer",
         username=user.username,
     )
@@ -118,7 +118,7 @@ async def login_google(
 
     return AuthenticationDetails(
         access_level=user.access_level,
-        access_token=create_access_token(user.username),
+        access_token=create_access_token(username=user.username),
         token_type="bearer",
         username=user.username,
     )

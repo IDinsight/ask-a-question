@@ -1,4 +1,4 @@
-"""This module contains the FastAPI router for the content management endpoints."""
+"""This module contains FastAPI routers for content management endpoints."""
 
 from typing import Annotated, List, Optional
 

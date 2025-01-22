@@ -1,6 +1,4 @@
-"""This module contains the FastAPI router for user creation and registration
-endpoints.
-"""
+"""This module contains FastAPI routers for user creation and registration endpoints."""
 
 from typing import Annotated
 

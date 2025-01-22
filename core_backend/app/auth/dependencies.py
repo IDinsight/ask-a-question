@@ -50,39 +50,6 @@ bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-async def authenticate_key(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> UserDB:
-    """Authenticate using basic bearer token. Used for calling the question-answering
-    endpoints. In case the JWT token is provided instead of the API key, it will fall
-    back to the JWT token authentication.
-
-    Parameters
-    ----------
-    credentials
-        The bearer token.
-
-    Returns
-    -------
-    UserDB
-        The user object.
-    """
-
-    token = credentials.credentials
-    print(f"{token = }")
-    input()
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_api_key(token, asession)
-            return user_db
-        except UserNotFoundError:
-            # Fall back to JWT token authentication if api key is not valid.
-            user_db = await get_current_user(token)
-            return user_db
-
-
 async def authenticate_credentials(
     *, password: str, username: str
 ) -> AuthenticatedUser | None:
@@ -191,6 +158,34 @@ async def authenticate_or_create_google_user(
             )
 
 
+def create_access_token(*, username: str) -> str:
+    """Create an access token for the user.
+
+    Parameters
+    ----------
+    username
+        The username of the user to create the access token for.
+
+    Returns
+    -------
+    str
+        The access token.
+    """
+
+    payload: dict[str, str | datetime] = {}
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+
+    payload["exp"] = expire
+    payload["iat"] = datetime.now(timezone.utc)
+    payload["sub"] = username
+    payload["type"] = "access_token"
+
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
     """Get the current user from the access token.
 
@@ -284,6 +279,40 @@ async def get_current_workspace(
 
 
 # XXX
+async def authenticate_key(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+) -> UserDB:
+    """Authenticate using basic bearer token. Used for calling the question-answering
+    endpoints. In case the JWT token is provided instead of the API key, it will fall
+    back to the JWT token authentication.
+
+    Parameters
+    ----------
+    credentials
+        The bearer token.
+
+    Returns
+    -------
+    UserDB
+        The user object.
+    """
+
+    token = credentials.credentials
+    print("authenticate_key")
+    print(f"{token = }")
+    input()
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_api_key(token, asession)
+            return user_db
+        except UserNotFoundError:
+            # Fall back to JWT token authentication if api key is not valid.
+            user_db = await get_current_user(token)
+            return user_db
+
+
 async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
     """Retrieve a user by token.
 
@@ -305,6 +334,8 @@ async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
         If the user with the specified token does not exist.
     """
 
+    print(f"get_user_by_api_key: {token = }")
+    input()
     hashed_token = get_key_hash(token)
 
     stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
@@ -316,23 +347,6 @@ async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
         raise UserNotFoundError("User with given token does not exist.") from err
 
 
-def create_access_token(username: str) -> str:
-    """
-    Create an access token for the user
-    """
-    payload: Dict[str, Union[str, datetime]] = {}
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-
-    payload["exp"] = expire
-    payload["iat"] = datetime.now(timezone.utc)
-    payload["sub"] = username
-    payload["type"] = "access_token"
-
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
 async def rate_limiter(
     request: Request,
     user_db: UserDB = Depends(authenticate_key),
@@ -340,6 +354,10 @@ async def rate_limiter(
     """
     Rate limiter for the API calls. Gets daily quota and decrement it
     """
+
+    print(f"rate_limiter: {user_db = }")
+    input()
+
     if CHECK_API_LIMIT is False:
         return
     username = user_db.username

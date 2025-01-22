@@ -333,7 +333,7 @@ def temp_user_api_key_and_api_quota(
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
 
-    access_token = create_access_token(username)
+    access_token = create_access_token(username=username)
     response_key = client.put(
         "/user/rotate-key",
         headers={"Authorization": f"Bearer {access_token}"},
@@ -450,7 +450,7 @@ def fullaccess_token_admin() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token(TEST_ADMIN_USERNAME)
+    return create_access_token(username=TEST_ADMIN_USERNAME)
 
 
 @pytest.fixture(scope="session")
@@ -458,7 +458,7 @@ def fullaccess_token() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token(TEST_USERNAME)
+    return create_access_token(username=TEST_USERNAME)
 
 
 @pytest.fixture(scope="session")
@@ -466,7 +466,7 @@ def fullaccess_token_user2() -> str:
     """
     Returns a token with full access
     """
-    return create_access_token(TEST_USERNAME_2)
+    return create_access_token(username=TEST_USERNAME_2)
 
 
 @pytest.fixture(scope="session")

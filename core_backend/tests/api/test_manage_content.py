@@ -65,7 +65,7 @@ def temp_user_token_and_quota(
     )
     db_session.add(temp_user_db)
     db_session.commit()
-    yield (create_access_token(username), content_quota)
+    yield (create_access_token(username=username), content_quota)
     db_session.delete(temp_user_db)
     db_session.commit()
 

@@ -102,7 +102,7 @@ def fullaccess_token(user: UserDB) -> str:
     """
     Returns a token with full access
     """
-    return create_access_token(user.username)
+    return create_access_token(username=user.username)
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
