@@ -48,10 +48,6 @@ class UserWorkspaceRoleAlreadyExistsError(Exception):
     """Exception raised when a user workspace role already exists in the database."""
 
 
-class WorkspaceAlreadyExistsError(Exception):
-    """Exception raised when a workspace already exists in the database."""
-
-
 class WorkspaceNotFoundError(Exception):
     """Exception raised when a workspace is not found in the database."""
 
