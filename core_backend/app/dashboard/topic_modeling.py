@@ -14,7 +14,7 @@ from hdbscan import HDBSCAN
 from sentence_transformers import SentenceTransformer
 from umap import UMAP
 
-from ..llm_call.dashboard import generate_topic_label  # Adjust import as necessary
+from ..llm_call.dashboard import generate_topic_label
 from ..utils import setup_logger
 from .config import TOPIC_MODELING_CONTEXT
 from .schemas import BokehContentItem, Topic, TopicsData, UserQuery
