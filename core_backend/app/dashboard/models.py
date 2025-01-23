@@ -1292,6 +1292,7 @@ async def get_raw_queries(
     asession: AsyncSession,
     user_id: int,
     start_date: date,
+    end_date: date,
 ) -> list[UserQuery]:
     """
     Retrieve N_SAMPLES_TOPIC_MODELING randomly sampled raw queries (query_text) and
@@ -1317,6 +1318,7 @@ async def get_raw_queries(
         .where(
             (QueryDB.user_id == user_id)
             & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
             & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
         )
         .order_by(func.random())
