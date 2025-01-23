@@ -98,11 +98,32 @@ def get_random_string(size: int) -> str:
 
 
 def create_langfuse_metadata(
-    query_id: int | None = None,
+    *,
     feature_name: str | None = None,
-    user_id: int | None = None,
+    query_id: int | None = None,
+    workspace_id: int | None = None,
 ) -> dict:
-    """Create metadata for langfuse logging."""
+    """Create metadata for langfuse logging.
+
+    Parameters
+    ----------
+    feature_name
+        The name of the feature.
+    query_id
+        The ID of the query.
+    workspace_id
+        The ID of the workspace.
+
+    Returns
+    -------
+    dict
+        The metadata for langfuse logging.
+
+    Raises
+    ------
+    ValueError
+        If neither `query_id` nor `feature_name` is provided.
+    """
 
     trace_id_elements = []
     if query_id is not None:
@@ -115,11 +136,9 @@ def create_langfuse_metadata(
     if LANGFUSE_PROJECT_NAME is not None:
         trace_id_elements.insert(0, LANGFUSE_PROJECT_NAME)
 
-    metadata = {
-        "trace_id": "-".join(trace_id_elements),
-    }
-    if user_id is not None:
-        metadata["trace_user_id"] = "user_id-" + str(user_id)
+    metadata = {"trace_id": "-".join(trace_id_elements)}
+    if workspace_id is not None:
+        metadata["trace_workspace_id"] = "workspace_id-" + str(workspace_id)
 
     return metadata
 

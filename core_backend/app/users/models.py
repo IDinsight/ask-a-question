@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship
+from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 from sqlalchemy.types import Enum as SQLAlchemyEnum
 
 from ..models import Base
@@ -525,6 +525,33 @@ async def get_user_role_in_workspace(
     result = await asession.execute(stmt)
     user_role = result.scalar_one_or_none()
     return user_role
+
+
+async def get_user_workspaces(
+    *, asession: AsyncSession, user_db: UserDB
+) -> list[WorkspaceDB]:
+    """Retrieve all workspaces a user belongs to.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object to retrieve workspaces for.
+
+    Returns
+    -------
+    list[WorkspaceDB]
+        A list of WorkspaceDB objects the user belongs to. Returns an empty list if
+        the user does not belong to any workspace.
+    """
+
+    stmt = select(UserDB).options(selectinload(UserDB.workspaces)).where(
+        UserDB.user_id == user_db.user_id
+    )
+    result = await asession.execute(stmt)
+    user = result.scalars().first()
+    return user.workspaces if user and user.workspaces else []
 
 
 async def get_users_and_roles_by_workspace_name(

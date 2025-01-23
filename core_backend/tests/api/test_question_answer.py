@@ -869,7 +869,7 @@ class TestAlignScore:
         assert user_query_response.search_results is not None  # Type assertion for mypy
 
         context_string = get_context_string_from_search_results(
-            user_query_response.search_results
+            search_results=user_query_response.search_results
         )
 
         expected_context_string = (

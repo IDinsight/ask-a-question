@@ -1,26 +1,24 @@
+"""This module contains Pydantic models for feedback and search results."""
+
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
 
 class FeedbackSentiment(str, Enum):
-    """
-    Enum for feedback sentiment
-    """
+    """Enum for feedback sentiment."""
 
-    POSITIVE = "positive"
     NEGATIVE = "negative"
+    POSITIVE = "positive"
     UNKNOWN = "unknown"
 
 
 class QuerySearchResult(BaseModel):
-    """
-    Pydantic model for each individual search result
-    """
+    """Pydantic model for each individual search result."""
 
-    title: str
-    text: str
-    id: int
     distance: float
+    id: int
+    text: str
+    title: str
 
     model_config = ConfigDict(from_attributes=True)

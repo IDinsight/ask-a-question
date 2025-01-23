@@ -1,7 +1,10 @@
-from datetime import date, datetime, timezone
-from typing import Annotated, List
+"""This module contains FastAPI routers for data API endpoints."""
 
-from fastapi import APIRouter, Depends, Query
+from datetime import date, datetime, timezone
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
+from fastapi.exceptions import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -14,7 +17,12 @@ from ..question_answer.models import QueryDB
 from ..urgency_detection.models import UrgencyQueryDB
 from ..urgency_rules.models import UrgencyRuleDB
 from ..urgency_rules.schemas import UrgencyRuleRetrieve
-from ..users.models import UserDB
+from ..users.models import (
+    UserDB,
+    get_user_workspaces,
+    user_has_required_role_in_workspace,
+)
+from ..users.schemas import UserRoles
 from ..utils import setup_logger
 from .schemas import (
     ContentFeedbackExtract,
@@ -34,55 +42,103 @@ router = APIRouter(
 )
 
 
-@router.get("/contents", response_model=List[ContentRetrieve])
+@router.get("/contents", response_model=list[ContentRetrieve])
 async def get_contents(
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[ContentRetrieve]:
+) -> list[ContentRetrieve]:
+    """Get all contents for a user.
+
+    Parameters
+    ----------
+    user_db
+        The user object associated with the user retrieving the contents.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[ContentRetrieve]
+        A list of ContentRetrieve objects containing all contents for the user.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
+        If the user does not have the correct user role to retrieve contents in the
+        workspace.
     """
-    Get all contents for a user.
-    """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace to retrieve contents.",
+        )
+
+    workspace_db = user_workspaces[0]
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
+        asession=asession,
+        user_db=user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must have a user role in the workspace to retrieve contents.",
+        )
+
 
     result = await asession.execute(
         select(ContentDB)
-        .filter(ContentDB.user_id == user_db.user_id)
+        .filter(ContentDB.workspace_id == workspace_db.workspace_id)
         .options(
             joinedload(ContentDB.content_tags),
         )
     )
     contents = result.unique().scalars().all()
     contents_responses = [
-        convert_content_to_pydantic_model(content) for content in contents
+        convert_content_to_pydantic_model(content=content) for content in contents
     ]
 
     return contents_responses
 
 
-def convert_content_to_pydantic_model(content: ContentDB) -> ContentRetrieve:
-    """
-    Convert a ContentDB object to a ContentRetrieve object
+def convert_content_to_pydantic_model(*, content: ContentDB) -> ContentRetrieve:
+    """Convert a `ContentDB` object to a `ContentRetrieve` object.
+
+    Parameters
+    ----------
+    content
+        The `ContentDB` object to convert.
+
+    Returns
+    -------
+    ContentRetrieve
+        The converted `ContentRetrieve` object.
     """
 
     return ContentRetrieve(
         content_id=content.content_id,
-        user_id=content.user_id,
+        content_metadata=content.content_metadata,
+        content_tags=[content_tag.tag_name for content_tag in content.content_tags],
         content_text=content.content_text,
         content_title=content.content_title,
-        content_metadata=content.content_metadata,
         created_datetime_utc=content.created_datetime_utc,
-        updated_datetime_utc=content.updated_datetime_utc,
-        positive_votes=content.positive_votes,
-        negative_votes=content.negative_votes,
-        content_tags=[content_tag.tag_name for content_tag in content.content_tags],
         is_archived=content.is_archived,
+        negative_votes=content.negative_votes,
+        positive_votes=content.positive_votes,
+        updated_datetime_utc=content.updated_datetime_utc,
+        workspace_id=content.workspace_id,
     )
 
 
-@router.get("/urgency-rules", response_model=List[UrgencyRuleRetrieve])
+@router.get("/urgency-rules", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[UrgencyRuleRetrieve]:
+) -> list[UrgencyRuleRetrieve]:
     """
     Get all urgency rules for a user.
     """
@@ -99,7 +155,7 @@ async def get_urgency_rules(
     return urgency_rules_responses
 
 
-@router.get("/queries", response_model=List[QueryExtract])
+@router.get("/queries", response_model=list[QueryExtract])
 async def get_queries(
     start_date: Annotated[
         datetime | date,
@@ -121,7 +177,7 @@ async def get_queries(
     ],
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[QueryExtract]:
+) -> list[QueryExtract]:
     """
     Get all queries including child records for a user between a start and end date.
 
@@ -153,7 +209,7 @@ async def get_queries(
     return queries_responses
 
 
-@router.get("/urgency-queries", response_model=List[UrgencyQueryExtract])
+@router.get("/urgency-queries", response_model=list[UrgencyQueryExtract])
 async def get_urgency_queries(
     start_date: Annotated[
         datetime | date,
@@ -175,7 +231,7 @@ async def get_urgency_queries(
     ],
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
-) -> List[UrgencyQueryExtract]:
+) -> list[UrgencyQueryExtract]:
     """
     Get all urgency queries including child records for a user between
     a start and end date.

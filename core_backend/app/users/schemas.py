@@ -9,7 +9,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class UserRoles(Enum):
+class UserRoles(str, Enum):
     """Enumeration for user roles.
 
     There are 2 different types of users:

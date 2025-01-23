@@ -81,6 +81,42 @@ async def authenticate_credentials(
             return None
 
 
+async def authenticate_key(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+) -> UserDB:
+    """Authenticate using basic bearer token. This is used by the following endpoints:
+
+    1. Data API
+    2. Question answering
+    3. Urgency detection
+
+    In case the JWT token is provided instead of the API key, it will fall back to the
+    JWT token authentication.
+
+    Parameters
+    ----------
+    credentials
+        The bearer token.
+
+    Returns
+    -------
+    UserDB
+        The user object.
+    """
+
+    token = credentials.credentials
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_api_key(asession=asession, token=token)
+            return user_db
+        except UserNotFoundError:
+            # Fall back to JWT token authentication if API key is not valid.
+            user_db = await get_current_user(token)
+            return user_db
+
+
 async def authenticate_or_create_google_user(
     *, google_email: str, request: Request
 ) -> AuthenticatedUser | None:
@@ -288,41 +324,6 @@ async def get_current_workspace(
         raise credentials_exception from err
 
 
-# XXX
-async def authenticate_key(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> UserDB:
-    """Authenticate using basic bearer token. Used for calling the question-answering
-    endpoints. In case the JWT token is provided instead of the API key, it will fall
-    back to the JWT token authentication.
-
-    Parameters
-    ----------
-    credentials
-        The bearer token.
-
-    Returns
-    -------
-    UserDB
-        The user object.
-    """
-
-    token = credentials.credentials
-    print("authenticate_key")
-    print(f"{token = }")
-    input()
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_api_key(token, asession)
-            return user_db
-        except UserNotFoundError:
-            # Fall back to JWT token authentication if api key is not valid.
-            user_db = await get_current_user(token)
-            return user_db
-
-
 async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
     """Retrieve a user by token.
 
@@ -340,29 +341,38 @@ async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
 
     Raises
     ------
-    UserNotFoundError
-        If the user with the specified token does not exist.
+    WorkspaceNotFoundError
+        If the workspace with the specified token does not exist.
     """
 
-    print(f"get_user_by_api_key: {token = }")
-    input()
     hashed_token = get_key_hash(token)
-
-    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
+    stmt = select(UserDB).where(WorkspaceDB.hashed_api_key == hashed_token)
     result = await asession.execute(stmt)
     try:
         user = result.scalar_one()
         return user
     except NoResultFound as err:
-        raise UserNotFoundError("User with given token does not exist.") from err
+        raise WorkspaceNotFoundError("User with given token does not exist.") from err
 
 
+# XXX
 async def rate_limiter(
     request: Request,
     user_db: UserDB = Depends(authenticate_key),
 ) -> None:
-    """
-    Rate limiter for the API calls. Gets daily quota and decrement it
+    """Rate limiter for the API calls. Gets daily quota and decrement it.
+
+    This is used by the following packages:
+
+    1. Question answering
+    2. Urgency detection
+
+    Parameters
+    ----------
+    request
+        The request object.
+    user_db
+        The user object
     """
 
     print(f"rate_limiter: {user_db = }")

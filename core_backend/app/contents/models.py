@@ -394,93 +394,59 @@ async def _get_content_embeddings(
     return await embedding(text_to_embed, metadata=metadata)
 
 
-# XXX
-async def increment_query_count(
-    user_id: int,
-    contents: dict[int, QuerySearchResult] | None,
-    asession: AsyncSession,
-) -> None:
-    """Increment the query count for the content.
-
-    Parameters
-    ----------
-    user_id
-        The ID of the user requesting the query count increment.
-    contents
-        The content to increment the query count for.
-    asession
-        `AsyncSession` object for database transactions.
-    """
-
-    if contents is None:
-        return
-    for _, content in contents.items():
-        content_db = await get_content_from_db(
-            user_id=user_id, content_id=content.id, asession=asession
-        )
-        if content_db:
-            content_db.query_count = content_db.query_count + 1
-            await asession.merge(content_db)
-            await asession.commit()
-
-
 async def get_similar_content_async(
     *,
-    user_id: int,
-    question: str,
-    n_similar: int,
     asession: AsyncSession,
-    metadata: Optional[dict] = None,
     exclude_archived: bool = True,
+    metadata: Optional[dict] = None,
+    n_similar: int,
+    question: str,
+    workspace_id: int,
 ) -> dict[int, QuerySearchResult]:
     """Get the most similar points in the vector table.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the similar content.
-    question
-        The question to search for similar content.
-    n_similar
-        The number of similar content items to retrieve.
     asession
-        `AsyncSession` object for database transactions.
-    metadata
-        The metadata to use for the embedding generation
+        The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
+    metadata
+        The metadata to use for the embedding generation
+    n_similar
+        The number of similar content items to retrieve.
+    question
+        The question to search for similar content.
+    workspace_id
+        The ID of the workspace to search for similar content in.
 
     Returns
     -------
-    Dict[int, QuerySearchResult]
+    dict[int, QuerySearchResult]
         A dictionary of similar content items if they exist, otherwise an empty
-        dictionary
+        dictionary.
     """
 
     metadata = metadata or {}
     metadata["generation_name"] = "get_similar_content_async"
 
-    question_embedding = await embedding(
-        question,
-        metadata=metadata,
-    )
+    question_embedding = await embedding(question, metadata=metadata)
 
     return await get_search_results(
-        user_id=user_id,
-        question_embedding=question_embedding,
-        n_similar=n_similar,
-        exclude_archived=exclude_archived,
         asession=asession,
+        exclude_archived=exclude_archived,
+        n_similar=n_similar,
+        question_embedding=question_embedding,
+        workspace_id=workspace_id,
     )
-
 
 async def get_search_results(
     *,
-    user_id: int,
-    question_embedding: list[float],
-    n_similar: int,
-    exclude_archived: bool = True,
     asession: AsyncSession,
+    exclude_archived: bool = True,
+    n_similar: int,
+    question_embedding: list[float],
+    workspace_id: int,
 ) -> dict[int, QuerySearchResult]:
     """Get similar content to given embedding and return search results.
 
@@ -488,29 +454,29 @@ async def get_search_results(
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the similar content.
-    question_embedding
-        The embedding vector of the question to search for.
-    n_similar
-        The number of similar content items to retrieve.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
+    n_similar
+        The number of similar content items to retrieve.
+    question_embedding
+        The embedding vector of the question to search for.
+    workspace_id
+        The ID of the workspace to search for similar content in.
 
     Returns
     -------
-    Dict[int, QuerySearchResult]
+    dict[int, QuerySearchResult]
         A dictionary of similar content items if they exist, otherwise an empty
-        dictionary
+        dictionary.
     """
 
     distance = ContentDB.content_embedding.cosine_distance(question_embedding).label(
         "distance"
     )
 
-    query = select(ContentDB, distance).where(ContentDB.user_id == user_id)
+    query = select(ContentDB, distance).where(ContentDB.workspace_id == workspace_id)
 
     if exclude_archived:
         query = query.where(ContentDB.is_archived == false())
@@ -522,33 +488,64 @@ async def get_search_results(
     results_dict = {}
     for i, r in enumerate(search_result):
         results_dict[i] = QuerySearchResult(
-            id=r[0].content_id,
-            title=r[0].content_title,
-            text=r[0].content_text,
             distance=r[1],
+            id=r[0].content_id,
+            text=r[0].content_text,
+            title=r[0].content_title,
         )
 
     return results_dict
 
 
+async def increment_query_count(
+    *,
+    asession: AsyncSession,
+    contents: dict[int, QuerySearchResult] | None,
+    workspace_id: int,
+) -> None:
+    """Increment the query count for the content.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    contents
+        The content to increment the query count for.
+    workspace_id
+        The ID of the workspace to increment the query count in.
+    """
+
+    if contents is None:
+        return
+    for _, content in contents.items():
+        content_db = await get_content_from_db(
+            asession=asession, content_id=content.id, workspace_id=workspace_id
+        )
+        if content_db:
+            content_db.query_count = content_db.query_count + 1
+            await asession.merge(content_db)
+            await asession.commit()
+
+
 async def update_votes_in_db(
-    user_id: int,
+    *,
+    asession: AsyncSession,
     content_id: int,
     vote: str,
-    asession: AsyncSession,
-) -> Optional[ContentDB]:
+    workspace_id: int,
+) -> ContentDB | None:
     """Update votes in the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user voting.
+    asession
+        The SQLAlchemy async session to use for all database connections
     content_id
         The ID of the content to vote on.
     vote
         The sentiment of the vote.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to vote on the content in.
 
     Returns
     -------
@@ -557,7 +554,7 @@ async def update_votes_in_db(
     """
 
     content_db = await get_content_from_db(
-        user_id=user_id, content_id=content_id, asession=asession
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
     if not content_db:
         return None

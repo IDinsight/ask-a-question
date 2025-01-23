@@ -7,6 +7,7 @@ import os
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
+from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -43,7 +44,7 @@ from ..llm_call.utils import (
     init_chat_history,
 )
 from ..schemas import QuerySearchResult
-from ..users.models import UserDB
+from ..users.models import UserDB, get_user_workspaces
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
@@ -119,9 +120,9 @@ async def chat(
     request
         The FastAPI request object.
     asession
-        The `AsyncSession` object for database transactions.
+        The SQLAlchemy async session to use for all database connections.
     user_db
-        The user database object.
+        The user object associated with the user that is making the chat query.
     reset_chat_history
         Specifies whether to reset the chat history.
 
@@ -129,7 +130,19 @@ async def chat(
     -------
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
     """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace for chat.",
+        )
 
     # 1.
     user_query = await init_user_query_and_chat_histories(
@@ -140,7 +153,11 @@ async def chat(
 
     # 2.
     return await search(
-        user_query=user_query, request=request, asession=asession, user_db=user_db
+        user_query=user_query,
+        request=request,
+        asession=asession,
+        user_db=user_db,
+        check_user_workspaces=False,
     )
 
 
@@ -159,53 +176,89 @@ async def search(
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
+    check_user_workspaces: bool = True,
 ) -> QueryResponse | JSONResponse:
-    """
-    Search endpoint finds the most similar content to the user query and optionally
+    """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
+
+    Parameters
+    ----------
+    user_query
+        The user query object.
+    request
+        The FastAPI request object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object associated with the user that is making the chat/search query.
+    check_user_workspaces
+        Specifies whether to check the number of workspaces that the user belongs to.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse
+        The query response object or an appropriate JSON response.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
     """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if check_user_workspaces and len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace for search.",
+        )
+    workspace_db = user_workspaces[0]  # HACK FIX FOR FRONTEND
 
     user_query_db, user_query_refined_template, response_template = (
         await get_user_query_and_response(
-            user_id=user_db.user_id,
-            user_query=user_query,
             asession=asession,
             generate_tts=False,
+            user_query=user_query,
+            workspace_id=workspace_db.workspace_id,
         )
     )
+    assert isinstance(user_query_db, QueryDB)
 
     response = await get_search_response(
-        query_refined=user_query_refined_template,
-        response=response_template,
-        user_id=user_db.user_id,
-        n_similar=int(N_TOP_CONTENT),
-        n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
         asession=asession,
         exclude_archived=True,
+        n_similar=int(N_TOP_CONTENT),
+        n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+        query_refined=user_query_refined_template,
         request=request,
+        response=response_template,
+        workspace_id=workspace_db.workspace_id,
     )
 
     if user_query.generate_llm_response:
         response = await get_generation_response(
-            query_refined=user_query_refined_template,
-            response=response,
+            query_refined=user_query_refined_template, response=response
         )
 
-    await save_query_response_to_db(user_query_db, response, asession)
-    await increment_query_count(
-        user_id=user_db.user_id,
-        contents=response.search_results,
+    await save_query_response_to_db(
         asession=asession,
+        response=response,
+        user_query_db=user_query_db,
+        workspace_id=workspace_db.workspace_id,
+    )
+    await increment_query_count(
+        asession=asession,
+        contents=response.search_results,
+        workspace_id=workspace_db.workspace_id,
     )
     await save_content_for_query_to_db(
-        user_id=user_db.user_id,
-        session_id=user_query.session_id,
-        query_id=response.query_id,
-        contents=response.search_results,
         asession=asession,
+        contents=response.search_results,
+        query_id=response.query_id,
+        session_id=user_query.session_id,
+        workspace_id=workspace_db.workspace_id,
     )
 
     if type(response) is QueryResponse:
@@ -241,13 +294,39 @@ async def voice_search(
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
+    check_user_workspaces: bool = True,
 ) -> QueryAudioResponse | JSONResponse:
-    """
-    Endpoint to transcribe audio from a provided URL,
-    generate an LLM response, by default generate_tts is
-    set to true and return a public random URL of an audio
+    """Endpoint to transcribe audio from a provided URL, generate an LLM response, by
+    default `generate_tts` is set to `True`, and return a public random URL of an audio
     file containing the spoken version of the generated response.
+
+    Parameters
+    ----------
+    file_url
+        The URL of the audio file.
+    request
+        The FastAPI request object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object associated with the user that is making the voice search query.
+    check_user_workspaces
+        Specifies whether to check the number of workspaces that the user belongs to.
+
+    Returns
+    -------
+    QueryAudioResponse | JSONResponse
+        The query audio response object or an appropriate JSON response.
     """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if check_user_workspaces and len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace for voice search.",
+        )
+    workspace_db = user_workspaces[0]
+
     try:
         file_stream, content_type, file_extension = await download_file_from_url(
             file_url
@@ -268,14 +347,13 @@ async def voice_search(
         if CUSTOM_STT_ENDPOINT is not None:
             transcription = await post_to_speech_stt(file_path, CUSTOM_STT_ENDPOINT)
             transcription_result = transcription["text"]
-
         else:
             transcription_result = await transcribe_audio(file_path)
 
         user_query = QueryBase(
             generate_llm_response=True,
-            query_text=transcription_result,
             query_metadata={},
+            query_text=transcription_result,
         )
 
         (
@@ -283,41 +361,46 @@ async def voice_search(
             user_query_refined_template,
             response_template,
         ) = await get_user_query_and_response(
-            user_id=user_db.user_id,
-            user_query=user_query,
             asession=asession,
             generate_tts=True,
+            user_query=user_query,
+            workspace_id=workspace_db.workspace_id,
         )
+        assert isinstance(user_query_db, QueryDB)
 
         response = await get_search_response(
-            query_refined=user_query_refined_template,
-            response=response_template,
-            user_id=user_db.user_id,
-            n_similar=int(N_TOP_CONTENT),
-            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
             asession=asession,
             exclude_archived=True,
+            n_similar=int(N_TOP_CONTENT),
+            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+            query_refined=user_query_refined_template,
             request=request,
+            response=response_template,
+            workspace_id=workspace_db.workspace_id,
         )
 
         if user_query.generate_llm_response:
             response = await get_generation_response(
-                query_refined=user_query_refined_template,
-                response=response,
+                query_refined=user_query_refined_template, response=response
             )
 
-        await save_query_response_to_db(user_query_db, response, asession)
-        await increment_query_count(
-            user_id=user_db.user_id,
-            contents=response.search_results,
+        await save_query_response_to_db(
             asession=asession,
+            response=response,
+            user_query_db=user_query_db,
+            workspace_id=workspace_db.workspace_id,
+        )
+        await increment_query_count(
+            asession=asession,
+            contents=response.search_results,
+            workspace_id=workspace_db.workspace_id,
         )
         await save_content_for_query_to_db(
-            user_id=user_db.user_id,
+            asession=asession,
+            contents=response.search_results,
             query_id=response.query_id,
             session_id=user_query.session_id,
-            contents=response.search_results,
-            asession=asession,
+            workspace_id=workspace_db.workspace_id,
         )
 
         if os.path.exists(file_path):
@@ -357,14 +440,15 @@ async def voice_search(
 @translate_question__before
 @paraphrase_question__before
 async def get_search_response(
-    query_refined: QueryRefined,
-    response: QueryResponse,
-    user_id: int,
+    *,
+    asession: AsyncSession,
+    exclude_archived: bool = True,
     n_similar: int,
     n_to_crossencoder: int,
-    asession: AsyncSession,
+    query_refined: QueryRefined,
     request: Request,
-    exclude_archived: bool = True,
+    response: QueryResponse,
+    workspace_id: int,
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -374,22 +458,22 @@ async def get_search_response(
 
     Parameters
     ----------
-    query_refined
-        The refined query object.
-    response
-        The query response object.
-    user_id
-        The ID of the user making the query.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    exclude_archived
+        Specifies whether to exclude archived content.
     n_similar
         The number of similar contents to retrieve.
     n_to_crossencoder
         The number of similar contents to send to the cross-encoder.
-    asession
-        `AsyncSession` object for database transactions.
+    query_refined
+        The refined query object.
     request
         The FastAPI request object.
-    exclude_archived
-        Specifies whether to exclude archived content.
+    response
+        The query response object.
+    workspace_id
+        The ID of the workspace that the contents of the search query belong to.
 
     Returns
     -------
@@ -403,9 +487,11 @@ async def get_search_response(
         `n_similar`.
     """
 
-    # No checks for errors:
-    #   always do the embeddings search even if some guardrails have failed
-    metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
+    # No checks for errors: always do the embeddings search even if some guardrails
+    # have failed.
+    metadata = create_langfuse_metadata(
+        query_id=response.query_id, workspace_id=workspace_id
+    )
 
     if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
         raise ValueError(
@@ -414,20 +500,20 @@ async def get_search_response(
         )
 
     search_results = await get_similar_content_async(
-        user_id=user_id,
-        question=query_refined.query_text,  # use latest transformed version of the text
-        n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
         asession=asession,
-        metadata=metadata,
         exclude_archived=exclude_archived,
+        metadata=metadata,
+        n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
+        question=query_refined.query_text,  # Use latest transformed version of the text
+        workspace_id=workspace_id,
     )
 
     if USE_CROSS_ENCODER and len(search_results) > 1:
         search_results = rerank_search_results(
             n_similar=n_similar,
-            search_results=search_results,
             query_text=query_refined.query_text,
             request=request,
+            search_results=search_results,
         )
 
     response.search_results = search_results
@@ -436,14 +522,31 @@ async def get_search_response(
 
 
 def rerank_search_results(
-    search_results: dict[int, QuerySearchResult],
+    *,
     n_similar: int,
     query_text: str,
     request: Request,
+    search_results: dict[int, QuerySearchResult],
 ) -> dict[int, QuerySearchResult]:
+    """Rerank search results based on the similarity of the content to the query text.
+
+    Parameters
+    ----------
+    n_similar
+        The number of similar contents retrieved.
+    query_text
+        The query text.
+    request
+        The FastAPI request object.
+    search_results
+        The search results.
+
+    Returns
+    -------
+    dict[int, QuerySearchResult]
+        The reranked search results.
     """
-    Rerank search results based on the similarity of the content to the query text
-    """
+
     encoder = request.app.state.crossencoder
     contents = search_results.values()
     scores = encoder.predict(
@@ -461,14 +564,12 @@ def rerank_search_results(
 @generate_tts__after
 @check_align_score__after
 async def get_generation_response(
-    query_refined: QueryRefined,
-    response: QueryResponse,
+    *, query_refined: QueryRefined, response: QueryResponse
 ) -> QueryResponse | QueryResponseError:
-    """Generate a response using an LLM given a query with search results. If
-    `chat_history` and `chat_params` are provided, then the response is generated
-    based on the chat history.
+    """Generate a response using an LLM given a query with search results.
 
-    Only runs if the generate_llm_response flag is set to True.
+    Only runs if the `generate_llm_response` flag is set to `True`.
+
     Requires "search_results" and "original_language" in the response.
 
     NB: This function will also update the user assistant chat cache with the updated
@@ -493,7 +594,7 @@ async def get_generation_response(
         return response
 
     metadata = create_langfuse_metadata(
-        query_id=response.query_id, user_id=query_refined.user_id
+        query_id=response.query_id, workspace_id=query_refined.workspace_id
     )
 
     response, chat_history = await generate_llm_query_response(
@@ -513,8 +614,8 @@ async def get_user_query_and_response(
     *,
     asession: AsyncSession,
     generate_tts: bool,
-    user_id: int,
     user_query: QueryBase,
+    workspace_id: int,
 ) -> tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
     and response objects to pass on.
@@ -522,47 +623,46 @@ async def get_user_query_and_response(
     Parameters
     ----------
     asession
-        `AsyncSession` object for database transactions.
+        The SQLAlchemy async session to use for all database connections.
     generate_tts
         Specifies whether to generate a TTS audio response
-    user_id
-        The ID of the user making the query.
+    workspace_id
+        The ID of the workspace that the user belongs to.
     user_query
         The user query database object.
 
     Returns
     -------
-    Tuple[QueryDB, QueryRefined, QueryResponse]
+    tuple[QueryDB, QueryRefined, QueryResponse]
         The user query database object, the refined query object, and the response
         object.
     """
 
-    # save query to db
+    # Save the query to the `QueryDB` database.
     user_query_db = await save_user_query_to_db(
-        user_id=user_id,
-        user_query=user_query,
-        asession=asession,
+        asession=asession, user_query=user_query, workspace_id=workspace_id
     )
-    # prepare refined query object
+
+    # Prepare the refined query object.
     user_query_refined = QueryRefined(
         **user_query.model_dump(),
-        user_id=user_id,
         generate_tts=generate_tts,
         query_text_original=user_query.query_text,
+        workspace_id=workspace_id,
     )
     if user_query_refined.chat_query_params:
         user_query_refined.query_text = user_query_refined.chat_query_params.pop(
             "search_query"
         )
 
-    # prepare placeholder response object
+    # Prepare the placeholder response object.
     response_template = QueryResponse(
-        query_id=user_query_db.query_id,
-        session_id=user_query.session_id,
+        debug_info={},
         feedback_secret_key=user_query_db.feedback_secret_key,
         llm_response=None,
+        query_id=user_query_db.query_id,
         search_results=None,
-        debug_info={},
+        session_id=user_query.session_id,
     )
     return user_query_db, user_query_refined, response_template
 
@@ -571,20 +671,31 @@ async def get_user_query_and_response(
 async def feedback(
     feedback: ResponseFeedbackBase,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
-    """
-    Feedback endpoint used to capture user feedback on the results returned by QA
+    """Feedback endpoint used to capture user feedback on the results returned by QA
     endpoints.
-
 
     <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
     and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
     include the other in the payload.
+
+    Parameters
+    ----------
+    feedback
+        The feedback object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    JSONResponse
+        The appropriate feedback response object.
     """
 
     is_matched = await check_secret_key_match(
-        feedback.feedback_secret_key, feedback.query_id, asession
+        asession=asession,
+        query_id=feedback.query_id,
+        secret_key=feedback.feedback_secret_key,
     )
     if is_matched is False:
         return JSONResponse(
@@ -594,7 +705,9 @@ async def feedback(
             },
         )
 
-    feedback_db = await save_response_feedback_to_db(feedback, asession)
+    feedback_db = await save_response_feedback_to_db(
+        asession=asession, feedback=feedback
+    )
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
@@ -612,18 +725,40 @@ async def content_feedback(
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> JSONResponse:
-    """
-    Feedback endpoint used to capture user feedback on specific content after it has
+    """Feedback endpoint used to capture user feedback on specific content after it has
     been returned by the QA endpoints.
-
 
     <B>Note</B>: This endpoint accepts `feedback_sentiment` ("positive" or "negative")
     and/or `feedback_text` (free-text). If you wish to only provide one of these, don't
     include the other in the payload.
+
+    Parameters
+    ----------
+    feedback
+        The feedback object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object associated with the user that is providing the feedback.
+
+    Returns
+    -------
+    JSONResponse
+        The appropriate feedback response object.
     """
 
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace for content feedback.",
+        )
+    workspace_db = user_workspaces[0]
+
     is_matched = await check_secret_key_match(
-        feedback.feedback_secret_key, feedback.query_id, asession
+        asession=asession,
+        query_id=feedback.query_id,
+        secret_key=feedback.feedback_secret_key,
     )
     if is_matched is False:
         return JSONResponse(
@@ -634,7 +769,9 @@ async def content_feedback(
         )
 
     try:
-        feedback_db = await save_content_feedback_to_db(feedback, asession)
+        feedback_db = await save_content_feedback_to_db(
+            asession=asession, feedback=feedback
+        )
     except IntegrityError as e:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -649,10 +786,10 @@ async def content_feedback(
             },
         )
     await update_votes_in_db(
-        user_id=user_db.user_id,
+        asession=asession,
         content_id=feedback.content_id,
         vote=feedback.feedback_sentiment,
-        asession=asession,
+        workspace_id=workspace_db.workspace_id,
     )
     return JSONResponse(
         status_code=status.HTTP_200_OK,
