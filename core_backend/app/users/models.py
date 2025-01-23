@@ -32,6 +32,10 @@ from .schemas import (
 PASSWORD_LENGTH = 12
 
 
+class IncorrectUserRoleInWorkspace(Exception):
+    """Exception raised when a user has an incorrect role to operate in a workspace."""
+
+
 class UserAlreadyExistsError(Exception):
     """Exception raised when a user already exists in the database."""
 
@@ -362,6 +366,40 @@ async def create_workspace(
         await asession.refresh(workspace_db)
 
         return workspace_db
+
+
+async def get_content_quota_by_workspace_id(
+    *, asession: AsyncSession, workspace_id: int
+) -> int:
+    """Retrieve a workspace content quota by workspace ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The workspace ID to retrieve the content quota for.
+
+    Returns
+    -------
+    int
+        The content quota for the workspace.
+
+    Raises
+    ------
+    WorkspaceNotFoundError
+        If the workspace ID does not exist.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_id == workspace_id)
+    result = await asession.execute(stmt)
+    try:
+        content_quota = result.scalar_one().content_quota
+        return content_quota
+    except NoResultFound as err:
+        raise WorkspaceNotFoundError(
+            f"Workspace ID {workspace_id} does not exist."
+        ) from err
 
 
 async def get_user_by_id(*, asession: AsyncSession, user_id: int) -> UserDB:
@@ -899,3 +937,32 @@ async def update_workspace_quotas(
     await asession.refresh(workspace_db)
 
     return workspace_db
+
+
+async def user_has_required_role_in_workspace(
+    *,
+    allowed_user_roles: UserRoles | list[UserRoles],
+    asession: AsyncSession,
+    user_db: UserDB,
+    workspace_db: WorkspaceDB,
+) -> bool:
+    """Check if the user has the required role to operate in the specified workspace.
+
+    Parameters
+    ----------
+    allowed_user_roles
+        The allowed user roles that can operate in the specified workspace.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object to check the role for.
+    workspace_db
+        The workspace to check the user role against.
+    """
+
+    if not isinstance(allowed_user_roles, list):
+        allowed_user_roles = [allowed_user_roles]
+    user_role_in_specified_workspace = await get_user_role_in_workspace(
+        asession=asession, user_db=user_db, workspace_db=workspace_db
+    )
+    return user_role_in_specified_workspace in allowed_user_roles

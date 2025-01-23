@@ -111,7 +111,7 @@ async def create_user(
 
     # HACK FIX FOR FRONTEND: This is to simulate a call to the `create_workspaces`
     # endpoint.
-    # workspace_temp_name = "Workspace_2"
+    # workspace_temp_name = "Workspace_1"
     # user_temp = UserCreate(
     #     role=UserRoles.ADMIN,
     #     username="Doesn't matter",

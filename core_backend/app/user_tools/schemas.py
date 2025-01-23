@@ -1,4 +1,4 @@
-"""This module contains the Pydantic models for user tools endpoints."""
+"""This module contains Pydantic models for user tools endpoints."""
 
 from pydantic import BaseModel, ConfigDict
 

@@ -1,7 +1,7 @@
 """This module contains authentication dependencies for the FastAPI application."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Dict, Union
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -259,7 +259,17 @@ async def get_current_workspace(
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        workspace_name = payload.get("sub")
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+
+        # HACK FIX FOR FRONTEND
+        if username in ["tony", "mark"]:
+            workspace_name = "Workspace_DEFAULT"
+        elif username in ["carlos", "amir", "sid"]:
+            workspace_name = "Workspace_1"
+        else:
+            workspace_name = None
         if workspace_name is None:
             raise credentials_exception
 
