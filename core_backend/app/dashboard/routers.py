@@ -80,7 +80,7 @@ def get_frequency_and_startdate(
             raise HTTPException(400, detail="end_date must be >= start_date")
 
         # Do monthly bars if the time period is more than a year
-        if start_dt - end_dt > timedelta(days=365):
+        if end_dt - start_dt > timedelta(days=365):
             return TimeFrequency.Month, start_dt, end_dt
 
         return TimeFrequency.Day, start_dt, end_dt
