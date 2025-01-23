@@ -338,7 +338,6 @@ async def get_timeseries_query(
     statement = (
         select(
             ts_labels.c.time_period,
-            # Count of negative
             func.coalesce(
                 func.count(
                     case(
@@ -348,7 +347,6 @@ async def get_timeseries_query(
                 ),
                 0,
             ).label("negative_feedback_count"),
-            # Count of non-negative or no feedback at all
             func.coalesce(
                 func.count(
                     case(
@@ -365,15 +363,17 @@ async def get_timeseries_query(
                 0,
             ).label("non_negative_feedback_count"),
         )
+        # 1) Outer-join ts_labels to queries, matching user_id in *join condition*:
         .select_from(ts_labels)
         .outerjoin(
             QueryDB,
-            func.date_trunc(interval_str, QueryDB.query_datetime_utc)
-            == func.date_trunc(interval_str, ts_labels.c.time_period),
+            and_(
+                QueryDB.user_id == user_id,
+                func.date_trunc(interval_str, QueryDB.query_datetime_utc)
+                == func.date_trunc(interval_str, ts_labels.c.time_period),
+            ),
         )
-        .where(QueryDB.user_id == user_id)
-        # Outer-join feedback so that queries with no feedback have a NULL
-        # feedback_sentiment
+        # 2) Outer-join feedback:
         .outerjoin(
             ResponseFeedbackDB,
             ResponseFeedbackDB.query_id == QueryDB.query_id,
