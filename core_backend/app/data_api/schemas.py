@@ -60,7 +60,7 @@ class QueryExtract(BaseModel):
     query_text: str
     response: list[QueryResponseExtract]
     response_feedback: list[ResponseFeedbackExtract]
-    user_id: int
+    workspace_id: int
 
 
 class UrgencyQueryResponseExtract(BaseModel):
@@ -84,4 +84,4 @@ class UrgencyQueryExtract(BaseModel):
     message_text: str
     response: UrgencyQueryResponseExtract | None
     urgency_query_id: int
-    user_id: int
+    workspace_id: int

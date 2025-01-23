@@ -139,12 +139,40 @@ async def get_urgency_rules(
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
-    """
-    Get all urgency rules for a user.
+    """Get all urgency rules for a workspace.
+
+    Parameters
+    ----------
+    user_db
+        The user object associated with the user retrieving the urgency rules.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[UrgencyRuleRetrieve]
+        A list of `UrgencyRuleRetrieve` objects containing all urgency rules for the
+        workspace.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
     """
 
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace to retrieve queries.",
+        )
+
+    workspace_db = user_workspaces[0]
+
     result = await asession.execute(
-        select(UrgencyRuleDB).filter(UrgencyRuleDB.user_id == user_db.user_id)
+        select(UrgencyRuleDB).filter(
+            UrgencyRuleDB.workspace_id == workspace_db.workspace_id
+        )
     )
     urgency_rules = result.unique().scalars().all()
     urgency_rules_responses = [
@@ -178,13 +206,42 @@ async def get_queries(
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[QueryExtract]:
-    """
-    Get all queries including child records for a user between a start and end date.
+    """Get all queries including child records for a user between a start and end date.
 
-    Note that the `start_date` and `end_date` can be provided as a date
-    or datetime object.
+    Note that the `start_date` and `end_date` can be provided as a date or `datetime`
+    object.
 
+    Parameters
+    ----------
+    start_date
+        The start date to filter queries by.
+    end_date
+        The end date to filter queries by.
+    user_db
+        The user object associated with the user retrieving the queries.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[QueryExtract]
+        A list of QueryExtract objects containing all queries for the user.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
     """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace to retrieve queries.",
+        )
+
+    workspace_db = user_workspaces[0]
+
     if isinstance(start_date, date):
         start_date = datetime.combine(start_date, datetime.min.time())
     if isinstance(end_date, date):
@@ -196,7 +253,7 @@ async def get_queries(
     result = await asession.execute(
         select(QueryDB)
         .filter(QueryDB.query_datetime_utc.between(start_date, end_date))
-        .filter(QueryDB.user_id == user_db.user_id)
+        .filter(QueryDB.workspace_id == workspace_db.workspace_id)
         .options(
             joinedload(QueryDB.response_feedback),
             joinedload(QueryDB.content_feedback),
@@ -204,7 +261,9 @@ async def get_queries(
         )
     )
     queries = result.unique().scalars().all()
-    queries_responses = [convert_query_to_pydantic_model(query) for query in queries]
+    queries_responses = [
+        convert_query_to_pydantic_model(query=query) for query in queries
+    ]
 
     return queries_responses
 
@@ -232,14 +291,43 @@ async def get_urgency_queries(
     user_db: Annotated[UserDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyQueryExtract]:
-    """
-    Get all urgency queries including child records for a user between
-    a start and end date.
+    """Get all urgency queries including child records for a user between a start and
+    end date.
 
-    Note that the `start_date` and `end_date` can be provided as a date
-    or datetime object.
+    Note that the `start_date` and `end_date` can be provided as a date or `datetime`
+    object.
 
+    Parameters
+    ----------
+    start_date
+        The start date to filter queries by.
+    end_date
+        The end date to filter queries by.
+    user_db
+        The user object associated with the user retrieving the urgent queries.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[UrgencyQueryExtract]
+        A list of `UrgencyQueryExtract` objects containing all urgent queries for the
+        workspace.
+
+    Raises
+    ------
+    HTTPException
+        If the user is not in exactly one workspace.
     """
+
+    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+    if len(user_workspaces) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be in exactly one workspace to retrieve queries.",
+        )
+
+    workspace_db = user_workspaces[0]
 
     if isinstance(start_date, date):
         start_date = datetime.combine(start_date, datetime.min.time())
@@ -252,50 +340,72 @@ async def get_urgency_queries(
     result = await asession.execute(
         select(UrgencyQueryDB)
         .filter(UrgencyQueryDB.message_datetime_utc.between(start_date, end_date))
-        .filter(UrgencyQueryDB.user_id == user_db.user_id)
+        .filter(UrgencyQueryDB.workspace_id == workspace_db.workspace_id)
         .options(
             joinedload(UrgencyQueryDB.response),
         )
     )
     urgency_queries = result.unique().scalars().all()
     urgency_queries_responses = [
-        convert_urgency_query_to_pydantic_model(query) for query in urgency_queries
+        convert_urgency_query_to_pydantic_model(query=query)
+        for query in urgency_queries
     ]
 
     return urgency_queries_responses
 
 
 def convert_urgency_query_to_pydantic_model(
-    query: UrgencyQueryDB,
+    *, query: UrgencyQueryDB
 ) -> UrgencyQueryExtract:
-    """
-    Convert a UrgencyQueryDB object to a UrgencyQueryExtract object
+    """Convert a `UrgencyQueryDB` object to a `UrgencyQueryExtract` object.
+
+    Parameters
+    ----------
+    query
+        The `UrgencyQueryDB` object to convert.
+
+    Returns
+    -------
+    UrgencyQueryExtract
+        The converted `UrgencyQueryExtract` object.
     """
 
     return UrgencyQueryExtract(
-        urgency_query_id=query.urgency_query_id,
-        user_id=query.user_id,
-        message_text=query.message_text,
         message_datetime_utc=query.message_datetime_utc,
+        message_text=query.message_text,
         response=(
             UrgencyQueryResponseExtract.model_validate(query.response)
             if query.response
             else None
         ),
+        urgency_query_id=query.urgency_query_id,
+        workspace_id=query.workspace_id,
     )
 
 
-def convert_query_to_pydantic_model(query: QueryDB) -> QueryExtract:
-    """
-    Convert a QueryDB object to a QueryExtract object
+def convert_query_to_pydantic_model(*, query: QueryDB) -> QueryExtract:
+    """Convert a `QueryDB` object to a `QueryExtract` object.
+
+    Parameters
+    ----------
+    query
+        The `QueryDB` object to convert.
+
+    Returns
+    -------
+    QueryExtract
+        The converted `QueryExtract` object.
     """
 
     return QueryExtract(
-        query_id=query.query_id,
-        user_id=query.user_id,
-        query_text=query.query_text,
-        query_metadata=query.query_metadata,
+        content_feedback=[
+            ContentFeedbackExtract.model_validate(feedback)
+            for feedback in query.content_feedback
+        ],
         query_datetime_utc=query.query_datetime_utc,
+        query_id=query.query_id,
+        query_metadata=query.query_metadata,
+        query_text=query.query_text,
         response=[
             QueryResponseExtract.model_validate(response) for response in query.response
         ],
@@ -303,8 +413,5 @@ def convert_query_to_pydantic_model(query: QueryDB) -> QueryExtract:
             ResponseFeedbackExtract.model_validate(feedback)
             for feedback in query.response_feedback
         ],
-        content_feedback=[
-            ContentFeedbackExtract.model_validate(feedback)
-            for feedback in query.content_feedback
-        ],
+        workspace_id=query.workspace_id,
     )
