@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs, Tab, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { Period } from "../types";
+import { Period, TimeFrame } from "../types";
 
 interface TabPanelProps {
   tabValue: Period;
@@ -10,21 +10,35 @@ interface TabPanelProps {
   customDateRangeSet?: boolean;
 }
 
+const tabLabels: Record<TimeFrame, Period> = {
+  "Last 24 hours": "day",
+  "Last week": "week",
+  "Last month": "month",
+  "Last year": "year",
+};
+
 const TabPanel: React.FC<TabPanelProps> = ({
   tabValue,
   handleChange,
   onEditCustomPeriod,
   customDateRangeSet,
 }) => {
+  const timePeriods = Object.entries(tabLabels) as [TimeFrame, Period][];
+
   return (
     <Box sx={{ my: 1 }}>
       <Tabs value={tabValue} onChange={handleChange}>
-        <Tab label="Day" value="day" />
-        <Tab label="Week" value="week" />
-        <Tab label="Month" value="month" />
-        <Tab label="Year" value="year" />
+        {timePeriods.map(([label, periodValue], index) => (
+          <Tab
+            key={`tab-${index}`}
+            label={label}
+            value={periodValue}
+            sx={{ textTransform: "none", marginRight: 6 }}
+          />
+        ))}
         <Tab
           value="custom"
+          sx={{ textTransform: "none" }}
           label={
             <Box display="flex" alignItems="center">
               Custom

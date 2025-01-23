@@ -1,5 +1,5 @@
 type Period = "day" | "week" | "month" | "year" | "custom";
-type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year" | "Custom";
+type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
 interface CustomDateRange {
   startDate: Date | null;
   endDate: Date | null;
