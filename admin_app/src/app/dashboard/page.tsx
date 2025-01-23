@@ -1,15 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+} from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import { Period, drawerWidth } from "./types";
+import { Period, drawerWidth, CustomDateRange } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import Insights from "./components/Insights";
-
 import { appColors } from "@/utils";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 type Page = {
   name: PageName;
@@ -34,11 +44,40 @@ const pages: Page[] = [
 
 const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<Page>(pages[0]);
-  const [timePeriod, setTimePeriod] = useState<Period>("week" as Period);
-  const [sideBarOpen, setSideBarOpen] = useState<boolean>(true);
+  const [timePeriod, setTimePeriod] = useState<Period>("week");
+  const [sideBarOpen, setSideBarOpen] = useState(true);
+  const [customDateRange, setCustomDateRange] = useState<CustomDateRange>({
+    startDate: null,
+    endDate: null,
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [tempEnd, setTempEnd] = useState<Date | null>(null);
 
   const handleTabChange = (_: React.ChangeEvent<{}>, newValue: Period) => {
-    setTimePeriod(newValue);
+    if (newValue === "custom") {
+      if (customDateRange.startDate && customDateRange.endDate) {
+        setTimePeriod("custom");
+      } else {
+        setTempStart(null);
+        setTempEnd(null);
+        setIsDialogOpen(true);
+      }
+    } else {
+      setTimePeriod(newValue);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
+
+  const handleSaveDialog = () => {
+    if (tempStart && tempEnd) {
+      setCustomDateRange({ startDate: tempStart, endDate: tempEnd });
+      setTimePeriod("custom");
+    }
+    setIsDialogOpen(false);
   };
 
   const showPage = () => {
@@ -54,7 +93,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Close sidebar on small screens
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1075) {
@@ -64,7 +102,6 @@ const Dashboard: React.FC = () => {
       }
     };
     window.addEventListener("resize", handleResize);
-    // wait 0.75s before first resize (so user can acknowledge the sidebar)
     setTimeout(() => {
       handleResize();
     }, 750);
@@ -130,6 +167,57 @@ const Dashboard: React.FC = () => {
           <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
         </Box>
       </Box>
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        PaperProps={{
+          sx: {
+            width: 420,
+            height: 420,
+            overflow: "visible",
+          },
+        }}
+      >
+        <DialogTitle>Select Date Range</DialogTitle>
+        <DialogContent sx={{ overflow: "visible" }}>
+          <Box display="flex" flexDirection="column" gap={4} mt={1}>
+            <DatePicker
+              selected={tempStart}
+              onChange={(date) => setTempStart(date)}
+              selectsStart
+              startDate={tempStart}
+              endDate={tempEnd}
+              customInput={
+                <TextField label="Start Date" variant="outlined" fullWidth />
+              }
+              dateFormat="MMMM d, yyyy"
+              popperClassName="bigDatePickerPopper"
+            />
+            <DatePicker
+              selected={tempEnd}
+              onChange={(date) => setTempEnd(date)}
+              selectsEnd
+              startDate={tempStart}
+              endDate={tempEnd}
+              customInput={<TextField label="End Date" variant="outlined" fullWidth />}
+              dateFormat="MMMM d, yyyy"
+              popperClassName="bigDatePickerPopper"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveDialog} disabled={!tempStart || !tempEnd}>
+            OK
+          </Button>
+        </DialogActions>
+        <style jsx global>{`
+          .bigDatePickerPopper .react-datepicker {
+            transform: scale(1.5);
+            transform-origin: top left;
+          }
+        `}</style>
+      </Dialog>
     </Box>
   );
 };

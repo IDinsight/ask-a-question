@@ -1,9 +1,22 @@
 import api from "../../utils/api";
 import { Period } from "./types";
 
-const getOverviewPageData = async (period: Period, token: string) => {
+function formatDate(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
+const getOverviewPageData = async (
+  period: Period,
+  token: string,
+  startDate?: Date,
+  endDate?: Date,
+) => {
   try {
-    const response = await api.get(`/dashboard/overview/${period}`, {
+    let url = `/dashboard/overview?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -14,9 +27,18 @@ const getOverviewPageData = async (period: Period, token: string) => {
   }
 };
 
-const fetchTopicsData = async (period: Period, token: string) => {
+const fetchTopicsData = async (
+  period: Period,
+  token: string,
+  startDate?: Date,
+  endDate?: Date,
+) => {
   try {
-    const response = await api.get(`/dashboard/insights/${period}`, {
+    let url = `/dashboard/insights?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -27,9 +49,18 @@ const fetchTopicsData = async (period: Period, token: string) => {
   }
 };
 
-const getEmbeddingData = async (period: Period, token: string) => {
+const getEmbeddingData = async (
+  period: Period,
+  token: string,
+  startDate?: Date,
+  endDate?: Date,
+) => {
   try {
-    const response = await api.get(`/dashboard/topic_visualization/${period}`, {
+    let url = `/dashboard/topic_visualization?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -40,9 +71,18 @@ const getEmbeddingData = async (period: Period, token: string) => {
   }
 };
 
-const generateNewTopics = async (period: Period, token: string) => {
+const generateNewTopics = async (
+  period: Period,
+  token: string,
+  startDate?: Date,
+  endDate?: Date,
+) => {
   try {
-    const response = await api.get(`/dashboard/insights/${period}/refresh`, {
+    let url = `/dashboard/insights/refresh?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -53,9 +93,18 @@ const generateNewTopics = async (period: Period, token: string) => {
   }
 };
 
-const getPerformancePageData = async (period: Period, token: string) => {
+const getPerformancePageData = async (
+  period: Period,
+  token: string,
+  startDate?: Date,
+  endDate?: Date,
+) => {
   try {
-    const response = await api.get(`/dashboard/performance/${period}`, {
+    let url = `/dashboard/performance?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -70,9 +119,15 @@ const getPerformanceDrawerData = async (
   period: Period,
   content_id: number,
   token: string,
+  startDate?: Date,
+  endDate?: Date,
 ) => {
   try {
-    const response = await api.get(`/dashboard/performance/${period}/${content_id}`, {
+    let url = `/dashboard/performance/content?period=${period}&content_id=${content_id}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -87,16 +142,19 @@ const getPerformanceDrawerAISummary = async (
   period: Period,
   content_id: number,
   token: string,
+  startDate?: Date,
+  endDate?: Date,
 ) => {
   try {
-    const response = await api.get(
-      `/dashboard/performance/${period}/${content_id}/ai-summary`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    let url = `/dashboard/performance/content/ai-summary?period=${period}&content_id=${content_id}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    }
+    const response = await api.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
     return response.data;
   } catch (error) {
     throw new Error("Error fetching dashboard performance drawer AI summary");

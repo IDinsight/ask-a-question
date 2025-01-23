@@ -1,6 +1,9 @@
-type Period = "day" | "week" | "month" | "year";
-type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
-
+type Period = "day" | "week" | "month" | "year" | "custom";
+type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year" | "Custom";
+interface CustomDateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+}
 interface DrawerData {
   title: string;
   query_count: number;
@@ -107,6 +110,7 @@ export type {
   TopicModelingData,
   TopicModelingResponse,
   Status,
+  CustomDateRange,
 };
 
 export { drawerWidth };
