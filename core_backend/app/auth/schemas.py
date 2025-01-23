@@ -27,6 +27,7 @@ class AuthenticatedUser(BaseModel):
 
     access_level: AccessLevel
     username: str
+    workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -440,15 +440,14 @@ async def voice_search(
 @translate_question__before
 @paraphrase_question__before
 async def get_search_response(
-    *,
+    query_refined: QueryRefined,
+    response: QueryResponse,
     asession: AsyncSession,
-    exclude_archived: bool = True,
     n_similar: int,
     n_to_crossencoder: int,
-    query_refined: QueryRefined,
     request: Request,
-    response: QueryResponse,
     workspace_id: int,
+    exclude_archived: bool = True,
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -564,7 +563,7 @@ def rerank_search_results(
 @generate_tts__after
 @check_align_score__after
 async def get_generation_response(
-    *, query_refined: QueryRefined, response: QueryResponse
+    query_refined: QueryRefined, response: QueryResponse
 ) -> QueryResponse | QueryResponseError:
     """Generate a response using an LLM given a query with search results.
 

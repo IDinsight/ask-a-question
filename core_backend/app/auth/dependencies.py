@@ -26,6 +26,7 @@ from ..users.models import (
     add_user_workspace_role,
     create_workspace,
     get_user_by_username,
+    get_user_workspaces,
     get_workspace_by_workspace_name,
     save_user_to_db,
 )
@@ -74,15 +75,26 @@ async def authenticate_credentials(
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
             if verify_password_salted_hash(password, user_db.hashed_password):
+                # HACK FIX FOR FRONTEND: Need to get workspace for AuthenticatedUser.
+                user_workspaces = await get_user_workspaces(
+                    asession=asession, user_db=user_db
+                )
+                assert len(user_workspaces) == 1
+                # HACK FIX FOR FRONTEND: Need to get workspace for AuthenticatedUser.
+
                 # Hardcode "fullaccess" now, but may use it in the future.
-                return AuthenticatedUser(access_level="fullaccess", username=username)
+                return AuthenticatedUser(
+                    access_level="fullaccess",
+                    username=username,
+                    workspace_name=user_workspaces[0].workspace_name,
+                )
             return None
         except UserNotFoundError:
             return None
 
 
 async def authenticate_key(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer)
 ) -> UserDB:
     """Authenticate using basic bearer token. This is used by the following endpoints:
 
@@ -105,16 +117,8 @@ async def authenticate_key(
     """
 
     token = credentials.credentials
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_api_key(asession=asession, token=token)
-            return user_db
-        except UserNotFoundError:
-            # Fall back to JWT token authentication if API key is not valid.
-            user_db = await get_current_user(token)
-            return user_db
+    user_db = await get_current_user(token)
+    return user_db
 
 
 async def authenticate_or_create_google_user(
@@ -190,17 +194,21 @@ async def authenticate_or_create_google_user(
                 workspace_name=workspace_db_new.workspace_name,
             )
             return AuthenticatedUser(
-                access_level="fullaccess", username=user_db.username
+                access_level="fullaccess",
+                username=user_db.username,
+                workspace_name=workspace_name,
             )
 
 
-def create_access_token(*, username: str) -> str:
+def create_access_token(*, username: str, workspace_name: str) -> str:
     """Create an access token for the user.
 
     Parameters
     ----------
     username
         The username of the user to create the access token for.
+    workspace_name
+        The name of the workspace selected for the user.
 
     Returns
     -------
@@ -216,6 +224,7 @@ def create_access_token(*, username: str) -> str:
     payload["exp"] = expire
     payload["iat"] = datetime.now(timezone.utc)
     payload["sub"] = username
+    payload["workspace_name"] = workspace_name
     payload["type"] = "access_token"
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -295,17 +304,7 @@ async def get_current_workspace(
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-
-        # HACK FIX FOR FRONTEND
-        if username in ["tony", "mark"]:
-            workspace_name = "Workspace_DEFAULT"
-        elif username in ["carlos", "amir", "sid"]:
-            workspace_name = "Workspace_1"
-        else:
-            workspace_name = None
+        workspace_name = payload.get("workspace_name")
         if workspace_name is None:
             raise credentials_exception
 
@@ -324,38 +323,6 @@ async def get_current_workspace(
         raise credentials_exception from err
 
 
-async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
-    """Retrieve a user by token.
-
-    Parameters
-    ----------
-    asession
-        The async session to use for the database connection.
-    token
-        The token to use for the query.
-
-    Returns
-    -------
-    UserDB
-        The user object retrieved from the database.
-
-    Raises
-    ------
-    WorkspaceNotFoundError
-        If the workspace with the specified token does not exist.
-    """
-
-    hashed_token = get_key_hash(token)
-    stmt = select(UserDB).where(WorkspaceDB.hashed_api_key == hashed_token)
-    result = await asession.execute(stmt)
-    try:
-        user = result.scalar_one()
-        return user
-    except NoResultFound as err:
-        raise WorkspaceNotFoundError("User with given token does not exist.") from err
-
-
-# XXX
 async def rate_limiter(
     request: Request,
     user_db: UserDB = Depends(authenticate_key),
@@ -373,25 +340,81 @@ async def rate_limiter(
         The request object.
     user_db
         The user object
-    """
 
-    print(f"rate_limiter: {user_db = }")
-    input()
+    Raises
+    ------
+    HTTPException
+        If the API call limit is reached.
+    """
 
     if CHECK_API_LIMIT is False:
         return
-    username = user_db.username
-    key = f"remaining-calls:{username}"
+
+    # HACK FIX FOR FRONTEND: Need to get the workspace for the redis cache name.
+    async with AsyncSession(
+            get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
+        assert len(user_workspaces) == 1
+        workspace_db = user_workspaces[0]
+    workspace_name = workspace_db.workspace_name
+    # HACK FIX FOR FRONTEND: Need to get the workspace for the redis cache name.
+
+    key = f"remaining-calls:{workspace_name}"
     redis = request.app.state.redis
     ttl = await redis.ttl(key)
-    # if key does not exist, set the key and value
+
+    # If key does not exist, set the key and value.
     if ttl == REDIS_KEY_EXPIRED:
-        await update_api_limits(redis, username, user_db.api_daily_quota)
+        await update_api_limits(
+            api_daily_quota=workspace_db.api_daily_quota,
+            redis=redis,
+            workspace_name=workspace_name,
+        )
 
     nb_remaining = await redis.get(key)
 
     if nb_remaining != b"None":
         nb_remaining = int(nb_remaining)
         if nb_remaining <= 0:
-            raise HTTPException(status_code=429, detail="API call limit reached.")
-        await update_api_limits(redis, username, nb_remaining - 1)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"API call limit reached for workspace: {workspace_name}.",
+            )
+        await update_api_limits(
+            api_daily_quota=nb_remaining - 1, redis=redis, workspace_name=workspace_name
+        )
+
+
+# XXX
+async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
+    """Retrieve a user by token.
+
+    MAYBE NOT NEEDED ANYMORE?
+
+    Parameters
+    ----------
+    asession
+        The async session to use for the database connection.
+    token
+        The token to use for the query.
+
+    Returns
+    -------
+    UserDB
+        The user object retrieved from the database.
+
+    Raises
+    ------
+    UserNotFoundError
+        If the user with the specified token does not exist.
+    """
+
+    hashed_token = get_key_hash(token)
+    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
+    result = await asession.execute(stmt)
+    try:
+        user = result.scalar_one()
+        return user
+    except NoResultFound as err:
+        raise UserNotFoundError("User with given token does not exist.") from err

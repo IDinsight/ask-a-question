@@ -53,9 +53,12 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password.",
         )
+
     return AuthenticationDetails(
         access_level=user.access_level,
-        access_token=create_access_token(username=user.username),
+        access_token=create_access_token(
+            username=user.username, workspace_name=user.workspace_name
+        ),
         token_type="bearer",
         username=user.username,
     )
@@ -118,7 +121,9 @@ async def login_google(
 
     return AuthenticationDetails(
         access_level=user.access_level,
-        access_token=create_access_token(username=user.username),
+        access_token=create_access_token(
+            username=user.username, workspace_name=user.workspace_name
+        ),
         token_type="bearer",
         username=user.username,
     )

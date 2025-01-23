@@ -32,10 +32,6 @@ from .schemas import (
 PASSWORD_LENGTH = 12
 
 
-class IncorrectUserRoleInWorkspace(Exception):
-    """Exception raised when a user has an incorrect role to operate in a workspace."""
-
-
 class UserAlreadyExistsError(Exception):
     """Exception raised when a user already exists in the database."""
 
