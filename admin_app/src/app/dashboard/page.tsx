@@ -27,19 +27,9 @@ type Page = {
 };
 
 const pages: Page[] = [
-  {
-    name: "Overview",
-    description: "Overview of user engagement and satisfaction",
-  },
-  {
-    name: "Content Performance",
-    description: "Track performance of contents  and identify areas for improvement",
-  },
-  {
-    name: "Query Topics",
-    description:
-      "Find out what users are asking about to inform creating and updating contents",
-  },
+  { name: "Overview", description: "Overview of user engagement and satisfaction" },
+  { name: "Content Performance", description: "Track performance of contents..." },
+  { name: "Query Topics", description: "Find out what users are asking..." },
 ];
 
 const Dashboard: React.FC = () => {
@@ -68,6 +58,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleEditCustomPeriod = () => {
+    setTempStart(customDateRange.startDate);
+    setTempEnd(customDateRange.endDate);
+    setIsDialogOpen(true);
+  };
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
   };
@@ -83,7 +79,12 @@ const Dashboard: React.FC = () => {
   const showPage = () => {
     switch (dashboardPage.name) {
       case "Overview":
-        return <Overview timePeriod={timePeriod} />;
+        return (
+          <Overview
+            timePeriod={timePeriod}
+            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+          />
+        );
       case "Content Performance":
         return <ContentPerformance timePeriod={timePeriod} />;
       case "Query Topics":
@@ -95,19 +96,12 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1075) {
-        setSideBarOpen(false);
-      } else {
-        setSideBarOpen(true);
-      }
+      if (window.innerWidth < 1075) setSideBarOpen(false);
+      else setSideBarOpen(true);
     };
     window.addEventListener("resize", handleResize);
-    setTimeout(() => {
-      handleResize();
-    }, 750);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    setTimeout(handleResize, 750);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -137,14 +131,7 @@ const Dashboard: React.FC = () => {
           width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: "100%",
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <Box
             sx={{
               display: "flex",
@@ -163,20 +150,21 @@ const Dashboard: React.FC = () => {
               {dashboardPage.description}
             </Typography>
           </Box>
-          <TabPanel tabValue={timePeriod} handleChange={handleTabChange} />
+          <TabPanel
+            tabValue={timePeriod}
+            handleChange={handleTabChange}
+            onEditCustomPeriod={handleEditCustomPeriod}
+            customDateRangeSet={
+              !!(customDateRange.startDate && customDateRange.endDate)
+            }
+          />
           <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
         </Box>
       </Box>
       <Dialog
         open={isDialogOpen}
         onClose={handleCloseDialog}
-        PaperProps={{
-          sx: {
-            width: 420,
-            height: 420,
-            overflow: "visible",
-          },
-        }}
+        PaperProps={{ sx: { width: 420, height: 420, overflow: "visible" } }}
       >
         <DialogTitle>Select Date Range</DialogTitle>
         <DialogContent sx={{ overflow: "visible" }}>
@@ -191,7 +179,6 @@ const Dashboard: React.FC = () => {
                 <TextField label="Start Date" variant="outlined" fullWidth />
               }
               dateFormat="MMMM d, yyyy"
-              popperClassName="bigDatePickerPopper"
             />
             <DatePicker
               selected={tempEnd}
@@ -201,7 +188,6 @@ const Dashboard: React.FC = () => {
               endDate={tempEnd}
               customInput={<TextField label="End Date" variant="outlined" fullWidth />}
               dateFormat="MMMM d, yyyy"
-              popperClassName="bigDatePickerPopper"
             />
           </Box>
         </DialogContent>
@@ -211,12 +197,6 @@ const Dashboard: React.FC = () => {
             OK
           </Button>
         </DialogActions>
-        <style jsx global>{`
-          .bigDatePickerPopper .react-datepicker {
-            transform: scale(1.5);
-            transform-origin: top left;
-          }
-        `}</style>
       </Dialog>
     </Box>
   );

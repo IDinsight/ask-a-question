@@ -24,9 +24,10 @@ import {
 
 interface OverviewProps {
   timePeriod: Period;
+  customDateRange?: { startDate: Date | null; endDate: Date | null };
 }
 
-const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
+const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateRange }) => {
   const { token } = useAuth();
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
   const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([
@@ -159,20 +160,33 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod }) => {
   };
 
   useEffect(() => {
-    if (token) {
-      getOverviewPageData(timePeriod, token).then((data) => {
+    if (!token) return;
+
+    if (
+      timePeriod === "custom" &&
+      customDateRange?.startDate &&
+      customDateRange?.endDate
+    ) {
+      getOverviewPageData(
+        "custom",
+        token,
+        customDateRange.startDate,
+        customDateRange.endDate,
+      ).then((data) => {
         parseCardData(data.stats_cards, timePeriod);
         parseHeatmapData(data.heatmap);
         parseTimeseriesData(data.time_series);
         setTopContentData(data.top_content);
       });
     } else {
-      setStatCardData([]);
-      setHeatmapData([]);
-      setTimeseriesData([]);
-      setTopContentData([]);
+      getOverviewPageData(timePeriod, token).then((data) => {
+        parseCardData(data.stats_cards, timePeriod);
+        parseHeatmapData(data.heatmap);
+        parseTimeseriesData(data.time_series);
+        setTopContentData(data.top_content);
+      });
     }
-  }, [timePeriod, token]);
+  }, [timePeriod, token, customDateRange]);
 
   return (
     <>
