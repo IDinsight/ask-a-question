@@ -86,9 +86,19 @@ const Dashboard: React.FC = () => {
           />
         );
       case "Content Performance":
-        return <ContentPerformance timePeriod={timePeriod} />;
+        return (
+          <ContentPerformance
+            timePeriod={timePeriod}
+            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+          />
+        );
       case "Query Topics":
-        return <Insights timePeriod={timePeriod} />;
+        return (
+          <Insights
+            timePeriod={timePeriod}
+            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+          />
+        );
       default:
         return <div>Page not found.</div>;
     }
