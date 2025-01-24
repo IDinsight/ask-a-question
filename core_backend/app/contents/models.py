@@ -101,7 +101,7 @@ class ContentDB(Base):
 
         return (
             f"ContentDB(content_id={self.content_id}, "
-            f"user_id={self.user_id}, "
+            f"workspace_id={self.workspace_id}, "
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
@@ -517,7 +517,7 @@ async def increment_query_count(
 
     if contents is None:
         return
-    for _, content in contents.items():
+    for content in contents.values():
         content_db = await get_content_from_db(
             asession=asession, content_id=content.id, workspace_id=workspace_id
         )

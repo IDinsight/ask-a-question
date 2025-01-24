@@ -42,7 +42,10 @@ class QueryBase(BaseModel):
 
 
 class QueryRefined(QueryBase):
-    """Pydantic model for question answering query with additional data.XXX"""
+    """Pydantic model for question answering query with additional data.
+
+    NB: This model contains the workspace ID.
+    """
 
     generate_tts: bool = Field(False)
     original_language: IdentifiedLanguage | None = None

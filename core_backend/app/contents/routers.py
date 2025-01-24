@@ -130,7 +130,7 @@ async def create_content(
     if not is_tag_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tag ids: {content_tags}",
+            detail=f"Invalid tag IDs: {content_tags}",
         )
 
     content.content_tags = content_tags
@@ -196,6 +196,8 @@ async def edit_content(
         If the tags are invalid.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -207,28 +209,31 @@ async def edit_content(
             detail="User does not have the required role to edit content in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # content for non-admin users of a workspace.
 
+    workspace_id = workspace_db.workspace_id
     old_content = await get_content_from_db(
         asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
+
     if not old_content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     is_tag_valid, content_tags = await validate_tags(
-        asession=asession,
-        tags=content.content_tags,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, tags=content.content_tags, workspace_id=workspace_id
     )
+
     if not is_tag_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tag ids: {content_tags}",
+            detail=f"Invalid tag IDs: {content_tags}",
         )
 
     content.content_tags = content_tags
@@ -237,7 +242,7 @@ async def edit_content(
         asession=asession,
         content=content,
         content_id=content_id,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
 
     return _convert_record_to_schema(record=updated_content)
@@ -245,7 +250,6 @@ async def edit_content(
 
 @router.get("/", response_model=list[ContentRetrieve])
 async def retrieve_content(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     skip: int = 0,
     limit: int = 50,
@@ -256,8 +260,6 @@ async def retrieve_content(
 
     Parameters
     ----------
-    calling_user_db
-        The user object associated with the user that is retrieving the content.
     workspace_db
         The workspace to retrieve content from.
     skip
@@ -273,25 +275,7 @@ async def retrieve_content(
     -------
     list[ContentRetrieve]
         The retrieved contents from the specified workspace.
-
-    Raises
-    ------
-    HTTPException
-        If the user does not have the required role to retrieve content in the
-        workspace.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve content in the "
-            "workspace.",
-        )
 
     records = await get_list_of_content_from_db(
         asession=asession,
@@ -331,6 +315,8 @@ async def archive_content(
         If the content is not found.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to archive
+    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -342,20 +328,22 @@ async def archive_content(
             detail="User does not have the required role to archive content in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to archive
+    # content for non-admin users of a workspace.
 
-
+    workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
-        asession=asession, content_id=content_id, workspace_id=workspace_db.workspace_id
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
 
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     await archive_content_from_db(
-        asession=asession, content_id=content_id, workspace_id=workspace_db.workspace_id
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
 
 
@@ -387,6 +375,8 @@ async def delete_content(
         If the deletion of the content with feedback is not allowed.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -398,22 +388,23 @@ async def delete_content(
             detail="User does not have the required role to delete content in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # content for non-admin users of a workspace.
 
+    workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
-        asession=asession, content_id=content_id, workspace_id=workspace_db.workspace_id
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
 
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     try:
         await delete_content_from_db(
-            asession=asession,
-            content_id=content_id,
-            workspace_id=workspace_db.workspace_id,
+            asession=asession, content_id=content_id, workspace_id=workspace_id
         )
     except sqlalchemy.exc.IntegrityError as e:
         logger.error(f"Error deleting content: {e}")
@@ -426,7 +417,6 @@ async def delete_content(
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: int,
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
@@ -437,8 +427,6 @@ async def retrieve_content_by_id(
     ----------
     content_id
         The ID of the content to retrieve.
-    calling_user_db
-        The user object associated with the user that is retrieving the content.
     workspace_db
         The workspace to retrieve content from.
     exclude_archived
@@ -454,21 +442,8 @@ async def retrieve_content_by_id(
     Raises
     ------
     HTTPException
-        If the user does not have the required role to retrieve content in the workspace.
         If the content is not found.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve content in the "
-            "workspace.",
-        )
 
     record = await get_content_from_db(
         asession=asession,
@@ -480,7 +455,7 @@ async def retrieve_content_by_id(
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     return _convert_record_to_schema(record=record)
@@ -525,6 +500,8 @@ async def bulk_upload_contents(
         If the CSV file is empty or unreadable.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to upload
+    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -536,6 +513,8 @@ async def bulk_upload_contents(
             detail="User does not have the required role to upload content in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to upload
+    # content for non-admin users of a workspace.
 
     # Ensure the file is a CSV.
     if file.filename is None or not file.filename.endswith(".csv"):
@@ -583,7 +562,7 @@ async def bulk_upload_contents(
         # Tag name to tag ID mapping.
         tag_name_to_id_map = {tag.tag_name: tag.tag_id for tag in tags_in_db}
 
-    # Add each row to the content database
+    # Add each row to the content database.
     created_contents = []
     for _, row in df.iterrows():
         content_tags: list = []  # Should be list[TagDB] but clashes with validate_tags
@@ -943,7 +922,7 @@ async def _check_content_quota_availability(
     # If `content_quota` is `None`, then there is no limit.
     if content_quota is not None:
         # Get the number of contents already used by the workspace. This is all the
-        # contents that have been added by admins of the workspace.
+        # contents that have been added by users (i.e., admins) of the workspace.
         stmt = select(ContentDB).where(
             (ContentDB.workspace_id == workspace_id) & (~ContentDB.is_archived)
         )

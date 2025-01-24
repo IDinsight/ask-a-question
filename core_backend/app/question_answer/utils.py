@@ -10,7 +10,7 @@ def get_context_string_from_search_results(
 
     Parameters
     ----------
-    search_results : dict[int, QuerySearchResult]
+    search_results
         The search results retrieved from the search engine.
 
     Returns

@@ -7,7 +7,6 @@ import os
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
-from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -44,7 +43,7 @@ from ..llm_call.utils import (
     init_chat_history,
 )
 from ..schemas import QuerySearchResult
-from ..users.models import UserDB, get_user_workspaces
+from ..users.models import WorkspaceDB
 from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
@@ -104,7 +103,7 @@ async def chat(
     user_query: QueryBase,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
     reset_chat_history: bool = False,
 ) -> QueryResponse | JSONResponse:
     """Chat endpoint manages a conversation between the user and the LLM agent. The
@@ -121,8 +120,8 @@ async def chat(
         The FastAPI request object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object associated with the user that is making the chat query.
+    workspace_db
+        The authenticated workspace object.
     reset_chat_history
         Specifies whether to reset the chat history.
 
@@ -130,19 +129,7 @@ async def chat(
     -------
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace for chat.",
-        )
 
     # 1.
     user_query = await init_user_query_and_chat_histories(
@@ -156,8 +143,7 @@ async def chat(
         user_query=user_query,
         request=request,
         asession=asession,
-        user_db=user_db,
-        check_user_workspaces=False,
+        workspace_db=workspace_db,
     )
 
 
@@ -175,8 +161,7 @@ async def search(
     user_query: QueryBase,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
-    check_user_workspaces: bool = True,
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
     """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
@@ -192,36 +177,22 @@ async def search(
         The FastAPI request object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object associated with the user that is making the chat/search query.
-    check_user_workspaces
-        Specifies whether to check the number of workspaces that the user belongs to.
+    workspace_db
+        The authenticated workspace object.
 
     Returns
     -------
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
     """
 
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if check_user_workspaces and len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace for search.",
-        )
-    workspace_db = user_workspaces[0]  # HACK FIX FOR FRONTEND
-
+    workspace_id = workspace_db.workspace_id
     user_query_db, user_query_refined_template, response_template = (
         await get_user_query_and_response(
             asession=asession,
             generate_tts=False,
             user_query=user_query,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
     )
     assert isinstance(user_query_db, QueryDB)
@@ -234,7 +205,7 @@ async def search(
         query_refined=user_query_refined_template,
         request=request,
         response=response_template,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
 
     if user_query.generate_llm_response:
@@ -246,19 +217,17 @@ async def search(
         asession=asession,
         response=response,
         user_query_db=user_query_db,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
     await increment_query_count(
-        asession=asession,
-        contents=response.search_results,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, contents=response.search_results, workspace_id=workspace_id
     )
     await save_content_for_query_to_db(
         asession=asession,
         contents=response.search_results,
         query_id=response.query_id,
         session_id=user_query.session_id,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
 
     if type(response) is QueryResponse:
@@ -293,8 +262,7 @@ async def voice_search(
     file_url: str,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
-    check_user_workspaces: bool = True,
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> QueryAudioResponse | JSONResponse:
     """Endpoint to transcribe audio from a provided URL, generate an LLM response, by
     default `generate_tts` is set to `True`, and return a public random URL of an audio
@@ -308,10 +276,8 @@ async def voice_search(
         The FastAPI request object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object associated with the user that is making the voice search query.
-    check_user_workspaces
-        Specifies whether to check the number of workspaces that the user belongs to.
+    workspace_db
+        The authenticated workspace object.
 
     Returns
     -------
@@ -319,13 +285,7 @@ async def voice_search(
         The query audio response object or an appropriate JSON response.
     """
 
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if check_user_workspaces and len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace for voice search.",
-        )
-    workspace_db = user_workspaces[0]
+    workspace_id = workspace_db.workspace_id
 
     try:
         file_stream, content_type, file_extension = await download_file_from_url(
@@ -364,7 +324,7 @@ async def voice_search(
             asession=asession,
             generate_tts=True,
             user_query=user_query,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
         assert isinstance(user_query_db, QueryDB)
 
@@ -376,7 +336,7 @@ async def voice_search(
             query_refined=user_query_refined_template,
             request=request,
             response=response_template,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
 
         if user_query.generate_llm_response:
@@ -388,19 +348,19 @@ async def voice_search(
             asession=asession,
             response=response,
             user_query_db=user_query_db,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
         await increment_query_count(
             asession=asession,
             contents=response.search_results,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
         await save_content_for_query_to_db(
             asession=asession,
             contents=response.search_results,
             query_id=response.query_id,
             session_id=user_query.session_id,
-            workspace_id=workspace_db.workspace_id,
+            workspace_id=workspace_id,
         )
 
         if os.path.exists(file_path):
@@ -457,22 +417,22 @@ async def get_search_response(
 
     Parameters
     ----------
+    query_refined
+        The refined query object.
+    response
+        The query response object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    exclude_archived
-        Specifies whether to exclude archived content.
     n_similar
         The number of similar contents to retrieve.
     n_to_crossencoder
         The number of similar contents to send to the cross-encoder.
-    query_refined
-        The refined query object.
     request
         The FastAPI request object.
-    response
-        The query response object.
     workspace_id
         The ID of the workspace that the contents of the search query belong to.
+    exclude_archived
+        Specifies whether to exclude archived content.
 
     Returns
     -------
@@ -696,6 +656,7 @@ async def feedback(
         query_id=feedback.query_id,
         secret_key=feedback.feedback_secret_key,
     )
+
     if is_matched is False:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -722,7 +683,7 @@ async def feedback(
 async def content_feedback(
     feedback: ContentFeedback,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> JSONResponse:
     """Feedback endpoint used to capture user feedback on specific content after it has
     been returned by the QA endpoints.
@@ -737,22 +698,14 @@ async def content_feedback(
         The feedback object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object associated with the user that is providing the feedback.
+    workspace_db
+        The authenticated workspace object.
 
     Returns
     -------
     JSONResponse
         The appropriate feedback response object.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace for content feedback.",
-        )
-    workspace_db = user_workspaces[0]
 
     is_matched = await check_secret_key_match(
         asession=asession,
@@ -763,7 +716,7 @@ async def content_feedback(
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": f"Secret key does not match query id: {feedback.query_id}"
+                "message": f"Secret key does not match query ID: {feedback.query_id}"
             },
         )
 
@@ -775,7 +728,7 @@ async def content_feedback(
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": f"Content id: {feedback.content_id} does not exist.",
+                "message": f"Content ID: {feedback.content_id} does not exist.",
                 "details": {
                     "content_id": feedback.content_id,
                     "query_id": feedback.query_id,
@@ -784,12 +737,14 @@ async def content_feedback(
                 },
             },
         )
+
     await update_votes_in_db(
         asession=asession,
         content_id=feedback.content_id,
         vote=feedback.feedback_sentiment,
         workspace_id=workspace_db.workspace_id,
     )
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
