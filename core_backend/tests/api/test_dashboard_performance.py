@@ -87,7 +87,6 @@ async def content_with_query_history(
 
     content_ids = faq_contents[: len(N_CONTENT_SHARED)]
     for idx, (n_response, content_id) in enumerate(zip(N_CONTENT_SHARED, content_ids)):
-
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta
         monkeypatch.setattr(
@@ -175,7 +174,6 @@ async def content_with_query_history(
             MockDatetime(time_of_record),
         )
         for i in range(n_response // 3):
-
             query_search_results.update(
                 {
                     idx * 100
@@ -230,7 +228,9 @@ async def test_dashboard_performance(
     user1: int,
 ) -> None:
     end_date = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(content_with_query_history)
+    frequency, start_date, end_date = get_frequency_and_startdate(
+        content_with_query_history
+    )
     performance_stats = await retrieve_performance(
         user1,
         asession,
@@ -256,7 +256,9 @@ async def test_cannot_access_other_user_stats(
     user1: int,
 ) -> None:
     end_date = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(content_with_query_history)
+    frequency, start_date, end_date = get_frequency_and_startdate(
+        content_with_query_history
+    )
 
     performance_stats = await retrieve_performance(
         user2,
@@ -278,7 +280,10 @@ async def test_drawer_data(
     user1: int,
 ) -> None:
     end_date = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(content_with_query_history)
+
+    frequency, start_date, end_date = get_frequency_and_startdate(
+        content_with_query_history
+    )
 
     max_feedback_records = 10
 
