@@ -67,6 +67,11 @@ async def authenticate_credentials(
     -------
     AuthenticatedUser | None
         Authenticated user if the user is authenticated, otherwise None.
+
+    Raises
+    ------
+    RuntimeError
+        If the user belongs to multiple workspaces.
     """
 
     async with AsyncSession(
@@ -75,18 +80,22 @@ async def authenticate_credentials(
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
             if verify_password_salted_hash(password, user_db.hashed_password):
-                # HACK FIX FOR FRONTEND: Need to get workspace for AuthenticatedUser.
+                # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
                 user_workspaces = await get_user_workspaces(
                     asession=asession, user_db=user_db
                 )
-                assert len(user_workspaces) == 1
-                # HACK FIX FOR FRONTEND: Need to get workspace for AuthenticatedUser.
+                if len(user_workspaces) != 1:
+                    raise RuntimeError(
+                        f"User {username} belongs to multiple workspaces."
+                    )
+                workspace_name = user_workspaces[0].workspace_name
+                # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
 
                 # Hardcode "fullaccess" now, but may use it in the future.
                 return AuthenticatedUser(
                     access_level="fullaccess",
                     username=username,
-                    workspace_name=user_workspaces[0].workspace_name,
+                    workspace_name=workspace_name,
                 )
             return None
         except UserNotFoundError:
@@ -95,7 +104,7 @@ async def authenticate_credentials(
 
 async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer)
-) -> UserDB:
+) -> WorkspaceDB:
     """Authenticate using basic bearer token. This is used by the following endpoints:
 
     1. Data API
@@ -112,13 +121,42 @@ async def authenticate_key(
 
     Returns
     -------
-    UserDB
-        The user object.
+    WorkspaceDB
+        The workspace object.
+
+    Raises
+    ------
+    RuntimeError
+        If the user belongs to multiple workspaces.
     """
 
     token = credentials.credentials
-    user_db = await get_current_user(token)
-    return user_db
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
+            workspace_db = await get_workspace_by_api_key(
+                asession=asession, token=token
+            )
+            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
+            return workspace_db
+        except WorkspaceNotFoundError:
+            # Fall back to JWT token authentication if API key is not valid.
+            user_db = await get_current_user(token)
+
+            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
+            user_workspaces = await get_user_workspaces(
+                asession=asession, user_db=user_db
+            )
+            if len(user_workspaces) != 1:
+                raise RuntimeError(
+                    f"User {user_db.username} belongs to multiple workspaces."
+                )
+            workspace_db = user_workspaces[0]
+            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
+
+            return workspace_db
 
 
 async def authenticate_or_create_google_user(
@@ -127,7 +165,7 @@ async def authenticate_or_create_google_user(
     """Check if user exists in the `UserDB` database. If not, create the `UserDB`
     object.
 
-    NB: When a Google user is created, their workspace name defaults to 
+    NB: When a Google user is created, their workspace name defaults to
     `Workspace_{google_email}` with a default role of ADMIN.
 
     Parameters
@@ -140,8 +178,14 @@ async def authenticate_or_create_google_user(
     Returns
     -------
     AuthenticatedUser | None
-        Authenticated user if the user is authenticated or a new user is created. None
-        if a new user is being created and the requested workspace already exists.
+        Authenticated user if the user is authenticated or a new user is created.
+        `None` if a new user is being created and the requested workspace already
+        exists.
+
+    Raises
+    ------
+    RuntimeError
+        If the user belongs to multiple workspaces.
     """
 
     async with AsyncSession(
@@ -151,25 +195,42 @@ async def authenticate_or_create_google_user(
             user_db = await get_user_by_username(
                 asession=asession, username=google_email
             )
-            return AuthenticatedUser(
-                access_level="fullaccess", username=user_db.username
+
+            # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
+            user_workspaces = await get_user_workspaces(
+                asession=asession, user_db=user_db
             )
-        except UserNotFoundError:
-            # Create the new user object with the specified role and workspace name.
-            workspace_name = f"Workspace_{google_email}"
-            user = UserCreate(
-                role=UserRoles.ADMIN,
-                username=google_email,
+            if len(user_workspaces) != 1:
+                raise RuntimeError(
+                    f"User {google_email} belongs to multiple workspaces."
+                )
+            workspace_name = user_workspaces[0].workspace_name
+            # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
+
+            return AuthenticatedUser(
+                access_level="fullaccess",
+                username=user_db.username,
                 workspace_name=workspace_name,
             )
-
-            # Create the default workspace for the Google user.
+        except UserNotFoundError:
+            # If the workspace already exists, then the Google user should have already
+            # been created.
+            workspace_name = f"Workspace_{google_email}"
             try:
                 _ = await get_workspace_by_workspace_name(
                     asession=asession, workspace_name=workspace_name
                 )
                 return None
             except WorkspaceNotFoundError:
+                # Create the new user object with an ADMIN role and the specified
+                # workspace name.
+                user = UserCreate(
+                    role=UserRoles.ADMIN,
+                    username=google_email,
+                    workspace_name=workspace_name,
+                )
+
+                # Create the workspace for the Google user.
                 workspace_db_new = await create_workspace(
                     api_daily_quota=DEFAULT_API_QUOTA,
                     asession=asession,
@@ -188,6 +249,7 @@ async def authenticate_or_create_google_user(
                 workspace_db=workspace_db_new,
             )
 
+            # Update API limits for the Google user's workspace.
             await update_api_limits(
                 api_daily_quota=DEFAULT_API_QUOTA,
                 redis=request.app.state.redis,
@@ -323,9 +385,43 @@ async def get_current_workspace(
         raise credentials_exception from err
 
 
+async def get_workspace_by_api_key(
+    *, asession: AsyncSession, token: str
+) -> WorkspaceDB:
+    """Retrieve a workspace by token.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    token
+        The token to use to retrieve the appropriate workspace.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace object corresponding to the token.
+
+    Raises
+    ------
+    WorkspaceNotFoundError
+        If the workspace with the specified token does not exist.
+    """
+
+    hashed_token = get_key_hash(token)
+    stmt = select(WorkspaceDB).where(WorkspaceDB.hashed_api_key == hashed_token)
+    result = await asession.execute(stmt)
+    try:
+        workspace_db = result.scalar_one()
+        return workspace_db
+    except NoResultFound as err:
+        raise WorkspaceNotFoundError(
+            "Workspace with given token does not exist."
+        ) from err
+
+
 async def rate_limiter(
-    request: Request,
-    user_db: UserDB = Depends(authenticate_key),
+    request: Request, workspace_db: WorkspaceDB = Depends(authenticate_key)
 ) -> None:
     """Rate limiter for the API calls. Gets daily quota and decrement it.
 
@@ -338,28 +434,21 @@ async def rate_limiter(
     ----------
     request
         The request object.
-    user_db
-        The user object
+    workspace_db
+        The workspace object.
 
     Raises
     ------
     HTTPException
         If the API call limit is reached.
+    RuntimeError
+        If the user belongs to multiple workspaces.
     """
 
     if CHECK_API_LIMIT is False:
         return
 
-    # HACK FIX FOR FRONTEND: Need to get the workspace for the redis cache name.
-    async with AsyncSession(
-            get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-        assert len(user_workspaces) == 1
-        workspace_db = user_workspaces[0]
     workspace_name = workspace_db.workspace_name
-    # HACK FIX FOR FRONTEND: Need to get the workspace for the redis cache name.
-
     key = f"remaining-calls:{workspace_name}"
     redis = request.app.state.redis
     ttl = await redis.ttl(key)
@@ -384,37 +473,3 @@ async def rate_limiter(
         await update_api_limits(
             api_daily_quota=nb_remaining - 1, redis=redis, workspace_name=workspace_name
         )
-
-
-# XXX
-async def get_user_by_api_key(*, asession: AsyncSession, token: str) -> UserDB:
-    """Retrieve a user by token.
-
-    MAYBE NOT NEEDED ANYMORE?
-
-    Parameters
-    ----------
-    asession
-        The async session to use for the database connection.
-    token
-        The token to use for the query.
-
-    Returns
-    -------
-    UserDB
-        The user object retrieved from the database.
-
-    Raises
-    ------
-    UserNotFoundError
-        If the user with the specified token does not exist.
-    """
-
-    hashed_token = get_key_hash(token)
-    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
-    result = await asession.execute(stmt)
-    try:
-        user = result.scalar_one()
-        return user
-    except NoResultFound as err:
-        raise UserNotFoundError("User with given token does not exist.") from err

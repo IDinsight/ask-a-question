@@ -289,13 +289,13 @@ def get_http_client() -> aiohttp.ClientSession:
     return new_http_client
 
 
-def encode_api_limit(api_limit: int | None) -> int | str:
+def encode_api_limit(*, api_limit: int | None) -> int | str:
     """Encode the API limit for Redis.
 
     Parameters
     ----------
     api_limit
-        The daily API limit.
+        The API limit.
 
     Returns
     -------
@@ -327,7 +327,7 @@ async def update_api_limits(
     )
     key = f"remaining-calls:{workspace_name}"
     expire_at = int(next_midnight.timestamp())
-    await redis.set(key, encode_api_limit(api_daily_quota))
+    await redis.set(key, encode_api_limit(api_limit=api_daily_quota))
     if api_daily_quota is not None:
         await redis.expireat(key, expire_at)
 

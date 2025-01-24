@@ -34,8 +34,8 @@ class UserCreate(BaseModel):
 
     NB: When a user is created, the user must be assigned to a workspace and a role
     within that workspace. The only exception is if the user is the first user to be
-    created, in which case the user will be assigned to the default workspace of
-    "SUPER ADMIN" with a default role of "ADMIN".
+    created, in which case the user will be assigned to a default workspace with a role
+    of "ADMIN".
     """
 
     role: Optional[UserRoles] = None
@@ -46,7 +46,7 @@ class UserCreate(BaseModel):
 
 
 class UserCreateWithPassword(UserCreate):
-    """Pydantic model for user creation."""
+    """Pydantic model for user creation with a password."""
 
     password: str
 
@@ -67,7 +67,8 @@ class UserRetrieve(BaseModel):
     """Pydantic model for user retrieval.
 
     NB: When a user is retrieved, a mapping between the workspaces that the user
-    belongs to and the roles within those workspaces should also be returned.
+    belongs to and the roles within those workspaces should also be returned. How that
+    information is used is up to the caller.
     """
 
     created_datetime_utc: datetime
@@ -95,6 +96,21 @@ class WorkspaceCreate(BaseModel):
 
     api_daily_quota: Optional[int] = None
     content_quota: Optional[int] = None
+    workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkspaceRetrieve(BaseModel):
+    """Pydantic model for workspace retrieval."""
+
+    api_daily_quota: Optional[int] = None
+    api_key_first_characters: str
+    api_key_updated_datetime_utc: datetime
+    content_quota: Optional[int] = None
+    created_datetime_utc: datetime
+    updated_datetime_utc: datetime
+    workspace_id: int
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)

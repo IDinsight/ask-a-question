@@ -17,13 +17,19 @@ class AuthenticationDetails(BaseModel):
     access_token: str
     token_type: TokenType
     username: str
-    is_admin: bool = True,  # HACK FIX FOR FRONTEND
+
+    # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
+    is_admin: bool = True
+    # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class AuthenticatedUser(BaseModel):
-    """Pydantic model for authenticated user."""
+    """Pydantic model for authenticated user.
+
+    NB: A user is authenticated within a workspace.
+    """
 
     access_level: AccessLevel
     username: str

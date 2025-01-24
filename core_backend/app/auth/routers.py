@@ -71,8 +71,8 @@ async def login_google(
     """Verify Google token and check if user exists. If user does not exist, create
     user and return JWT token for the user.
 
-    NB: When a user logs in with Google, the user is assigned the role of "ADMIN" by
-    default. Otherwise, the user should be created by an ADMIN of an existing workspace
+    NB: When a user logs in with Google, the user is assigned the role of ADMIN by
+    default. Otherwise, the user should be created by an admin of an existing workspace
     and assigned a role within that workspace.
 
     Parameters
@@ -116,7 +116,7 @@ async def login_google(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Workspace for '{gmail}' already exists. Contact the admin of that "
-                   f"workspace to create an account for you."
+            f"workspace to create an account for you."
         )
 
     return AuthenticationDetails(

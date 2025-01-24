@@ -1,11 +1,11 @@
-from typing import Dict
+"""This module contains the base class for SQLAlchemy models."""
 
 from sqlalchemy.orm import DeclarativeBase
 
-JSONDict = Dict[str, str]
+JSONDict = dict[str, str]
 
 
 class Base(DeclarativeBase):
-    """Base class for SQLAlchemy models"""
+    """Base class for SQLAlchemy models."""
 
     pass
