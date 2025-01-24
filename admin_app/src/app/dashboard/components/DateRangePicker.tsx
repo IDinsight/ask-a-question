@@ -29,7 +29,6 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
-  // reset fields whenever the dialog opens
   useEffect(() => {
     if (open) {
       setStartDate(initialStartDate);
@@ -39,7 +38,6 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
 
   const handleOk = () => {
     if (startDate && endDate) {
-      // guarantee startDate <= endDate, or do a swap if you prefer
       if (startDate > endDate) {
         onSelectDateRange(endDate, startDate);
       } else {
@@ -52,7 +50,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Select Date Range</DialogTitle>
       <DialogContent>
-        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+        <Box display="flex" flexDirection="row" gap={2} mt={1}>
           <DatePicker
             selected={startDate}
             onChange={(date: Date) => setStartDate(date)}
