@@ -219,6 +219,7 @@ async def retrieve_overview_frequency(
     """
     Retrieve all question answer statistics for the last day.
     """
+    # Use renamed start_dt/ end_dt to avoid typing errors etc.
     frequency, start_dt, end_dt = get_frequency_and_startdate(
         time_frequency, start_date, end_date
     )
@@ -266,12 +267,14 @@ async def retrieve_overview(
         start_date=start_date,
         end_date=end_date,
     )
+
     heatmap = await get_heatmap(
         user_id=user_id,
         asession=asession,
         start_date=start_date,
         end_date=end_date,
     )
+
     time_series = await get_overview_timeseries(
         user_id=user_id,
         asession=asession,
@@ -279,11 +282,13 @@ async def retrieve_overview(
         end_date=end_date,
         frequency=frequency,
     )
+
     top_content = await get_top_content(
         user_id=user_id,
         asession=asession,
         top_n=top_n,
     )
+
     return DashboardOverview(
         stats_cards=stats,
         heatmap=heatmap,
@@ -409,14 +414,9 @@ async def create_plot(
     time_frequency: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
 ) -> dict:
     """Creates a Bokeh plot based on embeddings data retrieved from Redis."""
     redis = request.app.state.redis
-    _, start_dt, end_dt = get_frequency_and_startdate(
-        time_frequency, start_date, end_date
-    )
     embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
     embeddings_json = await redis.get(embeddings_key)
     if not embeddings_json:

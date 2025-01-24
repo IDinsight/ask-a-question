@@ -86,6 +86,7 @@ async def content_with_query_history(
     )
 
     content_ids = faq_contents[: len(N_CONTENT_SHARED)]
+
     for idx, (n_response, content_id) in enumerate(zip(N_CONTENT_SHARED, content_ids)):
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta
@@ -174,6 +175,7 @@ async def content_with_query_history(
             MockDatetime(time_of_record),
         )
         for i in range(n_response // 3):
+
             query_search_results.update(
                 {
                     idx * 100

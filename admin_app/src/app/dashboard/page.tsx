@@ -88,6 +88,7 @@ const Dashboard: React.FC = () => {
       else setSideBarOpen(true);
     };
     window.addEventListener("resize", handleResize);
+    // wait 0.75s before first resize (so user can acknowledge the sidebar)
     setTimeout(handleResize, 750);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -119,7 +120,14 @@ const Dashboard: React.FC = () => {
           width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            height: "100%",
+          }}
+        >
           <Box
             sx={{
               display: "flex",

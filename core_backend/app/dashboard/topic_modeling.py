@@ -114,6 +114,7 @@ async def topic_model_queries(
 
     # Prepare TopicsData for frontend
     topics_data = prepare_topics_data(results_df, topic_labels)
+
     return topics_data, results_df
 
 
