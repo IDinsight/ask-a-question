@@ -63,7 +63,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         <Box display="flex" flexDirection="row" gap={2} mt={1}>
           <DatePicker
             selected={startDate}
-            onChange={(date: Date) => setStartDate(date)}
+            onChange={(date: Date | null) => setStartDate(date)}
             selectsStart
             startDate={startDate}
             endDate={endDate}
@@ -72,7 +72,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
           />
           <DatePicker
             selected={endDate}
-            onChange={(date: Date) => setEndDate(date)}
+            onChange={(date: Date | null) => setEndDate(date)}
             selectsEnd
             startDate={startDate}
             endDate={endDate}
