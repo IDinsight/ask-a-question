@@ -121,7 +121,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
       ).then((response) => {
         setDrawerAISummary(
           response.ai_summary ||
-            "LLM functionality disabled on the backend. Please check your environment.",
+            "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
         );
       });
     } else {
@@ -132,7 +132,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
       getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
         setDrawerAISummary(
           response.ai_summary ||
-            "LLM functionality disabled on the backend. Please check your environment.",
+            "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
         );
       });
     }
@@ -147,11 +147,11 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     function createSeriesData(
       name: string,
       key: keyof Timeseries,
-      d: Record<string, Timeseries>,
+      data: Record<string, Timeseries>,
     ): ApexData {
       return {
         name,
-        data: Object.entries(d.time_series).map(([period, timeseries]) => {
+        data: Object.entries(data.time_series).map(([period, timeseries]) => {
           const date = new Date(period);
           return { x: String(date), y: timeseries[key] as number };
         }),
@@ -191,7 +191,14 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
         data={drawerData}
         aiSummary={drawerAISummary}
       />
-      <Box bgcolor="white" sx={{ height: 300, border: 0, padding: 2 }}>
+      <Box
+        bgcolor="white"
+        sx={{
+          height: 300,
+          border: 0,
+          padding: 2,
+        }}
+      >
         <LineChart
           data={lineChartData}
           nTopContent={N_TOP_CONTENT}
