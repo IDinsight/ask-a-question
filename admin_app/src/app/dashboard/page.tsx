@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import { Period, drawerWidth, CustomDateRange } from "./types";
@@ -18,8 +9,7 @@ import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import Insights from "./components/Insights";
 import { appColors } from "@/utils";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DateRangePickerDialog from "@/app/dashboard/components/DateRangePicker";
 
 type Page = {
   name: PageName;
@@ -41,16 +31,12 @@ const Dashboard: React.FC = () => {
     endDate: null,
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tempStart, setTempStart] = useState<Date | null>(null);
-  const [tempEnd, setTempEnd] = useState<Date | null>(null);
 
-  const handleTabChange = (_: React.ChangeEvent<{}>, newValue: Period) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: Period) => {
     if (newValue === "custom") {
       if (customDateRange.startDate && customDateRange.endDate) {
         setTimePeriod("custom");
       } else {
-        setTempStart(null);
-        setTempEnd(null);
         setIsDialogOpen(true);
       }
     } else {
@@ -59,20 +45,12 @@ const Dashboard: React.FC = () => {
   };
 
   const handleEditCustomPeriod = () => {
-    setTempStart(customDateRange.startDate);
-    setTempEnd(customDateRange.endDate);
     setIsDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-  };
-
-  const handleSaveDialog = () => {
-    if (tempStart && tempEnd) {
-      setCustomDateRange({ startDate: tempStart, endDate: tempEnd });
-      setTimePeriod("custom");
-    }
+  const handleCustomDateRangeSelected = (start: Date, end: Date) => {
+    setCustomDateRange({ startDate: start, endDate: end });
+    setTimePeriod("custom");
     setIsDialogOpen(false);
   };
 
@@ -171,43 +149,14 @@ const Dashboard: React.FC = () => {
           <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
         </Box>
       </Box>
-      <Dialog
+
+      <DateRangePickerDialog
         open={isDialogOpen}
-        onClose={handleCloseDialog}
-        PaperProps={{ sx: { width: 420, height: 420, overflow: "visible" } }}
-      >
-        <DialogTitle>Select Date Range</DialogTitle>
-        <DialogContent sx={{ overflow: "visible" }}>
-          <Box display="flex" flexDirection="column" gap={4} mt={1}>
-            <DatePicker
-              selected={tempStart}
-              onChange={(date) => setTempStart(date)}
-              selectsStart
-              startDate={tempStart}
-              endDate={tempEnd}
-              customInput={
-                <TextField label="Start Date" variant="outlined" fullWidth />
-              }
-              dateFormat="MMMM d, yyyy"
-            />
-            <DatePicker
-              selected={tempEnd}
-              onChange={(date) => setTempEnd(date)}
-              selectsEnd
-              startDate={tempStart}
-              endDate={tempEnd}
-              customInput={<TextField label="End Date" variant="outlined" fullWidth />}
-              dateFormat="MMMM d, yyyy"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveDialog} disabled={!tempStart || !tempEnd}>
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onClose={() => setIsDialogOpen(false)}
+        onSelectDateRange={handleCustomDateRangeSelected}
+        initialStartDate={customDateRange.startDate}
+        initialEndDate={customDateRange.endDate}
+      />
     </Box>
   );
 };
