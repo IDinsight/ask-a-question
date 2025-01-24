@@ -1,3 +1,5 @@
+"""This script is used to add new data to the database for testing purposes."""
+
 import argparse
 import json
 import random
@@ -5,6 +7,7 @@ import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from typing import Any
 
 import pandas as pd
 import urllib3
@@ -23,7 +26,7 @@ from app.question_answer.models import (
     ResponseFeedbackDB,
 )
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
-from app.users.models import UserDB
+from app.users.models import WorkspaceDB
 from app.utils import get_key_hash
 from litellm import completion
 from sqlalchemy import (
@@ -31,16 +34,15 @@ from sqlalchemy import (
 )
 from urllib3.exceptions import InsecureRequestWarning
 
-# To disable InsecureRequestWarning
+# To disable InsecureRequestWarning.
 urllib3.disable_warnings(InsecureRequestWarning)
 
 try:
     import requests  # type: ignore
-
 except ImportError:
     print(
-        "Please install requests library using `pip install requests` "
-        "to run this script."
+        "Please install requests library using `pip install requests` to run this "
+        "script."
     )
 
 MODELS = [
@@ -97,11 +99,32 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict | None:
+def generate_feedback(
+    question_text: str, faq_text: str, sentiment: str
+) -> dict[str, Any] | None:
+    """Generate feedback based on the user's question and the FAQ response.
+
+    Parameters
+    ----------
+    question_text
+        The user's question.
+    faq_text
+        The FAQ response.
+    sentiment
+        The sentiment of the user's question.
+
+    Returns
+    -------
+    dict | None
+        The feedback text generated based on the sentiment and input.
+
+    Raises
+    ------
+    ValueError
+        If the output is not in the correct format.
     """
-    Generate feedback based on the user's question and the FAQ response.
-    """
-    # Define the prompt
+
+    # Define the prompt.
     prompt = f"""
     You are an AI model that helps generate feedback based on a user's question and an
     FAQ response.
@@ -137,23 +160,36 @@ def generate_feedback(question_text: str, faq_text: str, sentiment: str) -> dict
     )
 
     try:
-        # Extract the output from the response
+        # Extract the output from the response.
         feedback_output = response["choices"][0]["message"]["content"].strip()
         feedback_output = remove_json_markdown(feedback_output)
         feedback_dict = json.loads(feedback_output)
         if isinstance(feedback_dict, dict) and "output" in feedback_dict:
             return feedback_dict
-        else:
-            raise ValueError("Output is not in the correct format.")
+        raise ValueError("Output is not in the correct format.")
     except Exception as e:
         print(f"Output is not in the correct format.{e}")
         return None
 
 
 def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
+    """Save a single row in the database.
+
+    Parameters
+    ----------
+    endpoint
+        The endpoint to save the data.
+    data
+        The data to save.
+    retries
+        The number of retries to make if the request fails.
+
+    Returns
+    -------
+    dict | None
+        The response from the request.
     """
-    Save a single row in the database.
-    """
+
     try:
         response = requests.post(
             endpoint,
@@ -167,10 +203,9 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
         )
         response.raise_for_status()
         return response.json()
-
     except Exception as e:
         if retries > 0:
-            # Implement exponential wait before retrying
+            # Implement exponential wait before retrying.
             time.sleep(2 ** (2 - retries))
             return save_single_row(endpoint, data, retries=retries - 1)
         else:
@@ -179,8 +214,20 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
 
 
 def process_search(_id: int, text: str) -> tuple | None:
-    """
-    Process and add query to DB
+    """Process and add query to DB.
+
+    Parameters
+    ----------
+    _id
+        The ID of the query.
+    text
+        The text of the query.
+
+    Returns
+    -------
+    tuple | None
+        The query ID, feedback secret key, and search results if the query was added
+        successfully.
     """
 
     endpoint = f"{HOST}/search"
@@ -203,8 +250,23 @@ def process_search(_id: int, text: str) -> tuple | None:
 def process_response_feedback(
     query_id: int, feedback_sentiment: str, feedback_secret_key: str, is_off_topic: bool
 ) -> tuple | None:
-    """
-    Process and add response feedback to DB
+    """Process and add response feedback to DB.
+
+    Parameters
+    ----------
+    query_id
+        The ID of the query.
+    feedback_sentiment
+        The sentiment of the feedback.
+    feedback_secret_key
+        The secret key for the feedback.
+    is_off_topic
+        Specifies whether the query is off-topic.
+
+    Returns
+    -------
+    tuple | None
+        The query ID if the feedback was added successfully.
     """
 
     endpoint = f"{HOST}/response-feedback"
@@ -236,14 +298,37 @@ def process_content_feedback(
     is_off_topic: bool,
     generate_feedback_text: bool,
 ) -> tuple | None:
+    """Process and add content feedback to DB.
+
+    Parameters
+    ----------
+    query_id
+        The ID of the query.
+    query_text
+        The text of the query.
+    search_results
+        The search results.
+    feedback_sentiment
+        The sentiment of the feedback.
+    feedback_secret_key
+        The secret key for the feedback.
+    is_off_topic
+        Specifies whether the query is off-topic.
+    generate_feedback_text
+        Specifies whether to generate feedback text.
+
+    Returns
+    -------
+    tuple | None
+        The query ID if the feedback was added successfully.
     """
-    Process and add content feedback to DB
-    """
+
     endpoint = f"{HOST}/content-feedback"
 
     if is_off_topic and feedback_sentiment == "positive":
         return None
-    # randomly get a content from the search results to provide feedback on
+
+    # Randomly get a content from the search results to provide feedback on.
     content_num = str(random.randint(0, 3))
     if not search_results or not isinstance(search_results, dict):
         return None
@@ -252,7 +337,7 @@ def process_content_feedback(
 
     content = search_results[content_num]
 
-    # Get content text and use to generate feedback text using LLMs
+    # Get content text and use to generate feedback text using LLMs.
     content_text = content["title"] + " " + content["text"]
     generated_text = generate_feedback(query_text, content_text, feedback_sentiment)
 
@@ -279,13 +364,23 @@ def process_content_feedback(
 
 
 def process_urgency_detection(_id: int, text: str) -> tuple | None:
+    """Process and add urgency detection to DB.
+
+    Parameters
+    ----------
+    _id
+        The ID of the query.
+    text
+        The text of the query.
+
+    Returns
+    -------
+    tuple | None
+        The urgency detection result if the detection was successful.
     """
-    Process and add urgency detection to DB
-    """
+
     endpoint = f"{HOST}/urgency-detect"
-    data = {
-        "message_text": text,
-    }
+    data = {"message_text": text}
 
     response = save_single_row(endpoint, data)
     if response and "is_urgent" in response:
@@ -294,8 +389,19 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
 
 
 def create_random_datetime(start_date: datetime, end_date: datetime) -> datetime:
-    """
-    Create a random datetime from a date within a range
+    """Create a random datetime from a date within a range.
+
+    Parameters
+    ----------
+    start_date
+        The start date.
+    end_date
+        The end date.
+
+    Returns
+    -------
+    datetime
+        The random datetime.
     """
 
     time_difference = end_date - start_date
@@ -309,29 +415,51 @@ def create_random_datetime(start_date: datetime, end_date: datetime) -> datetime
 
 
 def is_within_time_range(date: datetime) -> bool:
+    """Helper function to check if the date is within desired time range. Prioritizing
+    9 am - 12 pm and 8 pm - 10 pm.
+
+    Parameters
+    ----------
+    date
+        The date to check.
+
+    Returns
+    -------
+    bool
+        Specifies if the date is within the desired time range.
     """
-    Helper function to check if the date is within desired time range.
-    Prioritizing 9am-12pm and 8pm-10pm
-    """
+
     if 9 <= date.hour < 12 or 20 <= date.hour < 22:
         return True
     return False
 
 
 def generate_distributed_dates(n: int, start: datetime, end: datetime) -> list:
+    """Generate dates with a specific distribution for the records.
+
+    Parameters
+    ----------
+    n
+        The number of dates to generate.
+    start
+        The start date.
+    end
+        The end date.
+
+    Returns
+    -------
+    list
+        The list of generated dates.
     """
-    Generate  dates with a specific distribution for the records
-    """
+
     dates: list[datetime] = []
     while len(dates) < n:
         date = create_random_datetime(start, end)
 
-        # More dates on weekends
+        # More dates on weekends.
         if date.weekday() >= 5:
-
-            if (
-                is_within_time_range(date) or random.random() < 0.4
-            ):  # Within time range or 30% chance
+            # Within time range or 30% chance.
+            if is_within_time_range(date) or random.random() < 0.4:
                 dates.append(date)
         else:
             if random.random() < 0.6:
@@ -347,26 +475,46 @@ def update_date_of_records(
     start_date: datetime,
     end_date: datetime,
 ) -> None:
+    """Update the date of the records in the database.
+
+    Parameters
+    ----------
+    models
+        The models to update.
+    api_key
+        The API key.
+    start_date
+        The start date.
+    end_date
+        The end date.
     """
-    Update the date of the records in the database
-    """
+
     session = next(get_session())
     hashed_token = get_key_hash(api_key)
-    user = session.execute(
-        select(UserDB).where(UserDB.hashed_api_key == hashed_token)
+    workspace = session.execute(
+        select(WorkspaceDB).where(WorkspaceDB.hashed_api_key == hashed_token)
     ).scalar_one()
-    queries = [c for c in session.query(QueryDB).all() if c.user_id == user.user_id]
+    queries = [
+        c
+        for c in session.query(QueryDB).all()
+        if c.workspace_id == workspace.workspace_id
+    ]
     random_dates = generate_distributed_dates(len(queries), start_date, end_date)
-    # Create a dictionary to map the query_id to the random date
+
+    # Create a dictionary to map the `query_id` to the random date.
     date_map_dic = {queries[i].query_id: random_dates[i] for i in range(len(queries))}
     for model in models:
         print(f"Updating the date of the records for {model[0].__name__}...")
         session = next(get_session())
 
-        rows = [c for c in session.query(model[0]).all() if c.user_id == user.user_id]
+        rows = [
+            c
+            for c in session.query(model[0]).all()
+            if c.workspace_id == workspace.workspace_id
+        ]
 
         for i, row in enumerate(rows):
-            # Set the date attribute to the random date
+            # Set the date attribute to the random date.
             if hasattr(row, "query_id") and model[0] != UrgencyResponseDB:
                 date = date_map_dic.get(row.query_id, None)
             else:
@@ -377,9 +525,14 @@ def update_date_of_records(
 
 
 def update_date_of_contents(date: datetime) -> None:
+    """Update the date of the content records in the database for consistency.
+
+    Parameters
+    ----------
+    date
+        The date to set for the records.
     """
-    Update the date of the content records in the database for consistency
-    """
+
     session = next(get_session())
     contents = session.query(ContentDB).all()
     for content in contents:
@@ -414,7 +567,7 @@ if __name__ == "__main__":
     saved_queries = defaultdict(list)
     print("Processing search queries...")
 
-    # Using multithreading to speed up the process
+    # Using multithreading to speed up the process.
     with ThreadPoolExecutor(max_workers=NB_WORKERS) as executor:
         future_to_text = {
             executor.submit(process_search, _id, text): _id
