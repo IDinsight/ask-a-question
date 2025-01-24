@@ -81,9 +81,11 @@ def get_frequency_and_startdate(
 
         # Do monthly bars if the time period is more than a year
         # Do weekl if > 2 mos
-        if end_dt - start_dt > timedelta(days=60):
+
+        diff = end_dt - start_dt
+        if diff > timedelta(days=90) and diff < timedelta(days=365):
             freq = TimeFrequency.Week
-        elif end_dt - start_dt > timedelta(days=365):
+        elif end_dt - start_dt >= timedelta(days=365):
             freq = TimeFrequency.Month
         else:
             freq = TimeFrequency.Day
