@@ -10,7 +10,7 @@ from sqlalchemy.sql.expression import delete
 from core_backend.app.dashboard.models import get_content_details
 from core_backend.app.dashboard.routers import (
     DashboardTimeFilter,
-    get_frequency_and_startdate,
+    get_freq_start_end_date,
     retrieve_performance,
 )
 from core_backend.app.question_answer.models import (
@@ -175,7 +175,6 @@ async def content_with_query_history(
             MockDatetime(time_of_record),
         )
         for i in range(n_response // 3):
-
             query_search_results.update(
                 {
                     idx * 100
@@ -230,7 +229,7 @@ async def test_dashboard_performance(
     user1: int,
 ) -> None:
     end_date = datetime.now(timezone.utc)
-    frequency, start_date, end_date = get_frequency_and_startdate(
+    frequency, start_date, end_date = get_freq_start_end_date(
         content_with_query_history
     )
     performance_stats = await retrieve_performance(
@@ -258,7 +257,7 @@ async def test_cannot_access_other_user_stats(
     user1: int,
 ) -> None:
     end_date = datetime.now(timezone.utc)
-    frequency, start_date, end_date = get_frequency_and_startdate(
+    frequency, start_date, end_date = get_freq_start_end_date(
         content_with_query_history
     )
 
@@ -283,7 +282,7 @@ async def test_drawer_data(
 ) -> None:
     end_date = datetime.now(timezone.utc)
 
-    frequency, start_date, end_date = get_frequency_and_startdate(
+    frequency, start_date, end_date = get_freq_start_end_date(
         content_with_query_history
     )
 
