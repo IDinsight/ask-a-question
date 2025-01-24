@@ -509,7 +509,18 @@ def log_chat_history(
 
 
 def remove_json_markdown(text: str) -> str:
-    """Remove json markdown from text."""
+    """Remove json markdown from text.
+
+    Parameters
+    ----------
+    text
+        The text containing the json markdown.
+
+    Returns
+    -------
+    str
+        The text with the json markdown removed.
+    """
 
     json_str = text.removeprefix("```json").removesuffix("```").strip()
     json_str = json_str.replace("\{", "{").replace("\}", "}")
