@@ -1,3 +1,5 @@
+"""This module contains prompts for LLM tasks."""
+
 from __future__ import annotations
 
 import re
