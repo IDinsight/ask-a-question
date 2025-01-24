@@ -48,7 +48,7 @@ logger = setup_logger()
 DashboardTimeFilter = Literal["day", "week", "month", "year", "custom"]
 
 
-def get_frequency_and_startdate(
+def get_freq_start_end_date(
     time_frequency: DashboardTimeFilter,
     start_date_str: Optional[str] = None,
     end_date_str: Optional[str] = None,
@@ -117,7 +117,7 @@ async def retrieve_content_details(
     Retrieve detailed statistics of a content
     """
     # Use start_dt/ end_dt to avoid typing errors etc.
-    frequency, start_dt, end_dt = get_frequency_and_startdate(
+    frequency, start_dt, end_dt = get_freq_start_end_date(
         time_frequency, start_date, end_date
     )
     details = await get_content_details(
@@ -147,7 +147,7 @@ async def retrieve_content_ai_summary(
     """
     Retrieve AI summary of a content
     """
-    frequency, start_dt, end_dt = get_frequency_and_startdate(
+    frequency, start_dt, end_dt = get_freq_start_end_date(
         time_frequency, start_date, end_date
     )
     ai_summary = await get_ai_answer_summary(
@@ -173,7 +173,7 @@ async def retrieve_performance_frequency(
     """
     Retrieve timeseries data on content usage and performance of each content
     """
-    frequency, start_dt, end_dt = get_frequency_and_startdate(
+    frequency, start_dt, end_dt = get_freq_start_end_date(
         time_frequency, start_date, end_date
     )
     performance_stats = await retrieve_performance(
@@ -221,7 +221,7 @@ async def retrieve_overview_frequency(
     Retrieve all question answer statistics for the last day.
     """
     # Use renamed start_dt/ end_dt to avoid typing errors etc.
-    frequency, start_dt, end_dt = get_frequency_and_startdate(
+    frequency, start_dt, end_dt = get_freq_start_end_date(
         time_frequency, start_date, end_date
     )
     stats = await retrieve_overview(
@@ -311,9 +311,7 @@ async def refresh_insights_frequency(
     """
     Refresh topic modelling insights for the time period specified.
     """
-    _, start_dt, end_dt = get_frequency_and_startdate(
-        time_frequency, start_date, end_date
-    )
+    _, start_dt, end_dt = get_freq_start_end_date(time_frequency, start_date, end_date)
     background_tasks.add_task(
         refresh_insights,
         time_frequency=time_frequency,
