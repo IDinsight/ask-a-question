@@ -47,9 +47,19 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: 600,
+          height: 400,
+          overflow: "visible",
+        },
+      }}
+    >
       <DialogTitle>Select Date Range</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflow: "visible" }}>
         <Box display="flex" flexDirection="row" gap={2} mt={1}>
           <DatePicker
             selected={startDate}
