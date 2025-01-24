@@ -77,6 +77,7 @@ async def create_content(
     NB: Content is now created within a specified workspace.
 
     The process is as follows:
+
     1. Parameters for the endpoint are checked first.
     2. Check if the content tags are valid.
     3, Check if the created content would exceed the workspace content quota.
@@ -85,7 +86,7 @@ async def create_content(
     Parameters
     ----------
     content
-        The content to create.
+        The content object to create.
     calling_user_db
         The user object associated with the user that is creating the content.
     workspace_db
@@ -105,7 +106,8 @@ async def create_content(
         If the content tags are invalid or the user would exceed their content quota.
     """
 
-    # 1.
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -117,20 +119,21 @@ async def create_content(
             detail="User does not have the required role to create content in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # content for non-admin users of a workspace.
 
     # 2.
+    workspace_id = workspace_db.workspace_id
     is_tag_valid, content_tags = await validate_tags(
-        asession=asession,
-        tags=content.content_tags,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, tags=content.content_tags, workspace_id=workspace_id
     )
     if not is_tag_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid tag ids: {content_tags}",
         )
+
     content.content_tags = content_tags
-    workspace_id = workspace_db.workspace_id
 
     # 3.
     if CHECK_CONTENT_LIMIT:

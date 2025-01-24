@@ -383,10 +383,12 @@ async def get_content_quota_by_workspace_id(
         If the workspace ID does not exist.
     """
 
-    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_id == workspace_id)
+    stmt = select(WorkspaceDB.content_quota).where(
+        WorkspaceDB.workspace_id == workspace_id
+    )
     result = await asession.execute(stmt)
     try:
-        content_quota = result.scalar_one().content_quota
+        content_quota = result.scalar_one()
         return content_quota
     except NoResultFound as err:
         raise WorkspaceNotFoundError(

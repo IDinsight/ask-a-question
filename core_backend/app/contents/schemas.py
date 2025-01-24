@@ -1,4 +1,4 @@
-"""This module contains Pydantic models for content CRUD operations."""
+"""This module contains Pydantic models for content endpoints."""
 
 from datetime import datetime
 
@@ -23,6 +23,12 @@ class ContentCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ContentDelete(BaseModel):
+    """Pydantic model for content deletion."""
+
+    content_id: int
+
+
 class ContentRetrieve(ContentCreate):
     """Pydantic model for content retrieval response."""
 
@@ -43,12 +49,6 @@ class ContentUpdate(ContentCreate):
     content_id: int
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ContentDelete(BaseModel):
-    """Pydantic model for content deletion."""
-
-    content_id: int
 
 
 class CustomError(BaseModel):

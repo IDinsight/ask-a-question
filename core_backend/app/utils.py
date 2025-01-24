@@ -11,7 +11,7 @@ import string
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import Logger
-from typing import List, Optional
+from typing import Optional
 from uuid import uuid4
 
 import aiohttp
@@ -28,11 +28,11 @@ from .config import (
     LOG_LEVEL,
 )
 
-# To make 32-byte API keys (results in 43 characters)
+# To make 32-byte API keys (results in 43 characters).
 SECRET_KEY_N_BYTES = 32
 
 
-# To prefix trace_id with project name
+# To prefix trace_id with project name.
 LANGFUSE_PROJECT_NAME = None
 
 if LANGFUSE == "True":
@@ -49,20 +49,48 @@ if LANGFUSE == "True":
 
 
 def generate_key() -> str:
-    """
-    Generate API key (default 32 byte = 43 characters)
+    """Generate API key (default 32 byte = 43 characters).
+
+    Returns
+    -------
+    str
+        The generated API key.
     """
 
     return secrets.token_urlsafe(SECRET_KEY_N_BYTES)
 
 
 def get_key_hash(key: str) -> str:
-    """Hashes the api key using SHA256."""
+    """Hash the API key using SHA256.
+
+    Parameters
+    ----------
+    key
+        The API key to hash.
+
+    Returns
+    -------
+    str
+        The hashed API key.
+    """
+
     return hashlib.sha256(key.encode()).hexdigest()
 
 
 def get_password_salted_hash(key: str) -> str:
-    """Hashes the password using SHA256 with a salt."""
+    """Hash the password using SHA256 with a salt.
+
+    Parameters
+    ----------
+    key
+        The password to hash.
+
+    Returns
+    -------
+    str
+        The hashed salted password.
+    """
+
     salt = os.urandom(16)
     key_salt_combo = salt + key.encode()
     hash_obj = hashlib.sha256(key_salt_combo)
@@ -70,7 +98,21 @@ def get_password_salted_hash(key: str) -> str:
 
 
 def verify_password_salted_hash(key: str, stored_hash: str) -> bool:
-    """Verifies if the api key matches the hash."""
+    """Verify if the API key matches the hash.
+
+    Parameters
+    ----------
+    key
+        The API key to verify.
+    stored_hash
+        The stored hash to compare against.
+
+    Returns
+    -------
+    bool
+        Specifies if the API key matches the hash.
+    """
+
     salt = bytes.fromhex(stored_hash[:32])
     original_hash = stored_hash[32:]
     key_salt_combo = salt + key.encode()
@@ -92,7 +134,18 @@ def get_random_int32() -> int:
 
 
 def get_random_string(size: int) -> str:
-    """Generate a random string of fixed length."""
+    """Generate a random string of fixed length.
+
+    Parameters
+    ----------
+    size
+        The size of the random string to generate.
+
+    Returns
+    -------
+    str
+        The generated random string.
+    """
 
     return "".join(random.choices(string.ascii_letters + string.digits, k=size))
 
@@ -144,65 +197,93 @@ def create_langfuse_metadata(
 
 
 def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:
+    """Get log level from string.
+
+    Parameters
+    ----------
+    log_level_str
+        The log level string.
+
+    Returns
+    -------
+    int
+        The log level.
     """
-    Get log level from string
-    """
+
     log_level_dict = {
         "CRITICAL": logging.CRITICAL,
-        "ERROR": logging.ERROR,
-        "WARNING": logging.WARNING,
-        "INFO": logging.INFO,
         "DEBUG": logging.DEBUG,
+        "ERROR": logging.ERROR,
+        "INFO": logging.INFO,
         "NOTSET": logging.NOTSET,
+        "WARNING": logging.WARNING,
     }
 
     return log_level_dict.get(log_level_str.upper(), logging.INFO)
 
 
 def generate_secret_key() -> str:
+    """Generate a secret key for the user query.
+
+    Returns
+    -------
+    str
+        The generated secret key.
     """
-    Generate a secret key for the user query
-    """
+
     return uuid4().hex
 
 
-async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
+async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> list[float]:
     """Get embedding for the given text.
+
     Parameters
     ----------
     text_to_embed
         The text to embed.
     metadata
         Metadata for `LiteLLM` embedding API.
+
     Returns
     -------
-    List[float]
+    list[float]
         The embedding for the given text.
     """
 
     metadata = metadata or {}
 
     content_embedding = await aembedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input=text_to_embed,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
+        input=text_to_embed,
         metadata=metadata,
+        model=LITELLM_MODEL_EMBEDDING,
     )
 
     return content_embedding.data[0]["embedding"]
 
 
-def setup_logger(
-    name: str = __name__, log_level: int = get_log_level_from_str()
-) -> Logger:
+def setup_logger(name: str = __name__, log_level: Optional[int] = None) -> Logger:
+    """Setup logger for the application.
+
+    Parameters
+    ----------
+    name
+        The name of the logger.
+    log_level
+        The log level for the logger.
+
+    Returns
+    -------
+    Logger
+        The configured logger.
     """
-    Setup logger for the application
-    """
+
+    log_level = log_level or get_log_level_from_str()
     logger = logging.getLogger(name)
 
-    # If the logger already has handlers,
-    # assume it was already configured and return it.
+    # If the logger already has handlers, assume it was already configured and return
+    # it.
     if logger.handlers:
         return logger
 
@@ -223,30 +304,25 @@ def setup_logger(
 
 
 class HttpClient:
-    """
-    HTTP client for call other endpoints
-    """
+    """HTTP client for calling other endpoints."""
 
     session: aiohttp.ClientSession | None = None
 
     def start(self) -> None:
-        """
-        Create AIOHTTP session
-        """
+        """Create AIOHTTP session."""
+
         self.session = aiohttp.ClientSession()
 
     async def stop(self) -> None:
-        """
-        Close AIOHTTP session
-        """
+        """Close AIOHTTP session."""
+
         if self.session is not None:
             await self.session.close()
         self.session = None
 
     def __call__(self) -> aiohttp.ClientSession:
-        """
-        Get AIOHTTP session
-        """
+        """Get AIOHTTP session."""
+
         assert self.session is not None
         return self.session
 
@@ -257,7 +333,8 @@ _HTTP_CLIENT: aiohttp.ClientSession | None = None
 def get_global_http_client() -> Optional[aiohttp.ClientSession]:
     """Return the value for the global variable _HTTP_CLIENT.
 
-    :returns:
+    Returns
+    -------
         The value for the global variable _HTTP_CLIENT.
     """
 
@@ -267,7 +344,10 @@ def get_global_http_client() -> Optional[aiohttp.ClientSession]:
 def set_global_http_client(http_client: HttpClient) -> None:
     """Set the value for the global variable _HTTP_CLIENT.
 
-    :param http_client: The value to set for the global variable _HTTP_CLIENT.
+    Parameters
+    ----------
+    http_client
+        The value to set for the global variable _HTTP_CLIENT.
     """
 
     global _HTTP_CLIENT
@@ -275,8 +355,12 @@ def set_global_http_client(http_client: HttpClient) -> None:
 
 
 def get_http_client() -> aiohttp.ClientSession:
-    """
-    Get HTTP client
+    """Get HTTP client.
+
+    Returns
+    -------
+    aiohttp.ClientSession
+        The HTTP client.
     """
 
     global_http_client = get_global_http_client()
@@ -333,12 +417,18 @@ async def update_api_limits(
 
 
 def generate_random_filename(extension: str) -> str:
-    """
-    Generate a random filename with the specified extension by concatenating
+    """Generate a random filename with the specified extension by concatenating
     multiple UUIDv4 strings.
 
-    Params:
-        extension (str): The file extension (e.g., '.wav', '.mp3').
+    Parameters
+    ----------
+    extension
+        The file extension (e.g., '.wav', '.mp3').
+
+    Returns
+    -------
+    str
+        The generated random filename.
     """
 
     random_filename = "".join([uuid4().hex for _ in range(5)])
@@ -346,11 +436,17 @@ def generate_random_filename(extension: str) -> str:
 
 
 def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
-    """
-    Get file extension from MIME type.
+    """Get file extension from MIME type.
 
-    Params:
-        mime_type (str): The MIME type of the file.
+    Parameters
+    ----------
+    mime_type
+        The MIME type of the file.
+
+    Returns
+    -------
+    str
+        The file extension.
     """
 
     mime_to_extension = {
@@ -387,14 +483,20 @@ async def upload_file_to_gcs(
     destination_blob_name: str,
     content_type: Optional[str] = None,
 ) -> None:
-    """
-    Upload a file stream to a Google Cloud Storage bucket and make it public.
+    """Upload a file stream to a Google Cloud Storage bucket and make it public.
 
-    Params:
-        bucket_name (str): The name of the GCS bucket.
-        file_stream (BytesIO): The file stream to upload.
-        content_type (str): The content type of the file (e.g., 'audio/mpeg').
+    Parameters
+    ----------
+    bucket_name
+        The name of the GCS bucket.
+    file_stream
+        The file stream to upload.
+    destination_blob_name
+        The name of the blob in the bucket.
+    content_type
+        The content type of the file (e.g., 'audio/mpeg').
     """
+
     client = storage.Client()
     bucket = client.bucket(bucket_name)
 
@@ -405,15 +507,19 @@ async def upload_file_to_gcs(
 
 
 async def generate_public_url(bucket_name: str, blob_name: str) -> str:
-    """
-    Generate a public URL for a GCS blob.
+    """Generate a public URL for a GCS blob.
 
-    Params:
-        bucket_name (str): The name of the GCS bucket.
-        blob_name (str): The name of the blob in the bucket.
+    Parameters
+    ----------
+    bucket_name
+        The name of the GCS bucket.
+    blob_name
+        The name of the blob in the bucket.
 
-    Returns:
-        str: A public URL that allows access to the GCS file.
+    Returns
+    -------
+    str
+        A public URL that allows access to the GCS file.
     """
 
     public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_name}"

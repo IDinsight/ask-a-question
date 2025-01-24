@@ -1,4 +1,4 @@
-"""This module contains Pydantic models for tag creation and retrieval."""
+"""This module contains Pydantic models for tag endpoints."""
 
 from datetime import datetime
 from typing import Annotated

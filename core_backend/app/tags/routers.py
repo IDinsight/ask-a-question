@@ -64,6 +64,8 @@ async def create_tag(
         If the tag name already exists.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -75,6 +77,8 @@ async def create_tag(
             detail="User does not have the required role to create tags in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
     if not await is_tag_name_unique(
@@ -125,6 +129,8 @@ async def edit_tag(
         If the tag ID is not found or the tag name already exists.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -136,6 +142,8 @@ async def edit_tag(
             detail="User does not have the required role to edit tags in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
     old_tag = await get_tag_from_db(
@@ -144,9 +152,10 @@ async def edit_tag(
 
     if not old_tag:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag id `{tag_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag ID `{tag_id}` not found"
         )
     assert isinstance(old_tag, TagDB)
+
     if (tag.tag_name != old_tag.tag_name) and not (
         await is_tag_name_unique(
             asession=asession,
@@ -171,7 +180,6 @@ async def edit_tag(
 
 @router.get("/", response_model=list[TagRetrieve])
 async def retrieve_tag(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     skip: int = 0,
     limit: Optional[int] = None,
@@ -181,8 +189,6 @@ async def retrieve_tag(
 
     Parameters
     ----------
-    calling_user_db
-        The user object associated with the user that is retrieving the tag.
     workspace_db
         The workspace to retrieve tags from.
     skip
@@ -196,24 +202,7 @@ async def retrieve_tag(
     -------
     list[TagRetrieve]
         The list of tags in the workspace.
-
-    Raises
-    ------
-    HTTPException
-        If the user does not have the required role to retrieve tags in the workspace.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve tags in the "
-            "workspace.",
-        )
 
     records = await get_list_of_tag_from_db(
         asession=asession,
@@ -252,6 +241,8 @@ async def delete_tag(
         If the tag ID is not found.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -263,6 +254,8 @@ async def delete_tag(
             detail="User does not have the required role to delete tags in the "
             "workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # tags for non-admin users of a workspace.
 
     record = await get_tag_from_db(
         asession=asession, tag_id=tag_id, workspace_id=workspace_db.workspace_id
@@ -270,8 +263,9 @@ async def delete_tag(
 
     if not record:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag id `{tag_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag ID `{tag_id}` not found"
         )
+
     await delete_tag_from_db(
         asession=asession, tag_id=tag_id, workspace_id=workspace_db.workspace_id
     )
@@ -280,7 +274,6 @@ async def delete_tag(
 @router.get("/{tag_id}", response_model=TagRetrieve)
 async def retrieve_tag_by_id(
     tag_id: int,
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
@@ -290,8 +283,6 @@ async def retrieve_tag_by_id(
     ----------
     tag_id
         The ID of the tag to retrieve.
-    calling_user_db
-        The user object associated with the user that is retrieving the tag.
     workspace_db
         The workspace to which the tag belongs.
     asession
@@ -305,21 +296,8 @@ async def retrieve_tag_by_id(
     Raises
     ------
     HTTPException
-        If the user does not have the required role to retrieve tags in the workspace.
         If the tag ID is not found.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve tags in the "
-            "workspace.",
-        )
 
     record = await get_tag_from_db(
         asession=asession, tag_id=tag_id, workspace_id=workspace_db.workspace_id
@@ -327,7 +305,7 @@ async def retrieve_tag_by_id(
 
     if not record:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag id `{tag_id}` not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Tag ID `{tag_id}` not found"
         )
 
     assert isinstance(record, TagDB)
