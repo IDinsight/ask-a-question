@@ -1,4 +1,4 @@
-"""This module contains Pydantic models for the urgency rules."""
+"""This module contains Pydantic models for urgency rules."""
 
 from datetime import datetime
 from typing import Annotated

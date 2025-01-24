@@ -2,8 +2,7 @@
 
 from typing import Callable
 
-from fastapi import APIRouter, Depends, status
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
@@ -13,7 +12,7 @@ from ..urgency_rules.models import (
     get_cosine_distances_from_rules,
     get_urgency_rules_from_db,
 )
-from ..users.models import UserDB, get_user_workspaces
+from ..users.models import WorkspaceDB
 from ..utils import generate_secret_key, setup_logger
 from .config import (
     URGENCY_CLASSIFIER,
@@ -60,7 +59,7 @@ def urgency_classifier(classifier_func: Callable) -> Callable:
 async def classify_text(
     urgency_query: UrgencyQuery,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> UrgencyResponse:
     """Classify the urgency of a text message.
 
@@ -70,8 +69,8 @@ async def classify_text(
         The urgency query to classify.
     asession
         The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object associated with the user that is classifying the urgency.
+    workspace_db
+        The authenticated workspace object.
 
     Returns
     -------
@@ -80,21 +79,9 @@ async def classify_text(
 
     Raises
     ------
-    HTTPException
-        If the user is not in exactly one workspace.
     ValueError
         If the urgency classifier is invalid.
     """
-
-    # HACK FIX FOR FRONTEND
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace for urgency detection.",
-        )
-    workspace_db = user_workspaces[0]
-    # HACK FIX FOR FRONTEND
 
     feedback_secret_key = generate_secret_key()
     urgency_query_db = await save_urgency_query_to_db(

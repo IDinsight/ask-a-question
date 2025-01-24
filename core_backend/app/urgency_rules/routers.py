@@ -1,4 +1,4 @@
-"""This module contains FastAPI routers for the urgency rule endpoints."""
+"""This module contains FastAPI routers for urgency rule endpoints."""
 
 from typing import Annotated
 
@@ -62,6 +62,8 @@ async def create_urgency_rule(
         workspace.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -73,6 +75,8 @@ async def create_urgency_rule(
             detail="User does not have the required role to create urgency rules in "
             "the workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # urgency rules for non-admin users of a workspace.
 
     urgency_rule_db = await save_urgency_rule_to_db(
         asession=asession,
@@ -85,7 +89,6 @@ async def create_urgency_rule(
 @router.get("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
 async def get_urgency_rule(
     urgency_rule_id: int,
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
@@ -95,8 +98,6 @@ async def get_urgency_rule(
     ----------
     urgency_rule_id
         The ID of the urgency rule to retrieve.
-    calling_user_db
-        The user object associated with the user that is retrieving the urgency rule.
     workspace_db
         The workspace to retrieve the urgency rule from.
     asession
@@ -110,33 +111,21 @@ async def get_urgency_rule(
     Raises
     ------
     HTTPException
-        If the user does not have the required role to retrieve urgency rules from the
-        workspace.
         If the urgency rule with the given ID does not exist.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve urgency rules "
-            "from the workspace.",
-        )
 
     urgency_rule_db = await get_urgency_rule_by_id_from_db(
         asession=asession,
         urgency_rule_id=urgency_rule_id,
         workspace_id=workspace_db.workspace_id,
     )
+
     if not urgency_rule_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Urgency Rule ID `{urgency_rule_id}` not found",
         )
+
     return _convert_record_to_schema(urgency_rule_db=urgency_rule_db)
 
 
@@ -168,6 +157,8 @@ async def delete_urgency_rule(
         If the urgency rule with the given ID does not exist.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -179,21 +170,22 @@ async def delete_urgency_rule(
             detail="User does not have the required role to delete urgency rules in "
             "the workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # urgency rules for non-admin users of a workspace.
 
+    workspace_id = workspace_db.workspace_id
     urgency_rule_db = await get_urgency_rule_by_id_from_db(
-        asession=asession,
-        urgency_rule_id=urgency_rule_id,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, urgency_rule_id=urgency_rule_id, workspace_id=workspace_id
     )
+
     if not urgency_rule_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Urgency Rule ID `{urgency_rule_id}` not found",
         )
+
     await delete_urgency_rule_from_db(
-        asession=asession,
-        urgency_rule_id=urgency_rule_id,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, urgency_rule_id=urgency_rule_id, workspace_id=workspace_id
     )
 
 
@@ -233,6 +225,8 @@ async def update_urgency_rule(
         If the urgency rule with the given ID does not exist.
     """
 
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
+    # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -244,11 +238,12 @@ async def update_urgency_rule(
             detail="User does not have the required role to update urgency rules in "
             "the workspace.",
         )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
+    # urgency rules for non-admin users of a workspace.
 
+    workspace_id = workspace_db.workspace_id
     old_urgency_rule = await get_urgency_rule_by_id_from_db(
-        asession=asession,
-        urgency_rule_id=urgency_rule_id,
-        workspace_id=workspace_db.workspace_id,
+        asession=asession, urgency_rule_id=urgency_rule_id, workspace_id=workspace_id
     )
 
     if not old_urgency_rule:
@@ -261,14 +256,13 @@ async def update_urgency_rule(
         asession=asession,
         urgency_rule=urgency_rule,
         urgency_rule_id=urgency_rule_id,
-        workspace_id=workspace_db.workspace_id,
+        workspace_id=workspace_id,
     )
     return _convert_record_to_schema(urgency_rule_db=urgency_rule_db)
 
 
 @router.get("/", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
@@ -276,8 +270,6 @@ async def get_urgency_rules(
 
     Parameters
     ----------
-    calling_user_db
-        The user object associated with the user that is retrieving the urgency rules.
     workspace_db
         The workspace to retrieve urgency rules from.
     asession
@@ -287,25 +279,7 @@ async def get_urgency_rules(
     -------
     list[UrgencyRuleRetrieve]
         A list of urgency rules.
-
-    Raises
-    ------
-    HTTPException
-        If the user does not have the required role to retrieve urgency rules from the
-        workspace.
     """
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to retrieve urgency rules "
-            "from the workspace.",
-        )
 
     urgency_rules_db = await get_urgency_rules_from_db(
         asession=asession, workspace_id=workspace_db.workspace_id
