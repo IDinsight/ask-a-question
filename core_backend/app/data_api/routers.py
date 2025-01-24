@@ -3,8 +3,7 @@
 from datetime import date, datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -17,12 +16,7 @@ from ..question_answer.models import QueryDB
 from ..urgency_detection.models import UrgencyQueryDB
 from ..urgency_rules.models import UrgencyRuleDB
 from ..urgency_rules.schemas import UrgencyRuleRetrieve
-from ..users.models import (
-    UserDB,
-    get_user_workspaces,
-    user_has_required_role_in_workspace,
-)
-from ..users.schemas import UserRoles
+from ..users.models import WorkspaceDB
 from ..utils import setup_logger
 from .schemas import (
     ContentFeedbackExtract,
@@ -44,15 +38,15 @@ router = APIRouter(
 
 @router.get("/contents", response_model=list[ContentRetrieve])
 async def get_contents(
-    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[ContentRetrieve]:
     """Get all contents for a user.
 
     Parameters
     ----------
-    user_db
-        The user object associated with the user retrieving the contents.
+    workspace_db
+        The authenticated workspace object.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -60,42 +54,12 @@ async def get_contents(
     -------
     list[ContentRetrieve]
         A list of ContentRetrieve objects containing all contents for the user.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
-        If the user does not have the correct user role to retrieve contents in the
-        workspace.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace to retrieve contents.",
-        )
-
-    workspace_db = user_workspaces[0]
-
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN, UserRoles.READ_ONLY],
-        asession=asession,
-        user_db=user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must have a user role in the workspace to retrieve contents.",
-        )
-
 
     result = await asession.execute(
         select(ContentDB)
         .filter(ContentDB.workspace_id == workspace_db.workspace_id)
-        .options(
-            joinedload(ContentDB.content_tags),
-        )
+        .options(joinedload(ContentDB.content_tags))
     )
     contents = result.unique().scalars().all()
     contents_responses = [
@@ -136,15 +100,15 @@ def convert_content_to_pydantic_model(*, content: ContentDB) -> ContentRetrieve:
 
 @router.get("/urgency-rules", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
-    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
     """Get all urgency rules for a workspace.
 
     Parameters
     ----------
-    user_db
-        The user object associated with the user retrieving the urgency rules.
+    workspace_db
+        The authenticated workspace object.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -153,21 +117,7 @@ async def get_urgency_rules(
     list[UrgencyRuleRetrieve]
         A list of `UrgencyRuleRetrieve` objects containing all urgency rules for the
         workspace.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace to retrieve queries.",
-        )
-
-    workspace_db = user_workspaces[0]
 
     result = await asession.execute(
         select(UrgencyRuleDB).filter(
@@ -203,7 +153,7 @@ async def get_queries(
             ),
         ),
     ],
-    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[QueryExtract]:
     """Get all queries including child records for a user between a start and end date.
@@ -217,8 +167,8 @@ async def get_queries(
         The start date to filter queries by.
     end_date
         The end date to filter queries by.
-    user_db
-        The user object associated with the user retrieving the queries.
+    workspace_db
+        The authenticated workspace object.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -226,21 +176,7 @@ async def get_queries(
     -------
     list[QueryExtract]
         A list of QueryExtract objects containing all queries for the user.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace to retrieve queries.",
-        )
-
-    workspace_db = user_workspaces[0]
 
     if isinstance(start_date, date):
         start_date = datetime.combine(start_date, datetime.min.time())
@@ -288,7 +224,7 @@ async def get_urgency_queries(
             ),
         ),
     ],
-    user_db: Annotated[UserDB, Depends(authenticate_key)],
+    workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyQueryExtract]:
     """Get all urgency queries including child records for a user between a start and
@@ -303,8 +239,8 @@ async def get_urgency_queries(
         The start date to filter queries by.
     end_date
         The end date to filter queries by.
-    user_db
-        The user object associated with the user retrieving the urgent queries.
+    workspace_db
+        The authenticated workspace object.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -313,21 +249,7 @@ async def get_urgency_queries(
     list[UrgencyQueryExtract]
         A list of `UrgencyQueryExtract` objects containing all urgent queries for the
         workspace.
-
-    Raises
-    ------
-    HTTPException
-        If the user is not in exactly one workspace.
     """
-
-    user_workspaces = await get_user_workspaces(asession=asession, user_db=user_db)
-    if len(user_workspaces) != 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User must be in exactly one workspace to retrieve queries.",
-        )
-
-    workspace_db = user_workspaces[0]
 
     if isinstance(start_date, date):
         start_date = datetime.combine(start_date, datetime.min.time())

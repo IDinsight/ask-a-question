@@ -9,8 +9,8 @@ class QueryResponseExtract(BaseModel):
     """Pydantic model for when a valid query response is returned."""
 
     llm_response: str | None
-    response_id: int
     response_datetime_utc: datetime
+    response_id: int
     search_results: dict
 
     model_config = ConfigDict(from_attributes=True)
@@ -51,7 +51,10 @@ class ContentFeedbackExtract(BaseModel):
 
 
 class QueryExtract(BaseModel):
-    """Pydantic model for a query. Contains all related child models."""
+    """Pydantic model for a query. Contains all related child models.
+
+    NB: The model contains the workspace ID.
+    """
 
     content_feedback: list[ContentFeedbackExtract]
     query_datetime_utc: datetime
@@ -78,6 +81,8 @@ class UrgencyQueryResponseExtract(BaseModel):
 class UrgencyQueryExtract(BaseModel):
     """Pydantic model that is returned for an urgency query. Contains all related
     child models.
+
+    NB: This model contains the workspace ID.
     """
 
     message_datetime_utc: datetime
