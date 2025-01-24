@@ -116,6 +116,7 @@ async def retrieve_content_details(
     """
     Retrieve detailed statistics of a content
     """
+    # Use start_dt/ end_dt to avoid typing errors etc.
     frequency, start_dt, end_dt = get_frequency_and_startdate(
         time_frequency, start_date, end_date
     )
