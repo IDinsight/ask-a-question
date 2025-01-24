@@ -344,22 +344,33 @@ async def get_timeseries_query(
     statement = (
         select(
             ts_labels.c.time_period,
+            # negative count
             func.coalesce(
                 func.count(
                     case(
-                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                        (
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                ResponseFeedbackDB.feedback_sentiment == "negative",
+                            ),
+                            1,
+                        ),
                         else_=None,
                     )
                 ),
                 0,
             ).label("negative_feedback_count"),
+            # non-negative count
             func.coalesce(
                 func.count(
                     case(
                         (
-                            or_(
-                                ResponseFeedbackDB.feedback_sentiment.is_(None),
-                                ResponseFeedbackDB.feedback_sentiment != "negative",
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                or_(
+                                    ResponseFeedbackDB.feedback_sentiment.is_(None),
+                                    ResponseFeedbackDB.feedback_sentiment != "negative",
+                                ),
                             ),
                             1,
                         ),
@@ -369,7 +380,6 @@ async def get_timeseries_query(
                 0,
             ).label("non_negative_feedback_count"),
         )
-        # 1) Outer-join ts_labels to queries, matching user_id in *join condition*:
         .select_from(ts_labels)
         .outerjoin(
             QueryDB,
@@ -379,7 +389,6 @@ async def get_timeseries_query(
                 == func.date_trunc(interval_str, ts_labels.c.time_period),
             ),
         )
-        # 2) Outer-join feedback:
         .outerjoin(
             ResponseFeedbackDB,
             ResponseFeedbackDB.query_id == QueryDB.query_id,
