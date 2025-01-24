@@ -1,4 +1,4 @@
-"""This module contains the FastAPI router for the content search and AI response
+"""This module contains FastAPI routers for the content search and AI response
 endpoints.
 """
 

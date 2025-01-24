@@ -15,18 +15,18 @@ logger = setup_logger()
 
 
 async def detect_urgency(
-    urgency_rules: list[str], message: str, metadata: Optional[dict] = None
+    *, message: str, metadata: Optional[dict] = None, urgency_rules: list[str]
 ) -> UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult:
     """Detects the urgency of a message based on a set of urgency rules.
 
     Parameters
     ----------
-    urgency_rules
-        A list of urgency rules.
     message
         The message to detect the urgency of.
     metadata
         Additional metadata to pass to the LLM model.
+    urgency_rules
+        A list of urgency rules.
 
     Returns
     -------
@@ -38,11 +38,11 @@ async def detect_urgency(
     prompt = ud_entailment.get_prompt()
 
     json_str = await _ask_llm_async(
-        user_message=message,
-        system_message=prompt,
+        json_=True,
         litellm_model=LITELLM_MODEL_URGENCY_DETECT,
         metadata=metadata,
-        json_=True,
+        system_message=prompt,
+        user_message=message,
     )
 
     try:

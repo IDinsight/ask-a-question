@@ -274,7 +274,8 @@ async def retrieve_content(
     Raises
     ------
     HTTPException
-        If the user does not have the required role to retrieve content in the workspace.
+        If the user does not have the required role to retrieve content in the
+        workspace.
     """
 
     if not await user_has_required_role_in_workspace(
