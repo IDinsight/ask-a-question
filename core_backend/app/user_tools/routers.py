@@ -1,6 +1,6 @@
 """This module contains FastAPI routers for user creation and registration endpoints."""
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
@@ -162,7 +162,7 @@ async def create_first_user(
     user: UserCreateWithPassword,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-    default_workspace_name: str = "Workspace_DEFAULT",
+    default_workspace_name: Optional[str] = None,
 ) -> UserCreateWithCode:
     """Create the first user. This occurs when there are no users in the `UserDB`
     database AND no workspaces in the `WorkspaceDB` database. The first user is created
@@ -213,7 +213,7 @@ async def create_first_user(
 
     # 1.
     user.role = UserRoles.ADMIN
-    user.workspace_name = default_workspace_name
+    user.workspace_name = default_workspace_name or f"Workspace_{user.username}"
     workspace_db_new = await create_workspace(asession=asession, user=user)
 
     # 2.
