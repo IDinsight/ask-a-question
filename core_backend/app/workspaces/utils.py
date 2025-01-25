@@ -99,7 +99,7 @@ async def create_workspace(
 
 async def get_content_quota_by_workspace_id(
     *, asession: AsyncSession, workspace_id: int
-) -> int:
+) -> int | None:
     """Retrieve a workspace content quota by workspace ID.
 
     Parameters
@@ -111,7 +111,7 @@ async def get_content_quota_by_workspace_id(
 
     Returns
     -------
-    int
+    int | None
         The content quota for the workspace.
 
     Raises

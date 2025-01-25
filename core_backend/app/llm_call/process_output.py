@@ -106,7 +106,7 @@ async def generate_llm_query_response(
             context=context,
             metadata=metadata,
             original_language=query_refined.original_language,
-            question=query_refined.query_text_original, # Use the original query text
+            question=query_refined.query_text_original,  # Use the original query text
         )
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
@@ -431,7 +431,8 @@ async def _generate_tts_response(
 
         else:
             tts_file = await synthesize_speech(
-                text=response.llm_response, language=query_refined.original_language,
+                text=response.llm_response,
+                language=query_refined.original_language,
             )
 
         content_type = "audio/wav"

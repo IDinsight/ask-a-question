@@ -24,7 +24,7 @@ from ..workspaces.utils import (
 )
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import authenticate_credentials, create_access_token
-from .schemas import AuthenticationDetails, AuthenticatedUser, GoogleLoginData
+from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
 
 TAG_METADATA = {
     "name": "Authentication",
@@ -62,7 +62,9 @@ async def login(
     """
 
     user = await authenticate_credentials(
-        password=form_data.password, scopes=form_data.scopes, username=form_data.username
+        password=form_data.password,
+        scopes=form_data.scopes,
+        username=form_data.username,
     )
 
     if user is None:
@@ -133,7 +135,8 @@ async def login_google(
     return AuthenticationDetails(
         access_level=authenticate_user.access_level,
         access_token=create_access_token(
-            username=authenticate_user.username, workspace_name=user.workspace_name
+            username=authenticate_user.username,
+            workspace_name=authenticate_user.workspace_name,
         ),
         token_type="bearer",
         username=authenticate_user.username,
@@ -178,7 +181,7 @@ async def authenticate_or_create_google_user(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Workspace for '{gmail}' already exists. Contact the admin of "
-                f"that workspace to create an account for you."
+                f"that workspace to create an account for you.",
             )
         except WorkspaceNotFoundError:
             # Create the new user object with an ADMIN role and the specified workspace
@@ -212,6 +215,7 @@ async def authenticate_or_create_google_user(
                 user_db = await save_user_to_db(asession=asession, user=user)
 
             # Assign user to the specified workspace with the specified role.
+            assert user.role
             _ = await add_user_workspace_role(
                 asession=asession,
                 user_db=user_db,

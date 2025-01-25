@@ -29,8 +29,8 @@ from ..users.models import (
     save_user_to_db,
     update_user_in_db,
     update_user_role_in_workspace,
-    users_exist_in_workspace,
     user_has_admin_role_in_any_workspace,
+    users_exist_in_workspace,
 )
 from ..users.schemas import (
     UserCreate,
@@ -128,6 +128,7 @@ async def create_user(
     user_checked = await check_create_user_call(
         asession=asession, calling_user_db=calling_user_db, user=user
     )
+    assert user_checked.workspace_name
 
     existing_user = await check_if_user_exists(asession=asession, user=user_checked)
     user_checked_workspace_db = await get_workspace_by_workspace_name(
@@ -135,10 +136,18 @@ async def create_user(
     )
     try:
         # 2 or 3.
-        return await add_new_user_to_workspace(
-            asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
-        ) if not existing_user else await add_existing_user_to_workspace(
-            asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
+        return (
+            await add_new_user_to_workspace(
+                asession=asession,
+                user=user_checked,
+                workspace_db=user_checked_workspace_db,
+            )
+            if not existing_user
+            else await add_existing_user_to_workspace(
+                asession=asession,
+                user=user_checked,
+                workspace_db=user_checked_workspace_db,
+            )
         )
     except UserWorkspaceRoleAlreadyExistsError as e:
         logger.error(f"Error creating user workspace role: {e}")
@@ -310,7 +319,7 @@ async def retrieve_all_users(
 
 @router.get("/require-register", response_model=RequireRegisterResponse)
 async def is_register_required(
-    asession: AsyncSession = Depends(get_async_session)
+    asession: AsyncSession = Depends(get_async_session),
 ) -> RequireRegisterResponse:
     """Initial registration is required if there are neither users nor workspaces in
     the `UserDB` and `WorkspaceDB` databases.
@@ -428,9 +437,7 @@ async def reset_password(
         user_workspace_names=[
             row.workspace_name for row in updated_user_workspace_roles
         ],
-        user_workspace_roles=[
-            row.user_role for row in updated_user_workspace_roles
-        ],
+        user_workspace_roles=[row.user_role for row in updated_user_workspace_roles],
     )
 
 
@@ -613,6 +620,8 @@ async def add_existing_user_to_workspace(
         The user object with the recovery codes.
     """
 
+    assert user.role
+
     # 1.
     user_db = await get_user_by_username(asession=asession, username=user.username)
 
@@ -666,6 +675,8 @@ async def add_new_user_to_workspace(
     UserCreateWithCode
         The user object with the recovery codes.
     """
+
+    assert user.role
 
     # 1.
     recovery_codes = generate_recovery_codes()
@@ -750,11 +761,11 @@ async def check_create_user_call(
             _ = await get_workspace_by_workspace_name(
                 asession=asession, workspace_name=user.workspace_name
             )
-        except WorkspaceNotFoundError:
+        except WorkspaceNotFoundError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Workspace does not exist: {user.workspace_name}",
-            )
+            ) from e
 
     # 2.
     if not await user_has_admin_role_in_any_workspace(
@@ -763,7 +774,7 @@ async def check_create_user_call(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Calling user does not have the correct role to create a user in "
-            "any workspace."
+            "any workspace.",
         )
 
     # 3.
@@ -794,7 +805,7 @@ async def check_create_user_call(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Calling user does not have the correct role in the specified "
-               f"workspace: {user.workspace_name}",
+                f"workspace: {user.workspace_name}",
             )
     else:
         # NB: `user.workspace_name` is updated here!
@@ -842,7 +853,7 @@ async def check_update_user_call(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Calling user does not have the correct role to update user "
-            "information."
+            "information.",
         )
 
     if user.role and not user.workspace_name:
@@ -853,11 +864,11 @@ async def check_update_user_call(
 
     try:
         user_db = await get_user_by_id(asession=asession, user_id=user_id)
-    except UserNotFoundError:
+    except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User ID {user_id} not found.",
-        )
+        ) from e
 
     if user.username != user_db.username and not await is_username_valid(
         asession=asession, username=user.username

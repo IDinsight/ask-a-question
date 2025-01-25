@@ -4,7 +4,7 @@ import json
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
-import requests
+import requests  # type: ignore
 from litellm import acompletion, token_counter
 
 from ..config import (

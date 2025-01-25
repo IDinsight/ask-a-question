@@ -440,6 +440,7 @@ async def get_similar_content_async(
         workspace_id=workspace_id,
     )
 
+
 async def get_search_results(
     *,
     asession: AsyncSession,

@@ -150,8 +150,10 @@ async def delete_tag_from_db(
         content_tags_table.c.tag_id == tag_id
     )
     await asession.execute(association_stmt)
-    stmt = delete(TagDB).where(TagDB.workspace_id == workspace_id).where(
-        TagDB.tag_id == tag_id
+    stmt = (
+        delete(TagDB)
+        .where(TagDB.workspace_id == workspace_id)
+        .where(TagDB.tag_id == tag_id)
     )
     await asession.execute(stmt)
     await asession.commit()
@@ -177,8 +179,10 @@ async def get_tag_from_db(
         The tag object if it exists, otherwise None.
     """
 
-    stmt = select(TagDB).where(TagDB.workspace_id == workspace_id).where(
-        TagDB.tag_id == tag_id
+    stmt = (
+        select(TagDB)
+        .where(TagDB.workspace_id == workspace_id)
+        .where(TagDB.tag_id == tag_id)
     )
     tag_row = (await asession.execute(stmt)).first()
     return tag_row[0] if tag_row else None
@@ -210,8 +214,8 @@ async def get_list_of_tag_from_db(
         The list of tags in the workspace.
     """
 
-    stmt = select(TagDB).where(TagDB.workspace_id == workspace_id).order_by(
-        TagDB.tag_id
+    stmt = (
+        select(TagDB).where(TagDB.workspace_id == workspace_id).order_by(TagDB.tag_id)
     )
     if offset > 0:
         stmt = stmt.offset(offset)
@@ -243,8 +247,10 @@ async def validate_tags(
         list of tag IDs or a list of `TagDB` objects.
     """
 
-    stmt = select(TagDB).where(TagDB.workspace_id == workspace_id).where(
-        TagDB.tag_id.in_(tags)
+    stmt = (
+        select(TagDB)
+        .where(TagDB.workspace_id == workspace_id)
+        .where(TagDB.tag_id.in_(tags))
     )
     tags_db = (await asession.execute(stmt)).all()
     tag_rows = [c[0] for c in tags_db] if tags_db else []
@@ -275,9 +281,9 @@ async def is_tag_name_unique(
     """
 
     stmt = (
-        select(TagDB).where(TagDB.workspace_id == workspace_id).where(
-            TagDB.tag_name == tag_name
-        )
+        select(TagDB)
+        .where(TagDB.workspace_id == workspace_id)
+        .where(TagDB.tag_name == tag_name)
     )
     tag_row = (await asession.execute(stmt)).first()
     return not tag_row

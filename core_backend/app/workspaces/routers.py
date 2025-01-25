@@ -84,7 +84,7 @@ async def create_workspaces(
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Calling user does not have the correct role to create workspaces."
+            detail="Calling user does not have the correct role to create workspaces.",
         )
 
     # 2.
@@ -145,7 +145,8 @@ async def retrieve_all_workspaces(
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Calling user does not have the correct role to retrieve workspaces."
+            detail="Calling user does not have the correct role to retrieve "
+            "workspaces.",
         )
 
     # 1.
@@ -210,11 +211,11 @@ async def update_workspace(
         workspace_db = await get_workspace_by_workspace_id(
             asession=asession, workspace_id=workspace_id
         )
-    except WorkspaceNotFoundError:
+    except WorkspaceNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Workspace ID {workspace_id} not found."
-        )
+            detail=f"Workspace ID {workspace_id} not found.",
+        ) from e
 
     calling_user_workspace_role = get_user_role_in_workspace(
         asession=asession, user_db=calling_user_db, workspace_db=workspace_db
@@ -222,7 +223,7 @@ async def update_workspace(
     if calling_user_workspace_role != UserRoles.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Calling user is not an admin in the workspace."
+            detail="Calling user is not an admin in the workspace.",
         )
 
     try:
@@ -234,7 +235,7 @@ async def update_workspace(
         return WorkspaceQuotaResponse(
             new_api_daily_quota=workspace_db_updated.api_daily_quota,
             new_content_quota=workspace_db_updated.content_quota,
-            workspace_name=workspace_db_updated.workspace_name
+            workspace_name=workspace_db_updated.workspace_name,
         )
     except SQLAlchemyError as e:
         logger.error(f"Error updating workspace quotas: {e}")

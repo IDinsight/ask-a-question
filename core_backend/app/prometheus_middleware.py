@@ -40,18 +40,18 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Collect metrics about requests made to the application.
 
-       Parameters
-       ----------
-        request
-            The incoming request.
-        call_next
-            The next middleware in the chain.
+        Parameters
+        ----------
+         request
+             The incoming request.
+         call_next
+             The next middleware in the chain.
 
-        Returns
-        -------
-        Response
-            The response to the incoming request.
-       """
+         Returns
+         -------
+         Response
+             The response to the incoming request.
+        """
 
         if request.url.path == "/metrics":
             return await call_next(request)

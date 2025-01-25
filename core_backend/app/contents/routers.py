@@ -847,7 +847,9 @@ def check_empty_values(*, df: pd.DataFrame, error_list: list[CustomError]) -> No
         )
 
 
-def check_length_constraints(*, df: pd.DataFrame, error_list: list[CustomError]) -> None:
+def check_length_constraints(
+    *, df: pd.DataFrame, error_list: list[CustomError]
+) -> None:
     """Check for length constraints in the DataFrame.
 
     Parameters

@@ -11,6 +11,7 @@ from ..database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
+from ..workspaces.utils import get_workspace_by_workspace_name
 from .models import (
     UrgencyRuleDB,
     delete_urgency_rule_from_db,

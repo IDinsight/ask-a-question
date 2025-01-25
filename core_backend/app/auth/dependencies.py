@@ -78,9 +78,12 @@ async def authenticate_credentials(
     """
 
     user_workspace_name: Optional[str] = next(
-        (scope.split(":", 1)[1].strip() for scope in scopes or [] if
-         scope.startswith("workspace:")),
-        None
+        (
+            scope.split(":", 1)[1].strip()
+            for scope in scopes or []
+            if scope.startswith("workspace:")
+        ),
+        None,
     )
 
     async with AsyncSession(
@@ -109,7 +112,7 @@ async def authenticate_credentials(
 
 
 async def authenticate_key(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer)
+    credentials: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> WorkspaceDB:
     """Authenticate using basic bearer token. This is used by the following endpoints:
 
@@ -147,7 +150,7 @@ async def authenticate_key(
             )
             # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
             return workspace_db
-        except WorkspaceTokenNotFoundError:
+        except WorkspaceTokenNotFoundError as e:
             # Fall back to JWT token authentication if API key is not valid.
             user_db = await get_current_user(token)
 
@@ -158,7 +161,7 @@ async def authenticate_key(
             if len(user_workspaces) != 1:
                 raise RuntimeError(
                     f"User {user_db.username} belongs to multiple workspaces."
-                )
+                ) from e
             workspace_db = user_workspaces[0]
             # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
 
@@ -193,7 +196,6 @@ def create_access_token(*, username: str, workspace_name: str) -> str:
     payload["type"] = "access_token"
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:

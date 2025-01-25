@@ -1,6 +1,7 @@
 """This module contains the ORM for managing users and workspaces."""
 
 from datetime import datetime, timezone
+from typing import Sequence
 
 from sqlalchemy import (
     ARRAY,
@@ -8,7 +9,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     Row,
-    Sequence,
     String,
     select,
     update,
@@ -96,12 +96,12 @@ class WorkspaceDB(Base):
 
     __tablename__ = "workspace"
 
-    api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    api_daily_quota: Mapped[int | None] = mapped_column(Integer, nullable=True)
     api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=True)
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    content_quota: Mapped[int] = mapped_column(Integer, nullable=True)
+    content_quota: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -247,8 +247,8 @@ async def check_if_user_exists(
 
     stmt = select(UserDB).where(UserDB.username == user.username)
     result = await asession.execute(stmt)
-    user = result.scalar_one_or_none()
-    return user
+    user_db = result.scalar_one_or_none()
+    return user_db
 
 
 async def check_if_users_exist(*, asession: AsyncSession) -> bool:
