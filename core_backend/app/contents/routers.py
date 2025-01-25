@@ -11,19 +11,18 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user, get_current_workspace
+from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..config import CHECK_CONTENT_LIMIT
 from ..database import get_async_session
 from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate, TagRetrieve
-from ..users.models import (
-    UserDB,
-    WorkspaceDB,
-    get_content_quota_by_workspace_id,
-    user_has_required_role_in_workspace,
-)
+from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
+from ..workspaces.utils import (
+    get_content_quota_by_workspace_id,
+    get_workspace_by_workspace_name,
+)
 from .models import (
     ContentDB,
     archive_content_from_db,
@@ -67,7 +66,7 @@ class ExceedsContentQuotaError(Exception):
 async def create_content(
     content: ContentCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[ContentRetrieve]:
     """Create new content.
@@ -89,8 +88,8 @@ async def create_content(
         The content object to create.
     calling_user_db
         The user object associated with the user that is creating the content.
-    workspace_db
-        The workspace to create the content in.
+    workspace_name
+        The name of the workspace to create the content in.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -105,6 +104,10 @@ async def create_content(
         If the user does not have the required role to create content in the workspace.
         If the content tags are invalid or the user would exceed their content quota.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # content for non-admin users of a workspace.
@@ -162,7 +165,7 @@ async def edit_content(
     content_id: int,
     content: ContentCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
@@ -176,8 +179,8 @@ async def edit_content(
         The content to edit.
     calling_user_db
         The user object associated with the user that is editing the content.
-    workspace_db
-        The workspace that the content belongs in.
+    workspace_name
+        The name of the workspace that the content belongs in.
     exclude_archived
         Specifies whether to exclude archived contents.
     asession
@@ -195,6 +198,10 @@ async def edit_content(
         If the content to edit is not found.
         If the tags are invalid.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
     # content for non-admin users of a workspace.
@@ -250,7 +257,7 @@ async def edit_content(
 
 @router.get("/", response_model=list[ContentRetrieve])
 async def retrieve_content(
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     skip: int = 0,
     limit: int = 50,
     exclude_archived: bool = True,
@@ -260,8 +267,8 @@ async def retrieve_content(
 
     Parameters
     ----------
-    workspace_db
-        The workspace to retrieve content from.
+    workspace_name
+        The name of the workspace to retrieve content from.
     skip
         The number of contents to skip.
     limit
@@ -277,6 +284,9 @@ async def retrieve_content(
         The retrieved contents from the specified workspace.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     records = await get_list_of_content_from_db(
         asession=asession,
         exclude_archived=exclude_archived,
@@ -292,7 +302,7 @@ async def retrieve_content(
 async def archive_content(
     content_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """Archive content by ID.
@@ -303,8 +313,8 @@ async def archive_content(
         The ID of the content to archive.
     calling_user_db
         The user object associated with the user that is archiving the content.
-    workspace_db
-        The workspace to archive content in.
+    workspace_name
+        The naem of the workspace to archive content in.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -314,6 +324,10 @@ async def archive_content(
         If the user does not have the required role to archive content in the workspace.
         If the content is not found.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to archive
     # content for non-admin users of a workspace.
@@ -351,7 +365,7 @@ async def archive_content(
 async def delete_content(
     content_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """Delete content by ID.
@@ -362,8 +376,8 @@ async def delete_content(
         The ID of the content to delete.
     calling_user_db
         The user object associated with the user that is deleting the content.
-    workspace_db
-        The workspace to delete content from.
+    workspace_name
+        The name of the workspace to delete content from.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -374,6 +388,10 @@ async def delete_content(
         If the content is not found.
         If the deletion of the content with feedback is not allowed.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # content for non-admin users of a workspace.
@@ -417,7 +435,7 @@ async def delete_content(
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: int,
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
@@ -427,8 +445,8 @@ async def retrieve_content_by_id(
     ----------
     content_id
         The ID of the content to retrieve.
-    workspace_db
-        The workspace to retrieve content from.
+    workspace_name
+        The name of the workspace to retrieve content from.
     exclude_archived
         Specifies whether to exclude archived contents.
     asession
@@ -445,6 +463,9 @@ async def retrieve_content_by_id(
         If the content is not found.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     record = await get_content_from_db(
         asession=asession,
         content_id=content_id,
@@ -465,7 +486,7 @@ async def retrieve_content_by_id(
 async def bulk_upload_contents(
     file: UploadFile,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
@@ -480,8 +501,8 @@ async def bulk_upload_contents(
         The CSV file to upload.
     calling_user_db
         The user object associated with the user that is uploading the CSV.
-    workspace_db
-        The workspace to upload the contents to.
+    workspace_name
+        The name of the workspace to upload the contents to.
     exclude_archived
         Specifies whether to exclude archived contents.
     asession
@@ -499,6 +520,10 @@ async def bulk_upload_contents(
         If the file is not a CSV.
         If the CSV file is empty or unreadable.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to upload
     # content for non-admin users of a workspace.

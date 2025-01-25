@@ -5,10 +5,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user, get_current_workspace
+from ..auth.dependencies import get_current_user
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -16,27 +15,20 @@ from ..users.models import (
     UserNotFoundInWorkspaceError,
     UserWorkspaceRoleAlreadyExistsError,
     WorkspaceDB,
-    WorkspaceNotFoundError,
     add_user_workspace_role,
     check_if_user_exists,
     check_if_users_exist,
-    check_if_workspaces_exist,
-    create_workspace,
     get_user_by_id,
     get_user_by_username,
     get_user_role_in_all_workspaces,
     get_user_role_in_workspace,
     get_users_and_roles_by_workspace_name,
-    get_workspace_by_workspace_id,
-    get_workspace_by_workspace_name,
     get_workspaces_by_user_role,
     is_username_valid,
     reset_user_password_in_db,
     save_user_to_db,
     update_user_in_db,
     update_user_role_in_workspace,
-    update_workspace_api_key,
-    update_workspace_quotas,
     users_exist_in_workspace,
     user_has_admin_role_in_any_workspace,
 )
@@ -47,16 +39,15 @@ from ..users.schemas import (
     UserResetPassword,
     UserRetrieve,
     UserRoles,
-    WorkspaceCreate,
-    WorkspaceRetrieve,
-    WorkspaceUpdate,
 )
-from ..utils import generate_key, setup_logger, update_api_limits
-from .schemas import (
-    RequireRegisterResponse,
-    WorkspaceKeyResponse,
-    WorkspaceQuotaResponse,
+from ..utils import setup_logger, update_api_limits
+from ..workspaces.utils import (
+    WorkspaceNotFoundError,
+    check_if_workspaces_exist,
+    create_workspace,
+    get_workspace_by_workspace_name,
 )
+from .schemas import RequireRegisterResponse
 from .utils import generate_recovery_codes
 
 TAG_METADATA = {
@@ -315,52 +306,6 @@ async def retrieve_all_users(
             )
         ]
     return user_list
-
-
-@router.put("/rotate-key", response_model=WorkspaceKeyResponse)
-async def get_new_api_key(
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> WorkspaceKeyResponse:
-    """Generate a new API key for the workspace. Takes a workspace object, generates a
-    new key, replaces the old one in the database, and returns a workspace object with
-    the new key.
-
-    Parameters
-    ----------
-    workspace_db
-        The workspace object requesting the new API key.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Returns
-    -------
-    WorkspaceKeyResponse
-        The response object containing the new API key.
-
-    Raises
-    ------
-    HTTPException
-        If there is an error updating the workspace API key.
-    """
-
-    new_api_key = generate_key()
-
-    try:
-        # This is necessary to attach the `workspace_db` object to the session.
-        asession.add(workspace_db)
-        workspace_db_updated = await update_workspace_api_key(
-            asession=asession, new_api_key=new_api_key, workspace_db=workspace_db
-        )
-        return WorkspaceKeyResponse(
-            new_api_key=new_api_key, workspace_name=workspace_db_updated.workspace_name
-        )
-    except SQLAlchemyError as e:
-        logger.error(f"Error updating workspace API key: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error updating workspace API key.",
-        ) from e
 
 
 @router.get("/require-register", response_model=RequireRegisterResponse)
@@ -632,212 +577,6 @@ async def get_user(
         user_workspace_names=[row.workspace_name for row in user_workspace_roles],
         user_workspace_roles=[row.user_role.value for row in user_workspace_roles],
     )
-
-
-# Workspace endpoints below.
-@router.post("/workspace/", response_model=UserCreateWithCode)
-async def create_workspaces(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspaces: WorkspaceCreate | list[WorkspaceCreate],
-    asession: AsyncSession = Depends(get_async_session),
-) -> list[WorkspaceDB]:
-    """Create workspaces. Workspaces can only be created by ADMIN users.
-
-    NB: When a workspace is created, the API daily quota and content quota limits for
-    the workspace is set.
-
-    The process is as follows:
-
-    1. If the calling user does not have the correct role to create workspaces, then an
-        error is thrown.
-    2. Create each workspace. If a workspace already exists during this process, an
-        error is NOT thrown. Instead, the existing workspace object is returned. This
-        avoids the need to iterate thru the list of workspaces first.
-
-    Parameters
-    ----------
-    calling_user_db
-        The user object associated with the user that is creating the workspace(s).
-    workspaces
-        The list of workspace objects to create.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Returns
-    -------
-    UserCreateWithCode
-        The user object with the recovery codes.
-
-    Raises
-    ------
-    HTTPException
-        If the calling user does not have the correct role to create workspaces.
-    """
-
-    # 1.
-    if not await user_has_admin_role_in_any_workspace(
-        asession=asession, user_db=calling_user_db
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Calling user does not have the correct role to create workspaces."
-        )
-
-    # 2.
-    if not isinstance(workspaces, list):
-        workspaces = [workspaces]
-    return [
-        await create_workspace(
-            api_daily_quota=workspace.api_daily_quota,
-            asession=asession,
-            content_quota=workspace.content_quota,
-            user=UserCreate(
-                role=UserRoles.ADMIN,
-                username=calling_user_db.username,
-                workspace_name=workspace.workspace_name,
-            ),
-        )
-        for workspace in workspaces
-    ]
-
-
-@router.get("/workspace/", response_model=list[WorkspaceRetrieve])
-async def retrieve_all_workspaces(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> list[WorkspaceRetrieve]:
-    """Return a list of all workspaces.
-
-    NB: When this endpoint called, it **should** be called by ADMIN users only since
-    details about workspaces are returned.
-
-    The process is as follows:
-
-    1. Only retrieve workspaces for which the calling user has an ADMIN role.
-    2. If the calling user is an admin in a workspace, then the details for that
-        workspace are returned.
-
-    Parameters
-    ----------
-    calling_user_db
-        The user object associated with the user that is retrieving the list of
-        workspaces.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Returns
-    -------
-    list[WorkspaceRetrieve]
-        A list of retrieved workspace objects.
-
-    Raises
-    ------
-    HTTPException
-        If the calling user does not have the correct role to retrieve workspaces.
-    """
-
-    if not await user_has_admin_role_in_any_workspace(
-        asession=asession, user_db=calling_user_db
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Calling user does not have the correct role to retrieve workspaces."
-        )
-
-    # 1.
-    calling_user_admin_workspace_dbs = await get_workspaces_by_user_role(
-        asession=asession, user_db=calling_user_db, user_role=UserRoles.ADMIN
-    )
-
-    # 2.
-    return [
-        WorkspaceRetrieve(
-            api_daily_quota=workspace_db.api_daily_quota,
-            api_key_first_characters=workspace_db.api_key_first_characters,
-            api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
-            content_quota=workspace_db.content_quota,
-            created_datetime_utc=workspace_db.created_datetime_utc,
-            updated_datetime_utc=workspace_db.updated_datetime_utc,
-            workspace_id=workspace_db.workspace_id,
-            workspace_name=workspace_db.workspace_name,
-        )
-        for workspace_db in calling_user_admin_workspace_dbs
-    ]
-
-
-@router.put("/workspace/{workspace_id}", response_model=WorkspaceUpdate)
-async def update_workspace(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_id: int,
-    workspace: WorkspaceUpdate,
-    asession: AsyncSession = Depends(get_async_session),
-) -> WorkspaceQuotaResponse:
-    """Update the quotas for an existing workspace. Only admin users can update
-    workspace quotas and only for the workspaces that they are assigned to.
-
-    NB: The name for a workspace can NOT be updated since this would involve
-    propagating changes user and roles changes as well.
-
-    Parameters
-    ----------
-    calling_user_db
-        The user object associated with the user updating the workspace.
-    workspace_id
-        The workspace ID to update.
-    workspace
-        The workspace object with the updated quotas.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Returns
-    -------
-    WorkspaceQuotaResponse
-        The response object containing the new quotas.
-
-    Raises
-    ------
-    HTTPException
-        If the workspace to update does not exist.
-        If the calling user does not have the correct role to update the workspace.
-        If there is an error updating the workspace quotas.
-    """
-
-    try:
-        workspace_db = await get_workspace_by_workspace_id(
-            asession=asession, workspace_id=workspace_id
-        )
-    except WorkspaceNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Workspace ID {workspace_id} not found."
-        )
-
-    calling_user_workspace_role = get_user_role_in_workspace(
-        asession=asession, user_db=calling_user_db, workspace_db=workspace_db
-    )
-    if calling_user_workspace_role != UserRoles.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Calling user is not an admin in the workspace."
-        )
-
-    try:
-        # This is necessary to attach the `workspace_db` object to the session.
-        asession.add(workspace_db)
-        workspace_db_updated = await update_workspace_quotas(
-            asession=asession, workspace=workspace, workspace_db=workspace_db
-        )
-        return WorkspaceQuotaResponse(
-            new_api_daily_quota=workspace_db_updated.api_daily_quota,
-            new_content_quota=workspace_db_updated.content_quota,
-            workspace_name=workspace_db_updated.workspace_name
-        )
-    except SQLAlchemyError as e:
-        logger.error(f"Error updating workspace quotas: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error updating workspace quotas.",
-        ) from e
 
 
 async def add_existing_user_to_workspace(

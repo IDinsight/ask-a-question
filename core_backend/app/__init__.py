@@ -1,3 +1,5 @@
+"""This module contains the FastAPI application for the backend."""
+
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
@@ -21,6 +23,7 @@ from . import (
     urgency_detection,
     urgency_rules,
     user_tools,
+    workspaces,
 )
 from .config import (
     CROSS_ENCODER_MODEL,
@@ -97,7 +100,15 @@ if LANGFUSE == "True":
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifespan events for the FastAPI application.
 
-    :param app: FastAPI application instance.
+    Parameters
+    ----------
+    app
+        The application instance.
+
+    Returns
+    -------
+    AsyncIterator[None]
+        The lifespan events.
     """
 
     logger.info("Application started")
@@ -114,7 +125,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_metrics_app() -> Callable:
-    """Create prometheus metrics app"""
+    """Create prometheus metrics app
+
+    Returns
+    -------
+    Callable
+        The metrics app.
+    """
+
     registry = CollectorRegistry()
     multiprocess.MultiProcessCollector(registry)
     return make_asgi_app(registry=registry)
@@ -128,8 +146,10 @@ def create_app() -> FastAPI:
     3. Add Prometheus middleware for metrics.
     4. Mount the metrics app on /metrics as an independent application.
 
-    :returns:
-        app: FastAPI application instance.
+    Returns
+    -------
+    FastAPI
+        The application instance.
     """
 
     app = FastAPI(
@@ -147,6 +167,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(auth.router)
     app.include_router(user_tools.router)
+    app.include_router(workspaces.router)
     app.include_router(admin.routers.router)
     app.include_router(data_api.router)
 

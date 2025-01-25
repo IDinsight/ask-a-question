@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user, get_current_workspace
+from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..users.models import UserDB, WorkspaceDB, user_has_required_role_in_workspace
+from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
 from .models import (
@@ -34,7 +34,7 @@ logger = setup_logger(__name__)
 async def create_urgency_rule(
     urgency_rule: UrgencyRuleCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """Create a new urgency rule.
@@ -45,8 +45,8 @@ async def create_urgency_rule(
         The urgency rule to create.
     calling_user_db
         The user object associated with the user that is creating the urgency rule.
-    workspace_db
-        The workspace to create the urgency rule in.
+    workspace_name
+        The name of the workspace to create the urgency rule in.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -61,6 +61,10 @@ async def create_urgency_rule(
         If the user does not have the required role to create urgency rules in the
         workspace.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # urgency rules for non-admin users of a workspace.
@@ -89,7 +93,7 @@ async def create_urgency_rule(
 @router.get("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
 async def get_urgency_rule(
     urgency_rule_id: int,
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """Get a single urgency rule by ID.
@@ -98,8 +102,8 @@ async def get_urgency_rule(
     ----------
     urgency_rule_id
         The ID of the urgency rule to retrieve.
-    workspace_db
-        The workspace to retrieve the urgency rule from.
+    workspace_name
+        The name of the workspace to retrieve the urgency rule from.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -114,6 +118,9 @@ async def get_urgency_rule(
         If the urgency rule with the given ID does not exist.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     urgency_rule_db = await get_urgency_rule_by_id_from_db(
         asession=asession,
         urgency_rule_id=urgency_rule_id,
@@ -133,7 +140,7 @@ async def get_urgency_rule(
 async def delete_urgency_rule(
     urgency_rule_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """Delete a single urgency rule by ID.
@@ -144,8 +151,8 @@ async def delete_urgency_rule(
         The ID of the urgency rule to delete.
     calling_user_db
         The user object associated with the user that is deleting the urgency rule.
-    workspace_db
-        The workspace to delete the urgency rule from.
+    workspace_name
+        The name of the workspace to delete the urgency rule from.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -156,6 +163,10 @@ async def delete_urgency_rule(
         workspace.
         If the urgency rule with the given ID does not exist.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # urgency rules for non-admin users of a workspace.
@@ -194,7 +205,7 @@ async def update_urgency_rule(
     urgency_rule_id: int,
     urgency_rule: UrgencyRuleCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> UrgencyRuleRetrieve:
     """Update a single urgency rule by ID.
@@ -207,8 +218,8 @@ async def update_urgency_rule(
         The updated urgency rule object.
     calling_user_db
         The user object associated with the user that is updating the urgency rule.
-    workspace_db
-        The workspace to update the urgency rule in.
+    workspace_name
+        The name of the workspace to update the urgency rule in.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -224,6 +235,10 @@ async def update_urgency_rule(
         workspace.
         If the urgency rule with the given ID does not exist.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
     # urgency rules for non-admin users of a workspace.
@@ -263,15 +278,15 @@ async def update_urgency_rule(
 
 @router.get("/", response_model=list[UrgencyRuleRetrieve])
 async def get_urgency_rules(
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyRuleRetrieve]:
     """Get all urgency rules.
 
     Parameters
     ----------
-    workspace_db
-        The workspace to retrieve urgency rules from.
+    workspace_name
+        The name of the workspace to retrieve urgency rules from.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -281,6 +296,9 @@ async def get_urgency_rules(
         A list of urgency rules.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     urgency_rules_db = await get_urgency_rules_from_db(
         asession=asession, workspace_id=workspace_db.workspace_id
     )

@@ -1,6 +1,4 @@
-"""This module contains Pydantic models for user creation, retrieval, and password
-reset. Pydantic models for workspace creation and retrieval are also defined here.
-"""
+"""This module contains Pydantic models for users."""
 
 from datetime import datetime
 from enum import Enum
@@ -87,39 +85,5 @@ class UserResetPassword(BaseModel):
     password: str
     recovery_code: str
     username: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class WorkspaceCreate(BaseModel):
-    """Pydantic model for workspace creation."""
-
-    api_daily_quota: Optional[int] = None
-    content_quota: Optional[int] = None
-    workspace_name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class WorkspaceRetrieve(BaseModel):
-    """Pydantic model for workspace retrieval."""
-
-    api_daily_quota: Optional[int] = None
-    api_key_first_characters: str
-    api_key_updated_datetime_utc: datetime
-    content_quota: Optional[int] = None
-    created_datetime_utc: datetime
-    updated_datetime_utc: datetime
-    workspace_id: int
-    workspace_name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class WorkspaceUpdate(BaseModel):
-    """Pydantic model for workspace updates."""
-
-    api_daily_quota: Optional[int] = None
-    content_quota: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

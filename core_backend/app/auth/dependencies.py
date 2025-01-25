@@ -1,7 +1,7 @@
 """This module contains authentication dependencies for the FastAPI application."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Optional
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -16,21 +16,15 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import CHECK_API_LIMIT
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
     WorkspaceDB,
-    WorkspaceNotFoundError,
-    add_user_workspace_role,
-    create_workspace,
     get_user_by_username,
     get_user_workspaces,
-    get_workspace_by_workspace_name,
-    save_user_to_db,
 )
-from ..users.schemas import UserCreate, UserRoles
 from ..utils import (
     get_key_hash,
     setup_logger,
@@ -51,15 +45,29 @@ bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
+class WorkspaceTokenNotFoundError(Exception):
+    """Exception raised when a workspace token is not found in the `WorkspaceDB`
+    database.
+    """
+
+
 async def authenticate_credentials(
-    *, password: str, username: str
+    *, password: str, scopes: Optional[list[str]] = None, username: str
 ) -> AuthenticatedUser | None:
     """Authenticate user using username and password.
+
+    NB: If the user belongs to multiple workspaces, then `scopes` must contain the
+    workspace that the user is logging into.
 
     Parameters
     ----------
     password
         User password.
+    scopes
+        User workspace. If the user being authenticated belongs to multiple workspaces,
+        then this parameter mMust be the exact string "workspace:workspace_name". Note
+        that even though this parameter is a list of strings, only one workspace is
+        allowed.
     username
         User username.
 
@@ -67,12 +75,13 @@ async def authenticate_credentials(
     -------
     AuthenticatedUser | None
         Authenticated user if the user is authenticated, otherwise None.
-
-    Raises
-    ------
-    RuntimeError
-        If the user belongs to multiple workspaces.
     """
+
+    user_workspace_name: Optional[str] = next(
+        (scope.split(":", 1)[1].strip() for scope in scopes or [] if
+         scope.startswith("workspace:")),
+        None
+    )
 
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
@@ -80,22 +89,19 @@ async def authenticate_credentials(
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
             if verify_password_salted_hash(password, user_db.hashed_password):
-                # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
-                user_workspaces = await get_user_workspaces(
-                    asession=asession, user_db=user_db
-                )
-                if len(user_workspaces) != 1:
-                    raise RuntimeError(
-                        f"User {username} belongs to multiple workspaces."
+                if not user_workspace_name:
+                    user_workspaces = await get_user_workspaces(
+                        asession=asession, user_db=user_db
                     )
-                workspace_name = user_workspaces[0].workspace_name
-                # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
+                    if len(user_workspaces) != 1:
+                        return None
+                user_workspace_name = user_workspaces[0].workspace_name
 
                 # Hardcode "fullaccess" now, but may use it in the future.
                 return AuthenticatedUser(
                     access_level="fullaccess",
                     username=username,
-                    workspace_name=workspace_name,
+                    workspace_name=user_workspace_name,
                 )
             return None
         except UserNotFoundError:
@@ -141,7 +147,7 @@ async def authenticate_key(
             )
             # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
             return workspace_db
-        except WorkspaceNotFoundError:
+        except WorkspaceTokenNotFoundError:
             # Fall back to JWT token authentication if API key is not valid.
             user_db = await get_current_user(token)
 
@@ -157,109 +163,6 @@ async def authenticate_key(
             # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
 
             return workspace_db
-
-
-async def authenticate_or_create_google_user(
-    *, google_email: str, request: Request
-) -> AuthenticatedUser | None:
-    """Check if user exists in the `UserDB` database. If not, create the `UserDB`
-    object.
-
-    NB: When a Google user is created, their workspace name defaults to
-    `Workspace_{google_email}` with a default role of ADMIN.
-
-    Parameters
-    ----------
-    google_email
-        Google email address.
-    request
-        The request object.
-
-    Returns
-    -------
-    AuthenticatedUser | None
-        Authenticated user if the user is authenticated or a new user is created.
-        `None` if a new user is being created and the requested workspace already
-        exists.
-
-    Raises
-    ------
-    RuntimeError
-        If the user belongs to multiple workspaces.
-    """
-
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_username(
-                asession=asession, username=google_email
-            )
-
-            # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
-            user_workspaces = await get_user_workspaces(
-                asession=asession, user_db=user_db
-            )
-            if len(user_workspaces) != 1:
-                raise RuntimeError(
-                    f"User {google_email} belongs to multiple workspaces."
-                )
-            workspace_name = user_workspaces[0].workspace_name
-            # HACK FIX FOR FRONTEND: Need to get workspace for `AuthenticatedUser`.
-
-            return AuthenticatedUser(
-                access_level="fullaccess",
-                username=user_db.username,
-                workspace_name=workspace_name,
-            )
-        except UserNotFoundError:
-            # If the workspace already exists, then the Google user should have already
-            # been created.
-            workspace_name = f"Workspace_{google_email}"
-            try:
-                _ = await get_workspace_by_workspace_name(
-                    asession=asession, workspace_name=workspace_name
-                )
-                return None
-            except WorkspaceNotFoundError:
-                # Create the new user object with an ADMIN role and the specified
-                # workspace name.
-                user = UserCreate(
-                    role=UserRoles.ADMIN,
-                    username=google_email,
-                    workspace_name=workspace_name,
-                )
-
-                # Create the workspace for the Google user.
-                workspace_db_new = await create_workspace(
-                    api_daily_quota=DEFAULT_API_QUOTA,
-                    asession=asession,
-                    content_quota=DEFAULT_CONTENT_QUOTA,
-                    user=user,
-                )
-
-            # Save the user to the `UserDB` database.
-            user_db = await save_user_to_db(asession=asession, user=user)
-
-            # Assign user to the specified workspace with the specified role.
-            _ = await add_user_workspace_role(
-                asession=asession,
-                user_db=user_db,
-                user_role=user.role,
-                workspace_db=workspace_db_new,
-            )
-
-            # Update API limits for the Google user's workspace.
-            await update_api_limits(
-                api_daily_quota=DEFAULT_API_QUOTA,
-                redis=request.app.state.redis,
-                workspace_name=workspace_db_new.workspace_name,
-            )
-            return AuthenticatedUser(
-                access_level="fullaccess",
-                username=user_db.username,
-                workspace_name=workspace_name,
-            )
 
 
 def create_access_token(*, username: str, workspace_name: str) -> str:
@@ -296,6 +199,10 @@ def create_access_token(*, username: str, workspace_name: str) -> str:
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
     """Get the current user from the access token.
 
+    NB: We have to check that both the username and workspace name are present in the
+    payload. If either one is missing, then this corresponds to the situation where
+    there are neither users nor workspaces present.
+
     Parameters
     ----------
     token
@@ -319,8 +226,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
+        username = payload.get("sub", None)
+        workspace_name = payload.get("workspace_name", None)
+        if not (username and workspace_name):
             raise credentials_exception
 
         # Fetch user from database.
@@ -338,10 +246,18 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         raise credentials_exception from err
 
 
-async def get_current_workspace(
+async def get_current_workspace_name(
     token: Annotated[str, Depends(oauth2_scheme)]
-) -> WorkspaceDB:
-    """Get the current workspace from the access token.
+) -> str:
+    """Get the current workspace name from the access token.
+
+    NB: We have to check that both the username and workspace name are present in the
+    payload. If either one is missing, then this corresponds to the situation where
+    there are neither users nor workspaces present.
+
+    NB: The workspace object cannot be retrieved in this module due to circular imports.
+    Instead, the workspace name is retrieved from the payload and the caller is
+    responsible for retrieving the workspace object.
 
     Parameters
     ----------
@@ -350,8 +266,8 @@ async def get_current_workspace(
 
     Returns
     -------
-    WorkspaceDB
-        The workspace object.
+    str
+        The workspace name.
 
     Raises
     ------
@@ -366,21 +282,11 @@ async def get_current_workspace(
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        workspace_name = payload.get("workspace_name")
-        if workspace_name is None:
+        username = payload.get("sub", None)
+        workspace_name = payload.get("workspace_name", None)
+        if not (username and workspace_name):
             raise credentials_exception
-
-        # Fetch workspace from database.
-        async with AsyncSession(
-            get_sqlalchemy_async_engine(), expire_on_commit=False
-        ) as asession:
-            try:
-                workspace_db = await get_workspace_by_workspace_name(
-                    asession=asession, workspace_name=workspace_name
-                )
-                return workspace_db
-            except WorkspaceNotFoundError as err:
-                raise credentials_exception from err
+        return workspace_name
     except InvalidTokenError as err:
         raise credentials_exception from err
 
@@ -415,7 +321,7 @@ async def get_workspace_by_api_key(
         workspace_db = result.scalar_one()
         return workspace_db
     except NoResultFound as err:
-        raise WorkspaceNotFoundError(
+        raise WorkspaceTokenNotFoundError(
             "Workspace with given token does not exist."
         ) from err
 

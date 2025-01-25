@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user, get_current_workspace
+from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..users.models import UserDB, WorkspaceDB, user_has_required_role_in_workspace
+from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
+from ..workspaces.utils import get_workspace_by_workspace_name
 from .models import (
     TagDB,
     delete_tag_from_db,
@@ -36,7 +37,7 @@ logger = setup_logger()
 async def create_tag(
     tag: TagCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """Create a new tag.
@@ -47,8 +48,8 @@ async def create_tag(
         The tag to be created.
     calling_user_db
         The user object associated with the user that is creating the tag.
-    workspace_db
-        The workspace to which the tag belongs.
+    workspace_name
+        The name of the workspace to which the tag belongs.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -63,6 +64,10 @@ async def create_tag(
         If the user does not have the required role to create tags in the workspace.
         If the tag name already exists.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # tags for non-admin users of a workspace.
@@ -99,7 +104,7 @@ async def edit_tag(
     tag_id: int,
     tag: TagCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """Edit a pre-existing tag.
@@ -112,8 +117,8 @@ async def edit_tag(
         The new tag information.
     calling_user_db
         The user object associated with the user that is editing the tag.
-    workspace_db
-        The workspace to which the tag belongs.
+    workspace_name
+        The naem of the workspace to which the tag belongs.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -128,6 +133,10 @@ async def edit_tag(
         If the user does not have the required role to edit tags in the workspace.
         If the tag ID is not found or the tag name already exists.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
     # tags for non-admin users of a workspace.
@@ -180,7 +189,7 @@ async def edit_tag(
 
 @router.get("/", response_model=list[TagRetrieve])
 async def retrieve_tag(
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     skip: int = 0,
     limit: Optional[int] = None,
     asession: AsyncSession = Depends(get_async_session),
@@ -189,8 +198,8 @@ async def retrieve_tag(
 
     Parameters
     ----------
-    workspace_db
-        The workspace to retrieve tags from.
+    workspace_name
+        The name of the workspace to retrieve tags from.
     skip
         The number of records to skip.
     limit
@@ -204,6 +213,9 @@ async def retrieve_tag(
         The list of tags in the workspace.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     records = await get_list_of_tag_from_db(
         asession=asession,
         limit=limit,
@@ -218,7 +230,7 @@ async def retrieve_tag(
 async def delete_tag(
     tag_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """Delete tag by ID.
@@ -229,8 +241,8 @@ async def delete_tag(
         The ID of the tag to be deleted.
     calling_user_db
         The user object associated with the user that is deleting the tag.
-    workspace_db
-        The workspace to which the tag belongs.
+    workspace_name
+        The name of the workspace to which the tag belongs.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -240,6 +252,10 @@ async def delete_tag(
         If the user does not have the required role to delete tags in the workspace.
         If the tag ID is not found.
     """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
 
     # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # tags for non-admin users of a workspace.
@@ -274,7 +290,7 @@ async def delete_tag(
 @router.get("/{tag_id}", response_model=TagRetrieve)
 async def retrieve_tag_by_id(
     tag_id: int,
-    workspace_db: Annotated[WorkspaceDB, Depends(get_current_workspace)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> TagRetrieve:
     """Retrieve a tag by ID.
@@ -283,8 +299,8 @@ async def retrieve_tag_by_id(
     ----------
     tag_id
         The ID of the tag to retrieve.
-    workspace_db
-        The workspace to which the tag belongs.
+    workspace_name
+        The name of the workspace to which the tag belongs.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -299,6 +315,9 @@ async def retrieve_tag_by_id(
         If the tag ID is not found.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     record = await get_tag_from_db(
         asession=asession, tag_id=tag_id, workspace_id=workspace_db.workspace_id
     )
