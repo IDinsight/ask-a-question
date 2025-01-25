@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Enum as SQLAlchemyEnum
 
 from ..models import Base
