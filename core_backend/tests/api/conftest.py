@@ -1,6 +1,8 @@
+"""This module contains fixtures for the API tests."""
+
 import json
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Generator, Optional
 
 import numpy as np
 import pytest
@@ -42,33 +44,33 @@ from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import UserDB
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
-TEST_ADMIN_USERNAME = "admin"
-TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_API_KEY = "admin_api_key"
+TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_RECOVERY_CODES = ["code1", "code2", "code3", "code4", "code5"]
-TEST_USERNAME = "test_username"
-TEST_PASSWORD = "test_password"
-TEST_USER_API_KEY = "test_api_key"
-TEST_CONTENT_QUOTA = 50
+TEST_ADMIN_USERNAME = "admin"
 TEST_API_QUOTA = 2000
-
-TEST_USERNAME_2 = "test_username_2"
-TEST_PASSWORD_2 = "test_password_2"
-TEST_USER_API_KEY_2 = "test_api_key_2"
-TEST_CONTENT_QUOTA_2 = 50
 TEST_API_QUOTA_2 = 2000
+TEST_CONTENT_QUOTA = 50
+TEST_CONTENT_QUOTA_2 = 50
+TEST_PASSWORD = "test_password"
+TEST_PASSWORD_2 = "test_password_2"
+TEST_USERNAME = "test_username"
+TEST_USERNAME_2 = "test_username_2"
+TEST_USER_API_KEY = "test_api_key"
+TEST_USER_API_KEY_2 = "test_api_key_2"
 
 
 @pytest.fixture(scope="session")
 def db_session() -> Generator[Session, None, None]:
     """Create a test database session."""
+
     with get_session_context_manager() as session:
         yield session
 
 
-# We recreate engine and session to ensure it is in the same
-# event loop as the test. Without this we get "Future attached to different loop" error.
-# See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
+# We recreate engine and session to ensure it is in the same event loop as the test.
+# Without this we get "Future attached to different loop" error.
+# See: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops  # noqa: E501
 @pytest.fixture(scope="function")
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     connection_string = get_connection_url()
@@ -78,9 +80,7 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
 
 
 @pytest.fixture(scope="function")
-async def asession(
-    async_engine: AsyncEngine,
-) -> AsyncGenerator[AsyncSession, None]:
+async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
         yield async_session
 
@@ -88,15 +88,11 @@ async def asession(
 @pytest.fixture(scope="session", autouse=True)
 def admin_user(client: TestClient, db_session: Session) -> Generator:
     admin_user = UserDB(
-        username=TEST_ADMIN_USERNAME,
+        created_datetime_utc=datetime.now(timezone.utc),
         hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
-        hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
-        content_quota=None,
-        api_daily_quota=None,
-        is_admin=True,
         recovery_codes=TEST_ADMIN_RECOVERY_CODES,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.now(timezone.utc),
+        username=TEST_ADMIN_USERNAME,
     )
 
     db_session.add(admin_user)
@@ -154,7 +150,7 @@ def user(
 @pytest.fixture(scope="function")
 async def faq_contents(
     asession: AsyncSession, user1: int
-) -> AsyncGenerator[List[int], None]:
+) -> AsyncGenerator[list[int], None]:
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
@@ -162,19 +158,19 @@ async def faq_contents(
     for _i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = await async_fake_embedding(
-            model=LITELLM_MODEL_EMBEDDING,
-            input=text_to_embed,
             api_base=LITELLM_ENDPOINT,
             api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            model=LITELLM_MODEL_EMBEDDING,
         )
         content_db = ContentDB(
-            user_id=user1,
             content_embedding=content_embedding,
-            content_title=content["content_title"],
-            content_text=content["content_text"],
             content_metadata=content.get("content_metadata", {}),
+            content_text=content["content_text"],
+            content_title=content["content_title"],
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=user1,
         )
         contents.append(content_db)
 
@@ -389,13 +385,13 @@ async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
 
 async def mock_return_args(
     question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
-) -> Tuple[QueryRefined, QueryResponse]:
+) -> tuple[QueryRefined, QueryResponse]:
     return question, response
 
 
 async def mock_detect_urgency(
-    urgency_rules: List[str], message: str, metadata: Optional[dict]
-) -> Dict[str, Any]:
+    urgency_rules: list[str], message: str, metadata: Optional[dict]
+) -> dict[str, Any]:
     return {
         "best_matching_rule": "made up rule",
         "probability": 0.7,
@@ -405,10 +401,9 @@ async def mock_detect_urgency(
 
 async def mock_identify_language(
     question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
-) -> Tuple[QueryRefined, QueryResponse]:
-    """
-    Monkeypatch call to LLM language identification service
-    """
+) -> tuple[QueryRefined, QueryResponse]:
+    """Monkeypatch call to LLM language identification service."""
+
     question.original_language = IdentifiedLanguage.ENGLISH
     response.debug_info["original_language"] = "ENGLISH"
 
@@ -417,10 +412,9 @@ async def mock_identify_language(
 
 async def mock_translate_question(
     question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
-) -> Tuple[QueryRefined, QueryResponse]:
-    """
-    Monkeypatch call to LLM translation service
-    """
+) -> tuple[QueryRefined, QueryResponse]:
+    """Monkeypatch call to LLM translation service."""
+
     if question.original_language is None:
         raise ValueError(
             (
@@ -433,10 +427,20 @@ async def mock_translate_question(
     return question, response
 
 
-async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
-    """
-    Replicates `embedding` function but just generates a random
-    list of floats
+async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
+    """Replicate `embedding` function by generating a random list of floats.
+
+    Parameters
+    ----------
+    arg:
+        Additional positional arguments. Not used.
+    kwargs
+        Additional keyword arguments. Not used.
+
+    Returns
+    -------
+    list[float]
+        List of random floats.
     """
 
     embedding_list = (
@@ -447,26 +451,47 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> List[float]:
 
 @pytest.fixture(scope="session")
 def fullaccess_token_admin() -> str:
+    """Return a token with full access for admin.
+
+    Returns
+    -------
+    str
+        Token with full access for admin.
     """
-    Returns a token with full access
-    """
-    return create_access_token(username=TEST_ADMIN_USERNAME)
+
+    return create_access_token(
+        username=TEST_ADMIN_USERNAME, workspace_name=f"Workspace_{TEST_ADMIN_USERNAME}"
+    )
 
 
 @pytest.fixture(scope="session")
 def fullaccess_token() -> str:
+    """Return a token with full access for user 1.
+
+    Returns
+    -------
+    str
+        Token with full access for user 1.
     """
-    Returns a token with full access
-    """
-    return create_access_token(username=TEST_USERNAME)
+
+    return create_access_token(
+        username=TEST_USERNAME, workspace_name=f"Workspace_{TEST_USERNAME}"
+    )
 
 
 @pytest.fixture(scope="session")
 def fullaccess_token_user2() -> str:
+    """Return a token with full access for user 2.
+
+    Returns
+    -------
+    str
+        Token with full access for user 2.
     """
-    Returns a token with full access
-    """
-    return create_access_token(username=TEST_USERNAME_2)
+
+    return create_access_token(
+        username=TEST_USERNAME_2, workspace_name=f"Workspace_{TEST_USERNAME_2}"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -498,8 +523,10 @@ def alembic_config() -> Config:
     """`alembic_config` is the primary point of entry for configurable options for the
     alembic runner for `pytest-alembic`.
 
-    :returns:
-        Config: A configuration object used by `pytest-alembic`.
+    Returns
+    -------
+    Config
+        A configuration object used by `pytest-alembic`.
     """
 
     return Config({"file": "alembic.ini"})
@@ -513,44 +540,13 @@ def alembic_engine() -> Engine:
     NB: The engine should point to a database that must be empty. It is out of scope
     for `pytest-alembic` to manage the database state.
 
-    :returns:
+    Returns
+    -------
+    Engine
         A SQLAlchemy engine object.
     """
 
     return create_engine(get_connection_url(db_api=SYNC_DB_API))
-
-
-@pytest.fixture(scope="session", autouse=True)
-def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
-    """
-    Monkeypatch GCS functions to replace their real implementations with dummy ones.
-    """
-    monkeysession.setattr(
-        "core_backend.app.question_answer.routers.upload_file_to_gcs",
-        async_fake_upload_file_to_gcs,
-    )
-    monkeysession.setattr(
-        "core_backend.app.llm_call.process_output.upload_file_to_gcs",
-        async_fake_upload_file_to_gcs,
-    )
-    monkeysession.setattr(
-        "core_backend.app.llm_call.process_output.generate_public_url",
-        async_fake_generate_public_url,
-    )
-
-
-async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
-    """
-    A dummy function to replace the real upload_file_to_gcs function.
-    """
-    pass
-
-
-async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
-    """
-    A dummy function to replace the real generate_public_url function.
-    """
-    return "http://example.com/signed-url"
 
 
 @pytest.fixture(scope="function")

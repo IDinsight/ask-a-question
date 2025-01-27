@@ -2,7 +2,6 @@
 
 from typing import Annotated
 
-import sqlalchemy
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,25 +9,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..user_tools.schemas import WorkspaceKeyResponse, WorkspaceQuotaResponse
 from ..users.models import (
     UserDB,
     UserNotFoundError,
-    WorkspaceDB,
     get_user_by_id,
     get_user_role_in_workspace,
     get_user_workspaces,
     get_workspaces_by_user_role,
     user_has_admin_role_in_any_workspace,
-    user_has_required_role_in_workspace,
 )
-from ..users.schemas import UserCreate, UserCreateWithCode, UserRoles
+from ..users.schemas import UserCreate, UserRoles
 from ..utils import generate_key, setup_logger
-from .schemas import WorkspaceCreate, WorkspaceRetrieve, WorkspaceUpdate
+from .schemas import (
+    WorkspaceCreate,
+    WorkspaceKeyResponse,
+    WorkspaceQuotaResponse,
+    WorkspaceRetrieve,
+    WorkspaceUpdate,
+)
 from .utils import (
     WorkspaceNotFoundError,
     create_workspace,
-    delete_workspace_by_id,
     get_workspace_by_workspace_id,
     get_workspace_by_workspace_name,
     update_workspace_api_key,
@@ -36,21 +37,21 @@ from .utils import (
 )
 
 TAG_METADATA = {
-    "name": "Admin",
+    "name": "Workspace",
     "description": "_Requires user login._ Only administrator user has access to these "
-    "endpoints.",
+    "endpoints and only for the workspaces that they are assigned to.",
 }
 
-router = APIRouter(prefix="/workspace", tags=["Admin"])
+router = APIRouter(prefix="/workspace", tags=["Workspace"])
 logger = setup_logger()
 
 
-@router.post("/", response_model=UserCreateWithCode)
+@router.post("/", response_model=list[WorkspaceCreate])
 async def create_workspaces(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspaces: WorkspaceCreate | list[WorkspaceCreate],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[WorkspaceDB]:
+) -> list[WorkspaceCreate]:
     """Create workspaces. Workspaces can only be created by ADMIN users.
 
     NB: When a workspace is created, the API daily quota and content quota limits for
@@ -75,8 +76,8 @@ async def create_workspaces(
 
     Returns
     -------
-    UserCreateWithCode
-        The user object with the recovery codes.
+    list[WorkspaceCreate]
+        A list of created workspace objects.
 
     Raises
     ------
@@ -96,7 +97,7 @@ async def create_workspaces(
     # 2.
     if not isinstance(workspaces, list):
         workspaces = [workspaces]
-    return [
+    workspace_dbs = [
         await create_workspace(
             api_daily_quota=workspace.api_daily_quota,
             asession=asession,
@@ -109,67 +110,14 @@ async def create_workspaces(
         )
         for workspace in workspaces
     ]
-
-
-@router.delete("/{workspace_id}")
-async def delete_workspace(
-    workspace_id: int,
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    asession: AsyncSession = Depends(get_async_session),
-) -> None:
-    """Delete workspace by ID.
-
-    NB: When deleting a workspace, all associated users and content are also deleted.
-
-    Parameters
-    ----------
-    workspace_id
-        The ID of the workspace to delete.
-    calling_user_db
-        The user object associated with the user that is deleting the workspace.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-
-    Raises
-    ------
-    HTTPException
-        If the user does not have the required role to delete the workspace.
-        If the workspace is not found.
-    """
-
-    try:
-        workspace_db = await get_workspace_by_workspace_id(
-            asession=asession, workspace_id=workspace_id
+    return [
+        WorkspaceCreate(
+            api_daily_quota=workspace_db.api_daily_quota,
+            content_quota=workspace_db.content_quota,
+            workspace_name=workspace_db.workspace_name,
         )
-    except WorkspaceNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Workspace ID {workspace_id} not found.",
-        ) from e
-
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # workspaces for non-admin users of a workspace.
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to delete the workspace.",
-        )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # workspaces for non-admin users of a workspace.
-
-    try:
-        await delete_workspace_by_id(asession=asession, workspace_id=workspace_id)
-    except sqlalchemy.exc.IntegrityError as e:
-        logger.error(f"Error deleting workspace: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Deleting workspace is not allowed.",
-        ) from e
+        for workspace_db in workspace_dbs
+    ]
 
 
 @router.get("/", response_model=list[WorkspaceRetrieve])
@@ -288,8 +236,9 @@ async def update_workspace(
     """Update the quotas for an existing workspace. Only admin users can update
     workspace quotas and only for the workspaces that they are assigned to.
 
-    NB: The name for a workspace can NOT be updated since this would involve
-    propagating changes user and roles changes as well.
+    NB: The ID for a workspace can NOT be updated since this would involve propagating
+    user and roles changes as well. However, the workspace name can be changed
+    (assuming it is unique).
 
     Parameters
     ----------
@@ -328,6 +277,7 @@ async def update_workspace(
     calling_user_workspace_role = get_user_role_in_workspace(
         asession=asession, user_db=calling_user_db, workspace_db=workspace_db
     )
+
     if calling_user_workspace_role != UserRoles.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

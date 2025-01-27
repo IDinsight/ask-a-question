@@ -23,6 +23,7 @@ from ..users.models import (
     UserNotFoundError,
     WorkspaceDB,
     get_user_by_username,
+    get_user_default_workspace,
     get_user_workspaces,
 )
 from ..utils import (
@@ -52,39 +53,22 @@ class WorkspaceTokenNotFoundError(Exception):
 
 
 async def authenticate_credentials(
-    *, password: str, scopes: Optional[list[str]] = None, username: str
+    *, password: str, username: str
 ) -> AuthenticatedUser | None:
     """Authenticate user using username and password.
-
-    NB: If the user belongs to multiple workspaces, then `scopes` must contain the
-    workspace that the user is logging into.
 
     Parameters
     ----------
     password
         User password.
-    scopes
-        User workspace. If the user being authenticated belongs to multiple workspaces,
-        then this parameter mMust be the exact string "workspace:workspace_name". Note
-        that even though this parameter is a list of strings, only one workspace is
-        allowed.
     username
         User username.
 
     Returns
     -------
     AuthenticatedUser | None
-        Authenticated user if the user is authenticated, otherwise None.
+        Authenticated user if the user is authenticated, otherwise `None`.
     """
-
-    user_workspace_name: Optional[str] = next(
-        (
-            scope.split(":", 1)[1].strip()
-            for scope in scopes or []
-            if scope.startswith("workspace:")
-        ),
-        None,
-    )
 
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
@@ -92,19 +76,15 @@ async def authenticate_credentials(
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
             if verify_password_salted_hash(password, user_db.hashed_password):
-                if not user_workspace_name:
-                    user_workspaces = await get_user_workspaces(
-                        asession=asession, user_db=user_db
-                    )
-                    if len(user_workspaces) != 1:
-                        return None
-                user_workspace_name = user_workspaces[0].workspace_name
+                user_workspace_db = await get_user_default_workspace(
+                    asession=asession, user_db=user_db
+                )
 
                 # Hardcode "fullaccess" now, but may use it in the future.
                 return AuthenticatedUser(
                     access_level="fullaccess",
                     username=username,
-                    workspace_name=user_workspace_name,
+                    workspace_name=user_workspace_db.workspace_name,
                 )
             return None
         except UserNotFoundError:
@@ -114,7 +94,7 @@ async def authenticate_credentials(
 async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> WorkspaceDB:
-    """Authenticate using basic bearer token. This is used by the following endpoints:
+    """Authenticate using basic bearer token. This is used by endpoints such as:
 
     1. Data API
     2. Question answering
@@ -135,37 +115,125 @@ async def authenticate_key(
 
     Raises
     ------
-    RuntimeError
-        If the user belongs to multiple workspaces.
+    HTTPException
+        If the credentials are invalid.
     """
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    def _get_username_and_workspace_name_from_token(
+        *, token_: Annotated[str, Depends(oauth2_scheme)]
+    ) -> tuple[str, str]:
+        """Get username and workspace name from the JWT token.
+
+        Parameters
+        ----------
+        token_
+            The JWT token.
+
+        Returns
+        -------
+        tuple[str, str]
+            The username and workspace name.
+
+        Raises
+        ------
+        HTTPException
+            If the credentials are invalid.
+        """
+
+        try:
+            payload = jwt.decode(token_, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            username_ = payload.get("sub", None)
+            workspace_name_ = payload.get("workspace_name", None)
+            if not (username_ and workspace_name_):
+                raise credentials_exception
+            return username_, workspace_name_
+        except InvalidTokenError as e:
+            raise credentials_exception from e
 
     token = credentials.credentials
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
         try:
-            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
             workspace_db = await get_workspace_by_api_key(
                 asession=asession, token=token
             )
-            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
             return workspace_db
-        except WorkspaceTokenNotFoundError as e:
+        except WorkspaceTokenNotFoundError:
             # Fall back to JWT token authentication if API key is not valid.
-            user_db = await get_current_user(token)
+            _, workspace_name = _get_username_and_workspace_name_from_token(
+                token_=token
+            )
+            stmt = select(WorkspaceDB).where(
+                WorkspaceDB.workspace_name == workspace_name
+            )
+            result = await asession.execute(stmt)
+            try:
+                workspace_db = result.scalar_one()
+                return workspace_db
+            except NoResultFound as err:
+                raise credentials_exception from err
 
-            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
-            user_workspaces = await get_user_workspaces(
+
+async def authenticate_workspace(
+    *, username: str, workspace_name: Optional[str] = None
+) -> AuthenticatedUser | None:
+    """Authenticate user workspace using username and workspace name.
+
+    Parameters
+    ----------
+    username
+        The username of the user to authenticate.
+    workspace_name
+        The name of the workspace that the user is trying to log into.
+
+    Returns
+    -------
+    AuthenticatedUser | None
+        Authenticated user if the user is authenticated, otherwise `None`.
+    """
+
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(asession=asession, username=username)
+        except UserNotFoundError:
+            return None
+
+        user_workspace_db: Optional[WorkspaceDB]
+        if not workspace_name:
+            user_workspace_db = await get_user_default_workspace(
                 asession=asession, user_db=user_db
             )
-            if len(user_workspaces) != 1:
-                raise RuntimeError(
-                    f"User {user_db.username} belongs to multiple workspaces."
-                ) from e
-            workspace_db = user_workspaces[0]
-            # HACK FIX FOR FRONTEND: Need to authenticate workspace instead of user.
+        else:
+            user_workspace_dbs = await get_user_workspaces(
+                asession=asession, user_db=user_db
+            )
+            user_workspace_db = next(
+                (
+                    db
+                    for db in user_workspace_dbs
+                    if db.workspace_name == workspace_name
+                ),
+                None,
+            )
+            if user_workspace_db is None:
+                return None
 
-            return workspace_db
+        # Hardcode "fullaccess" now, but may use it in the future.
+        assert isinstance(user_workspace_db, WorkspaceDB)
+        return AuthenticatedUser(
+            access_level="fullaccess",
+            username=username,
+            workspace_name=user_workspace_db.workspace_name,
+        )
 
 
 def create_access_token(*, username: str, workspace_name: str) -> str:

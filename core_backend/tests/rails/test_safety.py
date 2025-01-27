@@ -1,3 +1,5 @@
+"""This module contains tests for the safety classification functionality."""
+
 from pathlib import Path
 
 import pytest
@@ -20,7 +22,7 @@ INAPPROPRIATE_LANGUAGE_FILE = "data/inappropriate_lang.txt"
 
 
 def read_test_data(file: str) -> list[str]:
-    """Reads test data from file and returns a list of strings"""
+    """Reads test data from file and returns a list of strings."""
 
     file_path = Path(__file__).parent / file
 
@@ -30,25 +32,27 @@ def read_test_data(file: str) -> list[str]:
 
 @pytest.fixture
 def response() -> QueryResponse:
-    """Returns a dummy response"""
+    """Returns a dummy response."""
+
     return QueryResponse(
+        feedback_secret_key="feedback-string",
+        llm_response="Dummy response",
         query_id=1,
         search_results=None,
-        llm_response="Dummy response",
-        feedback_secret_key="feedback-string",
     )
 
 
 @pytest.mark.parametrize("prompt_injection", read_test_data(PROMPT_INJECTION_FILE))
 async def test_prompt_injection_found(
-    prompt_injection: pytest.FixtureRequest, response: pytest.FixtureRequest
+    prompt_injection: pytest.FixtureRequest, response: QueryResponse
 ) -> None:
-    """Tests that prompt injection is found"""
+    """Tests that prompt injection is found."""
+
     question = QueryRefined(
         query_text=prompt_injection,
         query_text_original=prompt_injection,
     )
-    _, response = await _classify_safety(question, response)
+    _, response = await _classify_safety(query_refined=question, response=response)
     assert isinstance(response, QueryResponseError)
     assert response.error_type == ErrorType.QUERY_UNSAFE
     assert (
@@ -58,16 +62,13 @@ async def test_prompt_injection_found(
 
 
 @pytest.mark.parametrize("safe_text", read_test_data(SAFE_MESSAGES_FILE))
-async def test_safe_message(
-    safe_text: pytest.FixtureRequest, response: pytest.FixtureRequest
-) -> None:
-    """Tests that safe messages are classified as safe"""
+async def test_safe_message(safe_text: str, response: QueryResponse) -> None:
+    """Tests that safe messages are classified as safe."""
+
     question = QueryRefined(
-        query_text=safe_text,
-        user_id=124,
-        query_text_original=safe_text,
+        query_text=safe_text, query_text_original=safe_text, workspace_id=124
     )
-    _, response = await _classify_safety(question, response)
+    _, response = await _classify_safety(query_refined=question, response=response)
 
     assert isinstance(response, QueryResponse)
     assert (
@@ -79,15 +80,16 @@ async def test_safe_message(
     "inappropriate_text", read_test_data(INAPPROPRIATE_LANGUAGE_FILE)
 )
 async def test_inappropriate_language(
-    inappropriate_text: pytest.FixtureRequest, response: pytest.FixtureRequest
+    inappropriate_text: str, response: QueryResponse
 ) -> None:
-    """Tests that inappropriate language is found"""
+    """Tests that inappropriate language is found."""
+
     question = QueryRefined(
         query_text=inappropriate_text,
-        user_id=124,
         query_text_original=inappropriate_text,
+        workspace_id=124,
     )
-    _, response = await _classify_safety(question, response)
+    _, response = await _classify_safety(query_refined=question, response=response)
 
     assert isinstance(response, QueryResponseError)
     assert response.error_type == ErrorType.QUERY_UNSAFE

@@ -1,5 +1,7 @@
 """This module contains FastAPI routers for user authentication endpoints."""
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -11,7 +13,7 @@ from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserNotFoundError,
-    add_user_workspace_role,
+    create_user_workspace_role,
     get_user_by_username,
     save_user_to_db,
 )
@@ -23,7 +25,11 @@ from ..workspaces.utils import (
     get_workspace_by_workspace_name,
 )
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
-from .dependencies import authenticate_credentials, create_access_token
+from .dependencies import (
+    authenticate_credentials,
+    authenticate_workspace,
+    create_access_token,
+)
 from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
 
 TAG_METADATA = {
@@ -39,10 +45,6 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> AuthenticationDetails:
     """Login route for users to authenticate and receive a JWT token.
-
-    NB: If the user belongs to multiple workspaces, then `form_data` must contain the
-    scope (i.e., workspace) that the user is logging into in order to authenticate the
-    user. The scope in this case must be the exact string "workspace:workspace_name".
 
     Parameters
     ----------
@@ -61,24 +63,23 @@ async def login(
         If the user credentials are invalid.
     """
 
-    user = await authenticate_credentials(
-        password=form_data.password,
-        scopes=form_data.scopes,
-        username=form_data.username,
+    authenticate_user = await authenticate_credentials(
+        password=form_data.password, username=form_data.username
     )
 
-    if user is None:
+    if authenticate_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
         )
 
     return AuthenticationDetails(
-        access_level=user.access_level,
+        access_level=authenticate_user.access_level,
         access_token=create_access_token(
-            username=user.username, workspace_name=user.workspace_name
+            username=authenticate_user.username,
+            workspace_name=authenticate_user.workspace_name,
         ),
         token_type="bearer",
-        username=user.username,
+        username=authenticate_user.username,
     )
 
 
@@ -187,7 +188,9 @@ async def authenticate_or_create_google_user(
             # Create the new user object with an ADMIN role and the specified workspace
             # name.
             user = UserCreate(
-                role=UserRoles.ADMIN, username=gmail, workspace_name=workspace_name
+                role=UserRoles.ADMIN,
+                username=gmail,
+                workspace_name=workspace_name,
             )
 
             # Create the workspace for the Google user.
@@ -215,9 +218,10 @@ async def authenticate_or_create_google_user(
                 user_db = await save_user_to_db(asession=asession, user=user)
 
             # Assign user to the specified workspace with the specified role.
-            assert user.role
-            _ = await add_user_workspace_role(
+            assert user.role is not None
+            _ = await create_user_workspace_role(
                 asession=asession,
+                is_default_workspace=True,
                 user_db=user_db,
                 user_role=user.role,
                 workspace_db=workspace_db,
@@ -228,3 +232,52 @@ async def authenticate_or_create_google_user(
                 username=user_db.username,
                 workspace_name=workspace_name,
             )
+
+
+@router.post("/login-workspace")
+async def login_workspace(
+    username: str, workspace_name: Optional[str] = None
+) -> AuthenticationDetails:
+    """Login route for users to authenticate into a workspace and receive a JWT token.
+
+    NB: This endpoint does NOT take the user's password for authentication. This is
+    because a user should first be authenticated using username and password before
+    they are allowed to log into a workspace.
+
+    Parameters
+    ----------
+    username
+        The username of the user.
+    workspace_name
+        The name of the workspace to log into.
+
+    Returns
+    -------
+    AuthenticationDetails
+        A Pydantic model containing the JWT token, token type, access level, and
+        username.
+
+    Raises
+    ------
+    HTTPException
+        If the user credentials are invalid.
+    """
+
+    authenticate_user = await authenticate_workspace(
+        username=username, workspace_name=workspace_name
+    )
+
+    if authenticate_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
+        )
+
+    return AuthenticationDetails(
+        access_level=authenticate_user.access_level,
+        access_token=create_access_token(
+            username=authenticate_user.username,
+            workspace_name=authenticate_user.workspace_name,
+        ),
+        token_type="bearer",
+        username=authenticate_user.username,
+    )

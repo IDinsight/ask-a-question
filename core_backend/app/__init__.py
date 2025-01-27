@@ -70,6 +70,7 @@ The important endpoints here are divided into the following two groups:
     - **Urgency detection**: Detect urgent messages according to your urgency rules.
 
 2. APIs used by the AAQ Admin App (authenticated via user login):
+    - **Workspace management**: APIs to manage the workspaces in the application.
     - **Content management**: APIs to manage the contents in the
 application.
     - **Content tag management**: APIs to manage the content tags in the
@@ -85,6 +86,7 @@ tags_metadata = [
     dashboard.TAG_METADATA,
     auth.TAG_METADATA,
     user_tools.TAG_METADATA,
+    workspaces.TAG_METADATA,
     admin.TAG_METADATA,
 ]
 
@@ -153,11 +155,11 @@ def create_app() -> FastAPI:
     """
 
     app = FastAPI(
-        title="Ask A Question APIs",
-        description=page_description,
         debug=True,
+        description=page_description,
         openapi_tags=tags_metadata,
         lifespan=lifespan,
+        title="Ask A Question APIs",
     )
     app.include_router(contents.router)
     app.include_router(tags.router)

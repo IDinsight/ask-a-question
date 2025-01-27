@@ -5,12 +5,14 @@ from typing import Sequence
 
 from sqlalchemy import (
     ARRAY,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
     Row,
     String,
     select,
+    text,
     update,
 )
 from sqlalchemy.exc import NoResultFound
@@ -63,13 +65,10 @@ class UserDB(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     workspaces: Mapped[list["WorkspaceDB"]] = relationship(
-        "WorkspaceDB",
-        back_populates="users",
-        secondary="user_workspace_association",
-        viewonly=True,
+        "WorkspaceDB", back_populates="users", secondary="user_workspace", viewonly=True
     )
-    workspace_roles: Mapped[list["UserWorkspaceRoleDB"]] = relationship(
-        "UserWorkspaceRoleDB", back_populates="user"
+    workspace_roles: Mapped[list["UserWorkspaceDB"]] = relationship(
+        "UserWorkspaceDB", back_populates="user"
     )
 
     def __repr__(self) -> str:
@@ -110,15 +109,12 @@ class WorkspaceDB(Base):
         DateTime(timezone=True), nullable=False
     )
     users: Mapped[list["UserDB"]] = relationship(
-        "UserDB",
-        back_populates="workspaces",
-        secondary="user_workspace_association",
-        viewonly=True,
+        "UserDB", back_populates="workspaces", secondary="user_workspace", viewonly=True
     )
     workspace_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     workspace_name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    workspace_roles: Mapped[list["UserWorkspaceRoleDB"]] = relationship(
-        "UserWorkspaceRoleDB", back_populates="workspace"
+    workspace_roles: Mapped[list["UserWorkspaceDB"]] = relationship(
+        "UserWorkspaceDB", back_populates="workspace"
     )
 
     def __repr__(self) -> str:
@@ -133,13 +129,23 @@ class WorkspaceDB(Base):
         return f"<Workspace '{self.workspace_name}' mapped to workspace ID `{self.workspace_id}` with API daily quota {self.api_daily_quota} and content quota {self.content_quota}>"  # noqa: E501
 
 
-class UserWorkspaceRoleDB(Base):
-    """ORM for managing user roles in workspaces."""
+class UserWorkspaceDB(Base):
+    """ORM for managing user in workspaces.
 
-    __tablename__ = "user_workspace_association"
+    TODO: A user's default workspace is assigned when the (new) user is created and
+    added to a workspace. There is currently no way to change a user's default
+    workspace.
+    """
+
+    __tablename__ = "user_workspace"
 
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
+    )
+    default_workspace: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=text("false"),  # Ensures existing rows default to false
     )
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -159,70 +165,15 @@ class UserWorkspaceRoleDB(Base):
     )
 
     def __repr__(self) -> str:
-        """Define the string representation for the `UserWorkspaceRoleDB` class.
+        """Define the string representation for the `UserWorkspaceDB` class.
 
         Returns
         -------
         str
-            A string representation of the `UserWorkspaceRoleDB` class.
+            A string representation of the `UserWorkspaceDB` class.
         """
 
-        return f"<Role '{self.user_role.value}' set for user ID '{self.user_id} in workspace ID '{self.workspace_id}'>."  # noqa: E501
-
-
-async def add_user_workspace_role(
-    *,
-    asession: AsyncSession,
-    user_db: UserDB,
-    user_role: UserRoles,
-    workspace_db: WorkspaceDB,
-) -> UserWorkspaceRoleDB:
-    """Add a user to a workspace with the specified role.
-
-    Parameters
-    ----------
-    asession
-        The SQLAlchemy async session to use for all database connections.
-    user_db
-        The user object assigned to the workspace object.
-    user_role
-        The role of the user in the workspace.
-    workspace_db
-        The workspace object that the user object is assigned to.
-
-    Returns
-    -------
-    UserWorkspaceRoleDB
-        The user workspace role object saved in the database.
-
-    Raises
-    ------
-    UserWorkspaceRoleAlreadyExistsError
-        If the user role in the workspace already exists.
-    """
-
-    existing_user_role = await get_user_role_in_workspace(
-        asession=asession, user_db=user_db, workspace_db=workspace_db
-    )
-    if existing_user_role is not None:
-        raise UserWorkspaceRoleAlreadyExistsError(
-            f"User '{user_db.username}' with role '{user_role}' in workspace "
-            f"{workspace_db.workspace_name} already exists."
-        )
-
-    user_workspace_role_db = UserWorkspaceRoleDB(
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-        user_id=user_db.user_id,
-        user_role=user_role,
-        workspace_id=workspace_db.workspace_id,
-    )
-
-    asession.add(user_workspace_role_db)
-    await asession.commit()
-    await asession.refresh(user_workspace_role_db)
-
-    return user_workspace_role_db
+        return f"<User ID '{self.user_id} has role '{self.user_role.value}' set for workspace ID '{self.workspace_id}'>."  # noqa: E501
 
 
 async def check_if_user_exists(
@@ -268,6 +219,66 @@ async def check_if_users_exist(*, asession: AsyncSession) -> bool:
     stmt = select(UserDB.user_id).limit(1)
     result = await asession.scalars(stmt)
     return result.first() is not None
+
+
+async def create_user_workspace_role(
+    *,
+    asession: AsyncSession,
+    is_default_workspace: bool = False,
+    user_db: UserDB,
+    user_role: UserRoles,
+    workspace_db: WorkspaceDB,
+) -> UserWorkspaceDB:
+    """Create a user in a workspace with the specified role.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    is_default_workspace
+        Specifies whether to set the workspace as the default workspace for the user.
+    user_db
+        The user object assigned to the workspace object.
+    user_role
+        The role of the user in the workspace.
+    workspace_db
+        The workspace object that the user object is assigned to.
+
+    Returns
+    -------
+    UserWorkspaceDB
+        The user workspace object saved in the database.
+
+    Raises
+    ------
+    UserWorkspaceRoleAlreadyExistsError
+        If the user role in the workspace already exists.
+    """
+
+    existing_user_role = await get_user_role_in_workspace(
+        asession=asession, user_db=user_db, workspace_db=workspace_db
+    )
+
+    if existing_user_role is not None:
+        raise UserWorkspaceRoleAlreadyExistsError(
+            f"User '{user_db.username}' with role '{user_role}' in workspace "
+            f"{workspace_db.workspace_name} already exists."
+        )
+
+    user_workspace_role_db = UserWorkspaceDB(
+        created_datetime_utc=datetime.now(timezone.utc),
+        default_workspace=is_default_workspace,
+        updated_datetime_utc=datetime.now(timezone.utc),
+        user_id=user_db.user_id,
+        user_role=user_role,
+        workspace_id=workspace_db.workspace_id,
+    )
+
+    asession.add(user_workspace_role_db)
+    await asession.commit()
+    await asession.refresh(user_workspace_role_db)
+
+    return user_workspace_role_db
 
 
 async def get_user_by_id(*, asession: AsyncSession, user_id: int) -> UserDB:
@@ -332,9 +343,44 @@ async def get_user_by_username(*, asession: AsyncSession, username: str) -> User
         ) from err
 
 
+async def get_user_default_workspace(
+    *, asession: AsyncSession, user_db: UserDB
+) -> WorkspaceDB:
+    """Retrieve the default workspace for a given user.
+
+    NB: A user will have a default workspace assigned when they are created.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object to retrieve the default workspace for.
+
+    Returns
+    -------
+    WorkspaceDB
+        The default workspace object for the user.
+    """
+
+    stmt = (
+        select(WorkspaceDB)
+        .join(UserWorkspaceDB, UserWorkspaceDB.workspace_id == WorkspaceDB.workspace_id)
+        .where(
+            UserWorkspaceDB.user_id == user_db.user_id,
+            UserWorkspaceDB.default_workspace.is_(True),
+        )
+        .limit(1)
+    )
+
+    result = await asession.execute(stmt)
+    default_workspace_db = result.scalar_one()
+    return default_workspace_db
+
+
 async def get_user_role_in_all_workspaces(
     *, asession: AsyncSession, user_db: UserDB
-) -> Sequence[Row[tuple[str, UserRoles]]]:
+) -> Sequence[Row[tuple[str, bool, UserRoles]]]:
     """Retrieve the workspaces a user belongs to and their roles in those workspaces.
 
     Parameters
@@ -346,18 +392,19 @@ async def get_user_role_in_all_workspaces(
 
     Returns
     -------
-    Sequence[Row[tuple[str, UserRoles]]]
-        A sequence of tuples containing the workspace name and the user role in that
-        workspace.
+    Sequence[Row[tuple[str, bool, UserRoles]]]
+        A sequence of tuples containing the workspace name, the default workspace
+        assignment, and the user role in that workspace.
     """
 
     stmt = (
-        select(WorkspaceDB.workspace_name, UserWorkspaceRoleDB.user_role)
-        .join(
-            UserWorkspaceRoleDB,
-            WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id,
+        select(
+            WorkspaceDB.workspace_name,
+            UserWorkspaceDB.default_workspace,
+            UserWorkspaceDB.user_role,
         )
-        .where(UserWorkspaceRoleDB.user_id == user_db.user_id)
+        .join(UserWorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceDB.workspace_id)
+        .where(UserWorkspaceDB.user_id == user_db.user_id)
     )
 
     result = await asession.execute(stmt)
@@ -386,9 +433,9 @@ async def get_user_role_in_workspace(
         exist in the workspace.
     """
 
-    stmt = select(UserWorkspaceRoleDB.user_role).where(
-        UserWorkspaceRoleDB.user_id == user_db.user_id,
-        UserWorkspaceRoleDB.workspace_id == workspace_db.workspace_id,
+    stmt = select(UserWorkspaceDB.user_role).where(
+        UserWorkspaceDB.user_id == user_db.user_id,
+        UserWorkspaceDB.workspace_id == workspace_db.workspace_id,
     )
     result = await asession.execute(stmt)
     user_role = result.scalar_one_or_none()
@@ -415,11 +462,8 @@ async def get_user_workspaces(
 
     stmt = (
         select(WorkspaceDB)
-        .join(
-            UserWorkspaceRoleDB,
-            UserWorkspaceRoleDB.workspace_id == WorkspaceDB.workspace_id,
-        )
-        .where(UserWorkspaceRoleDB.user_id == user_db.user_id)
+        .join(UserWorkspaceDB, UserWorkspaceDB.workspace_id == WorkspaceDB.workspace_id)
+        .where(UserWorkspaceDB.user_id == user_db.user_id)
     )
     result = await asession.execute(stmt)
     return result.scalars().all()
@@ -427,7 +471,7 @@ async def get_user_workspaces(
 
 async def get_users_and_roles_by_workspace_name(
     *, asession: AsyncSession, workspace_name: str
-) -> Sequence[Row[tuple[datetime, datetime, str, int, UserRoles]]]:
+) -> Sequence[Row[tuple[datetime, datetime, str, int, bool, UserRoles]]]:
     """Retrieve all users and their roles for a given workspace name.
 
     Parameters
@@ -439,9 +483,10 @@ async def get_users_and_roles_by_workspace_name(
 
     Returns
     -------
-    Sequence[Row[tuple[datetime, datetime, str, int, UserRoles]]]
+    Sequence[Row[tuple[datetime, datetime, str, int, bool, UserRoles]]]
         A sequence of tuples containing the created datetime, updated datetime,
-        username, user ID, and user role for each user in the workspace.
+        username, user ID, default user workspace assignment, and user role for each
+        user in the workspace.
     """
 
     stmt = (
@@ -450,10 +495,11 @@ async def get_users_and_roles_by_workspace_name(
             UserDB.updated_datetime_utc,
             UserDB.username,
             UserDB.user_id,
-            UserWorkspaceRoleDB.user_role,
+            UserWorkspaceDB.default_workspace,
+            UserWorkspaceDB.user_role,
         )
-        .join(UserWorkspaceRoleDB, UserDB.user_id == UserWorkspaceRoleDB.user_id)
-        .join(WorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id)
+        .join(UserWorkspaceDB, UserDB.user_id == UserWorkspaceDB.user_id)
+        .join(WorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceDB.workspace_id)
         .where(WorkspaceDB.workspace_name == workspace_name)
     )
 
@@ -484,12 +530,9 @@ async def get_workspaces_by_user_role(
 
     stmt = (
         select(WorkspaceDB)
-        .join(
-            UserWorkspaceRoleDB,
-            WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id,
-        )
-        .where(UserWorkspaceRoleDB.user_id == user_db.user_id)
-        .where(UserWorkspaceRoleDB.user_role == user_role)
+        .join(UserWorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceDB.workspace_id)
+        .where(UserWorkspaceDB.user_id == user_db.user_id)
+        .where(UserWorkspaceDB.user_role == user_role)
     )
     result = await asession.execute(stmt)
     return result.scalars().all()
@@ -585,6 +628,7 @@ async def save_user_to_db(
     """
 
     existing_user = await check_if_user_exists(asession=asession, user=user)
+
     if existing_user is not None:
         raise UserAlreadyExistsError(
             f"User with username {user.username} already exists."
@@ -608,6 +652,44 @@ async def save_user_to_db(
     await asession.refresh(user_db)
 
     return user_db
+
+
+async def update_user_default_workspace(
+    *, asession: AsyncSession, user_db: UserDB, workspace_db: WorkspaceDB
+) -> None:
+    """Update the default workspace for the user to the specified workspace. This sets
+    `default_workspace=False` for all of the user's workspaces, then sets
+    `default_workspace=True` for the specified workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_db
+        The user object to update the default workspace for.
+    workspace_db
+        The workspace object to set as the default workspace.
+    """
+
+    user_id = user_db.user_id
+    workspace_id = workspace_db.workspace_id
+
+    # Turn off `default_workspace` for all the user's workspaces.
+    await asession.execute(
+        update(UserWorkspaceDB)
+        .where(UserWorkspaceDB.user_id == user_id)
+        .values(default_workspace=False)
+    )
+
+    # Turn on `default_workspace` for the specified workspace.
+    await asession.execute(
+        update(UserWorkspaceDB)
+        .where(UserWorkspaceDB.user_id == user_id)
+        .where(UserWorkspaceDB.workspace_id == workspace_id)
+        .values(default_workspace=True)
+    )
+
+    await asession.commit()
 
 
 async def update_user_in_db(
@@ -670,13 +752,13 @@ async def update_user_role_in_workspace(
     """
 
     result = await asession.execute(
-        update(UserWorkspaceRoleDB)
+        update(UserWorkspaceDB)
         .where(
-            UserWorkspaceRoleDB.user_id == user_db.user_id,
-            UserWorkspaceRoleDB.workspace_id == workspace_db.workspace_id,
+            UserWorkspaceDB.user_id == user_db.user_id,
+            UserWorkspaceDB.workspace_id == workspace_db.workspace_id,
         )
         .values(user_role=new_role)
-        .returning(UserWorkspaceRoleDB)
+        .returning(UserWorkspaceDB)
     )
     updated_role_db = result.scalars().first()
     if updated_role_db is None:
@@ -708,8 +790,8 @@ async def users_exist_in_workspace(
     """
 
     stmt = (
-        select(UserWorkspaceRoleDB.user_id)
-        .join(WorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceRoleDB.workspace_id)
+        select(UserWorkspaceDB.user_id)
+        .join(WorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceDB.workspace_id)
         .where(WorkspaceDB.workspace_name == workspace_name)
         .limit(1)
     )
@@ -736,10 +818,10 @@ async def user_has_admin_role_in_any_workspace(
     """
 
     stmt = (
-        select(UserWorkspaceRoleDB.user_id)
+        select(UserWorkspaceDB.user_id)
         .where(
-            UserWorkspaceRoleDB.user_id == user_db.user_id,
-            UserWorkspaceRoleDB.user_role == UserRoles.ADMIN,
+            UserWorkspaceDB.user_id == user_db.user_id,
+            UserWorkspaceDB.user_role == UserRoles.ADMIN,
         )
         .limit(1)
     )

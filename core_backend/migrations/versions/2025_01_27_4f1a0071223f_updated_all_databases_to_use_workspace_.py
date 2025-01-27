@@ -1,8 +1,8 @@
 """Updated all databases to use workspace_id instead of user_id for workspaces.
 
-Revision ID: 44b2f73df27b
+Revision ID: 4f1a0071223f
 Revises: 27fd893400f8
-Create Date: 2025-01-25 12:27:06.887268
+Create Date: 2025-01-27 12:02:43.107533
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "44b2f73df27b"
+revision: str = "4f1a0071223f"
 down_revision: Union[str, None] = "27fd893400f8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,8 +39,14 @@ def upgrade() -> None:
         sa.UniqueConstraint("workspace_name"),
     )
     op.create_table(
-        "user_workspace_association",
+        "user_workspace",
         sa.Column("created_datetime_utc", sa.DateTime(timezone=True), nullable=False),
+        sa.Column(
+            "default_workspace",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+        ),
         sa.Column("updated_datetime_utc", sa.DateTime(timezone=True), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column(
@@ -153,12 +159,12 @@ def upgrade() -> None:
     )
     op.drop_column("urgency_rule", "user_id")
     op.drop_constraint("user_hashed_api_key_key", "user", type_="unique")
-    op.drop_column("user", "api_daily_quota")
-    op.drop_column("user", "api_key_updated_datetime_utc")
-    op.drop_column("user", "is_admin")
-    op.drop_column("user", "hashed_api_key")
     op.drop_column("user", "content_quota")
+    op.drop_column("user", "is_admin")
+    op.drop_column("user", "api_daily_quota")
     op.drop_column("user", "api_key_first_characters")
+    op.drop_column("user", "api_key_updated_datetime_utc")
+    op.drop_column("user", "hashed_api_key")
     # ### end Alembic commands ###
 
 
@@ -167,30 +173,7 @@ def downgrade() -> None:
     op.add_column(
         "user",
         sa.Column(
-            "api_key_first_characters",
-            sa.VARCHAR(length=5),
-            autoincrement=False,
-            nullable=True,
-        ),
-    )
-    op.add_column(
-        "user",
-        sa.Column("content_quota", sa.INTEGER(), autoincrement=False, nullable=True),
-    )
-    op.add_column(
-        "user",
-        sa.Column(
             "hashed_api_key", sa.VARCHAR(length=96), autoincrement=False, nullable=True
-        ),
-    )
-    op.add_column(
-        "user",
-        sa.Column(
-            "is_admin",
-            sa.BOOLEAN(),
-            server_default=sa.text("false"),
-            autoincrement=False,
-            nullable=False,
         ),
     )
     op.add_column(
@@ -204,7 +187,30 @@ def downgrade() -> None:
     )
     op.add_column(
         "user",
+        sa.Column(
+            "api_key_first_characters",
+            sa.VARCHAR(length=5),
+            autoincrement=False,
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        "user",
         sa.Column("api_daily_quota", sa.INTEGER(), autoincrement=False, nullable=True),
+    )
+    op.add_column(
+        "user",
+        sa.Column(
+            "is_admin",
+            sa.BOOLEAN(),
+            server_default=sa.text("false"),
+            autoincrement=False,
+            nullable=False,
+        ),
+    )
+    op.add_column(
+        "user",
+        sa.Column("content_quota", sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.create_unique_constraint("user_hashed_api_key_key", "user", ["hashed_api_key"])
     op.add_column(
@@ -320,6 +326,6 @@ def downgrade() -> None:
         "fk_content_user", "content", "user", ["user_id"], ["user_id"]
     )
     op.drop_column("content", "workspace_id")
-    op.drop_table("user_workspace_association")
+    op.drop_table("user_workspace")
     op.drop_table("workspace")
     # ### end Alembic commands ###

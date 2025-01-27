@@ -15,9 +15,9 @@ from ..users.models import (
     UserNotFoundInWorkspaceError,
     UserWorkspaceRoleAlreadyExistsError,
     WorkspaceDB,
-    add_user_workspace_role,
     check_if_user_exists,
     check_if_users_exist,
+    create_user_workspace_role,
     get_user_by_id,
     get_user_by_username,
     get_user_role_in_all_workspaces,
@@ -27,6 +27,7 @@ from ..users.models import (
     is_username_valid,
     reset_user_password_in_db,
     save_user_to_db,
+    update_user_default_workspace,
     update_user_in_db,
     update_user_role_in_workspace,
     user_has_admin_role_in_any_workspace,
@@ -51,12 +52,11 @@ from .schemas import RequireRegisterResponse
 from .utils import generate_recovery_codes
 
 TAG_METADATA = {
-    "name": "Admin",
-    "description": "_Requires user login._ Only administrator user has access to these "
-    "endpoints.",
+    "name": "User",
+    "description": "_Requires user login._ Users have access to these endpoints.",
 }
 
-router = APIRouter(prefix="/user", tags=["Admin"])
+router = APIRouter(prefix="/user", tags=["User"])
 logger = setup_logger()
 
 
@@ -72,7 +72,7 @@ async def create_user(
     workspace must be created already.
 
     NB: This endpoint can also be used to create a new user in a different workspace
-    that the calling user or be used to add an existing user to a workspace that the
+    than the calling user or be used to add an existing user to a workspace that the
     calling user is an admin of.
 
     NB: This endpoint does NOT update API limits for the workspace that the created
@@ -83,9 +83,11 @@ async def create_user(
 
     1. Parameters for the endpoint are checked first.
     2. If the user does not exist, then create the user and add the user to the
-        specified workspace with the specified role.
+        specified workspace with the specified role. In addition, the specified
+        workspace is set as the default workspace.
     3. If the user exists, then add the user to the specified workspace with the
-        specified role.
+        specified role. In this case, there is the option to set the workspace as the
+        default workspace for the user.
 
     Parameters
     ----------
@@ -111,6 +113,7 @@ async def create_user(
     # endpoint.
     # workspace_temp_name = "Workspace_1"
     # user_temp = UserCreate(
+    #     is_default_workspace=True,
     #     role=UserRoles.ADMIN,
     #     username="Doesn't matter",
     #     workspace_name=workspace_temp_name,
@@ -130,24 +133,19 @@ async def create_user(
     )
     assert user_checked.workspace_name
 
-    existing_user = await check_if_user_exists(asession=asession, user=user_checked)
     user_checked_workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=user_checked.workspace_name
     )
+
     try:
-        # 2 or 3.
-        return (
-            await add_new_user_to_workspace(
-                asession=asession,
-                user=user_checked,
-                workspace_db=user_checked_workspace_db,
-            )
-            if not existing_user
-            else await add_existing_user_to_workspace(
-                asession=asession,
-                user=user_checked,
-                workspace_db=user_checked_workspace_db,
-            )
+        # 3.
+        return await add_existing_user_to_workspace(
+            asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
+        )
+    except UserNotFoundError:
+        # 2.
+        return await add_new_user_to_workspace(
+            asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
         )
     except UserWorkspaceRoleAlreadyExistsError as e:
         logger.error(f"Error creating user workspace role: {e}")
@@ -166,19 +164,22 @@ async def create_first_user(
 ) -> UserCreateWithCode:
     """Create the first user. This occurs when there are no users in the `UserDB`
     database AND no workspaces in the `WorkspaceDB` database. The first user is created
-    as an ADMIN user in the workspace `default_workspace_name`. Thus, there is no need
-    to specify the workspace name and user role for the very first user. Furthermore,
-    the API daily quota and content quota is set to `None` for the default workspace.
-    After the default workspace is created for the first user, the first user should
-    then create a new workspace with a designated ADMIN user role and set the API daily
-    quota and content quota for that workspace accordingly.
+    as an ADMIN user in the workspace `default_workspace_name`; if not provided, then
+    the default workspace name is f`Workspace_{user.username}`. Thus, there is no need
+    to specify the workspace name and user role for the very first user.
+
+    Furthermore, the API daily quota and content quota is set to `None` for the default
+    workspace. After the default workspace is created for the first user, the first
+    user should then create a new workspace with a designated ADMIN user role and set
+    the API daily quota and content quota for that workspace accordingly.
 
     The process is as follows:
 
     1. Create the very first workspace for the very first user. No quotas are set, the
         user role defaults to ADMIN and the workspace name defaults to
         `default_workspace_name`.
-    2. Add the very first user to the default workspace with the ADMIN role.
+    2. Add the very first user to the default workspace with the ADMIN role and assign
+        the workspace as the default workspace for the first user.
     3. Update the API limits for the workspace.
 
     Parameters
@@ -249,8 +250,7 @@ async def retrieve_all_users(
     2. If the calling user is an admin in a workspace, then the details for that
         workspace are returned.
     3. If the calling user is not an admin in any workspace, then the details for
-        the calling user is returned. In this case, the calling user is not an ADMIN
-        user.
+        the calling user is returned.
 
     Parameters
     ----------
@@ -282,6 +282,7 @@ async def retrieve_all_users(
             if uwr.username not in user_mapping:
                 user_mapping[uwr.username] = UserRetrieve(
                     created_datetime_utc=uwr.created_datetime_utc,
+                    is_default_workspace=[uwr.default_workspace],
                     updated_datetime_utc=uwr.updated_datetime_utc,
                     username=uwr.username,
                     user_id=uwr.user_id,
@@ -290,6 +291,7 @@ async def retrieve_all_users(
                 )
             else:
                 user_data = user_mapping[uwr.username]
+                user_data.is_default_workspace.append(uwr.default_workspace)
                 user_data.user_workspace_names.append(workspace_name)
                 user_data.user_workspace_roles.append(uwr.user_role.value)
 
@@ -303,6 +305,9 @@ async def retrieve_all_users(
         user_list = [
             UserRetrieve(
                 created_datetime_utc=calling_user_db.created_datetime_utc,
+                is_default_workspace=[
+                    row.default_workspace for row in calling_user_workspace_roles
+                ],
                 updated_datetime_utc=calling_user_db.updated_datetime_utc,
                 username=calling_user_db.username,
                 user_id=calling_user_db.user_id,
@@ -314,6 +319,7 @@ async def retrieve_all_users(
                 ],
             )
         ]
+
     return user_list
 
 
@@ -403,6 +409,7 @@ async def reset_password(
         )
 
     user_to_update = await check_if_user_exists(asession=asession, user=user)
+
     if user_to_update is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
@@ -431,6 +438,9 @@ async def reset_password(
 
     return UserRetrieve(
         created_datetime_utc=updated_user_db.created_datetime_utc,
+        is_default_workspace=[
+            row.default_workspace for row in updated_user_workspace_roles
+        ],
         updated_datetime_utc=updated_user_db.updated_datetime_utc,
         username=updated_user_db.username,
         user_id=updated_user_db.user_id,
@@ -448,10 +458,10 @@ async def update_user(
     user: UserCreate,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserRetrieve:
-    """Update the user's name and/or role in a workspace. If a user belongs to multiple
-    workspaces, then an admin in any of those workspaces is allowed to update the
-    user's **name**. However, only admins of a workspace can modify their user's role
-    in that workspace.
+    """Update the user's name, role in a workspace, and/or their default workspace. If
+    a user belongs to multiple workspaces, then an admin in any of those workspaces is
+    allowed to update the user's name and/or default workspace only. However, only
+    admins of a workspace can modify their user's role in that workspace.
 
     NB: User information can only be updated by admin users. Furthermore, admin users
     can only update the information of users belonging to their workspaces. Since the
@@ -470,8 +480,9 @@ async def update_user(
     1. Parameters for the endpoint are checked first.
     2. If the user's workspace role is being updated, then the update procedure will
         update the user's role in that workspace.
-    3. Update the user's name in the database.
-    4. Retrieve the updated user's role in all workspaces for the return object.
+    3. Update the user's default workspace.
+    4. Update the user's name in the database.
+    5. Retrieve the updated user's role in all workspaces for the return object.
 
     Parameters
     ----------
@@ -519,21 +530,38 @@ async def update_user(
         except UserNotFoundInWorkspaceError as e:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User ID {user_id} not found in workspace.",
+                detail=f"User ID '{user_id}' not found in workspace.",
             ) from e
 
     # 3.
+    if user.is_default_workspace and user.workspace_name and workspace_db_checked:
+        try:
+            await update_user_default_workspace(
+                asession=asession,
+                user_db=user_db_checked,
+                workspace_db=workspace_db_checked,
+            )
+        except UserNotFoundInWorkspaceError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User ID '{user_id}' not found in workspace.",
+            ) from e
+
+    # 4.
     updated_user_db = await update_user_in_db(
         asession=asession, user=user, user_id=user_id
     )
 
-    # 3.
+    # 5.
     updated_user_workspace_roles = await get_user_role_in_all_workspaces(
         asession=asession, user_db=updated_user_db
     )
 
     return UserRetrieve(
         created_datetime_utc=updated_user_db.created_datetime_utc,
+        is_default_workspace=[
+            row.default_workspace for row in updated_user_workspace_roles
+        ],
         updated_datetime_utc=updated_user_db.updated_datetime_utc,
         username=updated_user_db.username,
         user_id=updated_user_db.user_id,
@@ -578,6 +606,7 @@ async def get_user(
     )
     return UserRetrieve(
         created_datetime_utc=user_db.created_datetime_utc,
+        is_default_workspace=[row.default_workspace for row in user_workspace_roles],
         updated_datetime_utc=user_db.updated_datetime_utc,
         user_id=user_db.user_id,
         username=user_db.username,
@@ -620,14 +649,16 @@ async def add_existing_user_to_workspace(
         The user object with the recovery codes.
     """
 
-    assert user.role
+    assert user.role is not None
+    assert user.is_default_workspace is not None
 
     # 1.
     user_db = await get_user_by_username(asession=asession, username=user.username)
 
     # 2.
-    _ = await add_user_workspace_role(
+    _ = await create_user_workspace_role(
         asession=asession,
+        is_default_workspace=user.is_default_workspace,
         user_db=user_db,
         user_role=user.role,
         workspace_db=workspace_db,
@@ -651,7 +682,8 @@ async def add_new_user_to_workspace(
 
     1. Generate recovery codes for the new user.
     2. Save the new user to the `UserDB` database along with their recovery codes.
-    3. Add the new user to the workspace with the specified role.
+    3. Add the new user to the workspace with the specified role. For new users, this
+        workspace is set as their default workspace.
 
     NB: If this function is invoked, then the assumption is that it is called by an
     ADMIN user with access to the specified workspace and that this ADMIN user is
@@ -676,7 +708,7 @@ async def add_new_user_to_workspace(
         The user object with the recovery codes.
     """
 
-    assert user.role
+    assert user.role is not None
 
     # 1.
     recovery_codes = generate_recovery_codes()
@@ -687,8 +719,9 @@ async def add_new_user_to_workspace(
     )
 
     # 3.
-    _ = await add_user_workspace_role(
+    _ = await create_user_workspace_role(
         asession=asession,
+        is_default_workspace=True,  # Should always be True for new users!
         user_db=user_db,
         user_role=user.role,
         workspace_db=workspace_db,
@@ -707,9 +740,11 @@ async def check_create_user_call(
 ) -> UserCreateWithPassword:
     """Check the user creation call to ensure the action is allowed.
 
-    NB: This function changes `user.workspace_name` to the workspace name of the
-    calling user if it is not specified. It also assigns a default role of READ_ONLY
-    if the role is not specified.
+    NB: This function:
+
+    1. Changes `user.workspace_name` to the workspace name of the calling user if it is
+        not specified.
+    2. Assigns a default role of READ ONLY if the role is not specified.
 
     The process is as follows:
 
@@ -777,10 +812,11 @@ async def check_create_user_call(
             "any workspace.",
         )
 
-    # 3.
     calling_user_admin_workspace_dbs = await get_workspaces_by_user_role(
         asession=asession, user_db=calling_user_db, user_role=UserRoles.ADMIN
     )
+
+    # 3.
     if not user.workspace_name and len(calling_user_admin_workspace_dbs) != 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -801,6 +837,7 @@ async def check_create_user_call(
         workspace_has_users = await users_exist_in_workspace(
             asession=asession, workspace_name=user.workspace_name
         )
+
         if not calling_user_in_specified_workspace and workspace_has_users:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -843,6 +880,8 @@ async def check_update_user_call(
     HTTPException
         If the calling user does not have the correct access to update the user.
         If a user's role is being changed but the workspace name is not specified.
+        If a user's default workspace is being changed but the workspace name is not
+            specified.
         If the user to update is not found.
         If the username is already taken.
     """
@@ -860,6 +899,13 @@ async def check_update_user_call(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Workspace name must be specified if user's role is being updated.",
+        )
+
+    if user.is_default_workspace is not None and not user.workspace_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Workspace name must be specified if user's default workspace is "
+            "being updated.",
         )
 
     try:
@@ -886,6 +932,7 @@ async def check_update_user_call(
         calling_user_workspace_role = await get_user_role_in_workspace(
             asession=asession, user_db=calling_user_db, workspace_db=workspace_db
         )
+
         if calling_user_workspace_role != UserRoles.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

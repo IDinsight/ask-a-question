@@ -36,6 +36,7 @@ class UserCreate(BaseModel):
     of "ADMIN".
     """
 
+    is_default_workspace: Optional[bool] = None
     role: Optional[UserRoles] = None
     username: str
     workspace_name: Optional[str] = None
@@ -70,6 +71,7 @@ class UserRetrieve(BaseModel):
     """
 
     created_datetime_utc: datetime
+    is_default_workspace: list[bool]
     updated_datetime_utc: datetime
     user_id: int
     username: str

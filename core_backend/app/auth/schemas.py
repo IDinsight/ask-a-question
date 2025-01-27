@@ -10,6 +10,19 @@ AccessLevel = Literal["fullaccess"]
 TokenType = Literal["bearer"]
 
 
+class AuthenticatedUser(BaseModel):
+    """Pydantic model for authenticated user.
+
+    NB: A user is authenticated within a workspace.
+    """
+
+    access_level: AccessLevel
+    username: str
+    workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AuthenticationDetails(BaseModel):
     """Pydantic model for authentication details."""
 
@@ -21,19 +34,6 @@ class AuthenticationDetails(BaseModel):
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
     is_admin: bool = True
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class AuthenticatedUser(BaseModel):
-    """Pydantic model for authenticated user.
-
-    NB: A user is authenticated within a workspace.
-    """
-
-    access_level: AccessLevel
-    username: str
-    workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
 

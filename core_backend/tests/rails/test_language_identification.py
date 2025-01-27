@@ -1,5 +1,6 @@
+"""This module contains tests for language identification."""
+
 from pathlib import Path
-from typing import List, Tuple
 
 import pytest
 import yaml
@@ -16,13 +17,13 @@ LANGUAGE_FILE = "data/language_identification.yaml"
 
 @pytest.fixture(scope="module")
 def available_languages() -> list[str]:
-    """Returns a list of available languages"""
+    """Returns a list of available languages."""
 
-    return [lang.value for lang in IdentifiedLanguage]
+    return [lang for lang in IdentifiedLanguage]
 
 
-def read_test_data(file: str) -> List[Tuple[str, str]]:
-    """Reads test data from file and returns a list of strings"""
+def read_test_data(file: str) -> list[tuple[str, str]]:
+    """Reads test data from file and returns a list of strings."""
 
     file_path = Path(__file__).parent / file
 
@@ -35,20 +36,19 @@ def read_test_data(file: str) -> List[Tuple[str, str]]:
 async def test_language_identification(
     available_languages: list[str], expected_label: str, content: str
 ) -> None:
-    """Test language identification"""
+    """Test language identification."""
+
     question = QueryRefined(
-        query_text=content,
-        user_id=124,
-        query_text_original=content,
+        query_text=content, query_text_original=content, workspace_id=124
     )
     response = QueryResponse(
-        query_id=1,
-        search_results=None,
-        llm_response="Dummy response",
         feedback_secret_key="feedback-string",
+        query_id=1,
+        llm_response="Dummy response",
+        search_results=None,
     )
     if expected_label not in available_languages:
         expected_label = "UNSUPPORTED"
-    _, response = await _identify_language(question, response)
+    _, response = await _identify_language(query_refined=question, response=response)
 
     assert response.debug_info["original_language"] == expected_label

@@ -4,15 +4,15 @@ import secrets
 import string
 
 
-def generate_recovery_codes(num_codes: int = 5, code_length: int = 20) -> list[str]:
+def generate_recovery_codes(*, code_length: int = 20, num_codes: int = 5) -> list[str]:
     """Generate recovery codes for a user.
 
     Parameters
     ----------
-    num_codes
-        The number of recovery codes to generate, by default 5.
     code_length
         The length of each recovery code, by default 20.
+    num_codes
+        The number of recovery codes to generate, by default 5.
 
     Returns
     -------
