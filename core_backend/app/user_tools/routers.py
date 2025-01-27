@@ -109,24 +109,6 @@ async def create_user(
         If the user is already assigned a role in the specified workspace.
     """
 
-    # HACK FIX FOR FRONTEND: This is to simulate a call to the `create_workspaces`
-    # endpoint.
-    # workspace_temp_name = "Workspace_1"
-    # user_temp = UserCreate(
-    #     is_default_workspace=True,
-    #     role=UserRoles.ADMIN,
-    #     username="Doesn't matter",
-    #     workspace_name=workspace_temp_name,
-    # )
-    # _ = await create_workspace(asession=asession, user=user_temp)
-    # user.workspace_name = workspace_temp_name
-    # HACK FIX FOR FRONTEND: This is to simulate a call to the `create_workspace`
-    # endpoint.
-
-    # HACK FIX FOR FRONTEND: This is to simulate creating a user with a different role.
-    # user.role = UserRoles.ADMIN
-    # HACK FIX FOR FRONTEND: This is to simulate creating a user with a different role.
-
     # 1.
     user_checked = await check_create_user_call(
         asession=asession, calling_user_db=calling_user_db, user=user
@@ -511,13 +493,6 @@ async def update_user(
         asession=asession, calling_user_db=calling_user_db, user=user, user_id=user_id
     )
 
-    # HACK FIX FOR FRONTEND: This is to simulate a frontend change that allows passing
-    # a user role and workspace name for update.
-    # user.role = UserRoles.ADMIN
-    # user.workspace_name = "Workspace_DEFAULT"
-    # HACK FIX FOR FRONTEND: This is to simulate a frontend change that allows passing
-    # a user role and workspace name for update.
-
     # 2.
     if user.role and user.workspace_name and workspace_db_checked:
         try:
@@ -650,7 +625,7 @@ async def add_existing_user_to_workspace(
     """
 
     assert user.role is not None
-    assert user.is_default_workspace is not None
+    user.is_default_workspace = user.is_default_workspace or False
 
     # 1.
     user_db = await get_user_by_username(asession=asession, username=user.username)
