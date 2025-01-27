@@ -782,7 +782,7 @@ async def check_create_user_call(
         asession=asession, user_db=calling_user_db
     ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Calling user does not have the correct role to create a user in "
             "any workspace.",
         )
@@ -815,7 +815,7 @@ async def check_create_user_call(
 
         if not calling_user_in_specified_workspace and workspace_has_users:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Calling user does not have the correct role in the specified "
                 f"workspace: {user.workspace_name}",
             )

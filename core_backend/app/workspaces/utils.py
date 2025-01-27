@@ -77,6 +77,9 @@ async def create_workspace(
             f"Only {UserRoles.ADMIN} users can create workspaces."
         )
 
+    assert api_daily_quota is None or api_daily_quota >= 0
+    assert content_quota is None or content_quota >= 0
+
     result = await asession.execute(
         select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)
     )
@@ -232,10 +235,10 @@ async def update_workspace_api_key(
     return workspace_db
 
 
-async def update_workspace_quotas(
+async def update_workspace_name_and_quotas(
     *, asession: AsyncSession, workspace: WorkspaceUpdate, workspace_db: WorkspaceDB
 ) -> WorkspaceDB:
-    """Update workspace quotas.
+    """Update workspace name and/or quotas.
 
     Parameters
     ----------
@@ -252,10 +255,12 @@ async def update_workspace_quotas(
         The workspace object updated in the database after updating quotas.
     """
 
-    assert workspace.api_daily_quota is None or workspace.api_daily_quota >= 0
-    assert workspace.content_quota is None or workspace.content_quota >= 0
-    workspace_db.api_daily_quota = workspace.api_daily_quota
-    workspace_db.content_quota = workspace.content_quota
+    if workspace.api_daily_quota is None or workspace.api_daily_quota >= 0:
+        workspace_db.api_daily_quota = workspace.api_daily_quota
+    if workspace.content_quota is None or workspace.content_quota >= 0:
+        workspace_db.content_quota = workspace.content_quota
+    if workspace.workspace_name is not None:
+        workspace_db.workspace_name = workspace.workspace_name
     workspace_db.updated_datetime_utc = datetime.now(timezone.utc)
 
     await asession.commit()

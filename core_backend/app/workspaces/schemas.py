@@ -9,8 +9,8 @@ from pydantic import BaseModel, ConfigDict
 class WorkspaceCreate(BaseModel):
     """Pydantic model for workspace creation."""
 
-    api_daily_quota: Optional[int] = None
-    content_quota: Optional[int] = None
+    api_daily_quota: int | None = -1
+    content_quota: int | None = -1
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -25,25 +25,15 @@ class WorkspaceKeyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WorkspaceQuotaResponse(BaseModel):
-    """Pydantic model for updating workspace quotas."""
-
-    new_api_daily_quota: int
-    new_content_quota: int
-    workspace_name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class WorkspaceRetrieve(BaseModel):
     """Pydantic model for workspace retrieval."""
 
     api_daily_quota: Optional[int] = None
-    api_key_first_characters: str
-    api_key_updated_datetime_utc: datetime
+    api_key_first_characters: Optional[str] = None
+    api_key_updated_datetime_utc: Optional[datetime] = None
     content_quota: Optional[int] = None
     created_datetime_utc: datetime
-    updated_datetime_utc: datetime
+    updated_datetime_utc: Optional[datetime] = None
     workspace_id: int
     workspace_name: str
 
@@ -53,7 +43,8 @@ class WorkspaceRetrieve(BaseModel):
 class WorkspaceUpdate(BaseModel):
     """Pydantic model for workspace updates."""
 
-    api_daily_quota: Optional[int] = None
-    content_quota: Optional[int] = None
+    api_daily_quota: int | None = -1
+    content_quota: int | None = -1
+    workspace_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
