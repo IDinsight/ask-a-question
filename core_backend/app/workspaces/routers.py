@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import sqlalchemy
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,10 +13,14 @@ from ..database import get_async_session
 from ..user_tools.schemas import WorkspaceKeyResponse, WorkspaceQuotaResponse
 from ..users.models import (
     UserDB,
+    UserNotFoundError,
     WorkspaceDB,
+    get_user_by_id,
     get_user_role_in_workspace,
+    get_user_workspaces,
     get_workspaces_by_user_role,
     user_has_admin_role_in_any_workspace,
+    user_has_required_role_in_workspace,
 )
 from ..users.schemas import UserCreate, UserCreateWithCode, UserRoles
 from ..utils import generate_key, setup_logger
@@ -23,6 +28,7 @@ from .schemas import WorkspaceCreate, WorkspaceRetrieve, WorkspaceUpdate
 from .utils import (
     WorkspaceNotFoundError,
     create_workspace,
+    delete_workspace_by_id,
     get_workspace_by_workspace_id,
     get_workspace_by_workspace_name,
     update_workspace_api_key,
@@ -105,6 +111,67 @@ async def create_workspaces(
     ]
 
 
+@router.delete("/{workspace_id}")
+async def delete_workspace(
+    workspace_id: int,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> None:
+    """Delete workspace by ID.
+
+    NB: When deleting a workspace, all associated users and content are also deleted.
+
+    Parameters
+    ----------
+    workspace_id
+        The ID of the workspace to delete.
+    calling_user_db
+        The user object associated with the user that is deleting the workspace.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to delete the workspace.
+        If the workspace is not found.
+    """
+
+    try:
+        workspace_db = await get_workspace_by_workspace_id(
+            asession=asession, workspace_id=workspace_id
+        )
+    except WorkspaceNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workspace ID {workspace_id} not found.",
+        ) from e
+
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # workspaces for non-admin users of a workspace.
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to delete the workspace.",
+        )
+    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # workspaces for non-admin users of a workspace.
+
+    try:
+        await delete_workspace_by_id(asession=asession, workspace_id=workspace_id)
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.error(f"Error deleting workspace: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Deleting workspace is not allowed.",
+        ) from e
+
+
 @router.get("/", response_model=list[WorkspaceRetrieve])
 async def retrieve_all_workspaces(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -167,6 +234,47 @@ async def retrieve_all_workspaces(
             workspace_name=workspace_db.workspace_name,
         )
         for workspace_db in calling_user_admin_workspace_dbs
+    ]
+
+
+@router.get("/{user_id}", response_model=list[WorkspaceRetrieve])
+async def retrieve_workspaces_by_user_id(
+    user_id: int, asession: AsyncSession = Depends(get_async_session)
+) -> list[WorkspaceRetrieve]:
+    """Retrieve workspaces by user ID. If the user does not exist or they do not belong
+    to any workspaces, then an empty list is returned.
+
+    Parameters
+    ----------
+    user_id
+        The user ID to retrieve workspaces for.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[WorkspaceRetrieve]
+        A list of workspace objects that the user belongs to.
+    """
+
+    try:
+        user_db = await get_user_by_id(asession=asession, user_id=user_id)
+    except UserNotFoundError:
+        return []
+
+    user_workspace_dbs = await get_user_workspaces(asession=asession, user_db=user_db)
+    return [
+        WorkspaceRetrieve(
+            api_daily_quota=user_workspace_db.api_daily_quota,
+            api_key_first_characters=user_workspace_db.api_key_first_characters,
+            api_key_updated_datetime_utc=user_workspace_db.api_key_updated_datetime_utc,
+            content_quota=user_workspace_db.content_quota,
+            created_datetime_utc=user_workspace_db.created_datetime_utc,
+            updated_datetime_utc=user_workspace_db.updated_datetime_utc,
+            workspace_id=user_workspace_db.workspace_id,
+            workspace_name=user_workspace_db.workspace_name,
+        )
+        for user_workspace_db in user_workspace_dbs
     ]
 
 

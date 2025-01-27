@@ -3,11 +3,11 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..users.models import WorkspaceDB
+from ..users.models import UserWorkspaceRoleDB, WorkspaceDB
 from ..users.schemas import UserCreate, UserRoles
 from ..utils import get_key_hash
 from .schemas import WorkspaceUpdate
@@ -19,6 +19,34 @@ class IncorrectUserRoleError(Exception):
 
 class WorkspaceNotFoundError(Exception):
     """Exception raised when a workspace is not found in the database."""
+
+
+async def check_if_workspace_exist_by_workspace_id(
+    *, asession: AsyncSession, workspace_id: int
+) -> bool:
+    """Check if a workspace exists given its ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to check.
+
+    Returns
+    -------
+    bool
+        Specifies if the workspace exists.
+    """
+
+    stmt = select(WorkspaceDB.workspace_id).where(
+        WorkspaceDB.workspace_id == workspace_id
+    )
+    try:
+        result = await asession.execute(stmt)
+        return result.scalar() is not None
+    except NoResultFound:
+        return False
 
 
 async def check_if_workspaces_exist(*, asession: AsyncSession) -> bool:
@@ -95,6 +123,55 @@ async def create_workspace(
         await asession.refresh(workspace_db)
 
     return workspace_db
+
+
+async def delete_workspace_by_id(asession: AsyncSession, workspace_id: int) -> None:
+    """Delete a workspace and all related entries in `UserWorkspaceRoleDB` and `UserDB`
+    for a given workspace ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to delete.
+
+    Raises
+    ------
+    RuntimeError
+        If an error occurs while deleting the workspace.
+    WorkspaceNotFoundError
+        If the workspace with the specified workspace ID does not exist.
+    """
+
+    if not await check_if_workspace_exist_by_workspace_id(
+        asession=asession, workspace_id=workspace_id
+    ):
+        raise WorkspaceNotFoundError(
+            f"Workspace with ID {workspace_id} does not exist."
+        )
+
+    try:
+        # Delete all associated roles from `UserWorkspaceRoleDB`.
+        role_delete_stmt = delete(UserWorkspaceRoleDB).where(
+            UserWorkspaceRoleDB.workspace_id == workspace_id
+        )
+        await asession.execute(role_delete_stmt)
+
+        # Delete the workspace itself.
+        workspace_delete_stmt = delete(WorkspaceDB).where(
+            WorkspaceDB.workspace_id == workspace_id
+        )
+        await asession.execute(workspace_delete_stmt)
+
+        # Commit the changes.
+        await asession.commit()
+    except Exception as e:
+        # Rollback in case of an error.
+        await asession.rollback()
+        raise RuntimeError(
+            f"An error occurred while deleting the workspace: {str(e)}"
+        ) from e
 
 
 async def get_content_quota_by_workspace_id(
