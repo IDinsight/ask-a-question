@@ -5,13 +5,14 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
-class QueryResponseExtract(BaseModel):
-    """Pydantic model for when a valid query response is returned."""
+class ContentFeedbackExtract(BaseModel):
+    """Pydantic model for content feedback."""
 
-    llm_response: str | None
-    response_datetime_utc: datetime
-    response_id: int
-    search_results: dict
+    content_id: int
+    feedback_datetime_utc: datetime
+    feedback_id: int
+    feedback_sentiment: str
+    feedback_text: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,21 +28,20 @@ class QueryResponseErrorExtract(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ResponseFeedbackExtract(BaseModel):
-    """Pydantic model for response feedback."""
+class QueryResponseExtract(BaseModel):
+    """Pydantic model for when a valid query response is returned."""
 
-    feedback_datetime_utc: datetime
-    feedback_id: int
-    feedback_sentiment: str
-    feedback_text: str | None
+    llm_response: str | None
+    response_datetime_utc: datetime
+    response_id: int
+    search_results: dict
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class ContentFeedbackExtract(BaseModel):
-    """Pydantic model for content feedback."""
+class ResponseFeedbackExtract(BaseModel):
+    """Pydantic model for response feedback."""
 
-    content_id: int
     feedback_datetime_utc: datetime
     feedback_id: int
     feedback_sentiment: str

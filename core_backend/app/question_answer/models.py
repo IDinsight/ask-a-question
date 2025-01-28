@@ -45,30 +45,29 @@ class QueryDB(Base):
 
     __tablename__ = "query"
 
-    query_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True, nullable=False
-    )
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
-    query_text: Mapped[str] = mapped_column(String, nullable=False)
-    query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    query_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=True)
-
-    response_feedback: Mapped[list["ResponseFeedbackDB"]] = relationship(
-        "ResponseFeedbackDB", back_populates="query", lazy=True
-    )
     content_feedback: Mapped[list["ContentFeedbackDB"]] = relationship(
         "ContentFeedbackDB", back_populates="query", lazy=True
     )
+    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
+    generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    query_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    query_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, index=True, nullable=False
+    )
+    query_generate_llm_response: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    query_text: Mapped[str] = mapped_column(String, nullable=False)
     response: Mapped[list["QueryResponseDB"]] = relationship(
         "QueryResponseDB", back_populates="query", lazy=True
+    )
+    response_feedback: Mapped[list["ResponseFeedbackDB"]] = relationship(
+        "ResponseFeedbackDB", back_populates="query", lazy=True
+    )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -96,25 +95,24 @@ class QueryResponseDB(Base):
 
     __tablename__ = "query_response"
 
-    response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+    error_type: Mapped[str] = mapped_column(String, nullable=True)
+    is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    query: Mapped[QueryDB] = relationship(
+        "QueryDB", back_populates="response", lazy=True
     )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    tts_filepath: Mapped[str] = mapped_column(String, nullable=True)
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    debug_info: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    error_type: Mapped[str] = mapped_column(String, nullable=True)
-    error_message: Mapped[str] = mapped_column(String, nullable=True)
-
-    query: Mapped[QueryDB] = relationship(
-        "QueryDB", back_populates="response", lazy=True
+    response_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    search_results: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    tts_filepath: Mapped[str] = mapped_column(String, nullable=True)
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -135,16 +133,14 @@ class QueryResponseContentDB(Base):
     """
 
     __tablename__ = "query_response_content"
+    __table_args__ = (
+        Index(
+            "idx_workspace_id_created_datetime", "workspace_id", "created_datetime_utc"
+        ),
+    )
 
     content_for_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
-    )
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("query.query_id"), nullable=False
     )
     content_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("content.content_id"), nullable=False
@@ -152,11 +148,12 @@ class QueryResponseContentDB(Base):
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-
-    __table_args__ = (
-        Index(
-            "idx_workspace_id_created_datetime", "workspace_id", "created_datetime_utc"
-        ),
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id"), nullable=False
+    )
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -187,22 +184,21 @@ class ResponseFeedbackDB(Base):
 
     __tablename__ = "query_response_feedback"
 
+    feedback_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
-    feedback_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response_feedback", lazy=True
+    )
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -229,26 +225,24 @@ class ContentFeedbackDB(Base):
 
     __tablename__ = "content_feedback"
 
+    content: Mapped["ContentDB"] = relationship("ContentDB")
+    content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
+    feedback_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     feedback_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
-    feedback_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
-
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="content_feedback", lazy=True
     )
-
-    content: Mapped["ContentDB"] = relationship("ContentDB")
+    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    session_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    )
 
     def __repr__(self) -> str:
         """Construct the string representation of the `ContentFeedbackDB` object.

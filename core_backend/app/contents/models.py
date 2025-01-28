@@ -43,7 +43,6 @@ class ContentDB(Base):
     """
 
     __tablename__ = "content"
-
     __table_args__ = (
         Index(
             "content_idx",
@@ -57,37 +56,28 @@ class ContentDB(Base):
         ),
     )
 
-    content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-
     content_embedding: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
-    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
-    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-
+    content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-
+    content_tags = relationship(
+        "TagDB", secondary=content_tags_table, back_populates="contents"
+    )
+    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
+    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-
-    positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    content_tags = relationship(
-        "TagDB",
-        secondary=content_tags_table,
-        back_populates="contents",
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
@@ -101,15 +91,15 @@ class ContentDB(Base):
 
         return (
             f"ContentDB(content_id={self.content_id}, "
-            f"workspace_id={self.workspace_id}, "
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
+            f"is_archived={self.is_archived}), "
             f"updated_datetime_utc={self.updated_datetime_utc}), "
-            f"is_archived={self.is_archived})"
+            f"workspace_id={self.workspace_id}"
         )
 
 

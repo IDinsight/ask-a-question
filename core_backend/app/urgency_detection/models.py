@@ -23,20 +23,19 @@ class UrgencyQueryDB(Base):
 
     __tablename__ = "urgency_query"
 
+    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
+    message_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    message_text: Mapped[str] = mapped_column(String, nullable=False)
+    response: Mapped["UrgencyResponseDB"] = relationship(
+        "UrgencyResponseDB", back_populates="query", uselist=False, lazy=True
+    )
     urgency_query_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True, nullable=False
     )
     workspace_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    message_text: Mapped[str] = mapped_column(String, nullable=False)
-    message_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
-
-    response: Mapped["UrgencyResponseDB"] = relationship(
-        "UrgencyResponseDB", back_populates="query", uselist=False, lazy=True
     )
 
     def __repr__(self) -> str:
@@ -63,24 +62,23 @@ class UrgencyResponseDB(Base):
 
     __tablename__ = "urgency_response"
 
-    urgency_response_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True, nullable=False
-    )
+    details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
     matched_rules: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True)
-    details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    query: Mapped[UrgencyQueryDB] = relationship(
+        "UrgencyQueryDB", back_populates="response", lazy=True
+    )
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("urgency_query.urgency_query_id")
-    )
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-
-    query: Mapped[UrgencyQueryDB] = relationship(
-        "UrgencyQueryDB", back_populates="response", lazy=True
+    urgency_response_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, index=True, nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:

@@ -6,6 +6,16 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class UrgencyRuleCosineDistance(BaseModel):
+    """Pydantic model for urgency detection result when using the cosine distance
+    method (i.e., environment variable LLM_CLASSIFIER is set to
+    "cosine_distance_classifier").
+    """
+
+    distance: float = Field(..., examples=[0.1])
+    urgency_rule: str = Field(..., examples=["Blurry vision and dizziness"])
+
+
 class UrgencyRuleCreate(BaseModel):
     """Pydantic model for creating a new urgency rule."""
 
@@ -47,13 +57,3 @@ class UrgencyRuleRetrieve(UrgencyRuleCreate):
             ]
         },
     )
-
-
-class UrgencyRuleCosineDistance(BaseModel):
-    """Pydantic model for urgency detection result when using the cosine distance
-    method (i.e., environment variable LLM_CLASSIFIER is set to
-    "cosine_distance_classifier").
-    """
-
-    distance: float = Field(..., examples=[0.1])
-    urgency_rule: str = Field(..., examples=["Blurry vision and dizziness"])

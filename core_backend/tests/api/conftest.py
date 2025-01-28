@@ -41,8 +41,9 @@ from core_backend.app.question_answer.models import (
 )
 from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
-from core_backend.app.users.models import UserDB
-from core_backend.app.utils import get_key_hash, get_password_salted_hash
+from core_backend.app.users.models import UserDB, WorkspaceDB
+from core_backend.app.users.schemas import UserRoles
+from core_backend.app.utils import get_password_salted_hash
 
 TEST_ADMIN_API_KEY = "admin_api_key"
 TEST_ADMIN_PASSWORD = "admin_password"
@@ -58,21 +59,38 @@ TEST_USERNAME = "test_username"
 TEST_USERNAME_2 = "test_username_2"
 TEST_USER_API_KEY = "test_api_key"
 TEST_USER_API_KEY_2 = "test_api_key_2"
+TEST_WORKSPACE = "test_workspace"
+TEST_WORKSPACE_2 = "test_workspace_2"
 
 
 @pytest.fixture(scope="session")
 def db_session() -> Generator[Session, None, None]:
-    """Create a test database session."""
+    """Create a test database session.
+
+    Returns
+    -------
+    Generator[Session, None, None]
+        Test database session.
+    """
 
     with get_session_context_manager() as session:
         yield session
 
 
-# We recreate engine and session to ensure it is in the same event loop as the test.
-# Without this we get "Future attached to different loop" error.
-# See: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops  # noqa: E501
 @pytest.fixture(scope="function")
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Create an async engine for testing.
+
+    NB: We recreate engine and session to ensure it is in the same event loop as the
+    test. Without this we get "Future attached to different loop" error. See:
+    https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops  # noqa: E501
+
+    Returns
+    -------
+    Generator[AsyncEngine, None, None]
+        Async engine for testing.
+    """
+
     connection_string = get_connection_url()
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
@@ -81,12 +99,38 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
 
 @pytest.fixture(scope="function")
 async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Create an async session for testing.
+
+    Parameters
+    ----------
+    async_engine
+        Async engine for testing.
+
+    Returns
+    -------
+    AsyncGenerator[AsyncSession, None]
+        Async session for testing.
+    """
+
     async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
         yield async_session
 
 
 @pytest.fixture(scope="session", autouse=True)
-def admin_user(client: TestClient, db_session: Session) -> Generator:
+def admin_user(db_session: Session) -> Generator[int, None, None]:
+    """Create an admin user ID for testing.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        Admin user ID.
+    """
+
     admin_user = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),
         hashed_password=get_password_salted_hash(key=TEST_ADMIN_PASSWORD),
@@ -101,7 +145,20 @@ def admin_user(client: TestClient, db_session: Session) -> Generator:
 
 
 @pytest.fixture(scope="session")
-def user1(client: TestClient, db_session: Session) -> Generator:
+def user1(db_session: Session) -> Generator[int, None, None]:
+    """Create a user ID for testing.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        User ID.
+    """
+
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
     result = db_session.execute(stmt)
     user = result.scalar_one()
@@ -109,39 +166,131 @@ def user1(client: TestClient, db_session: Session) -> Generator:
 
 
 @pytest.fixture(scope="session")
-def user2(client: TestClient, db_session: Session) -> Generator:
+def user2(db_session: Session) -> Generator[int, None, None]:
+    """Create a user ID for testing.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        User ID.
+    """
+
     stmt = select(UserDB).where(UserDB.username == TEST_USERNAME_2)
     result = db_session.execute(stmt)
     user = result.scalar_one()
     yield user.user_id
 
 
+@pytest.fixture(scope="session")
+def workspace1(db_session: Session) -> Generator[int, None, None]:
+    """Create a workspace ID for testing.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        Workspace ID.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_name == TEST_WORKSPACE)
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+@pytest.fixture(scope="session")
+def workspace2(db_session: Session) -> Generator[int, None, None]:
+    """Create a workspace ID for testing.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        Workspace ID.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_name == TEST_WORKSPACE_2)
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
 @pytest.fixture(scope="session", autouse=True)
-def user(
-    client: TestClient,
-    db_session: Session,
-    admin_user: int,
-    fullaccess_token_admin: str,
-) -> None:
+def user(client: TestClient, fullaccess_token_admin: str) -> None:
+    """Create users for testing by invoking the `/user` endpoint.
+
+    Parameters
+    ----------
+    client
+        Test client.
+    fullaccess_token_admin
+        Token with full access for admin.
+    """
+
     client.post(
         "/user",
         json={
-            "username": TEST_USERNAME,
+            "is_default_workspace": True,
             "password": TEST_PASSWORD,
-            "content_quota": TEST_CONTENT_QUOTA,
-            "api_daily_quota": TEST_API_QUOTA,
-            "is_admin": False,
+            "role": UserRoles.ADMIN,
+            "username": TEST_USERNAME,
+            "workspace_name": TEST_WORKSPACE,
         },
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
     client.post(
         "/user",
         json={
-            "username": TEST_USERNAME_2,
+            "is_default_workspace": True,
             "password": TEST_PASSWORD_2,
-            "content_quota": TEST_CONTENT_QUOTA_2,
+            "role": UserRoles.ADMIN,
+            "username": TEST_USERNAME_2,
+            "workspace_name": TEST_WORKSPACE_2,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def workspace(client: TestClient, fullaccess_token_admin: str) -> None:
+    """Create workspaces for testing by invoking the `/workspace` endpoint.
+
+    Parameters
+    ----------
+    client
+        Test client.
+    fullaccess_token_admin
+        Token with full access for admin.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_API_QUOTA,
+            "content_quota": TEST_CONTENT_QUOTA,
+            "workspace_name": TEST_WORKSPACE,
+        },
+        headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
+    )
+    client.post(
+        "/workspace",
+        json={
             "api_daily_quota": TEST_API_QUOTA_2,
-            "is_admin": False,
+            "content_quota": TEST_CONTENT_QUOTA_2,
+            "workspace_name": TEST_WORKSPACE_2,
         },
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
@@ -149,12 +298,26 @@ def user(
 
 @pytest.fixture(scope="function")
 async def faq_contents(
-    asession: AsyncSession, user1: int
+    asession: AsyncSession, workspace1: int
 ) -> AsyncGenerator[list[int], None]:
+    """Create FAQ contents for testing for workspace 1.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    workspace1
+        The ID for workspace 1.
+
+    Returns
+    -------
+    AsyncGenerator[list[int], None]
+        FAQ content IDs.
+    """
+
     with open("tests/api/data/content.json", "r") as f:
         json_data = json.load(f)
     contents = []
-
     for _i, content in enumerate(json_data):
         text_to_embed = content["content_title"] + "\n" + content["content_text"]
         content_embedding = await async_fake_embedding(
@@ -170,7 +333,7 @@ async def faq_contents(
             content_title=content["content_title"],
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
-            workspace_id=user1,
+            workspace_id=workspace1,
         )
         contents.append(content_db)
 
@@ -180,66 +343,88 @@ async def faq_contents(
     yield [content.content_id for content in contents]
 
     for content in contents:
-        deleteFeedback = delete(ContentFeedbackDB).where(
+        delete_feedback = delete(ContentFeedbackDB).where(
             ContentFeedbackDB.content_id == content.content_id
         )
         content_query = delete(QueryResponseContentDB).where(
             QueryResponseContentDB.content_id == content.content_id
         )
-        await asession.execute(deleteFeedback)
+        await asession.execute(delete_feedback)
         await asession.execute(content_query)
         await asession.delete(content)
 
     await asession.commit()
 
 
-@pytest.fixture(
-    scope="module",
-    params=[
-        ("Tag1"),
-        ("tag2",),
-    ],
-)
+@pytest.fixture(scope="module", params=[("Tag1"), ("tag2",)])
 def existing_tag_id(
     request: pytest.FixtureRequest, client: TestClient, fullaccess_token: str
 ) -> Generator[str, None, None]:
+    """Create a tag for testing by invoking the `/tag` endpoint.
+
+    Parameters
+    ----------
+    request
+        Pytest request object.
+    client
+        Test client.
+    fullaccess_token
+        Token with full access for user 1.
+
+    Returns
+    -------
+    Generator[str, None, None]
+        Tag ID.
+    """
+
     response = client.post(
         "/tag",
         headers={"Authorization": f"Bearer {fullaccess_token}"},
-        json={
-            "tag_name": request.param[0],
-        },
+        json={"tag_name": request.param[0]},
     )
     tag_id = response.json()["tag_id"]
     yield tag_id
     client.delete(
-        f"/tag/{tag_id}",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        f"/tag/{tag_id}", headers={"Authorization": f"Bearer {fullaccess_token}"}
     )
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, None]:
+async def urgency_rules(db_session: Session, workspace1: int) -> AsyncGenerator[int, None]:
+    """Create urgency rules for testing for workspace 1.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+    workspace1
+        The ID for workspace 1.
+
+    Returns
+    -------
+    AsyncGenerator[int, None]
+        Number of urgency rules.
+    """
+
     with open("tests/api/data/urgency_rules.json", "r") as f:
         json_data = json.load(f)
     rules = []
 
     for i, rule in enumerate(json_data):
         rule_embedding = await async_fake_embedding(
-            model=LITELLM_MODEL_EMBEDDING,
-            input=rule["urgency_rule_text"],
             api_base=LITELLM_ENDPOINT,
             api_key=LITELLM_API_KEY,
+            input=rule["urgency_rule_text"],
+            model=LITELLM_MODEL_EMBEDDING,
         )
-
         rule_db = UrgencyRuleDB(
-            urgency_rule_id=i,
-            user_id=user1,
-            urgency_rule_text=rule["urgency_rule_text"],
-            urgency_rule_vector=rule_embedding,
-            urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
+            urgency_rule_id=i,
+            urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
+            urgency_rule_text=rule["urgency_rule_text"],
+            urgency_rule_vector=rule_embedding,
+            workspace_id=workspace1,
         )
         rules.append(rule_db)
     db_session.add_all(rules)
@@ -247,7 +432,7 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
 
     yield len(rules)
 
-    # Delete the urgency rules
+    # Delete the urgency rules.
     for rule in rules:
         db_session.delete(rule)
     db_session.commit()
@@ -255,23 +440,38 @@ async def urgency_rules(db_session: Session, user1: int) -> AsyncGenerator[int, 
 
 @pytest.fixture(scope="function")
 async def urgency_rules_user2(
-    db_session: Session, user2: int
+    db_session: Session, workspace2: int
 ) -> AsyncGenerator[int, None]:
+    """Create urgency rules for testing for workspace 2.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+    workspace2
+        The ID for workspace 2.
+
+    Returns
+    -------
+    AsyncGenerator[int, None]
+        Number of urgency rules.
+    """
+
     rule_embedding = await async_fake_embedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input="user 2 rule",
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
+        input="workspace 2 rule",
+        model=LITELLM_MODEL_EMBEDDING,
     )
 
     rule_db = UrgencyRuleDB(
-        urgency_rule_id=1000,
-        user_id=user2,
-        urgency_rule_text="user 2 rule",
-        urgency_rule_vector=rule_embedding,
-        urgency_rule_metadata={},
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        urgency_rule_metadata={},
+        urgency_rule_id=1000,
+        urgency_rule_text="user 2 rule",
+        urgency_rule_vector=rule_embedding,
+        workspace_id=workspace2,
     )
 
     db_session.add(rule_db)
@@ -279,16 +479,9 @@ async def urgency_rules_user2(
 
     yield 1
 
-    # Delete the urgency rules
+    # Delete the urgency rules.
     db_session.delete(rule_db)
     db_session.commit()
-
-
-# @pytest.fixture(scope="session")
-# async def client() -> AsyncGenerator[AsyncClient, None]:
-#    app = create_app()
-#    async with AsyncClient(app=app, base_url="http://test") as c:
-#        yield c
 
 
 @pytest.fixture(scope="session")

@@ -32,19 +32,19 @@ class TagDB(Base):
 
     __tablename__ = "tag"
 
-    tag_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    contents = relationship(
+        "ContentDB", secondary=content_tags_table, back_populates="content_tags"
     )
-    tag_name: Mapped[str] = mapped_column(String(length=50), nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    tag_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    tag_name: Mapped[str] = mapped_column(String(length=50), nullable=False)
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    contents = relationship(
-        "ContentDB", secondary=content_tags_table, back_populates="content_tags"
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:

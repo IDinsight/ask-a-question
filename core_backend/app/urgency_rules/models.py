@@ -33,22 +33,22 @@ class UrgencyRuleDB(Base):
 
     __tablename__ = "urgency_rule"
 
-    urgency_rule_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False
-    )
-    workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
-    )
-    urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
-    urgency_rule_vector: Mapped[Vector] = mapped_column(
-        Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
-    )
-    urgency_rule_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
+    )
+    urgency_rule_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, nullable=False
+    )
+    urgency_rule_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=True)
+    urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
+    urgency_rule_vector: Mapped[Vector] = mapped_column(
+        Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     def __repr__(self) -> str:
