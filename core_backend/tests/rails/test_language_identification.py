@@ -39,13 +39,19 @@ async def test_language_identification(
     """Test language identification."""
 
     question = QueryRefined(
-        query_text=content, query_text_original=content, workspace_id=124
+        generate_llm_response=False,
+        generate_tts=False,
+        query_text=content,
+        query_text_original=content,
+        workspace_id=124,
     )
+
     response = QueryResponse(
         feedback_secret_key="feedback-string",
         query_id=1,
         llm_response="Dummy response",
         search_results=None,
+        session_id=None,
     )
     if expected_label not in available_languages:
         expected_label = "UNSUPPORTED"

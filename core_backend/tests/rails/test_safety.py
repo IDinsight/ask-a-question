@@ -39,18 +39,22 @@ def response() -> QueryResponse:
         llm_response="Dummy response",
         query_id=1,
         search_results=None,
+        session_id=None,
     )
 
 
 @pytest.mark.parametrize("prompt_injection", read_test_data(PROMPT_INJECTION_FILE))
 async def test_prompt_injection_found(
-    prompt_injection: pytest.FixtureRequest, response: QueryResponse
+    prompt_injection: str, response: QueryResponse
 ) -> None:
     """Tests that prompt injection is found."""
 
     question = QueryRefined(
+        generate_llm_response=False,
+        generate_tts=False,
         query_text=prompt_injection,
         query_text_original=prompt_injection,
+        workspace_id=124,
     )
     _, response = await _classify_safety(query_refined=question, response=response)
     assert isinstance(response, QueryResponseError)
@@ -66,7 +70,11 @@ async def test_safe_message(safe_text: str, response: QueryResponse) -> None:
     """Tests that safe messages are classified as safe."""
 
     question = QueryRefined(
-        query_text=safe_text, query_text_original=safe_text, workspace_id=124
+        generate_llm_response=False,
+        generate_tts=False,
+        query_text=safe_text,
+        query_text_original=safe_text,
+        workspace_id=124,
     )
     _, response = await _classify_safety(query_refined=question, response=response)
 
@@ -85,6 +93,8 @@ async def test_inappropriate_language(
     """Tests that inappropriate language is found."""
 
     question = QueryRefined(
+        generate_llm_response=False,
+        generate_tts=False,
         query_text=inappropriate_text,
         query_text_original=inappropriate_text,
         workspace_id=124,

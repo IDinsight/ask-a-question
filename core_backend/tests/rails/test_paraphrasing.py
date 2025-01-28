@@ -38,6 +38,8 @@ async def test_paraphrasing(test_data: dict) -> None:
     missing = test_data.get("missing", [])
 
     question = QueryRefined(
+        generate_llm_response=False,
+        generate_tts=False,
         query_text=message,
         query_text_original=message,
         workspace_id=124,
@@ -47,6 +49,7 @@ async def test_paraphrasing(test_data: dict) -> None:
         llm_response="Dummy response",
         query_id=1,
         search_results=None,
+        session_id=None,
     )
 
     paraphrased_question, paraphrased_response = await _paraphrase_question(
