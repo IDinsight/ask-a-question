@@ -56,7 +56,7 @@ async def get_llm_rag_answer(
         user_message=question,
     )
 
-    result = remove_json_markdown(result)
+    result = remove_json_markdown(text=result)
 
     try:
         response = RAG.model_validate_json(result)
@@ -134,7 +134,7 @@ async def get_llm_rag_answer_with_chat_history(
         json_=True,
         metadata=metadata or {},
     )
-    result = remove_json_markdown(content)
+    result = remove_json_markdown(text=content)
     try:
         response = RAG.model_validate_json(result)
     except ValidationError as e:

@@ -299,7 +299,7 @@ async def _get_llm_align_score(
     )
 
     try:
-        result = remove_json_markdown(result)
+        result = remove_json_markdown(text=result)
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
         logger.error(f"LLM alignment score response is not valid json: {e}")

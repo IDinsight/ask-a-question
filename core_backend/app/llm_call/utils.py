@@ -508,7 +508,7 @@ def log_chat_history(
             logger.info(f"\n{role}:\n({name}): {content}\n")
 
 
-def remove_json_markdown(text: str) -> str:
+def remove_json_markdown(*, text: str) -> str:
     """Remove json markdown from text.
 
     Parameters

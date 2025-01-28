@@ -113,7 +113,7 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
     metadata = create_langfuse_metadata(
         feature_name="topic-modeling", workspace_id=workspace_id
     )
-    topic_model_labelling = TopicModelLabelling(context)
+    topic_model_labelling = TopicModelLabelling(context=context)
 
     combined_texts = "\n".join(
         [f"{i + 1}. {text}" for i, text in enumerate(sample_texts)]
@@ -128,7 +128,7 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
     )
 
     try:
-        topic = topic_model_labelling.parse_json(topic_json)
+        topic = topic_model_labelling.parse_json(json_str=topic_json)
     except ValueError as e:
         logger.warning(
             (

@@ -162,7 +162,7 @@ def generate_feedback(
     try:
         # Extract the output from the response.
         feedback_output = response["choices"][0]["message"]["content"].strip()
-        feedback_output = remove_json_markdown(feedback_output)
+        feedback_output = remove_json_markdown(text=feedback_output)
         feedback_dict = json.loads(feedback_output)
         if isinstance(feedback_dict, dict) and "output" in feedback_dict:
             return feedback_dict

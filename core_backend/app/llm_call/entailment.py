@@ -46,7 +46,7 @@ async def detect_urgency(
     )
 
     try:
-        parsed_json = ud_entailment.parse_json(json_str)
+        parsed_json = ud_entailment.parse_json(json_str=json_str)
     except (ValidationError, ValueError) as e:
         logger.warning(f"JSON Decode failed. json_str: {json_str}. Exception: {e}")
         parsed_json = ud_entailment.default_json

@@ -279,7 +279,7 @@ class ChatHistory:
                 )
         try:
             return pydantic_model.model_validate_json(
-                remove_json_markdown(json_str)
+                remove_json_markdown(text=json_str)
             ).model_dump()
         except ValueError as e:
             raise ValueError(f"Error validating the output: {e}") from e
@@ -467,7 +467,7 @@ class TopicModelLabelling:
         """
     ).strip()
 
-    def __init__(self, context: str) -> None:
+    def __init__(self, *, context: str) -> None:
         """Initialize the topic model labelling task with context.
 
         Parameters
@@ -492,7 +492,7 @@ class TopicModelLabelling:
         return prompt + "\n\n" + self._response_prompt
 
     @staticmethod
-    def parse_json(json_str: str) -> dict[str, str]:
+    def parse_json(*, json_str: str) -> dict[str, str]:
         """Validate the output of the topic model labelling task.
 
         Parameters
@@ -511,7 +511,7 @@ class TopicModelLabelling:
             If there is an error validating the output.
         """
 
-        json_str = remove_json_markdown(json_str)
+        json_str = remove_json_markdown(text=json_str)
 
         try:
             result = TopicModelLabelling.TopicModelLabellingResult.model_validate_json(
@@ -567,7 +567,7 @@ class UrgencyDetectionEntailment:
         "reason": "",
     }
 
-    def __init__(self, urgency_rules: list[str]) -> None:
+    def __init__(self, *, urgency_rules: list[str]) -> None:
         """Initialize the urgency detection entailment task with urgency rules.
 
         Parameters
@@ -578,7 +578,7 @@ class UrgencyDetectionEntailment:
 
         self._urgency_rules = urgency_rules
 
-    def parse_json(self, json_str: str) -> dict:
+    def parse_json(self, *, json_str: str) -> dict:
         """Validate the output of the urgency detection entailment task.
 
         Parameters
@@ -597,7 +597,7 @@ class UrgencyDetectionEntailment:
             If the best matching rule is not in the urgency rules provided.
         """
 
-        json_str = remove_json_markdown(json_str)
+        json_str = remove_json_markdown(text=json_str)
 
         # fmt: off
         ud_entailment_result = (
