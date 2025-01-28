@@ -10,7 +10,7 @@ from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import TopicModelLabelling, get_feedback_summary_prompt
 from .utils import _ask_llm_async
 
-logger = setup_logger("DASHBOARD AI SUMMARY")
+logger = setup_logger(name="DASHBOARD AI SUMMARY")
 
 
 async def generate_ai_summary(
@@ -39,7 +39,7 @@ async def generate_ai_summary(
         feature_name="dashboard", workspace_id=workspace_id
     )
     ai_feedback_summary_prompt = get_feedback_summary_prompt(
-        content_title, content_text
+        content=content_text, content_title=content_title
     )
 
     ai_summary = await _ask_llm_async(

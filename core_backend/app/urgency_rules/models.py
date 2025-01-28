@@ -88,7 +88,7 @@ async def save_urgency_rule_to_db(
         "generation_name": "save_urgency_rule_to_db",
     }
     urgency_rule_vector = await embedding(
-        urgency_rule.urgency_rule_text, metadata=metadata
+        metadata=metadata, text_to_embed=urgency_rule.urgency_rule_text
     )
     urgency_rule_db = UrgencyRuleDB(
         created_datetime_utc=datetime.now(timezone.utc),
@@ -136,7 +136,7 @@ async def update_urgency_rule_in_db(
         "generation_name": "update_urgency_rule_in_db",
     }
     urgency_rule_vector = await embedding(
-        urgency_rule.urgency_rule_text, metadata=metadata
+        metadata=metadata, text_to_embed=urgency_rule.urgency_rule_text
     )
     urgency_rule_db = UrgencyRuleDB(
         updated_datetime_utc=datetime.now(timezone.utc),
@@ -271,7 +271,7 @@ async def get_cosine_distances_from_rules(
         "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "get_cosine_distances_from_rules",
     }
-    message_vector = await embedding(message_text, metadata=metadata)
+    message_vector = await embedding(metadata=metadata, text_to_embed=message_text)
     query = (
         select(
             UrgencyRuleDB,

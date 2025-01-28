@@ -89,7 +89,7 @@ async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, No
 def admin_user(client: TestClient, db_session: Session) -> Generator:
     admin_user = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),
-        hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
+        hashed_password=get_password_salted_hash(key=TEST_ADMIN_PASSWORD),
         recovery_codes=TEST_ADMIN_RECOVERY_CODES,
         updated_datetime_utc=datetime.now(timezone.utc),
         username=TEST_ADMIN_USERNAME,

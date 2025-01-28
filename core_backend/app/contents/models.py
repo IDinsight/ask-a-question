@@ -391,7 +391,7 @@ async def _get_content_embeddings(
     """
 
     text_to_embed = content.content_title + "\n" + content.content_text
-    return await embedding(text_to_embed, metadata=metadata)
+    return await embedding(metadata=metadata, text_to_embed=text_to_embed)
 
 
 async def get_similar_content_async(
@@ -430,7 +430,7 @@ async def get_similar_content_async(
     metadata = metadata or {}
     metadata["generation_name"] = "get_similar_content_async"
 
-    question_embedding = await embedding(question, metadata=metadata)
+    question_embedding = await embedding(metadata=metadata, text_to_embed=question)
 
     return await get_search_results(
         asession=asession,

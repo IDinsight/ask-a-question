@@ -16,7 +16,7 @@ from .utils import (
     remove_json_markdown,
 )
 
-logger = setup_logger("RAG")
+logger = setup_logger(name="RAG")
 
 
 async def get_llm_rag_answer(

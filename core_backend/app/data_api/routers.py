@@ -27,13 +27,18 @@ from .schemas import (
     UrgencyQueryResponseExtract,
 )
 
-logger = setup_logger()
+TAG_METADATA = {
+    "name": "Data API",
+    "description": "_Requires API key._ Endpoints for managing data.",
+}
 
 router = APIRouter(
     prefix="/data-api",
     dependencies=[Depends(authenticate_key)],
-    tags=["Data API"],
+    tags=[TAG_METADATA["name"]],
 )
+
+logger = setup_logger()
 
 
 @router.get("/contents", response_model=list[ContentRetrieve])

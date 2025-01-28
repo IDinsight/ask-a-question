@@ -24,7 +24,7 @@ from .models import (
 from .schemas import TagCreate, TagRetrieve
 
 TAG_METADATA = {
-    "name": "Content tag management",
+    "name": "Tag management for contents",
     "description": "_Requires user login._ Manage tags for content used "
     "for question answering.",
 }

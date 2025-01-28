@@ -4,6 +4,7 @@ endpoints.
 
 import json
 import os
+from io import BytesIO
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
@@ -289,15 +290,20 @@ async def voice_search(
 
     try:
         file_stream, content_type, file_extension = await download_file_from_url(
-            file_url
+            file_url=file_url
         )
+        assert isinstance(file_stream, BytesIO)
 
-        unique_filename = generate_random_filename(file_extension)
+        unique_filename = generate_random_filename(extension=file_extension)
         destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
         await upload_file_to_gcs(
-            GCS_SPEECH_BUCKET, file_stream, destination_blob_name, content_type
+            bucket_name=GCS_SPEECH_BUCKET,
+            content_type=content_type,
+            destination_blob_name=destination_blob_name,
+            file_stream=file_stream,
         )
+
         file_path = f"temp/{unique_filename}"
         with open(file_path, "wb") as f:
             file_stream.seek(0)
@@ -305,10 +311,12 @@ async def voice_search(
         file_stream.seek(0)
 
         if CUSTOM_STT_ENDPOINT is not None:
-            transcription = await post_to_speech_stt(file_path, CUSTOM_STT_ENDPOINT)
+            transcription = await post_to_speech_stt(
+                file_path=file_path, endpoint_url=CUSTOM_STT_ENDPOINT
+            )
             transcription_result = transcription["text"]
         else:
-            transcription_result = await transcribe_audio(file_path)
+            transcription_result = await transcribe_audio(audio_filename=file_path)
 
         user_query = QueryBase(
             generate_llm_response=True,

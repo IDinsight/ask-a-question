@@ -1,7 +1,5 @@
 """This module contains FastAPI routers for user authentication endpoints."""
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -30,11 +28,17 @@ from .dependencies import (
     authenticate_workspace,
     create_access_token,
 )
-from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
+from .schemas import (
+    AuthenticatedUser,
+    AuthenticationDetails,
+    GoogleLoginData,
+    WorkspaceLogin,
+)
 
 TAG_METADATA = {
     "name": "Authentication",
-    "description": "_Requires user login._ Endpoints for authenticating user logins.",
+    "description": "_Requires user login._ Endpoints for authenticating user and "
+    "workspace logins.",
 }
 
 router = APIRouter(tags=[TAG_METADATA["name"]])
@@ -235,9 +239,7 @@ async def authenticate_or_create_google_user(
 
 
 @router.post("/login-workspace")
-async def login_workspace(
-    username: str, workspace_name: Optional[str] = None
-) -> AuthenticationDetails:
+async def login_workspace(workspace_login: WorkspaceLogin) -> AuthenticationDetails:
     """Login route for users to authenticate into a workspace and receive a JWT token.
 
     NB: This endpoint does NOT take the user's password for authentication. This is
@@ -246,10 +248,9 @@ async def login_workspace(
 
     Parameters
     ----------
-    username
-        The username of the user.
-    workspace_name
-        The name of the workspace to log into.
+    workspace_login
+        The workspace login object containing the username and workspace name to log
+        into.
 
     Returns
     -------
@@ -263,9 +264,7 @@ async def login_workspace(
         If the user credentials are invalid.
     """
 
-    authenticate_user = await authenticate_workspace(
-        username=username, workspace_name=workspace_name
-    )
+    authenticate_user = await authenticate_workspace(workspace_login=workspace_login)
 
     if authenticate_user is None:
         raise HTTPException(

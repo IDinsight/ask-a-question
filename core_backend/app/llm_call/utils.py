@@ -16,7 +16,7 @@ from ..config import (
 )
 from ..utils import setup_logger
 
-logger = setup_logger("LLM_call")
+logger = setup_logger(name="LLM_call")
 
 
 async def _ask_llm_async(

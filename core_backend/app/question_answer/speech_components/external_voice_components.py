@@ -1,27 +1,44 @@
+"""This module contains functions that interact with Google's Speech-to-Text and
+Text-to-Speech APIs.
+"""
+
 import io
 from io import BytesIO
 
 from google.cloud import speech, texttospeech
 
 from ...llm_call.llm_prompts import IdentifiedLanguage
-from ...utils import (
-    setup_logger,
-)
+from ...utils import setup_logger
 from .utils import convert_audio_to_wav, detect_language, get_gtts_lang_code_and_model
 
-logger = setup_logger("Voice API")
+logger = setup_logger(name="Voice API")
 
 
-async def transcribe_audio(audio_filename: str) -> str:
+async def transcribe_audio(*, audio_filename: str) -> str:
+    """Convert the provided audio file to text using Google's Speech-to-Text API and
+    ensure the audio file meets the required specifications.
+
+    Parameters
+    ----------
+    audio_filename
+        The name of the audio file to be transcribed.
+
+    Returns
+    -------
+    str
+        The transcribed text from the audio file.
+
+    Raises
+    ------
+    ValueError
+        If the audio file fails to transcribe.
     """
-    Converts the provided audio file to text using Google's Speech-to-Text API.
-    Ensures the audio file meets the required specifications.
-    """
+
     logger.info(f"Starting transcription for {audio_filename}")
 
     try:
-        detected_language = detect_language(audio_filename)
-        wav_filename = convert_audio_to_wav(audio_filename)
+        detected_language = detect_language(file_path=audio_filename)
+        wav_filename = convert_audio_to_wav(input_filename=audio_filename)
 
         client = speech.SpeechClient()
 
@@ -29,11 +46,13 @@ async def transcribe_audio(audio_filename: str) -> str:
             content = audio_file.read()
 
         audio = speech.RecognitionAudio(content=content)
+
+        # Checkout language codes here:
+        # https://cloud.google.com/speech-to-text/docs/languages
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code=detected_language,  # Checkout language codes here:
-            # https://cloud.google.com/speech-to-text/docs/languages
+            language_code=detected_language,
         )
 
         response = client.recognize(config=config, audio=audio)
@@ -51,25 +70,37 @@ async def transcribe_audio(audio_filename: str) -> str:
         raise ValueError(error_msg) from e
 
 
-async def synthesize_speech(
-    text: str,
-    language: IdentifiedLanguage,
-) -> BytesIO:
-    """
-    Converts the provided text to speech using the specified voice model
-    using Google Text-to-Speech.
+async def synthesize_speech(*, language: IdentifiedLanguage, text: str) -> BytesIO:
+    """Convert the provided text to speech using the specified voice model using
+    Google Text-to-Speech API.
+
+    Parameters
+    ----------
+    language
+        The language of the text to be converted to speech.
+    text
+        The text to be converted to speech.
+
+    Returns
+    -------
+    BytesIO
+        The speech audio file.
+
+    Raises
+    ------
+    ValueError
+        If the text fails to be converted to speech.
     """
 
     try:
         client = texttospeech.TextToSpeechClient()
 
-        lang, voice_model = get_gtts_lang_code_and_model(language)
+        lang, voice_model = get_gtts_lang_code_and_model(identified_language=language)
 
         synthesis_input = texttospeech.SynthesisInput(text=text)
 
         voice = texttospeech.VoiceSelectionParams(
-            language_code=lang,
-            name=f"{lang}-{voice_model}",
+            language_code=lang, name=f"{lang}-{voice_model}"
         )
 
         audio_config = texttospeech.AudioConfig(

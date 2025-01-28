@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    exists,
     select,
     text,
     update,
@@ -63,12 +64,12 @@ class UserDB(Base):
         DateTime(timezone=True), nullable=False
     )
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    user_workspaces: Mapped[list["UserWorkspaceDB"]] = relationship(
+        "UserWorkspaceDB", back_populates="user"
+    )
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     workspaces: Mapped[list["WorkspaceDB"]] = relationship(
         "WorkspaceDB", back_populates="users", secondary="user_workspace", viewonly=True
-    )
-    workspace_roles: Mapped[list["UserWorkspaceDB"]] = relationship(
-        "UserWorkspaceDB", back_populates="user"
     )
 
     def __repr__(self) -> str:
@@ -108,14 +109,14 @@ class WorkspaceDB(Base):
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    user_workspaces: Mapped[list["UserWorkspaceDB"]] = relationship(
+        "UserWorkspaceDB", back_populates="workspace"
+    )
     users: Mapped[list["UserDB"]] = relationship(
         "UserDB", back_populates="workspaces", secondary="user_workspace", viewonly=True
     )
     workspace_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     workspace_name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    workspace_roles: Mapped[list["UserWorkspaceDB"]] = relationship(
-        "UserWorkspaceDB", back_populates="workspace"
-    )
 
     def __repr__(self) -> str:
         """Define the string representation for the `WorkspaceDB` class.
@@ -134,7 +135,9 @@ class UserWorkspaceDB(Base):
 
     TODO: A user's default workspace is assigned when the (new) user is created and
     added to a workspace. There is currently no way to change a user's default
-    workspace.
+    workspace. The exception is when a user is removed from a workspace that is also
+    their current default workspace. In this case, the user removal endpoint will
+    automatically assign the next earliest workspace as the user's default workspace.
     """
 
     __tablename__ = "user_workspace"
@@ -150,7 +153,7 @@ class UserWorkspaceDB(Base):
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    user: Mapped["UserDB"] = relationship("UserDB", back_populates="workspace_roles")
+    user: Mapped["UserDB"] = relationship("UserDB", back_populates="user_workspaces")
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.user_id"), primary_key=True
     )
@@ -158,7 +161,7 @@ class UserWorkspaceDB(Base):
         SQLAlchemyEnum(UserRoles), nullable=False
     )
     workspace: Mapped["WorkspaceDB"] = relationship(
-        "WorkspaceDB", back_populates="workspace_roles"
+        "WorkspaceDB", back_populates="user_workspaces"
     )
     workspace_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("workspace.workspace_id"), primary_key=True
@@ -200,6 +203,37 @@ async def check_if_user_exists(
     result = await asession.execute(stmt)
     user_db = result.scalar_one_or_none()
     return user_db
+
+
+async def check_if_user_exists_in_workspace(
+    *, asession: AsyncSession, user_id: int, workspace_id: int
+) -> bool:
+    """Check if a user exists in the specified workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_id
+        The user ID to check.
+    workspace_id
+        The workspace ID to check.
+
+    Returns
+    -------
+    bool
+        Specifies whether the user exists in the workspace.
+    """
+
+    stmt = select(
+        exists().where(
+            UserWorkspaceDB.user_id == user_id,
+            UserWorkspaceDB.workspace_id == workspace_id,
+        )
+    )
+    result = await asession.execute(stmt)
+
+    return bool(result.scalar())
 
 
 async def check_if_users_exist(*, asession: AsyncSession) -> bool:
@@ -282,9 +316,7 @@ async def create_user_workspace_role(
 
 
 async def get_admin_users_in_workspace(
-    *,
-    asession: AsyncSession,
-    workspace_id: int,
+    *, asession: AsyncSession, workspace_id: int
 ) -> Sequence[UserDB] | None:
     """Retrieve all admin users for a given workspace ID.
 
@@ -503,8 +535,8 @@ async def get_user_workspaces(
     return result.scalars().all()
 
 
-async def get_users_and_roles_by_workspace_name(
-    *, asession: AsyncSession, workspace_name: str
+async def get_users_and_roles_by_workspace_id(
+    *, asession: AsyncSession, workspace_id: int
 ) -> Sequence[Row[tuple[datetime, datetime, str, int, bool, UserRoles]]]:
     """Retrieve all users and their roles for a given workspace name.
 
@@ -512,8 +544,8 @@ async def get_users_and_roles_by_workspace_name(
     ----------
     asession
         The SQLAlchemy async session to use for all database connections.
-    workspace_name
-        The name of the workspace to retrieve users and their roles for.
+    workspace_id
+        The ID of the workspace to retrieve users and their roles for.
 
     Returns
     -------
@@ -534,7 +566,7 @@ async def get_users_and_roles_by_workspace_name(
         )
         .join(UserWorkspaceDB, UserDB.user_id == UserWorkspaceDB.user_id)
         .join(WorkspaceDB, WorkspaceDB.workspace_id == UserWorkspaceDB.workspace_id)
-        .where(WorkspaceDB.workspace_name == workspace_name)
+        .where(WorkspaceDB.workspace_id == workspace_id)
     )
 
     result = await asession.execute(stmt)
@@ -715,7 +747,7 @@ async def reset_user_password_in_db(
         The user object saved in the database after password reset.
     """
 
-    hashed_password = get_password_salted_hash(user.password)
+    hashed_password = get_password_salted_hash(key=user.password)
     user_db = UserDB(
         hashed_password=hashed_password,
         recovery_codes=recovery_codes,
@@ -765,10 +797,10 @@ async def save_user_to_db(
         )
 
     if isinstance(user, UserCreateWithPassword):
-        hashed_password = get_password_salted_hash(user.password)
+        hashed_password = get_password_salted_hash(key=user.password)
     else:
-        random_password = get_random_string(PASSWORD_LENGTH)
-        hashed_password = get_password_salted_hash(random_password)
+        random_password = get_random_string(size=PASSWORD_LENGTH)
+        hashed_password = get_password_salted_hash(key=random_password)
 
     user_db = UserDB(
         created_datetime_utc=datetime.now(timezone.utc),

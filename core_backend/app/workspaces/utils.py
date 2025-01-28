@@ -252,7 +252,7 @@ async def update_workspace_api_key(
         The workspace object updated in the database after API key update.
     """
 
-    workspace_db.hashed_api_key = get_key_hash(new_api_key)
+    workspace_db.hashed_api_key = get_key_hash(key=new_api_key)
     workspace_db.api_key_first_characters = new_api_key[:5]
     workspace_db.api_key_updated_datetime_utc = datetime.now(timezone.utc)
     workspace_db.updated_datetime_utc = datetime.now(timezone.utc)

@@ -28,7 +28,7 @@ TAG_METADATA = {
 }
 
 router = APIRouter(prefix="/urgency-rules", tags=[TAG_METADATA["name"]])
-logger = setup_logger(__name__)
+logger = setup_logger(name=__name__)
 
 
 @router.post("/", response_model=UrgencyRuleRetrieve)

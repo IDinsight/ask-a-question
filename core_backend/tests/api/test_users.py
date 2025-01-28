@@ -71,4 +71,4 @@ class TestUsers:
             user_db=saved_user, new_api_key="new_key", asession=asession
         )
         assert updated_user.hashed_api_key is not None
-        assert updated_user.hashed_api_key == get_key_hash("new_key")
+        assert updated_user.hashed_api_key == get_key_hash(key="new_key")

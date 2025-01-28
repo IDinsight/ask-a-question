@@ -26,7 +26,7 @@ from .llm_prompts import (
 )
 from .utils import _ask_llm_async
 
-logger = setup_logger("INPUT RAILS")
+logger = setup_logger(name="INPUT RAILS")
 
 
 def identify_language__before(func: Callable) -> Callable:

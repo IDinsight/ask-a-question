@@ -21,7 +21,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
         Parameters
         ----------
-        app : FastAPI
+        app
             The FastAPI application instance.
         """
 

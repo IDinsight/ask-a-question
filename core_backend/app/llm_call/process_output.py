@@ -35,7 +35,7 @@ from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer, get_llm_rag_answer_with_chat_history
 from .utils import _ask_llm_async, remove_json_markdown
 
-logger = setup_logger("OUTPUT RAILS")
+logger = setup_logger(name="OUTPUT RAILS")
 
 
 class AlignScoreData(TypedDict):
@@ -424,28 +424,30 @@ async def _generate_tts_response(
 
         if CUSTOM_TTS_ENDPOINT is not None:
             tts_file = await post_to_internal_tts(
-                text=response.llm_response,
                 endpoint_url=CUSTOM_TTS_ENDPOINT,
                 language=query_refined.original_language,
+                text=response.llm_response,
             )
 
         else:
             tts_file = await synthesize_speech(
-                text=response.llm_response,
-                language=query_refined.original_language,
+                language=query_refined.original_language, text=response.llm_response
             )
 
         content_type = "audio/wav"
-        file_extension = get_file_extension_from_mime_type(content_type)
-        unique_filename = generate_random_filename(file_extension)
+        file_extension = get_file_extension_from_mime_type(mime_type=content_type)
+        unique_filename = generate_random_filename(extension=file_extension)
         destination_blob_name = f"tts-voice-notes/{unique_filename}"
 
         await upload_file_to_gcs(
-            GCS_SPEECH_BUCKET, tts_file, destination_blob_name, content_type
+            bucket_name=GCS_SPEECH_BUCKET,
+            content_type=content_type,
+            destination_blob_name=destination_blob_name,
+            file_stream=tts_file,
         )
 
         tts_file_path = await generate_public_url(
-            GCS_SPEECH_BUCKET, destination_blob_name
+            blob_name=destination_blob_name, bucket_name=GCS_SPEECH_BUCKET
         )
 
         response.tts_filepath = tts_file_path

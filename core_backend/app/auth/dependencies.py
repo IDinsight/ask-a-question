@@ -38,7 +38,7 @@ from .config import (
     JWT_SECRET,
     REDIS_KEY_EXPIRED,
 )
-from .schemas import AuthenticatedUser
+from .schemas import AuthenticatedUser, WorkspaceLogin
 
 logger = setup_logger()
 
@@ -75,7 +75,9 @@ async def authenticate_credentials(
     ) as asession:
         try:
             user_db = await get_user_by_username(asession=asession, username=username)
-            if verify_password_salted_hash(password, user_db.hashed_password):
+            if verify_password_salted_hash(
+                key=password, stored_hash=user_db.hashed_password
+            ):
                 user_workspace_db = await get_user_default_workspace(
                     asession=asession, user_db=user_db
                 )
@@ -182,22 +184,24 @@ async def authenticate_key(
 
 
 async def authenticate_workspace(
-    *, username: str, workspace_name: Optional[str] = None
+    *, workspace_login: WorkspaceLogin
 ) -> AuthenticatedUser | None:
     """Authenticate user workspace using username and workspace name.
 
     Parameters
     ----------
-    username
-        The username of the user to authenticate.
-    workspace_name
-        The name of the workspace that the user is trying to log into.
+    workspace_login
+        The workspace login object containing the username and workspace name to log
+        into.
 
     Returns
     -------
     AuthenticatedUser | None
         Authenticated user if the user is authenticated, otherwise `None`.
     """
+
+    username = workspace_login.username
+    workspace_name = workspace_login.workspace_name
 
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
@@ -384,7 +388,7 @@ async def get_workspace_by_api_key(
         If the workspace with the specified token does not exist.
     """
 
-    hashed_token = get_key_hash(token)
+    hashed_token = get_key_hash(key=token)
     stmt = select(WorkspaceDB).where(WorkspaceDB.hashed_api_key == hashed_token)
     result = await asession.execute(stmt)
     try:

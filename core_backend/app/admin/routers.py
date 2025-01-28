@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_async_session
 
 TAG_METADATA = {
-    "name": "Healthcheck",
+    "name": "Admin",
     "description": "Healthcheck endpoint for the application",
 }
 

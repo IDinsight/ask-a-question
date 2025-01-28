@@ -10,13 +10,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..users.models import (
+from ..utils import setup_logger, update_api_limits
+from ..workspaces.utils import (
+    WorkspaceNotFoundError,
+    check_if_workspaces_exist,
+    create_workspace,
+    get_workspace_by_workspace_name,
+)
+from .models import (
     UserDB,
     UserNotFoundError,
     UserNotFoundInWorkspaceError,
     UserWorkspaceRoleAlreadyExistsError,
     WorkspaceDB,
     check_if_user_exists,
+    check_if_user_exists_in_workspace,
     check_if_users_exist,
     create_user_workspace_role,
     get_admin_users_in_workspace,
@@ -24,7 +32,7 @@ from ..users.models import (
     get_user_by_username,
     get_user_role_in_all_workspaces,
     get_user_role_in_workspace,
-    get_users_and_roles_by_workspace_name,
+    get_users_and_roles_by_workspace_id,
     get_workspaces_by_user_role,
     is_username_valid,
     remove_user_from_dbs,
@@ -37,7 +45,8 @@ from ..users.models import (
     user_has_required_role_in_workspace,
     users_exist_in_workspace,
 )
-from ..users.schemas import (
+from .schemas import (
+    RequireRegisterResponse,
     UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
@@ -46,20 +55,14 @@ from ..users.schemas import (
     UserResetPassword,
     UserRetrieve,
     UserRoles,
+    UserUpdate,
 )
-from ..utils import setup_logger, update_api_limits
-from ..workspaces.utils import (
-    WorkspaceNotFoundError,
-    check_if_workspaces_exist,
-    create_workspace,
-    get_workspace_by_workspace_name,
-)
-from .schemas import RequireRegisterResponse
 from .utils import generate_recovery_codes
 
 TAG_METADATA = {
     "name": "User",
-    "description": "_Requires user login._ Users have access to these endpoints.",
+    "description": "_Requires user login._ Manages users. Admin users have access to "
+    "all endpoints. Other users have limited access.",
 }
 
 router = APIRouter(prefix="/user", tags=["User"])
@@ -116,14 +119,10 @@ async def create_user(
     """
 
     # 1.
-    user_checked = await check_create_user_call(
+    user_checked, user_checked_workspace_db = await check_create_user_call(
         asession=asession, calling_user_db=calling_user_db, user=user
     )
     assert user_checked.workspace_name
-
-    user_checked_workspace_db = await get_workspace_by_workspace_name(
-        asession=asession, workspace_name=user_checked.workspace_name
-    )
 
     try:
         # 3.
@@ -233,14 +232,23 @@ async def remove_user_from_workspace(
 
     Note:
 
-    0. All workspaces must have at least one ADMIN user.
-    1. User authentication should be triggered by the frontend if the calling user has
-        removed themselves from all workspaces. This occurs when
-        `require_authentication` is set to `True` in `UserRemoveResponse`.
-    2. A workspace login should be triggered by the frontend if the calling user is
+    1. There should be no scenarios where the **last** admin user of a workspace is
+        allowed to remove themselves from the workspace. This poses a data risk since
+        an existing workspace with no users means that ANY admin can add users to that
+        workspace---this is essentially the scenario when an admin creates a new
+        workspace and then proceeds to add users to that newly created workspace.
+        However, existing workspaces can have content; thus, we disable the ability to
+        remove the last admin user from a workspace.
+    2. All workspaces must have at least one ADMIN user.
+    3. A re-authentication should be triggered by the frontend if the calling user is
+        removing themselves from the only workspace that they are assigned to. This
+        scenario can still occur if there are two admins of a workspace and an admin
+        is only assigned to that workspace and decides to remove themselves from the
+        workspace.
+    4. A workspace login should be triggered by the frontend if the calling user is
         removing themselves from the current workspace. This occurs when
-        `require_workspace_login` is set to `True` in `UserRemoveResponse`. This case
-        should be superceded by the first case.
+        `require_workspace_login` is set to `True` in `UserRemoveResponse`. Case 3
+        supersedes this case.
 
     The process is as follows:
 
@@ -361,9 +369,10 @@ async def retrieve_all_users(
 
     # 2.
     for workspace_db in calling_user_admin_workspace_dbs:
+        workspace_id = workspace_db.workspace_id
         workspace_name = workspace_db.workspace_name
-        user_workspace_roles = await get_users_and_roles_by_workspace_name(
-            asession=asession, workspace_name=workspace_name
+        user_workspace_roles = await get_users_and_roles_by_workspace_id(
+            asession=asession, workspace_id=workspace_id
         )
         for uwr in user_workspace_roles:
             if uwr.username not in user_mapping:
@@ -480,32 +489,11 @@ async def reset_password(
     -------
     UserRetrieve
         The updated user object.
-
-    Raises
-    ------
-    HTTPException
-        If the calling user is not the user resetting the password.
-        If the user is not found.
-        If the recovery code is incorrect.
     """
 
-    if calling_user_db.username != user.username:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Calling user is not the user resetting the password.",
-        )
-
-    user_to_update = await check_if_user_exists(asession=asession, user=user)
-
-    if user_to_update is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
-        )
-    if user.recovery_code not in user_to_update.recovery_codes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Recovery code is incorrect.",
-        )
+    user_to_update = await check_reset_password_call(
+        asession=asession, calling_user_db=calling_user_db, user=user
+    )
 
     # 1.
     updated_recovery_codes = [
@@ -542,7 +530,7 @@ async def reset_password(
 async def update_user(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     user_id: int,
-    user: UserCreate,
+    user: UserUpdate,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserRetrieve:
     """Update the user's name, role in a workspace, and/or their default workspace. If
@@ -566,8 +554,10 @@ async def update_user(
 
     1. Parameters for the endpoint are checked first.
     2. If the user's workspace role is being updated, then the update procedure will
-        update the user's role in that workspace.
-    3. Update the user's default workspace.
+        update the user's role in that workspace. This step will error out if the user
+        being updated is not part of the specified workspace.
+    3. Update the user's default workspace. This step will error out if the user
+        being updated is not part of the specified workspace.
     4. Update the user's name in the database.
     5. Retrieve the updated user's role in all workspaces for the return object.
 
@@ -890,7 +880,7 @@ async def check_remove_user_from_workspace_call(
 
 async def check_create_user_call(
     *, asession: AsyncSession, calling_user_db: UserDB, user: UserCreateWithPassword
-) -> UserCreateWithPassword:
+) -> tuple[UserCreateWithPassword, WorkspaceDB]:
     """Check the user creation call to ensure the action is allowed.
 
     NB: This function:
@@ -927,8 +917,8 @@ async def check_create_user_call(
 
     Returns
     -------
-    UserCreateWithPassword
-        The user object to create after possible updates.
+    tuple[UserCreateWithPassword, WorkspaceDB]
+        The user and workspace objects to create.
 
     Raises
     ------
@@ -1004,7 +994,60 @@ async def check_create_user_call(
     # NB: `user.role` is updated here!
     user.role = user.role or UserRoles.READ_ONLY
 
-    return user
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=user.workspace_name
+    )
+
+    return user, workspace_db
+
+
+async def check_reset_password_call(
+    *, asession: AsyncSession, calling_user_db: UserDB, user: UserResetPassword
+) -> UserDB:
+    """Check the reset password call to ensure the action is allowed.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    calling_user_db
+        The user object associated with the user that is resetting the password.
+    user
+        The user object with the new password and recovery code.
+
+    Returns
+    -------
+    UserDB
+        The user object to update.
+
+    Raises
+    ------
+    HTTPException
+        If the calling user is not the user resetting the password.
+        If the user to update is not found.
+        If the recovery code is incorrect.
+    """
+
+    if calling_user_db.username != user.username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Calling user is not the user resetting the password.",
+        )
+
+    user_to_update = await check_if_user_exists(asession=asession, user=user)
+
+    if user_to_update is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    if user.recovery_code not in user_to_update.recovery_codes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Recovery code is incorrect.",
+        )
+
+    return user_to_update
 
 
 async def check_update_user_call(
@@ -1037,6 +1080,8 @@ async def check_update_user_call(
             specified.
         If the user to update is not found.
         If the username is already taken.
+        If the calling user is not an admin in the workspace.
+        If the user does not belong to the specified workspace.
     """
 
     if not await user_has_admin_role_in_any_workspace(
@@ -1090,6 +1135,17 @@ async def check_update_user_call(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Calling user is not an admin in the workspace.",
+            )
+
+        if not await check_if_user_exists_in_workspace(
+            asession=asession,
+            user_id=user_db.user_id,
+            workspace_id=workspace_db.workspace_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User ID '{user_db.user_id}' does belong to workspace ID "
+                f"'{workspace_db.workspace_id}'.",
             )
 
     return user_db, workspace_db

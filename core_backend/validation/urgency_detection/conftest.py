@@ -77,8 +77,8 @@ def user(client: TestClient) -> UserDB:
     with get_session_context_manager() as db_session:
         user1 = UserDB(
             username=TEST_USERNAME,
-            hashed_password=get_password_salted_hash(TEST_PASSWORD),
-            hashed_api_key=get_key_hash(TEST_USER_API_KEY),
+            hashed_password=get_password_salted_hash(key=TEST_PASSWORD),
+            hashed_api_key=get_key_hash(key=TEST_USER_API_KEY),
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
         )

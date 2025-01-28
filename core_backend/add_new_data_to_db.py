@@ -490,7 +490,7 @@ def update_date_of_records(
     """
 
     session = next(get_session())
-    hashed_token = get_key_hash(api_key)
+    hashed_token = get_key_hash(key=api_key)
     workspace = session.execute(
         select(WorkspaceDB).where(WorkspaceDB.hashed_api_key == hashed_token)
     ).scalar_one()
