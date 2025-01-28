@@ -2,12 +2,13 @@
 
 from typing import Annotated, Optional
 
+import sqlalchemy
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -25,18 +26,22 @@ from ..users.models import (
     get_users_and_roles_by_workspace_name,
     get_workspaces_by_user_role,
     is_username_valid,
+    remove_user_from_dbs,
     reset_user_password_in_db,
     save_user_to_db,
     update_user_default_workspace,
     update_user_in_db,
     update_user_role_in_workspace,
     user_has_admin_role_in_any_workspace,
+    user_has_required_role_in_workspace,
     users_exist_in_workspace,
 )
 from ..users.schemas import (
     UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
+    UserRemove,
+    UserRemoveResponse,
     UserResetPassword,
     UserRetrieve,
     UserRoles,
@@ -212,6 +217,131 @@ async def create_first_user(
     )
 
     return user_new
+
+
+@router.delete("/{user_id}", response_model=UserRemoveResponse)
+async def remove_user_from_workspace(
+    user: UserRemove,
+    user_id: int,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserRemoveResponse:
+    """Remove user by ID from workspace. Users can only be removed from a workspace by
+    admin users of that workspace.
+
+    Note:
+
+    1. User authentication should be triggered by the frontend if the calling user has
+        removed themselves from all workspaces. This occurs when
+        `require_authentication` is set to `True` in `UserRemoveResponse`.
+    2. A workspace login should be triggered by the frontend if the calling user is
+        removing themselves from the current workspace. This occurs when
+        `require_workspace_login` is set to `True` in `UserRemoveResponse`. This case
+        should be superceded by the first case.
+
+    The process is as follows:
+
+    1. If the user is assigned to the specified workspace, then the user (and their
+        role) is removed from that workspace. If the specified workspace was the user's
+        default workspace, then the next workspace that the user is assigned to is set
+        as the user's default workspace.
+    2. If the user is not assigned to any workspace after being removed from the
+        specified workspace, then the user is also deleted from the `UserDB` database.
+        This is necessary because a user must be assigned to at least one workspace.
+
+    Parameters
+    ----------
+    user
+        The user object with the name of the workspace to remove the user from.
+    user_id
+        The user ID to remove from the specified workspace.
+    calling_user_db
+        The user object associated with the user that is removing the user from the
+        specified workspace.
+    workspace_name
+        The name of the workspace that the calling user is currently logged into. This
+        is used to detect if the calling user is removing themselves from the current
+        workspace. If so, then a workspace login will be triggered.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    UserRemoveResponse
+        The response object with the user's default workspace name after removal and
+        the workspace from which they were removed.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to remove users in the specified
+        workspace.
+        If the user ID is not found.
+        IF the user is not found in the workspace to be removed from.
+        If the removal of the user from the specified workspace is not allowed.
+    """
+
+    remove_from_workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=user.remove_workspace_name
+    )
+
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
+    # users for non-admin users of a workspace.
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=remove_from_workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to remove users from the "
+            "specified workspace.",
+        )
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
+    # users for non-admin users of a workspace.
+
+    user_db = await get_user_by_id(asession=asession, user_id=user_id)
+
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User ID `{user_id}` not found.",
+        )
+
+    # 1 and 2.
+    try:
+        (default_workspace_name, removed_from_workspace_name) = (
+            await remove_user_from_dbs(
+                asession=asession,
+                remove_from_workspace_db=remove_from_workspace_db,
+                user_db=user_db,
+            )
+        )
+    except UserNotFoundInWorkspaceError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in workspace.",
+        ) from e
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.error(f"Error deleting content: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Deletion of content with feedback is not allowed.",
+        ) from e
+
+    self_removal = calling_user_db.user_id == user_id
+    require_authentication = self_removal and default_workspace_name is None
+    require_workspace_login = require_authentication or (
+        self_removal and removed_from_workspace_name == workspace_name
+    )
+    return UserRemoveResponse(
+        default_workspace_name=default_workspace_name,
+        removed_from_workspace_name=removed_from_workspace_name,
+        require_authentication=require_authentication,
+        require_workspace_login=require_workspace_login,
+    )
 
 
 @router.get("/", response_model=list[UserRetrieve])

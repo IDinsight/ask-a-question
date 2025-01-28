@@ -62,6 +62,45 @@ class UserCreateWithCode(UserCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserRemove(BaseModel):
+    """Pydantic model for user removal from a workspace.
+
+    1. If the workspace to remove the user from is also the user's default workspace,
+        then the next workspace that the user is assigned to is set as the user's
+        default workspace.
+    2. If the user is not assigned to any workspace after being removed from the
+        specified workspace, then the user is also deleted from the `UserDB` database.
+        This is necessary because a user must be assigned to at least one workspace.
+    """
+
+    remove_workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserRemoveResponse(BaseModel):
+    """Pydantic model for user removal response.
+
+    Note:
+
+    1. If `default_workspace_name` is `None` upon return, then this means the user was
+    removed from all assigned workspaces and was also deleted from the `UserDB`
+    database. This situation should require the user to reauthenticate (i.e.,
+    `require_authentication` should be set to `True`).
+
+    2. If `require_workspace_login` is `True` upon return, then this means the user was
+    removed from the current workspace. This situation should require a workspace
+    login. This case should be superceded by the first case.
+    """
+
+    default_workspace_name: Optional[str] = None
+    removed_from_workspace_name: str
+    require_authentication: bool
+    require_workspace_login: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserRetrieve(BaseModel):
     """Pydantic model for user retrieval.
 

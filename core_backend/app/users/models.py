@@ -548,6 +548,11 @@ async def is_username_valid(*, asession: AsyncSession, username: str) -> bool:
         The SQLAlchemy async session to use for all database connections.
     username
         The username to check.
+
+    Returns
+    -------
+    bool
+        Specifies if the username is valid.
     """
 
     stmt = select(UserDB).where(UserDB.username == username)
@@ -557,6 +562,97 @@ async def is_username_valid(*, asession: AsyncSession, username: str) -> bool:
         return False
     except NoResultFound:
         return True
+
+
+async def remove_user_from_dbs(
+    *, asession: AsyncSession, remove_from_workspace_db: WorkspaceDB, user_db: UserDB
+) -> tuple[str | None, str]:
+    """Remove a user from a specified workspace. If the workspace was the user's
+    default workspace, then reassign the default to another assigned workspace (if
+    available). If the user ends up with no workspaces at all, remove them from the
+    `UserDB` database as well.
+
+    NB: If a workspace has no users after this function completes, it is NOT deleted.
+    This is because a workspace also contains contents, feedback, etc. and it is not
+    clear how these artifacts should be handled at the moment.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    remove_from_workspace_db
+        The workspace object to remove the user from.
+    user_db
+        The user object to remove from the workspace.
+
+    Returns
+    -------
+    tuple[str | None, str]
+        A tuple containing the user's default workspace name and the workspace from
+        which the user was removed from.
+
+    Raises
+    ------
+    UserNotFoundInWorkspaceError
+        If the user is not found in the workspace to be removed from.
+    """
+
+    # Find the user-workspace association.
+    result = await asession.execute(
+        select(UserWorkspaceDB).where(
+            UserWorkspaceDB.user_id == user_db.user_id,
+            UserWorkspaceDB.workspace_id == remove_from_workspace_db.workspace_id,
+        )
+    )
+    user_workspace = result.scalar_one_or_none()
+
+    if user_workspace is None:
+        raise UserNotFoundInWorkspaceError(
+            f"User with ID '{user_db.user_id}' not found in workspace "
+            f"'{remove_from_workspace_db.workspace_name}'."
+        )
+
+    # Remember if this workspace was set as the user's default workspace before removal.
+    was_default = user_workspace.default_workspace
+
+    # Remove the user from the specified workspace.
+    await asession.delete(user_workspace)
+    await asession.flush()
+
+    # Check how many other workspaces the user is still assigned to.
+    remaining_user_workspace_dbs = await get_user_workspaces(
+        asession=asession, user_db=user_db
+    )
+    if len(remaining_user_workspace_dbs) == 0:
+        # The user has no more workspaces, so remove from `UserDB` entirely.
+        await asession.delete(user_db)
+        await asession.flush()
+
+        # Return `None` to indicate no default workspace remains.
+        return None, remove_from_workspace_db.workspace_name
+
+    # If the removed workspace was the default workspace, then promote the next
+    # earliest workspace to the default workspace using the created datetime.
+    if was_default:
+        next_user_workspace_result = await asession.execute(
+            select(UserWorkspaceDB)
+            .where(UserWorkspaceDB.user_id == user_db.user_id)
+            .order_by(UserWorkspaceDB.created_datetime_utc.asc())
+            .limit(1)
+        )
+        next_user_workspace = next_user_workspace_result.first()
+        assert next_user_workspace is not None
+        next_user_workspace.default_workspace = True
+
+        # Persist the new default workspace.
+        await asession.flush()
+
+    # Retrieve the current default workspace name after all changes.
+    default_workspace = await get_user_default_workspace(
+        asession=asession, user_db=user_db
+    )
+
+    return default_workspace.workspace_name, remove_from_workspace_db.workspace_name
 
 
 async def reset_user_password_in_db(

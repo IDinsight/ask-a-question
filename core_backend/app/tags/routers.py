@@ -69,7 +69,7 @@ async def create_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -82,7 +82,7 @@ async def create_tag(
             detail="User does not have the required role to create tags in the "
             "workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
@@ -138,7 +138,7 @@ async def edit_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
     # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -151,7 +151,7 @@ async def edit_tag(
             detail="User does not have the required role to edit tags in the "
             "workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
     # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
@@ -257,7 +257,7 @@ async def delete_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -270,7 +270,7 @@ async def delete_tag(
             detail="User does not have the required role to delete tags in the "
             "workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # tags for non-admin users of a workspace.
 
     record = await get_tag_from_db(

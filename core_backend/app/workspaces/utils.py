@@ -204,6 +204,34 @@ async def get_workspace_by_workspace_name(
         ) from err
 
 
+async def is_workspace_name_valid(
+    *, asession: AsyncSession, workspace_name: str
+) -> bool:
+    """Check if a workspace name is valid. A workspace name is valid if it doesn't
+    already exist in the database.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_name
+        The workspace name to check.
+
+    Returns
+    -------
+    bool
+        Specifies whether the workspace name is valid.
+    """
+
+    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_name == workspace_name)
+    result = await asession.execute(stmt)
+    try:
+        result.one()
+        return False
+    except NoResultFound:
+        return True
+
+
 async def update_workspace_api_key(
     *, asession: AsyncSession, new_api_key: str, workspace_db: WorkspaceDB
 ) -> WorkspaceDB:

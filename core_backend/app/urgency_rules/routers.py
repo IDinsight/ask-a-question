@@ -67,7 +67,7 @@ async def create_urgency_rule(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -80,7 +80,7 @@ async def create_urgency_rule(
             detail="User does not have the required role to create urgency rules in "
             "the workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
     # urgency rules for non-admin users of a workspace.
 
     urgency_rule_db = await save_urgency_rule_to_db(
@@ -169,7 +169,7 @@ async def delete_urgency_rule(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -182,7 +182,7 @@ async def delete_urgency_rule(
             detail="User does not have the required role to delete urgency rules in "
             "the workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
     # urgency rules for non-admin users of a workspace.
 
     workspace_id = workspace_db.workspace_id
@@ -241,7 +241,7 @@ async def update_urgency_rule(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
     # urgency rules for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
@@ -254,7 +254,7 @@ async def update_urgency_rule(
             detail="User does not have the required role to update urgency rules in "
             "the workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to update
     # urgency rules for non-admin users of a workspace.
 
     workspace_id = workspace_db.workspace_id

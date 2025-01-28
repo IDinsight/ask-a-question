@@ -32,6 +32,7 @@ from .utils import (
     create_workspace,
     get_workspace_by_workspace_id,
     get_workspace_by_workspace_name,
+    is_workspace_name_valid,
     update_workspace_api_key,
     update_workspace_name_and_quotas,
 )
@@ -528,6 +529,7 @@ async def check_update_workspace_call(
     HTTPException
         If no valid updates are provided for the workspace.
         If the workspace to update does not exist.
+        If the workspace name is not valid.
         If the calling user is not an admin in the workspace.
     """
 
@@ -537,10 +539,9 @@ async def check_update_workspace_call(
 
     updating_api_daily_quota = api_daily_quota is None or api_daily_quota >= 0
     updating_content_quota = content_quota is None or content_quota >= 0
-    updating_workspace_name = workspace_name is not None
 
     if not any(
-        [updating_api_daily_quota, updating_content_quota, updating_workspace_name]
+        [updating_api_daily_quota, updating_content_quota, workspace_name is not None]
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -556,6 +557,14 @@ async def check_update_workspace_call(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workspace ID {workspace_id} not found.",
         ) from e
+
+    if workspace_name is not None and not await is_workspace_name_valid(
+        asession=asession, workspace_name=workspace_name
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workspace with workspace name {workspace_name} already exists.",
+        )
 
     calling_user_workspace_role = await get_user_role_in_workspace(
         asession=asession, user_db=calling_user_db, workspace_db=workspace_db
