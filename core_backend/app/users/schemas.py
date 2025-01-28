@@ -83,11 +83,11 @@ class UserRemoveResponse(BaseModel):
 
     Note:
 
+    0. All workspaces must have at least one ADMIN user.
     1. If `default_workspace_name` is `None` upon return, then this means the user was
     removed from all assigned workspaces and was also deleted from the `UserDB`
     database. This situation should require the user to reauthenticate (i.e.,
     `require_authentication` should be set to `True`).
-
     2. If `require_workspace_login` is `True` upon return, then this means the user was
     removed from the current workspace. This situation should require a workspace
     login. This case should be superceded by the first case.

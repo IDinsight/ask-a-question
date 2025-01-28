@@ -281,6 +281,40 @@ async def create_user_workspace_role(
     return user_workspace_role_db
 
 
+async def get_admin_users_in_workspace(
+    *,
+    asession: AsyncSession,
+    workspace_id: int,
+) -> Sequence[UserDB] | None:
+    """Retrieve all admin users for a given workspace ID.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to retrieve admin users for.
+
+    Returns
+    -------
+    Sequence[UserDB] | None
+        A sequence of UserDB objects representing the admin users in the workspace.
+        Returns `None` if no admin users exist for that workspace.
+    """
+
+    stmt = (
+        select(UserDB)
+        .join(UserWorkspaceDB, UserDB.user_id == UserWorkspaceDB.user_id)
+        .filter(
+            UserWorkspaceDB.workspace_id == workspace_id,
+            UserWorkspaceDB.user_role == UserRoles.ADMIN,
+        )
+    )
+    result = await asession.scalars(stmt)
+    admin_users = result.all()
+    return admin_users if admin_users else None
+
+
 async def get_user_by_id(*, asession: AsyncSession, user_id: int) -> UserDB:
     """Retrieve a user by user ID.
 

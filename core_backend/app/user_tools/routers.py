@@ -19,6 +19,7 @@ from ..users.models import (
     check_if_user_exists,
     check_if_users_exist,
     create_user_workspace_role,
+    get_admin_users_in_workspace,
     get_user_by_id,
     get_user_by_username,
     get_user_role_in_all_workspaces,
@@ -232,6 +233,7 @@ async def remove_user_from_workspace(
 
     Note:
 
+    0. All workspaces must have at least one ADMIN user.
     1. User authentication should be triggered by the frontend if the calling user has
         removed themselves from all workspaces. This occurs when
         `require_authentication` is set to `True` in `UserRemoveResponse`.
@@ -275,40 +277,13 @@ async def remove_user_from_workspace(
     Raises
     ------
     HTTPException
-        If the user does not have the required role to remove users in the specified
-        workspace.
-        If the user ID is not found.
         IF the user is not found in the workspace to be removed from.
         If the removal of the user from the specified workspace is not allowed.
     """
 
-    remove_from_workspace_db = await get_workspace_by_workspace_name(
-        asession=asession, workspace_name=user.remove_workspace_name
+    remove_from_workspace_db, user_db = await check_remove_user_from_workspace_call(
+        asession=asession, calling_user_db=calling_user_db, user=user, user_id=user_id
     )
-
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
-    # users for non-admin users of a workspace.
-    if not await user_has_required_role_in_workspace(
-        allowed_user_roles=[UserRoles.ADMIN],
-        asession=asession,
-        user_db=calling_user_db,
-        workspace_db=remove_from_workspace_db,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to remove users from the "
-            "specified workspace.",
-        )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
-    # users for non-admin users of a workspace.
-
-    user_db = await get_user_by_id(asession=asession, user_id=user_id)
-
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User ID `{user_id}` not found.",
-        )
 
     # 1 and 2.
     try:
@@ -838,6 +813,79 @@ async def add_new_user_to_workspace(
         username=user_db.username,
         workspace_name=workspace_db.workspace_name,
     )
+
+
+async def check_remove_user_from_workspace_call(
+    *, asession: AsyncSession, calling_user_db: UserDB, user: UserRemove, user_id: int
+) -> tuple[WorkspaceDB, UserDB]:
+    """Check the remove user from workspace call to ensure the action is allowed.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    calling_user_db
+        The user object associated with the user that is removing the user from the
+        specified workspace.
+    user
+        The user object with the name of the workspace to remove the user from.
+    user_id
+        The user ID to remove from the specified workspace.
+
+    Returns
+    -------
+    tuple[WorkspaceDB, UserDB]
+        The workspace and user objects to remove the user from.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to remove users from the specified
+        workspace.
+        If the user ID is not found.
+        If the user is attempting to remove the last admin user from the specified
+        workspace.
+    """
+
+    remove_from_workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=user.remove_workspace_name
+    )
+
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
+    # users for non-admin users of a workspace.
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=remove_from_workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to remove users from the "
+            "specified workspace.",
+        )
+    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
+    # users for non-admin users of a workspace.
+
+    user_db = await get_user_by_id(asession=asession, user_id=user_id)
+
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User ID `{user_id}` not found.",
+        )
+
+    workspace_admin_dbs = await get_admin_users_in_workspace(
+        asession=asession, workspace_id=remove_from_workspace_db.workspace_id
+    )
+    assert workspace_admin_dbs is not None
+    if len(workspace_admin_dbs) == 1 and workspace_admin_dbs[0].user_id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot remove last admin user from the workspace.",
+        )
+
+    return remove_from_workspace_db, user_db
 
 
 async def check_create_user_call(
