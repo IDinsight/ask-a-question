@@ -1,6 +1,4 @@
-"""This module contains the unit tests related to multi-turn chat for question
-answering.
-"""
+"""This module contains tests related to multi-turn chat for question answering."""
 
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
