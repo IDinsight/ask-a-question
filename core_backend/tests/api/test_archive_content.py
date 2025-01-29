@@ -17,20 +17,15 @@ class TestArchiveContent:
 
     @pytest.fixture(scope="function")
     def existing_content(
-        self,
-        admin_user_in_workspace: pytest.FixtureRequest,
-        access_token_admin: pytest.FixtureRequest,
-        client: TestClient,
+        self, access_token_admin_1: pytest.FixtureRequest, client: TestClient
     ) -> Generator[tuple[int, str, int], None, None]:
         """Create a content in the database and yield the content ID, content text,
         and user ID. The content will be deleted after the test is run.
 
         Parameters
         ----------
-        admin_user_in_workspace
-            The admin user in the admin workspace.
-        access_token_admin
-            Access token for admin user.
+        access_token_admin_1
+            Access token for admin user 1.
         client
             The test client.
 
@@ -42,7 +37,7 @@ class TestArchiveContent:
 
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "content_metadata": {},
                 "content_tags": [],
@@ -50,18 +45,19 @@ class TestArchiveContent:
                 "content_title": "Title in DB",
             },
         )
-        content_id = response.json()["content_id"]
-        content_text = response.json()["content_text"]
-        workspace_id = response.json()["workspace_id"]
+        json_response = response.json()
+        content_id = json_response["content_id"]
+        content_text = json_response["content_text"]
+        workspace_id = json_response["workspace_id"]
         yield content_id, content_text, workspace_id
         client.delete(
-            f"/content/{content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            f"/content/{content_id}?exclude_archived=False",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
 
     async def test_archived_content_does_not_appear_in_search_results(
         self,
-        access_token_admin: str,
+        access_token_admin_1: str,
         asession: AsyncSession,
         client: TestClient,
         existing_content: tuple[int, str, int],
@@ -78,8 +74,8 @@ class TestArchiveContent:
 
         Parameters
         ----------
-        access_token_admin
-            Access token for admin user.
+        access_token_admin_1
+            Access token for admin user 1.
         asession
             The SQLAlchemy async session to use for all database connections.
         client
@@ -94,7 +90,7 @@ class TestArchiveContent:
         # 1.
         response = client.patch(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -120,7 +116,7 @@ class TestArchiveContent:
         assert len(results_without_archived) == 0
 
     def test_save_content_returns_content(
-        self, access_token_admin: str, client: TestClient
+        self, access_token_admin_1: str, client: TestClient
     ) -> None:
         """This test checks:
 
@@ -130,8 +126,8 @@ class TestArchiveContent:
 
         Parameters
         ----------
-        access_token_admin
-            Access token for admin user.
+        access_token_admin_1
+            Access token for admin user 1.
         client
             The test client.
         """
@@ -139,7 +135,7 @@ class TestArchiveContent:
         # 1.
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "content_metadata": {},
                 "content_tags": [],
@@ -153,16 +149,21 @@ class TestArchiveContent:
 
         # 2.
         response = client.get(
-            "/content", headers={"Authorization": f"Bearer {access_token_admin}"}
+            "/content", headers={"Authorization": f"Bearer {access_token_admin_1}"}
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
         assert len(json_response) == 1
         assert json_response[0]["is_archived"] is False
 
+        client.delete(
+            f"/content/{json_response[0]['content_id']}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
     def test_archive_existing_content(
         self,
-        access_token_admin: str,
+        access_token_admin_1: str,
         client: TestClient,
         existing_content: tuple[int, str, int],
     ) -> None:
@@ -178,8 +179,8 @@ class TestArchiveContent:
 
         Parameters
         ----------
-        access_token_admin
-            Access token for admin user.
+        access_token_admin_1
+            Access token for admin user 1.
         client
             The test client.
         existing_content
@@ -191,7 +192,7 @@ class TestArchiveContent:
         # 1.
         response = client.get(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
@@ -200,7 +201,7 @@ class TestArchiveContent:
         # 2.
         response = client.patch(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
@@ -209,14 +210,14 @@ class TestArchiveContent:
         # 3.
         response = client.get(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
         # 4.
         response = client.get(
             f"/content/{existing_content_id}?exclude_archived=False",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
@@ -235,7 +236,7 @@ class TestArchiveContent:
     )
     def test_unable_to_update_archived_content(
         self,
-        access_token_admin: str,
+        access_token_admin_1: str,
         client: TestClient,
         existing_content: tuple[int, str, int],
         content_title: str,
@@ -250,8 +251,8 @@ class TestArchiveContent:
 
         Parameters
         ----------
-        access_token_admin
-            Access token for admin user.
+        access_token_admin_1
+            Access token for admin user 1.
         client
             The test client.
         existing_content
@@ -269,7 +270,7 @@ class TestArchiveContent:
         # 1.
         response = client.patch(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
@@ -277,7 +278,7 @@ class TestArchiveContent:
 
         response = client.put(
             f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "content_metadata": content_metadata,
                 "content_text": content_text,
@@ -289,7 +290,7 @@ class TestArchiveContent:
         # 2.
         response = client.put(
             f"/content/{existing_content_id}?exclude_archived=False",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "content_metadata": content_metadata,
                 "content_text": content_text,
@@ -303,7 +304,7 @@ class TestArchiveContent:
         assert json_response["content_metadata"] == content_metadata
 
     def test_bulk_csv_import_of_archived_content(
-        self, access_token_admin: str, client: TestClient
+        self, access_token_admin_1: str, client: TestClient
     ) -> None:
         """The scenario is as follows:
 
@@ -323,8 +324,8 @@ class TestArchiveContent:
 
         Parameters
         ----------
-        access_token_admin
-            Access token for admin user
+        access_token_admin_1
+            Access token for admin user 1.
         client
             The test client.
         """
@@ -339,11 +340,11 @@ class TestArchiveContent:
         )
         response = client.post(
             "/content/csv-upload",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             files={"file": ("test.csv", data, "text/csv")},
         )
         assert response.status_code == status.HTTP_200_OK
-        content_ids = [x["content_id"] for x in response.json()["contents"]]
+        content_id = [x["content_id"] for x in response.json()["contents"]][0]
 
         data = _dict_to_csv_bytes(
             {
@@ -354,15 +355,15 @@ class TestArchiveContent:
         )
         response = client.post(
             "/content/csv-upload",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             files={"file": ("test.csv", data, "text/csv")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
         # B.
         response = client.patch(
-            f"/content/{content_ids[0]}",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            f"/content/{content_id}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -376,7 +377,7 @@ class TestArchiveContent:
         )
         response = client.post(
             "/content/csv-upload",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             files={"file": ("test.csv", data, "text/csv")},
         )
         assert response.status_code == status.HTTP_200_OK
@@ -384,6 +385,12 @@ class TestArchiveContent:
         # 2.
         response = client.get(
             "/content/?exclude_archived=False",
-            headers={"Authorization": f"Bearer {access_token_admin}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
+
+        for dict_ in response.json():
+            client.delete(
+                f"/content/{dict_['content_id']}?exclude_archived=False",
+                headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            )

@@ -314,7 +314,7 @@ async def archive_content(
     calling_user_db
         The user object associated with the user that is archiving the content.
     workspace_name
-        The naem of the workspace to archive content in.
+        The name of the workspace to archive content in.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -367,6 +367,7 @@ async def delete_content(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
+    exclude_archived: bool = True,
 ) -> None:
     """Delete content by ID.
 
@@ -380,6 +381,8 @@ async def delete_content(
         The name of the workspace to delete content from.
     asession
         The SQLAlchemy async session to use for all database connections.
+    exclude_archived
+        Specifies whether to exclude archived contents.
 
     Raises
     ------
@@ -411,7 +414,10 @@ async def delete_content(
 
     workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
-        asession=asession, content_id=content_id, workspace_id=workspace_id
+        asession=asession,
+        content_id=content_id,
+        exclude_archived=exclude_archived,
+        workspace_id=workspace_id,
     )
 
     if not record:
