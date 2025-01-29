@@ -7,6 +7,7 @@ from sqlalchemy import (
     ARRAY,
     Boolean,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     Row,
@@ -19,7 +20,6 @@ from sqlalchemy import (
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.types import Enum as SQLAlchemyEnum
 
 from ..models import Base
 from ..utils import get_password_salted_hash, get_random_string
@@ -158,7 +158,7 @@ class UserWorkspaceDB(Base):
         Integer, ForeignKey("user.user_id"), primary_key=True
     )
     user_role: Mapped[UserRoles] = mapped_column(
-        SQLAlchemyEnum(UserRoles), nullable=False
+        Enum(UserRoles, native_enum=False), nullable=False
     )
     workspace: Mapped["WorkspaceDB"] = relationship(
         "WorkspaceDB", back_populates="user_workspaces"

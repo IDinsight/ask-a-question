@@ -146,7 +146,7 @@ class TestUrgencyRulesDataAPI:
         self,
         client: TestClient,
         urgency_rules: int,
-        urgency_rules_user2: int,
+        urgency_rules_workspace2: int,
         api_key_user2: str,
     ) -> None:
         response = client.get(
@@ -155,7 +155,7 @@ class TestUrgencyRulesDataAPI:
         )
 
         assert response.status_code == 200
-        assert len(response.json()) == urgency_rules_user2
+        assert len(response.json()) == urgency_rules_workspace2
 
 
 class TestUrgencyQueryDataAPI:

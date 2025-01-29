@@ -994,6 +994,7 @@ async def check_create_user_call(
     # NB: `user.role` is updated here!
     user.role = user.role or UserRoles.READ_ONLY
 
+    assert user.workspace_name is not None
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=user.workspace_name
     )

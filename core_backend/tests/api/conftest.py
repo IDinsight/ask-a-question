@@ -49,6 +49,7 @@ TEST_ADMIN_API_KEY = "admin_api_key"
 TEST_ADMIN_PASSWORD = "admin_password"
 TEST_ADMIN_RECOVERY_CODES = ["code1", "code2", "code3", "code4", "code5"]
 TEST_ADMIN_USERNAME = "admin"
+TEST_ADMIN_WORKSPACE_NAME = "test_workspace_admin"
 TEST_API_QUOTA = 2000
 TEST_API_QUOTA_2 = 2000
 TEST_CONTENT_QUOTA = 50
@@ -390,7 +391,9 @@ def existing_tag_id(
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules(db_session: Session, workspace1: int) -> AsyncGenerator[int, None]:
+async def urgency_rules(
+    db_session: Session, workspace1: int
+) -> AsyncGenerator[int, None]:
     """Create urgency rules for testing for workspace 1.
 
     Parameters
@@ -439,7 +442,7 @@ async def urgency_rules(db_session: Session, workspace1: int) -> AsyncGenerator[
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules_user2(
+async def urgency_rules_workspace2(
     db_session: Session, workspace2: int
 ) -> AsyncGenerator[int, None]:
     """Create urgency rules for testing for workspace 2.
@@ -486,6 +489,19 @@ async def urgency_rules_user2(
 
 @pytest.fixture(scope="session")
 def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None, None]:
+    """Create a test client.
+
+    Parameters
+    ----------
+    patch_llm_call
+        Pytest fixture request object.
+
+    Returns
+    -------
+    Generator[TestClient, None, None]
+        Test client.
+    """
+
     app = create_app()
     with TestClient(app) as c:
         yield c
@@ -497,23 +513,42 @@ def temp_user_api_key_and_api_quota(
     fullaccess_token_admin: str,
     client: TestClient,
 ) -> Generator[tuple[str, int], None, None]:
+    """Create a temporary user API key and API quota for testing.
+
+    Parameters
+    ----------
+    request
+        Pytest request object.
+    fullaccess_token_admin
+        Token with full access for admin.
+    client
+        Test client.
+
+    Returns
+    -------
+    Generator[tuple[str, int], None, None]
+        Temporary user API key and API quota.
+    """
+
     username = request.param["username"]
+    workspace_name = request.param["workspace_name"]
     api_daily_quota = request.param["api_daily_quota"]
 
     if api_daily_quota is not None:
         json = {
-            "username": username,
+            "is_default_workspace": True,
             "password": "temp_password",
-            "content_quota": 50,
-            "api_daily_quota": api_daily_quota,
-            "is_admin": False,
+            "role": UserRoles.ADMIN,
+            "username": username,
+            "workspace_name": workspace_name,
         }
     else:
         json = {
-            "username": username,
+            "is_default_workspace": True,
             "password": "temp_password",
-            "content_quota": 50,
-            "is_admin": False,
+            "role": UserRoles.ADMIN,
+            "username": username,
+            "workspace_name": workspace_name,
         }
 
     client.post(
@@ -522,20 +557,32 @@ def temp_user_api_key_and_api_quota(
         headers={"Authorization": f"Bearer {fullaccess_token_admin}"},
     )
 
-    access_token = create_access_token(username=username)
+    access_token = create_access_token(username=username, workspace_name=workspace_name)
     response_key = client.put(
-        "/user/rotate-key",
-        headers={"Authorization": f"Bearer {access_token}"},
+        "/workspace/rotate-key", headers={"Authorization": f"Bearer {access_token}"}
     )
     api_key = response_key.json()["new_api_key"]
 
-    yield (api_key, api_daily_quota)
+    yield api_key, api_daily_quota
 
 
 @pytest.fixture(scope="session")
 def monkeysession(
     request: pytest.FixtureRequest,
 ) -> Generator[pytest.MonkeyPatch, None, None]:
+    """Create a monkeypatch for the session.
+
+    Parameters
+    ----------
+    request
+        Pytest fixture request object.
+
+    Returns
+    -------
+    Generator[pytest.MonkeyPatch, None, None]
+        Monkeypatch for the session.
+    """
+
     from _pytest.monkeypatch import MonkeyPatch
 
     mpatch = MonkeyPatch()
@@ -545,9 +592,14 @@ def monkeysession(
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
+    """Monkeypatch call to LLM embeddings service.
+
+    Parameters
+    ----------
+    monkeysession
+        Pytest monkeypatch object.
     """
-    Monkeypatch call to LLM embeddings service
-    """
+
     monkeysession.setattr(
         "core_backend.app.contents.models.embedding", async_fake_embedding
     )
@@ -569,22 +621,86 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
 
 
 async def patched_llm_rag_answer(*args: Any, **kwargs: Any) -> RAG:
+    """Mock return argument for the `get_llm_rag_answer` function.
+
+    Parameters
+    ----------
+    args
+        Additional positional arguments.
+    kwargs
+        Additional keyword arguments.
+
+    Returns
+    -------
+    RAG
+        Patched LLM RAG response object.
+    """
+
     return RAG(answer="patched llm response", extracted_info=[])
 
 
 async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
-    return AlignmentScore(score=0.9, reason="test - high score")
+    """Mock return argument for the `_get_llm_align_score function`.
+
+    Parameters
+    ----------
+    args
+        Additional positional arguments.
+    kwargs
+        Additional keyword arguments.
+
+    Returns
+    -------
+    AlignmentScore
+        Alignment score object.
+    """
+
+    return AlignmentScore(reason="test - high score", score=0.9)
 
 
 async def mock_return_args(
-    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict] = None
 ) -> tuple[QueryRefined, QueryResponse]:
+    """Mock function arguments for functions in the `process_input` module.
+
+    Parameters
+    ----------
+    question
+        The refined question.
+    response
+        The query response.
+    metadata
+        Additional metadata.
+
+    Returns
+    -------
+    tuple[QueryRefined, QueryResponse]
+        Refined question and query response.
+    """
+
     return question, response
 
 
 async def mock_detect_urgency(
     urgency_rules: list[str], message: str, metadata: Optional[dict]
 ) -> dict[str, Any]:
+    """Mock function arguments for the `detect_urgency` function.
+
+    Parameters
+    ----------
+    urgency_rules
+        A list of urgency rules.
+    message
+        The message to check against the urgency rules.
+    metadata
+        Additional metadata.
+
+    Returns
+    -------
+    dict[str, Any]
+        The urgency detection result.
+    """
+
     return {
         "best_matching_rule": "made up rule",
         "probability": 0.7,
@@ -593,9 +709,24 @@ async def mock_detect_urgency(
 
 
 async def mock_identify_language(
-    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict] = None
 ) -> tuple[QueryRefined, QueryResponse]:
-    """Monkeypatch call to LLM language identification service."""
+    """Mock function arguments for the `_identify_language` function.
+
+    Parameters
+    ----------
+    question
+        The refined question.
+    response
+        The query response.
+    metadata
+        Additional metadata.
+
+    Returns
+    -------
+    tuple[QueryRefined, QueryResponse]
+        Refined question and query response.
+    """
 
     question.original_language = IdentifiedLanguage.ENGLISH
     response.debug_info["original_language"] = "ENGLISH"
@@ -604,9 +735,29 @@ async def mock_identify_language(
 
 
 async def mock_translate_question(
-    question: QueryRefined, response: QueryResponse, metadata: Optional[dict]
+    question: QueryRefined, response: QueryResponse, metadata: Optional[dict] = None
 ) -> tuple[QueryRefined, QueryResponse]:
-    """Monkeypatch call to LLM translation service."""
+    """Mock function arguments for the `_translate_question` function.
+
+    Parameters
+    ----------
+    question
+        The refined question.
+    response
+        The query response.
+    metadata
+        Additional metadata.
+
+    Returns
+    -------
+    tuple[QueryRefined, QueryResponse]
+        Refined question and query response.
+
+    Raises
+    ------
+    ValueError
+        If the language hasn't been identified.
+    """
 
     if question.original_language is None:
         raise ValueError(
@@ -644,7 +795,7 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
 
 @pytest.fixture(scope="session")
 def fullaccess_token_admin() -> str:
-    """Return a token with full access for admin.
+    """Return a token with full access for admin users.
 
     Returns
     -------
@@ -653,7 +804,7 @@ def fullaccess_token_admin() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME, workspace_name=f"Workspace_{TEST_ADMIN_USERNAME}"
+        username=TEST_ADMIN_USERNAME, workspace_name=TEST_ADMIN_WORKSPACE_NAME
     )
 
 
@@ -667,9 +818,7 @@ def fullaccess_token() -> str:
         Token with full access for user 1.
     """
 
-    return create_access_token(
-        username=TEST_USERNAME, workspace_name=f"Workspace_{TEST_USERNAME}"
-    )
+    return create_access_token(username=TEST_USERNAME, workspace_name=TEST_WORKSPACE)
 
 
 @pytest.fixture(scope="session")
@@ -683,29 +832,54 @@ def fullaccess_token_user2() -> str:
     """
 
     return create_access_token(
-        username=TEST_USERNAME_2, workspace_name=f"Workspace_{TEST_USERNAME_2}"
+        username=TEST_USERNAME_2, workspace_name=TEST_WORKSPACE_2
     )
 
 
 @pytest.fixture(scope="session")
 def api_key_user1(client: TestClient, fullaccess_token: str) -> str:
+    """Return a token with full access for user 1 by invoking the
+    `/workspace/rotate-key` endpoint.
+
+    Parameters
+    ----------
+    client
+        Test client.
+    fullaccess_token
+        Token with full access.
+
+    Returns
+    -------
+    str
+        Token with full access.
     """
-    Returns a token with full access
-    """
+
     response = client.put(
-        "/user/rotate-key",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        "/workspace/rotate-key", headers={"Authorization": f"Bearer {fullaccess_token}"}
     )
     return response.json()["new_api_key"]
 
 
 @pytest.fixture(scope="session")
 def api_key_user2(client: TestClient, fullaccess_token_user2: str) -> str:
+    """Return a token with full access for user 2 by invoking the
+    `/workspace/rotate-key` endpoint.
+
+    Parameters
+    ----------
+    client
+        Test client.
+    fullaccess_token_user2
+        Token with full access for user 2.
+
+    Returns
+    -------
+    str
+        Token with full access for user 2.
     """
-    Returns a token with full access
-    """
+
     response = client.put(
-        "/user/rotate-key",
+        "/workspace/rotate-key",
         headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
     )
     return response.json()["new_api_key"]

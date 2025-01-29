@@ -1,4 +1,4 @@
-"""This module tests the archive content API endpoint."""
+"""This module tests the archive content API endpoints."""
 
 from typing import Generator
 
@@ -19,13 +19,29 @@ class TestArchiveContent:
         client: TestClient,
         fullaccess_token: str,
     ) -> Generator[tuple[int, str, int], None, None]:
+        """Create a content in the database and yield the content ID, content text,
+        and user ID. The content will be deleted after the test is run.
+
+        Parameters
+        ----------
+        client
+            The test client.
+        fullaccess_token
+            The full access token.
+
+        Returns
+        -------
+        tuple[int, str, int]
+            The content ID, content text, and user ID.
+        """
+
         response = client.post(
             "/content",
             headers={"Authorization": f"Bearer {fullaccess_token}"},
             json={
-                "content_title": "Title in DB",
-                "content_text": "Text in DB",
                 "content_tags": [],
+                "content_text": "Text in DB",
+                "content_title": "Title in DB",
                 "content_metadata": {},
             },
         )

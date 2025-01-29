@@ -1,19 +1,20 @@
 """Updated all databases to use workspace_id instead of user_id for workspaces.
+Applied naming conventions.
 
-Revision ID: d835da2f09ed
+Revision ID: 8a14f17bde33
 Revises: 27fd893400f8
-Create Date: 2025-01-28 15:29:01.239612
+Create Date: 2025-01-29 12:12:07.724095
 
 """
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "d835da2f09ed"
+revision: str = "8a14f17bde33"
 down_revision: Union[str, None] = "27fd893400f8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,9 +35,9 @@ def upgrade() -> None:
         sa.Column("updated_datetime_utc", sa.DateTime(timezone=True), nullable=False),
         sa.Column("workspace_id", sa.Integer(), nullable=False),
         sa.Column("workspace_name", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("workspace_id"),
-        sa.UniqueConstraint("hashed_api_key"),
-        sa.UniqueConstraint("workspace_name"),
+        sa.PrimaryKeyConstraint("workspace_id", name=op.f("pk_workspace")),
+        sa.UniqueConstraint("hashed_api_key", name=op.f("uq_workspace_hashed_api_key")),
+        sa.UniqueConstraint("workspace_name", name=op.f("uq_workspace_workspace_name")),
     )
     op.create_table(
         "user_workspace",
@@ -50,39 +51,62 @@ def upgrade() -> None:
         sa.Column("updated_datetime_utc", sa.DateTime(timezone=True), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column(
-            "user_role", sa.Enum("ADMIN", "READ_ONLY", name="userroles"), nullable=False
+            "user_role",
+            sa.Enum("ADMIN", "READ_ONLY", name="userroles", native_enum=False),
+            nullable=False,
         ),
         sa.Column("workspace_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.user_id"],
+            ["user_id"], ["user.user_id"], name=op.f("fk_user_workspace_user_id_user")
         ),
         sa.ForeignKeyConstraint(
             ["workspace_id"],
             ["workspace.workspace_id"],
+            name=op.f("fk_user_workspace_workspace_id_workspace"),
         ),
-        sa.PrimaryKeyConstraint("user_id", "workspace_id"),
+        sa.PrimaryKeyConstraint(
+            "user_id", "workspace_id", name=op.f("pk_user_workspace")
+        ),
     )
     op.add_column("content", sa.Column("workspace_id", sa.Integer(), nullable=False))
     op.drop_constraint("fk_content_user", "content", type_="foreignkey")
     op.create_foreign_key(
-        None, "content", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_content_workspace_id_workspace"),
+        "content",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("content", "user_id")
     op.add_column(
         "content_feedback", sa.Column("workspace_id", sa.Integer(), nullable=False)
     )
+    op.drop_index("ix_content-feedback_feedback_id", table_name="content_feedback")
+    op.create_index(
+        op.f("ix_content_feedback_feedback_id"),
+        "content_feedback",
+        ["feedback_id"],
+        unique=False,
+    )
     op.drop_constraint(
         "fk_content_feedback_user_id_user", "content_feedback", type_="foreignkey"
     )
     op.create_foreign_key(
-        None, "content_feedback", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_content_feedback_workspace_id_workspace"),
+        "content_feedback",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("content_feedback", "user_id")
     op.add_column("query", sa.Column("workspace_id", sa.Integer(), nullable=False))
     op.drop_constraint("fk_query_user", "query", type_="foreignkey")
     op.create_foreign_key(
-        None, "query", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_query_workspace_id_workspace"),
+        "query",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("query", "user_id")
     op.add_column(
@@ -92,7 +116,11 @@ def upgrade() -> None:
         "fk_query_response_user_id_user", "query_response", type_="foreignkey"
     )
     op.create_foreign_key(
-        None, "query_response", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_query_response_workspace_id_workspace"),
+        "query_response",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("query_response", "user_id")
     op.add_column(
@@ -107,17 +135,30 @@ def upgrade() -> None:
         unique=False,
     )
     op.drop_constraint(
-        "query_response_content_user_id_fkey",
+        "fk_query_response_content_user_id_user",
         "query_response_content",
         type_="foreignkey",
     )
     op.create_foreign_key(
-        None, "query_response_content", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_query_response_content_workspace_id_workspace"),
+        "query_response_content",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("query_response_content", "user_id")
     op.add_column(
         "query_response_feedback",
         sa.Column("workspace_id", sa.Integer(), nullable=False),
+    )
+    op.drop_index(
+        "ix_query-response-feedback_feedback_id", table_name="query_response_feedback"
+    )
+    op.create_index(
+        op.f("ix_query_response_feedback_feedback_id"),
+        "query_response_feedback",
+        ["feedback_id"],
+        unique=False,
     )
     op.drop_constraint(
         "fk_query_response_feedback_user_id_user",
@@ -125,29 +166,63 @@ def upgrade() -> None:
         type_="foreignkey",
     )
     op.create_foreign_key(
-        None, "query_response_feedback", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_query_response_feedback_workspace_id_workspace"),
+        "query_response_feedback",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("query_response_feedback", "user_id")
     op.add_column("tag", sa.Column("workspace_id", sa.Integer(), nullable=False))
-    op.drop_constraint("tag_user_id_fkey", "tag", type_="foreignkey")
-    op.create_foreign_key(None, "tag", "workspace", ["workspace_id"], ["workspace_id"])
+    op.drop_constraint("fk_tag_user_id_user", "tag", type_="foreignkey")
+    op.create_foreign_key(
+        op.f("fk_tag_workspace_id_workspace"),
+        "tag",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
+    )
     op.drop_column("tag", "user_id")
     op.add_column(
         "urgency_query", sa.Column("workspace_id", sa.Integer(), nullable=False)
     )
+    op.drop_index("ix_urgency-query_urgency_query_id", table_name="urgency_query")
+    op.create_index(
+        op.f("ix_urgency_query_urgency_query_id"),
+        "urgency_query",
+        ["urgency_query_id"],
+        unique=False,
+    )
     op.drop_constraint("fk_urgency_query_user", "urgency_query", type_="foreignkey")
     op.create_foreign_key(
-        None, "urgency_query", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_urgency_query_workspace_id_workspace"),
+        "urgency_query",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("urgency_query", "user_id")
     op.add_column(
         "urgency_response", sa.Column("workspace_id", sa.Integer(), nullable=False)
     )
+    op.drop_index(
+        "ix_urgency-response_urgency_response_id", table_name="urgency_response"
+    )
+    op.create_index(
+        op.f("ix_urgency_response_urgency_response_id"),
+        "urgency_response",
+        ["urgency_response_id"],
+        unique=False,
+    )
     op.drop_constraint(
         "fk_urgency_response_user_id_user", "urgency_response", type_="foreignkey"
     )
     op.create_foreign_key(
-        None, "urgency_response", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_urgency_response_workspace_id_workspace"),
+        "urgency_response",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("urgency_response", "user_id")
     op.add_column(
@@ -155,21 +230,34 @@ def upgrade() -> None:
     )
     op.drop_constraint("fk_urgency_rule_user", "urgency_rule", type_="foreignkey")
     op.create_foreign_key(
-        None, "urgency_rule", "workspace", ["workspace_id"], ["workspace_id"]
+        op.f("fk_urgency_rule_workspace_id_workspace"),
+        "urgency_rule",
+        "workspace",
+        ["workspace_id"],
+        ["workspace_id"],
     )
     op.drop_column("urgency_rule", "user_id")
-    op.drop_constraint("user_hashed_api_key_key", "user", type_="unique")
+    op.drop_constraint("uq_user_hashed_api_key", "user", type_="unique")
     op.drop_column("user", "content_quota")
     op.drop_column("user", "api_daily_quota")
-    op.drop_column("user", "api_key_first_characters")
     op.drop_column("user", "hashed_api_key")
-    op.drop_column("user", "api_key_updated_datetime_utc")
+    op.drop_column("user", "api_key_first_characters")
     op.drop_column("user", "is_admin")
+    op.drop_column("user", "api_key_updated_datetime_utc")
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.add_column(
+        "user",
+        sa.Column(
+            "api_key_updated_datetime_utc",
+            postgresql.TIMESTAMP(timezone=True),
+            autoincrement=False,
+            nullable=True,
+        ),
+    )
     op.add_column(
         "user",
         sa.Column(
@@ -183,8 +271,8 @@ def downgrade() -> None:
     op.add_column(
         "user",
         sa.Column(
-            "api_key_updated_datetime_utc",
-            postgresql.TIMESTAMP(timezone=True),
+            "api_key_first_characters",
+            sa.VARCHAR(length=5),
             autoincrement=False,
             nullable=True,
         ),
@@ -197,27 +285,22 @@ def downgrade() -> None:
     )
     op.add_column(
         "user",
-        sa.Column(
-            "api_key_first_characters",
-            sa.VARCHAR(length=5),
-            autoincrement=False,
-            nullable=True,
-        ),
-    )
-    op.add_column(
-        "user",
         sa.Column("api_daily_quota", sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.add_column(
         "user",
         sa.Column("content_quota", sa.INTEGER(), autoincrement=False, nullable=True),
     )
-    op.create_unique_constraint("user_hashed_api_key_key", "user", ["hashed_api_key"])
+    op.create_unique_constraint("uq_user_hashed_api_key", "user", ["hashed_api_key"])
     op.add_column(
         "urgency_rule",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "urgency_rule", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_urgency_rule_workspace_id_workspace"),
+        "urgency_rule",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_urgency_rule_user", "urgency_rule", "user", ["user_id"], ["user_id"]
     )
@@ -226,7 +309,11 @@ def downgrade() -> None:
         "urgency_response",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "urgency_response", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_urgency_response_workspace_id_workspace"),
+        "urgency_response",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_urgency_response_user_id_user",
         "urgency_response",
@@ -234,27 +321,53 @@ def downgrade() -> None:
         ["user_id"],
         ["user_id"],
     )
+    op.drop_index(
+        op.f("ix_urgency_response_urgency_response_id"), table_name="urgency_response"
+    )
+    op.create_index(
+        "ix_urgency-response_urgency_response_id",
+        "urgency_response",
+        ["urgency_response_id"],
+        unique=False,
+    )
     op.drop_column("urgency_response", "workspace_id")
     op.add_column(
         "urgency_query",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "urgency_query", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_urgency_query_workspace_id_workspace"),
+        "urgency_query",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_urgency_query_user", "urgency_query", "user", ["user_id"], ["user_id"]
+    )
+    op.drop_index(op.f("ix_urgency_query_urgency_query_id"), table_name="urgency_query")
+    op.create_index(
+        "ix_urgency-query_urgency_query_id",
+        "urgency_query",
+        ["urgency_query_id"],
+        unique=False,
     )
     op.drop_column("urgency_query", "workspace_id")
     op.add_column(
         "tag", sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False)
     )
-    op.drop_constraint(None, "tag", type_="foreignkey")
-    op.create_foreign_key("tag_user_id_fkey", "tag", "user", ["user_id"], ["user_id"])
+    op.drop_constraint(op.f("fk_tag_workspace_id_workspace"), "tag", type_="foreignkey")
+    op.create_foreign_key(
+        "fk_tag_user_id_user", "tag", "user", ["user_id"], ["user_id"]
+    )
     op.drop_column("tag", "workspace_id")
     op.add_column(
         "query_response_feedback",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "query_response_feedback", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_query_response_feedback_workspace_id_workspace"),
+        "query_response_feedback",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_query_response_feedback_user_id_user",
         "query_response_feedback",
@@ -262,14 +375,28 @@ def downgrade() -> None:
         ["user_id"],
         ["user_id"],
     )
+    op.drop_index(
+        op.f("ix_query_response_feedback_feedback_id"),
+        table_name="query_response_feedback",
+    )
+    op.create_index(
+        "ix_query-response-feedback_feedback_id",
+        "query_response_feedback",
+        ["feedback_id"],
+        unique=False,
+    )
     op.drop_column("query_response_feedback", "workspace_id")
     op.add_column(
         "query_response_content",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "query_response_content", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_query_response_content_workspace_id_workspace"),
+        "query_response_content",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
-        "query_response_content_user_id_fkey",
+        "fk_query_response_content_user_id_user",
         "query_response_content",
         "user",
         ["user_id"],
@@ -289,7 +416,11 @@ def downgrade() -> None:
         "query_response",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "query_response", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_query_response_workspace_id_workspace"),
+        "query_response",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_query_response_user_id_user",
         "query_response",
@@ -301,14 +432,20 @@ def downgrade() -> None:
     op.add_column(
         "query", sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False)
     )
-    op.drop_constraint(None, "query", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_query_workspace_id_workspace"), "query", type_="foreignkey"
+    )
     op.create_foreign_key("fk_query_user", "query", "user", ["user_id"], ["user_id"])
     op.drop_column("query", "workspace_id")
     op.add_column(
         "content_feedback",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "content_feedback", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_content_feedback_workspace_id_workspace"),
+        "content_feedback",
+        type_="foreignkey",
+    )
     op.create_foreign_key(
         "fk_content_feedback_user_id_user",
         "content_feedback",
@@ -316,12 +453,23 @@ def downgrade() -> None:
         ["user_id"],
         ["user_id"],
     )
+    op.drop_index(
+        op.f("ix_content_feedback_feedback_id"), table_name="content_feedback"
+    )
+    op.create_index(
+        "ix_content-feedback_feedback_id",
+        "content_feedback",
+        ["feedback_id"],
+        unique=False,
+    )
     op.drop_column("content_feedback", "workspace_id")
     op.add_column(
         "content",
         sa.Column("user_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
-    op.drop_constraint(None, "content", type_="foreignkey")
+    op.drop_constraint(
+        op.f("fk_content_workspace_id_workspace"), "content", type_="foreignkey"
+    )
     op.create_foreign_key(
         "fk_content_user", "content", "user", ["user_id"], ["user_id"]
     )
