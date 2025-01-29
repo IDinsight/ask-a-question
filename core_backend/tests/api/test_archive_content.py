@@ -332,10 +332,10 @@ class TestArchiveContent:
 
         # A.
         data = _dict_to_csv_bytes(
-            {
-                "title": ["csv title 1", "csv title 2"],
-                "text": ["csv text 1", "csv text 2"],
+            data={
                 "tag": ["test-tag", "new-tag"],
+                "text": ["csv text 1", "csv text 2"],
+                "title": ["csv title 1", "csv title 2"],
             }
         )
         response = client.post(
@@ -347,10 +347,10 @@ class TestArchiveContent:
         content_id = [x["content_id"] for x in response.json()["contents"]][0]
 
         data = _dict_to_csv_bytes(
-            {
-                "title": ["csv title 1", "some new title"],
-                "text": ["csv text 1", "some new text"],
+            data={
                 "tag": ["test-tag", "some-new-tag"],
+                "text": ["csv text 1", "some new text"],
+                "title": ["csv title 1", "some new title"],
             }
         )
         response = client.post(
@@ -369,10 +369,10 @@ class TestArchiveContent:
 
         # 1.
         data = _dict_to_csv_bytes(
-            {
-                "title": ["csv title 1", "some new title"],
-                "text": ["csv text 1", "some new text"],
+            data={
                 "tag": ["test-tag", "some-new-tag"],
+                "text": ["csv text 1", "some new text"],
+                "title": ["csv title 1", "some new title"],
             }
         )
         response = client.post(
