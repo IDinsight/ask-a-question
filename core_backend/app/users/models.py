@@ -65,7 +65,10 @@ class UserDB(Base):
     )
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     user_workspaces: Mapped[list["UserWorkspaceDB"]] = relationship(
-        "UserWorkspaceDB", back_populates="user"
+        "UserWorkspaceDB",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     workspaces: Mapped[list["WorkspaceDB"]] = relationship(
@@ -110,7 +113,10 @@ class WorkspaceDB(Base):
         DateTime(timezone=True), nullable=False
     )
     user_workspaces: Mapped[list["UserWorkspaceDB"]] = relationship(
-        "UserWorkspaceDB", back_populates="workspace"
+        "UserWorkspaceDB",
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     users: Mapped[list["UserDB"]] = relationship(
         "UserDB", back_populates="workspaces", secondary="user_workspace", viewonly=True
@@ -155,7 +161,7 @@ class UserWorkspaceDB(Base):
     )
     user: Mapped["UserDB"] = relationship("UserDB", back_populates="user_workspaces")
     user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), primary_key=True
+        Integer, ForeignKey("user.user_id", ondelete="CASCADE"), primary_key=True
     )
     user_role: Mapped[UserRoles] = mapped_column(
         Enum(UserRoles, native_enum=False), nullable=False
@@ -164,7 +170,9 @@ class UserWorkspaceDB(Base):
         "WorkspaceDB", back_populates="user_workspaces"
     )
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), primary_key=True
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        primary_key=True,
     )
 
     def __repr__(self) -> str:

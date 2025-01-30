@@ -30,7 +30,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
 
     query_text = "I have a stomachache."
     reset_chat_history = False
-    user_query_object = QueryBase(query_text=query_text)
+    user_query_object = QueryBase(generate_llm_response=False, query_text=query_text)
     assert user_query_object.generate_llm_response is False
     assert user_query_object.session_id is None
 

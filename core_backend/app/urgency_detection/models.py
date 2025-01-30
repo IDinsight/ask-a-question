@@ -35,7 +35,9 @@ class UrgencyQueryDB(Base):
         Integer, primary_key=True, index=True, nullable=False
     )
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -78,7 +80,9 @@ class UrgencyResponseDB(Base):
         Integer, primary_key=True, index=True, nullable=False
     )
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:

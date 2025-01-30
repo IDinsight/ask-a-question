@@ -129,10 +129,10 @@ class UserRetrieve(BaseModel):
     created_datetime_utc: datetime
     is_default_workspace: list[bool]
     updated_datetime_utc: datetime
+    username: str
     user_id: int
     user_workspace_names: list[str]
     user_workspace_roles: list[UserRoles]
-    username: str
 
     model_config = ConfigDict(from_attributes=True)
 

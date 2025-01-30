@@ -49,4 +49,3 @@ teardown-redis-test:
 teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
-

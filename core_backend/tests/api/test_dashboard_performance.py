@@ -60,7 +60,7 @@ N_CONTENT_SHARED = [12, 10, 8, 6, 4]
 @pytest.fixture(params=["year", "month", "week", "day"])
 async def content_with_query_history(
     request: pytest.FixtureRequest,
-    user: pytest.FixtureRequest,
+    users: pytest.FixtureRequest,
     faq_contents: List[int],
     asession: AsyncSession,
     user1: int,

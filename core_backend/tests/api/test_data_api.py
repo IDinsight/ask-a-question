@@ -288,7 +288,7 @@ class TestUrgencyQueryDataAPI:
             urgency_query = UrgencyQuery(message_text=f"query {i}")
             urgency_query_db = await save_urgency_query_to_db(
                 asession=asession,
-                feedback_secret_key="secret key",
+                feedback_secret_key="secret key",  # pragma: allowlist secret
                 urgency_query=urgency_query,
                 workspace_id=workspace_1_id,
             )
@@ -348,7 +348,7 @@ class TestUrgencyQueryDataAPI:
         urgency_query = UrgencyQuery(message_text="query")
         urgency_query_db = await save_urgency_query_to_db(
             asession=asession,
-            feedback_secret_key="secret key",
+            feedback_secret_key="secret key",  # pragma: allowlist secret
             urgency_query=urgency_query,
             workspace_id=workspace_2_id,
         )
@@ -562,6 +562,7 @@ class TestQueryDataAPI:
                             title="title",
                         )
                     },
+                    session_id=None,
                 )
                 response_db = await save_query_response_to_db(
                     asession=asession,

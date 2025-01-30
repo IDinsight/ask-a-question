@@ -338,7 +338,7 @@ class TestImportContent:
             The pytest request object.
         """
 
-        mock_csv_file = request.getfixturevalue(mock_csv_data)
+        mock_csv_file = request.getfixturevalue(mock_csv_data)  # type: ignore
 
         response = client.post(
             "/content/csv-upload",
@@ -408,7 +408,7 @@ class TestImportContent:
         """
 
         # Fetch data from the fixture.
-        mock_csv_file = request.getfixturevalue(mock_csv_data)
+        mock_csv_file = request.getfixturevalue(mock_csv_data)  # type: ignore
 
         response = client.post(
             "/content/csv-upload",
@@ -521,7 +521,7 @@ class TestDBDuplicates:
             The existing content in the database.
         """
 
-        mock_csv_file = request.getfixturevalue(mock_csv_data)
+        mock_csv_file = request.getfixturevalue(mock_csv_data)  # type: ignore
         response_text_dupe = client.post(
             "/content/csv-upload",
             files={"file": ("test.csv", mock_csv_file, "text/csv")},

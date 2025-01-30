@@ -67,7 +67,9 @@ class QueryDB(Base):
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -112,7 +114,9 @@ class QueryResponseDB(Base):
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     tts_filepath: Mapped[str] = mapped_column(String, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -153,7 +157,9 @@ class QueryResponseContentDB(Base):
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -198,7 +204,9 @@ class ResponseFeedbackDB(Base):
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -241,7 +249,9 @@ class ContentFeedbackDB(Base):
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:

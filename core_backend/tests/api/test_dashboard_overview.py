@@ -50,7 +50,7 @@ class TestUrgencyDetectionStats:
         self,
         request: pytest.FixtureRequest,
         asession: AsyncSession,
-        user: pytest.FixtureRequest,
+        users: pytest.FixtureRequest,
     ) -> AsyncGenerator[Tuple[int, int], None]:
         n_urgent, n_not_urgent = request.param
         data = [(f"Test urgent query {i}", True) for i in range(n_urgent)]
