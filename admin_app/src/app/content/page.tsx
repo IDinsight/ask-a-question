@@ -76,11 +76,11 @@ const CardsPage = () => {
     color: "success" | "info" | "warning" | "error" | undefined;
   }>({ message: null, color: undefined });
 
-  const [openSidebar, setOpenSideBar] = useState(false);
+  const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
-    setOpenSideBar(!openSidebar);
+    setOpenSideBar(!openSearchSidebar);
   };
   const handleChatSidebarToggle = () => {
     setOpenSideBar(false);
@@ -90,9 +90,10 @@ const CardsPage = () => {
     setOpenChatSideBar(false);
   };
   const handleSidebarClose = () => {
+    setOpenChatSideBar(false);
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSidebar || openChatSidebar ? 5 : 0;
+  const sidebarGridWidth = openSearchSidebar || openChatSidebar ? 5 : 0;
 
   React.useEffect(() => {
     if (token) {
@@ -127,7 +128,7 @@ const CardsPage = () => {
           lg={12 - sidebarGridWidth + 1}
           sx={{
             display:
-              openSidebar || openChatSidebar
+              openSearchSidebar || openChatSidebar
                 ? { xs: "none", sm: "none", md: "block" }
                 : "block",
           }}
@@ -182,7 +183,7 @@ const CardsPage = () => {
                   searchTerm={searchTerm}
                   tags={tags}
                   filterTags={filterTags}
-                  openSidebar={openSidebar || openChatSidebar}
+                  openSidebar={openSearchSidebar || openChatSidebar}
                   token={token}
                   accessLevel={currAccessLevel}
                   setSnackMessage={setSnackMessage}
@@ -196,7 +197,7 @@ const CardsPage = () => {
                     p: 1,
                   }}
                 >
-                  {!openSidebar && (
+                  {!openSearchSidebar && (
                     <Fab
                       variant="extended"
                       sx={{
@@ -230,12 +231,12 @@ const CardsPage = () => {
         </Grid>
         <Grid
           item
-          xs={openSidebar ? 12 : 0}
-          sm={openSidebar ? 12 : 0}
+          xs={openSearchSidebar ? 12 : 0}
+          sm={openSearchSidebar ? 12 : 0}
           md={sidebarGridWidth}
           lg={sidebarGridWidth - 1}
           sx={{
-            display: openSidebar ? "block" : "none",
+            display: openSearchSidebar ? "block" : "none",
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />
@@ -252,11 +253,16 @@ const CardsPage = () => {
         >
           <ChatSideBar
             closeSidebar={handleChatSidebarClose}
-            showLLMResponseToggle={true}
-            getResponse={(question: string, generateLLMResponse, session_id) => {
+            getResponse={(question: string, session_id) => {
               return session_id
                 ? apiCalls.getChat(question, true, token!, session_id)
                 : apiCalls.getChat(question, true, token!);
+            }}
+            setSnackMessage={(message: string) => {
+              setSnackMessage({
+                message: message,
+                color: "error",
+              });
             }}
           />
         </Grid>

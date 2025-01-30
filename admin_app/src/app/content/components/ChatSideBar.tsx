@@ -4,7 +4,6 @@ import TypingAnimation from "@/components/TypingAnimation";
 import { Close, Send } from "@mui/icons-material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
   Avatar,
@@ -48,21 +47,15 @@ type Message = UserMessage | ResponseMessage;
 
 const ChatSideBar = ({
   closeSidebar,
-  showLLMResponseToggle,
   getResponse,
+  setSnackMessage,
 }: {
   closeSidebar: () => void;
-  showLLMResponseToggle: boolean;
-  getResponse: (
-    question: string,
-    generateLLMResponse: boolean,
-    session_id?: number,
-  ) => Promise<any>;
+  getResponse: (question: string, session_id?: number) => Promise<any>;
+  setSnackMessage: (message: string) => void;
 }) => {
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState<string>("");
-  const [generateLLMResponse, setGenerateLLMResponse] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null); // Ref to scroll to bottom of chat
@@ -103,24 +96,29 @@ const ChatSideBar = ({
     ]);
     setLoading(true);
     const responsePromise = sessionId
-      ? getResponse(question, generateLLMResponse, sessionId)
-      : getResponse(question, generateLLMResponse);
+      ? getResponse(question, sessionId)
+      : getResponse(question);
     responsePromise
       .then((response) => {
         const responseMessage = {
           dateTime: new Date().toISOString(),
           type: "response",
-          content: response.llm_response,
+          content:
+            response.status == 200
+              ? response.llm_response
+              : response.error.error_message,
           json: response,
         } as ResponseMessage;
-        setMessages((prevMessages) => [...prevMessages, responseMessage]);
-        setSessionId(response.session_id);
-      })
 
+        setMessages((prevMessages) => [...prevMessages, responseMessage]);
+        if (sessionId === null) {
+          setSessionId(response.session_id);
+        }
+      })
       .catch((error: Error) => {
         const errorMessage = "LLM Response failed.";
-        setError(errorMessage);
         processErrorMessage(error);
+        setSnackMessage(error.message);
         console.error(error);
       })
       .finally(() => {
@@ -159,12 +157,32 @@ const ChatSideBar = ({
         {messages.map((message, index) => (
           <MessageBox key={index} {...message} />
         ))}
-        {loading ? <TypingAnimation /> : null}
+        {loading ? (
+          <Box display="flex" alignItems="center">
+            <Avatar
+              alt="FA"
+              sx={{
+                mx: 2,
+                my: 1,
+                width: sizes.icons.medium,
+                height: sizes.icons.medium,
+                bgcolor: "primary.main",
+              }}
+            >
+              <AutoAwesomeIcon />
+            </Avatar>
+            <TypingAnimation />
+          </Box>
+        ) : null}
         <div ref={bottomRef}></div>
       </Box>
       <Box display="flex" justifyContent="flex-end" margin={1}>
         <Tooltip title="Reset conversation" aria-label="reset">
-          <IconButton onClick={handleReset} sx={{ color: appColors.primary }}>
+          <IconButton
+            onClick={handleReset}
+            sx={{ color: appColors.primary }}
+            disabled={loading}
+          >
             <RestartAltIcon />
             <Typography variant="body2">Reset chat</Typography>
           </IconButton>
@@ -199,7 +217,7 @@ const ChatSideBar = ({
         >
           <IconButton
             onClick={handleSendClick}
-            sx={{ color: generateLLMResponse ? "#5480D1" : appColors.primary }}
+            sx={{ color: appColors.primary }}
             disabled={loading || question == "" ? true : false}
           >
             {loading ? <CircularProgress size={24} /> : <Send />}
@@ -211,17 +229,6 @@ const ChatSideBar = ({
 };
 const MessageBox = (message: Message) => {
   const [open, setOpen] = useState(false);
-
-  const renderResults = (content: ResponseSummary[]) => {
-    return content.map((c: ResponseSummary) => (
-      <Box sx={{ pb: sizes.smallGap }} key={c.index}>
-        <Typography component={"span"} variant="subtitle2">
-          {Number(c.index) + 1}: {c.title}
-        </Typography>
-        <Typography variant="body2">{c.text}</Typography>
-      </Box>
-    ));
-  };
   const toggleJsonModal = () => setOpen(!open);
   const modalStyle = {
     position: "absolute",
@@ -243,8 +250,7 @@ const MessageBox = (message: Message) => {
     py: 2,
     px: 3,
     borderRadius: "20px",
-    bgcolor:
-      message.type === "question" ? appColors.lightGrey : appColors.dashboardPrimary,
+    bgcolor: message.type === "question" ? appColors.lightGrey : appColors.primary,
     color: message.type === "question" ? "black" : "white",
     boxShadow: 0,
     maxWidth: "75%",
@@ -260,25 +266,26 @@ const MessageBox = (message: Message) => {
         mb: 1,
       }}
     >
-      <Avatar
-        alt="FA"
-        sx={{
-          mx: 2,
-          my: 1,
-          width: sizes.icons.medium,
-          height: sizes.icons.medium,
-          bgcolor: "primary.main",
-          alignSelf: "flex-end",
-          order: avatarOrder,
-        }}
-      >
-        {message.type === "question" ? <PersonIcon /> : <AutoAwesomeIcon />}
-      </Avatar>
+      {message.type === "response" && (
+        <Avatar
+          alt="FA"
+          sx={{
+            mx: 2,
+            my: 1,
+            width: sizes.icons.medium,
+            height: sizes.icons.medium,
+            bgcolor: "primary.main",
+            alignSelf: "flex-end",
+            order: avatarOrder,
+          }}
+        >
+          <AutoAwesomeIcon />
+        </Avatar>
+      )}
+
       <Box sx={messageBubbleStyles}>
         <Typography component={"span"} variant="body1" align="left">
-          {typeof message.content === "string"
-            ? message.content
-            : renderResults(message.content)}
+          {typeof message.content === "string" ? message.content : null}
         </Typography>
         {message.hasOwnProperty("json") && (
           <Link
@@ -286,7 +293,7 @@ const MessageBox = (message: Message) => {
             variant="caption"
             align="right"
             underline="hover"
-            sx={{ cursor: "pointer", display: "block" }}
+            sx={{ cursor: "pointer", display: "block", color: appColors.white }}
           >
             {"<json>"}
           </Link>
