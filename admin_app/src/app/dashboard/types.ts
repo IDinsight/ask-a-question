@@ -1,8 +1,10 @@
 type Period = "day" | "week" | "month" | "year" | "custom";
 type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
-interface CustomDateRange {
+type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
+interface CustomDateParams {
   startDate: Date | null;
   endDate: Date | null;
+  frequency?: CustomDashboardFrequency;
 }
 interface DrawerData {
   title: string;
@@ -110,7 +112,8 @@ export type {
   TopicModelingData,
   TopicModelingResponse,
   Status,
-  CustomDateRange,
+  CustomDateParams,
+  CustomDashboardFrequency,
 };
 
 export { drawerWidth };
