@@ -13,6 +13,8 @@ from ..users.models import (
     UserDB,
     UserNotFoundError,
     WorkspaceDB,
+    add_existing_user_to_workspace,
+    check_if_user_has_default_workspace,
     get_user_by_id,
     get_user_role_in_workspace,
     get_user_workspaces,
@@ -55,16 +57,25 @@ async def create_workspaces(
 ) -> list[WorkspaceCreate]:
     """Create workspaces. Workspaces can only be created by ADMIN users.
 
+    NB: Any user is allowed to create a workspace. However, the user must be assigned
+    to a default workspace already.
+
     NB: When a workspace is created, the API daily quota and content quota limits for
     the workspace is set.
 
     The process is as follows:
 
-    1. If the calling user does not have the correct role to create workspaces, then an
-        error is thrown.
-    2. Create each workspace. If a workspace already exists during this process, an
-        error is NOT thrown. Instead, the existing workspace object is returned. This
-        avoids the need to iterate thru the list of workspaces first.
+    1. Create each workspace. If a workspace already exists during this process, an
+        error is NOT thrown. Instead, the existing workspace object is NOT returned to
+        the calling user. This avoids the need to iterate thru the list of workspaces
+        first and does not give the calling user information on workspace existence.
+    2. If a new workspace was created, then the calling user is automatically added as
+        an ADMIN user to the workspace. Otherwise, the calling user is not added and
+        they would have to contact the admin of the (existing) workspace to be added.
+        2a. We do NOT assign the calling user to any of the newly created workspaces
+        because existing users must already have a default workspace assigned and we
+        don't want to override their current default workspace when creating new
+        workspaces.
 
     Parameters
     ----------
@@ -83,23 +94,25 @@ async def create_workspaces(
     Raises
     ------
     HTTPException
-        If the calling user does not have the correct role to create workspaces.
+        If the calling user does not have a default workspace assigned
     """
 
-    # 1.
-    if not await user_has_admin_role_in_any_workspace(
+    if not await check_if_user_has_default_workspace(
         asession=asession, user_db=calling_user_db
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Calling user does not have the correct role to create workspaces.",
+            detail="Calling user must be assigned to a workspace first before creating "
+            "workspaces.",
         )
 
-    # 2.
     if not isinstance(workspaces, list):
         workspaces = [workspaces]
-    workspace_dbs = [
-        await create_workspace(
+    created_workspaces: list[WorkspaceCreate] = []
+
+    for workspace in workspaces:
+        # 1.
+        workspace_db, is_new_workspace = await create_workspace(
             api_daily_quota=workspace.api_daily_quota,
             asession=asession,
             content_quota=workspace.content_quota,
@@ -109,16 +122,28 @@ async def create_workspaces(
                 workspace_name=workspace.workspace_name,
             ),
         )
-        for workspace in workspaces
-    ]
-    return [
-        WorkspaceCreate(
-            api_daily_quota=workspace_db.api_daily_quota,
-            content_quota=workspace_db.content_quota,
-            workspace_name=workspace_db.workspace_name,
-        )
-        for workspace_db in workspace_dbs
-    ]
+
+        # 2.
+        if is_new_workspace:
+            await add_existing_user_to_workspace(
+                asession=asession,
+                user=UserCreate(
+                    is_default_workspace=False,  # 2a.
+                    role=UserRoles.ADMIN,
+                    username=calling_user_db.username,
+                    workspace_name=workspace_db.workspace_name,
+                ),
+                workspace_db=workspace_db,
+            )
+            created_workspaces.append(
+                WorkspaceCreate(
+                    api_daily_quota=workspace_db.api_daily_quota,
+                    content_quota=workspace_db.content_quota,
+                    workspace_name=workspace_db.workspace_name,
+                )
+            )
+
+    return created_workspaces
 
 
 @router.get("/", response_model=list[WorkspaceRetrieve])

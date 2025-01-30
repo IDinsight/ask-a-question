@@ -23,13 +23,13 @@ from .models import (
     UserNotFoundInWorkspaceError,
     UserWorkspaceRoleAlreadyExistsError,
     WorkspaceDB,
+    add_existing_user_to_workspace,
+    add_new_user_to_workspace,
     check_if_user_exists,
     check_if_user_exists_in_workspace,
     check_if_users_exist,
-    create_user_workspace_role,
     get_admin_users_in_workspace,
     get_user_by_id,
-    get_user_by_username,
     get_user_role_in_all_workspaces,
     get_user_role_in_workspace,
     get_users_and_roles_by_workspace_id,
@@ -37,7 +37,6 @@ from .models import (
     is_username_valid,
     remove_user_from_dbs,
     reset_user_password_in_db,
-    save_user_to_db,
     update_user_default_workspace,
     update_user_in_db,
     update_user_role_in_workspace,
@@ -57,7 +56,6 @@ from .schemas import (
     UserRoles,
     UserUpdate,
 )
-from .utils import generate_recovery_codes
 
 TAG_METADATA = {
     "name": "User",
@@ -204,7 +202,7 @@ async def create_first_user(
     user.workspace_name = (
         user.workspace_name or default_workspace_name or f"Workspace_{user.username}"
     )
-    workspace_db_new = await create_workspace(asession=asession, user=user)
+    workspace_db_new, _ = await create_workspace(asession=asession, user=user)
 
     # 2.
     user_new = await add_new_user_to_workspace(
@@ -684,127 +682,6 @@ async def get_user(
         username=user_db.username,
         user_workspace_names=[row.workspace_name for row in user_workspace_roles],
         user_workspace_roles=[row.user_role.value for row in user_workspace_roles],
-    )
-
-
-async def add_existing_user_to_workspace(
-    *,
-    asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
-    workspace_db: WorkspaceDB,
-) -> UserCreateWithCode:
-    """The process for adding an existing user to a workspace is:
-
-    1. Retrieve the existing user from the `UserDB` database.
-    2. Add the existing user to the workspace with the specified role.
-
-    NB: If this function is invoked, then the assumption is that it is called by an
-    ADMIN user with access to the specified workspace and that this ADMIN user is
-    adding an **existing** user to the workspace with the specified user role.
-
-    NB: We do not update the API limits for the workspace when an existing user is
-    added to the workspace. This is because the API limits are set at the workspace
-    level when the workspace is first created by the admin and not at the user level.
-
-    Parameters
-    ----------
-    asession
-        The SQLAlchemy async session to use for all database connections.
-    user
-        The user object to use for adding the existing user to the workspace.
-    workspace_db
-        The workspace object to use.
-
-    Returns
-    -------
-    UserCreateWithCode
-        The user object with the recovery codes.
-    """
-
-    assert user.role is not None
-    user.is_default_workspace = user.is_default_workspace or False
-
-    # 1.
-    user_db = await get_user_by_username(asession=asession, username=user.username)
-
-    # 2.
-    _ = await create_user_workspace_role(
-        asession=asession,
-        is_default_workspace=user.is_default_workspace,
-        user_db=user_db,
-        user_role=user.role,
-        workspace_db=workspace_db,
-    )
-
-    return UserCreateWithCode(
-        recovery_codes=user_db.recovery_codes,
-        role=user.role,
-        username=user_db.username,
-        workspace_name=workspace_db.workspace_name,
-    )
-
-
-async def add_new_user_to_workspace(
-    *,
-    asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
-    workspace_db: WorkspaceDB,
-) -> UserCreateWithCode:
-    """The process for adding a new user to a workspace is:
-
-    1. Generate recovery codes for the new user.
-    2. Save the new user to the `UserDB` database along with their recovery codes.
-    3. Add the new user to the workspace with the specified role. For new users, this
-        workspace is set as their default workspace.
-
-    NB: If this function is invoked, then the assumption is that it is called by an
-    ADMIN user with access to the specified workspace and that this ADMIN user is
-    adding a **new** user to the workspace with the specified user role.
-
-    NB: We do not update the API limits for the workspace when a new user is added to
-    the workspace. This is because the API limits are set at the workspace level when
-    the workspace is first created by the workspace admin and not at the user level.
-
-    Parameters
-    ----------
-    asession
-        The SQLAlchemy async session to use for all database connections.
-    user
-        The user object to use for adding the new user to the workspace.
-    workspace_db
-        The workspace object to use.
-
-    Returns
-    -------
-    UserCreateWithCode
-        The user object with the recovery codes.
-    """
-
-    assert user.role is not None
-
-    # 1.
-    recovery_codes = generate_recovery_codes()
-
-    # 2.
-    user_db = await save_user_to_db(
-        asession=asession, recovery_codes=recovery_codes, user=user
-    )
-
-    # 3.
-    _ = await create_user_workspace_role(
-        asession=asession,
-        is_default_workspace=True,  # Should always be True for new users!
-        user_db=user_db,
-        user_role=user.role,
-        workspace_db=workspace_db,
-    )
-
-    return UserCreateWithCode(
-        is_default_workspace=user.is_default_workspace,
-        recovery_codes=recovery_codes,
-        role=user.role,
-        username=user_db.username,
-        workspace_name=workspace_db.workspace_name,
     )
 
 

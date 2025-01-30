@@ -8,13 +8,9 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..users.models import WorkspaceDB
-from ..users.schemas import UserCreate, UserRoles
+from ..users.schemas import UserCreate
 from ..utils import get_key_hash
 from .schemas import WorkspaceUpdate
-
-
-class IncorrectUserRoleError(Exception):
-    """Exception raised when the user role is incorrect."""
 
 
 class WorkspaceNotFoundError(Exception):
@@ -46,7 +42,7 @@ async def create_workspace(
     asession: AsyncSession,
     content_quota: Optional[int] = None,
     user: UserCreate,
-) -> WorkspaceDB:
+) -> tuple[WorkspaceDB, bool]:
     """Create a workspace in the `WorkspaceDB` database. If the workspace already
     exists, then it is returned.
 
@@ -63,19 +59,10 @@ async def create_workspace(
 
     Returns
     -------
-    WorkspaceDB
-        The workspace object saved in the database.
-
-    Raises
-    ------
-    IncorrectUserRoleError
-        If the user role is incorrect for creating a workspace.
+    tuple[WorkspaceDB, bool]
+        A tuple containing the workspace object and a boolean specifying whether the
+        workspace was newly created.
     """
-
-    if user.role != UserRoles.ADMIN:
-        raise IncorrectUserRoleError(
-            f"Only {UserRoles.ADMIN} users can create workspaces."
-        )
 
     assert api_daily_quota is None or api_daily_quota >= 0
     assert content_quota is None or content_quota >= 0
@@ -84,7 +71,9 @@ async def create_workspace(
         select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)
     )
     workspace_db = result.scalar_one_or_none()
+    new_workspace = False
     if workspace_db is None:
+        new_workspace = True
         workspace_db = WorkspaceDB(
             api_daily_quota=api_daily_quota,
             content_quota=content_quota,
@@ -97,7 +86,7 @@ async def create_workspace(
         await asession.commit()
         await asession.refresh(workspace_db)
 
-    return workspace_db
+    return workspace_db, new_workspace
 
 
 async def get_content_quota_by_workspace_id(

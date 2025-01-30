@@ -198,7 +198,7 @@ async def authenticate_or_create_google_user(
             )
 
             # Create the workspace for the Google user.
-            workspace_db = await create_workspace(
+            workspace_db, _ = await create_workspace(
                 api_daily_quota=DEFAULT_API_QUOTA,
                 asession=asession,
                 content_quota=DEFAULT_CONTENT_QUOTA,
