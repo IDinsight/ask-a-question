@@ -11,17 +11,25 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { CustomDashboardFrequency } from "@/app/dashboard/types";
+
+const timeFrequencies: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
 
 interface DateRangePickerDialogProps {
   open: boolean;
   onClose: () => void;
-  onSelectDateRange: (startDate: Date, endDate: Date, frequency: string) => void;
+  onSelectDateRange: (
+    startDate: Date,
+    endDate: Date,
+    frequency: CustomDashboardFrequency,
+  ) => void;
   initialStartDate?: Date | null;
   initialEndDate?: Date | null;
-  initialFrequency?: string;
+  initialFrequency?: CustomDashboardFrequency;
 }
 
 const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
@@ -30,17 +38,18 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   onSelectDateRange,
   initialStartDate = null,
   initialEndDate = null,
-  initialFrequency = "Daily",
+  initialFrequency = "Day",
 }) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [frequency, setFrequency] = useState<string>(initialFrequency);
+  const [frequency, setFrequency] =
+    useState<CustomDashboardFrequency>(initialFrequency);
 
   useEffect(() => {
     if (open) {
       setStartDate(initialStartDate);
       setEndDate(initialEndDate);
-      setFrequency(initialFrequency || "Daily");
+      setFrequency(initialFrequency || "Day");
     }
   }, [open, initialStartDate, initialEndDate, initialFrequency]);
 
@@ -91,13 +100,15 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
             <Select
               labelId="frequency-label"
               value={frequency}
-              onChange={(event) => setFrequency(event.target.value as string)}
+              onChange={(event: SelectChangeEvent<CustomDashboardFrequency>) =>
+                setFrequency(event.target.value as CustomDashboardFrequency)
+              }
               label="Frequency"
             >
-              <MenuItem value="Hourly">Hourly</MenuItem>
-              <MenuItem value="Daily">Daily</MenuItem>
-              <MenuItem value="Weekly">Weekly</MenuItem>
-              <MenuItem value="Monthly">Monthly</MenuItem>
+              <MenuItem value="Hour">Hourly</MenuItem>
+              <MenuItem value="Day">Daily</MenuItem>
+              <MenuItem value="Week">Weekly</MenuItem>
+              <MenuItem value="Month">Monthly</MenuItem>
             </Select>
           </FormControl>
         </Box>
