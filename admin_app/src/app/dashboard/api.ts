@@ -5,24 +5,56 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
+function buildURL(
+  basePath: string,
+  period: Period,
+  options: {
+    startDate?: Date;
+    endDate?: Date;
+    contentId?: number;
+    extraPath?: string;
+  } = {},
+): string {
+  let url = `${basePath}/${period}`;
+
+  if (options.contentId !== undefined) {
+    url += `/${options.contentId}`;
+  }
+
+  if (options.extraPath) {
+    url += `/${options.extraPath}`;
+  }
+
+  if (period === "custom" && options.startDate && options.endDate) {
+    const params = new URLSearchParams({
+      start_date: formatDate(options.startDate),
+      end_date: formatDate(options.endDate),
+    });
+    url += `?${params.toString()}`;
+  }
+
+  return url;
+}
+
+async function fetchData(url: string, token: string, errorMessage: string) {
+  try {
+    const response = await api.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(errorMessage);
+  }
+}
+
 const getOverviewPageData = async (
   period: Period,
   token: string,
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/overview/${period}`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching dashboard overview page data");
-  }
+  const url = buildURL("/dashboard/overview", period, { startDate, endDate });
+  return fetchData(url, token, "Error fetching dashboard overview page data");
 };
 
 const fetchTopicsData = async (
@@ -31,18 +63,8 @@ const fetchTopicsData = async (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/insights/${period}`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching Topics data");
-  }
+  const url = buildURL("/dashboard/insights", period, { startDate, endDate });
+  return fetchData(url, token, "Error fetching Topics data");
 };
 
 const getEmbeddingData = async (
@@ -51,18 +73,11 @@ const getEmbeddingData = async (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/topic_visualization/${period}`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching dashboard embedding data");
-  }
+  const url = buildURL("/dashboard/topic_visualization", period, {
+    startDate,
+    endDate,
+  });
+  return fetchData(url, token, "Error fetching dashboard embedding data");
 };
 
 const generateNewTopics = async (
@@ -71,18 +86,12 @@ const generateNewTopics = async (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/insights/${period}/refresh`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error kicking off new topic generation");
-  }
+  const url = buildURL("/dashboard/insights", period, {
+    startDate,
+    endDate,
+    extraPath: "refresh",
+  });
+  return fetchData(url, token, "Error kicking off new topic generation");
 };
 
 const getPerformancePageData = async (
@@ -91,60 +100,46 @@ const getPerformancePageData = async (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/performance/${period}`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching dashboard performance page data");
-  }
+  const url = buildURL("/dashboard/performance", period, {
+    startDate,
+    endDate,
+  });
+  return fetchData(url, token, "Error fetching dashboard performance page data");
 };
 
 const getPerformanceDrawerData = async (
   period: Period,
-  content_id: number,
+  contentId: number,
   token: string,
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/performance/${period}/${content_id}`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching dashboard performance drawer data");
-  }
+  const url = buildURL("/dashboard/performance", period, {
+    contentId,
+    startDate,
+    endDate,
+  });
+  return fetchData(url, token, "Error fetching dashboard performance drawer data");
 };
 
 const getPerformanceDrawerAISummary = async (
   period: Period,
-  content_id: number,
+  contentId: number,
   token: string,
   startDate?: Date,
   endDate?: Date,
 ) => {
-  try {
-    let url = `/dashboard/performance/${period}/${content_id}/ai-summary`;
-    if (period === "custom" && startDate && endDate) {
-      url += `?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    }
-    const response = await api.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching dashboard performance drawer AI summary");
-  }
+  const url = buildURL("/dashboard/performance", period, {
+    contentId,
+    startDate,
+    endDate,
+    extraPath: "ai-summary",
+  });
+  return fetchData(
+    url,
+    token,
+    "Error fetching dashboard performance drawer AI summary",
+  );
 };
 
 export {
