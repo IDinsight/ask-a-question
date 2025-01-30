@@ -46,26 +46,36 @@ from core_backend.app.users.schemas import UserRoles
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
 from core_backend.app.workspaces.utils import get_workspace_by_workspace_name
 
+# Admin users.
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_2 = "admin_password_2"  # pragma: allowlist secret
-TEST_ADMIN_RECOVERY_CODES_1 = ["code1", "code2", "code3", "code4", "code5"]
-TEST_ADMIN_RECOVERY_CODES_2 = ["code6", "code7", "code8", "code9", "code10"]
+TEST_ADMIN_PASSWORD_DATA_API_1 = "admin_password_data_api_1"  # pragma: allowlist secret
+TEST_ADMIN_PASSWORD_DATA_API_2 = "admin_password_data_api_2"  # pragma: allowlist secret
 TEST_ADMIN_USERNAME_1 = "admin_1"
 TEST_ADMIN_USERNAME_2 = "admin_2"
-TEST_READ_ONLY_PASSWORD_1 = "test_password"
-TEST_READ_ONLY_PASSWORD_2 = "test_password_2"
-TEST_READ_ONLY_USERNAME_1 = "test_username"
+TEST_ADMIN_USERNAME_DATA_API_1 = "admin_data_api_1"
+TEST_ADMIN_USERNAME_DATA_API_2 = "admin_data_api_2"
+
+# Read-only users.
+TEST_READ_ONLY_PASSWORD_1 = "test_password_1"  # pragma: allowlist secret
+TEST_READ_ONLY_USERNAME_1 = "test_username_1"
 TEST_READ_ONLY_USERNAME_2 = "test_username_2"
-TEST_WORKSPACE_API_KEY_1 = "test_api_key"
-TEST_WORKSPACE_API_KEY_2 = "test_api_key"
-TEST_WORKSPACE_API_QUOTA_1 = 2000
+
+# Workspaces.
+TEST_WORKSPACE_API_KEY_1 = "test_api_key_1"  # pragma: allowlist secret
 TEST_WORKSPACE_API_QUOTA_2 = 2000
-TEST_WORKSPACE_CONTENT_QUOTA_1 = 50
+TEST_WORKSPACE_API_QUOTA_DATA_API_1 = 2000
+TEST_WORKSPACE_API_QUOTA_DATA_API_2 = 2000
 TEST_WORKSPACE_CONTENT_QUOTA_2 = 50
-TEST_WORKSPACE_NAME_1 = "test_workspace1"
-TEST_WORKSPACE_NAME_2 = "test_workspace2"
+TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1 = 50
+TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2 = 50
+TEST_WORKSPACE_NAME_1 = "test_workspace_1"
+TEST_WORKSPACE_NAME_2 = "test_workspace_2"
+TEST_WORKSPACE_NAME_DATA_API_1 = "test_workspace_data_api_1"
+TEST_WORKSPACE_NAME_DATA_API_2 = "test_workspace_data_api_2"
 
 
+# Fixtures.
 @pytest.fixture(scope="function")
 async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     """Create an async session for testing.
@@ -141,12 +151,12 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture(scope="session")
 def access_token_admin_1() -> str:
-    """Return an access token for admin user 1.
+    """Return an access token for admin user 1 in workspace 1.
 
     Returns
     -------
     str
-        Access token for admin user 1.
+        Access token for admin user 1 in workspace 1.
     """
 
     return create_access_token(
@@ -156,12 +166,12 @@ def access_token_admin_1() -> str:
 
 @pytest.fixture(scope="session")
 def access_token_admin_2() -> str:
-    """Return an access token for admin user 2.
+    """Return an access token for admin user 2 in workspace 2.
 
     Returns
     -------
     str
-        Access token for admin user 2.
+        Access token for admin user 2 in workspace 2.
     """
 
     return create_access_token(
@@ -170,15 +180,47 @@ def access_token_admin_2() -> str:
 
 
 @pytest.fixture(scope="session")
+def access_token_admin_data_api_1() -> str:
+    """Return an access token for data API admin user 1 in data API workspace 1.
+
+    Returns
+    -------
+    str
+        Access token for data API admin user 1 in data API workspace 1.
+    """
+
+    return create_access_token(
+        username=TEST_ADMIN_USERNAME_DATA_API_1,
+        workspace_name=TEST_WORKSPACE_NAME_DATA_API_1,
+    )
+
+
+@pytest.fixture(scope="session")
+def access_token_admin_data_api_2() -> str:
+    """Return an access token for data API admin user 2 in data API workspace 2.
+
+    Returns
+    -------
+    str
+        Access token for data API admin user 2 in data API workspace 2.
+    """
+
+    return create_access_token(
+        username=TEST_ADMIN_USERNAME_DATA_API_2,
+        workspace_name=TEST_WORKSPACE_NAME_DATA_API_2,
+    )
+
+
+@pytest.fixture(scope="session")
 def access_token_read_only_1() -> str:
-    """Return an access token for read-only user 1.
+    """Return an access token for read-only user 1 in workspace 1.
 
     NB: Read-only user 1 is created in the same workspace as the admin user 1.
 
     Returns
     -------
     str
-        Access token for read-only user 1.
+        Access token for read-only user 1 in workspace 1.
     """
 
     return create_access_token(
@@ -188,14 +230,14 @@ def access_token_read_only_1() -> str:
 
 @pytest.fixture(scope="session")
 def access_token_read_only_2() -> str:
-    """Return an access token for read-only user 2.
+    """Return an access token for read-only user 2 in workspace 2.
 
     NB: Read-only user 2 is created in the same workspace as the admin user 2.
 
     Returns
     -------
     str
-        Access token for read-only user 2.
+        Access token for read-only user 2 in workspace 2.
     """
 
     return create_access_token(
@@ -213,7 +255,7 @@ async def admin_user_1_in_workspace_1(
     Parameters
     ----------
     access_token_admin_1
-        Access token for admin user 1.
+        Access token for admin user 1 in workspace 1.
     client
         Test client.
 
@@ -250,7 +292,7 @@ async def admin_user_2_in_workspace_2(
     Parameters
     ----------
     access_token_admin_1
-        Access token for admin user 1.
+        Access token for admin user 1 in workspace 1.
     client
         Test client.
 
@@ -277,6 +319,102 @@ async def admin_user_2_in_workspace_2(
             "role": UserRoles.ADMIN,
             "username": TEST_ADMIN_USERNAME_2,
             "workspace_name": TEST_WORKSPACE_NAME_2,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    return response.json()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def admin_user_data_api_1_in_workspace_data_api_1(
+    access_token_admin_1: pytest.FixtureRequest, client: TestClient
+) -> dict[str, Any]:
+    """Create data API admin user 1 in data API workspace 1 by invoking the `/user`
+    endpoint.
+
+    NB: Only admins can create workspaces. Since admin user 1 is the first admin user
+    ever, we need admin user 1 to create the data API workspace 1 and then add the data
+    API admin user 1 to the data API workspace 1.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1 in workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    dict[str, Any]
+        The response from creating the data API admin user 1 in the data API workspace
+        1.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_WORKSPACE_API_QUOTA_DATA_API_1,
+            "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1,
+            "workspace_name": TEST_WORKSPACE_NAME_DATA_API_1,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    response = client.post(
+        "/user",
+        json={
+            "is_default_workspace": True,
+            "password": TEST_ADMIN_PASSWORD_DATA_API_1,
+            "role": UserRoles.ADMIN,
+            "username": TEST_ADMIN_USERNAME_DATA_API_1,
+            "workspace_name": TEST_WORKSPACE_NAME_DATA_API_1,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    return response.json()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def admin_user_data_api_2_in_workspace_data_api_2(
+    access_token_admin_1: pytest.FixtureRequest, client: TestClient
+) -> dict[str, Any]:
+    """Create data API admin user 2 in data API workspace 2 by invoking the `/user`
+    endpoint.
+
+    NB: Only admins can create workspaces. Since admin user 1 is the first admin user
+    ever, we need admin user 1 to create the data API workspace 2 and then add the data
+    API admin user 2 to the data API workspace 2.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1 in workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    dict[str, Any]
+        The response from creating the data API admin user 2 in the data API workspace
+        2.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_WORKSPACE_API_QUOTA_DATA_API_2,
+            "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2,
+            "workspace_name": TEST_WORKSPACE_NAME_DATA_API_2,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    response = client.post(
+        "/user",
+        json={
+            "is_default_workspace": True,
+            "password": TEST_ADMIN_PASSWORD_DATA_API_2,
+            "role": UserRoles.ADMIN,
+            "username": TEST_ADMIN_USERNAME_DATA_API_2,
+            "workspace_name": TEST_WORKSPACE_NAME_DATA_API_2,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
     )
@@ -364,11 +502,69 @@ def api_key_workspace_2(access_token_admin_2: str, client: TestClient) -> str:
     return response.json()["new_api_key"]
 
 
-@pytest.fixture(scope="module", params=[("Tag1"), ("tag2",)])
+@pytest.fixture(scope="session")
+def api_key_workspace_data_api_1(
+    access_token_admin_data_api_1: str, client: TestClient
+) -> str:
+    """Return an API key for the data API admin user 1 in the data API workspace 1 by
+    invoking the `/workspace/rotate-key` endpoint.
+
+    Parameters
+    ----------
+    access_token_admin_data_api_1
+        Access token for the data API admin user 1 in data API workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    str
+        The new API key for data API workspace 1.
+    """
+
+    response = client.put(
+        "/workspace/rotate-key",
+        headers={"Authorization": f"Bearer {access_token_admin_data_api_1}"},
+    )
+    return response.json()["new_api_key"]
+
+
+@pytest.fixture(scope="session")
+def api_key_workspace_data_api_2(
+    access_token_admin_data_api_2: str, client: TestClient
+) -> str:
+    """Return an API key for the data API admin user 2 in the data API workspace 2 by
+    invoking the `/workspace/rotate-key` endpoint.
+
+    Parameters
+    ----------
+    access_token_admin_data_api_2
+        Access token for the data API admin user 2 in data API workspace 2.
+    client
+        Test client.
+
+    Returns
+    -------
+    str
+        The new API key for the data API workspace 2.
+    """
+
+    response = client.put(
+        "/workspace/rotate-key",
+        headers={"Authorization": f"Bearer {access_token_admin_data_api_2}"},
+    )
+    return response.json()["new_api_key"]
+
+
+@pytest.fixture(scope="module", params=["Tag1", "Tag2"])
 def existing_tag_id_in_workspace_1(
     access_token_admin_1: str, client: TestClient, request: pytest.FixtureRequest
 ) -> Generator[str, None, None]:
     """Create a tag for workspace 1.
+
+    NB: Using `request.param[0]` only uses the "T" in "Tag1" or "Tag2". This is
+    essentially a hack fix in order to not get a tag already exists error when we
+    create the tag (unless, of course, another test creates a tag named "T").
 
     Parameters
     ----------
@@ -400,7 +596,7 @@ def existing_tag_id_in_workspace_1(
 
 
 @pytest.fixture(scope="function")
-async def faq_contents(
+async def faq_contents_in_workspace_1(
     asession: AsyncSession, admin_user_1_in_workspace_1: dict[str, Any]
 ) -> AsyncGenerator[list[int], None]:
     """Create FAQ contents in workspace 1.
@@ -419,6 +615,140 @@ async def faq_contents(
     """
 
     workspace_name = admin_user_1_in_workspace_1["workspace_name"]
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+
+    with open("tests/api/data/content.json", "r") as f:
+        json_data = json.load(f)
+    contents = []
+    for content in json_data:
+        text_to_embed = content["content_title"] + "\n" + content["content_text"]
+        content_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        content_db = ContentDB(
+            content_embedding=content_embedding,
+            content_metadata=content.get("content_metadata", {}),
+            content_text=content["content_text"],
+            content_title=content["content_title"],
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=workspace_id,
+        )
+        contents.append(content_db)
+
+    asession.add_all(contents)
+    await asession.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        delete_feedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
+        await asession.execute(delete_feedback)
+        await asession.execute(content_query)
+        await asession.delete(content)
+
+    await asession.commit()
+
+
+@pytest.fixture(scope="function")
+async def faq_contents_in_workspace_data_api_1(
+    asession: AsyncSession,
+    admin_user_data_api_1_in_workspace_data_api_1: dict[str, Any],
+) -> AsyncGenerator[list[int], None]:
+    """Create FAQ contents in the data API workspace 1.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    admin_user_data_api_1_in_workspace_data_api_1
+        Data API admin user 1 in the data API workspace 1.
+
+    Returns
+    -------
+    AsyncGenerator[list[int], None]
+        FAQ content IDs.
+    """
+
+    workspace_name = admin_user_data_api_1_in_workspace_data_api_1["workspace_name"]
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+
+    with open("tests/api/data/content.json", "r") as f:
+        json_data = json.load(f)
+    contents = []
+    for content in json_data:
+        text_to_embed = content["content_title"] + "\n" + content["content_text"]
+        content_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        content_db = ContentDB(
+            content_embedding=content_embedding,
+            content_metadata=content.get("content_metadata", {}),
+            content_text=content["content_text"],
+            content_title=content["content_title"],
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=workspace_id,
+        )
+        contents.append(content_db)
+
+    asession.add_all(contents)
+    await asession.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        delete_feedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
+        await asession.execute(delete_feedback)
+        await asession.execute(content_query)
+        await asession.delete(content)
+
+    await asession.commit()
+
+
+@pytest.fixture(scope="function")
+async def faq_contents_in_workspace_data_api_2(
+    asession: AsyncSession,
+    admin_user_data_api_2_in_workspace_data_api_2: dict[str, Any],
+) -> AsyncGenerator[list[int], None]:
+    """Create FAQ contents in the data API workspace 2.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    admin_user_data_api_2_in_workspace_data_api_2
+        Data API admin user 2 in the data API workspace 2.
+
+    Returns
+    -------
+    AsyncGenerator[list[int], None]
+        FAQ content IDs.
+    """
+
+    workspace_name = admin_user_data_api_2_in_workspace_data_api_2["workspace_name"]
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
@@ -554,41 +884,6 @@ async def read_only_user_1_in_workspace_1(
     return response.json()
 
 
-@pytest.fixture(scope="session", autouse=True)
-async def read_only_user_2_in_workspace_2(
-    access_token_admin_2: pytest.FixtureRequest, client: TestClient
-) -> dict[str, Any]:
-    """Create read-only user 2 in workspace 2.
-
-    NB: Only admin user 2 can create read-only user 2 in workspace 2.
-
-    Parameters
-    ----------
-    access_token_admin_2
-        Access token for admin user 2.
-    client
-        Test client.
-
-    Returns
-    -------
-    dict[str, Any]
-        The response from creating read-only user 2 in workspace 2.
-    """
-
-    response = client.post(
-        "/user",
-        json={
-            "is_default_workspace": True,
-            "password": TEST_READ_ONLY_PASSWORD_2,
-            "role": UserRoles.READ_ONLY,
-            "username": TEST_READ_ONLY_USERNAME_2,
-            "workspace_name": TEST_WORKSPACE_NAME_2,
-        },
-        headers={"Authorization": f"Bearer {access_token_admin_2}"},
-    )
-    return response.json()
-
-
 @pytest.fixture(scope="function")
 async def redis_client() -> AsyncGenerator[aioredis.Redis, None]:
     """Create a redis client for testing.
@@ -644,7 +939,7 @@ def temp_workspace_api_key_and_api_quota(
         username=username,
     )
     db_session.add(temp_user_db)
-    db_session.commit()
+    db_session.flush()
 
     temp_workspace_db = WorkspaceDB(
         api_daily_quota=api_daily_quota,
@@ -654,7 +949,7 @@ def temp_workspace_api_key_and_api_quota(
         workspace_name=workspace_name,
     )
     db_session.add(temp_workspace_db)
-    db_session.commit()
+    db_session.flush()
 
     temp_user_workspace_db = UserWorkspaceDB(
         created_datetime_utc=datetime.now(timezone.utc),
@@ -713,7 +1008,7 @@ def temp_workspace_token_and_quota(
         username=username,
     )
     db_session.add(temp_user_db)
-    db_session.commit()
+    db_session.flush()
 
     temp_workspace_db = WorkspaceDB(
         content_quota=content_quota,
@@ -723,7 +1018,7 @@ def temp_workspace_token_and_quota(
         workspace_name=workspace_name,
     )
     db_session.add(temp_workspace_db)
-    db_session.commit()
+    db_session.flush()
 
     temp_user_workspace_db = UserWorkspaceDB(
         created_datetime_utc=datetime.now(timezone.utc),
@@ -798,48 +1093,102 @@ async def urgency_rules_workspace_1(
 
 
 @pytest.fixture(scope="function")
-async def urgency_rules_workspace_2(
-    db_session: Session, workspace_2_id: int
+async def urgency_rules_workspace_data_api_1(
+    db_session: Session, workspace_data_api_id_1: int
 ) -> AsyncGenerator[int, None]:
-    """Create urgency rules for workspace 2.
+    """Create urgency rules for the data API workspace 1.
 
     Parameters
     ----------
     db_session
         Test database session.
-    workspace_2_id
-        The ID for workspace 2.
+    workspace_data_api_id_1
+        The ID for the data API workspace 1.
 
     Returns
     -------
     AsyncGenerator[int, None]
-        Number of urgency rules in workspace 2.
+        Number of urgency rules in the data API workspace 1.
     """
 
-    rule_embedding = await async_fake_embedding(
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-        input="workspace 2 rule",
-        model=LITELLM_MODEL_EMBEDDING,
-    )
-
-    rule_db = UrgencyRuleDB(
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-        urgency_rule_metadata={},
-        urgency_rule_id=1000,
-        urgency_rule_text="user 2 rule",
-        urgency_rule_vector=rule_embedding,
-        workspace_id=workspace_2_id,
-    )
-
-    db_session.add(rule_db)
+    with open("tests/api/data/urgency_rules.json", "r") as f:
+        json_data = json.load(f)
+    rules = []
+    for i, rule in enumerate(json_data):
+        rule_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=rule["urgency_rule_text"],
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        rule_db = UrgencyRuleDB(
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            urgency_rule_id=i,
+            urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
+            urgency_rule_text=rule["urgency_rule_text"],
+            urgency_rule_vector=rule_embedding,
+            workspace_id=workspace_data_api_id_1,
+        )
+        rules.append(rule_db)
+    db_session.add_all(rules)
     db_session.commit()
 
-    yield 1
+    yield len(rules)
 
     # Delete the urgency rules.
-    db_session.delete(rule_db)
+    for rule in rules:
+        db_session.delete(rule)
+    db_session.commit()
+
+
+@pytest.fixture(scope="function")
+async def urgency_rules_workspace_data_api_2(
+    db_session: Session, workspace_data_api_id_2: int
+) -> AsyncGenerator[int, None]:
+    """Create urgency rules for the data API workspace 2.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+    workspace_data_api_id_2
+        The ID for the data API workspace 2.
+
+    Returns
+    -------
+    AsyncGenerator[int, None]
+        Number of urgency rules in the data API workspace 2.
+    """
+
+    with open("tests/api/data/urgency_rules.json", "r") as f:
+        json_data = json.load(f)
+    rules = []
+    for i, rule in enumerate(json_data):
+        rule_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=rule["urgency_rule_text"],
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        rule_db = UrgencyRuleDB(
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            urgency_rule_id=i,
+            urgency_rule_metadata=rule.get("urgency_rule_metadata", {}),
+            urgency_rule_text=rule["urgency_rule_text"],
+            urgency_rule_vector=rule_embedding,
+            workspace_id=workspace_data_api_id_2,
+        )
+        rules.append(rule_db)
+    db_session.add_all(rules)
+    db_session.commit()
+
+    yield len(rules)
+
+    # Delete the urgency rules.
+    for rule in rules:
+        db_session.delete(rule)
     db_session.commit()
 
 
@@ -867,8 +1216,8 @@ def workspace_1_id(db_session: Session) -> Generator[int, None, None]:
 
 
 @pytest.fixture(scope="session")
-def workspace_2_id(db_session: Session) -> Generator[int, None, None]:
-    """Return workspace 2 ID.
+def workspace_data_api_id_1(db_session: Session) -> Generator[int, None, None]:
+    """Return data API workspace 1 ID.
 
     Parameters
     ----------
@@ -878,17 +1227,41 @@ def workspace_2_id(db_session: Session) -> Generator[int, None, None]:
     Returns
     -------
     Generator[int, None, None]
-        Workspace 2 ID.
+        Data API workspace 1 ID.
     """
 
     stmt = select(WorkspaceDB).where(
-        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_2
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_DATA_API_1
     )
     result = db_session.execute(stmt)
     workspace_db = result.scalar_one()
     yield workspace_db.workspace_id
 
 
+@pytest.fixture(scope="session")
+def workspace_data_api_id_2(db_session: Session) -> Generator[int, None, None]:
+    """Return data API workspace 2 ID.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Returns
+    -------
+    Generator[int, None, None]
+        Data API workspace 2 ID.
+    """
+
+    stmt = select(WorkspaceDB).where(
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_DATA_API_2
+    )
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+# Mocks.
 async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
     """Replicate `embedding` function by generating a random list of floats.
 

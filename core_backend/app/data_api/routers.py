@@ -46,7 +46,7 @@ async def get_contents(
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[ContentRetrieve]:
-    """Get all contents for a user.
+    """Get all contents for a workspace.
 
     Parameters
     ----------
@@ -161,7 +161,8 @@ async def get_queries(
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[QueryExtract]:
-    """Get all queries including child records for a user between a start and end date.
+    """Get all queries including child records for a workspace between a start and end
+    date.
 
     Note that the `start_date` and `end_date` can be provided as a date or `datetime`
     object.
@@ -232,8 +233,8 @@ async def get_urgency_queries(
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UrgencyQueryExtract]:
-    """Get all urgency queries including child records for a user between a start and
-    end date.
+    """Get all urgency queries including child records for a workspace between a start
+    and end date.
 
     Note that the `start_date` and `end_date` can be provided as a date or `datetime`
     object.

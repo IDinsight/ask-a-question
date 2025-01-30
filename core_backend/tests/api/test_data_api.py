@@ -71,48 +71,48 @@ class TestContentDataAPI:
 
     async def test_content_extract(
         self,
-        api_key_workspace_1: str,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_1: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        faq_contents: list[int],
+        faq_contents_in_workspace_data_api_1: list[int],
     ) -> None:
         """Test the content extraction process.
 
         Parameters
         ----------
-        api_key_workspace_1
-            The API key of workspace 1.
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        faq_contents
-            The FAQ contents.
+        faq_contents_in_workspace_data_api_1
+            The FAQ contents in data API workspace 1.
         """
 
         response = client.get(
             "/data-api/contents",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == len(faq_contents)
+        assert len(response.json()) == len(faq_contents_in_workspace_data_api_1)
         response = client.get(
             "/data-api/contents",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) == 0
 
     @pytest.fixture
-    async def faq_content_with_tags_admin_2(
-        self, access_token_admin_2: str, client: TestClient
+    async def faq_content_with_tags_admin_2_in_workspace_data_api_2(
+        self, access_token_admin_data_api_2: str, client: TestClient
     ) -> AsyncGenerator[str, None]:
         """Create a FAQ content with tags for admin user 2.
 
         Parameters
         ----------
-        access_token_admin_2
-            The access token of the admin user 2.
+        access_token_admin_data_api_2
+            The access token of the admin user 2 in data API workspace 2.
         client
             The test client.
 
@@ -125,14 +125,14 @@ class TestContentDataAPI:
         response = client.post(
             "/tag",
             json={"tag_name": "ADMIN_2_TAG"},
-            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+            headers={"Authorization": f"Bearer {access_token_admin_data_api_2}"},
         )
         json_response = response.json()
         tag_id = json_response["tag_id"]
         tag_name = json_response["tag_name"]
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+            headers={"Authorization": f"Bearer {access_token_admin_data_api_2}"},
             json={
                 "content_metadata": {"metadata": "metadata"},
                 "content_tags": [tag_id],
@@ -146,35 +146,36 @@ class TestContentDataAPI:
 
         client.delete(
             f"/content/{json_response['content_id']}",
-            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+            headers={"Authorization": f"Bearer {access_token_admin_data_api_2}"},
         )
 
         client.delete(
             f"/tag/{tag_id}",
-            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+            headers={"Authorization": f"Bearer {access_token_admin_data_api_2}"},
         )
 
     async def test_content_extract_with_tags(
         self,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        faq_content_with_tags_admin_2: pytest.FixtureRequest,
+        faq_content_with_tags_admin_2_in_workspace_data_api_2: pytest.FixtureRequest,
     ) -> None:
         """Test the content extraction process with tags.
 
         Parameters
         ----------
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        faq_content_with_tags_admin_2
-            The fixture for the FAQ content with tags for admin user 2.
+        faq_content_with_tags_admin_2_in_workspace_data_api_2
+            The fixture for the FAQ content with tags for admin user 2 in data API
+            workspace 2.
         """
 
         response = client.get(
             "/data-api/contents",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) == 1
@@ -186,78 +187,78 @@ class TestUrgencyRulesDataAPI:
 
     async def test_urgency_rules_data_api(
         self,
-        api_key_workspace_1: str,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_1: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        urgency_rules_workspace_1: int,
+        urgency_rules_workspace_data_api_1: int,
     ) -> None:
         """Test the urgency rules data API.
 
         Parameters
         ----------
-        api_key_workspace_1
-            The API key of workspace 1.
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        urgency_rules_workspace_1
-            The number of urgency rules in workspace 1.
+        urgency_rules_workspace_data_api_1
+            The number of urgency rules in data API workspace 1.
         """
 
         response = client.get(
             "/data-api/urgency-rules",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == urgency_rules_workspace_1
+        assert len(response.json()) == urgency_rules_workspace_data_api_1
 
         response = client.get(
             "/data-api/urgency-rules",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) == 0
 
     async def test_urgency_rules_data_api_other_user(
         self,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        urgency_rules_workspace_2: int,
+        urgency_rules_workspace_data_api_2: int,
     ) -> None:
         """Test the urgency rules data API with workspace 2.
 
         Parameters
         ----------
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        urgency_rules_workspace_2
-            The number of urgency rules in workspace 2.
+        urgency_rules_workspace_data_api_2
+            The number of urgency rules in data API workspace 2.
         """
 
         response = client.get(
             "/data-api/urgency-rules",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == urgency_rules_workspace_2
+        assert len(response.json()) == urgency_rules_workspace_data_api_2
 
 
 class TestUrgencyQueryDataAPI:
     """Tests for the urgency query data API."""
 
     @pytest.fixture
-    async def workspace_1_data(
+    async def workspace_data_api_data_1(
         self,
         asession: AsyncSession,
         monkeypatch: pytest.MonkeyPatch,
-        urgency_rules_workspace_1: int,
-        workspace_1_id: int,
+        urgency_rules_workspace_data_api_1: int,
+        workspace_data_api_id_1: int,
     ) -> AsyncGenerator[None, None]:
-        """Create urgency query data for workspace 1.
+        """Create urgency query data for data API workspace 1.
 
         Parameters
         ----------
@@ -265,10 +266,10 @@ class TestUrgencyQueryDataAPI:
             The async session.
         monkeypatch
             The monkeypatch fixture.
-        urgency_rules_workspace_1
-            The number of urgency rules in workspace 1.
-        workspace_1_id
-            The ID of workspace 1.
+        urgency_rules_workspace_data_api_1
+            The number of urgency rules in the data API workspace 1.
+        workspace_data_api_id_1
+            The ID of the data API workspace 1.
 
         Returns
         -------
@@ -290,7 +291,7 @@ class TestUrgencyQueryDataAPI:
                 asession=asession,
                 feedback_secret_key="secret key",  # pragma: allowlist secret
                 urgency_query=urgency_query,
-                workspace_id=workspace_1_id,
+                workspace_id=workspace_data_api_id_1,
             )
             all_orm_objects.append(urgency_query_db)
             is_urgent = i % 2 == 0
@@ -316,13 +317,13 @@ class TestUrgencyQueryDataAPI:
         await asession.commit()
 
     @pytest.fixture
-    async def workspace_2_data(
+    async def workspace_data_api_data_2(
         self,
         asession: AsyncSession,
         monkeypatch: pytest.MonkeyPatch,
-        workspace_2_id: int,
+        workspace_data_api_id_2: int,
     ) -> AsyncGenerator[int, None]:
-        """Create urgency query data for workspace 2.
+        """Create urgency query data for data API workspace 2.
 
         Parameters
         ----------
@@ -330,8 +331,8 @@ class TestUrgencyQueryDataAPI:
             The async session.
         monkeypatch
             The monkeypatch fixture.
-        workspace_2_id
-            The ID of workspace 2.
+        workspace_data_api_id_2
+            The ID of data API workspace 2.
 
         Returns
         -------
@@ -350,7 +351,7 @@ class TestUrgencyQueryDataAPI:
             asession=asession,
             feedback_secret_key="secret key",  # pragma: allowlist secret
             urgency_query=urgency_query,
-            workspace_id=workspace_2_id,
+            workspace_id=workspace_data_api_id_2,
         )
 
         yield days_ago
@@ -360,25 +361,25 @@ class TestUrgencyQueryDataAPI:
 
     def test_urgency_query_data_api(
         self,
-        api_key_workspace_1: str,
+        api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_1_data: pytest.FixtureRequest,
+        workspace_data_api_data_1: pytest.FixtureRequest,
     ) -> None:
         """Test the urgency query data API.
 
         Parameters
         ----------
-        api_key_workspace_1
-            The API key of workspace 1.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
         client
             The test client.
-        workspace_1_data
-            The data of workspace 1.
+        workspace_data_api_data_1
+            The data of the data API workspace 1.
         """
 
         response = client.get(
             "/data-api/urgency-queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
             params={"start_date": "2021-01-01", "end_date": "2021-01-10"},
         )
         assert response.status_code == status.HTTP_200_OK
@@ -391,9 +392,9 @@ class TestUrgencyQueryDataAPI:
         self,
         days_ago_start: int,
         days_ago_end: int,
-        api_key_workspace_1: str,
+        api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_1_data: pytest.FixtureRequest,
+        workspace_data_api_data_1: pytest.FixtureRequest,
     ) -> None:
         """Test the urgency query data API with date filtering.
 
@@ -403,12 +404,12 @@ class TestUrgencyQueryDataAPI:
             The number of days ago to start.
         days_ago_end
             The number of days ago to end.
-        api_key_workspace_1
-            The API key of workspace 1.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
         client
             The test client.
-        workspace_1_data
-            The data of workspace 1.
+        workspace_data_api_data_1
+            The data of data API workspace 1.
         """
 
         start_date = datetime.now(timezone.utc) - relativedelta(
@@ -421,7 +422,7 @@ class TestUrgencyQueryDataAPI:
 
         response = client.get(
             "/data-api/urgency-queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
             params={
                 "start_date": start_date.strftime(date_format),
                 "end_date": end_date.strftime(date_format),
@@ -461,9 +462,9 @@ class TestUrgencyQueryDataAPI:
         self,
         days_ago_start: int,
         days_ago_end: int,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        workspace_2_data: int,
+        workspace_data_api_data_2: int,
     ) -> None:
         """Test the urgency query data API with workspace 2.
 
@@ -473,12 +474,12 @@ class TestUrgencyQueryDataAPI:
             The number of days ago to start.
         days_ago_end
             The number of days ago to end.
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        workspace_2_data
-            The data of workspace 2.
+        workspace_data_api_data_2
+            The data of data API workspace 2.
         """
 
         start_date = datetime.now(timezone.utc) - relativedelta(
@@ -491,7 +492,7 @@ class TestUrgencyQueryDataAPI:
 
         response = client.get(
             "/data-api/urgency-queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
             params={
                 "start_date": start_date.strftime(date_format),
                 "end_date": end_date.strftime(date_format),
@@ -499,7 +500,7 @@ class TestUrgencyQueryDataAPI:
         )
         assert response.status_code == status.HTTP_200_OK
 
-        if days_ago_end <= workspace_2_data <= days_ago_start:
+        if days_ago_end <= workspace_data_api_data_2 <= days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0
@@ -509,12 +510,12 @@ class TestQueryDataAPI:
     """Tests for the query data API."""
 
     @pytest.fixture
-    async def workspace_1_data(
+    async def workspace_data_api_data_1(
         self,
         asession: AsyncSession,
         monkeypatch: pytest.MonkeyPatch,
-        faq_contents: list[int],
-        workspace_1_id: int,
+        faq_contents_in_workspace_data_api_1: list[int],
+        workspace_data_api_id_1: int,
     ) -> AsyncGenerator[None, None]:
         """Create query data for workspace 1.
 
@@ -524,10 +525,10 @@ class TestQueryDataAPI:
             The async session.
         monkeypatch
             The monkeypatch fixture.
-        faq_contents
-            The FAQ contents.
-        workspace_1_id
-            The ID of workspace 1.
+        faq_contents_in_workspace_data_api_1
+            The FAQ contents in data API workspace 1.
+        workspace_data_api_id_1
+            The ID of data API workspace 1.
 
         Returns
         -------
@@ -546,7 +547,9 @@ class TestQueryDataAPI:
             )
             query = QueryBase(generate_llm_response=False, query_text=f"query {i}")
             query_db = await save_user_query_to_db(
-                asession=asession, user_query=query, workspace_id=workspace_1_id
+                asession=asession,
+                user_query=query,
+                workspace_id=workspace_data_api_id_1,
             )
             all_orm_objects.append(query_db)
             if i % 2 == 0:
@@ -557,7 +560,7 @@ class TestQueryDataAPI:
                     search_results={
                         1: QuerySearchResult(
                             distance=0.5,
-                            id=faq_contents[0],
+                            id=faq_contents_in_workspace_data_api_1[0],
                             text="text",
                             title="title",
                         )
@@ -568,7 +571,7 @@ class TestQueryDataAPI:
                     asession=asession,
                     response=response,
                     user_query_db=query_db,
-                    workspace_id=workspace_1_id,
+                    workspace_id=workspace_data_api_id_1,
                 )
                 all_orm_objects.append(response_db)
                 for i in range(N_RESPONSE_FEEDBACKS):
@@ -585,7 +588,7 @@ class TestQueryDataAPI:
                     all_orm_objects.append(response_feedback_db)
                 for i in range(N_CONTENT_FEEDBACKS):
                     content_feedback = ContentFeedback(
-                        content_id=faq_contents[0],
+                        content_id=faq_contents_in_workspace_data_api_1[0],
                         feedback_secret_key="test_secret_key",
                         feedback_sentiment=FeedbackSentiment.POSITIVE,
                         feedback_text=f"feedback {i}",
@@ -606,7 +609,7 @@ class TestQueryDataAPI:
                     search_results={
                         1: QuerySearchResult(
                             distance=0.5,
-                            id=faq_contents[0],
+                            id=faq_contents_in_workspace_data_api_1[0],
                             text="text",
                             title="title",
                         )
@@ -617,7 +620,7 @@ class TestQueryDataAPI:
                     asession=asession,
                     response=response_err,
                     user_query_db=query_db,
-                    workspace_id=workspace_1_id,
+                    workspace_id=workspace_data_api_id_1,
                 )
                 all_orm_objects.append(response_err_db)
 
@@ -630,12 +633,12 @@ class TestQueryDataAPI:
         await asession.commit()
 
     @pytest.fixture
-    async def workspace_2_data(
+    async def workspace_data_api_data_2(
         self,
         asession: AsyncSession,
         monkeypatch: pytest.MonkeyPatch,
-        faq_contents: list[int],
-        workspace_2_id: int,
+        faq_contents_in_workspace_data_api_2: list[int],
+        workspace_data_api_id_2: int,
     ) -> AsyncGenerator[int, None]:
         """Create query data for workspace 2.
 
@@ -645,10 +648,10 @@ class TestQueryDataAPI:
             The async session.
         monkeypatch
             The monkeypatch fixture.
-        faq_contents
-            The FAQ contents.
-        workspace_2_id
-            The ID of workspace 2.
+        faq_contents_in_workspace_data_api_2
+            The FAQ contents in data API workspace 2.
+        workspace_data_api_id_2
+            The ID of data API workspace 2.
 
         Returns
         -------
@@ -663,7 +666,7 @@ class TestQueryDataAPI:
         )
         query = QueryBase(generate_llm_response=False, query_text="query")
         query_db = await save_user_query_to_db(
-            asession=asession, user_query=query, workspace_id=workspace_2_id
+            asession=asession, user_query=query, workspace_id=workspace_data_api_id_2
         )
         yield days_ago
         await asession.delete(query_db)
@@ -671,25 +674,25 @@ class TestQueryDataAPI:
 
     def test_query_data_api(
         self,
-        api_key_workspace_1: str,
+        api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_1_data: pytest.FixtureRequest,
+        workspace_data_api_id_1: pytest.FixtureRequest,
     ) -> None:
         """Test the query data API for workspace 1.
 
         Parameters
         ----------
-        api_key_workspace_1
-            The API key of workspace 1.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
         client
             The test client.
-        workspace_1_data
-            The data of workspace 1.
+        workspace_data_api_id_1
+            The data of the data API workspace 1.
         """
 
         response = client.get(
             "/data-api/queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
             params={"start_date": "2021-01-01", "end_date": "2021-01-10"},
         )
         assert response.status_code == status.HTTP_200_OK
@@ -702,11 +705,11 @@ class TestQueryDataAPI:
         self,
         days_ago_start: int,
         days_ago_end: int,
-        api_key_workspace_1: str,
+        api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_1_data: pytest.FixtureRequest,
+        workspace_data_api_data_1: pytest.FixtureRequest,
     ) -> None:
-        """Test the query data API with date filtering for workspace 1.
+        """Test the query data API with date filtering for the data API workspace.
 
         Parameters
         ----------
@@ -714,12 +717,12 @@ class TestQueryDataAPI:
             The number of days ago to start.
         days_ago_end
             The number of days ago to end.
-        api_key_workspace_1
-            The API key of workspace 1.
+        api_key_workspace_data_api_1
+            The API key of the data API workspace 1.
         client
             The test client.
-        workspace_1_data
-            The data of workspace 1.
+        workspace_data_api_data_1
+            The data of the data API workspace 1.
         """
 
         start_date = datetime.now(timezone.utc) - relativedelta(
@@ -732,7 +735,7 @@ class TestQueryDataAPI:
 
         response = client.get(
             "/data-api/queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
             params={
                 "start_date": start_date.strftime(date_format),
                 "end_date": end_date.strftime(date_format),
@@ -772,9 +775,9 @@ class TestQueryDataAPI:
         self,
         days_ago_start: int,
         days_ago_end: int,
-        api_key_workspace_2: str,
+        api_key_workspace_data_api_2: str,
         client: TestClient,
-        workspace_2_data: int,
+        workspace_data_api_data_2: int,
     ) -> None:
         """Test the query data API with workspace 2.
 
@@ -784,12 +787,12 @@ class TestQueryDataAPI:
             The number of days ago to start.
         days_ago_end
             The number of days ago to end.
-        api_key_workspace_2
-            The API key of workspace 2.
+        api_key_workspace_data_api_2
+            The API key of data API workspace 2.
         client
             The test client.
-        workspace_2_data
-            The data of workspace 2.
+        workspace_data_api_data_2
+            The data of data API workspace 2.
         """
 
         start_date = datetime.now(timezone.utc) - relativedelta(
@@ -802,7 +805,7 @@ class TestQueryDataAPI:
 
         response = client.get(
             "/data-api/queries",
-            headers={"Authorization": f"Bearer {api_key_workspace_2}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_2}"},
             params={
                 "start_date": start_date.strftime(date_format),
                 "end_date": end_date.strftime(date_format),
@@ -810,7 +813,7 @@ class TestQueryDataAPI:
         )
         assert response.status_code == status.HTTP_200_OK
 
-        if days_ago_end <= workspace_2_data <= days_ago_start:
+        if days_ago_end <= workspace_data_api_data_2 <= days_ago_start:
             assert len(response.json()) == 1
         else:
             assert len(response.json()) == 0

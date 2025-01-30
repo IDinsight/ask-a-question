@@ -404,6 +404,7 @@ async def get_new_api_key(
     try:
         # This is necessary to attach the `workspace_db` object to the session.
         asession.add(workspace_db)
+        await asession.flush()
         workspace_db_updated = await update_workspace_api_key(
             asession=asession, new_api_key=new_api_key, workspace_db=workspace_db
         )
@@ -466,6 +467,7 @@ async def update_workspace(
     try:
         # This is necessary to attach the `workspace_db` object to the session.
         asession.add(workspace_db_checked)
+        await asession.flush()
         workspace_db_updated = await update_workspace_name_and_quotas(
             asession=asession, workspace=workspace, workspace_db=workspace_db_checked
         )

@@ -258,7 +258,7 @@ class TestEmbeddingsSearch:
         access_token_admin_1: str,
         api_key_workspace_1: str,
         client: TestClient,
-        faq_contents: pytest.FixtureRequest,
+        faq_contents_in_workspace_1: list[int],
     ) -> None:
         """Create a search request and check the response.
 
@@ -274,8 +274,8 @@ class TestEmbeddingsSearch:
             API key for workspace 1.
         client
             FastAPI test client.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
         """
 
         while True:
@@ -346,9 +346,29 @@ class TestEmbeddingsSearch:
         endpoint: str,
         api_key_workspace_1: str,
         client: TestClient,
-        faq_contents: list[int],
+        faq_contents_in_workspace_1: list[int],
         question_response: dict[str, Any],
     ) -> None:
+        """Test response feedback with correct token.
+
+        Parameters
+        ----------
+        outcome
+            The expected outcome.
+        expected_status_code
+            Expected status code.
+        endpoint
+            API endpoint.
+        api_key_workspace_1
+            API key for workspace 1.
+        client
+            FastAPI test client.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
+        question_response
+            The question response.
+        """
+
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
         token = api_key_workspace_1 if outcome == "correct" else "api_key_incorrect"
@@ -360,7 +380,7 @@ class TestEmbeddingsSearch:
         }
 
         if endpoint == "/content-feedback":
-            json_["content_id"] = faq_contents[0]
+            json_["content_id"] = faq_contents_in_workspace_1[0]
 
         response = client.post(
             endpoint, headers={"Authorization": f"Bearer {token}"}, json=json_
@@ -493,7 +513,7 @@ class TestEmbeddingsSearch:
         endpoint: str,
         client: TestClient,
         api_key_workspace_1: str,
-        faq_contents: list[int],
+        faq_contents_in_workspace_1: list[int],
         question_response: dict[str, Any],
     ) -> None:
         """Test response feedback with sentiment only.
@@ -506,8 +526,8 @@ class TestEmbeddingsSearch:
             FastAPI test client.
         api_key_workspace_1
             API key for workspace 1.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
         question_response
             The question response.
         """
@@ -521,7 +541,7 @@ class TestEmbeddingsSearch:
             "query_id": query_id,
         }
         if endpoint == "/content-feedback":
-            json_["content_id"] = faq_contents[0]
+            json_["content_id"] = faq_contents_in_workspace_1[0]
 
         response = client.post(
             endpoint,
@@ -542,7 +562,7 @@ class TestEmbeddingsSearch:
         api_key_workspace_1: str,
         api_key_workspace_2: str,
         client: TestClient,
-        faq_contents: list[int],
+        faq_contents_in_workspace_1: list[int],
     ) -> None:
         """Test admin 2 can access admin 1 content.
 
@@ -560,8 +580,8 @@ class TestEmbeddingsSearch:
             API key for workspace 2.
         client
             FastAPI test client.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
         """
 
         token = (
@@ -593,8 +613,8 @@ class TestEmbeddingsSearch:
                 value["id"] for value in response.json()["search_results"].values()
             ]
             if expect_found:
-                # Admin user 1 has contents in DB uploaded by the `faq_contents`
-                # fixture.
+                # Admin user 1 has contents in DB uploaded by the
+                # `faq_contents_in_workspace_1` fixture.
                 assert len(all_retireved_content_ids) > 0
             else:
                 # Admin user 2 should not have any content.
@@ -609,7 +629,7 @@ class TestEmbeddingsSearch:
         response_code: int,
         client: TestClient,
         api_key_workspace_1: str,
-        faq_contents: list[int],
+        faq_contents_in_workspace_1: list[int],
         question_response: dict[str, Any],
     ) -> None:
         """Test content feedback with correct content ID.
@@ -624,15 +644,15 @@ class TestEmbeddingsSearch:
             FastAPI test client.
         api_key_workspace_1
             API key for workspace 1.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
         question_response
             The question response.
         """
 
         query_id = question_response["query_id"]
         feedback_secret_key = question_response["feedback_secret_key"]
-        content_id = faq_contents[0] if content_id_valid else 99999
+        content_id = faq_contents_in_workspace_1[0] if content_id_valid else 99999
         response = client.post(
             "/content-feedback",
             json={
@@ -660,7 +680,7 @@ class TestGenerateResponse:
         expected_status_code: int,
         client: TestClient,
         api_key_workspace_1: str,
-        faq_contents: pytest.FixtureRequest,
+        faq_contents_in_workspace_1: list[int],
     ) -> None:
         """Test LLM response.
 
@@ -674,8 +694,8 @@ class TestGenerateResponse:
             FastAPI test client.
         api_key_workspace_1
             API key for workspace 1.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ content in workspace 1.
         """
 
         token = api_key_workspace_1 if outcome == "correct" else "api_key_incorrect"
@@ -707,7 +727,7 @@ class TestGenerateResponse:
         api_key_workspace_1: str,
         api_key_workspace_2: str,
         client: TestClient,
-        faq_contents: list[int],
+        faq_contents_in_workspace_1: list[int],
     ) -> None:
         """Test admin 2 can access admin 1 content.
 
@@ -723,8 +743,8 @@ class TestGenerateResponse:
             API key for workspace 2.
         client
             FastAPI test client.
-        faq_contents
-            FAQ contents.
+        faq_contents_in_workspace_1
+            FAQ contents in workspace 1.
         """
 
         token = (
@@ -739,15 +759,16 @@ class TestGenerateResponse:
         )
         assert response.status_code == status.HTTP_200_OK
 
-        all_retireved_content_ids = [
+        all_retrieved_content_ids = [
             value["id"] for value in response.json()["search_results"].values()
         ]
         if expect_found:
-            # Admin user 1 has contents in DB uploaded by the `faq_contents` fixture.
-            assert len(all_retireved_content_ids) > 0
+            # Admin user 1 has contents in DB uploaded by the
+            # `faq_contents_in_workspace_1` fixture.
+            assert len(all_retrieved_content_ids) > 0
         else:
             # Admin user 2 should not have any content.
-            assert len(all_retireved_content_ids) == 0
+            assert len(all_retrieved_content_ids) == 0
 
 
 class TestSTTResponse:

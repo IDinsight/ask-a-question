@@ -17,30 +17,37 @@ from core_backend.app.workspaces.utils import (
     update_workspace_api_key,
 )
 
-from .conftest import TEST_WORKSPACE_API_KEY_1, TEST_WORKSPACE_NAME_1
+from .conftest import TEST_WORKSPACE_API_KEY_1, TEST_WORKSPACE_NAME_2
 
 
+@pytest.mark.order(-100000)  # Ensure this class always runs last!
 class TestWorkspaceKeyManagement:
-    """Tests for the PUT /workspace/rotate-key endpoint."""
+    """Tests for the PUT /workspace/rotate-key endpoint.
+
+    NB: The tests in this class should always run LAST since API key generation is
+    random. Running these tests first might cause unintended consequences for other
+    tests/fixtures that require a known API key.
+    """
 
     async def test_get_workspace_by_api_key(
-        self, api_key_workspace_1: str, asession: AsyncSession
+        self, api_key_workspace_2: str, asession: AsyncSession
     ) -> None:
         """Test getting a workspace by the workspace API key.
 
         Parameters
         ----------
-        api_key_workspace_1
-            The workspace API key.
+        api_key_workspace_2
+            API key for workspace 2.
         asession
             The SQLAlchemy async session to use for all database connections.
         """
 
         retrieved_workspace_db = await get_workspace_by_api_key(
-            asession=asession, token=api_key_workspace_1
+            asession=asession, token=api_key_workspace_2
         )
-        assert retrieved_workspace_db.workspace_name == TEST_WORKSPACE_NAME_1
+        assert retrieved_workspace_db.workspace_name == TEST_WORKSPACE_NAME_2
 
+    @pytest.mark.order(after="test_get_workspace_by_api_key")
     def test_get_new_api_key_for_workspace_1(
         self, access_token_admin_1: str, client: TestClient
     ) -> None:
@@ -63,6 +70,7 @@ class TestWorkspaceKeyManagement:
         json_response = response.json()
         assert json_response["new_api_key"] != TEST_WORKSPACE_API_KEY_1
 
+    @pytest.mark.order(after="test_get_new_api_key_for_workspace_1")
     def test_get_new_api_key_query_with_old_key(
         self, access_token_admin_1: str, client: TestClient
     ) -> None:

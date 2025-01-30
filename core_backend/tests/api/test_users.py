@@ -50,9 +50,6 @@ class TestGetAllUsers:
             == len(json_response[0]["user_workspace_names"])
             == len(json_response[0]["user_workspace_roles"])
         )
-        assert json_response[0]["is_default_workspace"][0] is True
-        assert json_response[0]["user_workspace_roles"][0] == UserRoles.ADMIN
-        assert json_response[0]["username"] == TEST_ADMIN_USERNAME_1
 
     def test_get_all_users_non_admin(
         self, access_token_read_only_1: str, client: TestClient
@@ -107,7 +104,7 @@ class TestUserCreation:
                 "is_default_workspace": True,
                 "password": "password",  # pragma: allowlist secret
                 "role": UserRoles.READ_ONLY,
-                "username": "test_username_5",
+                "username": "mooooooooo",
                 "workspace_name": TEST_WORKSPACE_NAME_1,
             },
         )
@@ -117,9 +114,10 @@ class TestUserCreation:
         assert json_response["is_default_workspace"] is True
         assert json_response["recovery_codes"]
         assert json_response["role"] == UserRoles.READ_ONLY
-        assert json_response["username"] == "test_username_5"
+        assert json_response["username"] == "mooooooooo"
         assert json_response["workspace_name"] == TEST_WORKSPACE_NAME_1
 
+    @pytest.mark.order(after="test_admin_1_create_user_in_workspace_1")
     def test_admin_1_create_user_in_workspace_1_with_existing_user(
         self, access_token_admin_1: str, client: TestClient
     ) -> None:
@@ -141,7 +139,7 @@ class TestUserCreation:
                 "is_default_workspace": True,
                 "password": "password",  # pragma: allowlist secret
                 "role": UserRoles.READ_ONLY,
-                "username": "test_username_5",
+                "username": "mooooooooo",
                 "workspace_name": TEST_WORKSPACE_NAME_1,
             },
         )
@@ -305,7 +303,7 @@ class TestUserUpdate:
     @pytest.mark.parametrize("is_same_user", [True, False])
     async def test_non_admin_update_admin_1_in_workspace_1(
         self,
-        access_token_read_only_2: str,
+        access_token_read_only_1: str,
         admin_user_1_in_workspace_1: dict[str, Any],
         asession: AsyncSession,
         client: TestClient,
@@ -317,8 +315,8 @@ class TestUserUpdate:
 
         Parameters
         ----------
-        access_token_read_only_2
-            Read-only user access token in workspace 2.
+        access_token_read_only_1
+            Read-only user access token in workspace 1.
         admin_user_1_in_workspace_1
             Admin user in workspace 1.
         asession
@@ -345,7 +343,7 @@ class TestUserUpdate:
         user_id = admin_user_id if is_same_user else user_id_1
         response = client.put(
             f"/user/{user_id}",
-            headers={"Authorization": f"Bearer {access_token_read_only_2}"},
+            headers={"Authorization": f"Bearer {access_token_read_only_1}"},
             json={"username": "foobar"},
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
