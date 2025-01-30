@@ -4,7 +4,12 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import { Period, drawerWidth, CustomDateParams, TimeFrequency } from "./types";
+import {
+  Period,
+  drawerWidth,
+  CustomDateParams,
+  CustomDashboardFrequency,
+} from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import Insights from "./components/Insights";
@@ -29,7 +34,7 @@ const Dashboard: React.FC = () => {
   const [customDateParams, setCustomDateParams] = useState<CustomDateParams>({
     startDate: null,
     endDate: null,
-    frequency: "Daily",
+    frequency: "Day",
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -52,7 +57,7 @@ const Dashboard: React.FC = () => {
   const handleCustomDateParamsSelected = (
     start: Date,
     end: Date,
-    frequency: TimeFrequency,
+    frequency: CustomDashboardFrequency,
   ) => {
     setCustomDateParams({ startDate: start, endDate: end, frequency: frequency });
     setTimePeriod("custom");
