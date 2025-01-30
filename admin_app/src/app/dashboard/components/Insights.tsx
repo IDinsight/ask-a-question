@@ -7,7 +7,7 @@ import {
   QueryData,
   TopicModelingResponse,
   Status,
-  CustomDateRange,
+  CustomDateParams,
 } from "../types";
 
 import BokehPlot from "./insights/Bokeh";
@@ -16,13 +16,13 @@ import Topics from "./insights/Topics";
 
 interface InsightProps {
   timePeriod: Period;
-  customDateRange?: CustomDateRange;
+  customDateParams?: CustomDateParams;
 }
 
 const POLLING_INTERVAL = 3000;
 const POLLING_TIMEOUT = 90000;
 
-const Insight: React.FC<InsightProps> = ({ timePeriod, customDateRange }) => {
+const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
   const { token } = useAuth();
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [topicQueries, setTopicQueries] = useState<QueryData[]>([]);
@@ -53,12 +53,16 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateRange }) => {
     setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: true }));
     setDataStatusByTimePeriod((prev) => ({ ...prev, [periodKey]: "in_progress" }));
 
-    if (period === "custom" && customDateRange?.startDate && customDateRange.endDate) {
+    if (
+      period === "custom" &&
+      customDateParams?.startDate &&
+      customDateParams.endDate
+    ) {
       generateNewTopics(
         "custom",
         token!,
-        customDateRange.startDate,
-        customDateRange.endDate,
+        customDateParams.startDate,
+        customDateParams.endDate,
       )
         .then((response) => {
           setSnackMessage({ message: response.detail, color: "info" });
@@ -113,14 +117,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateRange }) => {
         let dataFromBackendResponse: TopicModelingResponse;
         if (
           period === "custom" &&
-          customDateRange?.startDate &&
-          customDateRange.endDate
+          customDateParams?.startDate &&
+          customDateParams.endDate
         ) {
           dataFromBackendResponse = await fetchTopicsData(
             "custom",
             token!,
-            customDateRange.startDate,
-            customDateRange.endDate,
+            customDateParams.startDate,
+            customDateParams.endDate,
           );
         } else {
           dataFromBackendResponse = await fetchTopicsData(period, token!);
@@ -176,15 +180,15 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateRange }) => {
     timePeriods.forEach((period) => {
       if (
         period === "custom" &&
-        (!customDateRange?.startDate || !customDateRange.endDate)
+        (!customDateParams?.startDate || !customDateParams.endDate)
       )
         return;
       if (period === "custom") {
         fetchTopicsData(
           "custom",
           token!,
-          customDateRange!.startDate!,
-          customDateRange!.endDate!,
+          customDateParams!.startDate!,
+          customDateParams!.endDate!,
         ).then((dataFromBackendResponse) => {
           setDataStatusByTimePeriod((prev) => ({
             ...prev,
@@ -242,7 +246,7 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateRange }) => {
       });
       pollingTimerRef.current = {};
     };
-  }, [token, customDateRange]);
+  }, [token, customDateParams]);
 
   useEffect(() => {
     const periodKey = timePeriod;

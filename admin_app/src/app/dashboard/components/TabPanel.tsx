@@ -7,7 +7,7 @@ interface TabPanelProps {
   tabValue: Period;
   handleChange: (event: React.SyntheticEvent, newValue: Period) => void;
   onEditCustomPeriod?: () => void;
-  customDateRangeSet?: boolean;
+  customDateParamsSet?: boolean;
 }
 
 const tabLabels: Record<TimeFrame, Period> = {
@@ -21,7 +21,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
   tabValue,
   handleChange,
   onEditCustomPeriod,
-  customDateRangeSet,
+  customDateParamsSet,
 }) => {
   const timePeriods = Object.entries(tabLabels) as [TimeFrame, Period][];
 
@@ -42,7 +42,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
           label={
             <Box display="flex" alignItems="center">
               Custom
-              {customDateRangeSet && onEditCustomPeriod && (
+              {customDateParamsSet && onEditCustomPeriod && (
                 <IconButton
                   size="small"
                   onClick={(e) => {

@@ -1,18 +1,18 @@
+import React, { useEffect } from "react";
+import { Box } from "@mui/material";
+import { format } from "date-fns";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import { useAuth } from "@/utils/auth";
 import { getOverviewPageData } from "@/app/dashboard/api";
 import StackedBarChart from "@/app/dashboard/components/overview/StackedChart";
 import HeatMap from "@/app/dashboard/components/overview/HeatMap";
 import { StatCard, StatCardProps } from "@/app/dashboard/components/overview/StatCard";
 import TopContentTable from "@/app/dashboard/components/overview/TopContentTable";
 import { Layout } from "@/components/Layout";
-import { useAuth } from "@/utils/auth";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
-import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import { Box } from "@mui/material";
-import { format } from "date-fns";
-import React, { useEffect } from "react";
 import {
   ApexData,
   ApexSeriesData,
@@ -20,14 +20,15 @@ import {
   DayHourUsageData,
   Period,
   TopContentData,
+  CustomDateParams,
 } from "../types";
 
 interface OverviewProps {
   timePeriod: Period;
-  customDateRange?: { startDate: Date | null; endDate: Date | null };
+  customDateParams?: CustomDateParams;
 }
 
-const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateRange }) => {
+const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => {
   const { token } = useAuth();
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
   const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([
@@ -164,14 +165,16 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateRange }) => {
 
     if (
       timePeriod === "custom" &&
-      customDateRange?.startDate &&
-      customDateRange?.endDate
+      customDateParams?.startDate &&
+      customDateParams?.endDate &&
+      customDateParams?.frequency
     ) {
       getOverviewPageData(
         "custom",
         token,
-        customDateRange.startDate,
-        customDateRange.endDate,
+        customDateParams.startDate,
+        customDateParams.endDate,
+        customDateParams.frequency,
       ).then((data) => {
         parseCardData(data.stats_cards, timePeriod);
         parseHeatmapData(data.heatmap);
@@ -186,7 +189,7 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateRange }) => {
         setTopContentData(data.top_content);
       });
     }
-  }, [timePeriod, token, customDateRange]);
+  }, [timePeriod, token, customDateParams]);
 
   return (
     <>
