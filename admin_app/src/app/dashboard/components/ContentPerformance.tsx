@@ -13,7 +13,7 @@ import {
   Period,
   RowDataType,
   DrawerData,
-  CustomDateRange,
+  CustomDateParams,
 } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 
@@ -21,12 +21,12 @@ const N_TOP_CONTENT = 10;
 
 interface PerformanceProps {
   timePeriod: Period;
-  customDateRange?: CustomDateRange;
+  customDateParams?: CustomDateParams;
 }
 
 const ContentPerformance: React.FC<PerformanceProps> = ({
   timePeriod,
-  customDateRange,
+  customDateParams,
 }) => {
   const { token } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -39,14 +39,14 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     if (!token) return;
     if (
       timePeriod === "custom" &&
-      customDateRange?.startDate &&
-      customDateRange.endDate
+      customDateParams?.startDate &&
+      customDateParams.endDate
     ) {
       getPerformancePageData(
         "custom",
         token,
-        customDateRange.startDate,
-        customDateRange.endDate,
+        customDateParams.startDate,
+        customDateParams.endDate,
       ).then((response) => {
         parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
         parseContentTableData(response.content_time_series);
@@ -57,7 +57,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
         parseContentTableData(response.content_time_series);
       });
     }
-  }, [timePeriod, token, customDateRange]);
+  }, [timePeriod, token, customDateParams]);
 
   const parseLineChartData = (timeseriesData: Record<string, any>[]) => {
     const apexTimeSeriesData: ApexData[] = timeseriesData.map((series, idx) => {
@@ -99,15 +99,15 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     if (!token) return;
     if (
       timePeriod === "custom" &&
-      customDateRange?.startDate &&
-      customDateRange.endDate
+      customDateParams?.startDate &&
+      customDateParams.endDate
     ) {
       getPerformanceDrawerData(
         "custom",
         contentId,
         token,
-        customDateRange.startDate,
-        customDateRange.endDate,
+        customDateParams.startDate,
+        customDateParams.endDate,
       ).then((response) => {
         parseDrawerData(response);
         setDrawerOpen(true);
@@ -116,8 +116,8 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
         "custom",
         contentId,
         token,
-        customDateRange.startDate,
-        customDateRange.endDate,
+        customDateParams.startDate,
+        customDateParams.endDate,
       ).then((response) => {
         setDrawerAISummary(
           response.ai_summary ||
