@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from "react";
 
+import TypingAnimation from "@/components/TypingAnimation";
 import { Close, Send } from "@mui/icons-material";
-import {
-  Box,
-  CircularProgress,
-  IconButton,
-  Paper,
-  Typography,
-  TextField,
-  Fade,
-  Avatar,
-  Link,
-  Modal,
-  Tooltip,
-} from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import TypingAnimation from "@/components/TypingAnimation";
+import {
+  Avatar,
+  Box,
+  CircularProgress,
+  Fade,
+  IconButton,
+  Link,
+  Modal,
+  Paper,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 
 import { appColors, sizes } from "@/utils";
-import { set } from "date-fns";
 
 interface ResponseSummary {
   index: string;
@@ -137,7 +136,7 @@ const ChatSideBar = ({
         flexDirection: "column",
         padding: 3,
         paddingTop: 4,
-        height: "100%",
+        height: "94vh",
       }}
     >
       <Box
@@ -155,7 +154,6 @@ const ChatSideBar = ({
         sx={{
           overflowY: "auto",
           flexGrow: 1,
-          maxHeight: "500px",
         }}
       >
         {messages.map((message, index) => (
