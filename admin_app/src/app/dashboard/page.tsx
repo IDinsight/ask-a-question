@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import { Period, drawerWidth, CustomDateRange } from "./types";
+import { Period, drawerWidth, CustomDateParams, TimeFrequency } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import Insights from "./components/Insights";
@@ -26,15 +26,16 @@ const Dashboard: React.FC = () => {
   const [dashboardPage, setDashboardPage] = useState<Page>(pages[0]);
   const [timePeriod, setTimePeriod] = useState<Period>("week");
   const [sideBarOpen, setSideBarOpen] = useState(true);
-  const [customDateRange, setCustomDateRange] = useState<CustomDateRange>({
+  const [customDateParams, setCustomDateParams] = useState<CustomDateParams>({
     startDate: null,
     endDate: null,
+    frequency: "Daily",
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: Period) => {
     if (newValue === "custom") {
-      if (customDateRange.startDate && customDateRange.endDate) {
+      if (customDateParams.startDate && customDateParams.endDate) {
         setTimePeriod("custom");
       } else {
         setIsDialogOpen(true);
@@ -48,8 +49,12 @@ const Dashboard: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleCustomDateRangeSelected = (start: Date, end: Date) => {
-    setCustomDateRange({ startDate: start, endDate: end });
+  const handleCustomDateParamsSelected = (
+    start: Date,
+    end: Date,
+    frequency: TimeFrequency,
+  ) => {
+    setCustomDateParams({ startDate: start, endDate: end, frequency: frequency });
     setTimePeriod("custom");
     setIsDialogOpen(false);
   };
@@ -60,21 +65,21 @@ const Dashboard: React.FC = () => {
         return (
           <Overview
             timePeriod={timePeriod}
-            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+            customDateParams={timePeriod === "custom" ? customDateParams : undefined}
           />
         );
       case "Content Performance":
         return (
           <ContentPerformance
             timePeriod={timePeriod}
-            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+            customDateParams={timePeriod === "custom" ? customDateParams : undefined}
           />
         );
       case "Query Topics":
         return (
           <Insights
             timePeriod={timePeriod}
-            customDateRange={timePeriod === "custom" ? customDateRange : undefined}
+            customDateParams={timePeriod === "custom" ? customDateParams : undefined}
           />
         );
       default:
@@ -150,8 +155,12 @@ const Dashboard: React.FC = () => {
             tabValue={timePeriod}
             handleChange={handleTabChange}
             onEditCustomPeriod={handleEditCustomPeriod}
-            customDateRangeSet={
-              !!(customDateRange.startDate && customDateRange.endDate)
+            customDateParamsSet={
+              !!(
+                customDateParams.startDate &&
+                customDateParams.endDate &&
+                customDateParams.frequency
+              )
             }
           />
           <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
@@ -161,9 +170,10 @@ const Dashboard: React.FC = () => {
       <DateRangePickerDialog
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onSelectDateRange={handleCustomDateRangeSelected}
-        initialStartDate={customDateRange.startDate}
-        initialEndDate={customDateRange.endDate}
+        onSelectDateRange={handleCustomDateParamsSelected}
+        initialStartDate={customDateParams.startDate}
+        initialEndDate={customDateParams.endDate}
+        initialFrequency={customDateParams.frequency}
       />
     </Box>
   );
