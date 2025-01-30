@@ -90,7 +90,7 @@ const CardsPage = () => {
     setOpenChatSideBar(false);
   };
   const handleSidebarClose = () => {
-    setOpenChatSideBar(false);
+    setOpenSideBar(false);
   };
   const sidebarGridWidth = openSidebar || openChatSidebar ? 5 : 0;
 
