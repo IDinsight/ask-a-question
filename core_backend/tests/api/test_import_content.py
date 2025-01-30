@@ -1,6 +1,5 @@
 """This module contains tests for the import content API endpoint."""
 
-from datetime import datetime, timezone
 from io import BytesIO
 from typing import Generator
 
@@ -8,12 +7,6 @@ import pandas as pd
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-
-from core_backend.app.auth.dependencies import create_access_token
-from core_backend.app.users.models import UserDB, UserWorkspaceDB, WorkspaceDB
-from core_backend.app.users.schemas import UserRoles
-from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
 
 def _dict_to_csv_bytes(*, data: dict) -> BytesIO:
@@ -36,73 +29,6 @@ def _dict_to_csv_bytes(*, data: dict) -> BytesIO:
     csv_bytes.seek(0)
 
     return csv_bytes
-
-
-@pytest.fixture(scope="class")
-def temp_workspace_token_and_quota(
-    client: TestClient, db_session: Session, request: pytest.FixtureRequest
-) -> Generator[tuple[str, int], None, None]:
-    """Create a temporary workspace with a specific content quota and return the access
-    token and content quota.
-
-    Parameters
-    ----------
-    client
-        The test client.
-    db_session
-        The database session.
-    request
-        The pytest request object.
-
-    Returns
-    -------
-    Generator[tuple[str, int], None, None]
-        The access token and content quota for the temporary workspace.
-    """
-
-    content_quota = request.param["content_quota"]
-    username = request.param["username"]
-    workspace_name = request.param["workspace_name"]
-
-    temp_user_db = UserDB(
-        created_datetime_utc=datetime.now(timezone.utc),
-        hashed_password=get_password_salted_hash(key="temp_password"),
-        updated_datetime_utc=datetime.now(timezone.utc),
-        username=username,
-    )
-    db_session.add(temp_user_db)
-    db_session.commit()
-
-    temp_workspace_db = WorkspaceDB(
-        content_quota=content_quota,
-        created_datetime_utc=datetime.now(timezone.utc),
-        hashed_api_key=get_key_hash(key="temp_api_key"),
-        updated_datetime_utc=datetime.now(timezone.utc),
-        workspace_name=workspace_name,
-    )
-    db_session.add(temp_workspace_db)
-    db_session.commit()
-
-    temp_user_workspace_db = UserWorkspaceDB(
-        created_datetime_utc=datetime.now(timezone.utc),
-        default_workspace=True,
-        updated_datetime_utc=datetime.now(timezone.utc),
-        user_id=temp_user_db.user_id,
-        user_role=UserRoles.ADMIN,
-        workspace_id=temp_workspace_db.workspace_id,
-    )
-    db_session.add(temp_user_workspace_db)
-    db_session.commit()
-
-    yield (
-        create_access_token(username=username, workspace_name=workspace_name),
-        content_quota,
-    )
-
-    db_session.delete(temp_user_db)
-    db_session.delete(temp_workspace_db)
-    db_session.delete(temp_user_workspace_db)
-    db_session.commit()
 
 
 class TestImportContentQuota:
