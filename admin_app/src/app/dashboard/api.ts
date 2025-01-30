@@ -1,5 +1,5 @@
 import api from "../../utils/api";
-import { Period } from "./types";
+import { Period, TimeFrequency } from "./types";
 
 function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
@@ -11,6 +11,7 @@ function buildURL(
   options: {
     startDate?: Date;
     endDate?: Date;
+    frequency?: TimeFrequency;
     contentId?: number;
     extraPath?: string;
   } = {},
@@ -25,12 +26,22 @@ function buildURL(
     url += `/${options.extraPath}`;
   }
 
-  if (period === "custom" && options.startDate && options.endDate) {
-    const params = new URLSearchParams({
-      start_date: formatDate(options.startDate),
-      end_date: formatDate(options.endDate),
-    });
-    url += `?${params.toString()}`;
+  const params = new URLSearchParams();
+
+  if (period === "custom") {
+    if (options.startDate && options.endDate) {
+      params.set("start_date", formatDate(options.startDate));
+      params.set("end_date", formatDate(options.endDate));
+    }
+  }
+
+  if (options.frequency) {
+    params.set("frequency", options.frequency);
+  }
+
+  const queryString = params.toString();
+  if (queryString) {
+    url += `?${queryString}`;
   }
 
   return url;
@@ -52,8 +63,13 @@ const getOverviewPageData = async (
   token: string,
   startDate?: Date,
   endDate?: Date,
+  frequency?: TimeFrequency,
 ) => {
-  const url = buildURL("/dashboard/overview", period, { startDate, endDate });
+  const url = buildURL("/dashboard/overview", period, {
+    startDate,
+    endDate,
+    frequency,
+  });
   return fetchData(url, token, "Error fetching dashboard overview page data");
 };
 
@@ -63,7 +79,10 @@ const fetchTopicsData = async (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  const url = buildURL("/dashboard/insights", period, { startDate, endDate });
+  const url = buildURL("/dashboard/insights", period, {
+    startDate,
+    endDate,
+  });
   return fetchData(url, token, "Error fetching Topics data");
 };
 
