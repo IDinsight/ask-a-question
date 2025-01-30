@@ -1,5 +1,5 @@
 import api from "../../utils/api";
-import { Period, TimeFrequency } from "./types";
+import { Period, CustomDashboardFrequency } from "./types";
 
 function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
@@ -11,7 +11,7 @@ function buildURL(
   options: {
     startDate?: Date;
     endDate?: Date;
-    frequency?: TimeFrequency;
+    frequency?: CustomDashboardFrequency;
     contentId?: number;
     extraPath?: string;
   } = {},
@@ -63,7 +63,7 @@ const getOverviewPageData = async (
   token: string,
   startDate?: Date,
   endDate?: Date,
-  frequency?: TimeFrequency,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/overview", period, {
     startDate,
