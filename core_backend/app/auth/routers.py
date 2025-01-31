@@ -84,6 +84,7 @@ async def login(
         ),
         token_type="bearer",
         username=authenticate_user.username,
+        workspace_name=authenticate_user.workspace_name,
     )
 
 

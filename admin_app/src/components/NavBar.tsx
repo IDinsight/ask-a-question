@@ -63,9 +63,14 @@ const Logo = () => {
 
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
+    null
+  );
 
-  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
+  const smallMenuPageDict = [
+    ...pageDict,
+    { title: "Dashboard", path: "/dashboard" },
+  ];
 
   return (
     <Box
@@ -127,7 +132,10 @@ const SmallScreenNavMenu = () => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color: pathname === page.path ? appColors.white : appColors.secondary,
+                color:
+                  pathname === page.path
+                    ? appColors.white
+                    : appColors.secondary,
               }}
             >
               {page.title}
@@ -172,7 +180,8 @@ const LargeScreenNavMenu = () => {
               key={page.title}
               sx={{
                 margin: sizes.baseGap,
-                color: pathname === page.path ? appColors.white : appColors.outline,
+                color:
+                  pathname === page.path ? appColors.white : appColors.outline,
               }}
             >
               {page.title}
@@ -183,7 +192,8 @@ const LargeScreenNavMenu = () => {
           variant="outlined"
           onClick={() => router.push("/dashboard")}
           style={{
-            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
+            color:
+              pathname === "/dashboard" ? appColors.white : appColors.outline,
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
@@ -200,13 +210,15 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
-  const { logout, username, role } = useAuth();
+  const { logout, username, role, workspaceName } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-  const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
-  const [persistedRole, setPersistedRole] = React.useState<"admin" | "user" | null>(
-    null,
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
+    null
   );
+  const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+  const [persistedRole, setPersistedRole] = React.useState<
+    "admin" | "user" | null
+  >(null);
 
   useEffect(() => {
     // Save user to local storage when it changes

@@ -30,7 +30,7 @@ class AuthenticationDetails(BaseModel):
     access_token: str
     token_type: TokenType
     username: str
-
+    workspace_name: str
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
     is_admin: bool = True
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.

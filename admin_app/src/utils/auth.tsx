@@ -8,6 +8,7 @@ type AuthContextType = {
   username: string | null;
   accessLevel: "readonly" | "fullaccess";
   role: "admin" | "user" | null;
+  workspaceName: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
   logout: () => void;
@@ -35,8 +36,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
     return null;
   };
-  const [userRole, setUserRole] = useState<"admin" | "user" | null>(getInitialRole);
-
+  const [userRole, setUserRole] = useState<"admin" | "user" | null>(
+    getInitialRole
+  );
+  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("token");
@@ -54,7 +57,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return "readonly";
   };
   const [accessLevel, setAccessLevel] = useState<"readonly" | "fullaccess">(
-    getInitialAccessLevel,
+    getInitialAccessLevel
   );
 
   const searchParams = useSearchParams();
@@ -66,18 +69,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/";
 
     try {
-      const { access_token, access_level, is_admin } = await apiCalls.getLoginToken(
-        username,
-        password,
-      );
+      const { access_token, access_level, is_admin, workspace_name } =
+        await apiCalls.getLoginToken(username, password);
       const role = is_admin ? "admin" : "user";
       localStorage.setItem("token", access_token);
       localStorage.setItem("accessLevel", access_level);
       localStorage.setItem("role", role);
+      localStorage.setItem("workspaceName", workspace_name);
       setUsername(username);
       setToken(access_token);
       setAccessLevel(access_level);
       setUserRole(role);
+      setWorkspaceName(workspace_name);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -128,6 +131,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     setUsername(null);
     setToken(null);
     setUserRole(null);
+    setWorkspaceName(null);
     setAccessLevel("readonly");
     router.push("/login");
   };
@@ -137,13 +141,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     username: username,
     accessLevel: accessLevel,
     role: userRole,
+    workspaceName: workspaceName,
     loginError: loginError,
     login: login,
     loginGoogle: loginGoogle,
     logout: logout,
   };
 
-  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;
