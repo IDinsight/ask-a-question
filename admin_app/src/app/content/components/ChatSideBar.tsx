@@ -162,7 +162,7 @@ const ChatSideBar = ({
             <Avatar
               alt="FA"
               sx={{
-                mx: 2,
+                mr: 1,
                 my: 1,
                 width: sizes.icons.medium,
                 height: sizes.icons.medium,
@@ -247,12 +247,11 @@ const MessageBox = (message: Message) => {
   const avatarOrder = message.type === "question" ? 2 : 0;
   const contentOrder = 1;
   const messageBubbleStyles = {
-    py: 2,
-    px: 3,
-    borderRadius: "20px",
+    py: 1.5,
+    px: 2,
+    borderRadius: "15px",
     bgcolor: message.type === "question" ? appColors.lightGrey : appColors.primary,
     color: message.type === "question" ? "black" : "white",
-    boxShadow: 0,
     maxWidth: "75%",
     wordBreak: "break-word",
     order: contentOrder,
@@ -270,7 +269,7 @@ const MessageBox = (message: Message) => {
         <Avatar
           alt="FA"
           sx={{
-            mx: 2,
+            mr: 1,
             my: 1,
             width: sizes.icons.medium,
             height: sizes.icons.medium,
