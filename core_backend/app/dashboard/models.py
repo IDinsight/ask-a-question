@@ -251,41 +251,34 @@ def get_time_labels_query(
     ValueError
         If the frequency is invalid.
     """
-    if frequency == TimeFrequency.Hour:
-        # For hourly bins, go up to end_date + 1 hour - 1 second
-        extra_interval = "1 hour - 1 second"
-    elif frequency == TimeFrequency.Day:
-        # For daily bins, go up to end_date + 1 day - 1 second
-        extra_interval = "1 day - 1 second"
-    elif frequency == TimeFrequency.Week:
-        extra_interval = "1 week - 1 second"
-    elif frequency == TimeFrequency.Month:
-        extra_interval = "1 month - 1 second"
-    else:
-        raise ValueError("Unsupported frequency")
+    match frequency:
+        case TimeFrequency.Day:
+            interval_str = "day"
+        case TimeFrequency.Week:
+            interval_str = "week"
+        case TimeFrequency.Hour:
+            interval_str = "hour"
+        case TimeFrequency.Month:
+            interval_str = "month"
+        case _:
+            raise ValueError("Invalid frequency")
 
-    # generate_series( start_date, end_date + '1 day - 1 second', '1 day' )
-    # or '1 hour' if frequency=Hour, etc.
-    series_sql = text(
-        f"""generate_series(
-             '{start_date}'::timestamp,
-             '{end_date}'::timestamp + '{extra_interval}'::interval,
-             '1 {frequency.name.lower()}'::interval
-           ) AS period_start"""
-    )
-
-    # Then date_trunc that:
-    statement = (
+    extra_interval = "hour" if interval_str == "hour" else "day"
+    return interval_str, (
         select(
-            func.date_trunc(
-                frequency.name.lower(), literal_column("period_start")
-            ).label("time_period")
+            func.date_trunc(interval_str, literal_column("period_start")).label(
+                "time_period"
+            )
         )
-        .select_from(series_sql)
+        .select_from(
+            text(
+                f"generate_series('{start_date}'::timestamp, '{end_date}'::timestamp + "
+                f"'1 {extra_interval}'::interval, '1 {interval_str}'"
+                "::interval) AS period_start"
+            )
+        )
         .alias("ts_labels")
     )
-
-    return frequency.name.lower(), statement
 
 
 async def get_timeseries_query(
