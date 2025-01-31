@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogTitle,
@@ -23,12 +24,12 @@ interface DateRangePickerDialogProps {
   open: boolean;
   onClose: () => void;
   onSelectDateRange: (
-    startDate: Date,
-    endDate: Date,
+    startDate: string,
+    endDate: string,
     frequency: CustomDashboardFrequency,
   ) => void;
-  initialStartDate?: Date | null;
-  initialEndDate?: Date | null;
+  initialStartDate?: string | null;
+  initialEndDate?: string | null;
   initialFrequency?: CustomDashboardFrequency;
 }
 
@@ -40,8 +41,8 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   initialEndDate = null,
   initialFrequency = "Day",
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
   const [frequency, setFrequency] =
     useState<CustomDashboardFrequency>(initialFrequency);
 
@@ -58,7 +59,12 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       // Ensure startDate is before endDate
       const [finalStartDate, finalEndDate] =
         startDate > endDate ? [endDate, startDate] : [startDate, endDate];
-      onSelectDateRange(finalStartDate, finalEndDate, frequency);
+
+      // Format dates as 'YYYY-MM-DD' in local time
+      const formattedStartDate = format(finalStartDate, "yyyy-MM-dd");
+      const formattedEndDate = format(finalEndDate, "yyyy-MM-dd");
+
+      onSelectDateRange(formattedStartDate, formattedEndDate, frequency);
     }
   };
 
@@ -79,7 +85,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         <Box display="flex" flexDirection="row" gap={2} mt={1}>
           <DatePicker
             selected={startDate}
-            onChange={(date: Date | null) => setStartDate(date)}
+            onChange={(date: string | null) => setStartDate(date)}
             selectsStart
             startDate={startDate}
             endDate={endDate}
@@ -88,7 +94,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
           />
           <DatePicker
             selected={endDate}
-            onChange={(date: Date | null) => setEndDate(date)}
+            onChange={(date: string | null) => setEndDate(date)}
             selectsEnd
             startDate={startDate}
             endDate={endDate}

@@ -1,16 +1,12 @@
 import api from "../../utils/api";
 import { Period, CustomDashboardFrequency } from "./types";
 
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
 function buildURL(
   basePath: string,
   period: Period,
   options: {
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: string;
+    endDate?: string;
     frequency?: CustomDashboardFrequency;
     contentId?: number;
     extraPath?: string;
@@ -30,8 +26,8 @@ function buildURL(
 
   if (period === "custom") {
     if (options.startDate && options.endDate) {
-      params.set("start_date", formatDate(options.startDate));
-      params.set("end_date", formatDate(options.endDate));
+      params.set("start_date", options.startDate);
+      params.set("end_date", options.endDate);
     }
   }
 
@@ -61,8 +57,8 @@ async function fetchData(url: string, token: string, errorMessage: string) {
 const getOverviewPageData = async (
   period: Period,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
   frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/overview", period, {

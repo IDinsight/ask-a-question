@@ -2,8 +2,8 @@ type Period = "day" | "week" | "month" | "year" | "custom";
 type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
 type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
 interface CustomDateParams {
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: string | null;
+  endDate: string | null;
   frequency?: CustomDashboardFrequency;
 }
 interface DrawerData {
