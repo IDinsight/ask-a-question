@@ -310,7 +310,7 @@ async def add_new_user_to_workspace(
     )
 
     return UserCreateWithCode(
-        is_default_workspace=user.is_default_workspace,
+        is_default_workspace=True,
         recovery_codes=recovery_codes,
         role=user.role,
         username=user_db.username,

@@ -1,6 +1,6 @@
 """This module contains FastAPI routers for user creation and registration endpoints."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 import sqlalchemy
 from fastapi import APIRouter, Depends, status
@@ -145,13 +145,12 @@ async def create_first_user(
     user: UserCreateWithPassword,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
-    default_workspace_name: Optional[str] = None,
 ) -> UserCreateWithCode:
     """Create the first user. This occurs when there are no users in the `UserDB`
     database AND no workspaces in the `WorkspaceDB` database. The first user is created
-    as an ADMIN user in the workspace `default_workspace_name`; if not provided, then
-    the default workspace name is f`Workspace_{user.username}`. Thus, there is no need
-    to specify the workspace name and user role for the very first user.
+    as an ADMIN user in the workspace specified by `user`; if not provided, then the
+    default workspace name is f`Workspace_{user.username}`. Thus, there is no need to
+    specify the workspace name and user role for the very first user.
 
     Furthermore, the API daily quota and content quota is set to `None` for the default
     workspace. After the default workspace is created for the first user, the first
@@ -160,9 +159,8 @@ async def create_first_user(
 
     The process is as follows:
 
-    1. Create the very first workspace for the very first user. No quotas are set, the
-        user role defaults to ADMIN and the workspace name defaults to
-        `default_workspace_name`.
+    1. Create the very first workspace for the very first user. No quotas are set and
+        the user role defaults to ADMIN.
     2. Add the very first user to the default workspace with the ADMIN role and assign
         the workspace as the default workspace for the first user.
     3. Update the API limits for the workspace.
@@ -175,8 +173,6 @@ async def create_first_user(
         The request object.
     asession
         The SQLAlchemy async session to use for all database connections.
-    default_workspace_name
-        The default workspace name for the very first user.
 
     Returns
     -------
@@ -199,9 +195,7 @@ async def create_first_user(
 
     # 1.
     user.role = UserRoles.ADMIN
-    user.workspace_name = (
-        user.workspace_name or default_workspace_name or f"Workspace_{user.username}"
-    )
+    user.workspace_name = user.workspace_name or f"Workspace_{user.username}"
     workspace_db_new, _ = await create_workspace(asession=asession, user=user)
 
     # 2.

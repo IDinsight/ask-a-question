@@ -246,14 +246,16 @@ class TestUserUpdate:
             },
         )
         assert response.status_code == status.HTTP_200_OK
-
         response = client.get(
             "/user/current-user",
             headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
-        assert json_response["is_default_workspace"][0] is True
+        for i, workspace_name in enumerate(json_response["user_workspace_names"]):
+            if workspace_name == TEST_WORKSPACE_NAME_1:
+                assert json_response["is_default_workspace"][i] is True
+                break
         assert json_response["username"] == admin_username
 
     async def test_admin_1_update_other_user_in_workspace_1(
