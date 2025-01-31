@@ -36,9 +36,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
     return null;
   };
-  const [userRole, setUserRole] = useState<"admin" | "user" | null>(
-    getInitialRole
-  );
+  const [userRole, setUserRole] = useState<"admin" | "user" | null>(getInitialRole);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
@@ -57,7 +55,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return "readonly";
   };
   const [accessLevel, setAccessLevel] = useState<"readonly" | "fullaccess">(
-    getInitialAccessLevel
+    getInitialAccessLevel,
   );
 
   const searchParams = useSearchParams();
@@ -148,9 +146,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     logout: logout,
   };
 
-  return (
-    <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

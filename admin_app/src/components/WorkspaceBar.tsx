@@ -5,5 +5,6 @@ interface WorkspaceMenuProps {
 const WorkspaceMenu = ({currentWorkspace,workspaces}:WorkspaceMenuProps) => {  
     
     
+    
 return ()
 }
