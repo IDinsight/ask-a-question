@@ -55,8 +55,8 @@ const Dashboard: React.FC = () => {
   };
 
   const handleCustomDateParamsSelected = (
-    start: Date,
-    end: Date,
+    start: string,
+    end: string,
     frequency: CustomDashboardFrequency,
   ) => {
     setCustomDateParams({ startDate: start, endDate: end, frequency: frequency });

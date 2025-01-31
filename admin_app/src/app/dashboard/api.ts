@@ -72,8 +72,8 @@ const getOverviewPageData = async (
 const fetchTopicsData = async (
   period: Period,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
@@ -85,8 +85,8 @@ const fetchTopicsData = async (
 const getEmbeddingData = async (
   period: Period,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/topic_visualization", period, {
     startDate,
@@ -98,8 +98,8 @@ const getEmbeddingData = async (
 const generateNewTopics = async (
   period: Period,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
@@ -112,8 +112,8 @@ const generateNewTopics = async (
 const getPerformancePageData = async (
   period: Period,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     startDate,
@@ -126,8 +126,8 @@ const getPerformanceDrawerData = async (
   period: Period,
   contentId: number,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
@@ -141,8 +141,8 @@ const getPerformanceDrawerAISummary = async (
   period: Period,
   contentId: number,
   token: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
