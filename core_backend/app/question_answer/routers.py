@@ -193,7 +193,6 @@ async def search(
             query_refined=user_query_refined_template,
             response=response,
         )
-
     await save_query_response_to_db(user_query_db, response, asession)
     await increment_query_count(
         user_id=user_db.user_id,
