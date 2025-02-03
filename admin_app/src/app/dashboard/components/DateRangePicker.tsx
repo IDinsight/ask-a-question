@@ -98,7 +98,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          height: "38vh",
+          height: "35vh",
           width: "750px",
           overflow: "visible",
           display: "flex",
@@ -167,9 +167,9 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         </Box>
         <Box mt="auto" p={2} bgcolor="#e8f3fe" borderRadius={1} textAlign="center">
           <Typography variant="caption">
-            Note: Frequency setting for custom timeframes will only affect how many bars
-            are shown in the Overview page and the selected frequency will not affect
-            Performance or Insights pages.
+            Note: Frequency setting for custom timeframes will only affect bar graphs in
+            the Overview page. The selected frequency will not affect Performance or
+            Insights pages.
           </Typography>
         </Box>
       </DialogContent>
