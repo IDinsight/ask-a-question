@@ -165,12 +165,13 @@ async def retrieve_performance_frequency(
     top_n: int | None = None,
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    frequency: Optional[TimeFrequency] = Query(None),
 ) -> DashboardPerformance:
     """
     Retrieve timeseries data on content usage and performance of each content
     """
-    frequency, start_dt, end_dt = get_freq_start_end_date(
-        timeframe, start_date, end_date
+    freq, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, frequency
     )
     performance_stats = await retrieve_performance(
         user_id=user_db.user_id,
@@ -178,7 +179,7 @@ async def retrieve_performance_frequency(
         top_n=top_n,
         start_date=start_dt,
         end_date=end_dt,
-        frequency=frequency,
+        frequency=freq,
     )
     return performance_stats
 
@@ -308,7 +309,12 @@ async def refresh_insights_frequency(
     """
     Refresh topic modelling insights for the time period specified.
     """
-    _, start_dt, end_dt = get_freq_start_end_date(timeframe, start_date, end_date)
+    # TimeFrequency doens't actually matter here (but still required) so we just
+    # pass day to get the start and end date
+    _, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, TimeFrequency.Day
+    )
+
     background_tasks.add_task(
         refresh_insights,
         timeframe=timeframe,
