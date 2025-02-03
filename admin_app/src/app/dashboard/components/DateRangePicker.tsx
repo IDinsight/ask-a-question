@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 import {
   Dialog,
   DialogTitle,
@@ -44,6 +44,22 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   const [frequency, setFrequency] =
     useState<CustomDashboardFrequency>(initialFrequency);
 
+  const frequencyLimits: Record<CustomDashboardFrequency, number> = {
+    Hour: 14,
+    Day: 100,
+    Week: 365,
+    Month: 1825,
+  };
+
+  const frequencyOptions: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
+
+  // Compute number of days in the selected range
+  const diffDays: number | null =
+    startDate && endDate
+      ? Math.abs(differenceInCalendarDays(endDate, startDate)) + 1
+      : null;
+
+  // When the dialog popup opens -> set variables
   useEffect(() => {
     if (open) {
       setStartDate(initialStartDate ? new Date(initialStartDate) : null);
@@ -51,6 +67,20 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       setFrequency(initialFrequency || "Day");
     }
   }, [open, initialStartDate, initialEndDate, initialFrequency]);
+
+  // Auto-update the selected frequency if the current one is invalid given the selected date range
+  useEffect(() => {
+    if (diffDays !== null) {
+      if (diffDays > frequencyLimits[frequency]) {
+        const validOption = frequencyOptions.find(
+          (option) => diffDays <= frequencyLimits[option],
+        );
+        if (validOption && validOption !== frequency) {
+          setFrequency(validOption);
+        }
+      }
+    }
+  }, [diffDays, frequency, frequencyOptions, frequencyLimits]);
 
   const handleOk = () => {
     if (startDate && endDate) {
@@ -60,7 +90,7 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
           ? [endDate, startDate]
           : [startDate, endDate];
 
-      // Format dates as 'YYYY-MM-DD' in local time
+      // Format to 'YYYY-MM-DD' in local time
       const formattedStartDate = format(finalStartDate, "yyyy-MM-dd");
       const formattedEndDate = format(finalEndDate, "yyyy-MM-dd");
 
@@ -111,17 +141,33 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
               }
               label="Frequency"
             >
-              <MenuItem value="Hour">Hourly</MenuItem>
-              <MenuItem value="Day">Daily</MenuItem>
-              <MenuItem value="Week">Weekly</MenuItem>
-              <MenuItem value="Month">Monthly</MenuItem>
+              {frequencyOptions.map((option) => (
+                <MenuItem
+                  key={option}
+                  value={option}
+                  // Disable the option if diffDays is defined and exceeds its limit.
+                  disabled={diffDays !== null && diffDays > frequencyLimits[option]}
+                >
+                  {option === "Hour" && "Hourly"}
+                  {option === "Day" && "Daily"}
+                  {option === "Week" && "Weekly"}
+                  {option === "Month" && "Monthly"}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleOk} disabled={!startDate || !endDate}>
+        <Button
+          onClick={handleOk}
+          disabled={
+            !startDate ||
+            !endDate ||
+            (diffDays !== null && diffDays > frequencyLimits[frequency])
+          }
+        >
           OK
         </Button>
       </DialogActions>
