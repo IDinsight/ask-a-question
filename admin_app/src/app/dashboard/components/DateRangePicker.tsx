@@ -13,6 +13,7 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  Typography,
 } from "@mui/material";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -53,13 +54,11 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
 
   const frequencyOptions: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
 
-  // Compute number of days in the selected range
   const diffDays: number | null =
     startDate && endDate
       ? Math.abs(differenceInCalendarDays(endDate, startDate)) + 1
       : null;
 
-  // When the dialog popup opens -> set variables
   useEffect(() => {
     if (open) {
       setStartDate(initialStartDate ? new Date(initialStartDate) : null);
@@ -68,7 +67,6 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
     }
   }, [open, initialStartDate, initialEndDate, initialFrequency]);
 
-  // Auto-update the selected frequency if the current one is invalid given the selected date range
   useEffect(() => {
     if (diffDays !== null) {
       if (diffDays > frequencyLimits[frequency]) {
@@ -84,16 +82,12 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
 
   const handleOk = () => {
     if (startDate && endDate) {
-      // Ensure startDate is before endDate
       const [finalStartDate, finalEndDate] =
         startDate.getTime() > endDate.getTime()
           ? [endDate, startDate]
           : [startDate, endDate];
-
-      // Format to 'YYYY-MM-DD' in local time
       const formattedStartDate = format(finalStartDate, "yyyy-MM-dd");
       const formattedEndDate = format(finalEndDate, "yyyy-MM-dd");
-
       onSelectDateRange(formattedStartDate, formattedEndDate, frequency);
     }
   };
@@ -104,14 +98,23 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: 600,
-          height: 400,
+          height: "38vh",
+          width: "750px",
           overflow: "visible",
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
       <DialogTitle>Select Date Range and Frequency</DialogTitle>
-      <DialogContent sx={{ overflow: "visible" }}>
+      <DialogContent
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "visible",
+        }}
+      >
         <Box display="flex" flexDirection="row" gap={2} mt={1}>
           <DatePicker
             selected={startDate}
@@ -131,8 +134,10 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
             customInput={<TextField label="End Date" variant="outlined" fullWidth />}
             dateFormat="MMMM d, yyyy"
           />
-          <FormControl variant="outlined">
-            <InputLabel id="frequency-label">Frequency</InputLabel>
+          <FormControl variant="outlined" sx={{ minWidth: 180 }}>
+            <InputLabel id="frequency-label" sx={{ whiteSpace: "nowrap" }}>
+              Frequency
+            </InputLabel>
             <Select
               labelId="frequency-label"
               value={frequency}
@@ -140,22 +145,32 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
                 setFrequency(event.target.value as CustomDashboardFrequency)
               }
               label="Frequency"
+              sx={{ whiteSpace: "nowrap" }}
             >
               {frequencyOptions.map((option) => (
                 <MenuItem
                   key={option}
                   value={option}
-                  // Disable the option if diffDays is defined and exceeds its limit.
                   disabled={diffDays !== null && diffDays > frequencyLimits[option]}
                 >
-                  {option === "Hour" && "Hourly"}
-                  {option === "Day" && "Daily"}
-                  {option === "Week" && "Weekly"}
-                  {option === "Month" && "Monthly"}
+                  {option === "Hour"
+                    ? "Hourly"
+                    : option === "Day"
+                    ? "Daily"
+                    : option === "Week"
+                    ? "Weekly"
+                    : "Monthly"}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+        </Box>
+        <Box mt="auto" p={2} bgcolor="#e8f3fe" borderRadius={1} textAlign="center">
+          <Typography variant="caption">
+            Note: Frequency setting for custom timeframes will only affect how many bars
+            are shown in the Overview page and the selected frequency will not affect
+            Performance or Insights pages.
+          </Typography>
         </Box>
       </DialogContent>
       <DialogActions>
