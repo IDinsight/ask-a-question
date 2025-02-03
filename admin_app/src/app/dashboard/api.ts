@@ -13,33 +13,26 @@ function buildURL(
   } = {},
 ): string {
   let url = `${basePath}/${period}`;
-
   if (options.contentId !== undefined) {
     url += `/${options.contentId}`;
   }
-
   if (options.extraPath) {
     url += `/${options.extraPath}`;
   }
-
   const params = new URLSearchParams();
-
   if (period === "custom") {
     if (options.startDate && options.endDate) {
       params.set("start_date", options.startDate);
       params.set("end_date", options.endDate);
     }
   }
-
   if (options.frequency) {
     params.set("frequency", options.frequency);
   }
-
   const queryString = params.toString();
   if (queryString) {
     url += `?${queryString}`;
   }
-
   return url;
 }
 
@@ -82,16 +75,8 @@ const fetchTopicsData = async (
   return fetchData(url, token, "Error fetching Topics data");
 };
 
-const getEmbeddingData = async (
-  period: Period,
-  token: string,
-  startDate?: string,
-  endDate?: string,
-) => {
-  const url = buildURL("/dashboard/topic_visualization", period, {
-    startDate,
-    endDate,
-  });
+const getEmbeddingData = async (period: Period, token: string) => {
+  const url = buildURL("/dashboard/topic_visualization", period);
   return fetchData(url, token, "Error fetching dashboard embedding data");
 };
 
@@ -114,10 +99,12 @@ const getPerformancePageData = async (
   token: string,
   startDate?: string,
   endDate?: string,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     startDate,
     endDate,
+    frequency,
   });
   return fetchData(url, token, "Error fetching dashboard performance page data");
 };
@@ -128,11 +115,13 @@ const getPerformanceDrawerData = async (
   token: string,
   startDate?: string,
   endDate?: string,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
     startDate,
     endDate,
+    frequency,
   });
   return fetchData(url, token, "Error fetching dashboard performance drawer data");
 };
@@ -143,11 +132,13 @@ const getPerformanceDrawerAISummary = async (
   token: string,
   startDate?: string,
   endDate?: string,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
     startDate,
     endDate,
+    frequency,
     extraPath: "ai-summary",
   });
   return fetchData(
