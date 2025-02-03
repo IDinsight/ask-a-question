@@ -3,11 +3,11 @@ from __future__ import annotations
 import re
 import textwrap
 from enum import Enum
-from typing import ClassVar, Dict, List
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .utils import remove_json_markdown
+from .utils import format_prompt, remove_json_markdown
 
 
 # ----  Language identification bot
@@ -222,7 +222,7 @@ class RAG(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    extracted_info: List[str]
+    extracted_info: list[str]
     answer: str
 
     prompt: ClassVar[str] = RAG_RESPONSE_PROMPT
@@ -274,7 +274,7 @@ class UrgencyDetectionEntailment:
         probability: float = Field(ge=0, le=1)
         reason: str
 
-    _urgency_rules: List[str]
+    _urgency_rules: list[str]
     _prompt_base: str = textwrap.dedent(
         """
         You are a highly sensitive urgency detector. Score if ANY part of the
@@ -302,19 +302,19 @@ class UrgencyDetectionEntailment:
         """
     ).strip()
 
-    default_json: Dict = {
+    default_json: dict = {
         "best_matching_rule": "",
         "probability": 0.0,
         "reason": "",
     }
 
-    def __init__(self, urgency_rules: List[str]) -> None:
+    def __init__(self, urgency_rules: list[str]) -> None:
         """
         Initialize the urgency detection entailment task with urgency rules.
         """
         self._urgency_rules = urgency_rules
 
-    def parse_json(self, json_str: str) -> Dict:
+    def parse_json(self, json_str: str) -> dict:
         """
         Validates the output of the urgency detection entailment task.
         """
@@ -463,3 +463,149 @@ class TopicModelLabelling:
             raise ValueError(f"Error validating the output: {e}") from e
 
         return result.model_dump()
+
+
+class ChatHistory:
+    _valid_message_types = ["FOLLOW-UP", "NEW"]
+    system_message_construct_search_query = format_prompt(
+        prompt=textwrap.dedent(
+            """You are an AI assistant designed to help users with their
+            questions/concerns. You interact with users via a chat interface.
+
+            Your task is to analyze the user's LATEST MESSAGE by following these steps:
+
+            1. Determine the Type of the User's LATEST MESSAGE:
+                - Follow-up Message: These are messages that build upon the
+                conversation so far and/or seeks more clarifying information on a
+                previously discussed question/concern.
+                - New Message: These are messages that introduce a new topic that was
+                not previously discussed in the conversation.
+
+            2. Obtain More Information to Help Address the User's LATEST MESSAGE:
+                - Keep in mind the context given by the conversation history thus far.
+                - Use the conversation history and the Type of the User's LATEST
+                MESSAGE to formulate a precise query to execute against a vector
+                database in order to retrieve the most relevant information that can
+                address the user's LATEST MESSAGE given the context of the conversation
+                history.
+                - Ensure the vector database query is specific and accurately reflects
+                the user's information needs.
+                - Use specific keywords that captures the semantic meaning of the
+                user's information needs.
+
+            Output the following JSON response:
+
+            {{
+                "message_type": "The type of the user's LATEST MESSAGE. List of valid
+                options are: {valid_message_types},
+                "query": "The vector database query that you have constructed based on
+                the user's LATEST MESSAGE and the conversation history."
+            }}
+
+            Do NOT attempt to answer the user's question/concern. Only output the JSON
+            response, without any additional text.
+            """
+        ),
+        prompt_kws={"valid_message_types": _valid_message_types},
+    )
+    system_message_generate_response = format_prompt(
+        prompt=textwrap.dedent(
+            """You are an AI assistant designed to help users with their
+            questions/concerns. You interact with users via a chat interface. You will
+            be provided with ADDITIONAL RELEVANT INFORMATION that can address the
+            user's questions/concerns.
+
+            BEFORE answering the user's LATEST MESSAGE, follow these steps:
+
+            1. Review the conversation history to ensure that you understand the
+            context in which the user's LATEST MESSAGE is being asked.
+            2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you
+            understand the most useful information related to the user's LATEST
+            MESSAGE.
+
+            When you have completed the above steps, you will then write a JSON, whose
+            TypeScript Interface is given below:
+
+            interface Response {{
+                extracted_info: string[];
+                answer: string;
+            }}
+
+            For "extracted_info", extract from the provided ADDITIONAL RELEVANT
+            INFORMATION the most useful information related to the LATEST MESSAGE asked
+            by the user, and list them one by one. If no useful information is found,
+            return an empty list.
+
+            For "answer", understand the conversation history, ADDITIONAL RELEVANT
+            INFORMATION, and the user's LATEST MESSAGE, and then provide an answer to
+            the user's LATEST MESSAGE. If no useful information was found in the
+            either the conversation history or the ADDITIONAL RELEVANT INFORMATION,
+            respond with {failure_message}.
+
+            EXAMPLE RESPONSES:
+            {{"extracted_info": [
+                "Pineapples are a blend of pinecones and apples.",
+                "Pineapples have the shape of a pinecone."
+                ],
+              "answer": "The 'pine-' from pineapples likely come from the fact that
+               pineapples are a hybrid of pinecones and apples and its pinecone-like
+               shape."
+            }}
+            {{"extracted_info": [], "answer": "{failure_message}"}}
+
+            IMPORTANT NOTES ON THE "answer" FIELD:
+            - Keep in mind that the user is asking a {message_type} question.
+            - Answer in the language of the question ({original_language}).
+            - Answer should be concise and to the point.
+            - Do not include any information that is not present in the ADDITIONAL
+            RELEVANT INFORMATION.
+
+            Only output the JSON response, without any additional text.
+            """
+        )
+    )
+
+    class ChatHistoryConstructSearchQuery(BaseModel):
+        """Pydantic model for the output of the construct search query chat history."""
+
+        message_type: Literal["FOLLOW-UP", "NEW"]
+        query: str
+
+    @staticmethod
+    def parse_json(*, chat_type: Literal["search"], json_str: str) -> dict[str, str]:
+        """Validate the output of the chat history search query response.
+
+        Parameters
+        ----------
+        chat_type
+            The chat type. The chat type is used to determine the appropriate Pydantic
+            model to validate the JSON response.
+        json_str : str
+            The JSON string to validate.
+
+        Returns
+        -------
+        dict[str, str]
+            The validated JSON response.
+
+        Raises
+        ------
+        NotImplementedError
+            If the Pydantic model for the chat type is not implemented.
+        ValueError
+            If the JSON string is not valid.
+        """
+
+        match chat_type:
+            case "search":
+                pydantic_model = ChatHistory.ChatHistoryConstructSearchQuery
+            case _:
+                raise NotImplementedError(
+                    f"Pydantic model for chat type '{chat_type}' is not implemented."
+                )
+        try:
+            return pydantic_model.model_validate_json(
+                remove_json_markdown(json_str)
+            ).model_dump()
+        except ValueError as e:
+            raise ValueError(f"Error validating the output: {e}") from e
