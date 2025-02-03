@@ -25,9 +25,11 @@ function buildURL(
       params.set("start_date", options.startDate);
       params.set("end_date", options.endDate);
     }
-  }
-  if (options.frequency) {
-    params.set("frequency", options.frequency);
+    params.set("frequency", options.frequency || "Day");
+  } else {
+    if (options.frequency) {
+      params.set("frequency", options.frequency);
+    }
   }
   const queryString = params.toString();
   if (queryString) {
@@ -67,16 +69,28 @@ const fetchTopicsData = async (
   token: string,
   startDate?: string,
   endDate?: string,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
     endDate,
+    frequency,
   });
   return fetchData(url, token, "Error fetching Topics data");
 };
 
-const getEmbeddingData = async (period: Period, token: string) => {
-  const url = buildURL("/dashboard/topic_visualization", period);
+const getEmbeddingData = async (
+  period: Period,
+  token: string,
+  startDate?: string,
+  endDate?: string,
+  frequency?: CustomDashboardFrequency,
+) => {
+  const url = buildURL("/dashboard/topic_visualization", period, {
+    startDate,
+    endDate,
+    frequency,
+  });
   return fetchData(url, token, "Error fetching dashboard embedding data");
 };
 
@@ -85,10 +99,12 @@ const generateNewTopics = async (
   token: string,
   startDate?: string,
   endDate?: string,
+  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
     endDate,
+    frequency,
     extraPath: "refresh",
   });
   return fetchData(url, token, "Error kicking off new topic generation");

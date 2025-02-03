@@ -4,7 +4,7 @@ type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
 interface CustomDateParams {
   startDate: string | null;
   endDate: string | null;
-  frequency?: CustomDashboardFrequency;
+  frequency: CustomDashboardFrequency;
 }
 interface DrawerData {
   title: string;
