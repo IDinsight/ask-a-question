@@ -1,17 +1,23 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import DetailsDrawer from "@/app/dashboard/components/performance/DetailsDrawer";
-import LineChart from "@/app/dashboard/components/performance/LineChart";
-import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
+
 import {
   getPerformancePageData,
   getPerformanceDrawerData,
   getPerformanceDrawerAISummary,
 } from "@/app/dashboard/api";
+
+import DetailsDrawer from "@/app/dashboard/components/performance/DetailsDrawer";
+import LineChart from "@/app/dashboard/components/performance/LineChart";
+import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
 import { ApexData, Period, RowDataType, DrawerData } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
-import { useEffect } from "react";
-const N_TOP_CONTENT = 10;
+
+// Just an example 5-color palette
+const CHART_COLORS = ["#ff0000", "#008000", "#0000ff", "#ff00ff", "#ff8c00"];
+const N_TOP_CONTENT = 5;
 
 interface PerformanceProps {
   timePeriod: Period;
@@ -20,16 +26,26 @@ interface PerformanceProps {
 const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
   const { token } = useAuth();
 
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [lineChartData, setLineChartData] = React.useState<ApexData[]>([]);
-  const [contentTableData, setContentTableData] = React.useState<RowDataType[]>([]);
-  const [drawerData, setDrawerData] = React.useState<DrawerData | null>(null);
-  const [drawerAISummary, setDrawerAISummary] = React.useState<string | null>(null);
+  // Full dataset from server (the entire "content_time_series")
+  const [contentTableData, setContentTableData] = useState<RowDataType[]>([]);
 
+  // The subset of items currently being displayed/paginated in the table
+  const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
+
+  // For the big line chart
+  const [lineChartData, setLineChartData] = useState<ApexData[]>([]);
+
+  // Details drawer states
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerData, setDrawerData] = useState<DrawerData | null>(null);
+  const [drawerAISummary, setDrawerAISummary] = useState<string | null>(null);
+
+  // Load data once we have a token
   useEffect(() => {
     if (token) {
       getPerformancePageData(timePeriod, token).then((response) => {
-        parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
+        // The raw server timeseries is in `response.content_time_series`
+        // We'll parse it into table rows
         parseContentTableData(response.content_time_series);
       });
     } else {
@@ -37,10 +53,23 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     }
   }, [timePeriod, token]);
 
-  const toggleDrawer = (newOpen: boolean) => () => {
-    setDrawerOpen(newOpen);
-  };
+  // Each time the displayed table rows change, rebuild the top chart
+  useEffect(() => {
+    const newChartData: ApexData[] = itemsToDisplay.map((row, idx) => {
+      return {
+        name: row.title,
+        // If you only have numeric timeseries for the small chart,
+        // you may do index-based x-values:
+        data: row.query_count_timeseries.map((val, i) => ({
+          x: i,
+          y: val,
+        })),
+      };
+    });
+    setLineChartData(newChartData);
+  }, [itemsToDisplay]);
 
+  // Handle table row click -> show drawer
   const tableRowClickHandler = (contentId: number) => {
     setDrawerAISummary(null);
     if (token) {
@@ -61,6 +90,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     }
   };
 
+  // Parse the server response for the details drawer
   const parseDrawerData = (data: Record<string, any>) => {
     interface Timeseries {
       query_count: number;
@@ -75,13 +105,10 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     ): ApexData {
       return {
         name,
-        data: Object.entries(data.time_series).map(([period, timeseries]) => {
-          const date = new Date(period);
-          return {
-            x: String(date),
-            y: timeseries[key] as number,
-          };
-        }),
+        data: Object.entries(data.time_series).map(([period, timeseries]) => ({
+          x: String(new Date(period)),
+          y: timeseries[key] as number,
+        })),
       };
     }
 
@@ -113,38 +140,18 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     setDrawerData(drawerData);
   };
 
-  const parseLineChartData = (timeseriesData: Record<string, any>[]) => {
-    const apexTimeSeriesData: ApexData[] = timeseriesData.map((series, idx) => {
-      const zIndex = idx === 0 ? 3 : 2;
-      const seriesData = {
-        name: series.title,
-        zIndex: zIndex,
-        data: Object.entries(series.query_count_time_series).map(
-          ([period, queryCount]) => {
-            const date = new Date(period);
-            return {
-              x: String(date),
-              y: queryCount as number,
-            };
-          },
-        ),
-      };
-      return seriesData;
-    });
-    setLineChartData(apexTimeSeriesData);
-  };
-
+  // Parse the server response into the table row structure
   const parseContentTableData = (timeseriesData: Record<string, any>[]) => {
-    const rows: RowDataType[] = timeseriesData.map((series) => {
-      return {
-        id: series.id,
-        title: series.title,
-        query_count: series.total_query_count,
-        positive_votes: series.positive_votes,
-        negative_votes: series.negative_votes,
-        query_count_timeseries: Object.values(series.query_count_time_series),
-      };
-    });
+    // The table just needs these columns, plus the numeric array for the small sparkline
+    const rows: RowDataType[] = timeseriesData.map((series) => ({
+      id: series.id,
+      title: series.title,
+      query_count: series.total_query_count,
+      positive_votes: series.positive_votes,
+      negative_votes: series.negative_votes,
+      // The small sparkline uses numeric arrays. We skip the date dimension for now.
+      query_count_timeseries: Object.values(series.query_count_time_series) as number[],
+    }));
     setContentTableData(rows);
   };
 
@@ -152,28 +159,28 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     <>
       <DetailsDrawer
         open={drawerOpen}
-        onClose={toggleDrawer}
+        onClose={(open: boolean) => () => setDrawerOpen(open)}
         data={drawerData}
         aiSummary={drawerAISummary}
       />
-      <Box
-        bgcolor="white"
-        sx={{
-          height: 300,
-          border: 0,
-          padding: 2,
-        }}
-      >
+
+      {/* Big line chart—always controlled by parent state lineChartData */}
+      <Box bgcolor="white" sx={{ height: 400, border: 0, padding: 2 }}>
         <LineChart
           data={lineChartData}
           nTopContent={N_TOP_CONTENT}
           timePeriod={timePeriod}
+          chartColors={CHART_COLORS}
         />
       </Box>
+
+      {/* Table that shows only part of contentTableData, plus calls onItemsToDisplayChange */}
       <ContentsTable
         rows={contentTableData}
         onClick={tableRowClickHandler}
         rowsPerPage={N_TOP_CONTENT}
+        chartColors={CHART_COLORS}
+        onItemsToDisplayChange={(items) => setItemsToDisplay(items)}
       />
     </>
   );

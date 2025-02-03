@@ -1,22 +1,19 @@
 "use client";
+
 import dynamic from "next/dynamic";
-
-import { appColors } from "@/utils/index";
 import { ApexOptions } from "apexcharts";
+import { appColors } from "@/utils/index";
 
-const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-const LineChart = ({
-  data,
-  nTopContent,
-  timePeriod,
-}: {
-  data: any;
+interface LineChartProps {
+  data: any; // array of ApexData series
   nTopContent: number;
   timePeriod: string;
-}) => {
+  chartColors: string[];
+}
+
+const LineChart = ({ data, timePeriod, chartColors }: LineChartProps) => {
   const timeseriesOptions: ApexOptions = {
     title: {
       text: `Top content in the last ${timePeriod}`,
@@ -32,41 +29,45 @@ const LineChart = ({
       stacked: false,
       fontFamily: "Inter",
     },
-    dataLabels: {
-      enabled: false,
-    },
+    dataLabels: { enabled: false },
     xaxis: {
       type: "datetime",
       labels: {
         datetimeUTC: false,
+        format: "MMM dd", // e.g. "Jan 01"
       },
+      // You can also control the tick amount if desired:
+      tickAmount: 6,
     },
     yaxis: {
       tickAmount: 5,
       labels: {
-        formatter: function (value) {
-          return String(Math.round(value)); // Format labels to show whole numbers
-        },
+        formatter: (value) => String(Math.round(value)),
+      },
+    },
+    tooltip: {
+      x: {
+        format: "MMM dd, yyyy", // tooltip format
       },
     },
     legend: {
-      show: false,
+      show: true,
       position: "top",
       horizontalAlign: "left",
     },
     stroke: {
-      width: [3, ...Array(nTopContent).fill(3)],
+      width: 3,
       curve: "smooth",
-      dashArray: [0, ...Array(nTopContent).fill(7)],
+      dashArray: data.map(() => 0),
     },
-    colors: appColors.dashboardBlueShades,
+    colors: chartColors,
   };
 
   return (
     <div>
       <ReactApexcharts
         type="line"
-        height={270}
+        height={400}
         width="100%"
         options={timeseriesOptions}
         series={data}
