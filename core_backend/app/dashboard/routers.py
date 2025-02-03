@@ -1,12 +1,10 @@
-"""This module contains the FastAPI router for the dashboard endpoints."""
-
 import json
 from datetime import date, datetime, timedelta, timezone
-from typing import Annotated, Literal, Tuple
+from typing import Annotated, Literal, Optional, Tuple
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -47,29 +45,83 @@ TAG_METADATA = {
 router = APIRouter(prefix="/dashboard", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
-DashboardTimeFilter = Literal["day", "week", "month", "year"]
+DashboardTimeFilter = Literal["day", "week", "month", "year", "custom"]
 
 
-@router.get("/performance/{time_frequency}/{content_id}", response_model=DetailsDrawer)
+def get_freq_start_end_date(
+    timeframe: DashboardTimeFilter,
+    start_date_str: Optional[str] = None,
+    end_date_str: Optional[str] = None,
+    frequency: Optional[TimeFrequency] = None,
+) -> Tuple[TimeFrequency, datetime, datetime]:
+    """
+    Get the frequency and start date for the given time frequency.
+    """
+    now_utc = datetime.now(timezone.utc)
+    if timeframe == "custom":
+        if not start_date_str or not end_date_str:
+            raise HTTPException(
+                status_code=400,
+                detail="start_date and end_date are required for custom timeframe",
+            )
+        if not frequency:
+            raise HTTPException(
+                status_code=400,
+                detail="frequency is required for custom timeframe",
+            )
+        try:
+            start_dt = datetime.strptime(start_date_str, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
+            )
+            end_dt = datetime.strptime(end_date_str, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
+            )
+        except ValueError:
+            raise HTTPException(
+                400, detail="Invalid date format; must be YYYY-MM-DD"
+            ) from None
+
+        if end_dt < start_dt:
+            raise HTTPException(400, detail="end_date must be >= start_date")
+
+        return frequency, start_dt, end_dt
+
+    # For predefined timeframes, set default frequencies
+    match timeframe:
+        case "day":
+            return TimeFrequency.Hour, now_utc - timedelta(days=1), now_utc
+        case "week":
+            return TimeFrequency.Day, now_utc - timedelta(weeks=1), now_utc
+        case "month":
+            return TimeFrequency.Day, now_utc + relativedelta(months=-1), now_utc
+        case "year":
+            return TimeFrequency.Month, now_utc + relativedelta(years=-1), now_utc
+        case _:
+            raise ValueError(f"Invalid time frequency: {timeframe}")
+
+
+@router.get("/performance/{timeframe}/{content_id}", response_model=DetailsDrawer)
 async def retrieve_content_details(
     content_id: int,
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ) -> DetailsDrawer:
     """
     Retrieve detailed statistics of a content
     """
-
-    today = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(time_frequency)
-
+    # Use start_dt/ end_dt to avoid typing errors etc.
+    frequency, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date
+    )
     details = await get_content_details(
         user_id=user_db.user_id,
         content_id=content_id,
         asession=asession,
-        start_date=start_date,
-        end_date=today,
+        start_date=start_dt,
+        end_date=end_dt,
         frequency=frequency,
         max_feedback_records=int(MAX_FEEDBACK_RECORDS_FOR_TOP_CONTENT),
     )
@@ -77,54 +129,57 @@ async def retrieve_content_details(
 
 
 @router.get(
-    "/performance/{time_frequency}/{content_id}/ai-summary",
+    "/performance/{timeframe}/{content_id}/ai-summary",
     response_model=AIFeedbackSummary,
 )
 async def retrieve_content_ai_summary(
     content_id: int,
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ) -> AIFeedbackSummary:
     """
     Retrieve AI summary of a content
     """
-
-    today = datetime.now(timezone.utc)
-    _, start_date = get_frequency_and_startdate(time_frequency)
-
+    frequency, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date
+    )
     ai_summary = await get_ai_answer_summary(
         user_id=user_db.user_id,
         content_id=content_id,
-        start_date=start_date,
-        end_date=today,
+        start_date=start_dt,
+        end_date=end_dt,
         max_feedback_records=int(MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY),
         asession=asession,
     )
     return AIFeedbackSummary(ai_summary=ai_summary)
 
 
-@router.get("/performance/{time_frequency}", response_model=DashboardPerformance)
+@router.get("/performance/{timeframe}", response_model=DashboardPerformance)
 async def retrieve_performance_frequency(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
     top_n: int | None = None,
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    frequency: Optional[TimeFrequency] = Query(None),
 ) -> DashboardPerformance:
     """
     Retrieve timeseries data on content usage and performance of each content
     """
-
-    today = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(time_frequency)
-
+    freq, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, frequency
+    )
     performance_stats = await retrieve_performance(
         user_id=user_db.user_id,
         asession=asession,
         top_n=top_n,
-        start_date=start_date,
-        end_date=today,
-        frequency=frequency,
+        start_date=start_dt,
+        end_date=end_dt,
+        frequency=freq,
     )
     return performance_stats
 
@@ -148,55 +203,33 @@ async def retrieve_performance(
         end_date=end_date,
         frequency=frequency,
     )
-
     return DashboardPerformance(content_time_series=content_time_series)
 
 
-@router.get("/overview/{time_frequency}", response_model=DashboardOverview)
+@router.get("/overview/{timeframe}", response_model=DashboardOverview)
 async def retrieve_overview_frequency(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     asession: AsyncSession = Depends(get_async_session),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    frequency: Optional[TimeFrequency] = None,
 ) -> DashboardOverview:
     """
     Retrieve all question answer statistics for the last day.
     """
-
-    today = datetime.now(timezone.utc)
-    frequency, start_date = get_frequency_and_startdate(time_frequency)
-
+    # Use renamed start_dt/ end_dt to avoid typing errors etc.
+    freq, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, frequency
+    )
     stats = await retrieve_overview(
         user_id=user_db.user_id,
         asession=asession,
-        start_date=start_date,
-        end_date=today,
-        frequency=frequency,
+        start_date=start_dt,
+        end_date=end_dt,
+        frequency=freq,
     )
-
     return stats
-
-
-def get_frequency_and_startdate(
-    time_frequency: DashboardTimeFilter,
-) -> Tuple[TimeFrequency, datetime]:
-    """
-    Get the time frequency and start date based on the time filter
-    """
-    match time_frequency:
-        case "day":
-            return TimeFrequency.Hour, datetime.now(timezone.utc) - timedelta(days=1)
-        case "week":
-            return TimeFrequency.Day, datetime.now(timezone.utc) - timedelta(weeks=1)
-        case "month":
-            return TimeFrequency.Day, datetime.now(timezone.utc) + relativedelta(
-                months=-1
-            )
-        case "year":
-            return TimeFrequency.Month, datetime.now(timezone.utc) + relativedelta(
-                years=-1
-            )
-        case _:
-            raise ValueError(f"Invalid time frequency: {time_frequency}")
 
 
 async def retrieve_overview(
@@ -208,7 +241,6 @@ async def retrieve_overview(
     top_n: int = 4,
 ) -> DashboardOverview:
     """Retrieve all question answer statistics.
-
     Parameters
     ----------
     user_id
@@ -223,13 +255,11 @@ async def retrieve_overview(
         The frequency at which to retrieve the statistics.
     top_n
         The number of top content to retrieve.
-
     Returns
     -------
     DashboardOverview
         The dashboard overview statistics.
     """
-
     stats = await get_stats_cards(
         user_id=user_id,
         asession=asession,
@@ -266,135 +296,132 @@ async def retrieve_overview(
     )
 
 
-@router.get("/insights/{time_frequency}/refresh", response_model=dict)
+@router.get("/insights/{timeframe}/refresh", response_model=dict)
 async def refresh_insights_frequency(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
+    background_tasks: BackgroundTasks,
     asession: AsyncSession = Depends(get_async_session),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ) -> dict:
     """
     Refresh topic modelling insights for the time period specified.
     """
-
-    _, start_date = get_frequency_and_startdate(time_frequency)
-
-    topic_output = await refresh_insights(
-        time_frequency=time_frequency,
-        user_db=user_db,
-        request=request,
-        start_date=start_date,
-        asession=asession,
+    # TimeFrequency doens't actually matter here (but still required) so we just
+    # pass day to get the start and end date
+    _, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, TimeFrequency.Day
     )
 
-    return topic_output.dict()
+    background_tasks.add_task(
+        refresh_insights,
+        timeframe=timeframe,
+        user_db=user_db,
+        request=request,
+        start_date=start_dt,
+        end_date=end_dt,
+        asession=asession,
+    )
+    return {"detail": "Refresh task started in background."}
 
 
 async def refresh_insights(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
     start_date: date,
+    end_date: date,
     asession: AsyncSession = Depends(get_async_session),
-) -> TopicsData:
+) -> None:
     """
     Retrieve topic modelling insights for the time period specified
     and write to Redis.
+    Returns None since this function is called by a background task +
+    only ever writes to Redis.
     """
     redis = request.app.state.redis
+    await redis.set(
+        f"{user_db.username}_insights_{timeframe}_results",
+        TopicsData(
+            status="in_progress",
+            refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+            data=[],
+        ).model_dump_json(),
+    )
     try:
+        step = "Retrieve queries"
         time_period_queries = await get_raw_queries(
             user_id=user_db.user_id,
             asession=asession,
             start_date=start_date,
+            end_date=end_date,
         )
-
-        # set the key to "in_progress" to help with front-end loading UX
-        await redis.set(
-            f"{user_db.username}_insights_{time_frequency}_results",
-            TopicsData(
-                status="in_progress",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                data=[],
-            ).model_dump_json(),
-        )
-
+        step = "Retrieve contents"
         content_data = await get_raw_contents(
             user_id=user_db.user_id, asession=asession
         )
-
         topic_output, embeddings_df = await topic_model_queries(
             user_id=user_db.user_id,
             query_data=time_period_queries,
             content_data=content_data,
         )
-
+        step = "Write to Redis"
         embeddings_json = embeddings_df.to_json(orient="split")
-        embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
+        embeddings_key = f"{user_db.username}_embeddings_{timeframe}"
         await redis.set(embeddings_key, embeddings_json)
-
         await redis.set(
-            f"{user_db.username}_insights_{time_frequency}_results",
+            f"{user_db.username}_insights_{timeframe}_results",
             topic_output.model_dump_json(),
         )
-        return topic_output
-
+        return
     except Exception as e:
-        logger.warning(f"Topic modelling system error: {str(e)}")
-        raise e
+        error_msg = str(e)
+        logger.error(error_msg)
+        await redis.set(
+            f"{user_db.username}_insights_{timeframe}_results",
+            TopicsData(
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+                error_message=error_msg,
+                failure_step=step if step else None,
+            ).model_dump_json(),
+        )
 
 
-@router.get("/insights/{time_frequency}", response_model=TopicsData)
+@router.get("/insights/{timeframe}", response_model=TopicsData)
 async def retrieve_insights_frequency(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ) -> TopicsData:
     """
     Retrieve topic modelling insights for the time period specified.
     """
-
     redis = request.app.state.redis
-
-    if await redis.exists(f"{user_db.username}_insights_{time_frequency}_results"):
-        payload = await redis.get(
-            f"{user_db.username}_insights_{time_frequency}_results"
-        )
+    key = f"{user_db.username}_insights_{timeframe}_results"
+    if await redis.exists(key):
+        payload = await redis.get(key)
         parsed_payload = json.loads(payload)
-        topics_data = TopicsData(**parsed_payload)
-        return topics_data
-
-    return TopicsData(
-        status="not_started",
-        refreshTimeStamp="",
-        data=[],
-    )
+        return TopicsData(**parsed_payload)
+    return TopicsData(status="not_started", refreshTimeStamp="", data=[])
 
 
-@router.get("/topic_visualization/{time_frequency}", response_model=dict)
+@router.get("/topic_visualization/{timeframe}", response_model=dict)
 async def create_plot(
-    time_frequency: DashboardTimeFilter,
+    timeframe: DashboardTimeFilter,
     user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
 ) -> dict:
     """Creates a Bokeh plot based on embeddings data retrieved from Redis."""
-
-    # Get Redis client
     redis = request.app.state.redis
-
-    # Define the Redis key
-    embeddings_key = f"{user_db.username}_embeddings_{time_frequency}"
-
-    # Get the embeddings JSON from Redis
+    embeddings_key = f"{user_db.username}_embeddings_{timeframe}"
     embeddings_json = await redis.get(embeddings_key)
-    if embeddings_json is None:
-        # Handle missing data
+    if not embeddings_json:
         raise HTTPException(status_code=404, detail="Embeddings data not found")
-
-    # Decode and parse the JSON
-    embeddings_json = embeddings_json.decode("utf-8")
-    embeddings_df = pd.read_json(embeddings_json, orient="split")
-
-    # Create the Bokeh plot
-    bokeh_plot_json = produce_bokeh_plot(embeddings_df)
-    return bokeh_plot_json
+    df = pd.read_json(embeddings_json.decode("utf-8"), orient="split")
+    return produce_bokeh_plot(df)

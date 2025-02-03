@@ -251,7 +251,6 @@ def get_time_labels_query(
     ValueError
         If the frequency is invalid.
     """
-
     match frequency:
         case TimeFrequency.Day:
             interval_str = "day"
@@ -338,24 +337,33 @@ async def get_timeseries_query(
     statement = (
         select(
             ts_labels.c.time_period,
-            # Count of negative
+            # negative count
             func.coalesce(
                 func.count(
                     case(
-                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                        (
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                ResponseFeedbackDB.feedback_sentiment == "negative",
+                            ),
+                            1,
+                        ),
                         else_=None,
                     )
                 ),
                 0,
             ).label("negative_feedback_count"),
-            # Count of non-negative or no feedback at all
+            # non-negative count
             func.coalesce(
                 func.count(
                     case(
                         (
-                            or_(
-                                ResponseFeedbackDB.feedback_sentiment.is_(None),
-                                ResponseFeedbackDB.feedback_sentiment != "negative",
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                or_(
+                                    ResponseFeedbackDB.feedback_sentiment.is_(None),
+                                    ResponseFeedbackDB.feedback_sentiment != "negative",
+                                ),
                             ),
                             1,
                         ),
@@ -368,12 +376,12 @@ async def get_timeseries_query(
         .select_from(ts_labels)
         .outerjoin(
             QueryDB,
-            func.date_trunc(interval_str, QueryDB.query_datetime_utc)
-            == func.date_trunc(interval_str, ts_labels.c.time_period),
+            and_(
+                QueryDB.user_id == user_id,
+                func.date_trunc(interval_str, QueryDB.query_datetime_utc)
+                == func.date_trunc(interval_str, ts_labels.c.time_period),
+            ),
         )
-        .where(QueryDB.user_id == user_id)
-        # Outer-join feedback so that queries with no feedback have a NULL
-        # feedback_sentiment
         .outerjoin(
             ResponseFeedbackDB,
             ResponseFeedbackDB.query_id == QueryDB.query_id,
@@ -1292,6 +1300,7 @@ async def get_raw_queries(
     asession: AsyncSession,
     user_id: int,
     start_date: date,
+    end_date: date,
 ) -> list[UserQuery]:
     """
     Retrieve N_SAMPLES_TOPIC_MODELING randomly sampled raw queries (query_text) and
@@ -1317,6 +1326,7 @@ async def get_raw_queries(
         .where(
             (QueryDB.user_id == user_id)
             & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
             & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
         )
         .order_by(func.random())

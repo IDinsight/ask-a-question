@@ -1,6 +1,11 @@
-type Period = "day" | "week" | "month" | "year";
+type Period = "day" | "week" | "month" | "year" | "custom";
 type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
-
+type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
+interface CustomDateParams {
+  startDate: string | null;
+  endDate: string | null;
+  frequency: CustomDashboardFrequency;
+}
 interface DrawerData {
   title: string;
   query_count: number;
@@ -82,6 +87,8 @@ interface TopicModelingResponse {
   refreshTimeStamp: string;
   data: TopicModelingData[];
   unclustered_queries: QueryData[];
+  error_message: string;
+  failure_step: string;
 }
 
 interface TopicData {
@@ -104,6 +111,9 @@ export type {
   TopicData,
   TopicModelingData,
   TopicModelingResponse,
+  Status,
+  CustomDateParams,
+  CustomDashboardFrequency,
 };
 
 export { drawerWidth };
