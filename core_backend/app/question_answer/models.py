@@ -405,30 +405,7 @@ async def save_query_response_to_db(
         If the response type is invalid.
     """
 
-    if type(response) is QueryResponse:
-        user_query_responses_db = QueryResponseDB(
-            debug_info=response.model_dump()["debug_info"],
-            is_error=False,
-            llm_response=response.model_dump()["llm_response"],
-            query_id=user_query_db.query_id,
-            response_datetime_utc=datetime.now(timezone.utc),
-            search_results=response.model_dump()["search_results"],
-            session_id=user_query_db.session_id,
-            workspace_id=workspace_id,
-        )
-    elif type(response) is QueryAudioResponse:
-        user_query_responses_db = QueryResponseDB(
-            debug_info=response.model_dump()["debug_info"],
-            is_error=False,
-            llm_response=response.model_dump()["llm_response"],
-            query_id=user_query_db.query_id,
-            response_datetime_utc=datetime.now(timezone.utc),
-            search_results=response.model_dump()["search_results"],
-            session_id=user_query_db.session_id,
-            tts_filepath=response.model_dump()["tts_filepath"],
-            workspace_id=workspace_id,
-        )
-    elif type(response) is QueryResponseError:
+    if isinstance(response, QueryResponseError):
         user_query_responses_db = QueryResponseDB(
             debug_info=response.model_dump()["debug_info"],
             error_message=response.error_message,
@@ -440,6 +417,29 @@ async def save_query_response_to_db(
             search_results=response.model_dump()["search_results"],
             session_id=user_query_db.session_id,
             tts_filepath=None,
+            workspace_id=workspace_id,
+        )
+    elif isinstance(response, QueryAudioResponse):
+        user_query_responses_db = QueryResponseDB(
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+            llm_response=response.model_dump()["llm_response"],
+            query_id=user_query_db.query_id,
+            response_datetime_utc=datetime.now(timezone.utc),
+            search_results=response.model_dump()["search_results"],
+            session_id=user_query_db.session_id,
+            tts_filepath=response.model_dump()["tts_filepath"],
+            workspace_id=workspace_id,
+        )
+    elif isinstance(response, QueryResponse):
+        user_query_responses_db = QueryResponseDB(
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+            llm_response=response.model_dump()["llm_response"],
+            query_id=user_query_db.query_id,
+            response_datetime_utc=datetime.now(timezone.utc),
+            search_results=response.model_dump()["search_results"],
+            session_id=user_query_db.session_id,
             workspace_id=workspace_id,
         )
     else:

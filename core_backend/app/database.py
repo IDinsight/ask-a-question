@@ -1,5 +1,6 @@
 """This module contains functions for managing database connections."""
 
+# pylint: disable=global-statement
 import contextlib
 import os
 from collections.abc import AsyncGenerator, Generator
@@ -117,10 +118,10 @@ def get_session_context_manager() -> ContextManager[Session]:
 
 
 def get_session() -> Generator[Session, None, None]:
-    """Return a SQLAlchemy session generator.
+    """Yield a SQLAlchemy session generator.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[Session, None, None]
         A SQLAlchemy session generator.
     """
@@ -130,10 +131,10 @@ def get_session() -> Generator[Session, None, None]:
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Return a SQLAlchemy async session.
+    """Yield a SQLAlchemy async session.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[AsyncSession, None]
         An async session generator.
     """

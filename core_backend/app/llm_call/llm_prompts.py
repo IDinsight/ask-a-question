@@ -140,6 +140,8 @@ class AlignmentScore(BaseModel):
 
 
 class ChatHistory:
+    """Contains the prompts and models for the chat history task."""
+
     _valid_message_types = ["FOLLOW-UP", "NEW"]
     system_message_construct_search_query = format_prompt(
         prompt=textwrap.dedent(
@@ -600,17 +602,11 @@ class UrgencyDetectionEntailment:
         json_str = remove_json_markdown(text=json_str)
 
         # fmt: off
-        ud_entailment_result = (
-            UrgencyDetectionEntailment
-                .UrgencyDetectionEntailmentResult
-                .model_validate_json(
-                    json_str
-                )
-            )
+        ud_entailment_result = UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult.model_validate_json(json_str)  # noqa: E501
         # fmt: on
 
-        # TODO: This is a temporary fix to remove the number and the dot from the rule
-        # returned by the LLM.
+        # TODO: This is a temporary fix to remove the number  # pylint: disable=W0511
+        #  and the dot from the rule returned by the LLM.
         ud_entailment_result.best_matching_rule = re.sub(
             r"^\d+\.\s", "", ud_entailment_result.best_matching_rule
         )
@@ -665,10 +661,10 @@ def get_feedback_summary_prompt(*, content: str, content_title: str) -> str:
 
     ai_feedback_summary_prompt = textwrap.dedent(
         """
-        The following is a list of feedback provided by the user for a content share 
-        with them. Summarize the key themes in the list of feedback text into a few 
-        sentences. Suggest ways to address their feedback where applicable. Your 
-        response should be no longer than 50 words and NOT be in dot point. Do not 
+        The following is a list of feedback provided by the user for a content share
+        with them. Summarize the key themes in the list of feedback text into a few
+        sentences. Suggest ways to address their feedback where applicable. Your
+        response should be no longer than 50 words and NOT be in dot point. Do not
         include headers.
 
         <CONTENT_TITLE>

@@ -16,7 +16,9 @@ scenarios("core_backend/first_user_registration.feature")
 
 # Backgrounds.
 @given("An empty database")
-def reset_databases(clean_user_and_workspace_dbs: pytest.FixtureRequest) -> None:
+def reset_databases(  # pylint: disable=W0613
+    clean_user_and_workspace_dbs: pytest.FixtureRequest,
+) -> None:
     """Reset the `UserDB` and `WorkspaceDB` tables.
 
     Parameters
@@ -24,8 +26,6 @@ def reset_databases(clean_user_and_workspace_dbs: pytest.FixtureRequest) -> None
     clean_user_and_workspace_dbs
         The fixture to clean the `UserDB` and `WorkspaceDB` tables.
     """
-
-    pass
 
 
 # Scenarios.
@@ -144,13 +144,18 @@ def verify_workspace_and_role_for_tony(
     "Tony tries to register Mark as a first user",
     target_fixture="register_mark_response",
 )
-def try_to_register_mark(client: TestClient) -> dict[str, Any]:
+def try_to_register_mark(client: TestClient) -> httpx.Response:
     """Try to register Mark as a user.
 
     Parameters
     ----------
     client
         The test client for the FastAPI application.
+
+    Returns
+    -------
+    httpx.Response
+        The response from trying to register Mark as a user.
     """
 
     response = client.get("/user/require-register")
@@ -169,14 +174,12 @@ def try_to_register_mark(client: TestClient) -> dict[str, Any]:
 
 @then("Tony should not be allowed to register Mark as the first user")
 def check_that_mark_is_not_allowed_to_register(
-    client: TestClient, register_mark_response: httpx.Response
+    register_mark_response: httpx.Response,
 ) -> None:
     """Check that Mark is not allowed to be registered as the first user.
 
     Parameters
     ----------
-    client
-        The test client for the FastAPI application.
     register_mark_response
         The response from trying to register Mark as a user.
     """

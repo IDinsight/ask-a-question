@@ -19,7 +19,7 @@ LANGUAGE_FILE = "data/language_identification.yaml"
 def available_languages() -> list[str]:
     """Returns a list of available languages."""
 
-    return [lang for lang in IdentifiedLanguage]
+    return list(IdentifiedLanguage)
 
 
 def read_test_data(file: str) -> list[tuple[str, str]]:
@@ -27,7 +27,7 @@ def read_test_data(file: str) -> list[tuple[str, str]]:
 
     file_path = Path(__file__).parent / file
 
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = yaml.safe_load(f)
         return [(key, value) for key, values in content.items() for value in values]
 

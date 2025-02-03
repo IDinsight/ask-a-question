@@ -1,5 +1,6 @@
 """This module contains fixtures for the API tests."""
 
+# pylint: disable=W0613, W0621
 import json
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Callable, Generator, Optional
@@ -127,8 +128,8 @@ async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, No
     async_engine
         Async engine for testing.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[AsyncSession, None]
         Async session for testing.
     """
@@ -145,8 +146,8 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     test. Without this we get "Future attached to different loop" error. See:
     https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[AsyncEngine, None, None]
         Async engine for testing.
     """  # noqa: E501
@@ -196,8 +197,8 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
     patch_llm_call
         Pytest fixture request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[TestClient, None, None]
         Test client.
     """
@@ -211,8 +212,8 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
 def db_session() -> Generator[Session, None, None]:
     """Create a test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[Session, None, None]
         Test database session.
     """
@@ -647,8 +648,8 @@ def existing_tag_id_in_workspace_1(
     request
         Pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[str, None, None]
         Tag ID.
     """
@@ -680,8 +681,8 @@ async def faq_contents_in_workspace_1(
     admin_user_1_in_workspace_1
         Admin user 1 in workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -692,7 +693,7 @@ async def faq_contents_in_workspace_1(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -747,8 +748,8 @@ async def faq_contents_in_workspace_data_api_1(
     admin_user_data_api_1_in_workspace_data_api_1
         Data API admin user 1 in the data API workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -759,7 +760,7 @@ async def faq_contents_in_workspace_data_api_1(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -814,8 +815,8 @@ async def faq_contents_in_workspace_data_api_2(
     admin_user_data_api_2_in_workspace_data_api_2
         Data API admin user 2 in the data API workspace 2.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -826,7 +827,7 @@ async def faq_contents_in_workspace_data_api_2(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -878,8 +879,8 @@ def monkeysession(
     request
         Pytest fixture request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[pytest.MonkeyPatch, None, None]
         Monkeypatch for the session.
     """
@@ -960,8 +961,8 @@ async def read_only_user_1_in_workspace_1(
 async def redis_client() -> AsyncGenerator[aioredis.Redis, None]:
     """Create a redis client for testing.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[aioredis.Redis, None, None]
         Redis client for testing.
     """
@@ -990,8 +991,8 @@ def temp_workspace_api_key_and_api_quota(
     request
         Pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[tuple[str, int], None, None]
         Temporary workspace API key and API quota.
     """
@@ -1063,8 +1064,8 @@ def temp_workspace_token_and_quota(
     request
         The pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[tuple[str, int], None, None]
         The access token and content quota for the temporary workspace.
     """
@@ -1127,13 +1128,13 @@ async def urgency_rules_workspace_1(
     workspace_1_id
         The ID for workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in workspace 1.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1177,13 +1178,13 @@ async def urgency_rules_workspace_data_api_1(
     workspace_data_api_id_1
         The ID for the data API workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in the data API workspace 1.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1227,13 +1228,13 @@ async def urgency_rules_workspace_data_api_2(
     workspace_data_api_id_2
         The ID for the data API workspace 2.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in the data API workspace 2.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1273,8 +1274,8 @@ def workspace_1_id(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Workspace 1 ID.
     """
@@ -1296,8 +1297,8 @@ def workspace_data_api_id_1(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Data API workspace 1 ID.
     """
@@ -1319,8 +1320,8 @@ def workspace_data_api_id_2(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Data API workspace 2 ID.
     """

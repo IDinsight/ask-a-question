@@ -257,7 +257,9 @@ async def validate_tags(
     tags_db = (await asession.execute(stmt)).all()
     tag_rows = [c[0] for c in tags_db] if tags_db else []
     if len(tags) != len(tag_rows):
-        invalid_tags = set(tags) - set([c[0].tag_id for c in tags_db])
+        invalid_tags = set(tags) - set(  # pylint: disable=R1718
+            [c[0].tag_id for c in tags_db]
+        )
         return False, list(invalid_tags)
     return True, tag_rows
 

@@ -26,8 +26,8 @@ def existing_tag_id_in_workspace_1(
     request
         Pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[str, None, None]
         Tag ID.
     """

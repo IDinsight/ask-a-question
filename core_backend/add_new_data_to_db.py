@@ -1,5 +1,6 @@
 """This script is used to add new data to the database for testing purposes."""
 
+# pylint: disable=E0606, W0718
 import argparse
 import json
 import random
@@ -199,6 +200,7 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
                 "Authorization": f"Bearer {API_KEY}",
             },
             json=data,
+            timeout=600,
             verify=False,
         )
         response.raise_for_status()
@@ -208,12 +210,12 @@ def save_single_row(endpoint: str, data: dict, retries: int = 2) -> dict | None:
             # Implement exponential wait before retrying.
             time.sleep(2 ** (2 - retries))
             return save_single_row(endpoint, data, retries=retries - 1)
-        else:
-            print(f"Request failed after retries: {e}")
-            return None
+
+        print(f"Request failed after retries: {e}")
+        return None
 
 
-def process_search(_id: int, text: str) -> tuple | None:
+def process_search(_id: int, text: str) -> tuple | None:  # pylint: disable=W9019
     """Process and add query to DB.
 
     Parameters
@@ -363,7 +365,9 @@ def process_content_feedback(
     return None
 
 
-def process_urgency_detection(_id: int, text: str) -> tuple | None:
+def process_urgency_detection(  # pylint: disable=W9019
+    _id: int, text: str
+) -> tuple | None:
     """Process and add urgency detection to DB.
 
     Parameters
@@ -388,14 +392,14 @@ def process_urgency_detection(_id: int, text: str) -> tuple | None:
     return None
 
 
-def create_random_datetime(start_date: datetime, end_date: datetime) -> datetime:
+def create_random_datetime(start_date_: datetime, end_date_: datetime) -> datetime:
     """Create a random datetime from a date within a range.
 
     Parameters
     ----------
-    start_date
+    start_date_
         The start date.
-    end_date
+    end_date_
         The end date.
 
     Returns
@@ -404,11 +408,11 @@ def create_random_datetime(start_date: datetime, end_date: datetime) -> datetime
         The random datetime.
     """
 
-    time_difference = end_date - start_date
+    time_difference = end_date_ - start_date_
     random_number_of_days = random.randint(0, time_difference.days)
 
     random_number_of_seconds = random.randint(0, 86399)
-    random_datetime = start_date + timedelta(
+    random_datetime = start_date_ + timedelta(
         days=random_number_of_days, seconds=random_number_of_seconds
     )
     return random_datetime
@@ -461,10 +465,9 @@ def generate_distributed_dates(n: int, start: datetime, end: datetime) -> list:
             # Within time range or 30% chance.
             if is_within_time_range(date) or random.random() < 0.4:
                 dates.append(date)
-        else:
-            if random.random() < 0.6:
-                if is_within_time_range(date) or random.random() < 0.55:
-                    dates.append(date)
+        elif random.random() < 0.6:
+            if is_within_time_range(date) or random.random() < 0.55:
+                dates.append(date)
 
     return dates
 
@@ -472,8 +475,8 @@ def generate_distributed_dates(n: int, start: datetime, end: datetime) -> list:
 def update_date_of_records(
     models: list,
     api_key: str,
-    start_date: datetime,
-    end_date: datetime,
+    start_date_: datetime,
+    end_date_: datetime,
 ) -> None:
     """Update the date of the records in the database.
 
@@ -483,9 +486,9 @@ def update_date_of_records(
         The models to update.
     api_key
         The API key.
-    start_date
+    start_date_
         The start date.
-    end_date
+    end_date_
         The end date.
     """
 
@@ -499,7 +502,7 @@ def update_date_of_records(
         for c in session.query(QueryDB).all()
         if c.workspace_id == workspace.workspace_id
     ]
-    random_dates = generate_distributed_dates(len(queries), start_date, end_date)
+    random_dates = generate_distributed_dates(len(queries), start_date_, end_date_)
 
     # Create a dictionary to map the `query_id` to the random date.
     date_map_dic = {queries[i].query_id: random_dates[i] for i in range(len(queries))}

@@ -442,7 +442,7 @@ async def init_chat_history(
     logger.info(f"Initializing chat parameters for session: {session_id}")
     model_info_endpoint = LITELLM_ENDPOINT.rstrip("/") + "/model/info"
     model_info = requests.get(
-        model_info_endpoint, headers={"accept": "application/json"}
+        model_info_endpoint, headers={"accept": "application/json"}, timeout=600
     ).json()
     for dict_ in model_info["data"]:
         if dict_["model_name"] == "chat":
@@ -525,7 +525,7 @@ def remove_json_markdown(*, text: str) -> str:
     text = text.strip()
     if text.startswith("```") and text.endswith("```"):
         text = text.removeprefix("```json").removesuffix("```")
-    text = text.replace("\{", "{").replace("\}", "}")
+    text = text.replace(r"\{", "{").replace(r"\}", "}")
     return text.strip()
 
 

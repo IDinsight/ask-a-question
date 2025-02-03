@@ -38,6 +38,8 @@ N_RESPONSE_FEEDBACKS = 3
 
 
 class MockDatetime:
+    """Mock the datetime object."""
+
     def __init__(self, *, date: datetime) -> None:
         """Initialize the mock datetime object.
 
@@ -116,8 +118,8 @@ class TestContentDataAPI:
         client
             The test client.
 
-        Returns
-        -------
+        Yields
+        ------
         AsyncGenerator[str, None]
             The tag name.
         """
@@ -271,8 +273,8 @@ class TestUrgencyQueryDataAPI:
         workspace_data_api_id_1
             The ID of the data API workspace 1.
 
-        Returns
-        -------
+        Yields
+        ------
         AsyncGenerator[None, None]
             The urgency query data.
         """
@@ -334,8 +336,8 @@ class TestUrgencyQueryDataAPI:
         workspace_data_api_id_2
             The ID of data API workspace 2.
 
-        Returns
-        -------
+        Yields
+        ------
         AsyncGenerator[int, None]
             The number of days ago.
         """
@@ -442,15 +444,16 @@ class TestUrgencyQueryDataAPI:
                 n_records = 0
             else:
                 n_records = N_DAYS_HISTORY - days_ago_end + 1
-        else:  # days_ago_start < N_DAYS_HISTORY
-            if days_ago_end > N_DAYS_HISTORY:
-                n_records = 0
-            elif days_ago_end == N_DAYS_HISTORY:
-                n_records = 0
-            elif days_ago_end > days_ago_start:
-                n_records = 0
-            else:  # days_ago_end <= days_ago_start < N_DAYS_HISTORY
-                n_records = days_ago_start - days_ago_end + 1
+        # days_ago_start < N_DAYS_HISTORY
+        elif days_ago_end > N_DAYS_HISTORY:
+            n_records = 0
+        elif days_ago_end == N_DAYS_HISTORY:
+            n_records = 0
+        elif days_ago_end > days_ago_start:
+            n_records = 0
+        # days_ago_end <= days_ago_start < N_DAYS_HISTORY
+        else:
+            n_records = days_ago_start - days_ago_end + 1
 
         assert len(response.json()) == n_records
 
@@ -530,8 +533,8 @@ class TestQueryDataAPI:
         workspace_data_api_id_1
             The ID of data API workspace 1.
 
-        Returns
-        -------
+        Yields
+        ------
         AsyncGenerator[None, None]
             The data of workspace 1.
         """
@@ -653,8 +656,8 @@ class TestQueryDataAPI:
         workspace_data_api_id_2
             The ID of data API workspace 2.
 
-        Returns
-        -------
+        Yields
+        ------
         AsyncGenerator[int, None]
             The number of days ago.
         """
@@ -755,15 +758,16 @@ class TestQueryDataAPI:
                 n_records = 0
             else:
                 n_records = N_DAYS_HISTORY - days_ago_end + 1
-        else:  # days_ago_start < N_DAYS_HISTORY
-            if days_ago_end > N_DAYS_HISTORY:
-                n_records = 0
-            elif days_ago_end == N_DAYS_HISTORY:
-                n_records = 0
-            elif days_ago_end > days_ago_start:
-                n_records = 0
-            else:  # days_ago_end <= days_ago_start < N_DAYS_HISTORY
-                n_records = days_ago_start - days_ago_end + 1
+        # days_ago_start < N_DAYS_HISTORY
+        elif days_ago_end > N_DAYS_HISTORY:
+            n_records = 0
+        elif days_ago_end == N_DAYS_HISTORY:
+            n_records = 0
+        elif days_ago_end > days_ago_start:
+            n_records = 0
+        # days_ago_end <= days_ago_start < N_DAYS_HISTORY
+        else:
+            n_records = days_ago_start - days_ago_end + 1
 
         assert len(response.json()) == n_records
 

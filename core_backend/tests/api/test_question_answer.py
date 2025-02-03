@@ -783,7 +783,7 @@ class TestSTTResponse:
             (True, 500, {}),
         ],
     )
-    def test_voice_search(
+    def test_voice_search(  # pylint: disable=R1260
         self,
         is_authorized: bool,
         expected_status_code: int,
@@ -813,7 +813,7 @@ class TestSTTResponse:
         token = api_key_workspace_1 if is_authorized else "api_key_incorrect"
 
         async def dummy_download_file_from_url(
-            file_url: str,
+            file_url: str,  # pylint: disable=W0613
         ) -> tuple[BytesIO, str, str]:
             """Return dummy audio content.
 
@@ -830,7 +830,9 @@ class TestSTTResponse:
 
             return BytesIO(b"fake audio content"), "audio/mpeg", "mp3"
 
-        async def dummy_post_to_speech_stt(file_path: str, endpoint_url: str) -> dict:
+        async def dummy_post_to_speech_stt(  # pylint: disable=W0613
+            file_path: str, endpoint_url: str
+        ) -> dict:
             """Return dummy STT response.
 
             Parameters
@@ -855,7 +857,7 @@ class TestSTTResponse:
                 raise ValueError("Error from CUSTOM_STT_ENDPOINT")
             return mock_response
 
-        async def dummy_post_to_speech_tts(
+        async def dummy_post_to_speech_tts(  # pylint: disable=W0613
             text: str, endpoint_url: str, language: str
         ) -> BytesIO:
             """Return dummy audio content.
@@ -884,7 +886,9 @@ class TestSTTResponse:
                 raise ValueError("Error from CUSTOM_TTS_ENDPOINT")
             return BytesIO(b"fake audio content")
 
-        async def async_fake_transcribe_audio(*args: Any, **kwargs: Any) -> str:
+        async def async_fake_transcribe_audio(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> str:
             """Return transcribed text.
 
             Parameters
@@ -909,7 +913,9 @@ class TestSTTResponse:
                 raise ValueError("Error from External STT service")
             return "transcribed text"
 
-        async def async_fake_generate_tts_on_gcs(*args: Any, **kwargs: Any) -> BytesIO:
+        async def async_fake_generate_tts_on_gcs(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> BytesIO:
             """Return dummy audio content.
 
             Parameters
@@ -1083,7 +1089,9 @@ class TestErrorResponses:
             workspace_id=124,
         )
 
-        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+        async def mock_ask_llm(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> str:
             """Return the identified language string.
 
             Parameters
@@ -1147,7 +1155,9 @@ class TestErrorResponses:
             The user query response object.
         """
 
-        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+        async def mock_ask_llm(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> str:
             """Mock the LLM response.
 
             Parameters
@@ -1195,7 +1205,9 @@ class TestErrorResponses:
             The user query response object.
         """
 
-        async def mock_ask_llm(*args: Any, **kwargs: Any) -> str:
+        async def mock_ask_llm(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> str:
             """Mock the LLM response.
 
             Parameters
@@ -1259,7 +1271,9 @@ class TestErrorResponses:
             The user query response object.
         """
 
-        async def mock_ask_llm(llm_response: str, *args: Any, **kwargs: Any) -> str:
+        async def mock_ask_llm(  # pylint: disable=W0613
+            llm_response: str, *args: Any, **kwargs: Any
+        ) -> str:
             """Mock the LLM response.
 
             Parameters
@@ -1337,7 +1351,9 @@ class TestAlignScore:
             The user query response.
         """
 
-        async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+        async def mock_get_align_score(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> AlignmentScore:
             """Mock the alignment score.
 
             Parameters
@@ -1380,7 +1396,9 @@ class TestAlignScore:
             The user query response.
         """
 
-        async def mock_get_align_score(*args: Any, **kwargs: Any) -> AlignmentScore:
+        async def mock_get_align_score(  # pylint: disable=W0613
+            *args: Any, **kwargs: Any
+        ) -> AlignmentScore:
             """Mock the alignment score.
 
             Parameters

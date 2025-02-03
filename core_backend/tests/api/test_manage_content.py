@@ -41,8 +41,8 @@ def existing_content_id_in_workspace_1(
     request
         The pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[str, None, None]
         The content ID of the created content record in workspace 1.
     """
@@ -165,7 +165,7 @@ class TestContentQuota:
             The temporary workspace token and content quota.
         """
 
-        temp_workspace_token, content_quota = temp_workspace_token_and_quota
+        temp_workspace_token, _ = temp_workspace_token_and_quota
 
         # In this case we need to just be able to add content.
         response = client.post(

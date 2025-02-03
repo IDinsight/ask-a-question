@@ -1,5 +1,6 @@
 """This module contains tests for urgency rules endpoints."""
 
+# pylint: disable=W0621
 from datetime import datetime, timezone
 from typing import Generator
 
@@ -36,8 +37,8 @@ def existing_rule_id_in_workspace_1(
     request
         Pytest fixture request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[str, None, None]
         The urgency rule ID.
     """
@@ -242,7 +243,7 @@ class TestMultiUserManageUDRules:
     """Tests for managing urgency rules by multiple users."""
 
     @staticmethod
-    def admin_2_get_admin_1_ud_rule(
+    def test_admin_2_get_admin_1_ud_rule(
         access_token_admin_2: str,
         client: TestClient,
         existing_rule_id_in_workspace_1: str,
@@ -266,7 +267,7 @@ class TestMultiUserManageUDRules:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def admin_2_edit_admin_1_ud_rule(
+    def test_admin_2_edit_admin_1_ud_rule(
         access_token_admin_2: str,
         client: TestClient,
         existing_rule_id_in_workspace_1: str,
@@ -294,7 +295,7 @@ class TestMultiUserManageUDRules:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def user2_delete_user1_ud_rule(
+    def test_user2_delete_user1_ud_rule(
         access_token_admin_2: str,
         client: TestClient,
         existing_rule_id_in_workspace_1: str,

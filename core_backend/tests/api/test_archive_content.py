@@ -29,8 +29,8 @@ class TestArchiveContent:
         client
             The test client.
 
-        Returns
-        -------
+        Yields
+        ------
         tuple[int, str, int]
             The content ID, content text, and workspace ID.
         """

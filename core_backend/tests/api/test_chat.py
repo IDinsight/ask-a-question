@@ -382,7 +382,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             }
         ]
         await redis_client.set(chat_cache_key, json.dumps(altered_chat_history))
-        _, _, new_chat_history, new_chat_params = await init_chat_history(
+        _, _, new_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=False, session_id=session_id
         )
         assert new_chat_history == [
@@ -417,7 +417,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
     with patch(
         "core_backend.app.llm_call.utils.requests.get", return_value=mock_response
     ):
-        _, _, reset_chat_history, new_chat_params = await init_chat_history(
+        _, _, reset_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=True, session_id=session_id
         )
         assert reset_chat_history == [
