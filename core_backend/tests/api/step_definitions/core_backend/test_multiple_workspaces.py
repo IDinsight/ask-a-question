@@ -1,4 +1,4 @@
-"""This module contains scenarios for testing the first user registration process."""
+"""This module contains scenarios for testing multiple workspaces."""
 
 from typing import Any
 
@@ -11,7 +11,7 @@ from pytest_bdd import given, scenarios, then, when
 from core_backend.app.users.schemas import UserRoles
 
 # Define scenario(s).
-scenarios("core_backend/first_user_registration.feature")
+scenarios("core_backend/multiple_workspaces.feature")
 
 
 # Backgrounds.
