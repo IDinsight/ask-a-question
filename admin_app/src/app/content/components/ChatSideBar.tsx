@@ -100,13 +100,13 @@ const ChatSideBar = ({
       : getResponse(question);
     responsePromise
       .then((response) => {
+        const errorMessage = response.error
+          ? response.error.error_message
+          : "LLM Response failed.";
         const responseMessage = {
           dateTime: new Date().toISOString(),
           type: "response",
-          content:
-            response.status == 200
-              ? response.llm_response
-              : response.error.error_message,
+          content: response.status == 200 ? response.llm_response : errorMessage,
           json: response,
         } as ResponseMessage;
 
@@ -116,7 +116,6 @@ const ChatSideBar = ({
         }
       })
       .catch((error: Error) => {
-        const errorMessage = "LLM Response failed.";
         processErrorMessage(error);
         setSnackMessage(error.message);
         console.error(error);
