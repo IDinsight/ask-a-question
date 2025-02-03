@@ -522,10 +522,11 @@ def remove_json_markdown(*, text: str) -> str:
         The text with the json markdown removed.
     """
 
-    json_str = text.removeprefix("```json").removesuffix("```").strip()
-    json_str = json_str.replace("\{", "{").replace("\}", "}")
-
-    return json_str
+    text = text.strip()
+    if text.startswith("```") and text.endswith("```"):
+        text = text.removeprefix("```json").removesuffix("```")
+    text = text.replace("\{", "{").replace("\}", "}")
+    return text.strip()
 
 
 async def reset_chat_history(
