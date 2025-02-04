@@ -20,7 +20,7 @@ import {
 } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 
-const CHART_COLORS = ["#ff0000", "#008000", "#0000ff", "#ff00ff", "#ff8c00"];
+const CHART_COLORS = ["#003049", "#d62828", "#f77f00", "#fcbf49", "#eae2b7"];
 const N_TOP_CONTENT = 5;
 
 interface PerformanceProps {
@@ -39,6 +39,12 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerData, setDrawerData] = useState<DrawerData | null>(null);
   const [drawerAISummary, setDrawerAISummary] = useState<string | null>(null);
+  const [selectedOrderColumn, setSelectedOrderColumn] =
+    useState<string>("Daily Average Sent");
+  const [selectedOrderDirection, setSelectedOrderDirection] = useState<
+    "ascending" | "descending"
+  >("ascending");
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     if (!token) return;
@@ -166,11 +172,20 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     });
   };
 
+  const handleSortChange = (column: string, direction: "ascending" | "descending") => {
+    setSelectedOrderColumn(column);
+    setSelectedOrderDirection(direction);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
   return (
     <>
       <DetailsDrawer
         open={drawerOpen}
-        onClose={() => (e) => setDrawerOpen(false)}
+        onClose={() => (_event) => setDrawerOpen(false)}
         data={drawerData}
         aiSummary={drawerAISummary}
       />
@@ -180,6 +195,9 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
           nTopContent={N_TOP_CONTENT}
           timePeriod={timePeriod}
           chartColors={CHART_COLORS}
+          orderBy={selectedOrderColumn}
+          orderDirection={selectedOrderDirection}
+          pageNumber={page}
         />
       </Box>
       <ContentsTable
@@ -188,6 +206,8 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
         rowsPerPage={N_TOP_CONTENT}
         chartColors={CHART_COLORS}
         onItemsToDisplayChange={(items) => setItemsToDisplay(items)}
+        onSortChange={handleSortChange}
+        onPageChange={handlePageChange}
       />
     </>
   );

@@ -27,6 +27,7 @@ interface QueryCountTimeSeriesProps {
   color: string;
   isIncreasing: boolean;
 }
+
 const QueryCountTimeSeries: React.FC<QueryCountTimeSeriesProps> = ({
   queryCount,
   color,
@@ -34,7 +35,10 @@ const QueryCountTimeSeries: React.FC<QueryCountTimeSeriesProps> = ({
   const series = [
     {
       name: "Query Count",
-      data: queryCount.map((pt) => ({ x: new Date(pt.x).toISOString(), y: pt.y })),
+      data: queryCount.map((pt) => ({
+        x: new Date(pt.x).toISOString(),
+        y: pt.y,
+      })),
     },
   ];
   const options: ApexOptions = {
@@ -62,24 +66,29 @@ interface ContentsTableProps {
   chartColors: string[];
   onClick: (content_id: number) => void;
   onItemsToDisplayChange: (items: RowDataType[]) => void;
+  onSortChange: (column: string, direction: "ascending" | "descending") => void;
+  onPageChange: (newPage: number) => void;
 }
+
 const ContentsTable: React.FC<ContentsTableProps> = ({
   rows,
   rowsPerPage,
   chartColors,
   onClick,
   onItemsToDisplayChange,
+  onSortChange,
+  onPageChange,
 }) => {
   const [page, setPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<keyof RowDataType>("query_count");
   const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("descending");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const percentageIncrease = (queryCount: number[]) => {
-    if (queryCount.length < 4) return 0;
-    const qLen = queryCount.length;
-    const lastQuarter = queryCount.slice(Math.floor((qLen * 3) / 4));
-    const thirdQuarter = queryCount.slice(
+  const percentageIncrease = (queryCounts: number[]): number => {
+    if (queryCounts.length < 4) return 0;
+    const qLen = queryCounts.length;
+    const lastQuarter = queryCounts.slice(Math.floor((qLen * 3) / 4));
+    const thirdQuarter = queryCounts.slice(
       Math.floor((qLen * 2) / 4),
       Math.floor((qLen * 3) / 4),
     );
@@ -125,16 +134,22 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   }, [displayedRows, onItemsToDisplayChange]);
 
   const handleSort = (column: keyof RowDataType) => {
+    let newOrder: "ascending" | "descending" = "descending";
     if (column === sortColumn) {
-      setSortOrder(sortOrder === "ascending" ? "descending" : "ascending");
+      newOrder = sortOrder === "ascending" ? "descending" : "ascending";
+      setSortOrder(newOrder);
     } else {
       setSortColumn(column);
       setSortOrder("descending");
     }
+    onSortChange(column.toString(), newOrder);
   };
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) =>
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
+    onPageChange(value);
+  };
+
   const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
 
   return (
