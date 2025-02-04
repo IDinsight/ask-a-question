@@ -40,7 +40,6 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
   const [drawerData, setDrawerData] = useState<DrawerData | null>(null);
   const [drawerAISummary, setDrawerAISummary] = useState<string | null>(null);
 
-  // Fetch page data and build table rows
   useEffect(() => {
     if (!token) return;
     getPerformancePageData(

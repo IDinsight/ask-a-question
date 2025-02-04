@@ -154,9 +154,9 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
                 Daily Average Sent{" "}
                 {sortColumn === "query_count" &&
                   (sortOrder === "ascending" ? (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
                     <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
                   ))}
               </Box>
             </TableCell>
@@ -171,9 +171,9 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
                 Upvotes{" "}
                 {sortColumn === "positive_votes" &&
                   (sortOrder === "ascending" ? (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
                     <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
                   ))}
               </Box>
             </TableCell>
@@ -188,9 +188,9 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
                 Downvotes{" "}
                 {sortColumn === "negative_votes" &&
                   (sortOrder === "ascending" ? (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
                     <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
                   ))}
               </Box>
             </TableCell>
@@ -205,9 +205,9 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
                 Trend{" "}
                 {sortColumn === "query_count_timeseries" &&
                   (sortOrder === "ascending" ? (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
                     <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
                   ))}
               </Box>
             </TableCell>
