@@ -69,10 +69,12 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     setDrawerAISummary(null);
     getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
       const seriesData = (key: string) =>
-        Object.entries(response.time_series).map(([period, timeseries]) => ({
-          x: new Date(period).toISOString(),
-          y: timeseries[key] as number,
-        }));
+        Object.entries(response.time_series as Record<string, any>).map(
+          ([period, timeseries]) => ({
+            x: new Date(period).toISOString(),
+            y: timeseries[key] as number,
+          }),
+        );
       setDrawerData({
         title: response.title,
         query_count: response.query_count,
@@ -100,7 +102,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
     <>
       <DetailsDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => (_) => setDrawerOpen(false)}
         data={drawerData}
         aiSummary={drawerAISummary}
       />
