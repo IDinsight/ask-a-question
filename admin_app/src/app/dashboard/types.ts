@@ -105,7 +105,6 @@ interface ContentLineChartTSData {
   color?: string;
   zIndex?: number;
 }
-
 export type {
   Period,
   TimeFrame,
@@ -124,6 +123,7 @@ export type {
   CustomDateParams,
   CustomDashboardFrequency,
   ContentLineChartTSData,
+  TopicData,
 };
 
 export { drawerWidth };

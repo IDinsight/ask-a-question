@@ -16,6 +16,7 @@ import {
   RowDataType,
   CustomDateParams,
   DrawerData,
+  ApexData,
 } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 
@@ -26,7 +27,9 @@ interface PerformanceProps {
   timePeriod: Period;
   customDateParams?: CustomDateParams;
 }
-
+interface DrawerDataInput extends DrawerData {
+  time_series: Record<string, Record<string, number>>;
+}
 const ContentPerformance: React.FC<PerformanceProps> = ({
   timePeriod,
   customDateParams,
@@ -121,45 +124,37 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     }
   };
 
-  // Parse drawer data to create the series for the drawer's line chart.
-  const parseDrawerData = (data: Record<string, any>) => {
-    function createSeriesData(
+  const parseDrawerData = (data: DrawerDataInput): DrawerData => {
+    const createSeriesData = (
       name: string,
       key: "query_count" | "positive_count" | "negative_count",
-      data: Record<string, any>,
-    ): DrawerData["line_chart_data"][0] {
+      time_series: Record<string, Record<string, number>>,
+    ): ApexData => {
       return {
         name,
-        data: Object.entries(data.time_series).map(([period, timeseries]) => {
-          const date = new Date(period);
-          return { x: String(date), y: timeseries[key] as number };
+        data: Object.entries(time_series).map(([period, timeseries]) => {
+          // Convert the period into an ISO date string.
+          const isoDate = new Date(period).toISOString();
+          return { x: isoDate, y: timeseries[key] };
         }),
       };
-    }
-    const queryCountSeriesData = createSeriesData("Total Sent", "query_count", data);
-    const positiveVotesSeriesData = createSeriesData(
-      "Total Upvotes",
-      "positive_count",
-      data,
-    );
-    const negativeVotesSeriesData = createSeriesData(
-      "Total Downvotes",
-      "negative_count",
-      data,
-    );
-    setDrawerData({
+    };
+
+    const line_chart_data: ApexData[] = [
+      createSeriesData("Total Sent", "query_count", data.time_series),
+      createSeriesData("Total Upvotes", "positive_count", data.time_series),
+      createSeriesData("Total Downvotes", "negative_count", data.time_series),
+    ];
+
+    return {
       title: data.title,
       query_count: data.query_count,
       positive_votes: data.positive_votes,
       negative_votes: data.negative_votes,
       daily_query_count_avg: data.daily_query_count_avg,
-      line_chart_data: [
-        queryCountSeriesData,
-        positiveVotesSeriesData,
-        negativeVotesSeriesData,
-      ],
       user_feedback: data.user_feedback,
-    });
+      line_chart_data,
+    };
   };
 
   return (
