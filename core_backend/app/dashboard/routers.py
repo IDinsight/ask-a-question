@@ -143,8 +143,8 @@ async def retrieve_content_ai_summary(
     """
     Retrieve AI summary of a content
     """
-    frequency, start_dt, end_dt = get_freq_start_end_date(
-        timeframe, start_date, end_date
+    _, start_dt, end_dt = get_freq_start_end_date(
+        timeframe, start_date, end_date, TimeFrequency.Day
     )
     ai_summary = await get_ai_answer_summary(
         user_id=user_db.user_id,
