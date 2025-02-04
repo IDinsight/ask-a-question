@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 """This module contains utility functions related to LLM calls."""
 
 import json
@@ -33,9 +34,34 @@ from .playbooks import ConversationPlayBook
 from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_DEFAULT, LITELLM_MODEL_GENERATION
 from ..utils import setup_logger
 
+=======
+import json
+import uuid
+from copy import deepcopy
+from typing import Any, Optional
+
+import redis.asyncio as aioredis
+
+from litellm import acompletion, model_cost, token_counter
+from termcolor import colored
+
+from .playbooks import ConversationPlayBook
+from ..config import LITELLM_API_KEY, LITELLM_ENDPOINT, LITELLM_MODEL_DEFAULT, LITELLM_MODEL_GENERATION
+from ..utils import setup_logger
+
+>>>>>>> Stashed changes
 
 logger = setup_logger("LLM_call")
 >>>>>>> Stashed changes
+
+
+ROLE_TO_COLOR = {  # For message logging purposes
+    "system": "red",
+    "user": "green",
+    "assistant": "blue",
+    "function": "magenta",
+}
+ROLES = ["assistant", "function", "system", "user"]
 
 
 ROLE_TO_COLOR = {  # For message logging purposes
@@ -129,6 +155,7 @@ async def _ask_llm_async(
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def _truncate_chat_history(
     *,
     chat_history: list[dict[str, str | None]],
@@ -140,6 +167,8 @@ def _truncate_chat_history(
     the total token limit of the model (but maintains the initial system message if
     any) and effectively mimics an infinite chat buffer.
 =======
+=======
+>>>>>>> Stashed changes
 async def _get_response(
     *,
     client: aioredis.Redis,
@@ -1123,4 +1152,7 @@ async def summarize_conversation_history(
     )
     await redis_client.set(session_id, json.dumps(conversation_history))
     return conversation_history
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

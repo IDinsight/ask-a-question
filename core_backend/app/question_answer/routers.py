@@ -39,11 +39,15 @@ from ..llm_call.process_output import (
     generate_tts__after,
 )
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from ..llm_call.utils import (
     append_message_content_to_chat_history,
     get_chat_response,
     init_chat_history,
 )
+=======
+from ..llm_call.utils import init_conversation_history
+>>>>>>> Stashed changes
 =======
 from ..llm_call.utils import init_conversation_history
 >>>>>>> Stashed changes
@@ -169,14 +173,20 @@ async def chat(
     workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
 =======
+=======
+>>>>>>> Stashed changes
     """
     Chat endpoint manages a conversation between the user and the LLM agent. The
     conversation history is stored in a Redis cache. The process is as follows:
 
     1.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
@@ -209,7 +219,10 @@ async def chat(
         )
     )
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     assert isinstance(user_query_db, QueryDB)
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -623,9 +636,14 @@ def rerank_search_results(
         [(query_text, content.title + "\n" + content.text) for content in contents]
     )
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     sorted_by_score = [
         v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+=======
+    sorted_by_score = [
+      v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+>>>>>>> Stashed changes
 =======
     sorted_by_score = [
       v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)

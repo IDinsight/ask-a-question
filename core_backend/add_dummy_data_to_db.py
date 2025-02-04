@@ -21,6 +21,9 @@ if __name__ == "__main__":
 =======
     PACKAGE_PATH = str(Path(__file__).resolve())
     PACKAGE_PATH_SPLIT = PACKAGE_PATH.split(os.path.join("core_backend"))
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     PACKAGE_PATH = Path(PACKAGE_PATH_SPLIT[0]) / "core_backend"
     if PACKAGE_PATH not in sys.path:
