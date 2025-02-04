@@ -2,7 +2,7 @@
 
 # pylint: disable=W0613, W0621
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, tzinfo
 from typing import Any, AsyncGenerator, Callable, Generator, Optional
 
 import numpy as np
@@ -1335,6 +1335,37 @@ def workspace_data_api_id_2(db_session: Session) -> Generator[int, None, None]:
 
 
 # Mocks.
+class MockDatetime:
+    """Mock the datetime object."""
+
+    def __init__(self, *, date: datetime) -> None:
+        """Initialize the mock datetime object.
+
+        Parameters
+        ----------
+        date
+            The date.
+        """
+
+        self.date = date
+
+    def now(self, tz: Optional[tzinfo] = None) -> datetime:
+        """Mock the datetime.now() method.
+
+        Parameters
+        ----------
+        tz
+            The timezone.
+
+        Returns
+        -------
+        datetime
+            The datetime object.
+        """
+
+        return self.date.astimezone(tz) if tz is not None else self.date
+
+
 async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
     """Replicate `embedding` function by generating a random list of floats.
 

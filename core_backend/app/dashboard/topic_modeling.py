@@ -25,106 +25,6 @@ DISABLE_DASHBOARD_LLM = (
 )
 
 
-async def topic_model_queries(
-    *,
-    content_data: list[BokehContentItem],
-    query_data: list[UserQuery],
-    workspace_id: int,
-) -> tuple[TopicsData, pd.DataFrame]:
-    """Perform topic modeling on user queries and content data.
-
-    Parameters
-    ----------
-    content_data
-        A list of `BokehContentItem` objects containing content data.
-    query_data
-        A list of `UserQuery` objects containing the raw queries and their datetime
-        stamps.
-    workspace_id
-        The ID of the workspace.
-
-    Returns
-    -------
-    tuple[TopicsData, pd.DataFrame]
-        A tuple containing `TopicsData` objects for the frontend and a DataFrame with
-        embeddings.
-    """
-
-    if not query_data:
-        logger.warning("No queries to cluster")
-        return (
-            TopicsData(
-                data=[],
-                error_message="No queries to cluster",
-                failure_step="Run topic modeling",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                status="error",
-            ),
-            pd.DataFrame(),
-        )
-
-    if not content_data:
-        logger.warning("No content data to cluster")
-        return (
-            TopicsData(
-                data=[],
-                error_message="No content data to cluster",
-                failure_step="Run topic modeling",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                status="error",
-            ),
-            pd.DataFrame(),
-        )
-
-    n_queries = len(query_data)
-    n_contents = len(content_data)
-
-    if not sum([n_queries, n_contents]) >= 500:
-        logger.warning("Not enough data to cluster")
-        return (
-            TopicsData(
-                data=[],
-                error_message="""Not enough data to cluster.
-                Please provide at least 500 total queries and content items.""",
-                failure_step="Run topic modeling",
-                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                status="error",
-            ),
-            pd.DataFrame(),
-        )
-
-    # Prepare dataframes.
-    results_df = prepare_dataframes(content_data=content_data, query_data=query_data)
-
-    # Generate embeddings.
-    embeddings = generate_embeddings(texts=results_df["text"].tolist())
-
-    # Fit the BERTopic model.
-    topic_model = fit_topic_model(results_df["text"].tolist(), embeddings)
-
-    # Transform documents to get topics and probabilities.
-    topics, _ = topic_model.transform(results_df["text"], embeddings)
-    results_df["topic_id"] = topics
-
-    # Add reduced embeddings (for visualization).
-    add_reduced_embeddings(results_df=results_df, topic_model=topic_model)
-
-    # Generate topic labels using LLM or alternative method.
-    topic_labels = await generate_topic_labels_async(
-        results_df=results_df, topic_model=topic_model
-    )
-
-    # Add topic titles to the dataFrame.
-    results_df["topic_title"] = results_df.apply(
-        lambda row: get_topic_title(row=row, topic_labels=topic_labels), axis=1
-    )
-
-    # Prepare `TopicsData` for frontend.
-    topics_data = prepare_topics_data(results_df=results_df, topic_labels=topic_labels)
-
-    return topics_data, results_df
-
-
 def add_reduced_embeddings(*, results_df: pd.DataFrame, topic_model: BERTopic) -> None:
     """Add reduced embeddings (2D) to the results DataFrame.
 
@@ -200,7 +100,7 @@ def generate_embeddings(*, texts: list[str]) -> np.ndarray:
 
 
 async def generate_topic_labels_async(
-    *, results_df: pd.DataFrame, topic_model: BERTopic
+    *, results_df: pd.DataFrame, topic_model: BERTopic, workspace_id: int
 ) -> dict[int, dict[str, str]]:
     """Generate topic labels asynchronously using an LLM or alternative method.
 
@@ -210,6 +110,8 @@ async def generate_topic_labels_async(
         A DataFrame containing the topic modeling results.
     topic_model
         A fitted BERTopic model.
+    workspace_id
+        The ID of the workspace.
 
     Returns
     -------
@@ -250,7 +152,7 @@ async def generate_topic_labels_async(
     topic_dicts = await asyncio.gather(*tasks) if tasks else []
 
     # Map `topic_ids` to `topic_dicts`.
-    topic_labels = {tid: tdict for tid, tdict in zip(topic_ids, topic_dicts)}
+    topic_labels = dict(zip(topic_ids, topic_dicts))
 
     # Logging for debugging.
     logger.debug(f"Generated topic_labels: {topic_labels}")
@@ -388,3 +290,105 @@ def prepare_topics_data(
     )
 
     return topics_data
+
+
+async def topic_model_queries(
+    *,
+    content_data: list[BokehContentItem],
+    query_data: list[UserQuery],
+    workspace_id: int,
+) -> tuple[TopicsData, pd.DataFrame]:
+    """Perform topic modeling on user queries and content data.
+
+    Parameters
+    ----------
+    content_data
+        A list of `BokehContentItem` objects containing content data.
+    query_data
+        A list of `UserQuery` objects containing the raw queries and their datetime
+        stamps.
+    workspace_id
+        The ID of the workspace.
+
+    Returns
+    -------
+    tuple[TopicsData, pd.DataFrame]
+        A tuple containing `TopicsData` objects for the frontend and a DataFrame with
+        embeddings.
+    """
+
+    if not query_data:
+        logger.warning("No queries to cluster")
+        return (
+            TopicsData(
+                data=[],
+                error_message="No queries to cluster",
+                failure_step="Run topic modeling",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                status="error",
+            ),
+            pd.DataFrame(),
+        )
+
+    if not content_data:
+        logger.warning("No content data to cluster")
+        return (
+            TopicsData(
+                data=[],
+                error_message="No content data to cluster",
+                failure_step="Run topic modeling",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                status="error",
+            ),
+            pd.DataFrame(),
+        )
+
+    n_queries = len(query_data)
+    n_contents = len(content_data)
+
+    if not sum([n_queries, n_contents]) >= 500:
+        logger.warning("Not enough data to cluster")
+        return (
+            TopicsData(
+                data=[],
+                error_message="""Not enough data to cluster.
+                Please provide at least 500 total queries and content items.""",
+                failure_step="Run topic modeling",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                status="error",
+            ),
+            pd.DataFrame(),
+        )
+
+    # Prepare dataframes.
+    results_df = prepare_dataframes(content_data=content_data, query_data=query_data)
+
+    # Generate embeddings.
+    embeddings = generate_embeddings(texts=results_df["text"].tolist())
+
+    # Fit the BERTopic model.
+    topic_model = fit_topic_model(
+        embeddings=embeddings, texts=results_df["text"].tolist()
+    )
+
+    # Transform documents to get topics and probabilities.
+    topics, _ = topic_model.transform(results_df["text"], embeddings)
+    results_df["topic_id"] = topics
+
+    # Add reduced embeddings (for visualization).
+    add_reduced_embeddings(results_df=results_df, topic_model=topic_model)
+
+    # Generate topic labels using LLM or alternative method.
+    topic_labels = await generate_topic_labels_async(
+        results_df=results_df, topic_model=topic_model, workspace_id=workspace_id
+    )
+
+    # Add topic titles to the dataFrame.
+    results_df["topic_title"] = results_df.apply(
+        lambda row: get_topic_title(row=row, topic_labels=topic_labels), axis=1
+    )
+
+    # Prepare `TopicsData` for frontend.
+    topics_data = prepare_topics_data(results_df=results_df, topic_labels=topic_labels)
+
+    return topics_data, results_df

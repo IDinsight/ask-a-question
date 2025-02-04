@@ -1,8 +1,8 @@
 """This module contains tests for the data API endpoints."""
 
 import random
-from datetime import datetime, timezone, tzinfo
-from typing import Any, AsyncGenerator, Optional
+from datetime import datetime, timezone
+from typing import Any, AsyncGenerator
 
 import pytest
 from dateutil.relativedelta import relativedelta
@@ -32,40 +32,11 @@ from core_backend.app.urgency_detection.models import (
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.app.urgency_rules.schemas import UrgencyRuleCosineDistance
 
+from .conftest import MockDatetime
+
 N_CONTENT_FEEDBACKS = 2
 N_DAYS_HISTORY = 10
 N_RESPONSE_FEEDBACKS = 3
-
-
-class MockDatetime:
-    """Mock the datetime object."""
-
-    def __init__(self, *, date: datetime) -> None:
-        """Initialize the mock datetime object.
-
-        Parameters
-        ----------
-        date
-            The date.
-        """
-
-        self.date = date
-
-    def now(self, tz: Optional[tzinfo] = None) -> datetime:
-        """Mock the datetime.now() method.
-
-        Parameters
-        ----------
-        tz
-            The timezone.
-
-        Returns
-        -------
-        datetime
-            The datetime object.
-        """
-
-        return self.date.astimezone(tz) if tz is not None else self.date
 
 
 class TestContentDataAPI:
