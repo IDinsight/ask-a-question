@@ -40,11 +40,15 @@ from ..llm_call.process_output import (
 )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from ..llm_call.utils import (
     append_message_content_to_chat_history,
     get_chat_response,
     init_chat_history,
 )
+=======
+from ..llm_call.utils import init_conversation_history
+>>>>>>> Stashed changes
 =======
 from ..llm_call.utils import init_conversation_history
 >>>>>>> Stashed changes
@@ -174,9 +178,12 @@ async def chat(
 ) -> QueryResponse | JSONResponse:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     """
@@ -185,6 +192,9 @@ async def chat(
 
     1.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -220,7 +230,10 @@ async def chat(
     )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     assert isinstance(user_query_db, QueryDB)
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -637,9 +650,14 @@ def rerank_search_results(
     )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     sorted_by_score = [
         v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+=======
+    sorted_by_score = [
+      v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+>>>>>>> Stashed changes
 =======
     sorted_by_score = [
       v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
