@@ -123,6 +123,7 @@ export type {
   Status,
   CustomDateParams,
   CustomDashboardFrequency,
+  ContentLineChartTSData,
 };
 
 export { drawerWidth };
