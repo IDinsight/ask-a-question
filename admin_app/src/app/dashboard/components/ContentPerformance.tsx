@@ -23,9 +23,13 @@ const N_TOP_CONTENT = 5;
 
 interface PerformanceProps {
   timePeriod: Period;
+  customDateParams?: CustomDateParams;
 }
 
-const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
+const ContentPerformance: React.FC<PerformanceProps> = ({
+  timePeriod,
+  customDateParams,
+}) => {
   const { token } = useAuth();
   const [contentTableData, setContentTableData] = useState<RowDataType[]>([]);
   const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);

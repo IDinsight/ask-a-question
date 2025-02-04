@@ -7,7 +7,6 @@ interface CustomDateParams {
   endDate: string | null;
   frequency: CustomDashboardFrequency;
 }
-
 interface DrawerData {
   title: string;
   query_count: number;
@@ -110,8 +109,6 @@ interface ContentLineChartTSData {
 export type {
   Period,
   TimeFrame,
-  CustomDateParams,
-  CustomDashboardFrequency,
   DrawerData,
   DayHourUsageData,
   ApexData,
@@ -123,8 +120,9 @@ export type {
   QueryData,
   TopicModelingData,
   TopicModelingResponse,
-  TopicData,
-  ContentLineChartTSData,
+  Status,
+  CustomDateParams,
+  CustomDashboardFrequency,
 };
 
 export { drawerWidth };

@@ -5,7 +5,9 @@ import hashlib
 import logging
 import mimetypes
 import os
+import random
 import secrets
+import string
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import Logger
@@ -77,10 +79,20 @@ def verify_password_salted_hash(key: str, stored_hash: str) -> bool:
     return hash_obj.hexdigest() == original_hash
 
 
+def get_random_int32() -> int:
+    """Generate a random 32-bit integer.
+
+    Returns
+    -------
+    int
+        The generated 32-bit integer.
+    """
+
+    return random.randint(-(2**31), 2**31 - 1)
+
+
 def get_random_string(size: int) -> str:
     """Generate a random string of fixed length."""
-    import random
-    import string
 
     return "".join(random.choices(string.ascii_letters + string.digits, k=size))
 

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from pytest_alembic.config import Config
+from redis import asyncio as aioredis
 from sqlalchemy import delete, select
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -18,6 +19,7 @@ from core_backend.app.config import (
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
     PGVECTOR_VECTOR_SIZE,
+    REDIS_HOST,
 )
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.database import (
@@ -549,3 +551,22 @@ async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
     A dummy function to replace the real generate_public_url function.
     """
     return "http://example.com/signed-url"
+
+
+@pytest.fixture(scope="function")
+async def redis_client() -> AsyncGenerator[aioredis.Redis, None]:
+    """Create a redis client for testing.
+
+    Returns
+    -------
+    Generator[aioredis.Redis, None, None]
+        Redis client for testing.
+    """
+
+    rclient = await aioredis.from_url(REDIS_HOST, decode_responses=True)
+
+    await rclient.flushdb()
+
+    yield rclient
+
+    await rclient.close()

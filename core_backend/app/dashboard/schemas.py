@@ -201,6 +201,7 @@ class TopicsData(BaseModel):
     refreshTimeStamp: str
     data: list[Topic]
     error_message: str | None = None
+    failure_step: str | None = None
 
 
 class UserQuery(BaseModel):
