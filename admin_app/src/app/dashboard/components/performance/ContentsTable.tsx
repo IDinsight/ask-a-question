@@ -1,7 +1,6 @@
 "use client";
 
 import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import Box from "@mui/material/Box";
@@ -146,51 +145,71 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
             <TableCell>Content Title</TableCell>
             <TableCell
               onClick={() => handleSort("query_count")}
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
             >
-              Daily Average Sent{" "}
-              {sortColumn === "query_count" &&
-                (sortOrder === "ascending" ? (
-                  <ArrowDropDownIcon sx={{ color: "lightblue" }} />
-                ) : (
-                  <ArrowDropUpIcon sx={{ color: "lightblue" }} />
-                ))}
+              <Box
+                component="span"
+                sx={{ display: "inline-flex", alignItems: "center" }}
+              >
+                Daily Average Sent{" "}
+                {sortColumn === "query_count" &&
+                  (sortOrder === "ascending" ? (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ))}
+              </Box>
             </TableCell>
             <TableCell
               onClick={() => handleSort("positive_votes")}
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
             >
-              Upvotes{" "}
-              {sortColumn === "positive_votes" &&
-                (sortOrder === "ascending" ? (
-                  <ArrowDropDownIcon sx={{ color: "lightblue" }} />
-                ) : (
-                  <ArrowDropUpIcon sx={{ color: "lightblue" }} />
-                ))}
+              <Box
+                component="span"
+                sx={{ display: "inline-flex", alignItems: "center" }}
+              >
+                Upvotes{" "}
+                {sortColumn === "positive_votes" &&
+                  (sortOrder === "ascending" ? (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ))}
+              </Box>
             </TableCell>
             <TableCell
               onClick={() => handleSort("negative_votes")}
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
             >
-              Downvotes{" "}
-              {sortColumn === "negative_votes" &&
-                (sortOrder === "ascending" ? (
-                  <ArrowDropDownIcon sx={{ color: "lightblue" }} />
-                ) : (
-                  <ArrowDropUpIcon sx={{ color: "lightblue" }} />
-                ))}
+              <Box
+                component="span"
+                sx={{ display: "inline-flex", alignItems: "center" }}
+              >
+                Downvotes{" "}
+                {sortColumn === "negative_votes" &&
+                  (sortOrder === "ascending" ? (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ))}
+              </Box>
             </TableCell>
             <TableCell
               onClick={() => handleSort("query_count_timeseries")}
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
             >
-              Trend{" "}
-              {sortColumn === "query_count_timeseries" &&
-                (sortOrder === "ascending" ? (
-                  <ArrowDropDownIcon sx={{ color: "lightblue" }} />
-                ) : (
-                  <ArrowDropUpIcon sx={{ color: "lightblue" }} />
-                ))}
+              <Box
+                component="span"
+                sx={{ display: "inline-flex", alignItems: "center" }}
+              >
+                Trend{" "}
+                {sortColumn === "query_count_timeseries" &&
+                  (sortOrder === "ascending" ? (
+                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ) : (
+                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
+                  ))}
+              </Box>
             </TableCell>
           </TableRow>
           <TableRow>
