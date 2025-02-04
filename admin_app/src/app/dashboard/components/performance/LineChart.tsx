@@ -7,22 +7,18 @@ import { appColors } from "@/utils/index";
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface LineChartProps {
-  data: any; // array of ApexData series
+  data: any;
   nTopContent: number;
   timePeriod: string;
   chartColors: string[];
 }
 
-const LineChart = ({ data, timePeriod, chartColors }: LineChartProps) => {
+const LineChart: React.FC<LineChartProps> = ({ data, timePeriod, chartColors }) => {
   const timeseriesOptions: ApexOptions = {
     title: {
       text: `Top content in the last ${timePeriod}`,
       align: "left",
-      style: {
-        fontSize: "18px",
-        fontWeight: 500,
-        color: appColors.black,
-      },
+      style: { fontSize: "18px", fontWeight: 500, color: appColors.black },
     },
     chart: {
       id: "content-performance-timeseries",
@@ -32,29 +28,15 @@ const LineChart = ({ data, timePeriod, chartColors }: LineChartProps) => {
     dataLabels: { enabled: false },
     xaxis: {
       type: "datetime",
-      labels: {
-        datetimeUTC: false,
-        format: "MMM dd", // e.g. "Jan 01"
-      },
-      // You can also control the tick amount if desired:
+      labels: { datetimeUTC: false, format: "MMM dd" },
       tickAmount: 6,
     },
     yaxis: {
       tickAmount: 5,
-      labels: {
-        formatter: (value) => String(Math.round(value)),
-      },
+      labels: { formatter: (value) => String(Math.round(value)) },
     },
-    tooltip: {
-      x: {
-        format: "MMM dd, yyyy", // tooltip format
-      },
-    },
-    legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-    },
+    tooltip: { x: { format: "MMM dd, yyyy" } },
+    legend: { show: true, position: "top", horizontalAlign: "left" },
     stroke: {
       width: 3,
       curve: "smooth",
