@@ -106,7 +106,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({ timePeriod }) => {
         data={drawerData}
         aiSummary={drawerAISummary}
       />
-      <Box bgcolor="white" sx={{ height: 400, border: 0, padding: 2 }}>
+      <Box bgcolor="white" sx={{ height: 430, border: 0, padding: 2 }}>
         <LineChart
           data={lineChartData}
           nTopContent={N_TOP_CONTENT}
