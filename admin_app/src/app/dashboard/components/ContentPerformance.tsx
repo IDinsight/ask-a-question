@@ -27,9 +27,7 @@ interface PerformanceProps {
   timePeriod: Period;
   customDateParams?: CustomDateParams;
 }
-interface DrawerDataInput extends DrawerData {
-  time_series: Record<string, Record<string, number>>;
-}
+
 const ContentPerformance: React.FC<PerformanceProps> = ({
   timePeriod,
   customDateParams,
@@ -124,37 +122,49 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     }
   };
 
-  const parseDrawerData = (data: DrawerDataInput): DrawerData => {
-    const createSeriesData = (
+  const parseDrawerData = (data: Record<string, any>) => {
+    interface Timeseries {
+      query_count: number;
+      positive_count: number;
+      negative_count: number;
+    }
+    function createSeriesData(
       name: string,
-      key: "query_count" | "positive_count" | "negative_count",
-      time_series: Record<string, Record<string, number>>,
-    ): ApexData => {
+      key: keyof Timeseries,
+      data: Record<string, Timeseries>,
+    ): ApexData {
       return {
         name,
-        data: Object.entries(time_series).map(([period, timeseries]) => {
-          // Convert the period into an ISO date string.
-          const isoDate = new Date(period).toISOString();
-          return { x: isoDate, y: timeseries[key] };
+        data: Object.entries(data.time_series).map(([period, timeseries]) => {
+          const date = new Date(period);
+          return { x: String(date), y: timeseries[key] as number };
         }),
       };
-    };
-
-    const line_chart_data: ApexData[] = [
-      createSeriesData("Total Sent", "query_count", data.time_series),
-      createSeriesData("Total Upvotes", "positive_count", data.time_series),
-      createSeriesData("Total Downvotes", "negative_count", data.time_series),
-    ];
-
-    return {
+    }
+    const queryCountSeriesData = createSeriesData("Total Sent", "query_count", data);
+    const positiveVotesSeriesData = createSeriesData(
+      "Total Upvotes",
+      "positive_count",
+      data,
+    );
+    const negativeVotesSeriesData = createSeriesData(
+      "Total Downvotes",
+      "negative_count",
+      data,
+    );
+    setDrawerData({
       title: data.title,
       query_count: data.query_count,
       positive_votes: data.positive_votes,
       negative_votes: data.negative_votes,
       daily_query_count_avg: data.daily_query_count_avg,
+      line_chart_data: [
+        queryCountSeriesData,
+        positiveVotesSeriesData,
+        negativeVotesSeriesData,
+      ],
       user_feedback: data.user_feedback,
-      line_chart_data,
-    };
+    });
   };
 
   return (
