@@ -26,7 +26,7 @@
     "papaparse": "^5.4.1",
     "react": "^18",
     "react-apexcharts": "^1.4.1",
-    "react-datepicker": "^4.25.0",
+    "react-datepicker": "^8.0.0",
     "react-dom": "^18"
   },
   "devDependencies": {
