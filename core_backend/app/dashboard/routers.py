@@ -1,6 +1,8 @@
+"""This module contains FastAPI routers for dashboard endpoints."""
+
 import json
 from datetime import date, datetime, timedelta, timezone
-from typing import Annotated, Literal, Optional, Tuple
+from typing import Annotated, Literal, Optional
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
@@ -53,7 +55,7 @@ def get_freq_start_end_date(
     start_date_str: Optional[str] = None,
     end_date_str: Optional[str] = None,
     frequency: Optional[TimeFrequency] = None,
-) -> Tuple[TimeFrequency, datetime, datetime]:
+) -> tuple[TimeFrequency, datetime, datetime]:
     """
     Get the frequency and start date for the given time frequency.
     """
@@ -363,9 +365,9 @@ async def refresh_insights(
             user_id=user_db.user_id, asession=asession
         )
         topic_output, embeddings_df = await topic_model_queries(
-            user_id=user_db.user_id,
-            query_data=time_period_queries,
             content_data=content_data,
+            query_data=time_period_queries,
+            workspace_id=workspace_db.workspace_id,
         )
         step = "Write to Redis"
         embeddings_json = embeddings_df.to_json(orient="split")
@@ -424,4 +426,4 @@ async def create_plot(
     if not embeddings_json:
         raise HTTPException(status_code=404, detail="Embeddings data not found")
     df = pd.read_json(embeddings_json.decode("utf-8"), orient="split")
-    return produce_bokeh_plot(df)
+    return produce_bokeh_plot(embeddings_df=df)

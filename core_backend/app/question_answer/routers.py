@@ -38,11 +38,15 @@ from ..llm_call.process_output import (
     generate_llm_query_response,
     generate_tts__after,
 )
+<<<<<<< Updated upstream
 from ..llm_call.utils import (
     append_message_content_to_chat_history,
     get_chat_response,
     init_chat_history,
 )
+=======
+from ..llm_call.utils import init_conversation_history
+>>>>>>> Stashed changes
 from ..schemas import QuerySearchResult
 from ..users.models import WorkspaceDB
 from ..utils import (
@@ -158,14 +162,22 @@ async def chat(
         }
     },
 )
-async def search(
+async def chat(
     user_query: QueryBase,
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
     workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
+<<<<<<< Updated upstream
     """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
+=======
+    """
+    Chat endpoint manages a conversation between the user and the LLM agent. The
+    conversation history is stored in a Redis cache. The process is as follows:
+
+    1.
+>>>>>>> Stashed changes
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
@@ -196,7 +208,10 @@ async def search(
             workspace_id=workspace_id,
         )
     )
+<<<<<<< Updated upstream
     assert isinstance(user_query_db, QueryDB)
+=======
+>>>>>>> Stashed changes
 
     response = await get_search_response(
         asession=asession,
@@ -210,6 +225,15 @@ async def search(
     )
 
     if user_query.generate_llm_response:
+        # Initialize the conversation history in the Redis cache.
+        await init_conversation_history(
+            redis_client=request.app.state.redis,
+            reset=False,
+            session_id=user_query_db.session_id,
+        )
+        print(f"{response = }")
+        input()
+
         response = await get_generation_response(
             query_refined=user_query_refined_template, response=response
         )
@@ -243,6 +267,85 @@ async def search(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": "Internal server error"},
     )
+
+
+# @router.post(
+#     "/search",
+#     response_model=QueryResponse,
+#     responses={
+#         status.HTTP_400_BAD_REQUEST: {
+#             "model": QueryResponseError,
+#             "description": "Guardrail failure",
+#         }
+#     },
+# )
+# async def search(
+#     user_query: QueryBase,
+#     request: Request,
+#     asession: AsyncSession = Depends(get_async_session),
+#     user_db: UserDB = Depends(authenticate_key),
+# ) -> QueryResponse | JSONResponse:
+#     """
+#     Search endpoint finds the most similar content to the user query and optionally
+#     generates a single-turn LLM response.
+#
+#     If any guardrails fail, the embeddings search is still done and an error 400 is
+#     returned that includes the search results as well as the details of the failure.
+#     """
+#
+#     (
+#         user_query_db,
+#         user_query_refined_template,
+#         response_template,
+#     ) = await get_user_query_and_response(
+#         user_id=user_db.user_id,
+#         user_query=user_query,
+#         asession=asession,
+#         generate_tts=False,
+#     )
+#     response = await get_search_response(
+#         query_refined=user_query_refined_template,
+#         response=response_template,
+#         user_id=user_db.user_id,
+#         n_similar=int(N_TOP_CONTENT),
+#         n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+#         asession=asession,
+#         exclude_archived=True,
+#         request=request,
+#     )
+#
+#     if user_query.generate_llm_response:
+#         response = await get_generation_response(
+#             query_refined=user_query_refined_template,
+#             response=response,
+#         )
+#
+#     await save_query_response_to_db(user_query_db, response, asession)
+#     await increment_query_count(
+#         user_id=user_db.user_id,
+#         contents=response.search_results,
+#         asession=asession,
+#     )
+#     await save_content_for_query_to_db(
+#         user_id=user_db.user_id,
+#         session_id=user_query.session_id,
+#         query_id=response.query_id,
+#         contents=response.search_results,
+#         asession=asession,
+#     )
+#
+#     if type(response) is QueryResponse:
+#         return response
+#
+#     if type(response) is QueryResponseError:
+#         return JSONResponse(
+#             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+#         )
+#
+#     return JSONResponse(
+#         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         content={"message": "Internal server error"},
+#     )
 
 
 @router.post(
@@ -519,9 +622,14 @@ def rerank_search_results(
     scores = encoder.predict(
         [(query_text, content.title + "\n" + content.text) for content in contents]
     )
+<<<<<<< Updated upstream
 
     sorted_by_score = [
         v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+=======
+    sorted_by_score = [
+      v for _, v in sorted(zip(scores, contents), key=lambda x: x[0], reverse=True)
+>>>>>>> Stashed changes
     ][:n_similar]
     reranked_search_results = dict(enumerate(sorted_by_score))
 

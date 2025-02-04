@@ -1,6 +1,4 @@
-"""
-These are LLM functions used by the dashboard.
-"""
+"""This module contains LLM functions for the dashboard."""
 
 from bertopic import BERTopic
 
@@ -31,7 +29,7 @@ async def generate_ai_summary(
 
     Returns
     -------
-    str | None
+    str
         The AI summary.
     """
 
@@ -116,7 +114,7 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
     topic_model_labelling = TopicModelLabelling(context=context)
 
     combined_texts = "\n".join(
-        [f"{i + 1}. {text}" for i, text in enumerate(sample_texts)]
+        [f"{i}. {text}" for i, text in enumerate(sample_texts, 1)]
     )
 
     topic_json = await _ask_llm_async(

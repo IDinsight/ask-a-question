@@ -1,89 +1,11 @@
+"""This module contains Pydantic models for dashboard endpoints."""
+
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, Literal, get_args
 
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
-
-
-class QueryStats(BaseModel):
-    """
-    This class is used to define the schema for the query stats
-    """
-
-    n_questions: int
-    percentage_increase: float
-
-
-class ResponseFeedbackStats(BaseModel):
-    """
-    This class is used to define the schema for the response feedback stats
-    """
-
-    n_positive: int
-    n_negative: int
-    percentage_positive_increase: float
-    percentage_negative_increase: float
-
-
-class ContentFeedbackStats(BaseModel):
-    """
-    This class is used to define the schema for the content feedback stats
-    """
-
-    n_positive: int
-    n_negative: int
-    percentage_positive_increase: float
-    percentage_negative_increase: float
-
-
-class UrgencyStats(BaseModel):
-    """
-    This class is used to define the schema for the urgency stats
-    """
-
-    n_urgent: int
-    percentage_increase: float
-
-
-class StatsCards(BaseModel):
-    """
-    This class is used to define the schema for the stats cards
-    """
-
-    query_stats: QueryStats
-    response_feedback_stats: ResponseFeedbackStats
-    content_feedback_stats: ContentFeedbackStats
-    urgency_stats: UrgencyStats
-
-
-TimeHours = Literal[
-    "00:00",
-    "02:00",
-    "04:00",
-    "06:00",
-    "08:00",
-    "10:00",
-    "12:00",
-    "14:00",
-    "16:00",
-    "18:00",
-    "20:00",
-    "22:00",
-]
-
-Day = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-
-class TimeFrequency(str, Enum):
-    """
-    This class is used to define the schema for the time frequency
-    """
-
-    Day = "Day"
-    Week = "Week"
-    Hour = "Hour"
-    Month = "Month"
 
 
 def has_all_days(d: dict[str, int]) -> dict[str, int]:
@@ -104,13 +26,49 @@ def has_all_days(d: dict[str, int]) -> dict[str, int]:
     return d
 
 
+Day = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 DayCount = Annotated[dict[Day, int], AfterValidator(has_all_days)]
+TimeHours = Literal[
+    "00:00",
+    "02:00",
+    "04:00",
+    "06:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "20:00",
+    "22:00",
+]
+
+
+class AIFeedbackSummary(BaseModel):
+    """Pydantic model for AI feedback summary."""
+
+    ai_summary: str | None
+
+
+class BokehContentItem(BaseModel):
+    """Pydantic model for Bokeh content item."""
+
+    content_id: int
+    content_text: str
+    content_title: str
+
+
+class ContentFeedbackStats(BaseModel):
+    """Pydantic model for content feedback stats."""
+
+    n_negative: int
+    n_positive: int
+    percentage_negative_increase: float
+    percentage_positive_increase: float
 
 
 class Heatmap(BaseModel):
-    """
-    This class is used to define the schema for the heatmap
-    """
+    """Pydantic model for heatmap."""
 
     h00_00: DayCount = Field(..., alias="00:00")
     h02_00: DayCount = Field(..., alias="02:00")
@@ -127,147 +85,139 @@ class Heatmap(BaseModel):
 
 
 class OverviewTimeSeries(BaseModel):
-    """
-    This class is used to define the schema for the line chart
-    """
+    """Pydantic model for line chart."""
 
-    urgent: dict[str, int]
     downvoted: dict[str, int]
     normal: dict[str, int]
+    urgent: dict[str, int]
+
+
+class ResponseFeedbackStats(BaseModel):
+    """Pydantic model for response feedback stats."""
+
+    n_negative: int
+    n_positive: int
+    percentage_negative_increase: float
+    percentage_positive_increase: float
+
+
+class TimeFrequency(str, Enum):
+    """Enumeration for time frequency."""
+
+    Day = "Day"
+    Hour = "Hour"
+    Month = "Month"
+    Week = "Week"
+
+
+class QueryStats(BaseModel):
+    """Pydantic model for query stats."""
+
+    n_questions: int
+    percentage_increase: float
+
+
+class Topic(BaseModel):
+    """Pydantic model for one topic extracted from the user queries. Used for insights
+    page.
+    """
+
+    topic_id: int
+    topic_name: str
+    topic_popularity: int
+    topic_samples: list[dict[str, str]]
+    topic_summary: str
 
 
 class TopContentBase(BaseModel):
-    """
-    This class is used to define the schema for the top content basic
-    """
+    """Pydantic model for top content base."""
 
     title: str
 
 
-class TopContent(TopContentBase):
-    """
-    This class is used to define the schema for the top content
-    """
+class TopicsData(BaseModel):
+    """Pydantic model for a large group of individual topics. Used for insights page."""
 
+    data: list[Topic]
+    error_message: str | None = None
+    failure_step: str | None = None
+    refreshTimeStamp: str
+    status: Literal["not_started", "in_progress", "completed", "error"]
+
+
+class UrgencyStats(BaseModel):
+    """Pydantic model for urgency stats."""
+
+    n_urgent: int
+    percentage_increase: float
+
+
+class UserFeedback(BaseModel):
+    """Pydantic model for user feedback."""
+
+    feedback: str
+    question: str
+    timestamp: datetime
+
+
+class UserQuery(BaseModel):
+    """Pydantic model for insights for user queries."""
+
+    query_datetime_utc: datetime
+    query_id: int
+    query_text: str
+
+
+class DetailsDrawer(BaseModel):
+    """Pydantic model for details drawer."""
+
+    daily_query_count_avg: int
+    negative_votes: int
+    positive_votes: int
     query_count: int
-    positive_votes: int
-    negative_votes: int
+    time_series: dict[str, dict[str, int]]
+    title: str
+    user_feedback: list[UserFeedback]
+
+
+class StatsCards(BaseModel):
+    """Pydantic model for stats cards."""
+
+    content_feedback_stats: ContentFeedbackStats
+    query_stats: QueryStats
+    response_feedback_stats: ResponseFeedbackStats
+    urgency_stats: UrgencyStats
+
+
+class TopContent(TopContentBase):
+    """Pydantic model for top content."""
+
     last_updated: datetime
-
-
-class TopContentTimeSeries(TopContentBase):
-    """
-    This class is used to define the schema for the top content time series
-    """
-
-    id: int
-    query_count_time_series: dict[str, int]
-    positive_votes: int
     negative_votes: int
-    total_query_count: int
+    positive_votes: int
+    query_count: int
 
 
 class DashboardOverview(BaseModel):
-    """
-    This class is used to define the schema for the dashboard overview
-    """
+    """Pydantic model for dashboard overview."""
 
-    stats_cards: StatsCards
     heatmap: Heatmap
+    stats_cards: StatsCards
     time_series: OverviewTimeSeries
     top_content: list[TopContent]
 
 
-class Topic(BaseModel):
-    """
-    This class is used to define the schema for one topic
-    extracted from the user queries. Used for Insights page.
-    """
+class TopContentTimeSeries(TopContentBase):
+    """Pydantic model for top content time series."""
 
-    topic_id: int
-    topic_samples: list[dict[str, str]]
-    topic_name: str
-    topic_summary: str
-    topic_popularity: int
-
-
-class TopicsData(BaseModel):
-    """
-    This class is used to define the schema for the a large group
-    of individual Topics. Used for Insights page.
-    """
-
-    status: Literal["not_started", "in_progress", "completed", "error"]
-    refreshTimeStamp: str
-    data: list[Topic]
-    error_message: str | None = None
-    failure_step: str | None = None
-
-
-class UserQuery(BaseModel):
-    """
-    This class is used to define the schema for the insights queries
-    """
-
-    query_id: int
-    query_text: str
-    query_datetime_utc: datetime
-
-
-class BokehContentItem(BaseModel):
-    """
-    This class is used to define the schema for contents used in Bokeh plots
-    """
-
-    content_title: str
-    content_text: str
-    content_id: int
-
-
-class QueryCollection(BaseModel):
-    """
-    This class is used to define the schema for the insights queries data
-    """
-
-    n_queries: int
-    queries: list[UserQuery]
-
-
-class UserFeedback(BaseModel):
-    """
-    This class is used to define the schema for the user feedback
-    """
-
-    timestamp: datetime
-    question: str
-    feedback: str
-
-
-class DetailsDrawer(BaseModel):
-    """
-    This class is used to define the schema for the details drawer
-    """
-
-    title: str
-    query_count: int
-    positive_votes: int
+    id: int
     negative_votes: int
-    daily_query_count_avg: int
-    time_series: dict[str, dict[str, int]]
-    user_feedback: list[UserFeedback]
+    positive_votes: int
+    query_count_time_series: dict[str, int]
+    total_query_count: int
 
 
 class DashboardPerformance(BaseModel):
-    """
-    This class is used to define the schema for the dashboard performance page
-    """
+    """Pydantic model for dashboard performance."""
 
     content_time_series: list[TopContentTimeSeries]
-
-
-class AIFeedbackSummary(BaseModel):
-    """
-    This class is used to define the schema for the AI feedback summary
-    """
-
-    ai_summary: str | None

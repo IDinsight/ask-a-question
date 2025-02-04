@@ -38,10 +38,9 @@ from .schemas import (
     UserQuery,
 )
 
-N_SAMPLES_TOPIC_MODELING = 4000
-
-
 logger = setup_logger()
+
+N_SAMPLES_TOPIC_MODELING = 4000
 
 
 async def get_stats_cards(
@@ -852,10 +851,10 @@ async def get_ai_answer_summary(
 
     if all_feedback:
         ai_summary = await generate_ai_summary(
-            user_id=user_id,
-            content_title=content_row.content_title,
             content_text=content_row.content_text,
+            content_title=content_row.content_title,
             feedback=all_feedback,
+            workspace_id=workspace_id,
         )
     else:
         ai_summary = "No feedback to summarize."
