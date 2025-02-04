@@ -39,6 +39,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
   const [drawerData, setDrawerData] = useState<DrawerData | null>(null);
   const [drawerAISummary, setDrawerAISummary] = useState<string | null>(null);
 
+  // Fetch page data and build table rows
   useEffect(() => {
     if (!token) return;
     getPerformancePageData(
@@ -66,6 +67,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     });
   }, [timePeriod, token, customDateParams]);
 
+  // Build line chart data based on the items currently displayed
   useEffect(() => {
     const chartData: ContentLineChartTSData[] = itemsToDisplay.map((row) => ({
       name: row.title,
@@ -74,37 +76,89 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     setLineChartData(chartData);
   }, [itemsToDisplay]);
 
+  // When a table row is clicked, fetch and parse drawer data and AI summary.
   const tableRowClickHandler = (contentId: number) => {
     if (!token) return;
     setDrawerAISummary(null);
-    getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
-      const seriesData = (key: string) =>
-        Object.entries(response.time_series as Record<string, any>).map(
-          ([period, timeseries]) => ({
-            x: new Date(period).toISOString(),
-            y: timeseries[key] as number,
-          }),
-        );
-      setDrawerData({
-        title: response.title,
-        query_count: response.query_count,
-        positive_votes: response.positive_votes,
-        negative_votes: response.negative_votes,
-        daily_query_count_avg: response.daily_query_count_avg,
-        line_chart_data: [
-          { name: "Total Sent", data: seriesData("query_count") },
-          { name: "Total Upvotes", data: seriesData("positive_count") },
-          { name: "Total Downvotes", data: seriesData("negative_count") },
-        ],
-        user_feedback: response.user_feedback,
+    if (
+      timePeriod === "custom" &&
+      customDateParams?.startDate &&
+      customDateParams?.endDate
+    ) {
+      getPerformanceDrawerData(
+        "custom",
+        contentId,
+        token,
+        customDateParams.startDate,
+        customDateParams.endDate,
+      ).then((response) => {
+        parseDrawerData(response);
+        setDrawerOpen(true);
       });
-      setDrawerOpen(true);
-    });
-    getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
-      setDrawerAISummary(
-        response.ai_summary ||
-          "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
-      );
+      getPerformanceDrawerAISummary(
+        "custom",
+        contentId,
+        token,
+        customDateParams.startDate,
+        customDateParams.endDate,
+      ).then((response) => {
+        setDrawerAISummary(
+          response.ai_summary ||
+            "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
+        );
+      });
+    } else {
+      getPerformanceDrawerData(timePeriod, contentId, token).then((response) => {
+        parseDrawerData(response);
+        setDrawerOpen(true);
+      });
+      getPerformanceDrawerAISummary(timePeriod, contentId, token).then((response) => {
+        setDrawerAISummary(
+          response.ai_summary ||
+            "LLM functionality disabled on the backend. Please check your environment configuration if you wish to enable this feature.",
+        );
+      });
+    }
+  };
+
+  // Parse drawer data to create the series for the drawer's line chart.
+  const parseDrawerData = (data: Record<string, any>) => {
+    function createSeriesData(
+      name: string,
+      key: "query_count" | "positive_count" | "negative_count",
+      data: Record<string, any>,
+    ): DrawerData["line_chart_data"][0] {
+      return {
+        name,
+        data: Object.entries(data.time_series).map(([period, timeseries]) => {
+          const date = new Date(period);
+          return { x: String(date), y: timeseries[key] as number };
+        }),
+      };
+    }
+    const queryCountSeriesData = createSeriesData("Total Sent", "query_count", data);
+    const positiveVotesSeriesData = createSeriesData(
+      "Total Upvotes",
+      "positive_count",
+      data,
+    );
+    const negativeVotesSeriesData = createSeriesData(
+      "Total Downvotes",
+      "negative_count",
+      data,
+    );
+    setDrawerData({
+      title: data.title,
+      query_count: data.query_count,
+      positive_votes: data.positive_votes,
+      negative_votes: data.negative_votes,
+      daily_query_count_avg: data.daily_query_count_avg,
+      line_chart_data: [
+        queryCountSeriesData,
+        positiveVotesSeriesData,
+        negativeVotesSeriesData,
+      ],
+      user_feedback: data.user_feedback,
     });
   };
 
