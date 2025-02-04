@@ -43,7 +43,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     useState<string>("Daily Average Sent");
   const [selectedOrderDirection, setSelectedOrderDirection] = useState<
     "ascending" | "descending"
-  >("ascending");
+  >("descending");
   const [page, setPage] = useState<number>(1);
 
   useEffect(() => {

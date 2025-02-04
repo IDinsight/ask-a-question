@@ -54,10 +54,9 @@ const LineChart: React.FC<LineChartProps> = ({
     xaxis: {
       type: "datetime",
       labels: { datetimeUTC: false, format: "MMM dd" },
-      tickAmount: 6,
     },
     yaxis: {
-      tickAmount: 5,
+      tickAmount: 3,
       labels: { formatter: (value) => String(Math.round(value)) },
     },
     tooltip: { x: { format: "MMM dd" } },
