@@ -165,13 +165,12 @@ async def retrieve_performance_frequency(
     top_n: int | None = None,
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    frequency: Optional[TimeFrequency] = Query(None),
 ) -> DashboardPerformance:
     """
     Retrieve timeseries data on content usage and performance of each content
     """
     freq, start_dt, end_dt = get_freq_start_end_date(
-        timeframe, start_date, end_date, frequency
+        timeframe, start_date, end_date, TimeFrequency.Day
     )
     performance_stats = await retrieve_performance(
         user_id=user_db.user_id,

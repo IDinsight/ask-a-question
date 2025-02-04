@@ -41,7 +41,12 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
 
   useEffect(() => {
     if (!token) return;
-    getPerformancePageData(timePeriod, token).then((response) => {
+    getPerformancePageData(
+      timePeriod,
+      token,
+      customDateParams?.startDate ?? undefined,
+      customDateParams?.endDate ?? undefined,
+    ).then((response) => {
       const tableData: RowDataType[] = response.content_time_series.map(
         (series: any) => ({
           id: series.id,
@@ -59,7 +64,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
       );
       setContentTableData(tableData);
     });
-  }, [timePeriod, token]);
+  }, [timePeriod, token, customDateParams]);
 
   useEffect(() => {
     const chartData: ContentLineChartTSData[] = itemsToDisplay.map((row) => ({
@@ -107,7 +112,7 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     <>
       <DetailsDrawer
         open={drawerOpen}
-        onClose={() => (_) => setDrawerOpen(false)}
+        onClose={() => (e) => setDrawerOpen(false)}
         data={drawerData}
         aiSummary={drawerAISummary}
       />
