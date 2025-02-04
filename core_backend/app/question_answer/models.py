@@ -104,7 +104,9 @@ class QueryResponseDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -147,13 +149,13 @@ class QueryResponseContentDB(Base):
         Integer, primary_key=True, nullable=False
     )
     content_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("content.content_id"), nullable=False
+        Integer, ForeignKey("content.content_id", ondelete="CASCADE"), nullable=False
     )
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("query.query_id"), nullable=False
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE"), nullable=False
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
@@ -201,7 +203,9 @@ class ResponseFeedbackDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response_feedback", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
         Integer,
@@ -234,7 +238,9 @@ class ContentFeedbackDB(Base):
     __tablename__ = "content_feedback"
 
     content: Mapped["ContentDB"] = relationship("ContentDB")
-    content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
+    content_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("content.content_id", ondelete="CASCADE")
+    )
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -246,7 +252,9 @@ class ContentFeedbackDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="content_feedback", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
         Integer,

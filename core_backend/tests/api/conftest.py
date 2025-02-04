@@ -59,10 +59,12 @@ from core_backend.app.workspaces.utils import (
 # Admin users.
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_2 = "admin_password_2"  # pragma: allowlist secret
+TEST_ADMIN_PASSWORD_3 = "admin_password_3"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_1 = "admin_password_data_api_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_2 = "admin_password_data_api_2"  # pragma: allowlist secret
 TEST_ADMIN_USERNAME_1 = "admin_1"
 TEST_ADMIN_USERNAME_2 = "admin_2"
+TEST_ADMIN_USERNAME_3 = "admin_3"
 TEST_ADMIN_USERNAME_DATA_API_1 = "admin_data_api_1"
 TEST_ADMIN_USERNAME_DATA_API_2 = "admin_data_api_2"
 
@@ -74,13 +76,16 @@ TEST_READ_ONLY_USERNAME_2 = "test_username_2"
 # Workspaces.
 TEST_WORKSPACE_API_KEY_1 = "test_api_key_1"  # pragma: allowlist secret
 TEST_WORKSPACE_API_QUOTA_2 = 2000
+TEST_WORKSPACE_API_QUOTA_3 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_1 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_2 = 2000
 TEST_WORKSPACE_CONTENT_QUOTA_2 = 50
+TEST_WORKSPACE_CONTENT_QUOTA_3 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2 = 50
 TEST_WORKSPACE_NAME_1 = "test_workspace_1"
 TEST_WORKSPACE_NAME_2 = "test_workspace_2"
+TEST_WORKSPACE_NAME_3 = "test_workspace_3"
 TEST_WORKSPACE_NAME_DATA_API_1 = "test_workspace_data_api_1"
 TEST_WORKSPACE_NAME_DATA_API_2 = "test_workspace_data_api_2"
 
@@ -399,6 +404,52 @@ async def admin_user_2_in_workspace_2(
 
 
 @pytest.fixture(scope="session", autouse=True)
+async def admin_user_3_in_workspace_3(
+    access_token_admin_1: pytest.FixtureRequest, client: TestClient
+) -> dict[str, Any]:
+    """Create admin user 3 in workspace 3 by invoking the `/user` endpoint.
+
+    NB: Only admins can create workspaces. Since admin user 1 is the first admin user
+    ever, we need admin user 1 to create workspace 3 and then add admin user 3 to
+    workspace 3.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1 in workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    dict[str, Any]
+        The response from creating admin user 3 in workspace 3.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_WORKSPACE_API_QUOTA_3,
+            "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_3,
+            "workspace_name": TEST_WORKSPACE_NAME_3,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    response = client.post(
+        "/user",
+        json={
+            "is_default_workspace": True,
+            "password": TEST_ADMIN_PASSWORD_3,
+            "role": UserRoles.ADMIN,
+            "username": TEST_ADMIN_USERNAME_3,
+            "workspace_name": TEST_WORKSPACE_NAME_3,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    return response.json()
+
+
+@pytest.fixture(scope="session", autouse=True)
 async def admin_user_data_api_1_in_workspace_data_api_1(
     access_token_admin_1: pytest.FixtureRequest, client: TestClient
 ) -> dict[str, Any]:
@@ -688,6 +739,72 @@ async def faq_contents_in_workspace_1(
     """
 
     workspace_name = admin_user_1_in_workspace_1["workspace_name"]
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
+        json_data = json.load(f)
+    contents = []
+    for content in json_data:
+        text_to_embed = content["content_title"] + "\n" + content["content_text"]
+        content_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        content_db = ContentDB(
+            content_embedding=content_embedding,
+            content_metadata=content.get("content_metadata", {}),
+            content_text=content["content_text"],
+            content_title=content["content_title"],
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=workspace_id,
+        )
+        contents.append(content_db)
+
+    asession.add_all(contents)
+    await asession.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        delete_feedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
+        await asession.execute(delete_feedback)
+        await asession.execute(content_query)
+        await asession.delete(content)
+
+    await asession.commit()
+
+
+@pytest.fixture(scope="function")
+async def faq_contents_in_workspace_3(
+    asession: AsyncSession, admin_user_3_in_workspace_3: dict[str, Any]
+) -> AsyncGenerator[list[int], None]:
+    """Create FAQ contents in workspace 3.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    admin_user_3_in_workspace_3
+        Admin user 3 in workspace 3.
+
+    Yields
+    ------
+    AsyncGenerator[list[int], None]
+        FAQ content IDs.
+    """
+
+    workspace_name = admin_user_3_in_workspace_3["workspace_name"]
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
@@ -1282,6 +1399,52 @@ def workspace_1_id(db_session: Session) -> Generator[int, None, None]:
 
     stmt = select(WorkspaceDB).where(
         WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_1
+    )
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+@pytest.fixture(scope="session")
+def workspace_2_id(db_session: Session) -> Generator[int, None, None]:
+    """Return workspace 2 ID.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Yields
+    ------
+    Generator[int, None, None]
+        Workspace 2 ID.
+    """
+
+    stmt = select(WorkspaceDB).where(
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_2
+    )
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+@pytest.fixture(scope="session")
+def workspace_3_id(db_session: Session) -> Generator[int, None, None]:
+    """Return workspace 3 ID.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Yields
+    ------
+    Generator[int, None, None]
+        Workspace 3 ID.
+    """
+
+    stmt = select(WorkspaceDB).where(
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_3
     )
     result = db_session.execute(stmt)
     workspace_db = result.scalar_one()
