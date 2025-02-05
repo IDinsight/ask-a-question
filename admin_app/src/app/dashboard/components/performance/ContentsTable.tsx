@@ -84,17 +84,24 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("descending");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const percentageIncrease = (queryCounts: number[]): number => {
-    if (queryCounts.length < 4) return 0;
-    const qLen = queryCounts.length;
-    const lastQuarter = queryCounts.slice(Math.floor((qLen * 3) / 4));
-    const thirdQuarter = queryCounts.slice(
-      Math.floor((qLen * 2) / 4),
-      Math.floor((qLen * 3) / 4),
+  const percentageIncrease = (queryCount: number[]): number => {
+    if (queryCount.length < 4) return 0;
+    const queryLength = queryCount.length;
+    const lastQuarter = queryCount.slice(
+      Math.floor((queryLength / 4) * 3),
+      queryLength,
     );
-    const lastAvg = lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
-    const thirdAvg = thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
-    return (lastAvg - thirdAvg) / (thirdAvg || 1);
+    const lastQuarterValue =
+      lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
+
+    const thirdQuarter = queryCount.slice(
+      Math.floor((queryLength / 4) * 2),
+      Math.floor((queryLength / 4) * 3),
+    );
+    const thirdQuarterValue =
+      thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
+
+    return (lastQuarterValue - thirdQuarterValue) / (thirdQuarterValue || 1);
   };
 
   const sortRows = <K extends keyof RowDataType>(
