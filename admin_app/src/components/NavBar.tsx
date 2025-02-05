@@ -15,7 +15,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
-
+import WorkspaceMenu from "./WorkspaceMenu";
+import { id } from "date-fns/locale";
+import { type Workspace } from "./WorkspaceMenu";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -63,14 +65,9 @@ const Logo = () => {
 
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
-  );
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
 
-  const smallMenuPageDict = [
-    ...pageDict,
-    { title: "Dashboard", path: "/dashboard" },
-  ];
+  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
 
   return (
     <Box
@@ -96,6 +93,7 @@ const SmallScreenNavMenu = () => {
         <MenuIcon />
       </IconButton>
       <Logo />
+      <WorkspaceMenu workspaces={[]} currentWorkspace="workspace1" />
       <Menu
         id="menu-appbar"
         anchorEl={anchorElNav}
@@ -132,10 +130,7 @@ const SmallScreenNavMenu = () => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color:
-                  pathname === page.path
-                    ? appColors.white
-                    : appColors.secondary,
+                color: pathname === page.path ? appColors.white : appColors.secondary,
               }}
             >
               {page.title}
@@ -164,6 +159,7 @@ const LargeScreenNavMenu = () => {
       paddingRight={1.5}
     >
       <Logo />
+      <WorkspaceMenu workspaces={[]} currentWorkspaceName="workspace1" />
       <Box
         justifyContent="flex-end"
         alignItems="center"
@@ -180,8 +176,7 @@ const LargeScreenNavMenu = () => {
               key={page.title}
               sx={{
                 margin: sizes.baseGap,
-                color:
-                  pathname === page.path ? appColors.white : appColors.outline,
+                color: pathname === page.path ? appColors.white : appColors.outline,
               }}
             >
               {page.title}
@@ -192,8 +187,7 @@ const LargeScreenNavMenu = () => {
           variant="outlined"
           onClick={() => router.push("/dashboard")}
           style={{
-            color:
-              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
@@ -212,13 +206,11 @@ const LargeScreenNavMenu = () => {
 const UserDropdown = () => {
   const { logout, username, role, workspaceName } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
-  );
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
-  const [persistedRole, setPersistedRole] = React.useState<
-    "admin" | "user" | null
-  >(null);
+  const [persistedRole, setPersistedRole] = React.useState<"admin" | "user" | null>(
+    null,
+  );
 
   useEffect(() => {
     // Save user to local storage when it changes

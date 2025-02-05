@@ -102,6 +102,16 @@ const resetPassword = async (
   }
 };
 
+const getWorkspaceList = async (token: string) => {
+  try {
+    const response = await api.get("/user/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching content list");
+  }
+};
 export {
   createUser,
   editUser,
