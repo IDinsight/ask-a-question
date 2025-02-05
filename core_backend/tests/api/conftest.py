@@ -61,11 +61,13 @@ from core_backend.app.workspaces.utils import (
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_2 = "admin_password_2"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_3 = "admin_password_3"  # pragma: allowlist secret
+TEST_ADMIN_PASSWORD_4 = "admin_password_4"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_1 = "admin_password_data_api_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_2 = "admin_password_data_api_2"  # pragma: allowlist secret
 TEST_ADMIN_USERNAME_1 = "admin_1"
 TEST_ADMIN_USERNAME_2 = "admin_2"
 TEST_ADMIN_USERNAME_3 = "admin_3"
+TEST_ADMIN_USERNAME_4 = "admin_4"
 TEST_ADMIN_USERNAME_DATA_API_1 = "admin_data_api_1"
 TEST_ADMIN_USERNAME_DATA_API_2 = "admin_data_api_2"
 
@@ -78,15 +80,18 @@ TEST_READ_ONLY_USERNAME_2 = "test_username_2"
 TEST_WORKSPACE_API_KEY_1 = "test_api_key_1"  # pragma: allowlist secret
 TEST_WORKSPACE_API_QUOTA_2 = 2000
 TEST_WORKSPACE_API_QUOTA_3 = 2000
+TEST_WORKSPACE_API_QUOTA_4 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_1 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_2 = 2000
 TEST_WORKSPACE_CONTENT_QUOTA_2 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_3 = 50
+TEST_WORKSPACE_CONTENT_QUOTA_4 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2 = 50
 TEST_WORKSPACE_NAME_1 = "test_workspace_1"
 TEST_WORKSPACE_NAME_2 = "test_workspace_2"
 TEST_WORKSPACE_NAME_3 = "test_workspace_3"
+TEST_WORKSPACE_NAME_4 = "test_workspace_4"
 TEST_WORKSPACE_NAME_DATA_API_1 = "test_workspace_data_api_1"
 TEST_WORKSPACE_NAME_DATA_API_2 = "test_workspace_data_api_2"
 
@@ -255,6 +260,21 @@ def access_token_admin_2() -> str:
 
     return create_access_token(
         username=TEST_ADMIN_USERNAME_2, workspace_name=TEST_WORKSPACE_NAME_2
+    )
+
+
+@pytest.fixture(scope="session")
+def access_token_admin_4() -> str:
+    """Return an access token for admin user 4 in workspace 4.
+
+    Returns
+    -------
+    str
+        Access token for admin user 4 in workspace 4.
+    """
+
+    return create_access_token(
+        username=TEST_ADMIN_USERNAME_4, workspace_name=TEST_WORKSPACE_NAME_4
     )
 
 
@@ -444,6 +464,52 @@ async def admin_user_3_in_workspace_3(
             "role": UserRoles.ADMIN,
             "username": TEST_ADMIN_USERNAME_3,
             "workspace_name": TEST_WORKSPACE_NAME_3,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    return response.json()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def admin_user_4_in_workspace_4(
+    access_token_admin_1: pytest.FixtureRequest, client: TestClient
+) -> dict[str, Any]:
+    """Create admin user 4 in workspace 4 by invoking the `/user` endpoint.
+
+    NB: Only admins can create workspaces. Since admin user 1 is the first admin user
+    ever, we need admin user 1 to create workspace 4 and then add admin user 4 to
+    workspace 4.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1 in workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    dict[str, Any]
+        The response from creating admin user 4 in workspace 4.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_WORKSPACE_API_QUOTA_4,
+            "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_4,
+            "workspace_name": TEST_WORKSPACE_NAME_4,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    response = client.post(
+        "/user",
+        json={
+            "is_default_workspace": True,
+            "password": TEST_ADMIN_PASSWORD_4,
+            "role": UserRoles.ADMIN,
+            "username": TEST_ADMIN_USERNAME_4,
+            "workspace_name": TEST_WORKSPACE_NAME_4,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
     )
