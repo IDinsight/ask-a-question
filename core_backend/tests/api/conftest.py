@@ -1620,8 +1620,6 @@ async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
         Additional keyword arguments.
     """
 
-    pass
-
 
 async def mock_detect_urgency(
     urgency_rules: list[str], message: str, metadata: Optional[dict]
