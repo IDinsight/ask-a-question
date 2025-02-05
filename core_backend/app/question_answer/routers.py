@@ -231,13 +231,13 @@ async def search(
         workspace_id=workspace_id,
     )
 
-    if type(response) is QueryResponse:
-        return response
-
-    if type(response) is QueryResponseError:
+    if isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
+
+    if isinstance(response, QueryResponse):
+        return response
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -375,13 +375,13 @@ async def voice_search(
             os.remove(file_path)
             file_stream.close()
 
-        if type(response) is QueryAudioResponse:
-            return response
-
-        if type(response) is QueryResponseError:
+        if isinstance(response, QueryResponseError):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
             )
+
+        if isinstance(response, QueryAudioResponse):
+            return response
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
