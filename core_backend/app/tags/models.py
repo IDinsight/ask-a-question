@@ -22,8 +22,18 @@ from .schemas import TagCreate
 content_tags_table = Table(
     "content_tag",
     Base.metadata,
-    Column("content_id", Integer, ForeignKey("content.content_id"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("tag.tag_id"), primary_key=True),
+    Column(
+        "content_id",
+        Integer,
+        ForeignKey("content.content_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "tag_id",
+        Integer,
+        ForeignKey("tag.tag_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 
@@ -257,7 +267,9 @@ async def validate_tags(
     tags_db = (await asession.execute(stmt)).all()
     tag_rows = [c[0] for c in tags_db] if tags_db else []
     if len(tags) != len(tag_rows):
-        invalid_tags = set(tags) - set([c[0].tag_id for c in tags_db])
+        invalid_tags = set(tags) - set(  # pylint: disable=R1718
+            [c[0].tag_id for c in tags_db]
+        )
         return False, list(invalid_tags)
     return True, tag_rows
 

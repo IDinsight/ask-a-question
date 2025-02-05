@@ -157,6 +157,6 @@ class UserUpdate(UserCreate):
     2. role: This is the role to update the user to in the specified workspace.
     3. username: The username of the user to update.
     4. workspace_name: The name of the workspace to update the user in. If the field is
-        specified and is_default_workspace is set to True, then the user's default
+        specified and `is_default_workspace` is set to `True`, then the user's default
         workspace is updated to the specified workspace.
     """

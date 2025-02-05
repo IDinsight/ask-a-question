@@ -384,7 +384,7 @@ async def get_workspace_by_api_key(
 
     Raises
     ------
-    WorkspaceNotFoundError
+    WorkspaceTokenNotFoundError
         If the workspace with the specified token does not exist.
     """
 

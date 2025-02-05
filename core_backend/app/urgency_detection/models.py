@@ -71,7 +71,7 @@ class UrgencyResponseDB(Base):
         "UrgencyQueryDB", back_populates="response", lazy=True
     )
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("urgency_query.urgency_query_id")
+        Integer, ForeignKey("urgency_query.urgency_query_id", ondelete="CASCADE")
     )
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

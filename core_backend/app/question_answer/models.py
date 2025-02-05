@@ -104,7 +104,9 @@ class QueryResponseDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     llm_response: Mapped[str] = mapped_column(String, nullable=True)
     response_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -147,13 +149,13 @@ class QueryResponseContentDB(Base):
         Integer, primary_key=True, nullable=False
     )
     content_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("content.content_id"), nullable=False
+        Integer, ForeignKey("content.content_id", ondelete="CASCADE"), nullable=False
     )
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
     query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("query.query_id"), nullable=False
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE"), nullable=False
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
@@ -201,7 +203,9 @@ class ResponseFeedbackDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="response_feedback", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
         Integer,
@@ -234,7 +238,9 @@ class ContentFeedbackDB(Base):
     __tablename__ = "content_feedback"
 
     content: Mapped["ContentDB"] = relationship("ContentDB")
-    content_id: Mapped[int] = mapped_column(Integer, ForeignKey("content.content_id"))
+    content_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("content.content_id", ondelete="CASCADE")
+    )
     feedback_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -246,7 +252,9 @@ class ContentFeedbackDB(Base):
     query: Mapped[QueryDB] = relationship(
         "QueryDB", back_populates="content_feedback", lazy=True
     )
-    query_id: Mapped[int] = mapped_column(Integer, ForeignKey("query.query_id"))
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("query.query_id", ondelete="CASCADE")
+    )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
         Integer,
@@ -405,30 +413,7 @@ async def save_query_response_to_db(
         If the response type is invalid.
     """
 
-    if type(response) is QueryResponse:
-        user_query_responses_db = QueryResponseDB(
-            debug_info=response.model_dump()["debug_info"],
-            is_error=False,
-            llm_response=response.model_dump()["llm_response"],
-            query_id=user_query_db.query_id,
-            response_datetime_utc=datetime.now(timezone.utc),
-            search_results=response.model_dump()["search_results"],
-            session_id=user_query_db.session_id,
-            workspace_id=workspace_id,
-        )
-    elif type(response) is QueryAudioResponse:
-        user_query_responses_db = QueryResponseDB(
-            debug_info=response.model_dump()["debug_info"],
-            is_error=False,
-            llm_response=response.model_dump()["llm_response"],
-            query_id=user_query_db.query_id,
-            response_datetime_utc=datetime.now(timezone.utc),
-            search_results=response.model_dump()["search_results"],
-            session_id=user_query_db.session_id,
-            tts_filepath=response.model_dump()["tts_filepath"],
-            workspace_id=workspace_id,
-        )
-    elif type(response) is QueryResponseError:
+    if isinstance(response, QueryResponseError):
         user_query_responses_db = QueryResponseDB(
             debug_info=response.model_dump()["debug_info"],
             error_message=response.error_message,
@@ -440,6 +425,29 @@ async def save_query_response_to_db(
             search_results=response.model_dump()["search_results"],
             session_id=user_query_db.session_id,
             tts_filepath=None,
+            workspace_id=workspace_id,
+        )
+    elif isinstance(response, QueryAudioResponse):
+        user_query_responses_db = QueryResponseDB(
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+            llm_response=response.model_dump()["llm_response"],
+            query_id=user_query_db.query_id,
+            response_datetime_utc=datetime.now(timezone.utc),
+            search_results=response.model_dump()["search_results"],
+            session_id=user_query_db.session_id,
+            tts_filepath=response.model_dump()["tts_filepath"],
+            workspace_id=workspace_id,
+        )
+    elif isinstance(response, QueryResponse):
+        user_query_responses_db = QueryResponseDB(
+            debug_info=response.model_dump()["debug_info"],
+            is_error=False,
+            llm_response=response.model_dump()["llm_response"],
+            query_id=user_query_db.query_id,
+            response_datetime_utc=datetime.now(timezone.utc),
+            search_results=response.model_dump()["search_results"],
+            session_id=user_query_db.session_id,
             workspace_id=workspace_id,
         )
     else:

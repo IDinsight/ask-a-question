@@ -26,7 +26,7 @@ def read_test_data(file: str) -> list[str]:
 
     file_path = Path(__file__).parent / file
 
-    with open(file_path) as f:
+    with open(file_path, encoding="utf-8") as f:
         return f.read().splitlines()
 
 

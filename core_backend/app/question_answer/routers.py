@@ -231,13 +231,13 @@ async def search(
         workspace_id=workspace_id,
     )
 
-    if type(response) is QueryResponse:
-        return response
-
-    if type(response) is QueryResponseError:
+    if isinstance(response, QueryResponseError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
         )
+
+    if isinstance(response, QueryResponse):
+        return response
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -375,13 +375,13 @@ async def voice_search(
             os.remove(file_path)
             file_stream.close()
 
-        if type(response) is QueryAudioResponse:
-            return response
-
-        if type(response) is QueryResponseError:
+        if isinstance(response, QueryResponseError):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
             )
+
+        if isinstance(response, QueryAudioResponse):
+            return response
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -395,7 +395,7 @@ async def voice_search(
             content={"error": f"Value error: {str(ve)}"},
         )
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         logger.error(f"Unexpected error: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -636,7 +636,7 @@ async def get_user_query_and_response(
 
 @router.post("/response-feedback")
 async def feedback(
-    feedback: ResponseFeedbackBase,
+    feedback_: ResponseFeedbackBase,
     asession: AsyncSession = Depends(get_async_session),
 ) -> JSONResponse:
     """Feedback endpoint used to capture user feedback on the results returned by QA
@@ -648,7 +648,7 @@ async def feedback(
 
     Parameters
     ----------
-    feedback
+    feedback_
         The feedback object.
     asession
         The SQLAlchemy async session to use for all database connections.
@@ -661,20 +661,20 @@ async def feedback(
 
     is_matched = await check_secret_key_match(
         asession=asession,
-        query_id=feedback.query_id,
-        secret_key=feedback.feedback_secret_key,
+        query_id=feedback_.query_id,
+        secret_key=feedback_.feedback_secret_key,
     )
 
     if is_matched is False:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": f"Secret key does not match query id: {feedback.query_id}"
+                "message": f"Secret key does not match query id: {feedback_.query_id}"
             },
         )
 
     feedback_db = await save_response_feedback_to_db(
-        asession=asession, feedback=feedback
+        asession=asession, feedback=feedback_
     )
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -689,7 +689,7 @@ async def feedback(
 
 @router.post("/content-feedback")
 async def content_feedback(
-    feedback: ContentFeedback,
+    feedback_: ContentFeedback,
     asession: AsyncSession = Depends(get_async_session),
     workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> JSONResponse:
@@ -702,7 +702,7 @@ async def content_feedback(
 
     Parameters
     ----------
-    feedback
+    feedback_
         The feedback object.
     asession
         The SQLAlchemy async session to use for all database connections.
@@ -717,29 +717,29 @@ async def content_feedback(
 
     is_matched = await check_secret_key_match(
         asession=asession,
-        query_id=feedback.query_id,
-        secret_key=feedback.feedback_secret_key,
+        query_id=feedback_.query_id,
+        secret_key=feedback_.feedback_secret_key,
     )
     if is_matched is False:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": f"Secret key does not match query ID: {feedback.query_id}"
+                "message": f"Secret key does not match query ID: {feedback_.query_id}"
             },
         )
 
     try:
         feedback_db = await save_content_feedback_to_db(
-            asession=asession, feedback=feedback
+            asession=asession, feedback=feedback_
         )
     except IntegrityError as e:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "message": f"Content ID: {feedback.content_id} does not exist.",
+                "message": f"Content ID: {feedback_.content_id} does not exist.",
                 "details": {
-                    "content_id": feedback.content_id,
-                    "query_id": feedback.query_id,
+                    "content_id": feedback_.content_id,
+                    "query_id": feedback_.query_id,
                     "exception": "IntegrityError",
                     "exception_details": str(e),
                 },
@@ -748,8 +748,8 @@ async def content_feedback(
 
     await update_votes_in_db(
         asession=asession,
-        content_id=feedback.content_id,
-        vote=feedback.feedback_sentiment,
+        content_id=feedback_.content_id,
+        vote=feedback_.feedback_sentiment,
         workspace_id=workspace_db.workspace_id,
     )
 

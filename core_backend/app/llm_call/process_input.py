@@ -159,7 +159,7 @@ def _process_identified_language_response(
                 "Unintelligible input. "
                 + f"The following languages are supported: {supported_languages}."
             )
-            error_type = ErrorType.UNINTELLIGIBLE_INPUT
+            error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
         case _:
             error_message = (
                 "Unsupported language. Only the following languages "

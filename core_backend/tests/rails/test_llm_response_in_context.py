@@ -25,7 +25,7 @@ def read_test_data(file: str) -> list[tuple]:
 
     file_path = Path(__file__).parent / file
 
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = yaml.safe_load(f)
         return [(c["context"], *t.values()) for c in content for t in c["tests"]]
 

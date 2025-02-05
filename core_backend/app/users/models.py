@@ -310,7 +310,7 @@ async def add_new_user_to_workspace(
     )
 
     return UserCreateWithCode(
-        is_default_workspace=user.is_default_workspace,
+        is_default_workspace=True,
         recovery_codes=recovery_codes,
         role=user.role,
         username=user_db.username,
@@ -396,7 +396,7 @@ async def check_if_users_exist(*, asession: AsyncSession) -> bool:
 
 async def check_if_user_has_default_workspace(
     *, asession: AsyncSession, user_db: UserDB
-) -> bool:
+) -> bool | None:
     """Check if a user has an assigned default workspace.
 
     Parameters
@@ -408,7 +408,7 @@ async def check_if_user_has_default_workspace(
 
     Returns
     -------
-    bool
+    bool | None
         Specifies whether the user has a default workspace assigned.
     """
 

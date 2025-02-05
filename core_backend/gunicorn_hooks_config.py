@@ -5,7 +5,7 @@ from main import Worker
 from prometheus_client import multiprocess
 
 
-def child_exit(server: Arbiter, worker: Worker) -> None:
+def child_exit(server: Arbiter, worker: Worker) -> None:  # pylint: disable=W0613
     """Multiprocess mode requires to mark the process as dead.
 
     Parameters

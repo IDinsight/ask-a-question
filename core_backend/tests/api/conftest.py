@@ -1,15 +1,17 @@
 """This module contains fixtures for the API tests."""
 
+# pylint: disable=W0613, W0621
 import json
-from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Generator, Optional
+from datetime import datetime, timezone, tzinfo
+from typing import Any, AsyncGenerator, Callable, Generator, Optional
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from pytest_alembic.config import Config
+from pytest_bdd.parser import Feature, Scenario, Step
 from redis import asyncio as aioredis
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
@@ -41,18 +43,28 @@ from core_backend.app.question_answer.models import (
 )
 from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
-from core_backend.app.users.models import UserDB, UserWorkspaceDB, WorkspaceDB
+from core_backend.app.users.models import (
+    UserDB,
+    UserWorkspaceDB,
+    WorkspaceDB,
+    check_if_users_exist,
+)
 from core_backend.app.users.schemas import UserRoles
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
-from core_backend.app.workspaces.utils import get_workspace_by_workspace_name
+from core_backend.app.workspaces.utils import (
+    check_if_workspaces_exist,
+    get_workspace_by_workspace_name,
+)
 
 # Admin users.
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_2 = "admin_password_2"  # pragma: allowlist secret
+TEST_ADMIN_PASSWORD_3 = "admin_password_3"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_1 = "admin_password_data_api_1"  # pragma: allowlist secret
 TEST_ADMIN_PASSWORD_DATA_API_2 = "admin_password_data_api_2"  # pragma: allowlist secret
 TEST_ADMIN_USERNAME_1 = "admin_1"
 TEST_ADMIN_USERNAME_2 = "admin_2"
+TEST_ADMIN_USERNAME_3 = "admin_3"
 TEST_ADMIN_USERNAME_DATA_API_1 = "admin_data_api_1"
 TEST_ADMIN_USERNAME_DATA_API_2 = "admin_data_api_2"
 
@@ -64,15 +76,51 @@ TEST_READ_ONLY_USERNAME_2 = "test_username_2"
 # Workspaces.
 TEST_WORKSPACE_API_KEY_1 = "test_api_key_1"  # pragma: allowlist secret
 TEST_WORKSPACE_API_QUOTA_2 = 2000
+TEST_WORKSPACE_API_QUOTA_3 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_1 = 2000
 TEST_WORKSPACE_API_QUOTA_DATA_API_2 = 2000
 TEST_WORKSPACE_CONTENT_QUOTA_2 = 50
+TEST_WORKSPACE_CONTENT_QUOTA_3 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1 = 50
 TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2 = 50
 TEST_WORKSPACE_NAME_1 = "test_workspace_1"
 TEST_WORKSPACE_NAME_2 = "test_workspace_2"
+TEST_WORKSPACE_NAME_3 = "test_workspace_3"
 TEST_WORKSPACE_NAME_DATA_API_1 = "test_workspace_data_api_1"
 TEST_WORKSPACE_NAME_DATA_API_2 = "test_workspace_data_api_2"
+
+
+# Hooks.
+def pytest_bdd_step_error(
+    request: pytest.FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable,
+    step_func_args: dict[str, Any],
+    exception: Exception,
+) -> None:
+    """Hook for when a step fails.
+
+    Parameters
+    ----------
+    request
+        Pytest fixture request object.
+    feature
+        The BDD feature that failed.
+    scenario
+        The BDD scenario that failed.
+    step
+        The BDD step that failed.
+    step_func
+        The step function that failed.
+    step_func_args
+        The arguments passed to the step function that failed.
+    exception
+        The exception that was raised by the step function that failed.
+    """
+
+    print(f"Step: {step} FAILED with Step Function Arguments: {step_func_args}")
 
 
 # Fixtures.
@@ -85,8 +133,8 @@ async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, No
     async_engine
         Async engine for testing.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[AsyncSession, None]
         Async session for testing.
     """
@@ -103,8 +151,8 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     test. Without this we get "Future attached to different loop" error. See:
     https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[AsyncEngine, None, None]
         Async engine for testing.
     """  # noqa: E501
@@ -113,6 +161,36 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
     await engine.dispose()
+
+
+@pytest.fixture
+async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
+    """Delete all entries from `UserWorkspaceDB`, `UserDB`, and `WorkspaceDB` and reset
+    the autoincrement counters.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    """
+
+    async with asession.begin():
+        # Delete from the association table first due to foreign key constraints.
+        await asession.execute(delete(UserWorkspaceDB))
+
+        # Delete users and workspaces after the association table is cleared.
+        await asession.execute(delete(UserDB))
+        await asession.execute(delete(WorkspaceDB))
+
+        # Reset auto-increment sequences.
+        await asession.execute(text("ALTER SEQUENCE user_user_id_seq RESTART WITH 1"))
+        await asession.execute(
+            text("ALTER SEQUENCE workspace_workspace_id_seq RESTART WITH 1")
+        )
+
+        # Sanity check.
+        assert not await check_if_users_exist(asession=asession)
+        assert not await check_if_workspaces_exist(asession=asession)
 
 
 @pytest.fixture(scope="session")
@@ -124,8 +202,8 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
     patch_llm_call
         Pytest fixture request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[TestClient, None, None]
         Test client.
     """
@@ -139,8 +217,8 @@ def client(patch_llm_call: pytest.FixtureRequest) -> Generator[TestClient, None,
 def db_session() -> Generator[Session, None, None]:
     """Create a test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[Session, None, None]
         Test database session.
     """
@@ -319,6 +397,52 @@ async def admin_user_2_in_workspace_2(
             "role": UserRoles.ADMIN,
             "username": TEST_ADMIN_USERNAME_2,
             "workspace_name": TEST_WORKSPACE_NAME_2,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    return response.json()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def admin_user_3_in_workspace_3(
+    access_token_admin_1: pytest.FixtureRequest, client: TestClient
+) -> dict[str, Any]:
+    """Create admin user 3 in workspace 3 by invoking the `/user` endpoint.
+
+    NB: Only admins can create workspaces. Since admin user 1 is the first admin user
+    ever, we need admin user 1 to create workspace 3 and then add admin user 3 to
+    workspace 3.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1 in workspace 1.
+    client
+        Test client.
+
+    Returns
+    -------
+    dict[str, Any]
+        The response from creating admin user 3 in workspace 3.
+    """
+
+    client.post(
+        "/workspace",
+        json={
+            "api_daily_quota": TEST_WORKSPACE_API_QUOTA_3,
+            "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_3,
+            "workspace_name": TEST_WORKSPACE_NAME_3,
+        },
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+    )
+    response = client.post(
+        "/user",
+        json={
+            "is_default_workspace": True,
+            "password": TEST_ADMIN_PASSWORD_3,
+            "role": UserRoles.ADMIN,
+            "username": TEST_ADMIN_USERNAME_3,
+            "workspace_name": TEST_WORKSPACE_NAME_3,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
     )
@@ -575,8 +699,8 @@ def existing_tag_id_in_workspace_1(
     request
         Pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[str, None, None]
         Tag ID.
     """
@@ -608,8 +732,8 @@ async def faq_contents_in_workspace_1(
     admin_user_1_in_workspace_1
         Admin user 1 in workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -620,7 +744,73 @@ async def faq_contents_in_workspace_1(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
+        json_data = json.load(f)
+    contents = []
+    for content in json_data:
+        text_to_embed = content["content_title"] + "\n" + content["content_text"]
+        content_embedding = await async_fake_embedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+        content_db = ContentDB(
+            content_embedding=content_embedding,
+            content_metadata=content.get("content_metadata", {}),
+            content_text=content["content_text"],
+            content_title=content["content_title"],
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=workspace_id,
+        )
+        contents.append(content_db)
+
+    asession.add_all(contents)
+    await asession.commit()
+
+    yield [content.content_id for content in contents]
+
+    for content in contents:
+        delete_feedback = delete(ContentFeedbackDB).where(
+            ContentFeedbackDB.content_id == content.content_id
+        )
+        content_query = delete(QueryResponseContentDB).where(
+            QueryResponseContentDB.content_id == content.content_id
+        )
+        await asession.execute(delete_feedback)
+        await asession.execute(content_query)
+        await asession.delete(content)
+
+    await asession.commit()
+
+
+@pytest.fixture(scope="function")
+async def faq_contents_in_workspace_3(
+    asession: AsyncSession, admin_user_3_in_workspace_3: dict[str, Any]
+) -> AsyncGenerator[list[int], None]:
+    """Create FAQ contents in workspace 3.
+
+    Parameters
+    ----------
+    asession
+        Async database session.
+    admin_user_3_in_workspace_3
+        Admin user 3 in workspace 3.
+
+    Yields
+    ------
+    AsyncGenerator[list[int], None]
+        FAQ content IDs.
+    """
+
+    workspace_name = admin_user_3_in_workspace_3["workspace_name"]
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -675,8 +865,8 @@ async def faq_contents_in_workspace_data_api_1(
     admin_user_data_api_1_in_workspace_data_api_1
         Data API admin user 1 in the data API workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -687,7 +877,7 @@ async def faq_contents_in_workspace_data_api_1(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -742,8 +932,8 @@ async def faq_contents_in_workspace_data_api_2(
     admin_user_data_api_2_in_workspace_data_api_2
         Data API admin user 2 in the data API workspace 2.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[list[int], None]
         FAQ content IDs.
     """
@@ -754,7 +944,7 @@ async def faq_contents_in_workspace_data_api_2(
     )
     workspace_id = workspace_db.workspace_id
 
-    with open("tests/api/data/content.json", "r") as f:
+    with open("tests/api/data/content.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     contents = []
     for content in json_data:
@@ -806,8 +996,8 @@ def monkeysession(
     request
         Pytest fixture request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[pytest.MonkeyPatch, None, None]
         Monkeypatch for the session.
     """
@@ -888,8 +1078,8 @@ async def read_only_user_1_in_workspace_1(
 async def redis_client() -> AsyncGenerator[aioredis.Redis, None]:
     """Create a redis client for testing.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[aioredis.Redis, None, None]
         Redis client for testing.
     """
@@ -918,8 +1108,8 @@ def temp_workspace_api_key_and_api_quota(
     request
         Pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[tuple[str, int], None, None]
         Temporary workspace API key and API quota.
     """
@@ -991,8 +1181,8 @@ def temp_workspace_token_and_quota(
     request
         The pytest request object.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[tuple[str, int], None, None]
         The access token and content quota for the temporary workspace.
     """
@@ -1055,13 +1245,13 @@ async def urgency_rules_workspace_1(
     workspace_1_id
         The ID for workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in workspace 1.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1105,13 +1295,13 @@ async def urgency_rules_workspace_data_api_1(
     workspace_data_api_id_1
         The ID for the data API workspace 1.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in the data API workspace 1.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1155,13 +1345,13 @@ async def urgency_rules_workspace_data_api_2(
     workspace_data_api_id_2
         The ID for the data API workspace 2.
 
-    Returns
-    -------
+    Yields
+    ------
     AsyncGenerator[int, None]
         Number of urgency rules in the data API workspace 2.
     """
 
-    with open("tests/api/data/urgency_rules.json", "r") as f:
+    with open("tests/api/data/urgency_rules.json", "r", encoding="utf-8") as f:
         json_data = json.load(f)
     rules = []
     for i, rule in enumerate(json_data):
@@ -1201,14 +1391,60 @@ def workspace_1_id(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Workspace 1 ID.
     """
 
     stmt = select(WorkspaceDB).where(
         WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_1
+    )
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+@pytest.fixture(scope="session")
+def workspace_2_id(db_session: Session) -> Generator[int, None, None]:
+    """Return workspace 2 ID.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Yields
+    ------
+    Generator[int, None, None]
+        Workspace 2 ID.
+    """
+
+    stmt = select(WorkspaceDB).where(
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_2
+    )
+    result = db_session.execute(stmt)
+    workspace_db = result.scalar_one()
+    yield workspace_db.workspace_id
+
+
+@pytest.fixture(scope="session")
+def workspace_3_id(db_session: Session) -> Generator[int, None, None]:
+    """Return workspace 3 ID.
+
+    Parameters
+    ----------
+    db_session
+        Test database session.
+
+    Yields
+    ------
+    Generator[int, None, None]
+        Workspace 3 ID.
+    """
+
+    stmt = select(WorkspaceDB).where(
+        WorkspaceDB.workspace_name == TEST_WORKSPACE_NAME_3
     )
     result = db_session.execute(stmt)
     workspace_db = result.scalar_one()
@@ -1224,8 +1460,8 @@ def workspace_data_api_id_1(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Data API workspace 1 ID.
     """
@@ -1247,8 +1483,8 @@ def workspace_data_api_id_2(db_session: Session) -> Generator[int, None, None]:
     db_session
         Test database session.
 
-    Returns
-    -------
+    Yields
+    ------
     Generator[int, None, None]
         Data API workspace 2 ID.
     """
@@ -1262,6 +1498,37 @@ def workspace_data_api_id_2(db_session: Session) -> Generator[int, None, None]:
 
 
 # Mocks.
+class MockDatetime:
+    """Mock the datetime object."""
+
+    def __init__(self, *, date: datetime) -> None:
+        """Initialize the mock datetime object.
+
+        Parameters
+        ----------
+        date
+            The date.
+        """
+
+        self.date = date
+
+    def now(self, tz: Optional[tzinfo] = None) -> datetime:
+        """Mock the datetime.now() method.
+
+        Parameters
+        ----------
+        tz
+            The timezone.
+
+        Returns
+        -------
+        datetime
+            The datetime object.
+        """
+
+        return self.date.astimezone(tz) if tz is not None else self.date
+
+
 async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
     """Replicate `embedding` function by generating a random list of floats.
 

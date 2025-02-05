@@ -108,11 +108,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ----------
     app
         The application instance.
-
-    Returns
-    -------
-    AsyncIterator[None]
-        The lifespan events.
     """
 
     logger.info("Application started")

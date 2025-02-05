@@ -48,7 +48,7 @@ def detect_language(*, file_path: str) -> str:
 
     logger.info(f"Detecting language for {file_path} using Faster Whisper tiny model.")
 
-    segments, info = model.transcribe(file_path)
+    _, info = model.transcribe(file_path)
 
     detected_language = info.language
     logger.info(f"Detected language: {detected_language}")

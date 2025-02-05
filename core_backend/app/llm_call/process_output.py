@@ -165,6 +165,7 @@ def check_align_score__after(func: Callable) -> Callable:
         args
             Additional positional arguments.
         kwargs
+            Additional keyword arguments.
 
         Returns
         -------

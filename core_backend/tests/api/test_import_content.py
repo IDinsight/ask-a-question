@@ -63,7 +63,7 @@ class TestImportContentQuota:
             The temporary workspace access token and content quota.
         """
 
-        temp_workspace_token, content_quota = temp_workspace_token_and_quota
+        temp_workspace_token, _ = temp_workspace_token_and_quota
         data = _dict_to_csv_bytes(
             data={
                 "text": ["csv text 1", "csv text 2"],
@@ -112,7 +112,7 @@ class TestImportContentQuota:
             The temporary workspace access token and content quota.
         """
 
-        temp_workspace_token, content_quota = temp_workspace_token_and_quota
+        temp_workspace_token, _ = temp_workspace_token_and_quota
         data = _dict_to_csv_bytes(
             data={
                 "text": ["csv text 1", "csv text 2"],
@@ -463,8 +463,8 @@ class TestDBDuplicates:
         client
             The test client.
 
-        Returns
-        -------
+        Yields
+        ------
         Generator[str, None, None]
             The content ID.
         """
