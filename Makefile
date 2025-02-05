@@ -33,7 +33,7 @@ fresh-env :
 lint-core-backend:
 	black core_backend/
 	ruff check core_backend/
-	mypy core_backend/ --ignore-missing-imports
+	mypy core_backend/ --ignore-missing-imports --explicit-package-base
 	pylint core_backend/
 
 # Dev requirements

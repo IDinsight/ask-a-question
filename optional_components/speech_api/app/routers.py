@@ -47,7 +47,7 @@ async def transcribe_audio_endpoint(
 
     try:
         return await transcribe_audio(file_path=request.stt_file_path)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         logger.error(f"Error during transcription: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -85,7 +85,7 @@ async def synthesize_speech_endpoint(
     try:
         result = await synthesize_speech(language=request.language, text=request.text)
         return StreamingResponse(result, media_type="audio/wav")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         logger.error(f"Unexpected error during speech synthesis: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
