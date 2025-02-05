@@ -398,14 +398,14 @@ async def voice_search(
     except ValueError as ve:
         logger.error(f"ValueError: {str(ve)}")
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_502_BAD_GATEWAY,
             content={"error": f"Value error: {str(ve)}"},
         )
 
     except Exception as e:  # pylint: disable=W0718
         logger.error(f"Unexpected error: {str(e)}")
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_510_NOT_EXTENDED,
             content={"error": "Internal server error"},
         )
 
