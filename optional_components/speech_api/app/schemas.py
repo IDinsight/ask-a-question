@@ -1,28 +1,42 @@
+"""This module contains Pydantic models for the speech API."""
+
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
 
 class IdentifiedLanguage(str, Enum):
-    """
-    Identified language of the user's input.
-    """
+    """Enumeration for the identified language of the user's input."""
 
-    ENGLISH = "ENGLISH"
-    SWAHILI = "SWAHILI"
-    # XHOSA = "XHOSA"
-    # ZULU = "ZULU"
     # AFRIKAANS = "AFRIKAANS"
+    ENGLISH = "ENGLISH"
     HINDI = "HINDI"
+    SWAHILI = "SWAHILI"
     UNINTELLIGIBLE = "UNINTELLIGIBLE"
     UNSUPPORTED = "UNSUPPORTED"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+
+
+class SynthesisRequest(BaseModel):
+    """Pydantic model for the synthesis request for TTS."""
+
+    language: IdentifiedLanguage
+    text: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SynthesisResponse(BaseModel):
+    """Pydantic model for the synthesis response for TTS."""
+
+    audio: bytes
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TranscriptionRequest(BaseModel):
-    """
-    Pydantic model for the transcription request for STT.
-
-    """
+    """Pydantic model for the transcription request for STT."""
 
     stt_file_path: str
 
@@ -30,35 +44,9 @@ class TranscriptionRequest(BaseModel):
 
 
 class TranscriptionResponse(BaseModel):
-    """
-    Pydantic model for the transcription response for STT.
+    """Pydantic model for the transcription response for STT."""
 
-    """
-
-    text: str
     language: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class SynthesisRequest(BaseModel):
-    """
-    Pydantic model for the synthesis request for TTS.
-
-    """
-
     text: str
-    language: IdentifiedLanguage
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class SynthesisResponse(BaseModel):
-    """
-    Pydantic model for the synthesis response for TTS.
-
-    """
-
-    audio: bytes
 
     model_config = ConfigDict(from_attributes=True)
