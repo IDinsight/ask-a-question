@@ -281,7 +281,7 @@ async def retrieve_workspace_by_workspace_id(
     return WorkspaceRetrieve(
         api_daily_quota=matched_workspace_db.api_daily_quota,
         api_key_first_characters=matched_workspace_db.api_key_first_characters,
-        api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,  # noqa: E501
+        api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,
         content_quota=matched_workspace_db.content_quota,
         created_datetime_utc=matched_workspace_db.created_datetime_utc,
         updated_datetime_utc=matched_workspace_db.updated_datetime_utc,

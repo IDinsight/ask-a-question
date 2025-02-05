@@ -42,6 +42,7 @@ from core_backend.app.question_answer.models import (
     QueryResponseContentDB,
 )
 from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
+from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from core_backend.app.urgency_rules.models import UrgencyRuleDB
 from core_backend.app.users.models import (
     UserDB,
@@ -1238,6 +1239,9 @@ async def urgency_rules_workspace_1(
 ) -> AsyncGenerator[int, None]:
     """Create urgency rules for workspace 1.
 
+    NB: It is important to also delete the urgency queries and urgency query responses
+    entries since the tests that use this fixture will create entries in those tables.
+
     Parameters
     ----------
     db_session
@@ -1279,6 +1283,17 @@ async def urgency_rules_workspace_1(
     # Delete the urgency rules.
     for rule in rules:
         db_session.delete(rule)
+
+    # Delete urgency queries.
+    stmt = delete(UrgencyQueryDB).where(UrgencyQueryDB.workspace_id == workspace_1_id)
+    db_session.execute(stmt)
+
+    # Delete urgency query responses.
+    stmt = delete(UrgencyResponseDB).where(
+        UrgencyResponseDB.workspace_id == workspace_1_id
+    )
+    db_session.execute(stmt)
+
     db_session.commit()
 
 

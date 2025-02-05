@@ -62,7 +62,7 @@ def convert_rows_to_details_drawer(
     n_days
         The number of days to use for calculating the average daily query count.
     timeseries
-        The timeseris rows to convert.
+        The timeseries rows to convert.
 
     Returns
     -------
@@ -1356,7 +1356,7 @@ async def get_timeseries_urgency(
             func.date_trunc(interval_str, UrgencyResponseDB.response_datetime_utc)
             == func.date_trunc(interval_str, ts_labels.c.time_period),
         )
-        .where(ResponseFeedbackDB.query.has(workspace_id=workspace_id))
+        .where(UrgencyResponseDB.query.has(workspace_id=workspace_id))
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )

@@ -62,4 +62,5 @@ jobs:
             ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
           python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
-          python -m pytest -m "not rails and not alembic" tests
+          python -m pytest -m "not rails and not alembic" --ignore-glob="tests/api/step_definitions/*" tests
+          python -m pytest -m "not rails and not alembic" tests/api/step_definitions
