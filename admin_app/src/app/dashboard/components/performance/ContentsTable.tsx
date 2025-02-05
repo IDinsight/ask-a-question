@@ -1,14 +1,6 @@
 "use client";
 
-import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
-import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import Box from "@mui/material/Box";
-import Pagination from "@mui/material/Pagination";
-import TextField from "@mui/material/TextField";
-import { ApexOptions } from "apexcharts";
-import dynamic from "next/dynamic";
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Paper,
   Table,
@@ -17,9 +9,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
 } from "@mui/material";
+import Pagination from "@mui/material/Pagination";
+import { ApexOptions } from "apexcharts";
+import Box from "@mui/material/Box";
 import theme from "@/theme";
-
+import dynamic from "next/dynamic";
+import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
+import { SortableTableHeader } from "./SortableTableHeader";
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface QueryCountTimeSeriesProps {
@@ -93,14 +91,12 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
     );
     const lastQuarterValue =
       lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
-
     const thirdQuarter = queryCount.slice(
       Math.floor((queryLength / 4) * 2),
       Math.floor((queryLength / 4) * 3),
     );
     const thirdQuarterValue =
       thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
-
     return (lastQuarterValue - thirdQuarterValue) / (thirdQuarterValue || 1);
   };
 
@@ -165,74 +161,34 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
         <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
           <TableRow>
             <TableCell>Content Title</TableCell>
-            <TableCell
-              onClick={() => handleSort("query_count")}
-              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              <Box
-                component="span"
-                sx={{ display: "inline-flex", alignItems: "center" }}
-              >
-                Daily Average Sent{" "}
-                {sortColumn === "query_count" &&
-                  (sortOrder === "ascending" ? (
-                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ))}
-              </Box>
-            </TableCell>
-            <TableCell
-              onClick={() => handleSort("positive_votes")}
-              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              <Box
-                component="span"
-                sx={{ display: "inline-flex", alignItems: "center" }}
-              >
-                Upvotes{" "}
-                {sortColumn === "positive_votes" &&
-                  (sortOrder === "ascending" ? (
-                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ))}
-              </Box>
-            </TableCell>
-            <TableCell
-              onClick={() => handleSort("negative_votes")}
-              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              <Box
-                component="span"
-                sx={{ display: "inline-flex", alignItems: "center" }}
-              >
-                Downvotes{" "}
-                {sortColumn === "negative_votes" &&
-                  (sortOrder === "ascending" ? (
-                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ))}
-              </Box>
-            </TableCell>
-            <TableCell
-              onClick={() => handleSort("query_count_timeseries")}
-              sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              <Box
-                component="span"
-                sx={{ display: "inline-flex", alignItems: "center" }}
-              >
-                Trend{" "}
-                {sortColumn === "query_count_timeseries" &&
-                  (sortOrder === "ascending" ? (
-                    <ArrowDropUpIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ) : (
-                    <ArrowDropDownIcon sx={{ color: "#1565c0", ml: 0.5 }} />
-                  ))}
-              </Box>
-            </TableCell>
+            <SortableTableHeader
+              label="Daily Average Sent"
+              columnKey="query_count"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Upvotes"
+              columnKey="positive_votes"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Downvotes"
+              columnKey="negative_votes"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Trend"
+              columnKey="query_count_timeseries"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
           </TableRow>
           <TableRow>
             <TableCell sx={{ paddingTop: 0 }}>
