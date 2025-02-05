@@ -1041,6 +1041,30 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
+def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
+    """Monkeypatch GCS functions to replace their real implementations with dummy ones.
+
+    Parameters
+    ----------
+    monkeysession
+        Pytest monkeypatch object.
+    """
+
+    monkeysession.setattr(
+        "core_backend.app.question_answer.routers.upload_file_to_gcs",
+        async_fake_upload_file_to_gcs,
+    )
+    monkeysession.setattr(
+        "core_backend.app.llm_call.process_output.upload_file_to_gcs",
+        async_fake_upload_file_to_gcs,
+    )
+    monkeysession.setattr(
+        "core_backend.app.llm_call.process_output.generate_public_url",
+        async_fake_generate_public_url,
+    )
+
+
+@pytest.fixture(scope="session", autouse=True)
 async def read_only_user_1_in_workspace_1(
     access_token_admin_1: pytest.FixtureRequest, client: TestClient
 ) -> dict[str, Any]:
@@ -1564,6 +1588,39 @@ async def async_fake_embedding(*arg: str, **kwargs: str) -> list[float]:
         np.random.rand(int(PGVECTOR_VECTOR_SIZE)).astype(np.float32).tolist()
     )
     return embedding_list
+
+
+async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
+    """A dummy function to replace the real `generate_public_url` function.
+
+    Parameters
+    ----------
+    args
+        Additional positional arguments.
+    kwargs
+        Additional keyword arguments.
+
+    Returns
+    -------
+    str
+        A dummy URL.
+    """
+
+    return "http://example.com/signed-url"
+
+
+async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
+    """A dummy function to replace the real `upload_file_to_gcs` function.
+
+    Parameters
+    ----------
+    args
+        Additional positional arguments.
+    kwargs
+        Additional keyword arguments.
+    """
+
+    pass
 
 
 async def mock_detect_urgency(
