@@ -30,6 +30,7 @@ class AuthenticationDetails(BaseModel):
     access_token: str
     token_type: TokenType
     username: str
+    workspace_name: str
 
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
     is_admin: bool = True
@@ -58,7 +59,6 @@ class WorkspaceLogin(BaseModel):
     workspace.
     """
 
-    username: str
     workspace_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

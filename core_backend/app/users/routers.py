@@ -55,6 +55,7 @@ from .schemas import (
     UserRetrieve,
     UserRoles,
     UserUpdate,
+    UserWorkspace,
 )
 
 TAG_METADATA = {
@@ -322,29 +323,30 @@ async def remove_user_from_workspace(
 
 
 @router.get("/", response_model=list[UserRetrieve])
-async def retrieve_all_users(
+async def retrieve_all_users_in_current_workspace(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[UserRetrieve]:
-    """Return a list of all users.
+    """Return a list of all users in the current workspace.
 
     NB: When this endpoint called, it **should** be called by ADMIN users only since
-    details about users and workspaces are returned. However, any given user should
-    also be able to retrieve information about themselves even if they are not ADMIN
-    users.
+    details about users and their current workspace are returned. However, any given
+    user should also be able to retrieve information about themselves even if they are
+    not ADMIN users.
 
     The process is as follows:
 
-    1. Only retrieve workspaces for which the calling user has an ADMIN role.
-    2. If the calling user is an admin in a workspace, then the details for that
-        workspace are returned.
-    3. If the calling user is not an admin in any workspace, then the details for
-        the calling user is returned.
+    1. If the calling user is an admin in the current workspace, then the details of
+        all users in the current workspace are returned.
+    2. Otherwise, only the details of the calling user is returned.
 
     Parameters
     ----------
     calling_user_db
         The user object associated with the user that is retrieving the list of users.
+    workspace_name
+        The name of the workspace that the calling user is currently logged into.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -352,63 +354,91 @@ async def retrieve_all_users(
     -------
     list[UserRetrieve]
         A list of retrieved user objects.
+
+    Raises
+    ------
+    HTTPException
+        If the calling user does not have the required role to retrieve users in the
+        current workspace.
     """
 
-    user_mapping: dict[str, UserRetrieve] = {}
-
-    # 1.
-    calling_user_admin_workspace_dbs = await get_workspaces_by_user_role(
-        asession=asession, user_db=calling_user_db, user_role=UserRoles.ADMIN
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    workspace_id = workspace_db.workspace_id
+    calling_user_role_in_workspace = await get_user_role_in_workspace(
+        asession=asession, user_db=calling_user_db, workspace_db=workspace_db
     )
 
-    # 2.
-    for workspace_db in calling_user_admin_workspace_dbs:
-        workspace_id = workspace_db.workspace_id
-        workspace_name = workspace_db.workspace_name
-        user_workspace_roles = await get_users_and_roles_by_workspace_id(
-            asession=asession, workspace_id=workspace_id
-        )
-        for uwr in user_workspace_roles:
-            if uwr.username not in user_mapping:
-                user_mapping[uwr.username] = UserRetrieve(
-                    created_datetime_utc=uwr.created_datetime_utc,
-                    is_default_workspace=[uwr.default_workspace],
-                    updated_datetime_utc=uwr.updated_datetime_utc,
-                    username=uwr.username,
-                    user_id=uwr.user_id,
-                    user_workspace_names=[workspace_name],
-                    user_workspace_roles=[uwr.user_role.value],
-                )
-            else:
-                user_data = user_mapping[uwr.username]
-                user_data.is_default_workspace.append(uwr.default_workspace)
-                user_data.user_workspace_names.append(workspace_name)
-                user_data.user_workspace_roles.append(uwr.user_role.value)
-
-    user_list = list(user_mapping.values())
-
-    # 3.
-    if not user_list:
-        calling_user_workspace_roles = await get_user_role_in_all_workspaces(
-            asession=asession, user_db=calling_user_db
-        )
-        user_list = [
-            UserRetrieve(
-                created_datetime_utc=calling_user_db.created_datetime_utc,
-                is_default_workspace=[
-                    row.default_workspace for row in calling_user_workspace_roles
-                ],
-                updated_datetime_utc=calling_user_db.updated_datetime_utc,
-                username=calling_user_db.username,
-                user_id=calling_user_db.user_id,
-                user_workspace_names=[
-                    row.workspace_name for row in calling_user_workspace_roles
-                ],
-                user_workspace_roles=[
-                    row.user_role.value for row in calling_user_workspace_roles
-                ],
+    match calling_user_role_in_workspace:
+        # 1.
+        case UserRoles.ADMIN:
+            user_mapping: dict[str, UserRetrieve] = {}
+            user_workspace_roles = await get_users_and_roles_by_workspace_id(
+                asession=asession, workspace_id=workspace_id
             )
-        ]
+            for uwr in user_workspace_roles:
+                if uwr.username not in user_mapping:
+                    user_mapping[uwr.username] = UserRetrieve(
+                        created_datetime_utc=uwr.created_datetime_utc,
+                        is_default_workspace=[uwr.default_workspace],
+                        updated_datetime_utc=uwr.updated_datetime_utc,
+                        user_id=uwr.user_id,
+                        user_workspaces=[
+                            UserWorkspace(
+                                user_role=uwr.user_role.value,
+                                workspace_id=workspace_id,
+                                workspace_name=workspace_name,
+                            )
+                        ],
+                        username=uwr.username,
+                    )
+                else:
+                    user_data = user_mapping[uwr.username]
+                    user_data.is_default_workspace.append(uwr.default_workspace)
+                    user_data.user_workspaces.append(
+                        UserWorkspace(
+                            user_role=uwr.user_role.value,
+                            workspace_id=workspace_id,
+                            workspace_name=workspace_name,
+                        )
+                    )
+            user_list = list(user_mapping.values())
+        # 2.
+        case UserRoles.READ_ONLY:
+            calling_user_workspace_roles = await get_user_role_in_all_workspaces(
+                asession=asession, user_db=calling_user_db
+            )
+            user_list = [
+                UserRetrieve(
+                    created_datetime_utc=calling_user_db.created_datetime_utc,
+                    is_default_workspace=[
+                        row.default_workspace for row in calling_user_workspace_roles
+                    ],
+                    updated_datetime_utc=calling_user_db.updated_datetime_utc,
+                    username=calling_user_db.username,
+                    user_id=calling_user_db.user_id,
+                    user_workspaces=[
+                        UserWorkspace(
+                            user_role=row.user_role,
+                            workspace_id=row.workspace_id,
+                            workspace_name=row.workspace_name,
+                        )
+                        for row in calling_user_workspace_roles
+                    ],
+                )
+            ]
+        case None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Calling user role in workspace is `None`.",
+            )
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Calling user does not have the required role to retrieve users "
+                "in the current workspace.",
+            )
 
     return user_list
 
@@ -513,10 +543,14 @@ async def reset_password(
         updated_datetime_utc=updated_user_db.updated_datetime_utc,
         username=updated_user_db.username,
         user_id=updated_user_db.user_id,
-        user_workspace_names=[
-            row.workspace_name for row in updated_user_workspace_roles
+        user_workspaces=[
+            UserWorkspace(
+                user_role=row.user_role,
+                workspace_id=row.workspace_id,
+                workspace_name=row.workspace_name,
+            )
+            for row in updated_user_workspace_roles
         ],
-        user_workspace_roles=[row.user_role for row in updated_user_workspace_roles],
     )
 
 
@@ -629,11 +663,13 @@ async def update_user(
         updated_datetime_utc=updated_user_db.updated_datetime_utc,
         username=updated_user_db.username,
         user_id=updated_user_db.user_id,
-        user_workspace_names=[
-            row.workspace_name for row in updated_user_workspace_roles
-        ],
-        user_workspace_roles=[
-            row.user_role.value for row in updated_user_workspace_roles
+        user_workspaces=[
+            UserWorkspace(
+                user_role=row.user_role,
+                workspace_id=row.workspace_id,
+                workspace_name=row.workspace_name,
+            )
+            for row in updated_user_workspace_roles
         ],
     )
 
@@ -674,8 +710,14 @@ async def get_user(
         updated_datetime_utc=user_db.updated_datetime_utc,
         user_id=user_db.user_id,
         username=user_db.username,
-        user_workspace_names=[row.workspace_name for row in user_workspace_roles],
-        user_workspace_roles=[row.user_role.value for row in user_workspace_roles],
+        user_workspaces=[
+            UserWorkspace(
+                user_role=row.user_role,
+                workspace_id=row.workspace_id,
+                workspace_name=row.workspace_name,
+            )
+            for row in user_workspace_roles
+        ],
     )
 
 

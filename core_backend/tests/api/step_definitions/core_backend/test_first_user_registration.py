@@ -131,12 +131,9 @@ def verify_workspace_and_role_for_tony(
     )
     assert json_response["username"] == "Tony"
     assert (
-        len(json_response["user_workspace_names"]) == 1
-        and json_response["user_workspace_names"][0] == "Workspace_Tony"
-    )
-    assert (
-        len(json_response["user_workspace_roles"]) == 1
-        and json_response["user_workspace_roles"][0] == UserRoles.ADMIN
+        len(json_response["user_workspaces"]) == 1
+        and json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Tony"
+        and json_response["user_workspaces"][0]["user_role"] == UserRoles.ADMIN
     )
 
 

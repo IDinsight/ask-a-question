@@ -211,6 +211,44 @@ async def retrieve_all_workspaces(
     ]
 
 
+@router.get("/", response_model=WorkspaceRetrieve)
+async def retrieve_current_workspace(
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> WorkspaceRetrieve:
+    """Return the current workspace.
+
+    NB: This endpoint can be called by any authenticated user.
+
+    Parameters
+    ----------
+    workspace_name
+        The name of the current workspace to retrieve.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    WorkspaceRetrieve
+        The current workspace object.
+    """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    return WorkspaceRetrieve(
+        api_daily_quota=workspace_db.api_daily_quota,
+        api_key_first_characters=workspace_db.api_key_first_characters,
+        api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
+        content_quota=workspace_db.content_quota,
+        created_datetime_utc=workspace_db.created_datetime_utc,
+        updated_datetime_utc=workspace_db.updated_datetime_utc,
+        workspace_id=workspace_db.workspace_id,
+        workspace_name=workspace_db.workspace_name,
+    )
+
+
 @router.get("/{workspace_id}", response_model=WorkspaceRetrieve)
 async def retrieve_workspace_by_workspace_id(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],

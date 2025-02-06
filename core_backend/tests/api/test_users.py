@@ -27,8 +27,10 @@ from .conftest import (
 class TestGetAllUsers:
     """Tests for the GET /user/ endpoint."""
 
-    def test_get_all_users(self, access_token_admin_1: str, client: TestClient) -> None:
-        """Test that an admin can get all users.
+    def test_get_all_users_in_current_workspace(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that an admin can get all users in the current workspace.
 
         Parameters
         ----------
@@ -45,16 +47,14 @@ class TestGetAllUsers:
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
         assert len(json_response) > 0
-        assert (
-            len(json_response[0]["is_default_workspace"])
-            == len(json_response[0]["user_workspace_names"])
-            == len(json_response[0]["user_workspace_roles"])
+        assert len(json_response[0]["is_default_workspace"]) == len(
+            json_response[0]["user_workspaces"]
         )
 
-    def test_get_all_users_non_admin(
+    def test_get_all_users_non_admin_in_current_workspace(
         self, access_token_read_only_1: str, client: TestClient
     ) -> None:
-        """Test that a non-admin user can just get themselves.
+        """Test that a non-admin user can just get themselves in the current workspace.
 
         Parameters
         ----------
@@ -72,12 +72,13 @@ class TestGetAllUsers:
         assert len(json_response) == 1
         assert (
             len(json_response[0]["is_default_workspace"])
-            == len(json_response[0]["user_workspace_names"])
-            == len(json_response[0]["user_workspace_roles"])
+            == len(json_response[0]["user_workspaces"])
             == 1
         )
         assert json_response[0]["is_default_workspace"][0] is True
-        assert json_response[0]["user_workspace_roles"][0] == UserRoles.READ_ONLY
+        assert (
+            json_response[0]["user_workspaces"][0]["user_role"] == UserRoles.READ_ONLY
+        )
         assert json_response[0]["username"] == TEST_READ_ONLY_USERNAME_1
 
 
@@ -252,8 +253,8 @@ class TestUserUpdate:
         )
         assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
-        for i, workspace_name in enumerate(json_response["user_workspace_names"]):
-            if workspace_name == TEST_WORKSPACE_NAME_1:
+        for i, uw_dict in enumerate(json_response["user_workspaces"]):
+            if uw_dict["workspace_name"] == TEST_WORKSPACE_NAME_1:
                 assert json_response["is_default_workspace"][i] is True
                 break
         assert json_response["username"] == admin_username
@@ -516,8 +517,7 @@ class TestUserFetching:
             "updated_datetime_utc",
             "username",
             "user_id",
-            "user_workspace_names",
-            "user_workspace_roles",
+            "user_workspaces",
         ]
         for key in expected_keys:
             assert key in json_response, f"Missing key: {key}"

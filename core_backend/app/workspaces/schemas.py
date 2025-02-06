@@ -5,12 +5,14 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+
 
 class WorkspaceCreate(BaseModel):
     """Pydantic model for workspace creation."""
 
-    api_daily_quota: int | None = -1
-    content_quota: int | None = -1
+    api_daily_quota: int | None = DEFAULT_API_QUOTA
+    content_quota: int | None = DEFAULT_CONTENT_QUOTA
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
