@@ -1,5 +1,5 @@
-Feature: Multiple workspaces
-    Test admin and user permissions with multiple workspaces
+Feature: Switching workspaces
+    Test admin and user permissions when switching between workspaces
 
     Background: Populate 3 workspaces with admin and read-only users
         Given Multiple workspaces are setup
