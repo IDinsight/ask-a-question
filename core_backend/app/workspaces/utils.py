@@ -257,6 +257,10 @@ async def update_workspace_name_and_quotas(
 ) -> WorkspaceDB:
     """Update workspace name and/or quotas.
 
+    NB: Workspace quotas cannot be changed currently. These values are assigned to
+    reasonable defaults when a workspace is created and are not meant to be changed
+    except by the system administrator.
+
     Parameters
     ----------
     asession
@@ -272,10 +276,10 @@ async def update_workspace_name_and_quotas(
         The workspace object updated in the database after updating quotas.
     """
 
-    if workspace.api_daily_quota is None or workspace.api_daily_quota >= 0:
-        workspace_db.api_daily_quota = workspace.api_daily_quota
-    if workspace.content_quota is None or workspace.content_quota >= 0:
-        workspace_db.content_quota = workspace.content_quota
+    # if workspace.api_daily_quota is None or workspace.api_daily_quota >= 0:
+    #     workspace_db.api_daily_quota = workspace.api_daily_quota
+    # if workspace.content_quota is None or workspace.content_quota >= 0:
+    #     workspace_db.content_quota = workspace.content_quota
     if workspace.workspace_name is not None:
         workspace_db.workspace_name = workspace.workspace_name
     workspace_db.updated_datetime_utc = datetime.now(timezone.utc)

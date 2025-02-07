@@ -7,7 +7,12 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user, get_current_workspace_name
+from ..auth.dependencies import (
+    create_access_token,
+    get_current_user,
+    get_current_workspace_name,
+)
+from ..auth.schemas import AuthenticationDetails
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -27,6 +32,7 @@ from .schemas import (
     WorkspaceCreate,
     WorkspaceKeyResponse,
     WorkspaceRetrieve,
+    WorkspaceSwitch,
     WorkspaceUpdate,
 )
 from .utils import (
@@ -216,7 +222,7 @@ async def retrieve_all_workspaces(
     ]
 
 
-@router.get("/", response_model=WorkspaceRetrieve)
+@router.get("/current", response_model=WorkspaceRetrieve)
 async def retrieve_current_workspace(
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
@@ -487,6 +493,63 @@ async def get_new_api_key(
         ) from e
 
 
+@router.post("/switch-workspace")
+async def switch_workspace(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_switch: WorkspaceSwitch,
+    asession: AsyncSession = Depends(get_async_session),
+) -> AuthenticationDetails:
+    """Switch to a different workspace.
+
+    NB: A user should first be authenticated before they are allowed to switch to
+    another workspace.
+
+    Parameters
+    ----------
+    calling_user_db
+        The user object associated with the user switching workspaces.
+    workspace_switch
+        The workspace switch object containing the workspace name to switch into.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    AuthenticationDetails
+        The authentication details object containing the new access token.
+
+    Raises
+    ------
+    HTTPException
+        If the workspace to switch into does not exist.
+    """
+
+    username = calling_user_db.username
+    workspace_name = workspace_switch.workspace_name
+    user_workspace_dbs = await get_user_workspaces(
+        asession=asession, user_db=calling_user_db
+    )
+    user_workspace_db = next(
+        (db for db in user_workspace_dbs if db.workspace_name == workspace_name), None
+    )
+    if user_workspace_db is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workspace with workspace name '{workspace_name}' not found.",
+        )
+
+    # Hardcode "fullaccess" now, but may use it in the future.
+    return AuthenticationDetails(
+        access_level="fullaccess",
+        access_token=create_access_token(
+            username=username, workspace_name=workspace_name
+        ),
+        token_type="bearer",
+        username=username,
+        workspace_name=workspace_name,
+    )
+
+
 @router.put("/{workspace_id}", response_model=WorkspaceUpdate)
 async def update_workspace(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -494,12 +557,16 @@ async def update_workspace(
     workspace: WorkspaceUpdate,
     asession: AsyncSession = Depends(get_async_session),
 ) -> WorkspaceUpdate:
-    """Update the name and/or quotas for an existing workspace. Only admin users can
-    update workspace name/quotas and only for the workspaces that they are assigned to.
+    """Update the name for an existing workspace. Only admin users can update workspace
+    name and only for the workspaces that they are assigned to.
 
     NB: The ID for a workspace can NOT be updated since this would involve propagating
     user and roles changes as well. However, the workspace name can be changed
     (assuming it is unique).
+
+    NB: Workspace quotas cannot be changed currently. These values are assigned to
+    reasonable defaults when a workspace is created and are not meant to be changed
+    except by the system administrator.
 
     Parameters
     ----------

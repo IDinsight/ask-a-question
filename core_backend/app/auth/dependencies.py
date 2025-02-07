@@ -1,7 +1,7 @@
 """This module contains authentication dependencies for the FastAPI application."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Optional
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -24,7 +24,6 @@ from ..users.models import (
     WorkspaceDB,
     get_user_by_username,
     get_user_default_workspace,
-    get_user_workspaces,
 )
 from ..utils import (
     get_key_hash,
@@ -38,7 +37,7 @@ from .config import (
     JWT_SECRET,
     REDIS_KEY_EXPIRED,
 )
-from .schemas import AuthenticatedUser, WorkspaceLogin
+from .schemas import AuthenticatedUser
 
 logger = setup_logger()
 
@@ -181,60 +180,6 @@ async def authenticate_key(
                 return workspace_db
             except NoResultFound as err:
                 raise credentials_exception from err
-
-
-async def authenticate_workspace(
-    *, calling_user_db: UserDB, workspace_login: WorkspaceLogin
-) -> AuthenticatedUser | None:
-    """Authenticate user workspace using username and workspace name.
-
-    Parameters
-    ----------
-    calling_user_db
-        The user object associated with the user logging into the workspace.
-    workspace_login
-        The workspace login object containing the username and workspace name to log
-        into.
-
-    Returns
-    -------
-    AuthenticatedUser | None
-        Authenticated user if the user is authenticated, otherwise `None`.
-    """
-
-    username = calling_user_db.username
-    workspace_name = workspace_login.workspace_name
-
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        user_workspace_db: Optional[WorkspaceDB]
-        if not workspace_name:
-            user_workspace_db = await get_user_default_workspace(
-                asession=asession, user_db=calling_user_db
-            )
-        else:
-            user_workspace_dbs = await get_user_workspaces(
-                asession=asession, user_db=calling_user_db
-            )
-            user_workspace_db = next(
-                (
-                    db
-                    for db in user_workspace_dbs
-                    if db.workspace_name == workspace_name
-                ),
-                None,
-            )
-            if user_workspace_db is None:
-                return None
-
-        # Hardcode "fullaccess" now, but may use it in the future.
-        assert isinstance(user_workspace_db, WorkspaceDB)
-        return AuthenticatedUser(
-            access_level="fullaccess",
-            username=username,
-            workspace_name=user_workspace_db.workspace_name,
-        )
 
 
 def create_access_token(*, username: str, workspace_name: str) -> str:
