@@ -186,10 +186,10 @@ def check_that_mark_is_not_allowed_to_register(
 
 @when(
     "Tony adds Mark as the second user with a read-only role",
-    target_fixture="mark_response",
+    target_fixture="add_mark_response",
 )
 def add_mark_as_second_user(access_token_tony: str, client: TestClient) -> None:
-    """Try to register Mark as a user.
+    """Add Mark as a user in workspace Tony.
 
     Parameters
     ----------
@@ -215,20 +215,20 @@ def add_mark_as_second_user(access_token_tony: str, client: TestClient) -> None:
 
 
 @then("The returned response from adding Mark should contain the expected values")
-def check_mark_return_response_is_successful(mark_response: dict[str, Any]) -> None:
+def check_mark_return_response_is_successful(add_mark_response: dict[str, Any]) -> None:
     """Check that the response from adding Mark contains the expected values.
 
     Parameters
     ----------
-    mark_response
+    add_mark_response
         The JSON response from adding Mark as the second user.
     """
 
-    assert mark_response["is_default_workspace"] is True
-    assert mark_response["recovery_codes"]
-    assert mark_response["role"] == UserRoles.READ_ONLY
-    assert mark_response["username"] == "Mark"
-    assert mark_response["workspace_name"] == "Workspace_Tony"
+    assert add_mark_response["is_default_workspace"] is True
+    assert add_mark_response["recovery_codes"]
+    assert add_mark_response["role"] == UserRoles.READ_ONLY
+    assert add_mark_response["username"] == "Mark"
+    assert add_mark_response["workspace_name"] == "Workspace_Tony"
 
 
 @then("Mark is able to authenticate himself")
