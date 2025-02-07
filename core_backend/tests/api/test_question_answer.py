@@ -777,10 +777,10 @@ class TestSTTResponse:
     @pytest.mark.parametrize(
         "is_authorized, expected_status_code, mock_response",
         [
-            (True, 200, {"text": "Paris"}),
-            (False, 401, {"error": "Unauthorized"}),
-            (True, 400, {"text": "Paris"}),
-            (True, 500, {}),
+            (True, status.HTTP_200_OK, {"text": "Paris"}),
+            (False, status.HTTP_401_UNAUTHORIZED, {"error": "Unauthorized"}),
+            (True, status.HTTP_400_BAD_REQUEST, {"text": "Paris"}),
+            (True, status.HTTP_500_INTERNAL_SERVER_ERROR, {}),
         ],
     )
     def test_voice_search(  # pylint: disable=R1260

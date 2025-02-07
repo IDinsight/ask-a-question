@@ -1,5 +1,7 @@
 """This module contains FastAPI routers for user authentication endpoints."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -10,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
+    UserDB,
     UserNotFoundError,
     create_user_workspace_role,
     get_user_by_username,
@@ -27,6 +30,7 @@ from .dependencies import (
     authenticate_credentials,
     authenticate_workspace,
     create_access_token,
+    get_current_user,
 )
 from .schemas import (
     AuthenticatedUser,
@@ -67,24 +71,25 @@ async def login(
         If the user credentials are invalid.
     """
 
-    authenticate_user = await authenticate_credentials(
+    authenticated_user = await authenticate_credentials(
         password=form_data.password, username=form_data.username
     )
 
-    if authenticate_user is None:
+    if authenticated_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
         )
 
+    username = authenticated_user.username
+    workspace_name = authenticated_user.workspace_name
     return AuthenticationDetails(
-        access_level=authenticate_user.access_level,
+        access_level=authenticated_user.access_level,
         access_token=create_access_token(
-            username=authenticate_user.username,
-            workspace_name=authenticate_user.workspace_name,
+            username=username, workspace_name=workspace_name
         ),
         token_type="bearer",
-        username=authenticate_user.username,
-        workspace_name=authenticate_user.workspace_name,
+        username=username,
+        workspace_name=workspace_name,
     )
 
 
@@ -135,17 +140,21 @@ async def login_google(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token."
         ) from e
 
-    authenticate_user = await authenticate_or_create_google_user(
+    authenticated_user = await authenticate_or_create_google_user(
         gmail=idinfo["email"], request=request
     )
+
+    username = authenticated_user.username
+    workspace_name = authenticated_user.workspace_name
     return AuthenticationDetails(
-        access_level=authenticate_user.access_level,
+        access_level=authenticated_user.access_level,
         access_token=create_access_token(
-            username=authenticate_user.username,
-            workspace_name=authenticate_user.workspace_name,
+            username=username,
+            workspace_name=workspace_name,
         ),
         token_type="bearer",
-        username=authenticate_user.username,
+        username=username,
+        workspace_name=workspace_name,
     )
 
 
@@ -240,7 +249,10 @@ async def authenticate_or_create_google_user(
 
 
 @router.post("/login-workspace")
-async def login_workspace(workspace_login: WorkspaceLogin) -> AuthenticationDetails:
+async def login_workspace(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_login: WorkspaceLogin,
+) -> AuthenticationDetails:
     """Login route for users to authenticate into a workspace and receive a JWT token.
 
     NB: This endpoint does NOT take the user's password for authentication. This is
@@ -249,6 +261,8 @@ async def login_workspace(workspace_login: WorkspaceLogin) -> AuthenticationDeta
 
     Parameters
     ----------
+    calling_user_db
+        The user object associated with the user logging into the workspace.
     workspace_login
         The workspace login object containing the username and workspace name to log
         into.
@@ -265,20 +279,23 @@ async def login_workspace(workspace_login: WorkspaceLogin) -> AuthenticationDeta
         If the user credentials are invalid.
     """
 
-    authenticate_user = await authenticate_workspace(workspace_login=workspace_login)
+    authenticated_user = await authenticate_workspace(
+        calling_user_db=calling_user_db, workspace_login=workspace_login
+    )
 
-    if authenticate_user is None:
+    if authenticated_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
         )
 
+    username = authenticated_user.username
+    workspace_name = authenticated_user.workspace_name
     return AuthenticationDetails(
-        access_level=authenticate_user.access_level,
+        access_level=authenticated_user.access_level,
         access_token=create_access_token(
-            username=authenticate_user.username,
-            workspace_name=authenticate_user.workspace_name,
+            username=username, workspace_name=workspace_name
         ),
-        workspace_name=authenticate_user.workspace_name,
         token_type="bearer",
-        username=authenticate_user.username,
+        username=authenticated_user.username,
+        workspace_name=workspace_name,
     )

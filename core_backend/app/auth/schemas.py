@@ -58,7 +58,6 @@ class WorkspaceLogin(BaseModel):
     workspace.
     """
 
-    username: str
     workspace_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

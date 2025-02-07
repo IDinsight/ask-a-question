@@ -49,12 +49,12 @@ router = APIRouter(prefix="/workspace", tags=["Workspace"])
 logger = setup_logger()
 
 
-@router.post("/", response_model=list[WorkspaceCreate])
+@router.post("/", response_model=list[WorkspaceRetrieve])
 async def create_workspaces(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspaces: WorkspaceCreate | list[WorkspaceCreate],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[WorkspaceCreate]:
+) -> list[WorkspaceRetrieve]:
     """Create workspaces. Workspaces can only be created by ADMIN users.
 
     NB: Any user is allowed to create a workspace. However, the user must be assigned
@@ -88,7 +88,7 @@ async def create_workspaces(
 
     Returns
     -------
-    list[WorkspaceCreate]
+    list[WorkspaceRetrieve]
         A list of created workspace objects.
 
     Raises
@@ -108,7 +108,7 @@ async def create_workspaces(
 
     if not isinstance(workspaces, list):
         workspaces = [workspaces]
-    created_workspaces: list[WorkspaceCreate] = []
+    created_workspaces: list[WorkspaceRetrieve] = []
 
     for workspace in workspaces:
         # 1.
@@ -136,9 +136,14 @@ async def create_workspaces(
                 workspace_db=workspace_db,
             )
             created_workspaces.append(
-                WorkspaceCreate(
+                WorkspaceRetrieve(
                     api_daily_quota=workspace_db.api_daily_quota,
+                    api_key_first_characters=workspace_db.api_key_first_characters,
+                    api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
                     content_quota=workspace_db.content_quota,
+                    created_datetime_utc=workspace_db.created_datetime_utc,
+                    updated_datetime_utc=workspace_db.updated_datetime_utc,
+                    workspace_id=workspace_db.workspace_id,
                     workspace_name=workspace_db.workspace_name,
                 )
             )
@@ -211,6 +216,44 @@ async def retrieve_all_workspaces(
     ]
 
 
+@router.get("/", response_model=WorkspaceRetrieve)
+async def retrieve_current_workspace(
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> WorkspaceRetrieve:
+    """Return the current workspace.
+
+    NB: This endpoint can be called by any authenticated user.
+
+    Parameters
+    ----------
+    workspace_name
+        The name of the current workspace to retrieve.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    WorkspaceRetrieve
+        The current workspace object.
+    """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    return WorkspaceRetrieve(
+        api_daily_quota=workspace_db.api_daily_quota,
+        api_key_first_characters=workspace_db.api_key_first_characters,
+        api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
+        content_quota=workspace_db.content_quota,
+        created_datetime_utc=workspace_db.created_datetime_utc,
+        updated_datetime_utc=workspace_db.updated_datetime_utc,
+        workspace_id=workspace_db.workspace_id,
+        workspace_name=workspace_db.workspace_name,
+    )
+
+
 @router.get("/{workspace_id}", response_model=WorkspaceRetrieve)
 async def retrieve_workspace_by_workspace_id(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -281,7 +324,7 @@ async def retrieve_workspace_by_workspace_id(
     return WorkspaceRetrieve(
         api_daily_quota=matched_workspace_db.api_daily_quota,
         api_key_first_characters=matched_workspace_db.api_key_first_characters,
-        api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,  # noqa: E501
+        api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,
         content_quota=matched_workspace_db.content_quota,
         created_datetime_utc=matched_workspace_db.created_datetime_utc,
         updated_datetime_utc=matched_workspace_db.updated_datetime_utc,

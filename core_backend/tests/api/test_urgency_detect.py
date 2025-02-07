@@ -5,9 +5,12 @@ from typing import Any, Callable
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from core_backend.app.urgency_detection.config import URGENCY_CLASSIFIER
+from core_backend.app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from core_backend.app.urgency_detection.routers import ALL_URGENCY_CLASSIFIERS
 from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 from core_backend.app.workspaces.utils import get_workspace_by_workspace_name
@@ -139,9 +142,12 @@ class TestUrgencyDetectionToken:
         self,
         username: str,
         expect_found: bool,
-        client: TestClient,
         api_key_workspace_1: str,
         api_key_workspace_2: str,
+        client: TestClient,
+        db_session: Session,
+        workspace_1_id: int,
+        workspace_2_id: int,
     ) -> None:
         """Test that an admin user can access the urgency rules of another admin user.
 
@@ -151,18 +157,24 @@ class TestUrgencyDetectionToken:
             The user name.
         expect_found
             Specifies whether the urgency rules are expected to be found.
-        client
-            Test client.
         api_key_workspace_1
             API key for workspace 1.
         api_key_workspace_2
             API key for workspace 2.
+        client
+            Test client.
+        db_session
+            Database session.
+        workspace_1_id
+            The ID of workspace 1.
+        workspace_2_id
+            The ID of workspace 2.
         """
 
-        token = (
-            api_key_workspace_1
+        token, workspace_id = (
+            (api_key_workspace_1, workspace_1_id)
             if username == TEST_ADMIN_USERNAME_1
-            else api_key_workspace_2
+            else (api_key_workspace_2, workspace_2_id)
         )
         response = client.post(
             "/urgency-detect",
@@ -171,16 +183,27 @@ class TestUrgencyDetectionToken:
         )
         assert response.status_code == status.HTTP_200_OK
 
-        if response.status_code == status.HTTP_200_OK:
-            is_urgent = response.json()["is_urgent"]
-            if expect_found:
-                # The breathing query should flag as urgent for admin user 1. See
-                # data/urgency_rules.json which is loaded by the urgency_rules fixture.
-                # Assert is_urgent.
-                pass
-            else:
-                # Admin user 2 has no urgency rules so no flag.
-                assert not is_urgent
+        is_urgent = response.json()["is_urgent"]
+        if expect_found:
+            # The breathing query should flag as urgent for admin user 1. See
+            # data/urgency_rules.json which is loaded by the urgency_rules fixture.
+            # Assert is_urgent.
+            pass
+        else:
+            # Admin user 2 has no urgency rules so no flag.
+            assert not is_urgent
+
+        # Delete urgency queries.
+        stmt = delete(UrgencyQueryDB).where(UrgencyQueryDB.workspace_id == workspace_id)
+        db_session.execute(stmt)
+
+        # Delete urgency query responses.
+        stmt = delete(UrgencyResponseDB).where(
+            UrgencyResponseDB.workspace_id == workspace_id
+        )
+        db_session.execute(stmt)
+
+        db_session.commit()
 
 
 class TestUrgencyClassifiers:

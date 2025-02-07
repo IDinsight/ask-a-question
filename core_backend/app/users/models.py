@@ -613,7 +613,7 @@ async def get_user_default_workspace(
 
 async def get_user_role_in_all_workspaces(
     *, asession: AsyncSession, user_db: UserDB
-) -> Sequence[Row[tuple[str, bool, UserRoles]]]:
+) -> Sequence[Row[tuple[int, str, bool, UserRoles]]]:
     """Retrieve the workspaces a user belongs to and their roles in those workspaces.
 
     Parameters
@@ -625,13 +625,14 @@ async def get_user_role_in_all_workspaces(
 
     Returns
     -------
-    Sequence[Row[tuple[str, bool, UserRoles]]]
-        A sequence of tuples containing the workspace name, the default workspace
-        assignment, and the user role in that workspace.
+    Sequence[Row[tuple[int, str, bool, UserRoles]]]
+        A sequence of tuples containing the workspace ID, workspace name, the default
+        workspace assignment, and the user role in that workspace.
     """
 
     stmt = (
         select(
+            WorkspaceDB.workspace_id,
             WorkspaceDB.workspace_name,
             UserWorkspaceDB.default_workspace,
             UserWorkspaceDB.user_role,

@@ -118,25 +118,6 @@ class UserRemoveResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserRetrieve(BaseModel):
-    """Pydantic model for user retrieval.
-
-    NB: When a user is retrieved, a mapping between the workspaces that the user
-    belongs to and the roles within those workspaces should also be returned. How that
-    information is used is up to the caller.
-    """
-
-    created_datetime_utc: datetime
-    is_default_workspace: list[bool]
-    updated_datetime_utc: datetime
-    username: str
-    user_id: int
-    user_workspace_names: list[str]
-    user_workspace_roles: list[UserRoles]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserResetPassword(BaseModel):
     """Pydantic model for user password reset."""
 
@@ -160,3 +141,29 @@ class UserUpdate(UserCreate):
         specified and `is_default_workspace` is set to `True`, then the user's default
         workspace is updated to the specified workspace.
     """
+
+
+class UserWorkspace(BaseModel):
+    """Pydantic model for user workspace information."""
+
+    user_role: UserRoles
+    workspace_id: int
+    workspace_name: str
+
+
+class UserRetrieve(BaseModel):
+    """Pydantic model for user retrieval.
+
+    NB: When a user is retrieved, a mapping between the workspaces that the user
+    belongs to and the roles within those workspaces should also be returned. How that
+    information is used is up to the caller.
+    """
+
+    created_datetime_utc: datetime
+    is_default_workspace: list[bool]
+    updated_datetime_utc: datetime
+    user_id: int
+    user_workspaces: list[UserWorkspace]
+    username: str
+
+    model_config = ConfigDict(from_attributes=True)
