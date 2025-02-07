@@ -152,7 +152,10 @@ async def retrieve_content_ai_summary(
     )
 
     _, start_dt, end_dt = get_freq_start_end_date(
-        end_date_str=end_date, start_date_str=start_date, timeframe=timeframe
+        end_date_str=end_date,
+        frequency=TimeFrequency.Day,
+        start_date_str=start_date,
+        timeframe=timeframe,
     )
 
     ai_summary = await get_ai_answer_summary(
@@ -175,7 +178,6 @@ async def retrieve_performance_frequency(
     top_n: int | None = None,
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    frequency: Optional[TimeFrequency] = Query(None),
 ) -> DashboardPerformance:
     """Retrieve timeseries data on content usage and performance of each content.
 
@@ -193,8 +195,6 @@ async def retrieve_performance_frequency(
         The start date for the time period.
     end_date
         The end date for the time period.
-    frequency
-        The frequency at which to retrieve the timeseries.
 
     Returns
     -------
@@ -208,7 +208,7 @@ async def retrieve_performance_frequency(
 
     freq, start_dt, end_dt = get_freq_start_end_date(
         end_date_str=end_date,
-        frequency=frequency,
+        frequency=TimeFrequency.Day,
         start_date_str=start_date,
         timeframe=timeframe,
     )

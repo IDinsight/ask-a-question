@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import DetailsDrawer from "@/app/dashboard/components/performance/DetailsDrawer";
 import LineChart from "@/app/dashboard/components/performance/LineChart";
 import ContentsTable from "@/app/dashboard/components/performance/ContentsTable";
@@ -9,15 +11,17 @@ import {
   getPerformanceDrawerAISummary,
 } from "@/app/dashboard/api";
 import {
-  ApexData,
+  ContentLineChartTSData,
   Period,
   RowDataType,
-  DrawerData,
   CustomDateParams,
+  DrawerData,
+  ApexData,
 } from "@/app/dashboard/types";
 import { useAuth } from "@/utils/auth";
 
-const N_TOP_CONTENT = 10;
+const CHART_COLORS = ["#003049", "#d62828", "#f77f00", "#fcbf49", "#eae2b7"];
+const N_TOP_CONTENT = 5;
 
 interface PerformanceProps {
   timePeriod: Period;
@@ -29,78 +33,63 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
   customDateParams,
 }) => {
   const { token } = useAuth();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [lineChartData, setLineChartData] = useState<ApexData[]>([]);
   const [contentTableData, setContentTableData] = useState<RowDataType[]>([]);
+  const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
+  const [lineChartData, setLineChartData] = useState<ContentLineChartTSData[]>([]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerData, setDrawerData] = useState<DrawerData | null>(null);
   const [drawerAISummary, setDrawerAISummary] = useState<string | null>(null);
+  const [selectedOrderColumn, setSelectedOrderColumn] =
+    useState<string>("Daily Average Sent");
+  const [selectedOrderDirection, setSelectedOrderDirection] = useState<
+    "ascending" | "descending"
+  >("descending");
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     if (!token) return;
-    if (
-      timePeriod === "custom" &&
-      customDateParams?.startDate &&
-      customDateParams.endDate
-    ) {
-      getPerformancePageData(
-        "custom",
-        token,
-        customDateParams.startDate,
-        customDateParams.endDate,
-      ).then((response) => {
-        parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
-        parseContentTableData(response.content_time_series);
-      });
-    } else {
-      getPerformancePageData(timePeriod, token).then((response) => {
-        parseLineChartData(response.content_time_series.slice(0, N_TOP_CONTENT));
-        parseContentTableData(response.content_time_series);
-      });
-    }
+    getPerformancePageData(
+      timePeriod,
+      token,
+      customDateParams?.startDate ?? undefined,
+      customDateParams?.endDate ?? undefined,
+    ).then((response) => {
+      const tableData: RowDataType[] = response.content_time_series.map(
+        (series: any) => ({
+          id: series.id,
+          title: series.title,
+          query_count: series.total_query_count,
+          positive_votes: series.positive_votes,
+          negative_votes: series.negative_votes,
+          query_count_timeseries: Object.entries(series.query_count_time_series).map(
+            ([timestamp, value]) => ({
+              x: new Date(timestamp).getTime(),
+              y: value as number,
+            }),
+          ),
+        }),
+      );
+      setContentTableData(tableData);
+    });
   }, [timePeriod, token, customDateParams]);
 
-  const parseLineChartData = (timeseriesData: Record<string, any>[]) => {
-    const apexTimeSeriesData: ApexData[] = timeseriesData.map((series, idx) => {
-      const zIndex = idx === 0 ? 3 : 2;
-      return {
-        name: series.title,
-        zIndex,
-        data: Object.entries(series.query_count_time_series).map(
-          ([period, queryCount]) => {
-            const date = new Date(period);
-            return { x: String(date), y: queryCount as number };
-          },
-        ),
-      };
-    });
-    setLineChartData(apexTimeSeriesData);
-  };
+  // Build line chart data based on the items currently displayed
+  useEffect(() => {
+    const chartData: ContentLineChartTSData[] = itemsToDisplay.map((row) => ({
+      name: row.title,
+      data: row.query_count_timeseries,
+    }));
+    setLineChartData(chartData);
+  }, [itemsToDisplay]);
 
-  const parseContentTableData = (timeseriesData: Record<string, any>[]) => {
-    const rows: RowDataType[] = timeseriesData.map((series) => {
-      return {
-        id: series.id,
-        title: series.title,
-        query_count: series.total_query_count,
-        positive_votes: series.positive_votes,
-        negative_votes: series.negative_votes,
-        query_count_timeseries: Object.values(series.query_count_time_series),
-      };
-    });
-    setContentTableData(rows);
-  };
-
-  const toggleDrawer = (newOpen: boolean) => () => {
-    setDrawerOpen(newOpen);
-  };
-
+  // When a table row is clicked, fetch and parse drawer data and AI summary.
   const tableRowClickHandler = (contentId: number) => {
-    setDrawerAISummary(null);
     if (!token) return;
+    setDrawerAISummary(null);
     if (
       timePeriod === "custom" &&
       customDateParams?.startDate &&
-      customDateParams.endDate
+      customDateParams?.endDate
     ) {
       getPerformanceDrawerData(
         "custom",
@@ -183,32 +172,42 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     });
   };
 
+  const handleSortChange = (column: string, direction: "ascending" | "descending") => {
+    setSelectedOrderColumn(column);
+    setSelectedOrderDirection(direction);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
   return (
     <>
       <DetailsDrawer
         open={drawerOpen}
-        onClose={toggleDrawer}
+        onClose={() => (_event) => setDrawerOpen(false)}
         data={drawerData}
         aiSummary={drawerAISummary}
       />
-      <Box
-        bgcolor="white"
-        sx={{
-          height: 300,
-          border: 0,
-          padding: 2,
-        }}
-      >
+      <Box bgcolor="white" sx={{ height: 430, border: 0, padding: 2 }}>
         <LineChart
           data={lineChartData}
           nTopContent={N_TOP_CONTENT}
           timePeriod={timePeriod}
+          chartColors={CHART_COLORS}
+          orderBy={selectedOrderColumn}
+          orderDirection={selectedOrderDirection}
+          pageNumber={page}
         />
       </Box>
       <ContentsTable
         rows={contentTableData}
         onClick={tableRowClickHandler}
         rowsPerPage={N_TOP_CONTENT}
+        chartColors={CHART_COLORS}
+        onItemsToDisplayChange={(items) => setItemsToDisplay(items)}
+        onSortChange={handleSortChange}
+        onPageChange={handlePageChange}
       />
     </>
   );
