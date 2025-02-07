@@ -1,3 +1,4 @@
+import { Workspace } from "@/components/WorkspaceMenu";
 import api from "@/utils/api";
 interface UserBody {
   sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
@@ -102,16 +103,32 @@ const resetPassword = async (
   }
 };
 
+const createWorkspace = async (workspace_name: string, token: string) => {
+  try {
+    console.log("here");
+    const response = await api.post(
+      "/workspace/",
+      { workspace_name },
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
 const getWorkspaceList = async (token: string) => {
   try {
-    const response = await api.get("/user/", {
+    const response = await api.get("/workspace/", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return response.data;
+    return response.data as Workspace[];
   } catch (error) {
     throw new Error("Error fetching content list");
   }
 };
+
 export {
   createUser,
   editUser,
@@ -120,5 +137,7 @@ export {
   getRegisterOption,
   registerUser,
   resetPassword,
+  createWorkspace,
+  getWorkspaceList,
 };
 export type { UserBody, UserBodyPassword };

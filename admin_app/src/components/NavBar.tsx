@@ -16,8 +16,10 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
-import { id } from "date-fns/locale";
 import { type Workspace } from "./WorkspaceMenu";
+import { createWorkspace, getWorkspaceList } from "@/app/user-management/api";
+import { Create } from "@mui/icons-material";
+import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -26,7 +28,15 @@ const pageDict = [
 
 const settings = ["Logout"];
 
+interface ScreenMenuProps {
+  children: React.ReactNode;
+}
 const NavBar = () => {
+  const { token, workspaceName } = useAuth();
+  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
+  const onWorkspaceModalClose = () => {
+    setOpenCreateWorkspaceModal(false);
+  };
   return (
     <AppBar
       position="fixed"
@@ -40,9 +50,34 @@ const NavBar = () => {
         appStyles.alignItemsCenter,
       ]}
     >
-      <SmallScreenNavMenu />
-      <LargeScreenNavMenu />
+      <SmallScreenNavMenu>
+        <WorkspaceMenu
+          getWorkspaces={() => {
+            return getWorkspaceList(token!);
+          }}
+          currentWorkspaceName={workspaceName!}
+          setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+        />
+      </SmallScreenNavMenu>
+      <LargeScreenNavMenu>
+        <WorkspaceMenu
+          getWorkspaces={() => {
+            return getWorkspaceList(token!);
+          }}
+          currentWorkspaceName={workspaceName!}
+          setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+        />
+      </LargeScreenNavMenu>
       <UserDropdown />
+      <WorkspaceCreateModal
+        open={openCreateWorkspaceModal}
+        onClose={onWorkspaceModalClose}
+        isEdit={false}
+        onCreate={(name: string) => {
+          console.log("This is showing");
+          return createWorkspace(name, token!);
+        }}
+      />
     </AppBar>
   );
 };
@@ -63,7 +98,7 @@ const Logo = () => {
   );
 };
 
-const SmallScreenNavMenu = () => {
+const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
   const pathname = usePathname();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
 
@@ -93,7 +128,8 @@ const SmallScreenNavMenu = () => {
         <MenuIcon />
       </IconButton>
       <Logo />
-      <WorkspaceMenu workspaces={[]} currentWorkspace="workspace1" />
+      {children}
+
       <Menu
         id="menu-appbar"
         anchorEl={anchorElNav}
@@ -142,7 +178,7 @@ const SmallScreenNavMenu = () => {
   );
 };
 
-const LargeScreenNavMenu = () => {
+const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -159,7 +195,7 @@ const LargeScreenNavMenu = () => {
       paddingRight={1.5}
     >
       <Logo />
-      <WorkspaceMenu workspaces={[]} currentWorkspaceName="workspace1" />
+      {children}
       <Box
         justifyContent="flex-end"
         alignItems="center"
@@ -204,7 +240,7 @@ const LargeScreenNavMenu = () => {
 };
 
 const UserDropdown = () => {
-  const { logout, username, role, workspaceName } = useAuth();
+  const { logout, username, role } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);

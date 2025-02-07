@@ -79,6 +79,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setAccessLevel(access_level);
       setUserRole(role);
       setWorkspaceName(workspace_name);
+      console.log("workspace", workspace_name);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -104,11 +105,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     apiCalls
       .getGoogleLoginToken({ client_id: client_id, credential: credential })
-      .then(({ access_token, access_level, username, is_admin }) => {
+      .then(({ access_token, access_level, username, is_admin, workspace_name }) => {
         const role = is_admin ? "admin" : "user";
         localStorage.setItem("token", access_token);
         localStorage.setItem("accessLevel", access_level);
-
+        localStorage.setItem("workspaceName", workspace_name);
         localStorage.setItem("role", role);
         setUsername(username);
         setToken(access_token);

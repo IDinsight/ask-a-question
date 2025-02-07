@@ -13,19 +13,23 @@ import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { appColors, sizes } from "@/utils";
 export type Workspace = {
-  id: number;
-  name: string;
-  role: string;
+  workspace_id: number;
+  workspace_name: string;
 };
 
 interface WorkspaceMenuProps {
   currentWorkspaceName: string;
-  getWorkspaces: Promise<Workspace[]>;
+  getWorkspaces: () => Promise<Workspace[]>;
+  setOpenCreateWorkspaceModal: (value: boolean) => void;
 }
 
-const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuProps) => {
+const WorkspaceMenu = ({
+  currentWorkspaceName,
+  getWorkspaces,
+  setOpenCreateWorkspaceModal,
+}: WorkspaceMenuProps) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
+  const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -33,6 +37,12 @@ const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuPro
   const handleCloseUserMenu = () => {
     setAnchorEl(null);
   };
+
+  React.useEffect(() => {
+    getWorkspaces().then((returnedWorkspaces: Workspace[]) => {
+      setWorkspaces(returnedWorkspaces);
+    });
+  }, []);
 
   return (
     <Paper
@@ -52,7 +62,7 @@ const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuPro
             }}
           />
           <span style={{ fontSize: sizes.baseGap, color: appColors.white }}>
-            {currentWorkspace}
+            {currentWorkspaceName}
           </span>
 
           <KeyboardArrowDownIcon
@@ -75,7 +85,7 @@ const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuPro
             variant="subtitle2"
             sx={{ padding: "8px 16px", fontWeight: "bold", color: "gray" }}
           >
-            Current Workspace: {currentWorkspace}
+            Current Workspace: {currentWorkspaceName}
           </Typography>
           <MenuItem>
             <ListItemIcon>
@@ -103,11 +113,11 @@ const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuPro
             Switch Workspace
           </Typography>
           {workspaces.map((workspace) => (
-            <MenuItem key={workspace.id}>
+            <MenuItem key={workspace.workspace_id}>
               <ListItemIcon>
                 <LibraryBooksIcon />
               </ListItemIcon>
-              <ListItemText>Manage Workspace</ListItemText>
+              <ListItemText>{workspace.workspace_name}</ListItemText>
               <span
                 style={{
                   border: `1px solid ${appColors.primary}`,
@@ -126,7 +136,13 @@ const WorkspaceMenu = ({ currentWorkspaceName, GetWorkspaces }: WorkspaceMenuPro
             <ListItemIcon>
               <AddIcon />
             </ListItemIcon>
-            <ListItemText>Create new workspace</ListItemText>
+            <ListItemText
+              onClick={() => {
+                setOpenCreateWorkspaceModal(true);
+              }}
+            >
+              Create new workspace
+            </ListItemText>
           </MenuItem>
         </MenuList>
       </Menu>

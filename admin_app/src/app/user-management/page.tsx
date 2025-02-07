@@ -20,7 +20,7 @@ import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 
 const UserManagement: React.FC = () => {
-  const { token, username, role } = useAuth();
+  const { token, username, role, workspaceName } = useAuth();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -101,9 +101,26 @@ const UserManagement: React.FC = () => {
             gap: 2,
           }}
         >
-          <Typography variant="h4">Manage User</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h4">Manage Workspace</Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setShowEditModal(true);
+              }}
+            >
+              Edit Workspace
+            </Button>{" "}
+          </Box>
           <Typography variant="body1" align="left" color={appColors.darkGrey}>
-            Add and edit user passwords.
+            Edit workspace and add/remove users to workspace
           </Typography>
         </Box>
         <Layout.FlexBox
@@ -111,9 +128,10 @@ const UserManagement: React.FC = () => {
             display: "flex",
             flexDirection: "row",
             justifyContent: "flex-end",
+            gap: sizes.tinyGap,
           }}
         >
-          <Tooltip title="Add new user">
+          <Tooltip title="Add existing user to workspace">
             <>
               <Button
                 variant="contained"
@@ -122,7 +140,20 @@ const UserManagement: React.FC = () => {
                   setShowCreateModal(true);
                 }}
               >
-                Add User
+                Add existing user to workspace
+              </Button>
+            </>
+          </Tooltip>
+          <Tooltip title="Edit workspace">
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  setShowCreateModal(true);
+                }}
+              >
+                Create new user to workspace
               </Button>
             </>
           </Tooltip>
