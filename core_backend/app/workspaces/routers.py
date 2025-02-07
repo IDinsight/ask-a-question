@@ -222,7 +222,7 @@ async def retrieve_all_workspaces(
     ]
 
 
-@router.get("/current", response_model=WorkspaceRetrieve)
+@router.get("/current-workspace", response_model=WorkspaceRetrieve)
 async def retrieve_current_workspace(
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
