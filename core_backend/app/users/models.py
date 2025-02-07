@@ -247,6 +247,7 @@ async def add_existing_user_to_workspace(
     )
 
     return UserCreateWithCode(
+        is_default_workspace=user.is_default_workspace,
         recovery_codes=user_db.recovery_codes,
         role=user.role,
         username=user_db.username,
@@ -301,16 +302,17 @@ async def add_new_user_to_workspace(
     )
 
     # 3.
+    is_default_workspace = True  # Should always be True for new users!
     _ = await create_user_workspace_role(
         asession=asession,
-        is_default_workspace=True,  # Should always be True for new users!
+        is_default_workspace=is_default_workspace,
         user_db=user_db,
         user_role=user.role,
         workspace_db=workspace_db,
     )
 
     return UserCreateWithCode(
-        is_default_workspace=True,
+        is_default_workspace=is_default_workspace,
         recovery_codes=recovery_codes,
         role=user.role,
         username=user_db.username,
