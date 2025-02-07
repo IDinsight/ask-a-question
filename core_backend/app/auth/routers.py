@@ -1,7 +1,5 @@
 """This module contains FastAPI routers for user authentication endpoints."""
 
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -12,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
-    UserDB,
     UserNotFoundError,
     create_user_workspace_role,
     get_user_by_username,
@@ -26,18 +23,8 @@ from ..workspaces.utils import (
     get_workspace_by_workspace_name,
 )
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
-from .dependencies import (
-    authenticate_credentials,
-    authenticate_workspace,
-    create_access_token,
-    get_current_user,
-)
-from .schemas import (
-    AuthenticatedUser,
-    AuthenticationDetails,
-    GoogleLoginData,
-    WorkspaceLogin,
-)
+from .dependencies import authenticate_credentials, create_access_token
+from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
 
 TAG_METADATA = {
     "name": "Authentication",
@@ -246,56 +233,3 @@ async def authenticate_or_create_google_user(
                 username=user_db.username,
                 workspace_name=workspace_name,
             )
-
-
-@router.post("/login-workspace")
-async def login_workspace(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    workspace_login: WorkspaceLogin,
-) -> AuthenticationDetails:
-    """Login route for users to authenticate into a workspace and receive a JWT token.
-
-    NB: This endpoint does NOT take the user's password for authentication. This is
-    because a user should first be authenticated using username and password before
-    they are allowed to log into a workspace.
-
-    Parameters
-    ----------
-    calling_user_db
-        The user object associated with the user logging into the workspace.
-    workspace_login
-        The workspace login object containing the username and workspace name to log
-        into.
-
-    Returns
-    -------
-    AuthenticationDetails
-        A Pydantic model containing the JWT token, token type, access level, and
-        username.
-
-    Raises
-    ------
-    HTTPException
-        If the user credentials are invalid.
-    """
-
-    authenticated_user = await authenticate_workspace(
-        calling_user_db=calling_user_db, workspace_login=workspace_login
-    )
-
-    if authenticated_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
-        )
-
-    username = authenticated_user.username
-    workspace_name = authenticated_user.workspace_name
-    return AuthenticationDetails(
-        access_level=authenticated_user.access_level,
-        access_token=create_access_token(
-            username=username, workspace_name=workspace_name
-        ),
-        token_type="bearer",
-        username=authenticated_user.username,
-        workspace_name=workspace_name,
-    )

@@ -42,6 +42,19 @@ class WorkspaceRetrieve(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class WorkspaceSwitch(BaseModel):
+    """Pydantic model for switching workspaces.
+
+    NB: Switching workspaces should NOT require the user's password since this
+    functionality is only available after a user authenticates with their username and
+    password.
+    """
+
+    workspace_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class WorkspaceUpdate(BaseModel):
     """Pydantic model for workspace updates."""
 
