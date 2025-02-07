@@ -21,6 +21,7 @@ type AuthContextType = {
     client_id: string;
     credential: string;
   }) => void;
+  logoutWorkspace: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,7 +76,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem("role", role);
     localStorage.setItem("workspaceName", workspaceName);
     setUsername(username);
-    setToken(token);
+    setToken((prev) => (prev === token ? `${token} ` : token));
     setUserRole(role);
     setUserRole(is_admin ? "admin" : "user");
     setWorkspaceName(workspaceName);
@@ -103,11 +104,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const loginWorkspace = async (username: string, workspaceName: string) => {
     const sourcePage = searchParams.has("sourcePage")
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
-      : "/";
+      : "/content";
     try {
+      logoutWorkspace();
       const { access_token, access_level, is_admin, workspace_name } =
         await getLoginWorkspace(username, workspaceName, token);
       setLoginParams(username, access_token, access_level, is_admin, workspace_name);
+
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -146,12 +149,24 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("role");
+    localStorage.removeItem("workspaceName");
     setUsername(null);
     setToken(null);
     setUserRole(null);
     setWorkspaceName(null);
     setAccessLevel("readonly");
     router.push("/login");
+  };
+
+  const logoutWorkspace = () => {
+    //localStorage.removeItem("token");
+    localStorage.removeItem("accessLevel");
+    localStorage.removeItem("role");
+    localStorage.removeItem("workspaceName");
+    //setToken(null);
+    setUserRole(null);
+    setWorkspaceName(null);
+    setAccessLevel("readonly");
   };
 
   const authValue: AuthContextType = {
@@ -165,6 +180,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     loginWorkspace: loginWorkspace,
     loginGoogle: loginGoogle,
     logout: logout,
+    logoutWorkspace: logoutWorkspace,
   };
 
   return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;

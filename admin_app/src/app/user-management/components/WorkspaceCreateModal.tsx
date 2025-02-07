@@ -36,7 +36,7 @@ const WorkspaceCreateModal = ({
     }
     return true;
   };
-
+  console.log("existingWorkspace", existingWorkspace);
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -81,7 +81,7 @@ const WorkspaceCreateModal = ({
             id="workspace-name"
             label="Workspace Name"
             name="workspace-name"
-            defaultValue={existingWorkspace ? existingWorkspace.workspace_name : ""}
+            defaultValue={existingWorkspace?.workspace_name}
             onChange={() => {
               setIsWorkspaceNameEmpty(false);
             }}

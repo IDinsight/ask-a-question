@@ -121,6 +121,19 @@ const createWorkspace = async (workspace_name: string, token: string) => {
     console.error(error);
   }
 };
+
+const getWorkspace = async (token: string) => {
+  try {
+    const response = await api.get("/workspace/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching user info");
+  }
+};
 const getWorkspaceList = async (token: string) => {
   try {
     const response = await api.get("/workspace/", {
@@ -173,5 +186,6 @@ export {
   getWorkspaceList,
   getLoginWorkspace,
   editWorkspace,
+  getWorkspace,
 };
 export type { UserBody, UserBodyPassword };

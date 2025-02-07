@@ -37,7 +37,7 @@ interface ScreenMenuProps {
   children: React.ReactNode;
 }
 const NavBar = () => {
-  const { username, token, workspaceName, loginWorkspace } = useAuth();
+  const { username, token, workspaceName, loginWorkspace, logoutWorkspace } = useAuth();
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
