@@ -90,6 +90,17 @@ def setup_multiple_workspaces(
 ) -> dict[str, dict[str, Any]]:
     """Setup admin and read-only users in multiple workspaces.
 
+    This fixtures sets up the following users and workspaces:
+
+    1. Suzin (Admin) in workspace Suzin.
+    2. Mark (Read-Only) in workspace Suzin.
+    3. Carlos (Admin) in workspace Carlos.
+    4. Zia (Read-Only) in workspace Carlos.
+    5. Amir (Admin) in workspace Amir.
+    6. Poornima (Admin) in workspace Amir.
+    7. Sid (Read-Only) in workspace Amir.
+    8. Poornima (Admin) in workspace Suzin.
+
     Parameters
     ----------
     clean_user_and_workspace_dbs
