@@ -101,10 +101,11 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   };
 
   const sortRows = <K extends keyof RowDataType>(
+    data: RowDataType[],
     byParam: K,
     order: "ascending" | "descending",
-  ): RowDataType[] =>
-    [...rows].sort((a, b) => {
+  ): RowDataType[] => {
+    return [...data].sort((a, b) => {
       let cmp = 0;
       if (byParam === "query_count_timeseries") {
         const diffA = percentageIncrease(
@@ -119,6 +120,7 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
       }
       return order === "ascending" ? cmp : -cmp;
     });
+  };
 
   const filteredRows = useMemo(() => {
     return searchTerm
@@ -127,10 +129,10 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   }, [rows, searchTerm]);
 
   const displayedRows = useMemo(() => {
-    const sorted = sortRows(sortColumn, sortOrder);
+    const sorted = sortRows(filteredRows, sortColumn, sortOrder);
     const start = (page - 1) * rowsPerPage;
     return sorted.slice(start, start + rowsPerPage);
-  }, [rows, page, sortColumn, sortOrder, rowsPerPage]);
+  }, [filteredRows, page, sortColumn, sortOrder, rowsPerPage]);
 
   useEffect(() => {
     onItemsToDisplayChange(displayedRows);
