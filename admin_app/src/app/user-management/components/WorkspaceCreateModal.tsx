@@ -17,11 +17,13 @@ interface WorkspaceCreateProps {
   onClose: () => void;
   isEdit: boolean;
   onCreate: (workspaceName: string) => Promise<Workspace>;
+  existingWorkspace?: Workspace;
 }
 const WorkspaceCreateModal = ({
   open,
   onClose,
   isEdit,
+  existingWorkspace,
   onCreate,
 }: WorkspaceCreateProps) => {
   const [errorMessage, setErrorMessage] = React.useState("");
@@ -32,18 +34,18 @@ const WorkspaceCreateModal = ({
       setIsWorkspaceNameEmpty(true);
       return false;
     }
+    return true;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const workspaceName = data.get("workspace-name") as string;
-
+    console.log("workspace", workspaceName);
     if (isFormValid(workspaceName)) {
-      onCreate(workspaceName).then((data) => {
-        console.log(data);
+      onCreate(workspaceName).then((value: Workspace) => {
+        console.log(value);
       });
-      console.log(workspaceName);
       onClose();
     }
   };
@@ -77,8 +79,9 @@ const WorkspaceCreateModal = ({
             required
             fullWidth
             id="workspace-name"
-            label="workspace-name"
+            label="Workspace Name"
             name="workspace-name"
+            defaultValue={existingWorkspace ? existingWorkspace.workspace_name : ""}
             onChange={() => {
               setIsWorkspaceNameEmpty(false);
             }}
@@ -88,19 +91,19 @@ const WorkspaceCreateModal = ({
               disabled
               margin="none"
               required
-              label="Content Limit"
+              label="Content Quota"
               type="number"
               sx={{ width: "48%" }}
-              value={null}
+              value={existingWorkspace ? existingWorkspace.content_quota : ""}
             />
             <TextField
               disabled
               margin="none"
               required
-              label="API Call Limit"
+              label="API Daily Quota"
               type="number"
               sx={{ width: "48%" }}
-              value={null}
+              value={existingWorkspace ? existingWorkspace.api_daily_quota : ""}
             />
           </Box>
           <Box

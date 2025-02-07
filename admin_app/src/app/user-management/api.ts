@@ -105,12 +105,15 @@ const resetPassword = async (
 
 const createWorkspace = async (workspace_name: string, token: string) => {
   try {
-    console.log("here");
+    console.log({ workspace_name });
     const response = await api.post(
       "/workspace/",
-      { workspace_name },
+      { workspace_name, content_quota: 100, api_daily_quota: 100 },
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
     return response.data;
@@ -128,6 +131,35 @@ const getWorkspaceList = async (token: string) => {
     throw new Error("Error fetching content list");
   }
 };
+const getLoginWorkspace = async (
+  username: string,
+  workspace_name: string,
+  token: string | null,
+) => {
+  const data = { username, workspace_name };
+
+  try {
+    const response = await api.post("/login-workspace", data);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error fetching workspace login token");
+  }
+};
+const editWorkspace = async (
+  workspace_id: number,
+  workspace: Workspace,
+  token: string,
+) => {
+  try {
+    const response = await api.put(`/workspace/${workspace_id}`, workspace, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error creating content");
+  }
+};
 
 export {
   createUser,
@@ -139,5 +171,7 @@ export {
   resetPassword,
   createWorkspace,
   getWorkspaceList,
+  getLoginWorkspace,
+  editWorkspace,
 };
 export type { UserBody, UserBodyPassword };

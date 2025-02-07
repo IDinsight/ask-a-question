@@ -156,17 +156,6 @@ const getUrgencyDetection = async (search: string, token: string) => {
   }
 };
 
-const getLoginWorkspace = async (username: string, workspace_name: string) => {
-  const data = { username, workspace_name };
-
-  try {
-    const response = await api.post("/login-workspace", data);
-    return response.data;
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error fetching workspace login token");
-  }
-};
 export const apiCalls = {
   getLoginToken,
   getGoogleLoginToken,
@@ -174,6 +163,5 @@ export const apiCalls = {
   getChat,
   postResponseFeedback,
   getUrgencyDetection,
-  getLoginWorkspace,
 };
 export default api;

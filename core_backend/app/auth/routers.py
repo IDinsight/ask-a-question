@@ -278,6 +278,7 @@ async def login_workspace(workspace_login: WorkspaceLogin) -> AuthenticationDeta
             username=authenticate_user.username,
             workspace_name=authenticate_user.workspace_name,
         ),
+        workspace_name=authenticate_user.workspace_name,
         token_type="bearer",
         username=authenticate_user.username,
     )

@@ -17,9 +17,14 @@ import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
-import { createWorkspace, getWorkspaceList } from "@/app/user-management/api";
+import {
+  createWorkspace,
+  getLoginWorkspace,
+  getWorkspaceList,
+} from "@/app/user-management/api";
 import { Create } from "@mui/icons-material";
 import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
+import api, { apiCalls } from "@/utils/api";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -32,7 +37,7 @@ interface ScreenMenuProps {
   children: React.ReactNode;
 }
 const NavBar = () => {
-  const { token, workspaceName } = useAuth();
+  const { username, token, workspaceName, loginWorkspace } = useAuth();
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
@@ -57,6 +62,9 @@ const NavBar = () => {
           }}
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+          loginWorkspace={(workspace: Workspace) => {
+            return loginWorkspace(username, workspace.workspace_name);
+          }}
         />
       </SmallScreenNavMenu>
       <LargeScreenNavMenu>
@@ -66,6 +74,9 @@ const NavBar = () => {
           }}
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+          loginWorkspace={(workspace: Workspace) => {
+            return loginWorkspace("admin", workspace.workspace_name);
+          }}
         />
       </LargeScreenNavMenu>
       <UserDropdown />
@@ -74,7 +85,6 @@ const NavBar = () => {
         onClose={onWorkspaceModalClose}
         isEdit={false}
         onCreate={(name: string) => {
-          console.log("This is showing");
           return createWorkspace(name, token!);
         }}
       />

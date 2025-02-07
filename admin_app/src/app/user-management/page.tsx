@@ -10,7 +10,13 @@ import {
   Typography,
 } from "@mui/material";
 import { UserCard } from "./components/UserCard";
-import { editUser, getUserList, resetPassword, UserBodyPassword } from "./api";
+import {
+  editUser,
+  editWorkspace,
+  getUserList,
+  resetPassword,
+  UserBodyPassword,
+} from "./api";
 import { useAuth } from "@/utils/auth";
 import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
@@ -18,6 +24,9 @@ import { createUser, UserBody } from "./api";
 import { UserResetModal } from "./components/UserResetModal";
 import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
+import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
+import { Workspace } from "@/components/WorkspaceMenu";
+import { set } from "date-fns";
 
 const UserManagement: React.FC = () => {
   const { token, username, role, workspaceName } = useAuth();
@@ -28,6 +37,8 @@ const UserManagement: React.FC = () => {
   const [currentUser, setCurrentUser] = React.useState<UserBody | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
+  const [openEditWorkspaceModal, setOpenEditWorkspaceModal] =
+    React.useState<boolean>(false);
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
   React.useEffect(() => {
@@ -46,6 +57,9 @@ const UserManagement: React.FC = () => {
       setShowConfirmationModal(false);
     }
   }, [recoveryCodes]);
+  const onWorkspaceModalClose = () => {
+    setOpenEditWorkspaceModal(false);
+  };
   const handleRegisterModalContinue = (newRecoveryCodes: string[]) => {
     setRecoveryCodes(newRecoveryCodes);
     setLoading(true);
@@ -113,7 +127,7 @@ const UserManagement: React.FC = () => {
               variant="contained"
               color="secondary"
               onClick={() => {
-                setShowEditModal(true);
+                setOpenEditWorkspaceModal(true);
               }}
             >
               Edit Workspace
@@ -221,7 +235,18 @@ const UserManagement: React.FC = () => {
                 </Layout.FlexBox>
               ))}
             </List>
-
+            <WorkspaceCreateModal
+              open={openEditWorkspaceModal}
+              onClose={onWorkspaceModalClose}
+              isEdit={true}
+              onCreate={(name: string) => {
+                const workspace = {
+                  workspace_id: 1,
+                  workspace_name: name,
+                } as Workspace;
+                return editWorkspace(1, workspace, token!);
+              }}
+            />
             <CreateUserModal
               open={showCreateModal}
               onClose={() => {
