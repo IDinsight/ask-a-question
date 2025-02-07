@@ -17,14 +17,8 @@ import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
-import {
-  createWorkspace,
-  getLoginWorkspace,
-  getWorkspaceList,
-} from "@/app/user-management/api";
-import { Create } from "@mui/icons-material";
+import { createWorkspace, getWorkspaceList } from "@/app/user-management/api";
 import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
-import api, { apiCalls } from "@/utils/api";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -37,7 +31,7 @@ interface ScreenMenuProps {
   children: React.ReactNode;
 }
 const NavBar = () => {
-  const { username, token, workspaceName, loginWorkspace, logoutWorkspace } = useAuth();
+  const { username, token, workspaceName, loginWorkspace } = useAuth();
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
@@ -63,7 +57,7 @@ const NavBar = () => {
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
           loginWorkspace={(workspace: Workspace) => {
-            return loginWorkspace(username, workspace.workspace_name);
+            return loginWorkspace(workspace.workspace_name);
           }}
         />
       </SmallScreenNavMenu>
@@ -75,7 +69,7 @@ const NavBar = () => {
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
           loginWorkspace={(workspace: Workspace) => {
-            return loginWorkspace("admin", workspace.workspace_name);
+            return loginWorkspace(workspace.workspace_name);
           }}
         />
       </LargeScreenNavMenu>
@@ -84,8 +78,12 @@ const NavBar = () => {
         open={openCreateWorkspaceModal}
         onClose={onWorkspaceModalClose}
         isEdit={false}
-        onCreate={(name: string) => {
-          return createWorkspace(name, token!);
+        onCreate={(workspace: Workspace) => {
+          return createWorkspace(workspace, token!);
+        }}
+        loginWorkspace={(workspace: Workspace) => {
+          console.log("workspace sent", workspace);
+          return loginWorkspace(workspace.workspace_name);
         }}
       />
     </AppBar>

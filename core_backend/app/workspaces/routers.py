@@ -591,7 +591,6 @@ async def update_workspace(
         If the calling user does not have the correct role to update the workspace.
         If there is an error updating the workspace quotas.
     """
-
     workspace_db_checked = await check_update_workspace_call(
         asession=asession,
         calling_user_db=calling_user_db,

@@ -14,8 +14,7 @@ import {
   editUser,
   editWorkspace,
   getUserList,
-  getWorkspace,
-  getWorkspaceList,
+  getCurrentWorkspace,
   resetPassword,
   UserBodyPassword,
 } from "./api";
@@ -31,7 +30,7 @@ import { Workspace } from "@/components/WorkspaceMenu";
 import { set } from "date-fns";
 
 const UserManagement: React.FC = () => {
-  const { token, username, role, workspaceName } = useAuth();
+  const { token, username, role, loginWorkspace } = useAuth();
   const [currentWorkspace, setCurrentWorkspace] = React.useState<Workspace | null>();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
@@ -52,7 +51,7 @@ const UserManagement: React.FC = () => {
       setLoading(false);
       setUsers(sortedData);
     });
-    getWorkspace(token!).then((data: Workspace) => {
+    getCurrentWorkspace(token!).then((data: Workspace) => {
       setCurrentWorkspace(data);
     });
   }, [loading]);
@@ -128,7 +127,9 @@ const UserManagement: React.FC = () => {
               alignItems: "center",
             }}
           >
-            <Typography variant="h4">Manage Workspace</Typography>
+            <Typography variant="h4">
+              Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
+            </Typography>
             <Button
               variant="contained"
               color="secondary"
@@ -246,15 +247,17 @@ const UserManagement: React.FC = () => {
                 open={openEditWorkspaceModal}
                 onClose={onWorkspaceModalClose}
                 isEdit={true}
-                onCreate={(name: string) => {
-                  const workspace = {
-                    workspace_id: currentWorkspace.workspace_id,
-                    workspace_name: name,
-                  } as Workspace;
-
-                  return editWorkspace(1, workspace, token!);
-                }}
                 existingWorkspace={currentWorkspace}
+                onCreate={(workspaceToEdit: Workspace) => {
+                  return editWorkspace(
+                    currentWorkspace.workspace_id!,
+                    workspaceToEdit,
+                    token!,
+                  );
+                }}
+                loginWorkspace={(workspace: Workspace) => {
+                  return loginWorkspace(workspace.workspace_name);
+                }}
               />
             )}
             <CreateUserModal

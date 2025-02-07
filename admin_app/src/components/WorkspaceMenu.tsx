@@ -25,7 +25,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { appColors, sizes } from "@/utils";
 import { select } from "@bokeh/bokehjs/build/js/lib/core/dom";
 export type Workspace = {
-  workspace_id: number;
+  workspace_id?: number;
   workspace_name: string;
   content_quota?: number;
   api_daily_quota?: number;

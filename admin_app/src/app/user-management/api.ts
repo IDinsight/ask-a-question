@@ -103,28 +103,23 @@ const resetPassword = async (
   }
 };
 
-const createWorkspace = async (workspace_name: string, token: string) => {
+const createWorkspace = async (workspace: Workspace, token: string) => {
   try {
-    console.log({ workspace_name });
-    const response = await api.post(
-      "/workspace/",
-      { workspace_name, content_quota: 100, api_daily_quota: 100 },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await api.post("/workspace/", workspace, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
     return response.data;
   } catch (error) {
     console.error(error);
   }
 };
 
-const getWorkspace = async (token: string) => {
+const getCurrentWorkspace = async (token: string) => {
   try {
-    const response = await api.get("/workspace/", {
+    const response = await api.get("/workspace/current", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -144,15 +139,13 @@ const getWorkspaceList = async (token: string) => {
     throw new Error("Error fetching content list");
   }
 };
-const getLoginWorkspace = async (
-  username: string,
-  workspace_name: string,
-  token: string | null,
-) => {
-  const data = { username, workspace_name };
-
+const getLoginWorkspace = async (workspace_name: string, token: string | null) => {
+  const data = { workspace_name };
+  console.log("data", data);
   try {
-    const response = await api.post("/login-workspace", data);
+    const response = await api.post("/workspace/switch-workspace", data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return response.data;
   } catch (error) {
     console.log(error);
@@ -170,7 +163,7 @@ const editWorkspace = async (
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error creating content");
+    throw new Error("Error editing workspace");
   }
 };
 
@@ -186,6 +179,6 @@ export {
   getWorkspaceList,
   getLoginWorkspace,
   editWorkspace,
-  getWorkspace,
+  getCurrentWorkspace,
 };
 export type { UserBody, UserBodyPassword };

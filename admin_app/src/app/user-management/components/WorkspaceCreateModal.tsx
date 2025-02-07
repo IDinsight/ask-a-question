@@ -10,14 +10,14 @@ import {
 } from "@mui/material";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import React from "react";
-import { is } from "date-fns/locale";
 import { Workspace } from "@/components/WorkspaceMenu";
 interface WorkspaceCreateProps {
   open: boolean;
   onClose: () => void;
   isEdit: boolean;
-  onCreate: (workspaceName: string) => Promise<Workspace>;
   existingWorkspace?: Workspace;
+  onCreate: (workspace: Workspace) => Promise<Workspace>;
+  loginWorkspace: (workspace: Workspace) => void;
 }
 const WorkspaceCreateModal = ({
   open,
@@ -25,10 +25,10 @@ const WorkspaceCreateModal = ({
   isEdit,
   existingWorkspace,
   onCreate,
+  loginWorkspace,
 }: WorkspaceCreateProps) => {
   const [errorMessage, setErrorMessage] = React.useState("");
   const [isWorkspaceNameEmpty, setIsWorkspaceNameEmpty] = React.useState(false);
-
   const isFormValid = (workspaceName: string) => {
     if (workspaceName === "") {
       setIsWorkspaceNameEmpty(true);
@@ -36,15 +36,18 @@ const WorkspaceCreateModal = ({
     }
     return true;
   };
-  console.log("existingWorkspace", existingWorkspace);
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const workspaceName = data.get("workspace-name") as string;
-    console.log("workspace", workspaceName);
     if (isFormValid(workspaceName)) {
-      onCreate(workspaceName).then((value: Workspace) => {
-        console.log(value);
+      onCreate({
+        workspace_name: workspaceName,
+        content_quota: 100,
+        api_daily_quota: 100,
+      }).then((value: Workspace | Workspace[]) => {
+        const workspace = Array.isArray(value) ? value[0] : value;
+        loginWorkspace(workspace);
       });
       onClose();
     }

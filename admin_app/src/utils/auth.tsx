@@ -1,6 +1,7 @@
 "use client";
 import { getLoginWorkspace } from "@/app/user-management/api";
 import { apiCalls } from "@/utils/api";
+import { set } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
 
@@ -12,7 +13,7 @@ type AuthContextType = {
   workspaceName: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
-  loginWorkspace: (username: string, workspaceName: string) => void;
+  loginWorkspace: (workspaceName: string) => void;
   logout: () => void;
   loginGoogle: ({
     client_id,
@@ -64,7 +65,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const setLoginParams = (
-    username: string,
     token: string,
     accessLevel: string,
     is_admin: boolean,
@@ -75,7 +75,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem("accessLevel", accessLevel);
     localStorage.setItem("role", role);
     localStorage.setItem("workspaceName", workspaceName);
-    setUsername(username);
     setToken((prev) => (prev === token ? `${token} ` : token));
     setUserRole(role);
     setUserRole(is_admin ? "admin" : "user");
@@ -89,7 +88,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { access_token, access_level, is_admin, workspace_name } =
         await apiCalls.getLoginToken(username, password);
-      setLoginParams(username, access_token, access_level, is_admin, workspace_name);
+      localStorage.setItem("username", username);
+      setUsername(username);
+
+      setLoginParams(access_token, access_level, is_admin, workspace_name);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -101,15 +103,15 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   };
-  const loginWorkspace = async (username: string, workspaceName: string) => {
+  const loginWorkspace = async (workspaceName: string) => {
     const sourcePage = searchParams.has("sourcePage")
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/content";
     try {
       logoutWorkspace();
       const { access_token, access_level, is_admin, workspace_name } =
-        await getLoginWorkspace(username, workspaceName, token);
-      setLoginParams(username, access_token, access_level, is_admin, workspace_name);
+        await getLoginWorkspace(workspaceName, token);
+      setLoginParams(access_token, access_level, is_admin, workspace_name);
 
       router.push(sourcePage);
     } catch (error: Error | any) {
@@ -137,7 +139,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     apiCalls
       .getGoogleLoginToken({ client_id: client_id, credential: credential })
       .then(({ access_token, access_level, username, is_admin, workspace_name }) => {
-        setLoginParams(username, access_token, access_level, is_admin, workspace_name);
+        localStorage.setItem("username", username);
+        setUsername(username);
+        setLoginParams(access_token, access_level, is_admin, workspace_name);
         router.push(sourcePage);
       })
       .catch((error) => {
@@ -159,14 +163,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logoutWorkspace = () => {
-    //localStorage.removeItem("token");
+    localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
     localStorage.removeItem("role");
     localStorage.removeItem("workspaceName");
-    //setToken(null);
+    setToken(null);
     setUserRole(null);
     setWorkspaceName(null);
-    setAccessLevel("readonly");
   };
 
   const authValue: AuthContextType = {
