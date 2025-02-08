@@ -428,4 +428,4 @@ def check_authentication_is_required(
     assert json_response["default_workspace_name"] is None
     assert json_response["removed_from_workspace_name"] == "Workspace_Carlos"
     assert json_response["require_authentication"] is True
-    assert json_response["require_workspace_switch"] is False
+    assert json_response["require_workspace_switch"] is True

@@ -74,23 +74,24 @@ async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
         The SQLAlchemy async session to use for all database connections.
     """
 
-    async with asession.begin():
-        # Delete from the association table first due to foreign key constraints.
-        await asession.execute(delete(UserWorkspaceDB))
+    # Delete from the association table first due to foreign key constraints.
+    await asession.execute(delete(UserWorkspaceDB))
 
-        # Delete users and workspaces after the association table is cleared.
-        await asession.execute(delete(UserDB))
-        await asession.execute(delete(WorkspaceDB))
+    # Delete users and workspaces after the association table is cleared.
+    await asession.execute(delete(UserDB))
+    await asession.execute(delete(WorkspaceDB))
 
-        # Reset auto-increment sequences.
-        await asession.execute(text("ALTER SEQUENCE user_user_id_seq RESTART WITH 1"))
-        await asession.execute(
-            text("ALTER SEQUENCE workspace_workspace_id_seq RESTART WITH 1")
-        )
+    # Reset auto-increment sequences.
+    await asession.execute(text("ALTER SEQUENCE user_user_id_seq RESTART WITH 1"))
+    await asession.execute(
+        text("ALTER SEQUENCE workspace_workspace_id_seq RESTART WITH 1")
+    )
 
-        # Sanity check.
-        assert not await check_if_users_exist(asession=asession)
-        assert not await check_if_workspaces_exist(asession=asession)
+    await asession.commit()
+
+    # Sanity check.
+    assert not await check_if_users_exist(asession=asession)
+    assert not await check_if_workspaces_exist(asession=asession)
 
 
 @pytest.fixture
