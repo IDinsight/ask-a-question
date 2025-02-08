@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
 
 # Define scenario(s).
-scenarios("core_backend/reset_user_passwords.feature")
+scenarios("core_backend/resetting_user_passwords.feature")
 
 
 # Backgrounds.

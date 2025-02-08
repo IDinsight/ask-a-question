@@ -88,7 +88,9 @@ async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
 def setup_multiple_workspaces(
     clean_user_and_workspace_dbs: pytest.FixtureRequest, client: TestClient
 ) -> dict[str, dict[str, Any]]:
-    """Setup admin and read-only users in multiple workspaces.
+    """Setup admin and read-only users in multiple workspaces. In addition, log each
+    user into their respective workspaces so that there is an access token for each
+    user.
 
     This fixtures sets up the following users and workspaces:
 
@@ -272,7 +274,8 @@ def setup_multiple_workspaces(
         "access_token": sid_access_token,
     }
 
-    # Add Poornima as an admin user in workspace Suzin.
+    # Add Poornima as an admin user in workspace Suzin (but do NOT log Poornima into
+    # Suzin's workspace).
     client.post(
         "/user/",
         headers={"Authorization": f"Bearer {suzin_access_token}"},

@@ -11,7 +11,7 @@ from pytest_bdd import given, scenarios, then, when
 from core_backend.app.users.schemas import UserRoles
 
 # Define scenario(s).
-scenarios("core_backend/first_user_registration.feature")
+scenarios("core_backend/registering_first_user.feature")
 
 
 # Backgrounds.
