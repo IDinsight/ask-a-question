@@ -1,6 +1,5 @@
 """This module contains fixtures for the API tests."""
 
-# pylint:disable=W0613
 from collections import defaultdict
 from typing import Any, Callable
 
@@ -15,6 +14,7 @@ from core_backend.app.users.models import (
     UserWorkspaceDB,
     WorkspaceDB,
     check_if_users_exist,
+    get_user_by_username,
 )
 from core_backend.app.users.schemas import UserRoles
 from core_backend.app.workspaces.utils import check_if_workspaces_exist
@@ -22,7 +22,7 @@ from core_backend.app.workspaces.utils import check_if_workspaces_exist
 
 # Hooks.
 def pytest_bdd_step_error(
-    request: pytest.FixtureRequest,
+    request: pytest.FixtureRequest,  # pylint: disable=W0613
     feature: Feature,
     scenario: Scenario,
     step: Step,
@@ -50,7 +50,16 @@ def pytest_bdd_step_error(
         The exception that was raised by the step function that failed.
     """
 
-    print(f"Step: {step} FAILED with Step Function Arguments: {step_func_args}")
+    print(
+        f"\n>>>STEP FAILED\n"
+        f"Feature: {feature}\n"
+        f"Scenario: {scenario}\n"
+        f"Step: {step}\n"
+        f"Step Function: {step_func}\n"
+        f"Step Function Arguments: {step_func_args}\n"
+        f"Exception Raised: {exception}\n"
+        f"<<<STEP FAILED\n"
+    )
 
 
 # Fixtures.
@@ -62,7 +71,7 @@ async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
     Parameters
     ----------
     asession
-        Async database session.
+        The SQLAlchemy async session to use for all database connections.
     """
 
     async with asession.begin():
@@ -85,8 +94,10 @@ async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
 
 
 @pytest.fixture
-def setup_multiple_workspaces(
-    clean_user_and_workspace_dbs: pytest.FixtureRequest, client: TestClient
+async def setup_multiple_workspaces(
+    asession: AsyncSession,
+    clean_user_and_workspace_dbs: pytest.FixtureRequest,
+    client: TestClient,
 ) -> dict[str, dict[str, Any]]:
     """Setup admin and read-only users in multiple workspaces. In addition, log each
     user into their respective workspaces so that there is an access token for each
@@ -103,8 +114,13 @@ def setup_multiple_workspaces(
     7. Sid (Read-Only) in workspace Amir.
     8. Poornima (Admin) in workspace Suzin.
 
+    NB: Suzin is all powerful since she is the very first admin user. She creates all
+    the workspaces for the other admin users as well. Don't mess with Suzin.
+
     Parameters
     ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
     clean_user_and_workspace_dbs
         Fixture to clean the user and workspace databases.
     client
@@ -135,9 +151,12 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Suzin", "password": "123"}
     )
     suzin_access_token = suzin_login_response.json()["access_token"]
+    suzin_user_db = await get_user_by_username(asession=asession, username="Suzin")
+    suzin_user_id = suzin_user_db.user_id
     user_workspace_responses["suzin"] = {
         **register_suzin_response.json(),
         "access_token": suzin_access_token,
+        "user_id": suzin_user_id,
     }
 
     # Add Mark as a read only user in workspace Suzin.
@@ -155,9 +174,12 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Mark", "password": "123"}
     )
     mark_access_token = mark_login_response.json()["access_token"]
+    mark_user_db = await get_user_by_username(asession=asession, username="Mark")
+    mark_user_id = mark_user_db.user_id
     user_workspace_responses["mark"] = {
         **add_mark_response.json(),
         "access_token": mark_access_token,
+        "user_id": mark_user_id,
     }
 
     # Create workspace Carlos.
@@ -182,9 +204,12 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Carlos", "password": "123"}
     )
     carlos_access_token = carlos_login_response.json()["access_token"]
+    carlos_user_db = await get_user_by_username(asession=asession, username="Carlos")
+    carlos_user_id = carlos_user_db.user_id
     user_workspace_responses["carlos"] = {
         **add_carlos_response.json(),
         "access_token": carlos_access_token,
+        "user_id": carlos_user_id,
     }
 
     # Add Zia as a read only user in workspace Carlos.
@@ -202,9 +227,12 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Zia", "password": "123"}
     )
     zia_access_token = zia_login_response.json()["access_token"]
+    zia_user_db = await get_user_by_username(asession=asession, username="Zia")
+    zia_user_id = zia_user_db.user_id
     user_workspace_responses["zia"] = {
         **add_zia_response.json(),
         "access_token": zia_access_token,
+        "user_id": zia_user_id,
     }
 
     # Create workspace Amir.
@@ -229,9 +257,12 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Amir", "password": "123"}
     )
     amir_access_token = amir_login_response.json()["access_token"]
+    amir_user_db = await get_user_by_username(asession=asession, username="Amir")
+    amir_user_id = amir_user_db.user_id
     user_workspace_responses["amir"] = {
         **add_amir_response.json(),
         "access_token": amir_access_token,
+        "user_id": amir_user_id,
     }
 
     # Add Poornima as an admin user in workspace Amir.
@@ -249,9 +280,14 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Poornima", "password": "123"}
     )
     poornima_access_token = poornima_login_response.json()["access_token"]
+    poornima_user_db = await get_user_by_username(
+        asession=asession, username="Poornima"
+    )
+    poornima_user_id = poornima_user_db.user_id
     user_workspace_responses["poornima"] = {
         **add_poornima_response.json(),
         "access_token": poornima_access_token,
+        "user_id": poornima_user_id,
     }
 
     # Add Sid as a read-only user in workspace Amir.
@@ -269,12 +305,15 @@ def setup_multiple_workspaces(
         "/login", data={"username": "Sid", "password": "123"}
     )
     sid_access_token = sid_login_response.json()["access_token"]
+    sid_user_db = await get_user_by_username(asession=asession, username="Sid")
+    sid_user_id = sid_user_db.user_id
     user_workspace_responses["sid"] = {
         **add_sid_response.json(),
         "access_token": sid_access_token,
+        "user_id": sid_user_id,
     }
 
-    # Add Poornima as an admin user in workspace Suzin (but do NOT log Poornima into
+    # Add Poornima as an admin user in workspace Suzin (but do NOT switch Poornima into
     # Suzin's workspace).
     client.post(
         "/user/",

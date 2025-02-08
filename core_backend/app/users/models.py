@@ -862,7 +862,7 @@ async def remove_user_from_dbs(
     if len(remaining_user_workspace_dbs) == 0:
         # The user has no more workspaces, so remove from `UserDB` entirely.
         await asession.delete(user_db)
-        await asession.flush()
+        await asession.commit()
 
         # Return `None` to indicate no default workspace remains.
         return None, remove_from_workspace_db.workspace_name
@@ -876,12 +876,14 @@ async def remove_user_from_dbs(
             .order_by(UserWorkspaceDB.created_datetime_utc.asc())
             .limit(1)
         )
-        next_user_workspace = next_user_workspace_result.first()
+        next_user_workspace = next_user_workspace_result.scalar_one_or_none()
         assert next_user_workspace is not None
         next_user_workspace.default_workspace = True
 
         # Persist the new default workspace.
         await asession.flush()
+
+    await asession.commit()
 
     # Retrieve the current default workspace name after all changes.
     default_workspace = await get_user_default_workspace(

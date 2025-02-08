@@ -3,7 +3,7 @@
 from typing import Annotated
 
 import sqlalchemy
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,7 +49,6 @@ from .schemas import (
     UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
-    UserRemove,
     UserRemoveResponse,
     UserResetPassword,
     UserRetrieve,
@@ -216,10 +215,12 @@ async def create_first_user(
 
 @router.delete("/{user_id}", response_model=UserRemoveResponse)
 async def remove_user_from_workspace(
-    user: UserRemove,
     user_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    remove_from_workspace_name: str = Query(
+        ..., description="Name of the workspace to remove the user from."
+    ),
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserRemoveResponse:
     """Remove user by ID from workspace. Users can only be removed from a workspace by
@@ -230,19 +231,19 @@ async def remove_user_from_workspace(
     1. There should be no scenarios where the **last** admin user of a workspace is
         allowed to remove themselves from the workspace. This poses a data risk since
         an existing workspace with no users means that ANY admin can add users to that
-        workspace---this is essentially the scenario when an admin creates a new
-        workspace and then proceeds to add users to that newly created workspace.
-        However, existing workspaces can have content; thus, we disable the ability to
-        remove the last admin user from a workspace.
+        workspace---this is the same scenario as when an admin creates a new workspace
+        and then proceeds to add users to that newly created workspace. However,
+        existing workspaces can have content; thus, we disable the ability to remove
+        the last admin user from a workspace.
     2. All workspaces must have at least one ADMIN user.
     3. A re-authentication should be triggered by the frontend if the calling user is
         removing themselves from the only workspace that they are assigned to. This
         scenario can still occur if there are two admins of a workspace and an admin
         is only assigned to that workspace and decides to remove themselves from the
         workspace.
-    4. A workspace login should be triggered by the frontend if the calling user is
+    4. A workspace switch should be triggered by the frontend if the calling user is
         removing themselves from the current workspace. This occurs when
-        `require_workspace_login` is set to `True` in `UserRemoveResponse`. Case 3
+        `require_workspace_switch` is set to `True` in `UserRemoveResponse`. Case 3
         supersedes this case.
 
     The process is as follows:
@@ -257,8 +258,6 @@ async def remove_user_from_workspace(
 
     Parameters
     ----------
-    user
-        The user object with the name of the workspace to remove the user from.
     user_id
         The user ID to remove from the specified workspace.
     calling_user_db
@@ -268,6 +267,8 @@ async def remove_user_from_workspace(
         The name of the workspace that the calling user is currently logged into. This
         is used to detect if the calling user is removing themselves from the current
         workspace. If so, then a workspace login will be triggered.
+    remove_from_workspace_name
+        The name of the workspace from which the user is being removed.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -285,7 +286,10 @@ async def remove_user_from_workspace(
     """
 
     remove_from_workspace_db, user_db = await check_remove_user_from_workspace_call(
-        asession=asession, calling_user_db=calling_user_db, user=user, user_id=user_id
+        asession=asession,
+        calling_user_db=calling_user_db,
+        remove_from_workspace_name=remove_from_workspace_name,
+        user_id=user_id,
     )
 
     # 1 and 2.
@@ -311,14 +315,14 @@ async def remove_user_from_workspace(
 
     self_removal = calling_user_db.user_id == user_id
     require_authentication = self_removal and default_workspace_name is None
-    require_workspace_login = require_authentication or (
+    require_workspace_switch = require_authentication or (
         self_removal and removed_from_workspace_name == workspace_name
     )
     return UserRemoveResponse(
         default_workspace_name=default_workspace_name,
         removed_from_workspace_name=removed_from_workspace_name,
         require_authentication=require_authentication,
-        require_workspace_login=require_workspace_login,
+        require_workspace_switch=require_workspace_switch,
     )
 
 
@@ -722,7 +726,11 @@ async def get_user(
 
 
 async def check_remove_user_from_workspace_call(
-    *, asession: AsyncSession, calling_user_db: UserDB, user: UserRemove, user_id: int
+    *,
+    asession: AsyncSession,
+    calling_user_db: UserDB,
+    remove_from_workspace_name: str,
+    user_id: int,
 ) -> tuple[WorkspaceDB, UserDB]:
     """Check the remove user from workspace call to ensure the action is allowed.
 
@@ -733,8 +741,8 @@ async def check_remove_user_from_workspace_call(
     calling_user_db
         The user object associated with the user that is removing the user from the
         specified workspace.
-    user
-        The user object with the name of the workspace to remove the user from.
+    remove_from_workspace_name
+        The name of the workspace from which the user is being removed.
     user_id
         The user ID to remove from the specified workspace.
 
@@ -746,6 +754,7 @@ async def check_remove_user_from_workspace_call(
     Raises
     ------
     HTTPException
+        If the workspace to remove the user from does not exist.
         If the user does not have the required role to remove users from the specified
         workspace.
         If the user ID is not found.
@@ -753,9 +762,15 @@ async def check_remove_user_from_workspace_call(
         workspace.
     """
 
-    remove_from_workspace_db = await get_workspace_by_workspace_name(
-        asession=asession, workspace_name=user.remove_workspace_name
-    )
+    try:
+        remove_from_workspace_db = await get_workspace_by_workspace_name(
+            asession=asession, workspace_name=remove_from_workspace_name
+        )
+    except WorkspaceNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workspace does not exist: {remove_from_workspace_name}",
+        ) from e
 
     # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
     # users for non-admin users of a workspace.

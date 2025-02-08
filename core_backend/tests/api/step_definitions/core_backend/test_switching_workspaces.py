@@ -34,6 +34,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
+# Scenarios.
 @when(
     "Suzin switches to Workspace Carlos and Workspace Amir",
     target_fixture="suzin_switch_workspaces_response",

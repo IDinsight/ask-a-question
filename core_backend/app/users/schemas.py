@@ -70,22 +70,6 @@ class UserCreateWithCode(UserCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserRemove(BaseModel):
-    """Pydantic model for user removal from a workspace.
-
-    1. If the workspace to remove the user from is also the user's default workspace,
-        then the next workspace that the user is assigned to is set as the user's
-        default workspace.
-    2. If the user is not assigned to any workspace after being removed from the
-        specified workspace, then the user is also deleted from the `UserDB` database.
-        This is necessary because a user must be assigned to at least one workspace.
-    """
-
-    remove_workspace_name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserRemoveResponse(BaseModel):
     """Pydantic model for user removal response.
 
@@ -94,26 +78,26 @@ class UserRemoveResponse(BaseModel):
     1. There should be no scenarios where the **last** admin user of a workspace is
         allowed to remove themselves from the workspace. This poses a data risk since
         an existing workspace with no users means that ANY admin can add users to that
-        workspace---this is essentially the scenario when an admin creates a new
-        workspace and then proceeds to add users to that newly created workspace.
-        However, existing workspaces can have content; thus, we disable the ability to
-        remove the last admin user from a workspace.
+        workspace---this is the same scenario as when an admin creates a new workspace
+        and then proceeds to add users to that newly created workspace. However,
+        existing workspaces can have content; thus, we disable the ability to remove
+        the last admin user from a workspace.
     2. All workspaces must have at least one ADMIN user.
     3. A re-authentication should be triggered by the frontend if the calling user is
         removing themselves from the only workspace that they are assigned to. This
         scenario can still occur if there are two admins of a workspace and an admin
         is only assigned to that workspace and decides to remove themselves from the
         workspace.
-    4. A workspace login should be triggered by the frontend if the calling user is
+    4. A workspace switch should be triggered by the frontend if the calling user is
         removing themselves from the current workspace. This occurs when
-        `require_workspace_login` is set to `True` in `UserRemoveResponse`. Case 3
+        `require_workspace_switch` is set to `True` in `UserRemoveResponse`. Case 3
         supersedes this case.
     """
 
     default_workspace_name: Optional[str] = None
     removed_from_workspace_name: str
     require_authentication: bool
-    require_workspace_login: bool
+    require_workspace_switch: bool
 
     model_config = ConfigDict(from_attributes=True)
 

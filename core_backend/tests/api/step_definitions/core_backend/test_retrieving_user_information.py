@@ -32,6 +32,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
+# Scenarios.
 @when(
     "Suzin retrieves information from all workspaces",
     target_fixture="suzin_retrieved_users_response",
