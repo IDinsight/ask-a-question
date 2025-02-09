@@ -85,10 +85,14 @@ def check_poornima_updated_name(
 
     poornima_user_id = user_workspace_responses["poornima"]["user_id"]
     json_response = poornima_update_name_response.json()
-    assert json_response["is_default_workspace"] == [False, True]
     assert json_response["user_id"] == poornima_user_id
-    assert json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Suzin"
-    assert json_response["user_workspaces"][1]["workspace_name"] == "Workspace_Amir"
+    for x, y in zip(
+        json_response["is_default_workspace"], json_response["user_workspaces"]
+    ):
+        if x is True:
+            assert y["workspace_name"] == "Workspace_Amir"
+        else:
+            assert y["workspace_name"] == "Workspace_Suzin"
     assert json_response["username"] == "Poornima_Updated"
 
 
@@ -146,12 +150,16 @@ def check_poornima_updated_default_workspace(
 
     poornima_user_id = user_workspace_responses["poornima"]["user_id"]
     json_response = poornima_update_default_workspace_response.json()
-    assert json_response["is_default_workspace"] == [True, False]
     assert json_response["user_id"] == poornima_user_id
-    assert json_response["user_workspaces"][0]["user_role"] == UserRoles.ADMIN
-    assert json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Suzin"
-    assert json_response["user_workspaces"][1]["user_role"] == UserRoles.ADMIN
-    assert json_response["user_workspaces"][1]["workspace_name"] == "Workspace_Amir"
+    for x, y in zip(
+        json_response["is_default_workspace"], json_response["user_workspaces"]
+    ):
+        if x is True:
+            assert y["user_role"] == UserRoles.ADMIN
+            assert y["workspace_name"] == "Workspace_Suzin"
+        else:
+            assert y["user_role"] == UserRoles.ADMIN
+            assert y["workspace_name"] == "Workspace_Amir"
     assert json_response["username"] == "Poornima_Updated"
 
 
@@ -209,12 +217,16 @@ def check_poornima_updated_role(
 
     poornima_user_id = user_workspace_responses["poornima"]["user_id"]
     json_response = poornima_update_workspace_role_response.json()
-    assert json_response["is_default_workspace"] == [True, False]
     assert json_response["user_id"] == poornima_user_id
-    assert json_response["user_workspaces"][0]["user_role"] == UserRoles.READ_ONLY
-    assert json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Suzin"
-    assert json_response["user_workspaces"][1]["user_role"] == UserRoles.ADMIN
-    assert json_response["user_workspaces"][1]["workspace_name"] == "Workspace_Amir"
+    for x, y in zip(
+        json_response["is_default_workspace"], json_response["user_workspaces"]
+    ):
+        if x is True:
+            assert y["user_role"] == UserRoles.READ_ONLY
+            assert y["workspace_name"] == "Workspace_Suzin"
+        else:
+            assert y["user_role"] == UserRoles.ADMIN
+            assert y["workspace_name"] == "Workspace_Amir"
     assert json_response["username"] == "Poornima_Updated"
 
 

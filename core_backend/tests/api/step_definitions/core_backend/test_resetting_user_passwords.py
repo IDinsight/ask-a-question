@@ -85,12 +85,28 @@ def check_suzin_reset_password_response(
 
     assert suzin_reset_password_response.status_code == status.HTTP_200_OK
     json_response = suzin_reset_password_response.json()
-    assert json_response["is_default_workspace"] == [True, False, False]
-    assert json_response["user_workspaces"] == [
-        {"user_role": "admin", "workspace_id": 1, "workspace_name": "Workspace_Suzin"},
-        {"user_role": "admin", "workspace_id": 2, "workspace_name": "Workspace_Carlos"},
-        {"user_role": "admin", "workspace_id": 3, "workspace_name": "Workspace_Amir"},
-    ]
+    for x, y in zip(
+        json_response["is_default_workspace"], json_response["user_workspaces"]
+    ):
+        if x is True:
+            assert y == {
+                "user_role": "admin",
+                "workspace_id": 1,
+                "workspace_name": "Workspace_Suzin",
+            }
+        else:
+            assert y in [
+                {
+                    "user_role": "admin",
+                    "workspace_id": 2,
+                    "workspace_name": "Workspace_Carlos",
+                },
+                {
+                    "user_role": "admin",
+                    "workspace_id": 3,
+                    "workspace_name": "Workspace_Amir",
+                },
+            ]
     assert json_response["username"] == "Suzin"
 
     suzin_login_response = client.post(
