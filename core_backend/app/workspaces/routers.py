@@ -13,6 +13,7 @@ from ..auth.dependencies import (
     get_current_workspace_name,
 )
 from ..auth.schemas import AuthenticationDetails
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -67,7 +68,7 @@ async def create_workspaces(
     to a default workspace already.
 
     NB: When a workspace is created, the API daily quota and content quota limits for
-    the workspace is set.
+    the workspace is set to global defaults regardless of what the user specifies.
 
     The process is as follows:
 
@@ -119,9 +120,9 @@ async def create_workspaces(
     for workspace in workspaces:
         # 1.
         workspace_db, is_new_workspace = await create_workspace(
-            api_daily_quota=workspace.api_daily_quota,
+            api_daily_quota=DEFAULT_API_QUOTA,  # workspace.api_daily_quota,
             asession=asession,
-            content_quota=workspace.content_quota,
+            content_quota=DEFAULT_CONTENT_QUOTA,  # workspace.content_quota,
             user=UserCreate(
                 role=UserRoles.ADMIN,
                 username=calling_user_db.username,
@@ -145,7 +146,7 @@ async def create_workspaces(
                 WorkspaceRetrieve(
                     api_daily_quota=workspace_db.api_daily_quota,
                     api_key_first_characters=workspace_db.api_key_first_characters,
-                    api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
+                    api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,  # noqa: E501
                     content_quota=workspace_db.content_quota,
                     created_datetime_utc=workspace_db.created_datetime_utc,
                     updated_datetime_utc=workspace_db.updated_datetime_utc,
