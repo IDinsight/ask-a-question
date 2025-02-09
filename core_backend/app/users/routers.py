@@ -25,6 +25,7 @@ from .models import (
     WorkspaceDB,
     add_existing_user_to_workspace,
     add_new_user_to_workspace,
+    check_if_two_users_share_a_common_workspace,
     check_if_user_exists,
     check_if_user_exists_in_workspace,
     check_if_users_exist,
@@ -495,9 +496,9 @@ async def reset_password(
     user's password is universal and belongs to the user and not a workspace. Thus,
     only a user can reset their own password.
 
-    NB: Since the `retrieve_all_users` endpoint is invoked first to display the correct
-    users for the calling user's workspaces, there should be no scenarios where a user
-    is resetting the password of another user.
+    NB: Since the `retrieve_all_users_in_current_workspace` endpoint should be invoked
+    first to display the correct users for the calling user's workspaces, there should
+    be no scenarios where a user is resetting the password of another user.
 
     The process is as follows:
 
@@ -572,10 +573,10 @@ async def update_user(
 
     NB: User information can only be updated by admin users. Furthermore, admin users
     can only update the information of users belonging to their workspaces. Since the
-    `retrieve_all_users` endpoint is invoked first to display the correct users for the
-    calling user's workspaces, there should be no issue with an admin user updating
-    user information for users in other workspaces. This endpoint will also check that
-    the calling user is an admin in any workspace.
+    `retrieve_all_users_in_current_workspace` endpoint should be invoked first to
+    display the correct users for the calling user's workspaces, there should be no
+    issue with an admin user updating user information for users in other workspaces.
+    This endpoint will also check that the calling user is an admin in any workspace.
 
     NB: A user's API daily quota limit and content quota can no longer be updated since
     these are set at the workspace level when the workspace is first created. Instead,
@@ -1007,6 +1008,7 @@ async def check_update_user_call(
     ------
     HTTPException
         If the calling user does not have the correct access to update the user.
+        If the calling user and the user being updated does not share workspaces.
         If a user's role is being changed but the workspace name is not specified.
         If a user's default workspace is being changed but the workspace name is not
             specified.
@@ -1016,8 +1018,13 @@ async def check_update_user_call(
         If the user does not belong to the specified workspace.
     """
 
-    if not await user_has_admin_role_in_any_workspace(
-        asession=asession, user_db=calling_user_db
+    if not (
+        await user_has_admin_role_in_any_workspace(
+            asession=asession, user_db=calling_user_db
+        )
+        and await check_if_two_users_share_a_common_workspace(
+            asession=asession, user_id_1=calling_user_db.user_id, user_id_2=user_id
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -1055,7 +1062,11 @@ async def check_update_user_call(
         )
 
     workspace_db = None
-    if user.role and user.workspace_name:
+
+    # Assumption here is that if the workspace name is specified when updating a user,
+    # then the calling user must be an admin in that workspace AND the user being
+    # updated must also exist in that workspace.
+    if user.workspace_name:
         workspace_db = await get_workspace_by_workspace_name(
             asession=asession, workspace_name=user.workspace_name
         )

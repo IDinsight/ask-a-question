@@ -32,7 +32,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
-# Scenarios.
+# Scenario: Users can only reset their own passwords
 @when(
     "Suzin tries to reset her own password",
     target_fixture="suzin_reset_password_response",

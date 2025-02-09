@@ -28,7 +28,7 @@ def reset_databases(  # pylint: disable=W0613
     """
 
 
-# Scenarios.
+# Scenario: Only one user can be registered as the first user
 @when("I create Tony as the first user", target_fixture="create_tony_json_response")
 def create_tony_as_first_user(client: TestClient) -> dict[str, Any]:
     """Create Tony as the first user.

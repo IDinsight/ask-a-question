@@ -34,7 +34,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
-# Scenarios.
+# Scenario: Users can only switch to their own workspaces.
 @when(
     "Suzin switches to Workspace Carlos and Workspace Amir",
     target_fixture="suzin_switch_workspaces_response",

@@ -32,7 +32,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
-# Scenarios.
+# Scenario: Retrieved user information should be limited by role and workspace
 @when(
     "Suzin retrieves information from all workspaces",
     target_fixture="suzin_retrieved_users_response",

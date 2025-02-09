@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from typing import Sequence
 
+import sqlalchemy.sql.functions as func
 from sqlalchemy import (
     ARRAY,
     Boolean,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    case,
     exists,
     select,
     text,
@@ -318,6 +320,45 @@ async def add_new_user_to_workspace(
         username=user_db.username,
         workspace_name=workspace_db.workspace_name,
     )
+
+
+async def check_if_two_users_share_a_common_workspace(
+    *, asession: AsyncSession, user_id_1: int, user_id_2: int
+) -> bool:
+    """Check if two users share a common workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_id_1
+        The first user ID to check.
+    user_id_2
+        The second user ID to check.
+
+    Returns
+    -------
+    bool
+        Specifies whether the two users share a common workspace.
+    """
+
+    # Subquery: select all workspace IDs belonging to user ID 2.
+    user2_workspace_ids = select(UserWorkspaceDB.workspace_id).where(
+        UserWorkspaceDB.user_id == user_id_2
+    )
+
+    # Main query: count how many of user1's workspace IDs intersect user2's.
+    result = await asession.execute(
+        select(func.count())
+        .select_from(UserWorkspaceDB)
+        .where(
+            UserWorkspaceDB.user_id == user_id_1,
+            UserWorkspaceDB.workspace_id.in_(user2_workspace_ids),
+        )
+    )
+
+    shared_count = result.scalar_one()
+    return shared_count > 0
 
 
 async def check_if_user_exists(
@@ -991,9 +1032,7 @@ async def save_user_to_db(
 async def update_user_default_workspace(
     *, asession: AsyncSession, user_db: UserDB, workspace_db: WorkspaceDB
 ) -> None:
-    """Update the default workspace for the user to the specified workspace. This sets
-    `default_workspace=False` for all of the user's workspaces, then sets
-    `default_workspace=True` for the specified workspace.
+    """Update the default workspace for the user to the specified workspace.
 
     Parameters
     ----------
@@ -1005,24 +1044,18 @@ async def update_user_default_workspace(
         The workspace object to set as the default workspace.
     """
 
-    user_id = user_db.user_id
-    workspace_id = workspace_db.workspace_id
-
-    # Turn off `default_workspace` for all the user's workspaces.
-    await asession.execute(
+    stmt = (
         update(UserWorkspaceDB)
-        .where(UserWorkspaceDB.user_id == user_id)
-        .values(default_workspace=False)
+        .where(UserWorkspaceDB.user_id == user_db.user_id)
+        .values(
+            default_workspace=case(
+                (UserWorkspaceDB.workspace_id == workspace_db.workspace_id, True),
+                else_=False,
+            )
+        )
     )
 
-    # Turn on `default_workspace` for the specified workspace.
-    await asession.execute(
-        update(UserWorkspaceDB)
-        .where(UserWorkspaceDB.user_id == user_id)
-        .where(UserWorkspaceDB.workspace_id == workspace_id)
-        .values(default_workspace=True)
-    )
-
+    await asession.execute(stmt)
     await asession.commit()
 
 

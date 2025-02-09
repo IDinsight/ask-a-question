@@ -32,7 +32,7 @@ def reset_databases(
     return setup_multiple_workspaces
 
 
-# Scenarios.
+# Scenario: Each workspace must have at least one (admin) user
 @when(
     "Carlos removes Suzin from workspace Carlos",
     target_fixture="suzin_remove_response",
@@ -154,6 +154,8 @@ def check_carlos_cannot_remove_himself_from_workspace_carlos(
     assert json_response[0]["workspace_name"] == "Workspace_Carlos"
 
 
+# Scenario: Admin can remove user from their own workspace but not a user in a
+# workspace that the admin is not a member of
 @when(
     "Amir removes Sid from workspace Amir",
     target_fixture="sid_remove_response",
@@ -276,6 +278,8 @@ def check_amir_cannot_remove_poornima_from_workspace_suzin(
     assert poornima_remove_response.status_code == status.HTTP_403_FORBIDDEN
 
 
+# Scenario: An admin can remove themselves from a workspace if the workspace has
+# multiple admins
 @when(
     "Poornima removes herself from workspace Amir",
     target_fixture="poornima_self_remove_response",
@@ -327,6 +331,9 @@ def check_that_poornima_is_required_to_switch_workspaces(
     assert json_response["require_workspace_switch"] is True
 
 
+# Scenario: If a (admin) user removes themselves from the only workspace they belong to
+# and they are signed into that workspace, then the user is deleted and
+# reauthentication is required
 @when(
     "Carlos removes himself from workspace Carlos",
     target_fixture="carlos_self_remove_response",
