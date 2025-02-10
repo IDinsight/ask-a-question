@@ -17,7 +17,10 @@ from core_backend.app.users.models import (
     get_user_by_username,
 )
 from core_backend.app.users.schemas import UserRoles
-from core_backend.app.workspaces.utils import check_if_workspaces_exist
+from core_backend.app.workspaces.utils import (
+    check_if_workspaces_exist,
+    get_workspace_by_workspace_name,
+)
 
 
 # Hooks.
@@ -154,10 +157,15 @@ async def setup_multiple_workspaces(
     suzin_access_token = suzin_login_response.json()["access_token"]
     suzin_user_db = await get_user_by_username(asession=asession, username="Suzin")
     suzin_user_id = suzin_user_db.user_id
+    suzin_workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name="Workspace_Suzin"
+    )
+    suzin_workspace_id = suzin_workspace_db.workspace_id
     user_workspace_responses["suzin"] = {
         **register_suzin_response.json(),
         "access_token": suzin_access_token,
         "user_id": suzin_user_id,
+        "workspace_name_to_id": {"Workspace_Suzin": suzin_workspace_id},
     }
 
     # Add Mark as a read only user in workspace Suzin.
@@ -181,6 +189,7 @@ async def setup_multiple_workspaces(
         **add_mark_response.json(),
         "access_token": mark_access_token,
         "user_id": mark_user_id,
+        "workspace_name_to_id": {"Workspace_Suzin": suzin_workspace_id},
     }
 
     # Create workspace Carlos.
@@ -207,10 +216,15 @@ async def setup_multiple_workspaces(
     carlos_access_token = carlos_login_response.json()["access_token"]
     carlos_user_db = await get_user_by_username(asession=asession, username="Carlos")
     carlos_user_id = carlos_user_db.user_id
+    carlos_workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name="Workspace_Carlos"
+    )
+    carlos_workspace_id = carlos_workspace_db.workspace_id
     user_workspace_responses["carlos"] = {
         **add_carlos_response.json(),
         "access_token": carlos_access_token,
         "user_id": carlos_user_id,
+        "workspace_name_to_id": {"Workspace_Carlos": carlos_workspace_id},
     }
 
     # Add Zia as a read only user in workspace Carlos.
@@ -234,6 +248,7 @@ async def setup_multiple_workspaces(
         **add_zia_response.json(),
         "access_token": zia_access_token,
         "user_id": zia_user_id,
+        "workspace_name_to_id": {"Workspace_Carlos": carlos_workspace_id},
     }
 
     # Create workspace Amir.
@@ -260,10 +275,15 @@ async def setup_multiple_workspaces(
     amir_access_token = amir_login_response.json()["access_token"]
     amir_user_db = await get_user_by_username(asession=asession, username="Amir")
     amir_user_id = amir_user_db.user_id
+    amir_workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name="Workspace_Amir"
+    )
+    amir_workspace_id = amir_workspace_db.workspace_id
     user_workspace_responses["amir"] = {
         **add_amir_response.json(),
         "access_token": amir_access_token,
         "user_id": amir_user_id,
+        "workspace_name_to_id": {"Workspace_Amir": amir_workspace_id},
     }
 
     # Add Poornima as an admin user in workspace Amir.
@@ -289,6 +309,7 @@ async def setup_multiple_workspaces(
         **add_poornima_response.json(),
         "access_token": poornima_access_token,
         "user_id": poornima_user_id,
+        "workspace_name_to_id": {"Workspace_Amir": amir_workspace_id},
     }
 
     # Add Sid as a read-only user in workspace Amir.
@@ -312,6 +333,7 @@ async def setup_multiple_workspaces(
         **add_sid_response.json(),
         "access_token": sid_access_token,
         "user_id": sid_user_id,
+        "workspace_name_to_id": {"Workspace_Amir": amir_workspace_id},
     }
 
     # Add Poornima as an admin user in workspace Suzin (but do NOT switch Poornima into
@@ -325,5 +347,8 @@ async def setup_multiple_workspaces(
             "workspace_name": "Workspace_Suzin",
         },
     )
+    user_workspace_responses["poornima"]["workspace_name_to_id"][
+        "Workspace_Suzin"
+    ] = suzin_workspace_id
 
     return user_workspace_responses
