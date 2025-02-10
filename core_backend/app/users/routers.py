@@ -184,6 +184,7 @@ async def add_existing_user(
     user_checked, user_checked_workspace_db = await check_create_or_add_user_call(
         asession=asession, calling_user_db=calling_user_db, user=user
     )
+    assert type(user_checked) is UserCreate
     assert user_checked.workspace_name
 
     # 3.
