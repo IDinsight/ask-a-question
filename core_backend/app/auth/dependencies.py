@@ -24,7 +24,9 @@ from ..users.models import (
     WorkspaceDB,
     get_user_by_username,
     get_user_default_workspace,
+    get_user_role_in_workspace,
 )
+from ..users.schemas import UserRoles
 from ..utils import (
     get_key_hash,
     setup_logger,
@@ -80,10 +82,15 @@ async def authenticate_credentials(
                 user_workspace_db = await get_user_default_workspace(
                     asession=asession, user_db=user_db
                 )
+                user_role = await get_user_role_in_workspace(
+                    asession=asession, user_db=user_db, workspace_db=user_workspace_db
+                )
+                assert user_role is not None and user_role in UserRoles
 
                 # Hardcode "fullaccess" now, but may use it in the future.
                 return AuthenticatedUser(
                     access_level="fullaccess",
+                    user_role=user_role,
                     username=username,
                     workspace_name=user_workspace_db.workspace_name,
                 )
@@ -149,7 +156,7 @@ async def authenticate_key(
 
         try:
             payload = jwt.decode(token_, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            username_ = payload.get("sub", None)
+            username_ = payload.get("username", None)
             workspace_name_ = payload.get("workspace_name", None)
             if not (username_ and workspace_name_):
                 raise credentials_exception
@@ -182,11 +189,15 @@ async def authenticate_key(
                 raise credentials_exception from err
 
 
-def create_access_token(*, username: str, workspace_name: str) -> str:
+def create_access_token(
+    *, user_role: UserRoles, username: str, workspace_name: str
+) -> str:
     """Create an access token for the user.
 
     Parameters
     ----------
+    user_role
+        The role of the user.
     username
         The username of the user to create the access token for.
     workspace_name
@@ -205,9 +216,10 @@ def create_access_token(*, username: str, workspace_name: str) -> str:
 
     payload["exp"] = expire
     payload["iat"] = datetime.now(timezone.utc)
-    payload["sub"] = username
-    payload["workspace_name"] = workspace_name
     payload["type"] = "access_token"
+    payload["user_role"] = user_role
+    payload["username"] = username
+    payload["workspace_name"] = workspace_name
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -242,7 +254,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub", None)
+        username = payload.get("username", None)
         workspace_name = payload.get("workspace_name", None)
         if not (username and workspace_name):
             raise credentials_exception
@@ -298,7 +310,7 @@ async def get_current_workspace_name(
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub", None)
+        username = payload.get("username", None)
         workspace_name = payload.get("workspace_name", None)
         if not (username and workspace_name):
             raise credentials_exception

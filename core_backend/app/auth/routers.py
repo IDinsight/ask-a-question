@@ -67,14 +67,16 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials."
         )
 
+    user_role = authenticated_user.user_role
     username = authenticated_user.username
     workspace_name = authenticated_user.workspace_name
     return AuthenticationDetails(
         access_level=authenticated_user.access_level,
         access_token=create_access_token(
-            username=username, workspace_name=workspace_name
+            user_role=user_role, username=username, workspace_name=workspace_name
         ),
         token_type="bearer",
+        user_role=user_role,
         username=username,
         workspace_name=workspace_name,
     )
@@ -131,15 +133,18 @@ async def login_google(
         gmail=idinfo["email"], request=request
     )
 
+    user_role = authenticated_user.user_role
     username = authenticated_user.username
     workspace_name = authenticated_user.workspace_name
     return AuthenticationDetails(
         access_level=authenticated_user.access_level,
         access_token=create_access_token(
+            user_role=user_role,
             username=username,
             workspace_name=workspace_name,
         ),
         token_type="bearer",
+        user_role=user_role,
         username=username,
         workspace_name=workspace_name,
     )
@@ -193,6 +198,8 @@ async def authenticate_or_create_google_user(
                 username=gmail,
                 workspace_name=workspace_name,
             )
+            user_role = user.role
+            assert user_role is not None and user_role in UserRoles
 
             # Create the workspace for the Google user.
             workspace_db, _ = await create_workspace(
@@ -219,17 +226,17 @@ async def authenticate_or_create_google_user(
                 user_db = await save_user_to_db(asession=asession, user=user)
 
             # Assign user to the specified workspace with the specified role.
-            assert user.role is not None
             _ = await create_user_workspace_role(
                 asession=asession,
                 is_default_workspace=True,
                 user_db=user_db,
-                user_role=user.role,
+                user_role=user_role,
                 workspace_db=workspace_db,
             )
 
             return AuthenticatedUser(
                 access_level="fullaccess",
+                user_role=user_role,
                 username=user_db.username,
                 workspace_name=workspace_name,
             )

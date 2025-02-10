@@ -523,6 +523,7 @@ async def switch_workspace(
     ------
     HTTPException
         If the workspace to switch into does not exist.
+        If the calling user's role in the workspace to switch into is not valid.
     """
 
     username = calling_user_db.username
@@ -533,19 +534,31 @@ async def switch_workspace(
     user_workspace_db = next(
         (db for db in user_workspace_dbs if db.workspace_name == workspace_name), None
     )
+
     if user_workspace_db is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Workspace with workspace name '{workspace_name}' not found.",
         )
 
+    user_role = await get_user_role_in_workspace(
+        asession=asession, user_db=calling_user_db, workspace_db=user_workspace_db
+    )
+
+    if user_role is None or user_role not in UserRoles:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Invalid user role when switching to workspace.",
+        )
+
     # Hardcode "fullaccess" now, but may use it in the future.
     return AuthenticationDetails(
         access_level="fullaccess",
         access_token=create_access_token(
-            username=username, workspace_name=workspace_name
+            user_role=user_role, username=username, workspace_name=workspace_name
         ),
         token_type="bearer",
+        user_role=user_role,
         username=username,
         workspace_name=workspace_name,
     )

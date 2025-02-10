@@ -176,7 +176,9 @@ def access_token_admin_1() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_1, workspace_name=TEST_WORKSPACE_NAME_1
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_1,
+        workspace_name=TEST_WORKSPACE_NAME_1,
     )
 
 
@@ -191,7 +193,9 @@ def access_token_admin_2() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_2, workspace_name=TEST_WORKSPACE_NAME_2
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_2,
+        workspace_name=TEST_WORKSPACE_NAME_2,
     )
 
 
@@ -206,7 +210,9 @@ def access_token_admin_4() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_4, workspace_name=TEST_WORKSPACE_NAME_4
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_4,
+        workspace_name=TEST_WORKSPACE_NAME_4,
     )
 
 
@@ -221,6 +227,7 @@ def access_token_admin_data_api_1() -> str:
     """
 
     return create_access_token(
+        user_role=UserRoles.ADMIN,
         username=TEST_ADMIN_USERNAME_DATA_API_1,
         workspace_name=TEST_WORKSPACE_NAME_DATA_API_1,
     )
@@ -237,6 +244,7 @@ def access_token_admin_data_api_2() -> str:
     """
 
     return create_access_token(
+        user_role=UserRoles.ADMIN,
         username=TEST_ADMIN_USERNAME_DATA_API_2,
         workspace_name=TEST_WORKSPACE_NAME_DATA_API_2,
     )
@@ -255,7 +263,9 @@ def access_token_read_only_1() -> str:
     """
 
     return create_access_token(
-        username=TEST_READ_ONLY_USERNAME_1, workspace_name=TEST_WORKSPACE_NAME_1
+        user_role=UserRoles.READ_ONLY,
+        username=TEST_READ_ONLY_USERNAME_1,
+        workspace_name=TEST_WORKSPACE_NAME_1,
     )
 
 
@@ -272,7 +282,9 @@ def access_token_read_only_2() -> str:
     """
 
     return create_access_token(
-        username=TEST_READ_ONLY_USERNAME_2, workspace_name=TEST_WORKSPACE_NAME_2
+        user_role=UserRoles.READ_ONLY,
+        username=TEST_READ_ONLY_USERNAME_2,
+        workspace_name=TEST_WORKSPACE_NAME_2,
     )
 
 
@@ -1142,7 +1154,7 @@ def temp_workspace_api_key_and_api_quota(
     username = request.param["username"]
     workspace_name = request.param["workspace_name"]
     temp_access_token = create_access_token(
-        username=username, workspace_name=workspace_name
+        user_role=UserRoles.ADMIN, username=username, workspace_name=workspace_name
     )
 
     temp_user_db = UserDB(
@@ -1245,7 +1257,9 @@ def temp_workspace_token_and_quota(
     db_session.commit()
 
     yield (
-        create_access_token(username=username, workspace_name=workspace_name),
+        create_access_token(
+            user_role=UserRoles.ADMIN, username=username, workspace_name=workspace_name
+        ),
         content_quota,
     )
 
