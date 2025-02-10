@@ -376,6 +376,7 @@ async def retrieve_workspaces_by_user_id(
     HTTPException
         If the calling user does not have the correct role to retrieve workspaces.
         If the user ID does not exist.
+        If the calling user is not an admin in the same workspace as the user.
     """
 
     if not await user_has_admin_role_in_any_workspace(
@@ -405,7 +406,8 @@ async def retrieve_workspaces_by_user_id(
     calling_user_admin_workspace_ids = [
         db.workspace_id for db in calling_user_admin_workspace_dbs
     ]
-    return [
+
+    retrieved_workspaces: list[WorkspaceRetrieve] = [
         WorkspaceRetrieve(
             api_daily_quota=db.api_daily_quota,
             api_key_first_characters=db.api_key_first_characters,
@@ -419,6 +421,13 @@ async def retrieve_workspaces_by_user_id(
         for db in user_workspace_dbs
         if db.workspace_id in calling_user_admin_workspace_ids
     ]
+    if retrieved_workspaces:
+        return retrieved_workspaces
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Calling user is not an admin in the same workspace as the user.",
+    )
 
 
 @router.put("/rotate-key", response_model=WorkspaceKeyResponse)

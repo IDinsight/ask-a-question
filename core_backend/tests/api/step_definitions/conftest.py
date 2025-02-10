@@ -26,8 +26,8 @@ from core_backend.app.workspaces.utils import (
 # Hooks.
 def pytest_bdd_step_error(
     request: pytest.FixtureRequest,  # pylint: disable=W0613
-    feature: Feature,
-    scenario: Scenario,
+    feature: Feature,  # pylint: disable=W0613
+    scenario: Scenario,  # pylint: disable=W0613
     step: Step,
     step_func: Callable,
     step_func_args: dict[str, Any],
@@ -55,8 +55,6 @@ def pytest_bdd_step_error(
 
     print(
         f"\n>>>STEP FAILED\n"
-        f"Feature: {feature}\n"
-        f"Scenario: {scenario}\n"
         f"Step: {step}\n"
         f"Step Function: {step_func}\n"
         f"Step Function Arguments: {step_func_args}\n"
@@ -98,7 +96,7 @@ async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
 
 
 @pytest.fixture
-async def setup_multiple_workspaces(
+async def setup_multiple_workspaces(  # pylint: disable=R0915
     asession: AsyncSession,
     clean_user_and_workspace_dbs: pytest.FixtureRequest,
     client: TestClient,
@@ -144,12 +142,7 @@ async def setup_multiple_workspaces(
     assert json_response["require_register"] is True
     register_suzin_response = client.post(
         "/user/register-first-user",
-        json={
-            "password": "123",
-            "role": UserRoles.ADMIN,
-            "username": "Suzin",
-            "workspace_name": None,
-        },
+        json={"password": "123", "role": UserRoles.ADMIN, "username": "Suzin"},
     )
     suzin_login_response = client.post(
         "/login", data={"username": "Suzin", "password": "123"}

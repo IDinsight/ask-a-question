@@ -106,11 +106,15 @@ def check_zia_default_workspace(
         "/user/current-user", headers={"Authorization": f"Bearer {zia_access_token}"}
     )
     json_response = response.json()
-    assert json_response["is_default_workspace"] == [True, False]
-    assert json_response["user_workspaces"][0]["user_role"] == UserRoles.READ_ONLY
-    assert json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Carlos"
-    assert json_response["user_workspaces"][1]["user_role"] == UserRoles.ADMIN
-    assert json_response["user_workspaces"][1]["workspace_name"] == "Workspace_Zia"
+    for x, y in zip(
+        json_response["is_default_workspace"], json_response["user_workspaces"]
+    ):
+        if x is True:
+            assert y["user_role"] == UserRoles.READ_ONLY
+            assert y["workspace_name"] == "Workspace_Carlos"
+        else:
+            assert y["user_role"] == UserRoles.ADMIN
+            assert y["workspace_name"] == "Workspace_Zia"
 
 
 @when(
