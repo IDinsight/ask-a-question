@@ -205,7 +205,9 @@ async def add_existing_user_to_workspace(
     """The process for adding an existing user to a workspace is:
 
     1. Retrieve the existing user from the `UserDB` database.
-    2. Add the existing user to the workspace with the specified role.
+    2. If the default workspace is being changed for the user, then ensure that the
+        old default workspace is set to `False` before the change.
+    3. Add the existing user to the workspace with the specified role.
 
     NB: If this function is invoked, then the assumption is that it is called by an
     ADMIN user with access to the specified workspace and that this ADMIN user is
@@ -240,6 +242,12 @@ async def add_existing_user_to_workspace(
     user_db = await get_user_by_username(asession=asession, username=user.username)
 
     # 2.
+    if user.is_default_workspace:
+        await update_user_default_workspace(
+            asession=asession, user_db=user_db, workspace_db=workspace_db
+        )
+
+    # 3.
     _ = await create_user_workspace_role(
         asession=asession,
         is_default_workspace=user.is_default_workspace,

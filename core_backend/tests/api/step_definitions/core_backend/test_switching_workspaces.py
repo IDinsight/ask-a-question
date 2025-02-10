@@ -404,7 +404,6 @@ def poornima_switches_workspace(
         headers={"Authorization": f"Bearer {poornima_access_token}"},
         json={"workspace_name": "Workspace_Suzin"},
     )
-    print(f"{switch_to_workspace_suzin_response = }")
     return {"switch_to_workspace_suzin_response": switch_to_workspace_suzin_response}
 
 
