@@ -317,10 +317,9 @@ async def setup_multiple_workspaces(
     # Add Poornima as an admin user in workspace Suzin (but do NOT switch Poornima into
     # Suzin's workspace).
     client.post(
-        "/user/",
+        "/user/existing-user",
         headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
-            "password": "123",
             "role": UserRoles.ADMIN,
             "username": "Poornima",
             "workspace_name": "Workspace_Suzin",

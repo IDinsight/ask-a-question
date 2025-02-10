@@ -36,7 +36,7 @@ def reset_databases(
 
 # Scenario: Users can only switch to their own workspaces.
 @when(
-    "Suzin switches to Workspace Carlos and Workspace Amir",
+    "Suzin switches to workspace Carlos and workspace Amir",
     target_fixture="suzin_switch_workspaces_response",
 )
 def suzin_switches_workspaces(
@@ -102,7 +102,7 @@ def check_suzin_workspace_switch_responses(
 
 
 @when(
-    "Mark tries to switch to Workspace Carlos and Workspace Amir",
+    "Mark tries to switch to workspace Carlos and workspace Amir",
     target_fixture="mark_switch_workspaces_response",
 )
 def mark_switches_workspaces(
@@ -157,7 +157,7 @@ def check_mark_workspace_switch_responses(
 
 
 @when(
-    "Carlos tries to switch to Workspace Suzin and Workspace Amir",
+    "Carlos tries to switch to workspace Suzin and workspace Amir",
     target_fixture="carlos_switch_workspaces_response",
 )
 def carlos_switches_workspaces(
@@ -212,7 +212,7 @@ def check_carlos_workspace_switch_responses(
 
 
 @when(
-    "Zia tries to switch to Workspace Suzin and Workspace Amir",
+    "Zia tries to switch to workspace Suzin and workspace Amir",
     target_fixture="zia_switch_workspaces_response",
 )
 def zia_switches_workspaces(
@@ -267,7 +267,7 @@ def check_zia_workspace_switch_responses(
 
 
 @when(
-    "Amir tries to switch to Workspace Suzin and Workspace Carlos",
+    "Amir tries to switch to workspace Suzin and workspace Carlos",
     target_fixture="amir_switch_workspaces_response",
 )
 def amir_switches_workspaces(
@@ -322,7 +322,7 @@ def check_amir_workspace_switch_responses(
 
 
 @when(
-    "Sid tries to switch to Workspace Suzin and Workspace Carlos",
+    "Sid tries to switch to workspace Suzin and workspace Carlos",
     target_fixture="sid_switch_workspaces_response",
 )
 def sid_switches_workspaces(
@@ -377,7 +377,7 @@ def check_sid_workspace_switch_responses(
 
 
 @when(
-    "Poornima switches to Workspace Suzin",
+    "Poornima switches to workspace Suzin",
     target_fixture="poornima_switch_workspace_response",
 )
 def poornima_switches_workspace(
@@ -404,10 +404,11 @@ def poornima_switches_workspace(
         headers={"Authorization": f"Bearer {poornima_access_token}"},
         json={"workspace_name": "Workspace_Suzin"},
     )
+    print(f"{switch_to_workspace_suzin_response = }")
     return {"switch_to_workspace_suzin_response": switch_to_workspace_suzin_response}
 
 
-@then("Poornima should be able to switch to Workspace Suzin")
+@then("Poornima should be able to switch to workspace Suzin")
 def check_poornima_workspace_switch_response(
     poornima_switch_workspace_response: dict[str, httpx.Response],
     user_workspace_responses: dict[str, dict[str, Any]],

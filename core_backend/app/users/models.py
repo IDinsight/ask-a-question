@@ -199,7 +199,7 @@ class UserWorkspaceDB(Base):
 async def add_existing_user_to_workspace(
     *,
     asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
+    user: UserCreate,
     workspace_db: WorkspaceDB,
 ) -> UserCreateWithCode:
     """The process for adding an existing user to a workspace is:
@@ -260,7 +260,7 @@ async def add_existing_user_to_workspace(
 async def add_new_user_to_workspace(
     *,
     asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
+    user: UserCreateWithPassword,
     workspace_db: WorkspaceDB,
 ) -> UserCreateWithCode:
     """The process for adding a new user to a workspace is:
@@ -293,7 +293,7 @@ async def add_new_user_to_workspace(
         The user object with the recovery codes.
     """
 
-    assert user.role is not None
+    assert user.role is not None and user.role in UserRoles
 
     # 1.
     recovery_codes = generate_recovery_codes()
