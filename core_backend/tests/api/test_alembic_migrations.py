@@ -21,9 +21,12 @@ def test_single_head_revision(
 ) -> None:
     """Assert that there only exists one head revision.
 
-    :param alembic_runner: A fixture which provides a callable to run alembic
-        migrations.
-    :param migration_history: A fixture which provides a history of alembic migrations.
+    Parameters
+    ----------
+    alembic_runner
+        A fixture which provides a callable to run alembic migrations.
+    migration_history
+        A fixture which provides a history of alembic migrations.
     """
 
     tests.test_single_head_revision(migration_history)
@@ -35,9 +38,12 @@ def test_upgrade(
 ) -> None:
     """Assert that the revision history can be run through from base to head.
 
-    :param alembic_runner: A fixture which provides a callable to run alembic
-        migrations.
-    :param migration_history: A fixture which provides a history of alembic migrations.
+    Parameters
+    ----------
+    alembic_runner
+        A fixture which provides a callable to run alembic migrations.
+    migration_history
+        A fixture which provides a history of alembic migrations.
     """
 
     tests.test_upgrade(migration_history)
@@ -55,9 +61,12 @@ def test_model_definitions_match_ddl(
     should always generate an empty migration (e.g. find no difference between your
     database (i.e. migrations history) and your models).
 
-    :param alembic_runner: A fixture which provides a callable to run alembic
-        migrations.
-    :param migration_history: A fixture which provides a history of alembic migrations.
+    Parameters
+    ----------
+    alembic_runner
+        A fixture which provides a callable to run alembic migrations.
+    migration_history
+        A fixture which provides a history of alembic migrations.
     """
 
     tests.test_model_definitions_match_ddl(migration_history)
@@ -73,9 +82,12 @@ def test_up_down_consistency(
     database migrations that says that the revisions in existence for a database should
     be able to go from an entirely blank schema to the finished product, and back again.
 
-    :param alembic_runner: A fixture which provides a callable to run alembic
-        migrations.
-    :param migration_history: A fixture which provides a history of alembic migrations.
+    Parameters
+    ----------
+    alembic_runner
+        A fixture which provides a callable to run alembic migrations.
+    migration_history
+        A fixture which provides a history of alembic migrations.
     """
 
     tests.test_up_down_consistency(migration_history)

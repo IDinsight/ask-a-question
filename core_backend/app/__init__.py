@@ -1,3 +1,5 @@
+"""This module contains the FastAPI application for the backend."""
+
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
@@ -20,7 +22,8 @@ from . import (
     tags,
     urgency_detection,
     urgency_rules,
-    user_tools,
+    users,
+    workspaces,
 )
 from .config import (
     CROSS_ENCODER_MODEL,
@@ -72,17 +75,21 @@ application.
     - **Content tag management**: APIs to manage the content tags in the
 application.
     - **Urgency rules management**: APIs to manage the urgency rules in the application.
+    - **Workspace management**: APIs to manage the workspaces in the application.
 """
+
 tags_metadata = [
-    question_answer.TAG_METADATA,
-    urgency_detection.TAG_METADATA,
-    contents.TAG_METADATA,
-    tags.TAG_METADATA,
-    urgency_rules.TAG_METADATA,
-    dashboard.TAG_METADATA,
-    auth.TAG_METADATA,
-    user_tools.TAG_METADATA,
     admin.TAG_METADATA,
+    auth.TAG_METADATA,
+    contents.TAG_METADATA,
+    dashboard.TAG_METADATA,
+    data_api.TAG_METADATA,
+    question_answer.TAG_METADATA,
+    tags.TAG_METADATA,
+    urgency_detection.TAG_METADATA,
+    urgency_rules.TAG_METADATA,
+    users.TAG_METADATA,
+    workspaces.TAG_METADATA,
 ]
 
 if LANGFUSE == "True":
@@ -97,7 +104,10 @@ if LANGFUSE == "True":
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifespan events for the FastAPI application.
 
-    :param app: FastAPI application instance.
+    Parameters
+    ----------
+    app
+        The application instance.
     """
 
     logger.info("Application started")
@@ -114,7 +124,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_metrics_app() -> Callable:
-    """Create prometheus metrics app"""
+    """Create prometheus metrics app
+
+    Returns
+    -------
+    Callable
+        The metrics app.
+    """
+
     registry = CollectorRegistry()
     multiprocess.MultiProcessCollector(registry)
     return make_asgi_app(registry=registry)
@@ -128,27 +145,30 @@ def create_app() -> FastAPI:
     3. Add Prometheus middleware for metrics.
     4. Mount the metrics app on /metrics as an independent application.
 
-    :returns:
-        app: FastAPI application instance.
+    Returns
+    -------
+    FastAPI
+        The application instance.
     """
 
     app = FastAPI(
-        title="Ask A Question APIs",
-        description=page_description,
         debug=True,
+        description=page_description,
         openapi_tags=tags_metadata,
         lifespan=lifespan,
+        title="Ask A Question APIs",
     )
-    app.include_router(contents.router)
-    app.include_router(tags.router)
-    app.include_router(question_answer.router)
-    app.include_router(urgency_rules.router)
-    app.include_router(urgency_detection.router)
-    app.include_router(dashboard.router)
-    app.include_router(auth.router)
-    app.include_router(user_tools.router)
     app.include_router(admin.routers.router)
+    app.include_router(auth.router)
+    app.include_router(contents.router)
+    app.include_router(dashboard.router)
     app.include_router(data_api.router)
+    app.include_router(question_answer.router)
+    app.include_router(tags.router)
+    app.include_router(urgency_detection.router)
+    app.include_router(urgency_rules.router)
+    app.include_router(users.router)
+    app.include_router(workspaces.router)
 
     origins = [
         f"http://{DOMAIN}",

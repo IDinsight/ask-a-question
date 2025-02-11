@@ -15,7 +15,7 @@ from core_backend.app.config import (
 )
 from core_backend.app.utils import setup_logger
 
-logger = setup_logger("UDValidation")
+logger = setup_logger(name="UDValidation")
 
 
 class TestUDPerformance:

@@ -366,7 +366,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
 const SearchSidebar = ({ closeSidebar }: { closeSidebar: () => void }) => {
   return (
     <TestSidebar
-      title="Test Question Answering"
+      title="Test Search"
       closeSidebar={closeSidebar}
       showLLMResponseToggle={true}
       handleSendClick={getSearchResponse}

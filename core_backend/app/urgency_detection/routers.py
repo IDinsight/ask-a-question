@@ -1,4 +1,4 @@
-"""This module contains the FastAPI router for the urgency detection endpoints."""
+"""This module contains FastAPI routers for urgency detection endpoints."""
 
 from typing import Callable
 
@@ -12,7 +12,7 @@ from ..urgency_rules.models import (
     get_cosine_distances_from_rules,
     get_urgency_rules_from_db,
 )
-from ..users.models import UserDB
+from ..users.models import WorkspaceDB
 from ..utils import generate_secret_key, setup_logger
 from .config import (
     URGENCY_CLASSIFIER,
@@ -59,17 +59,36 @@ def urgency_classifier(classifier_func: Callable) -> Callable:
 async def classify_text(
     urgency_query: UrgencyQuery,
     asession: AsyncSession = Depends(get_async_session),
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
 ) -> UrgencyResponse:
+    """Classify the urgency of a text message.
+
+    Parameters
+    ----------
+    urgency_query
+        The urgency query to classify.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_db
+        The authenticated workspace object.
+
+    Returns
+    -------
+    UrgencyResponse
+        The urgency response object.
+
+    Raises
+    ------
+    ValueError
+        If the urgency classifier is invalid.
     """
-    Classify the urgency of a text message
-    """
+
     feedback_secret_key = generate_secret_key()
     urgency_query_db = await save_urgency_query_to_db(
-        user_id=user_db.user_id,
+        asession=asession,
         feedback_secret_key=feedback_secret_key,
         urgency_query=urgency_query,
-        asession=asession,
+        workspace_id=workspace_db.workspace_id,
     )
 
     classifier = ALL_URGENCY_CLASSIFIERS.get(URGENCY_CLASSIFIER)
@@ -77,13 +96,13 @@ async def classify_text(
         raise ValueError(f"Invalid urgency classifier: {URGENCY_CLASSIFIER}")
 
     urgency_response = await classifier(
-        user_id=user_db.user_id, urgency_query=urgency_query, asession=asession
+        asession=asession,
+        urgency_query=urgency_query,
+        workspace_id=workspace_db.workspace_id,
     )
 
     await save_urgency_response_to_db(
-        urgency_query_db=urgency_query_db,
-        response=urgency_response,
-        asession=asession,
+        asession=asession, response=urgency_response, urgency_query_db=urgency_query_db
     )
 
     return urgency_response
@@ -91,20 +110,18 @@ async def classify_text(
 
 @urgency_classifier
 async def cosine_distance_classifier(
-    user_id: int,
-    urgency_query: UrgencyQuery,
-    asession: AsyncSession,
+    *, asession: AsyncSession, urgency_query: UrgencyQuery, workspace_id: int
 ) -> UrgencyResponse:
     """Classify the urgency of a text message using cosine distance.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting to classify the urgency of the text message.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_query
         The urgency query to classify.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to classify the urgency of the text message.
 
     Returns
     -------
@@ -113,9 +130,9 @@ async def cosine_distance_classifier(
     """
 
     cosine_distances = await get_cosine_distances_from_rules(
-        user_id=user_id,
-        message_text=urgency_query.message_text,
         asession=asession,
+        message_text=urgency_query.message_text,
+        workspace_id=workspace_id,
     )
     matched_rules = []
     for rule in cosine_distances.values():
@@ -123,28 +140,28 @@ async def cosine_distance_classifier(
             matched_rules.append(str(rule.urgency_rule))
 
     return UrgencyResponse(
+        details=cosine_distances,
         is_urgent=len(matched_rules) > 0,
         matched_rules=matched_rules,
-        details=cosine_distances,
     )
 
 
 @urgency_classifier
 async def llm_entailment_classifier(
-    user_id: int,
-    urgency_query: UrgencyQuery,
-    asession: AsyncSession,
+    *, asession: AsyncSession, urgency_query: UrgencyQuery, workspace_id: int
 ) -> UrgencyResponse:
     """Classify the urgency of a text message using LLM entailment.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting to classify the urgency of the text message.
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_query
         The urgency query to classify.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to classify the urgency of the text message.
 
     Returns
     -------
@@ -152,22 +169,24 @@ async def llm_entailment_classifier(
         The urgency response object.
     """
 
-    rules = await get_urgency_rules_from_db(user_id=user_id, asession=asession)
-    metadata = {"trace_user_id": "user_id-" + str(user_id)}
+    rules = await get_urgency_rules_from_db(
+        asession=asession, workspace_id=workspace_id
+    )
+    metadata = {"trace_workspace_id": "workspace_id-" + str(workspace_id)}
     urgency_rules = [rule.urgency_rule_text for rule in rules]
 
     if len(urgency_rules) == 0:
-        return UrgencyResponse(is_urgent=False, matched_rules=[], details={})
+        return UrgencyResponse(details={}, is_urgent=False, matched_rules=[])
 
     result = await detect_urgency(
-        urgency_rules=urgency_rules,
         message=urgency_query.message_text,
         metadata=metadata,
+        urgency_rules=urgency_rules,
     )
 
     if result.probability > float(URGENCY_DETECTION_MIN_PROBABILITY):
         return UrgencyResponse(
-            is_urgent=True, matched_rules=[result.best_matching_rule], details=result
+            details=result, is_urgent=True, matched_rules=[result.best_matching_rule]
         )
 
-    return UrgencyResponse(is_urgent=False, matched_rules=[], details=result)
+    return UrgencyResponse(details=result, is_urgent=False, matched_rules=[])

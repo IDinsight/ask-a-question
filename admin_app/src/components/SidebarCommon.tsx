@@ -56,7 +56,7 @@ const TestSidebar = ({
       sx={{
         padding: 3,
         paddingTop: 4,
-        height: "100%",
+        height: "94vh",
       }}
     >
       <Box
@@ -111,7 +111,10 @@ const TestSidebar = ({
                 <Checkbox
                   checked={generateLLMResponse}
                   onChange={toggleGenerateLLMResponse}
-                  sx={{ color: "#5480D1", "&.Mui-checked": { color: "#5480D1" } }}
+                  sx={{
+                    color: "#5480D1",
+                    "&.Mui-checked": { color: "#5480D1" },
+                  }}
                 />
               }
               label="Also generate AI response"
@@ -136,15 +139,12 @@ const TestSidebar = ({
       </Box>
       <Box
         sx={{
+          flexGrow: 1,
           marginTop: 4,
           marginBottom: 4,
-          padding: 4,
+          padding: 2,
           overflowY: "scroll",
-          border: 1,
-          borderRadius: 1,
-          borderColor: "grey.400",
-          flexGrow: 1,
-          height: "65vh",
+          height: "75%",
         }}
       >
         {ResponseBox && (

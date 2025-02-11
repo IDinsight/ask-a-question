@@ -1,3 +1,5 @@
+"""This module contains the main entry point for the FastAPI application."""
+
 import logging
 
 import uvicorn
@@ -10,7 +12,7 @@ app = create_app()
 
 
 class Worker(UvicornWorker):
-    """Custom worker class to allow root_path to be passed to Uvicorn"""
+    """Custom worker class to allow `root_path` to be passed to Uvicorn."""
 
     CONFIG_KWARGS = {"root_path": BACKEND_ROOT_PATH}
 

@@ -1,14 +1,24 @@
-from typing import Dict
+"""This module contains utility functions for the `question_answer` module."""
 
 from .schemas import QuerySearchResult
 
 
 def get_context_string_from_search_results(
-    search_results: Dict[int, QuerySearchResult]
+    *, search_results: dict[int, QuerySearchResult]
 ) -> str:
+    """Get the context string from the retrieved content.
+
+    Parameters
+    ----------
+    search_results
+        The search results retrieved from the search engine.
+
+    Returns
+    -------
+    str
+        The context string from the retrieved content.
     """
-    Get the context string from the retrieved content
-    """
+
     context_list = []
     for key, result in search_results.items():
         if not isinstance(result, QuerySearchResult):

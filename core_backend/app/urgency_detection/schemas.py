@@ -1,4 +1,4 @@
-from typing import Dict, List
+"""This module contains Pydantic models for the urgency detection."""
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -7,9 +7,7 @@ from ..urgency_rules.schemas import UrgencyRuleCosineDistance
 
 
 class UrgencyQuery(BaseModel):
-    """
-    Query for urgency detection
-    """
+    """Pydantic model for urgency detection queries."""
 
     message_text: str = Field(
         ...,
@@ -22,16 +20,14 @@ class UrgencyQuery(BaseModel):
 
 
 class UrgencyResponse(BaseModel):
-    """
-    Urgency detection response class
-    """
+    """Pydantic model for urgency detection responses."""
 
-    is_urgent: bool
-    matched_rules: List[str]
     details: (
-        Dict[int, UrgencyRuleCosineDistance]
+        dict[int, UrgencyRuleCosineDistance]
         | UrgencyDetectionEntailment.UrgencyDetectionEntailmentResult
     )
+    is_urgent: bool
+    matched_rules: list[str]
 
     model_config = ConfigDict(
         from_attributes=True,

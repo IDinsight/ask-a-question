@@ -29,6 +29,14 @@ fresh-env :
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+# Linting
+lint-core-backend:
+	black core_backend/
+	ruff check core_backend/
+	mypy core_backend/ --ignore-missing-imports --explicit-package-base
+	pylint core_backend/
+	cloc core_backend/
+
 # Dev requirements
 setup-dev: setup-db setup-redis setup-llm-proxy
 teardown-dev: teardown-db teardown-redis teardown-llm-proxy

@@ -1,3 +1,5 @@
+"""This module contains Pydantic models for tag endpoints."""
+
 from datetime import datetime
 from typing import Annotated
 
@@ -5,9 +7,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 
 
 class TagCreate(BaseModel):
-    """
-    Pydantic model for content creation
-    """
+    """Pydantic model for tag creation."""
 
     tag_name: Annotated[str, StringConstraints(max_length=50)]
 
@@ -27,13 +27,11 @@ class TagCreate(BaseModel):
 
 
 class TagRetrieve(TagCreate):
-    """
-    Pydantic model for tag retrieval
-    """
+    """Pydantic model for tag retrieval."""
 
-    tag_id: int
-    user_id: int
     created_datetime_utc: datetime
+    tag_id: int
+    workspace_id: int
     updated_datetime_utc: datetime
 
     model_config = ConfigDict(
@@ -42,14 +40,14 @@ class TagRetrieve(TagCreate):
                 {
                     "tag_id": 1,
                     "tag_name": "example-tag",
-                    "user_id": 1,
+                    "workspace_id": 1,
                     "created_datetime_utc": "2024-01-01T00:00:00",
                     "updated_datetime_utc": "2024-01-01T00:00:00",
                 },
                 {
                     "tag_id": 2,
                     "tag_name": "ABC",
-                    "user_id": 1,
+                    "workspace_id": 1,
                     "created_datetime_utc": "2024-01-01T00:00:00",
                     "updated_datetime_utc": "2024-01-01T00:00:00",
                 },

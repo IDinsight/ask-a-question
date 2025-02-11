@@ -8,14 +8,14 @@ import { useState } from "react";
 import { TopicData } from "../../types";
 
 interface TopicProps {
-  data?: TopicData[]; // Make data optional
+  data?: TopicData[];
   selectedTopicId: number | null;
   onClick: (topicId: number | null) => void;
   topicsPerPage: number;
 }
 
 const Topics: React.FC<TopicProps> = ({
-  data = [], // Default to empty array
+  data = [],
   selectedTopicId,
   onClick,
   topicsPerPage,
@@ -38,11 +38,11 @@ const Topics: React.FC<TopicProps> = ({
     } else {
       filterPageData(page);
     }
-  }, [data]); // Runs when data changes
+  }, [data]);
 
   useEffect(() => {
     filterPageData(page);
-  }, [page]); // Runs when page changes
+  }, [page]);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -98,25 +98,30 @@ const Topics: React.FC<TopicProps> = ({
             </ListItemButton>
           </Box>
         ))}
+        {data.length === 0 && (
+          <Typography sx={{ mt: 2 }}>No topics available.</Typography>
+        )}
       </Box>
-      <Box
-        justifyContent="center"
-        alignItems="flex-end"
-        sx={{
-          display: "flex",
-          mt: 3,
-          flexGrow: 0,
-        }}
-      >
-        <Pagination
-          defaultPage={1}
-          color="primary"
-          siblingCount={0}
-          page={page}
-          onChange={handlePageChange}
-          count={data.length > 0 ? Math.ceil(data.length / topicsPerPage) : 1}
-        />
-      </Box>
+      {data.length > topicsPerPage && (
+        <Box
+          justifyContent="center"
+          alignItems="flex-end"
+          sx={{
+            display: "flex",
+            mt: 3,
+            flexGrow: 0,
+          }}
+        >
+          <Pagination
+            defaultPage={1}
+            color="primary"
+            siblingCount={0}
+            page={page}
+            onChange={handlePageChange}
+            count={Math.ceil(data.length / topicsPerPage)}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

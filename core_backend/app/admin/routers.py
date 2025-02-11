@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+"""This module contains FastAPI routers for admin endpoints."""
+
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -7,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_async_session
 
 TAG_METADATA = {
-    "name": "Healthcheck",
+    "name": "Admin",
     "description": "Healthcheck endpoint for the application",
 }
 
@@ -18,13 +20,24 @@ router = APIRouter(tags=[TAG_METADATA["name"]])
 async def healthcheck(
     db_session: AsyncSession = Depends(get_async_session),
 ) -> JSONResponse:
+    """Healthcheck endpoint - checks connection to the database.
+
+    Parameters
+    ----------
+    db_session
+        The database session object.
+
+    Returns
+    -------
+    JSONResponse
+        A JSON response with the status of the database connection.
     """
-    Healthcheck endpoint - checks connection to Db
-    """
+
     try:
         await db_session.execute(text("SELECT 1;"))
     except SQLAlchemyError as e:
         return JSONResponse(
-            status_code=500, content={"message": f"Failed database connection: {e}"}
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Failed database connection: {e}"},
         )
-    return JSONResponse(status_code=200, content={"status": "ok"})
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ok"})
