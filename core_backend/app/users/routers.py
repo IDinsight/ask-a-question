@@ -130,7 +130,7 @@ async def create_new_user(
     )
 
 
-@router.post("/existing-user", response_model=UserCreateWithCode)
+@router.post("/add-existing-user-to-workspace", response_model=UserCreateWithCode)
 async def add_existing_user(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     user: UserCreate,
