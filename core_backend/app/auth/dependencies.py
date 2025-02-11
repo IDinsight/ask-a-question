@@ -77,7 +77,7 @@ async def authenticate_credentials(
             if verify_password_salted_hash(
                 key=password, stored_hash=user_db.hashed_password
             ):
-                user_workspace_db = await get_user_default_workspace(
+                user_workspace_db, user_role = await get_user_default_workspace(
                     asession=asession, user_db=user_db
                 )
 
@@ -86,6 +86,7 @@ async def authenticate_credentials(
                     access_level="fullaccess",
                     username=username,
                     workspace_name=user_workspace_db.workspace_name,
+                    user_role=user_role,
                 )
             return None
         except UserNotFoundError:

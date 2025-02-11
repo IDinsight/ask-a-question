@@ -23,27 +23,36 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { appColors, sizes } from "@/utils";
-import { select } from "@bokeh/bokehjs/build/js/lib/core/dom";
+import { useAuth } from "@/utils/auth";
+
+export type User = {
+  user_id: number;
+  username: string;
+
+  user_workspaces: Workspace[];
+};
 export type Workspace = {
   workspace_id?: number;
   workspace_name: string;
   content_quota?: number;
   api_daily_quota?: number;
+  user_role?: string;
 };
 
 interface WorkspaceMenuProps {
   currentWorkspaceName: string;
-  getWorkspaces: () => Promise<Workspace[]>;
+  getUserInfo: () => Promise<User>;
   setOpenCreateWorkspaceModal: (value: boolean) => void;
   loginWorkspace: (workspace: Workspace) => void;
 }
 
 const WorkspaceMenu = ({
   currentWorkspaceName,
-  getWorkspaces,
+  getUserInfo,
   setOpenCreateWorkspaceModal,
   loginWorkspace,
 }: WorkspaceMenuProps) => {
+  const { workspaceName, userRole } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = React.useState<Workspace | null>(
@@ -51,6 +60,9 @@ const WorkspaceMenu = ({
   );
   const [openConfirmSwitchWorkspaceDialog, setOpenConfirmSwitchWorkspaceDialog] =
     React.useState(false);
+  const [persistedWorkspaceName, setPersistedWorkspaceName] =
+    React.useState<string>("");
+  const [persistedUserRole, setPersistedUserRole] = React.useState<string | null>(null);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -71,10 +83,33 @@ const WorkspaceMenu = ({
   };
 
   React.useEffect(() => {
-    getWorkspaces().then((returnedWorkspaces: Workspace[]) => {
-      setWorkspaces(returnedWorkspaces);
+    getUserInfo().then((returnedUser: User) => {
+      setWorkspaces(returnedUser.user_workspaces);
     });
   }, []);
+  React.useEffect(() => {
+    // Save user to local storage when it changes
+    if (workspaceName) {
+      localStorage.setItem("workspaceName", workspaceName);
+    }
+    // Save role to local storage when it changes
+    if (userRole != null) {
+      localStorage.setItem("userRole", userRole);
+    }
+  }, [workspaceName]);
+  React.useEffect(() => {
+    // Retrieve user from local storage on component mount
+    const storedWorkspace = localStorage.getItem("workspaceName");
+    if (storedWorkspace) {
+      setPersistedWorkspaceName(storedWorkspace);
+    }
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) {
+      if (storedRole === "admin" || storedRole === "read_only") {
+        setPersistedUserRole(storedRole);
+      }
+    }
+  }, [workspaceName]);
 
   return (
     <Paper
@@ -94,7 +129,7 @@ const WorkspaceMenu = ({
             }}
           />
           <span style={{ fontSize: sizes.baseGap, color: appColors.white }}>
-            {currentWorkspaceName}
+            {persistedWorkspaceName}
           </span>
 
           <KeyboardArrowDownIcon
@@ -117,29 +152,32 @@ const WorkspaceMenu = ({
             variant="subtitle2"
             sx={{ padding: "8px 16px", fontWeight: "bold", color: "gray" }}
           >
-            Current Workspace: {currentWorkspaceName}
+            Current Workspace: {persistedWorkspaceName}
           </Typography>
-          <MenuItem
-            onClick={() => {
-              window.location.href = "/user-management";
-            }}
-          >
-            <ListItemIcon>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText>Manage Workspace</ListItemText>
-            <span
-              style={{
-                border: `1px solid ${appColors.primary}`,
-                borderRadius: "4px",
-                padding: "2px 4px",
-                marginLeft: "8px",
-                color: appColors.primary,
+          {persistedUserRole === "admin" && (
+            <MenuItem
+              onClick={() => {
+                window.location.href = "/user-management";
               }}
+              disabled={persistedUserRole !== "admin"}
             >
-              Admin
-            </span>
-          </MenuItem>
+              <ListItemIcon>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText>Manage Workspace</ListItemText>
+              <span
+                style={{
+                  border: `1px solid ${appColors.primary}`,
+                  borderRadius: "4px",
+                  padding: "2px 4px",
+                  marginLeft: "8px",
+                  color: appColors.primary,
+                }}
+              >
+                {persistedUserRole === "admin" ? "Admin" : "Read only"}
+              </span>
+            </MenuItem>
+          )}
           <Divider />
 
           <Typography
@@ -149,7 +187,10 @@ const WorkspaceMenu = ({
             Switch Workspace
           </Typography>
           {workspaces.map((workspace) => (
-            <MenuItem key={workspace.workspace_id}>
+            <MenuItem
+              key={workspace.workspace_id}
+              disabled={workspace.workspace_name === persistedWorkspaceName}
+            >
               <ListItemIcon>
                 <LibraryBooksIcon />
               </ListItemIcon>
@@ -169,7 +210,7 @@ const WorkspaceMenu = ({
                   color: appColors.primary,
                 }}
               >
-                Admin
+                {workspace.user_role === "admin" ? "Admin" : "Read only"}
               </span>
             </MenuItem>
           ))}

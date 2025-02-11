@@ -17,7 +17,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
-import { createWorkspace, getWorkspaceList } from "@/app/user-management/api";
+import { createWorkspace, getUser, getWorkspaceList } from "@/app/user-management/api";
 import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
@@ -31,7 +31,7 @@ interface ScreenMenuProps {
   children: React.ReactNode;
 }
 const NavBar = () => {
-  const { username, token, workspaceName, loginWorkspace } = useAuth();
+  const { token, workspaceName, loginWorkspace } = useAuth();
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
@@ -51,8 +51,8 @@ const NavBar = () => {
     >
       <SmallScreenNavMenu>
         <WorkspaceMenu
-          getWorkspaces={() => {
-            return getWorkspaceList(token!);
+          getUserInfo={() => {
+            return getUser(token!);
           }}
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
@@ -63,8 +63,8 @@ const NavBar = () => {
       </SmallScreenNavMenu>
       <LargeScreenNavMenu>
         <WorkspaceMenu
-          getWorkspaces={() => {
-            return getWorkspaceList(token!);
+          getUserInfo={() => {
+            return getUser(token!);
           }}
           currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
@@ -82,7 +82,6 @@ const NavBar = () => {
           return createWorkspace(workspace, token!);
         }}
         loginWorkspace={(workspace: Workspace) => {
-          console.log("workspace sent", workspace);
           return loginWorkspace(workspace.workspace_name);
         }}
       />
@@ -248,7 +247,7 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
 };
 
 const UserDropdown = () => {
-  const { logout, username, role } = useAuth();
+  const { logout, username } = useAuth();
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
@@ -261,10 +260,6 @@ const UserDropdown = () => {
     if (username) {
       localStorage.setItem("user", username);
     }
-    // Save role to local storage when it changes
-    if (role != null) {
-      localStorage.setItem("role", role);
-    }
   }, [username]);
 
   useEffect(() => {
@@ -272,12 +267,6 @@ const UserDropdown = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setPersistedUser(storedUser);
-    }
-    const storedRole = localStorage.getItem("role");
-    if (storedRole) {
-      if (storedRole === "admin" || storedRole === "user") {
-        setPersistedRole(storedRole);
-      }
     }
   }, [username]);
 

@@ -9,7 +9,7 @@ type AuthContextType = {
   token: string | null;
   username: string | null;
   accessLevel: "readonly" | "fullaccess";
-  role: "admin" | "user" | null;
+  userRole: "admin" | "read_only" | null;
   workspaceName: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
@@ -35,12 +35,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const [username, setUsername] = useState<string | null>(null);
   const getInitialRole = () => {
     if (typeof window !== "undefined") {
-      const role = localStorage.getItem("role");
-      return role === "admin" || role === "user" ? role : null;
+      const userRole = localStorage.getItem("userRole");
+      return userRole as "admin" | "read_only" | null;
     }
     return null;
   };
-  const [userRole, setUserRole] = useState<"admin" | "user" | null>(getInitialRole);
+  const [userRole, setUserRole] = useState<"admin" | "read_only" | null>(
+    getInitialRole,
+  );
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
@@ -67,17 +69,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const setLoginParams = (
     token: string,
     accessLevel: string,
-    is_admin: boolean,
+    user_role: "admin" | "read_only",
     workspaceName: string,
   ) => {
-    const role = is_admin ? "admin" : "user";
     localStorage.setItem("token", token);
     localStorage.setItem("accessLevel", accessLevel);
-    localStorage.setItem("role", role);
     localStorage.setItem("workspaceName", workspaceName);
+    localStorage.setItem("userRole", user_role);
     setToken((prev) => (prev === token ? `${token} ` : token));
-    setUserRole(role);
-    setUserRole(is_admin ? "admin" : "user");
+    setUserRole(user_role);
+
     setWorkspaceName(workspaceName);
   };
   const login = async (username: string, password: string) => {
@@ -86,12 +87,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/";
 
     try {
-      const { access_token, access_level, is_admin, workspace_name } =
+      const { access_token, access_level, user_role, workspace_name } =
         await apiCalls.getLoginToken(username, password);
       localStorage.setItem("username", username);
       setUsername(username);
 
-      setLoginParams(access_token, access_level, is_admin, workspace_name);
+      setLoginParams(access_token, access_level, user_role, workspace_name);
       router.push(sourcePage);
     } catch (error: Error | any) {
       if (error.status === 401) {
@@ -109,9 +110,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       : "/content";
     try {
       logoutWorkspace();
-      const { access_token, access_level, is_admin, workspace_name } =
+      const { access_token, access_level, user_role, workspace_name } =
         await getLoginWorkspace(workspaceName, token);
-      setLoginParams(access_token, access_level, is_admin, workspace_name);
+      setLoginParams(access_token, access_level, user_role, workspace_name);
 
       router.push(sourcePage);
     } catch (error: Error | any) {
@@ -138,10 +139,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     apiCalls
       .getGoogleLoginToken({ client_id: client_id, credential: credential })
-      .then(({ access_token, access_level, username, is_admin, workspace_name }) => {
+      .then(({ access_token, access_level, username, user_role, workspace_name }) => {
         localStorage.setItem("username", username);
         setUsername(username);
-        setLoginParams(access_token, access_level, is_admin, workspace_name);
+        setLoginParams(access_token, access_level, user_role, workspace_name);
         router.push(sourcePage);
       })
       .catch((error) => {
@@ -152,7 +153,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
-    localStorage.removeItem("role");
+    localStorage.removeItem("userRole");
     localStorage.removeItem("workspaceName");
     setUsername(null);
     setToken(null);
@@ -165,7 +166,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const logoutWorkspace = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("accessLevel");
-    localStorage.removeItem("role");
+    localStorage.removeItem("userRole");
     localStorage.removeItem("workspaceName");
     setToken(null);
     setUserRole(null);
@@ -176,7 +177,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     token: token,
     username: username,
     accessLevel: accessLevel,
-    role: userRole,
+    userRole: userRole,
     workspaceName: workspaceName,
     loginError: loginError,
     login: login,

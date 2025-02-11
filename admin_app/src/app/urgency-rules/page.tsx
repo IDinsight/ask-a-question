@@ -42,7 +42,7 @@ const UrgencyRulesPage = () => {
   const [items, setItems] = useState<UrgencyRule[]>([]);
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
-  const { token, accessLevel } = useAuth();
+  const { token, accessLevel, userRole } = useAuth();
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
@@ -63,13 +63,13 @@ const UrgencyRulesPage = () => {
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        },
+        }
       );
     } else {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
-        token!,
+        token!
       ).then((data: UrgencyRule) => {
         const newItems = [...items];
         newItems[index] = data;
@@ -79,7 +79,10 @@ const UrgencyRulesPage = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -157,8 +160,9 @@ const UrgencyRulesPage = () => {
   const handleSidebarClose = () => {
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSidebar ? 5 : 0;
 
+  const sidebarGridWidth = openSidebar ? 5 : 0;
+  const editAccess = userRole === "admin";
   return (
     <Grid container>
       <Grid
@@ -168,7 +172,9 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+          display: openSidebar
+            ? { xs: "none", sm: "none", md: "block" }
+            : "block",
         }}
       >
         <Layout.FlexBox
@@ -200,10 +206,14 @@ const UrgencyRulesPage = () => {
               <Typography variant="h4" align="left" color="primary">
                 Urgency Detection
               </Typography>
-              <Typography variant="body1" align="left" color={appColors.darkGrey}>
+              <Typography
+                variant="body1"
+                align="left"
+                color={appColors.darkGrey}
+              >
                 Add, edit, and test urgency rules. Messages sent to the urgency
-                detection service will be flagged as urgent if any of the rules apply to
-                the message.
+                detection service will be flagged as urgent if any of the rules
+                apply to the message.
               </Typography>
             </Box>
             <Layout.FlexBox
@@ -217,7 +227,7 @@ const UrgencyRulesPage = () => {
                 <>
                   <Button
                     variant="contained"
-                    disabled={saving}
+                    disabled={saving || !editAccess}
                     onClick={() => createNewRecord()}
                     startIcon={<Add fontSize="small" />}
                   >
@@ -286,10 +296,15 @@ const UrgencyRulesPage = () => {
                                 aria-label="delete"
                                 sx={{ marginRight: 0.5 }}
                                 onClick={deleteItem(index)}
+                                disabled={!editAccess}
                               >
                                 <Delete fontSize="small" color="primary" />
                               </IconButton>
-                              <IconButton aria-label="edit" onClick={handleEdit(index)}>
+                              <IconButton
+                                aria-label="edit"
+                                onClick={handleEdit(index)}
+                                disabled={!editAccess}
+                              >
                                 <Edit fontSize="small" color="primary" />
                               </IconButton>
                             </>
@@ -299,7 +314,7 @@ const UrgencyRulesPage = () => {
                         onMouseEnter={() => setHoveredIndex(index)}
                         onMouseLeave={() => setHoveredIndex(-1)}
                         onDoubleClick={
-                          currAccessLevel == "fullaccess" ? handleEdit(index) : () => {}
+                          editAccess ? handleEdit(index) : () => {}
                         }
                       >
                         <ListItemIcon>#{index + 1}</ListItemIcon>
@@ -308,12 +323,12 @@ const UrgencyRulesPage = () => {
                             fullWidth
                             size="medium"
                             value={urgencyRule.urgency_rule_text}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              handleTextChange(e.target.value, index)
-                            }
-                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                              handleKeyDown(e, index)
-                            }
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => handleTextChange(e.target.value, index)}
+                            onKeyDown={(
+                              e: React.KeyboardEvent<HTMLInputElement>
+                            ) => handleKeyDown(e, index)}
                             onBlur={() => {
                               onBlur(index);
                             }}
@@ -325,7 +340,10 @@ const UrgencyRulesPage = () => {
                             InputProps={{
                               style: { backgroundColor: "white" },
                               endAdornment: (
-                                <InputAdornment position="end" sx={{ paddingRight: 2 }}>
+                                <InputAdornment
+                                  position="end"
+                                  sx={{ paddingRight: 2 }}
+                                >
                                   <IconButton
                                     onMouseDown={() => {
                                       addOrUpdateItem(index);
@@ -347,7 +365,7 @@ const UrgencyRulesPage = () => {
                               urgencyRule.updated_datetime_utc ? (
                                 "Last updated: " +
                                 new Date(
-                                  urgencyRule.updated_datetime_utc,
+                                  urgencyRule.updated_datetime_utc
                                 ).toLocaleString(undefined, {
                                   day: "numeric",
                                   month: "numeric",

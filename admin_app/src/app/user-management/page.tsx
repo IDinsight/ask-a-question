@@ -28,10 +28,15 @@ import { Layout } from "@/components/Layout";
 import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
 import { Workspace } from "@/components/WorkspaceMenu";
 import { set } from "date-fns";
+import { get } from "http";
+import UserWorkspaceModal from "./components/UserWorkspaceModal";
+import UserSearchModal from "./components/UserWorkspaceModal";
 
 const UserManagement: React.FC = () => {
-  const { token, username, role, loginWorkspace } = useAuth();
-  const [currentWorkspace, setCurrentWorkspace] = React.useState<Workspace | null>();
+  const { token, username, userRole, workspaceName, loginWorkspace } =
+    useAuth();
+  const [currentWorkspace, setCurrentWorkspace] =
+    React.useState<Workspace | null>();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -41,14 +46,17 @@ const UserManagement: React.FC = () => {
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const [openEditWorkspaceModal, setOpenEditWorkspaceModal] =
     React.useState<boolean>(false);
-  const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] =
+    React.useState(false);
+  const [showUserSearchModal, setShowUserSearchModal] = React.useState(false);
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
   React.useEffect(() => {
     getUserList(token!).then((data: UserBody[]) => {
       const sortedData = data.sort((a: UserBody, b: UserBody) =>
-        a.username.localeCompare(b.username),
+        a.username.localeCompare(b.username)
       );
       setLoading(false);
+      console.log(sortedData);
       setUsers(sortedData);
     });
     getCurrentWorkspace(token!).then((data: Workspace) => {
@@ -85,9 +93,27 @@ const UserManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
-  if (role !== "admin") {
+  const getUserRoleInWorkspace = (
+    workspaces: Workspace[],
+    workspaceName: string
+  ): "admin" | "read_only" | undefined => {
+    const workspace = workspaces.find(
+      (workspace) => workspace.workspace_name === workspaceName
+    );
+    if (workspace) {
+      console.log(workspace);
+      return workspace.user_role as "admin" | "read_only";
+    }
+    return undefined;
+  };
+  if (userRole !== "admin") {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="80vh"
+      >
         <Typography variant="h6">[403] Access Denied</Typography>
       </Box>
     );
@@ -128,7 +154,8 @@ const UserManagement: React.FC = () => {
             }}
           >
             <Typography variant="h4">
-              Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
+              Manage Workspace:{" "}
+              <strong>{currentWorkspace?.workspace_name}</strong>
             </Typography>
             <Button
               variant="contained"
@@ -181,7 +208,12 @@ const UserManagement: React.FC = () => {
         </Layout.FlexBox>
         <Layout.Spacer />
         {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="100%"
+          >
             <CircularProgress size={24} />
           </Box>
         ) : (
@@ -203,7 +235,17 @@ const UserManagement: React.FC = () => {
                   <UserCard
                     index={index}
                     username={user.username}
-                    isAdmin={user.is_admin}
+                    userRole={
+                      getUserRoleInWorkspace(
+                        user.user_workspaces!,
+                        currentWorkspace!.workspace_name
+                      )
+                        ? getUserRoleInWorkspace(
+                            user.user_workspaces!,
+                            currentWorkspace!.workspace_name
+                          )
+                        : "read_only"
+                    }
                     isLastItem={index === users.length - 1}
                     hoveredIndex={hoveredIndex}
                     setHoveredIndex={setHoveredIndex}
@@ -219,7 +261,11 @@ const UserManagement: React.FC = () => {
                     isLoggedUser={currentUser?.username === username}
                     onContinue={handleEditModalContinue}
                     registerUser={(userToEdit: UserBody) => {
-                      return editUser(currentUser!.user_id!, userToEdit, token!);
+                      return editUser(
+                        currentUser!.user_id!,
+                        userToEdit,
+                        token!
+                      );
                     }}
                     title={`Edit User: ${currentUser?.username}`}
                     buttonTitle="Confirm"
@@ -233,9 +279,14 @@ const UserManagement: React.FC = () => {
                     resetPassword={(
                       username: string,
                       recoveryCode: string,
-                      password: string,
+                      password: string
                     ) => {
-                      return resetPassword(username, recoveryCode, password, token!);
+                      return resetPassword(
+                        username,
+                        recoveryCode,
+                        password,
+                        token!
+                      );
                     }}
                     user={currentUser!}
                   />
@@ -252,7 +303,7 @@ const UserManagement: React.FC = () => {
                   return editWorkspace(
                     currentWorkspace.workspace_id!,
                     workspaceToEdit,
-                    token!,
+                    token!
                   );
                 }}
                 loginWorkspace={(workspace: Workspace) => {
@@ -271,7 +322,17 @@ const UserManagement: React.FC = () => {
               }}
               buttonTitle="Confirm"
             />
-
+            <UserSearchModal
+              open={showCreateModal}
+              onClose={() => {
+                setShowCreateModal(false);
+              }}
+              onContinue={handleRegisterModalContinue}
+              registerUser={(user: UserBodyPassword | UserBody) => {
+                return createUser(user as UserBodyPassword, token!);
+              }}
+              buttonTitle="Confirm"
+            />
             <ConfirmationModal
               open={showConfirmationModal}
               onClose={() => {

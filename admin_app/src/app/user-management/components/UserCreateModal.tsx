@@ -131,16 +131,11 @@ const UserModal = ({
         ? ({
             username: formData.username,
             is_admin: formData.is_admin || false,
-
-            content_quota: parseInt(formData.contentLimit!),
-            api_daily_quota: parseInt(formData.apiCallLimit!),
           } as UserBody)
         : ({
             username: formData.username,
             is_admin: formData.is_admin || false,
             password: formData.password,
-            content_quota: parseInt(formData.contentLimit!),
-            api_daily_quota: parseInt(formData.apiCallLimit!),
           } as UserBodyPassword);
       const data = await registerUser(newUser);
 

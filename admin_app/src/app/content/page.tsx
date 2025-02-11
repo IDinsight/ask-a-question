@@ -64,13 +64,14 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label,
+    LANGUAGE_OPTIONS[0].label
   );
+
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
-  const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
-  const { token, accessLevel } = useAuth();
+  const [editAccess, setEditAccess] = React.useState(false);
+  const { token, userRole } = useAuth();
   const [snackMessage, setSnackMessage] = React.useState<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -106,12 +107,12 @@ const CardsPage = () => {
         }
       };
       fetchTags();
-      setCurrAccessLevel(accessLevel);
+      setEditAccess(userRole === "admin");
     } else {
       setTags([]);
-      setCurrAccessLevel("readonly");
+      setEditAccess(userRole === "admin");
     }
-  }, [accessLevel, token]);
+  }, [userRole, token]);
 
   const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
@@ -156,9 +157,13 @@ const CardsPage = () => {
                 <Typography variant="h4" align="left" color="primary">
                   Question Answering
                 </Typography>
-                <Typography variant="body1" align="left" color={appColors.darkGrey}>
-                  Add, edit, and test content for question-answering. Questions sent to
-                  the search service will retrieve results from here.
+                <Typography
+                  variant="body1"
+                  align="left"
+                  color={appColors.darkGrey}
+                >
+                  Add, edit, and test content for question-answering. Questions
+                  sent to the search service will retrieve results from here.
                 </Typography>
               </Box>
               <Layout.FlexBox
@@ -169,7 +174,7 @@ const CardsPage = () => {
                 }}
               >
                 <CardsUtilityStrip
-                  editAccess={currAccessLevel === "fullaccess"}
+                  editAccess={editAccess}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   tags={tags}
@@ -185,7 +190,7 @@ const CardsPage = () => {
                   filterTags={filterTags}
                   openSidebar={openSearchSidebar || openChatSidebar}
                   token={token}
-                  accessLevel={currAccessLevel}
+                  editAccess={editAccess}
                   setSnackMessage={setSnackMessage}
                 />
                 <Box
@@ -299,7 +304,8 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setFilterTags,
   setSnackMessage,
 }) => {
-  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
+  const [openDownloadModal, setOpenDownloadModal] =
+    React.useState<boolean>(false);
 
   return (
     <Layout.FlexBox
@@ -379,7 +385,11 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   );
 };
 
-const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({
+  tags,
+  filterTags,
+  setFilterTags,
+}) => {
   return (
     <Autocomplete
       multiple
@@ -400,8 +410,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   );
 };
 
-function AddButtonWithDropdown() {
-  const [editAccess, setEditAccess] = useState(true);
+function AddButtonWithDropdown(editAccess: boolean) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
@@ -455,7 +464,7 @@ const CardsGrid = ({
   filterTags,
   openSidebar,
   token,
-  accessLevel,
+  editAccess,
   setSnackMessage,
 }: {
   displayLanguage: string;
@@ -464,7 +473,7 @@ const CardsGrid = ({
   filterTags: Tag[];
   openSidebar: boolean;
   token: string | null;
-  accessLevel: string;
+  editAccess: boolean;
   setSnackMessage: React.Dispatch<
     React.SetStateAction<{
       message: string | null;
@@ -530,14 +539,20 @@ const CardsGrid = ({
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+              card.content_title
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+              card.content_text
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
 
             const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id),
+              card.content_tags.includes(fTag.tag_id)
             );
 
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+            return (
+              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
+            );
           });
 
           setCards(filteredData);
@@ -657,7 +672,7 @@ const CardsGrid = ({
                         tags={
                           tags
                             ? tags.filter((tag) =>
-                                item.content_tags.includes(tag.tag_id),
+                                item.content_tags.includes(tag.tag_id)
                               )
                             : []
                         }
@@ -673,7 +688,7 @@ const CardsGrid = ({
                         archiveContent={(content_id: number) => {
                           return archiveContent(content_id, token!);
                         }}
-                        editAccess={accessLevel === "fullaccess"}
+                        editAccess={editAccess}
                       />
                     </Grid>
                   );

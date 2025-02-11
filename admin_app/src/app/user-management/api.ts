@@ -4,9 +4,7 @@ interface UserBody {
   sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
   username: string;
-  is_admin: boolean;
-  content_quota: number;
-  api_daily_quota: number;
+  user_workspaces?: Workspace[];
 }
 interface UserBodyPassword extends UserBody {
   password: string;
@@ -19,7 +17,7 @@ const editUser = async (user_id: number, user: UserBody, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error creating content");
+    throw new Error("Error editing user");
   }
 };
 
@@ -30,7 +28,7 @@ const createUser = async (user: UserBodyPassword, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error creating content");
+    throw new Error("Error creating user");
   }
 };
 const getUserList = async (token: string) => {
@@ -40,7 +38,7 @@ const getUserList = async (token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching content list");
+    throw new Error("Error fetching user list");
   }
 };
 

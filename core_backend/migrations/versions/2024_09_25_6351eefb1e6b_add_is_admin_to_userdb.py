@@ -24,6 +24,7 @@ def upgrade() -> None:
         "user",
         sa.Column("is_admin", sa.Boolean(), nullable=False, server_default=sa.false()),
     )
+
     # ### end Alembic commands ###
 
 

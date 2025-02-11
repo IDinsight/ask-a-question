@@ -77,6 +77,7 @@ async def login(
         token_type="bearer",
         username=username,
         workspace_name=workspace_name,
+        user_role=authenticated_user.user_role,
     )
 
 
@@ -142,6 +143,7 @@ async def login_google(
         token_type="bearer",
         username=username,
         workspace_name=workspace_name,
+        user_role=authenticated_user.user_role,
     )
 
 
@@ -232,4 +234,5 @@ async def authenticate_or_create_google_user(
                 access_level="fullaccess",
                 username=user_db.username,
                 workspace_name=workspace_name,
+                user_role=user.role,
             )

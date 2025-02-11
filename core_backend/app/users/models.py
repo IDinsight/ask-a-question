@@ -578,8 +578,8 @@ async def get_user_by_username(*, asession: AsyncSession, username: str) -> User
 
 async def get_user_default_workspace(
     *, asession: AsyncSession, user_db: UserDB
-) -> WorkspaceDB:
-    """Retrieve the default workspace for a given user.
+) -> tuple[WorkspaceDB, UserRoles]:
+    """Retrieve the default workspace and role for a given user.
 
     NB: A user will have a default workspace assigned when they are created.
 
@@ -592,12 +592,12 @@ async def get_user_default_workspace(
 
     Returns
     -------
-    WorkspaceDB
-        The default workspace object for the user.
+    tuple[WorkspaceDB, UserRoles]
+        The default workspace object and the user role for the user.
     """
 
     stmt = (
-        select(WorkspaceDB)
+        select(WorkspaceDB, UserWorkspaceDB.user_role)
         .join(UserWorkspaceDB, UserWorkspaceDB.workspace_id == WorkspaceDB.workspace_id)
         .where(
             UserWorkspaceDB.user_id == user_db.user_id,
@@ -607,8 +607,8 @@ async def get_user_default_workspace(
     )
 
     result = await asession.execute(stmt)
-    default_workspace_db = result.scalar_one()
-    return default_workspace_db
+    default_workspace_db, user_role = result.one()
+    return default_workspace_db, user_role
 
 
 async def get_user_role_in_all_workspaces(

@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from ..users.schemas import UserRoles
+
 AccessLevel = Literal["fullaccess"]
 TokenType = Literal["bearer"]
 
@@ -19,6 +21,7 @@ class AuthenticatedUser(BaseModel):
     access_level: AccessLevel
     username: str
     workspace_name: str
+    user_role: UserRoles
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,6 +34,7 @@ class AuthenticationDetails(BaseModel):
     token_type: TokenType
     username: str
     workspace_name: str
+    user_role: UserRoles
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
     is_admin: bool = True
     # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.

@@ -537,7 +537,9 @@ async def switch_workspace(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Workspace with workspace name '{workspace_name}' not found.",
         )
-
+    user_roles = await get_user_role_in_workspace(
+        asession=asession, user_db=calling_user_db, workspace_db=user_workspace_db
+    )
     # Hardcode "fullaccess" now, but may use it in the future.
     return AuthenticationDetails(
         access_level="fullaccess",
@@ -547,6 +549,7 @@ async def switch_workspace(
         token_type="bearer",
         username=username,
         workspace_name=workspace_name,
+        user_role=user_roles,
     )
 
 

@@ -2,11 +2,11 @@ import React from "react";
 import { Avatar, Typography, ListItem, IconButton, ListItemIcon } from "@mui/material";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import Edit from "@mui/icons-material/Edit";
-
+import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 interface UserCardProps {
   index: number;
   username: string;
-  isAdmin: boolean;
+  userRole: "admin" | "read_only";
   isLastItem: boolean;
   hoveredIndex: number;
   setHoveredIndex: (index: number) => void;
@@ -17,7 +17,7 @@ interface UserCardProps {
 const UserCard: React.FC<UserCardProps> = ({
   index,
   username,
-  isAdmin,
+  userRole,
   isLastItem,
   hoveredIndex,
   setHoveredIndex,
@@ -64,10 +64,11 @@ const UserCard: React.FC<UserCardProps> = ({
               </IconButton>
               <IconButton
                 edge="end"
-                aria-label="reset password"
+                aria-label="remove user"
+                title="Remove user from Workspace"
                 onClick={() => onResetPassword()}
               >
-                <LockResetIcon fontSize="small" color="primary" />
+                <GroupRemoveIcon fontSize="small" color="primary" />
               </IconButton>
             </>
           )
@@ -79,7 +80,9 @@ const UserCard: React.FC<UserCardProps> = ({
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <Typography variant="body1">{username}</Typography>
-          <Typography variant="body2">{isAdmin ? "Admin" : "User"}</Typography>
+          <Typography variant="body2">
+            {userRole == "admin" ? "Admin" : "Read only"}{" "}
+          </Typography>
         </div>
       </ListItem>
     </>
