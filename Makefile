@@ -1,4 +1,5 @@
 #!make
+SHELL := /bin/bash
 
 PROJECT_NAME = aaq
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
