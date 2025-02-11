@@ -186,7 +186,7 @@ def suzin_adds_mark_to_workspace_mark(
 
     suzin_access_token = user_workspace_responses["suzin"]["access_token"]
     create_response = client.post(
-        "/user/existing-user",
+        "/user/add-existing-user-to-workspace",
         headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
             "is_default_workspace": True,
@@ -236,7 +236,7 @@ def suzin_adds_mark_to_workspace_amir(
 
     suzin_access_token = user_workspace_responses["suzin"]["access_token"]
     create_response = client.post(
-        "/user/existing-user",
+        "/user/add-existing-user-to-workspace",
         headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
             "is_default_workspace": True,

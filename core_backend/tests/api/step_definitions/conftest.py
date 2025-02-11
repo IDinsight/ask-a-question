@@ -332,7 +332,7 @@ async def setup_multiple_workspaces(  # pylint: disable=R0915
     # Add Poornima as an admin user in workspace Suzin (but do NOT switch Poornima into
     # Suzin's workspace).
     client.post(
-        "/user/existing-user",
+        "/user/add-existing-user-to-workspace",
         headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
             "role": UserRoles.ADMIN,
