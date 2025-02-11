@@ -115,12 +115,10 @@ const getPerformancePageData = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     startDate,
     endDate,
-    frequency,
   });
   return fetchData(url, token, "Error fetching dashboard performance page data");
 };
@@ -131,13 +129,11 @@ const getPerformanceDrawerData = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
     startDate,
     endDate,
-    frequency,
   });
   return fetchData(url, token, "Error fetching dashboard performance drawer data");
 };
@@ -148,13 +144,11 @@ const getPerformanceDrawerAISummary = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
     startDate,
     endDate,
-    frequency,
     extraPath: "ai-summary",
   });
   return fetchData(
