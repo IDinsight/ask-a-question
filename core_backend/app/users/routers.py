@@ -794,9 +794,11 @@ async def check_if_username_exists(
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
     """Check if a username exists in the database.
+
     NB: This endpoint should only be available to admin users. Although the check will
     pull global user records, the endpoint does not return details regarding user
     information, only a boolean.
+
     Parameters
     ----------
     calling_user_db
