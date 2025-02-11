@@ -64,7 +64,7 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
 
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -157,13 +157,9 @@ const CardsPage = () => {
                 <Typography variant="h4" align="left" color="primary">
                   Question Answering
                 </Typography>
-                <Typography
-                  variant="body1"
-                  align="left"
-                  color={appColors.darkGrey}
-                >
-                  Add, edit, and test content for question-answering. Questions
-                  sent to the search service will retrieve results from here.
+                <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                  Add, edit, and test content for question-answering. Questions sent to
+                  the search service will retrieve results from here.
                 </Typography>
               </Box>
               <Layout.FlexBox
@@ -304,8 +300,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setFilterTags,
   setSnackMessage,
 }) => {
-  const [openDownloadModal, setOpenDownloadModal] =
-    React.useState<boolean>(false);
+  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
   return (
     <Layout.FlexBox
@@ -385,11 +380,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   );
 };
 
-const TagsFilter: React.FC<TagsFilterProps> = ({
-  tags,
-  filterTags,
-  setFilterTags,
-}) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
   return (
     <Autocomplete
       multiple
@@ -539,20 +530,14 @@ const CardsGrid = ({
         .then((data) => {
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              card.content_text
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id)
+              card.content_tags.includes(fTag.tag_id),
             );
 
-            return (
-              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
-            );
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
           });
 
           setCards(filteredData);
@@ -672,7 +657,7 @@ const CardsGrid = ({
                         tags={
                           tags
                             ? tags.filter((tag) =>
-                                item.content_tags.includes(tag.tag_id)
+                                item.content_tags.includes(tag.tag_id),
                               )
                             : []
                         }
