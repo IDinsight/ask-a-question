@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import DatePicker from "react-datepicker";
 import { CustomDashboardFrequency } from "@/app/dashboard/types";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface DateRangePickerDialogProps {
   open: boolean;
