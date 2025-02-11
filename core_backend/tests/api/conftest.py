@@ -3,15 +3,14 @@
 # pylint: disable=W0613, W0621
 import json
 from datetime import datetime, timezone, tzinfo
-from typing import Any, AsyncGenerator, Callable, Generator, Optional
+from typing import Any, AsyncGenerator, Generator, Optional
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from pytest_alembic.config import Config
-from pytest_bdd.parser import Feature, Scenario, Step
 from redis import asyncio as aioredis
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, select
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
@@ -48,14 +47,10 @@ from core_backend.app.users.models import (
     UserDB,
     UserWorkspaceDB,
     WorkspaceDB,
-    check_if_users_exist,
 )
 from core_backend.app.users.schemas import UserRoles
 from core_backend.app.utils import get_key_hash, get_password_salted_hash
-from core_backend.app.workspaces.utils import (
-    check_if_workspaces_exist,
-    get_workspace_by_workspace_name,
-)
+from core_backend.app.workspaces.utils import get_workspace_by_workspace_name
 
 # Admin users.
 TEST_ADMIN_PASSWORD_1 = "admin_password_1"  # pragma: allowlist secret
@@ -96,39 +91,6 @@ TEST_WORKSPACE_NAME_DATA_API_1 = "test_workspace_data_api_1"
 TEST_WORKSPACE_NAME_DATA_API_2 = "test_workspace_data_api_2"
 
 
-# Hooks.
-def pytest_bdd_step_error(
-    request: pytest.FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: dict[str, Any],
-    exception: Exception,
-) -> None:
-    """Hook for when a step fails.
-
-    Parameters
-    ----------
-    request
-        Pytest fixture request object.
-    feature
-        The BDD feature that failed.
-    scenario
-        The BDD scenario that failed.
-    step
-        The BDD step that failed.
-    step_func
-        The step function that failed.
-    step_func_args
-        The arguments passed to the step function that failed.
-    exception
-        The exception that was raised by the step function that failed.
-    """
-
-    print(f"Step: {step} FAILED with Step Function Arguments: {step_func_args}")
-
-
 # Fixtures.
 @pytest.fixture(scope="function")
 async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
@@ -167,36 +129,6 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
     await engine.dispose()
-
-
-@pytest.fixture
-async def clean_user_and_workspace_dbs(asession: AsyncSession) -> None:
-    """Delete all entries from `UserWorkspaceDB`, `UserDB`, and `WorkspaceDB` and reset
-    the autoincrement counters.
-
-    Parameters
-    ----------
-    asession
-        Async database session.
-    """
-
-    async with asession.begin():
-        # Delete from the association table first due to foreign key constraints.
-        await asession.execute(delete(UserWorkspaceDB))
-
-        # Delete users and workspaces after the association table is cleared.
-        await asession.execute(delete(UserDB))
-        await asession.execute(delete(WorkspaceDB))
-
-        # Reset auto-increment sequences.
-        await asession.execute(text("ALTER SEQUENCE user_user_id_seq RESTART WITH 1"))
-        await asession.execute(
-            text("ALTER SEQUENCE workspace_workspace_id_seq RESTART WITH 1")
-        )
-
-        # Sanity check.
-        assert not await check_if_users_exist(asession=asession)
-        assert not await check_if_workspaces_exist(asession=asession)
 
 
 @pytest.fixture(scope="session")
@@ -244,7 +176,9 @@ def access_token_admin_1() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_1, workspace_name=TEST_WORKSPACE_NAME_1
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_1,
+        workspace_name=TEST_WORKSPACE_NAME_1,
     )
 
 
@@ -259,7 +193,9 @@ def access_token_admin_2() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_2, workspace_name=TEST_WORKSPACE_NAME_2
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_2,
+        workspace_name=TEST_WORKSPACE_NAME_2,
     )
 
 
@@ -274,7 +210,9 @@ def access_token_admin_4() -> str:
     """
 
     return create_access_token(
-        username=TEST_ADMIN_USERNAME_4, workspace_name=TEST_WORKSPACE_NAME_4
+        user_role=UserRoles.ADMIN,
+        username=TEST_ADMIN_USERNAME_4,
+        workspace_name=TEST_WORKSPACE_NAME_4,
     )
 
 
@@ -289,6 +227,7 @@ def access_token_admin_data_api_1() -> str:
     """
 
     return create_access_token(
+        user_role=UserRoles.ADMIN,
         username=TEST_ADMIN_USERNAME_DATA_API_1,
         workspace_name=TEST_WORKSPACE_NAME_DATA_API_1,
     )
@@ -305,6 +244,7 @@ def access_token_admin_data_api_2() -> str:
     """
 
     return create_access_token(
+        user_role=UserRoles.ADMIN,
         username=TEST_ADMIN_USERNAME_DATA_API_2,
         workspace_name=TEST_WORKSPACE_NAME_DATA_API_2,
     )
@@ -323,7 +263,9 @@ def access_token_read_only_1() -> str:
     """
 
     return create_access_token(
-        username=TEST_READ_ONLY_USERNAME_1, workspace_name=TEST_WORKSPACE_NAME_1
+        user_role=UserRoles.READ_ONLY,
+        username=TEST_READ_ONLY_USERNAME_1,
+        workspace_name=TEST_WORKSPACE_NAME_1,
     )
 
 
@@ -340,7 +282,9 @@ def access_token_read_only_2() -> str:
     """
 
     return create_access_token(
-        username=TEST_READ_ONLY_USERNAME_2, workspace_name=TEST_WORKSPACE_NAME_2
+        user_role=UserRoles.READ_ONLY,
+        username=TEST_READ_ONLY_USERNAME_2,
+        workspace_name=TEST_WORKSPACE_NAME_2,
     )
 
 
@@ -1210,7 +1154,7 @@ def temp_workspace_api_key_and_api_quota(
     username = request.param["username"]
     workspace_name = request.param["workspace_name"]
     temp_access_token = create_access_token(
-        username=username, workspace_name=workspace_name
+        user_role=UserRoles.ADMIN, username=username, workspace_name=workspace_name
     )
 
     temp_user_db = UserDB(
@@ -1313,7 +1257,9 @@ def temp_workspace_token_and_quota(
     db_session.commit()
 
     yield (
-        create_access_token(username=username, workspace_name=workspace_name),
+        create_access_token(
+            user_role=UserRoles.ADMIN, username=username, workspace_name=workspace_name
+        ),
         content_quota,
     )
 

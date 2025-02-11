@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from typing import Sequence
 
+import sqlalchemy.sql.functions as func
 from sqlalchemy import (
     ARRAY,
     Boolean,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Integer,
     Row,
     String,
+    case,
     exists,
     select,
     text,
@@ -197,13 +199,15 @@ class UserWorkspaceDB(Base):
 async def add_existing_user_to_workspace(
     *,
     asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
+    user: UserCreate,
     workspace_db: WorkspaceDB,
 ) -> UserCreateWithCode:
     """The process for adding an existing user to a workspace is:
 
     1. Retrieve the existing user from the `UserDB` database.
-    2. Add the existing user to the workspace with the specified role.
+    2. If the default workspace is being changed for the user, then ensure that the
+        old default workspace is set to `False` before the change.
+    3. Add the existing user to the workspace with the specified role.
 
     NB: If this function is invoked, then the assumption is that it is called by an
     ADMIN user with access to the specified workspace and that this ADMIN user is
@@ -238,6 +242,12 @@ async def add_existing_user_to_workspace(
     user_db = await get_user_by_username(asession=asession, username=user.username)
 
     # 2.
+    if user.is_default_workspace:
+        await update_user_default_workspace(
+            asession=asession, user_db=user_db, workspace_db=workspace_db
+        )
+
+    # 3.
     _ = await create_user_workspace_role(
         asession=asession,
         is_default_workspace=user.is_default_workspace,
@@ -247,6 +257,7 @@ async def add_existing_user_to_workspace(
     )
 
     return UserCreateWithCode(
+        is_default_workspace=user.is_default_workspace,
         recovery_codes=user_db.recovery_codes,
         role=user.role,
         username=user_db.username,
@@ -257,7 +268,7 @@ async def add_existing_user_to_workspace(
 async def add_new_user_to_workspace(
     *,
     asession: AsyncSession,
-    user: UserCreate | UserCreateWithPassword,
+    user: UserCreateWithPassword,
     workspace_db: WorkspaceDB,
 ) -> UserCreateWithCode:
     """The process for adding a new user to a workspace is:
@@ -290,7 +301,7 @@ async def add_new_user_to_workspace(
         The user object with the recovery codes.
     """
 
-    assert user.role is not None
+    assert user.role is not None and user.role in UserRoles
 
     # 1.
     recovery_codes = generate_recovery_codes()
@@ -301,21 +312,61 @@ async def add_new_user_to_workspace(
     )
 
     # 3.
+    is_default_workspace = True  # Should always be True for new users!
     _ = await create_user_workspace_role(
         asession=asession,
-        is_default_workspace=True,  # Should always be True for new users!
+        is_default_workspace=is_default_workspace,
         user_db=user_db,
         user_role=user.role,
         workspace_db=workspace_db,
     )
 
     return UserCreateWithCode(
-        is_default_workspace=True,
+        is_default_workspace=is_default_workspace,
         recovery_codes=recovery_codes,
         role=user.role,
         username=user_db.username,
         workspace_name=workspace_db.workspace_name,
     )
+
+
+async def check_if_two_users_share_a_common_workspace(
+    *, asession: AsyncSession, user_id_1: int, user_id_2: int
+) -> bool:
+    """Check if two users share a common workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    user_id_1
+        The first user ID to check.
+    user_id_2
+        The second user ID to check.
+
+    Returns
+    -------
+    bool
+        Specifies whether the two users share a common workspace.
+    """
+
+    # Subquery: select all workspace IDs belonging to user ID 2.
+    user2_workspace_ids = select(UserWorkspaceDB.workspace_id).where(
+        UserWorkspaceDB.user_id == user_id_2
+    )
+
+    # Main query: count how many of user1's workspace IDs intersect user2's.
+    result = await asession.execute(
+        select(func.count())
+        .select_from(UserWorkspaceDB)
+        .where(
+            UserWorkspaceDB.user_id == user_id_1,
+            UserWorkspaceDB.workspace_id.in_(user2_workspace_ids),
+        )
+    )
+
+    shared_count = result.scalar_one()
+    return shared_count > 0
 
 
 async def check_if_user_exists(
@@ -578,8 +629,8 @@ async def get_user_by_username(*, asession: AsyncSession, username: str) -> User
 
 async def get_user_default_workspace(
     *, asession: AsyncSession, user_db: UserDB
-) -> tuple[WorkspaceDB, UserRoles]:
-    """Retrieve the default workspace and role for a given user.
+) -> WorkspaceDB:
+    """Retrieve the default workspace for a given user.
 
     NB: A user will have a default workspace assigned when they are created.
 
@@ -592,12 +643,12 @@ async def get_user_default_workspace(
 
     Returns
     -------
-    tuple[WorkspaceDB, UserRoles]
-        The default workspace object and the user role for the user.
+    WorkspaceDB
+        The default workspace object for the user.
     """
 
     stmt = (
-        select(WorkspaceDB, UserWorkspaceDB.user_role)
+        select(WorkspaceDB)
         .join(UserWorkspaceDB, UserWorkspaceDB.workspace_id == WorkspaceDB.workspace_id)
         .where(
             UserWorkspaceDB.user_id == user_db.user_id,
@@ -607,8 +658,8 @@ async def get_user_default_workspace(
     )
 
     result = await asession.execute(stmt)
-    default_workspace_db, user_role = result.one()
-    return default_workspace_db, user_role
+    default_workspace_db = result.scalar_one()
+    return default_workspace_db
 
 
 async def get_user_role_in_all_workspaces(
@@ -860,7 +911,7 @@ async def remove_user_from_dbs(
     if len(remaining_user_workspace_dbs) == 0:
         # The user has no more workspaces, so remove from `UserDB` entirely.
         await asession.delete(user_db)
-        await asession.flush()
+        await asession.commit()
 
         # Return `None` to indicate no default workspace remains.
         return None, remove_from_workspace_db.workspace_name
@@ -874,12 +925,14 @@ async def remove_user_from_dbs(
             .order_by(UserWorkspaceDB.created_datetime_utc.asc())
             .limit(1)
         )
-        next_user_workspace = next_user_workspace_result.first()
+        next_user_workspace = next_user_workspace_result.scalar_one_or_none()
         assert next_user_workspace is not None
         next_user_workspace.default_workspace = True
 
         # Persist the new default workspace.
         await asession.flush()
+
+    await asession.commit()
 
     # Retrieve the current default workspace name after all changes.
     default_workspace = await get_user_default_workspace(
@@ -987,9 +1040,7 @@ async def save_user_to_db(
 async def update_user_default_workspace(
     *, asession: AsyncSession, user_db: UserDB, workspace_db: WorkspaceDB
 ) -> None:
-    """Update the default workspace for the user to the specified workspace. This sets
-    `default_workspace=False` for all of the user's workspaces, then sets
-    `default_workspace=True` for the specified workspace.
+    """Update the default workspace for the user to the specified workspace.
 
     Parameters
     ----------
@@ -1001,24 +1052,18 @@ async def update_user_default_workspace(
         The workspace object to set as the default workspace.
     """
 
-    user_id = user_db.user_id
-    workspace_id = workspace_db.workspace_id
-
-    # Turn off `default_workspace` for all the user's workspaces.
-    await asession.execute(
+    stmt = (
         update(UserWorkspaceDB)
-        .where(UserWorkspaceDB.user_id == user_id)
-        .values(default_workspace=False)
+        .where(UserWorkspaceDB.user_id == user_db.user_id)
+        .values(
+            default_workspace=case(
+                (UserWorkspaceDB.workspace_id == workspace_db.workspace_id, True),
+                else_=False,
+            )
+        )
     )
 
-    # Turn on `default_workspace` for the specified workspace.
-    await asession.execute(
-        update(UserWorkspaceDB)
-        .where(UserWorkspaceDB.user_id == user_id)
-        .where(UserWorkspaceDB.workspace_id == workspace_id)
-        .values(default_workspace=True)
-    )
-
+    await asession.execute(stmt)
     await asession.commit()
 
 

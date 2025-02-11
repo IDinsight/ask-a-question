@@ -3,7 +3,7 @@
 from typing import Annotated
 
 import sqlalchemy
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,7 @@ from .models import (
     WorkspaceDB,
     add_existing_user_to_workspace,
     add_new_user_to_workspace,
+    check_if_two_users_share_a_common_workspace,
     check_if_user_exists,
     check_if_user_exists_in_workspace,
     check_if_users_exist,
@@ -49,7 +50,6 @@ from .schemas import (
     UserCreate,
     UserCreateWithCode,
     UserCreateWithPassword,
-    UserRemove,
     UserRemoveResponse,
     UserResetPassword,
     UserRetrieve,
@@ -69,19 +69,13 @@ logger = setup_logger()
 
 
 @router.post("/", response_model=UserCreateWithCode)
-async def create_user(
+async def create_new_user(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     user: UserCreateWithPassword,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreateWithCode:
-    """Create a user. If the user does not exist, then a new user is created in the
-    specified workspace with the specified role. Otherwise, the existing user is added
-    to the specified workspace with the specified role. In all cases, the specified
-    workspace must be created already.
-
-    NB: This endpoint can also be used to create a new user in a different workspace
-    than the calling user or be used to add an existing user to a workspace that the
-    calling user is an admin of.
+    """Create a new user in an **existing** workspace. New user creation requires a
+    user password.
 
     NB: This endpoint does NOT update API limits for the workspace that the created
     user is being assigned to. This is because API limits are set at the workspace
@@ -89,18 +83,18 @@ async def create_user(
 
     The process is as follows:
 
-    1. Parameters for the endpoint are checked first.
-    2. If the user does not exist, then create the user and add the user to the
-        specified workspace with the specified role. In addition, the specified
-        workspace is set as the default workspace.
-    3. If the user exists, then add the user to the specified workspace with the
-        specified role. In this case, there is the option to set the workspace as the
-        default workspace for the user.
+    1. If the username already exists, then raise a 400 error. In this case, the
+        frontend should add the existing user to a workspace instead (i.e., invoke the
+        `/user/existing-user` endpoint).
+    2. The rest of the parameters for creating a new user in a workspace are checked.
+    3. Create the new user and add the user to the specified workspace with the
+        specified role. In addition, the specified workspace is set as the new user's
+        default workspace.
 
     Parameters
     ----------
     calling_user_db
-        The user object associated with the user that is creating a user.
+        The user object associated with the user that is creating a new user.
     user
         The user object to create.
     asession
@@ -114,23 +108,90 @@ async def create_user(
     Raises
     ------
     HTTPException
+        If the username already exists.
+    """
+
+    # 1.
+    if await check_if_user_exists(asession=asession, user=user):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists."
+        )
+
+    # 2.
+    user_checked, user_checked_workspace_db = await check_create_or_add_user_call(
+        asession=asession, calling_user_db=calling_user_db, user=user
+    )
+    assert isinstance(user_checked, UserCreateWithPassword)
+    assert user_checked.workspace_name
+
+    # 3.
+    return await add_new_user_to_workspace(
+        asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
+    )
+
+
+@router.post("/add-existing-user-to-workspace", response_model=UserCreateWithCode)
+async def add_existing_user(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    user: UserCreate,
+    asession: AsyncSession = Depends(get_async_session),
+) -> UserCreateWithCode:
+    """Add an existing user to an **existing** workspace. This does not require a user
+    password.
+
+    NB: This endpoint does NOT update API limits for the workspace that the created
+    user is being assigned to. This is because API limits are set at the workspace
+    level when the workspace is first created and not at the user level.
+
+    The process is as follows:
+
+    1. If the user does not exist, then raise a 404 error. In this case, the frontend
+        should create a new user instead (i.e., invoke the `/user/` endpoint).
+    2. The rest of the parameters for adding an existing user to a workspace are
+        checked.
+    3. Add the existing user to the specified workspace with the specified role. In
+        this case, there is the option to also set the workspace as the default
+        workspace for the user.
+
+    Parameters
+    ----------
+    calling_user_db
+        The user object associated with the user that is adding an existing user.
+    user
+        The user object to add.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    UserCreateWithCode
+        The user object with the recovery codes.
+
+    Raises
+    ------
+    HTTPException
+        If the username does not exist.
         If the user is already assigned a role in the specified workspace.
     """
 
     # 1.
-    user_checked, user_checked_workspace_db = await check_create_user_call(
+    if not await check_if_user_exists(asession=asession, user=user):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist."
+        )
+
+    # 2.
+    user_checked, user_checked_workspace_db = await check_create_or_add_user_call(
         asession=asession, calling_user_db=calling_user_db, user=user
+    )
+    assert not isinstance(user_checked, UserCreateWithPassword) and isinstance(
+        user_checked, UserCreate
     )
     assert user_checked.workspace_name
 
+    # 3.
     try:
-        # 3.
         return await add_existing_user_to_workspace(
-            asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
-        )
-    except UserNotFoundError:
-        # 2.
-        return await add_new_user_to_workspace(
             asession=asession, user=user_checked, workspace_db=user_checked_workspace_db
         )
     except UserWorkspaceRoleAlreadyExistsError as e:
@@ -216,10 +277,12 @@ async def create_first_user(
 
 @router.delete("/{user_id}", response_model=UserRemoveResponse)
 async def remove_user_from_workspace(
-    user: UserRemove,
     user_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    remove_from_workspace_name: str = Query(
+        ..., description="Name of the workspace to remove the user from."
+    ),
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserRemoveResponse:
     """Remove user by ID from workspace. Users can only be removed from a workspace by
@@ -230,19 +293,19 @@ async def remove_user_from_workspace(
     1. There should be no scenarios where the **last** admin user of a workspace is
         allowed to remove themselves from the workspace. This poses a data risk since
         an existing workspace with no users means that ANY admin can add users to that
-        workspace---this is essentially the scenario when an admin creates a new
-        workspace and then proceeds to add users to that newly created workspace.
-        However, existing workspaces can have content; thus, we disable the ability to
-        remove the last admin user from a workspace.
+        workspace---this is the same scenario as when an admin creates a new workspace
+        and then proceeds to add users to that newly created workspace. However,
+        existing workspaces can have content; thus, we disable the ability to remove
+        the last admin user from a workspace.
     2. All workspaces must have at least one ADMIN user.
     3. A re-authentication should be triggered by the frontend if the calling user is
         removing themselves from the only workspace that they are assigned to. This
         scenario can still occur if there are two admins of a workspace and an admin
         is only assigned to that workspace and decides to remove themselves from the
         workspace.
-    4. A workspace login should be triggered by the frontend if the calling user is
+    4. A workspace switch should be triggered by the frontend if the calling user is
         removing themselves from the current workspace. This occurs when
-        `require_workspace_login` is set to `True` in `UserRemoveResponse`. Case 3
+        `require_workspace_switch` is set to `True` in `UserRemoveResponse`. Case 3
         supersedes this case.
 
     The process is as follows:
@@ -257,8 +320,6 @@ async def remove_user_from_workspace(
 
     Parameters
     ----------
-    user
-        The user object with the name of the workspace to remove the user from.
     user_id
         The user ID to remove from the specified workspace.
     calling_user_db
@@ -268,6 +329,8 @@ async def remove_user_from_workspace(
         The name of the workspace that the calling user is currently logged into. This
         is used to detect if the calling user is removing themselves from the current
         workspace. If so, then a workspace login will be triggered.
+    remove_from_workspace_name
+        The name of the workspace from which the user is being removed.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -285,7 +348,10 @@ async def remove_user_from_workspace(
     """
 
     remove_from_workspace_db, user_db = await check_remove_user_from_workspace_call(
-        asession=asession, calling_user_db=calling_user_db, user=user, user_id=user_id
+        asession=asession,
+        calling_user_db=calling_user_db,
+        remove_from_workspace_name=remove_from_workspace_name,
+        user_id=user_id,
     )
 
     # 1 and 2.
@@ -311,14 +377,14 @@ async def remove_user_from_workspace(
 
     self_removal = calling_user_db.user_id == user_id
     require_authentication = self_removal and default_workspace_name is None
-    require_workspace_login = require_authentication or (
+    require_workspace_switch = require_authentication or (
         self_removal and removed_from_workspace_name == workspace_name
     )
     return UserRemoveResponse(
         default_workspace_name=default_workspace_name,
         removed_from_workspace_name=removed_from_workspace_name,
         require_authentication=require_authentication,
-        require_workspace_login=require_workspace_login,
+        require_workspace_switch=require_workspace_switch,
     )
 
 
@@ -491,9 +557,9 @@ async def reset_password(
     user's password is universal and belongs to the user and not a workspace. Thus,
     only a user can reset their own password.
 
-    NB: Since the `retrieve_all_users` endpoint is invoked first to display the correct
-    users for the calling user's workspaces, there should be no scenarios where a user
-    is resetting the password of another user.
+    NB: Since the `retrieve_all_users_in_current_workspace` endpoint should be invoked
+    first to display the correct users for the calling user's workspaces, there should
+    be no scenarios where a user is resetting the password of another user.
 
     The process is as follows:
 
@@ -568,10 +634,10 @@ async def update_user(
 
     NB: User information can only be updated by admin users. Furthermore, admin users
     can only update the information of users belonging to their workspaces. Since the
-    `retrieve_all_users` endpoint is invoked first to display the correct users for the
-    calling user's workspaces, there should be no issue with an admin user updating
-    user information for users in other workspaces. This endpoint will also check that
-    the calling user is an admin in any workspace.
+    `retrieve_all_users_in_current_workspace` endpoint should be invoked first to
+    display the correct users for the calling user's workspaces, there should be no
+    issue with an admin user updating user information for users in other workspaces.
+    This endpoint will also check that the calling user is an admin in any workspace.
 
     NB: A user's API daily quota limit and content quota can no longer be updated since
     these are set at the workspace level when the workspace is first created. Instead,
@@ -721,8 +787,58 @@ async def get_user(
     )
 
 
+@router.head("/{username}")
+async def check_if_username_exists(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    username: str,
+    asession: AsyncSession = Depends(get_async_session),
+) -> bool:
+    """Check if a username exists in the database.
+    NB: This endpoint should only be available to admin users. Although the check will
+    pull global user records, the endpoint does not return details regarding user
+    information, only a boolean.
+    Parameters
+    ----------
+    calling_user_db
+        The user object associated with the user that is checking the username.
+    username
+        The username to check.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    Returns
+    -------
+    bool
+        Specifies the username already exists. `False` if the usernames does not exist.
+    Raises
+    ------
+    HTTPException
+        If the calling user does not have the correct role to check if a username
+        exists.
+    """
+
+    if not await user_has_admin_role_in_any_workspace(
+        asession=asession, user_db=calling_user_db
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Calling user does not have the correct role to check if a username "
+            "exists.",
+        )
+
+    return (
+        await check_if_user_exists(
+            asession=asession, user=UserCreate(username=username)
+        )
+        is not None
+    )
+
+
 async def check_remove_user_from_workspace_call(
-    *, asession: AsyncSession, calling_user_db: UserDB, user: UserRemove, user_id: int
+    *,
+    asession: AsyncSession,
+    calling_user_db: UserDB,
+    remove_from_workspace_name: str,
+    user_id: int,
 ) -> tuple[WorkspaceDB, UserDB]:
     """Check the remove user from workspace call to ensure the action is allowed.
 
@@ -733,8 +849,8 @@ async def check_remove_user_from_workspace_call(
     calling_user_db
         The user object associated with the user that is removing the user from the
         specified workspace.
-    user
-        The user object with the name of the workspace to remove the user from.
+    remove_from_workspace_name
+        The name of the workspace from which the user is being removed.
     user_id
         The user ID to remove from the specified workspace.
 
@@ -746,6 +862,7 @@ async def check_remove_user_from_workspace_call(
     Raises
     ------
     HTTPException
+        If the workspace to remove the user from does not exist.
         If the user does not have the required role to remove users from the specified
         workspace.
         If the user ID is not found.
@@ -753,9 +870,15 @@ async def check_remove_user_from_workspace_call(
         workspace.
     """
 
-    remove_from_workspace_db = await get_workspace_by_workspace_name(
-        asession=asession, workspace_name=user.remove_workspace_name
-    )
+    try:
+        remove_from_workspace_db = await get_workspace_by_workspace_name(
+            asession=asession, workspace_name=remove_from_workspace_name
+        )
+    except WorkspaceNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workspace does not exist: {remove_from_workspace_name}",
+        ) from e
 
     # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
     # users for non-admin users of a workspace.
@@ -794,10 +917,13 @@ async def check_remove_user_from_workspace_call(
     return remove_from_workspace_db, user_db
 
 
-async def check_create_user_call(
-    *, asession: AsyncSession, calling_user_db: UserDB, user: UserCreateWithPassword
-) -> tuple[UserCreateWithPassword, WorkspaceDB]:
-    """Check the user creation call to ensure the action is allowed.
+async def check_create_or_add_user_call(
+    *,
+    asession: AsyncSession,
+    calling_user_db: UserDB,
+    user: UserCreate | UserCreateWithPassword,
+) -> tuple[UserCreate | UserCreateWithPassword, WorkspaceDB]:
+    """Check the create/add user call to ensure the action is allowed.
 
     NB: This function:
 
@@ -807,17 +933,17 @@ async def check_create_user_call(
 
     The process is as follows:
 
-    1. If a workspace is specified for the user being created and the workspace is not
-        yet created, then an error is thrown. This is a safety net for the backend
-        since the frontend should ensure that a user can only be created in existing
-        workspaces.
+    1. If a workspace is specified for the user being created/added and the workspace is
+        not yet created, then an error is thrown. This is a safety net for the backend
+        since the frontend should ensure that a user can only be created in/added to
+        existing workspaces.
     2. If the calling user is not an admin in any workspace, then an error is thrown.
         This is a safety net for the backend since the frontend should ensure that the
-        ability to create a user is only available to admin users.
+        ability to create/add a user is only available to admin users.
     3. If the workspace is not specified for the user and the calling user belongs to
         multiple workspaces, then an error is thrown. This is a safety net for the
         backend since the frontend should ensure that a workspace is specified when
-        creating a user.
+        creating/adding a user if there are multiple workspaces to choose from.
     4. If the calling user is not an admin in the workspace specified for the user and
         the specified workspace exists with users and roles, then an error is thrown.
         In this case, the calling user must be an admin in the specified workspace.
@@ -827,21 +953,21 @@ async def check_create_user_call(
     asession
         The SQLAlchemy async session to use for all database connections.
     calling_user_db
-        The user object associated with the user that is creating a user.
+        The user object associated with the user that is creating/adding a user.
     user
-        The user object to create.
+        The user object to create/add.
 
     Returns
     -------
-    tuple[UserCreateWithPassword, WorkspaceDB]
-        The user and workspace objects to create.
+    tuple[UserCreate | UserCreateWithPassword, WorkspaceDB]
+        The user and workspace objects to create/add.
 
     Raises
     ------
     HTTPException
-        If a workspace is specified for the user being created and the workspace is not
-        yet created.
-        If the calling user does not have the correct role to create a user in any
+        If a workspace is specified for the user being created/added and the workspace
+        is not yet created.
+        If the calling user does not have the correct role to create/add a user in any
         workspace.
         If the user workspace is not specified and the calling user belongs to multiple
         workspaces.
@@ -906,11 +1032,11 @@ async def check_create_user_call(
     else:
         # NB: `user.workspace_name` is updated here!
         user.workspace_name = calling_user_admin_workspace_dbs[0].workspace_name
+    assert user.workspace_name is not None
 
     # NB: `user.role` is updated here!
     user.role = user.role or UserRoles.READ_ONLY
 
-    assert user.workspace_name is not None
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=user.workspace_name
     )
@@ -985,13 +1111,14 @@ async def check_update_user_call(
 
     Returns
     -------
-    tuple[UserDB, WorkspaceDB]
+    tuple[UserDB, WorkspaceDB | None]
         The user and workspace objects to update.
 
     Raises
     ------
     HTTPException
         If the calling user does not have the correct access to update the user.
+        If the calling user and the user being updated does not share workspaces.
         If a user's role is being changed but the workspace name is not specified.
         If a user's default workspace is being changed but the workspace name is not
             specified.
@@ -1001,8 +1128,13 @@ async def check_update_user_call(
         If the user does not belong to the specified workspace.
     """
 
-    if not await user_has_admin_role_in_any_workspace(
-        asession=asession, user_db=calling_user_db
+    if not (
+        await user_has_admin_role_in_any_workspace(
+            asession=asession, user_db=calling_user_db
+        )
+        and await check_if_two_users_share_a_common_workspace(
+            asession=asession, user_id_1=calling_user_db.user_id, user_id_2=user_id
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -1040,7 +1172,11 @@ async def check_update_user_call(
         )
 
     workspace_db = None
-    if user.role and user.workspace_name:
+
+    # Assumption here is that if the workspace name is specified when updating a user,
+    # then the calling user must be an admin in that workspace AND the user being
+    # updated must also exist in that workspace.
+    if user.workspace_name:
         workspace_db = await get_workspace_by_workspace_name(
             asession=asession, workspace_name=user.workspace_name
         )

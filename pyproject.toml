@@ -43,3 +43,8 @@ exclude_lines = [
     "pragma: no cover",
 ]
 omit = ["*/tests/*"]
+
+[tool.coverage.run]
+branch = true
+concurrency = ["greenlet", "thread"]
+source = ["core_backend"]

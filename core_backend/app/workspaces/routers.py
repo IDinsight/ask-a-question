@@ -13,6 +13,7 @@ from ..auth.dependencies import (
     get_current_workspace_name,
 )
 from ..auth.schemas import AuthenticationDetails
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -67,7 +68,7 @@ async def create_workspaces(
     to a default workspace already.
 
     NB: When a workspace is created, the API daily quota and content quota limits for
-    the workspace is set.
+    the workspace is set to global defaults regardless of what the user specifies.
 
     The process is as follows:
 
@@ -119,9 +120,9 @@ async def create_workspaces(
     for workspace in workspaces:
         # 1.
         workspace_db, is_new_workspace = await create_workspace(
-            api_daily_quota=workspace.api_daily_quota,
+            api_daily_quota=DEFAULT_API_QUOTA,  # workspace.api_daily_quota,
             asession=asession,
-            content_quota=workspace.content_quota,
+            content_quota=DEFAULT_CONTENT_QUOTA,  # workspace.content_quota,
             user=UserCreate(
                 role=UserRoles.ADMIN,
                 username=calling_user_db.username,
@@ -145,7 +146,7 @@ async def create_workspaces(
                 WorkspaceRetrieve(
                     api_daily_quota=workspace_db.api_daily_quota,
                     api_key_first_characters=workspace_db.api_key_first_characters,
-                    api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
+                    api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,  # noqa: E501
                     content_quota=workspace_db.content_quota,
                     created_datetime_utc=workspace_db.created_datetime_utc,
                     updated_datetime_utc=workspace_db.updated_datetime_utc,
@@ -222,7 +223,7 @@ async def retrieve_all_workspaces(
     ]
 
 
-@router.get("/current", response_model=WorkspaceRetrieve)
+@router.get("/current-workspace", response_model=WorkspaceRetrieve)
 async def retrieve_current_workspace(
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
@@ -375,6 +376,7 @@ async def retrieve_workspaces_by_user_id(
     HTTPException
         If the calling user does not have the correct role to retrieve workspaces.
         If the user ID does not exist.
+        If the calling user is not an admin in the same workspace as the user.
     """
 
     if not await user_has_admin_role_in_any_workspace(
@@ -404,7 +406,8 @@ async def retrieve_workspaces_by_user_id(
     calling_user_admin_workspace_ids = [
         db.workspace_id for db in calling_user_admin_workspace_dbs
     ]
-    return [
+
+    retrieved_workspaces: list[WorkspaceRetrieve] = [
         WorkspaceRetrieve(
             api_daily_quota=db.api_daily_quota,
             api_key_first_characters=db.api_key_first_characters,
@@ -418,6 +421,13 @@ async def retrieve_workspaces_by_user_id(
         for db in user_workspace_dbs
         if db.workspace_id in calling_user_admin_workspace_ids
     ]
+    if retrieved_workspaces:
+        return retrieved_workspaces
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Calling user is not an admin in the same workspace as the user.",
+    )
 
 
 @router.put("/rotate-key", response_model=WorkspaceKeyResponse)
@@ -522,6 +532,7 @@ async def switch_workspace(
     ------
     HTTPException
         If the workspace to switch into does not exist.
+        If the calling user's role in the workspace to switch into is not valid.
     """
 
     username = calling_user_db.username
@@ -532,24 +543,33 @@ async def switch_workspace(
     user_workspace_db = next(
         (db for db in user_workspace_dbs if db.workspace_name == workspace_name), None
     )
+
     if user_workspace_db is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Workspace with workspace name '{workspace_name}' not found.",
         )
-    user_roles = await get_user_role_in_workspace(
+
+    user_role = await get_user_role_in_workspace(
         asession=asession, user_db=calling_user_db, workspace_db=user_workspace_db
     )
+
+    if user_role is None or user_role not in UserRoles:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Invalid user role when switching to workspace.",
+        )
+
     # Hardcode "fullaccess" now, but may use it in the future.
     return AuthenticationDetails(
         access_level="fullaccess",
         access_token=create_access_token(
-            username=username, workspace_name=workspace_name
+            user_role=user_role, username=username, workspace_name=workspace_name
         ),
         token_type="bearer",
+        user_role=user_role,
         username=username,
         workspace_name=workspace_name,
-        user_role=user_roles,
     )
 
 
@@ -594,6 +614,7 @@ async def update_workspace(
         If the calling user does not have the correct role to update the workspace.
         If there is an error updating the workspace quotas.
     """
+
     workspace_db_checked = await check_update_workspace_call(
         asession=asession,
         calling_user_db=calling_user_db,

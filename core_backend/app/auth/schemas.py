@@ -19,10 +19,9 @@ class AuthenticatedUser(BaseModel):
     """
 
     access_level: AccessLevel
+    user_role: UserRoles
     username: str
     workspace_name: str
-    user_role: UserRoles
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -32,12 +31,9 @@ class AuthenticationDetails(BaseModel):
     access_level: AccessLevel
     access_token: str
     token_type: TokenType
+    user_role: UserRoles
     username: str
     workspace_name: str
-    user_role: UserRoles
-    # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
-    is_admin: bool = True
-    # HACK FIX FOR FRONTEND: Need this to show User Management page for all users.
 
     model_config = ConfigDict(from_attributes=True)
 
