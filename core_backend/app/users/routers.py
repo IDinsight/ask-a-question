@@ -792,11 +792,13 @@ async def check_if_username_exists(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     username: str,
     asession: AsyncSession = Depends(get_async_session),
-) -> bool:
+) -> None:
     """Check if a username exists in the database.
+
     NB: This endpoint should only be available to admin users. Although the check will
     pull global user records, the endpoint does not return details regarding user
     information, only a boolean.
+
     Parameters
     ----------
     calling_user_db
@@ -805,15 +807,13 @@ async def check_if_username_exists(
         The username to check.
     asession
         The SQLAlchemy async session to use for all database connections.
-    Returns
-    -------
-    bool
-        Specifies the username already exists. `False` if the usernames does not exist.
+
     Raises
     ------
     HTTPException
         If the calling user does not have the correct role to check if a username
         exists.
+        If the username does not exist.
     """
 
     if not await user_has_admin_role_in_any_workspace(
@@ -825,12 +825,11 @@ async def check_if_username_exists(
             "exists.",
         )
 
-    return (
-        await check_if_user_exists(
-            asession=asession, user=UserCreate(username=username)
-        )
-        is not None
-    )
+    if not await check_if_user_exists(
+        asession=asession, user=UserCreate(username=username)
+    ):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return
 
 
 async def check_remove_user_from_workspace_call(

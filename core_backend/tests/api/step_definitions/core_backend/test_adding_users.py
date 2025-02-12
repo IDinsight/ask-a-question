@@ -58,6 +58,12 @@ def carlos_adds_tanmay(
     """
 
     carlos_access_token = user_workspace_responses["carlos"]["access_token"]
+    response = client.head(
+        "/user/Tanmay",
+        headers={"Authorization": f"Bearer {carlos_access_token}"},
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
     create_response = client.post(
         "/user/",
         headers={"Authorization": f"Bearer {carlos_access_token}"},
@@ -69,6 +75,7 @@ def carlos_adds_tanmay(
         },
     )
     assert create_response.status_code == status.HTTP_200_OK
+
     return create_response
 
 
