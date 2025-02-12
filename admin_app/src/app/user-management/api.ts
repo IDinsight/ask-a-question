@@ -1,5 +1,6 @@
 import { Workspace } from "@/components/WorkspaceMenu";
 import api from "@/utils/api";
+import axios from "axios";
 interface UserBody {
   sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
@@ -117,7 +118,7 @@ const createWorkspace = async (workspace: Workspace, token: string) => {
 
 const getCurrentWorkspace = async (token: string) => {
   try {
-    const response = await api.get("/workspace/current", {
+    const response = await api.get("/workspace/current-workspace", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -125,6 +126,31 @@ const getCurrentWorkspace = async (token: string) => {
     return response.data;
   } catch (error) {
     throw new Error("Error fetching user info");
+  }
+};
+
+export const checkIfUsernameExists = async (
+  username: string,
+  token: string,
+): Promise<boolean> => {
+  try {
+    const response = await api.head(`/user/${username}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.status === 200;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      throw new Error(
+        `Error checking username: ${error.response?.statusText || "Unknown error"}`,
+      );
+    }
+    throw new Error("Error checking username");
   }
 };
 const getWorkspaceList = async (token: string) => {
@@ -165,6 +191,24 @@ const editWorkspace = async (
   }
 };
 
+const addUserToWorkspace = async (
+  username: string,
+  workspace_name: string,
+  token: string,
+) => {
+  try {
+    const response = await api.post(
+      "/user/add-existing-user-to-workspace",
+      { username, workspace_name },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error("Error adding user to workspace");
+  }
+};
 export {
   createUser,
   editUser,
@@ -173,10 +217,12 @@ export {
   getRegisterOption,
   registerUser,
   resetPassword,
+  checkIfUsernameExists,
   createWorkspace,
   getWorkspaceList,
   getLoginWorkspace,
   editWorkspace,
   getCurrentWorkspace,
+  addUserToWorkspace,
 };
 export type { UserBody, UserBodyPassword };

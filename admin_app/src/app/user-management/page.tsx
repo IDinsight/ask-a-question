@@ -17,6 +17,8 @@ import {
   getCurrentWorkspace,
   resetPassword,
   UserBodyPassword,
+  addUserToWorkspace,
+  checkIfUsernameExists,
 } from "./api";
 import { useAuth } from "@/utils/auth";
 import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
@@ -48,16 +50,15 @@ const UserManagement: React.FC = () => {
   const [showUserSearchModal, setShowUserSearchModal] = React.useState(false);
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
   React.useEffect(() => {
-    getUserList(token!).then((data: UserBody[]) => {
-      const sortedData = data.sort((a: UserBody, b: UserBody) =>
-        a.username.localeCompare(b.username),
-      );
-      setLoading(false);
-      console.log(sortedData);
-      setUsers(sortedData);
-    });
     getCurrentWorkspace(token!).then((data: Workspace) => {
       setCurrentWorkspace(data);
+      getUserList(token!).then((data: UserBody[]) => {
+        const sortedData = data.sort((a: UserBody, b: UserBody) =>
+          a.username.localeCompare(b.username),
+        );
+        setLoading(false);
+        setUsers(sortedData);
+      });
     });
   }, [loading]);
   React.useEffect(() => {
@@ -98,7 +99,6 @@ const UserManagement: React.FC = () => {
       (workspace) => workspace.workspace_name === workspaceName,
     );
     if (workspace) {
-      console.log(workspace);
       return workspace.user_role as "admin" | "read_only";
     }
     return undefined;
@@ -304,11 +304,23 @@ const UserManagement: React.FC = () => {
               onClose={() => {
                 setShowCreateModal(false);
               }}
-              onContinue={handleRegisterModalContinue}
-              registerUser={(user: UserBodyPassword | UserBody) => {
-                return createUser(user as UserBodyPassword, token!);
+              checkUserExists={(username: string) => {
+                return checkIfUsernameExists(username, token!);
               }}
-              buttonTitle="Confirm"
+              addUserToWorkspace={(username: string) => {
+                return addUserToWorkspace(
+                  username,
+                  currentWorkspace!.workspace_name,
+                  token!,
+                );
+              }}
+              createUser={(username: string, password: string) => {
+                return addUserToWorkspace(
+                  username,
+                  currentWorkspace!.workspace_name,
+                  token!,
+                );
+              }}
             />
             <ConfirmationModal
               open={showConfirmationModal}

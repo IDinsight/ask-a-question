@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+"use client";
+
+import type React from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   TextField,
   Button,
-  Box,
   Typography,
+  Box,
   Alert,
 } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+
 interface UserSearchModalProps {
   open: boolean;
   onClose: () => void;
@@ -28,51 +31,59 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [userExists, setUserExists] = useState<boolean | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleVerifyUser = async () => {
+  const handleVerifyUser = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const exists = await checkUserExists(username);
+      console.log("User exists:", exists); // Debug log
       setUserExists(exists);
+      setIsVerified(true);
     } catch (err) {
+      console.error("Error verifying user:", err); // Debug log
       setError("Error verifying user.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [username, checkUserExists]);
 
-  const handleAction = async () => {
+  const handleAction = useCallback(async () => {
+    if (!isVerified) return;
+
     if (userExists) {
       await addUserToWorkspace(username);
-      onClose();
     } else {
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
         return;
       }
       await createUser(username, password);
-      onClose();
     }
-  };
+    onClose();
+  }, [
+    isVerified,
+    userExists,
+    username,
+    password,
+    confirmPassword,
+    addUserToWorkspace,
+    createUser,
+    onClose,
+  ]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose}>
       <DialogContent>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          gap={2}
-          width={400}
-          mx="auto"
-        >
+        <Box display="flex" flexDirection="column" gap={2} width={350}>
           <Typography variant="h6" align="center">
-            Add or Create User to Workspace
+            Add or Create User
           </Typography>
           {error && <Alert severity="error">{error}</Alert>}
-          <Box display="flex" gap={1} width="100%">
+          <Box display="flex" gap={1}>
             <TextField
               fullWidth
               label="Username"
@@ -84,10 +95,10 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
               onClick={handleVerifyUser}
               disabled={loading || !username}
             >
-              <CheckCircleIcon />
+              {loading ? "Checking..." : "Verify User"}
             </Button>
           </Box>
-          {userExists === false && (
+          {isVerified && userExists === false && (
             <>
               <TextField
                 fullWidth
@@ -105,20 +116,14 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
               />
             </>
           )}
-          <Box display="flex" gap={2} width="100%">
-            <Button variant="outlined" color="primary" onClick={onClose} fullWidth>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={userExists === null}
-              onClick={handleAction}
-              fullWidth
-            >
-              {userExists ? "Add User to Workspace" : "Create User"}
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!isVerified}
+            onClick={handleAction}
+          >
+            {userExists ? "Add User to Workspace" : "Create User"}
+          </Button>
         </Box>
       </DialogContent>
     </Dialog>
