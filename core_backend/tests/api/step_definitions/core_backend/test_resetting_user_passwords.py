@@ -55,11 +55,9 @@ def suzin_reset_own_password(
         The response from Suzin resetting her own password.
     """
 
-    suzin_access_token = user_workspace_responses["suzin"]["access_token"]
     suzin_recovery_codes = user_workspace_responses["suzin"]["recovery_codes"]
     reset_password_response = client.put(
         "/user/reset-password",
-        headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
             "password": "456",
             "recovery_code": suzin_recovery_codes[0],
@@ -137,11 +135,9 @@ def suzin_reset_mark_password(
         The response from Suzin resetting Mark's password.
     """
 
-    suzin_access_token = user_workspace_responses["suzin"]["access_token"]
     mark_recovery_codes = user_workspace_responses["mark"]["recovery_codes"]
     reset_password_response = client.put(
         "/user/reset-password",
-        headers={"Authorization": f"Bearer {suzin_access_token}"},
         json={
             "password": "456",
             "recovery_code": mark_recovery_codes[0],
@@ -151,11 +147,11 @@ def suzin_reset_mark_password(
     return reset_password_response
 
 
-@then("Suzin gets an error")
-def check_suzin_reset_password_responses(
+@then("Suzin should be able to reset Mark's password")
+def check_suzin_reset_mark_password_response(
     suzin_reset_mark_password_response: httpx.Response,
 ) -> None:
-    """Check that Suzin cannot reset Mark's password.
+    """Check that Suzin can reset Mark's password.
 
     Parameters
     ----------
@@ -163,7 +159,7 @@ def check_suzin_reset_password_responses(
         The response from Suzin resetting Mark's password.
     """
 
-    assert suzin_reset_mark_password_response.status_code == status.HTTP_403_FORBIDDEN
+    assert suzin_reset_mark_password_response.status_code == status.HTTP_200_OK
 
 
 @when(
@@ -188,11 +184,9 @@ def mark_reset_suzin_password(
         The response from Mark resetting Suzin's password.
     """
 
-    mark_access_token = user_workspace_responses["mark"]["access_token"]
     suzin_recovery_codes = user_workspace_responses["suzin"]["recovery_codes"]
     reset_password_response = client.put(
         "/user/reset-password",
-        headers={"Authorization": f"Bearer {mark_access_token}"},
         json={
             "password": "123",
             "recovery_code": suzin_recovery_codes[1],
@@ -202,11 +196,11 @@ def mark_reset_suzin_password(
     return reset_password_response
 
 
-@then("Mark gets an error")
-def check_mark_reset_suzin_password_responses(
+@then("Mark should be able to reset Suzin's password")
+def check_mark_reset_suzin_password_response(
     mark_reset_suzin_password_response: httpx.Response,
 ) -> None:
-    """Check that Mark cannot reset Suzin's password.
+    """Check that Mark can reset Suzin's password.
 
     Parameters
     ----------
@@ -214,7 +208,7 @@ def check_mark_reset_suzin_password_responses(
         The response from Mark resetting Suzin's password.
     """
 
-    assert mark_reset_suzin_password_response.status_code == status.HTTP_403_FORBIDDEN
+    assert mark_reset_suzin_password_response.status_code == status.HTTP_200_OK
 
 
 @when(
@@ -239,25 +233,23 @@ def poornima_reset_suzin_password(
         The response from Poornima resetting Suzin's password.
     """
 
-    poornima_access_token = user_workspace_responses["poornima"]["access_token"]
     suzin_recovery_codes = user_workspace_responses["suzin"]["recovery_codes"]
     reset_password_response = client.put(
         "/user/reset-password",
-        headers={"Authorization": f"Bearer {poornima_access_token}"},
         json={
             "password": "123",
-            "recovery_code": suzin_recovery_codes[1],
+            "recovery_code": suzin_recovery_codes[2],
             "username": "Suzin",
         },
     )
     return reset_password_response
 
 
-@then("Poornima gets an error")
-def check_poornima_reset_suzin_password_responses(
+@then("Poornima should be able to reset Suzin's password")
+def check_poornima_reset_suzin_password_response(
     poornima_reset_suzin_password_response: httpx.Response,
 ) -> None:
-    """Check that Mark cannot reset Suzin's password.
+    """Check that Poornima can reset Suzin's password.
 
     Parameters
     ----------
@@ -265,6 +257,4 @@ def check_poornima_reset_suzin_password_responses(
         The response from Poornima resetting Suzin's password.
     """
 
-    assert (
-        poornima_reset_suzin_password_response.status_code == status.HTTP_403_FORBIDDEN
-    )
+    assert poornima_reset_suzin_password_response.status_code == status.HTTP_200_OK

@@ -543,9 +543,7 @@ async def is_register_required(
 
 @router.put("/reset-password", response_model=UserRetrieve)
 async def reset_password(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
-    user: UserResetPassword,
-    asession: AsyncSession = Depends(get_async_session),
+    user: UserResetPassword, asession: AsyncSession = Depends(get_async_session)
 ) -> UserRetrieve:
     """Reset user password. Takes a user object, generates a new password, replaces the
     old one in the database, and returns the updated user object.
@@ -568,8 +566,6 @@ async def reset_password(
 
     Parameters
     ----------
-    calling_user_db
-        The user object associated with the user resetting the password.
     user
         The user object with the new password and recovery code.
     asession
@@ -581,9 +577,7 @@ async def reset_password(
         The updated user object.
     """
 
-    user_to_update = await check_reset_password_call(
-        asession=asession, calling_user_db=calling_user_db, user=user
-    )
+    user_to_update = await check_reset_password_call(asession=asession, user=user)
 
     # 1.
     updated_recovery_codes = [
@@ -1044,7 +1038,7 @@ async def check_create_or_add_user_call(
 
 
 async def check_reset_password_call(
-    *, asession: AsyncSession, calling_user_db: UserDB, user: UserResetPassword
+    *, asession: AsyncSession, user: UserResetPassword
 ) -> UserDB:
     """Check the reset password call to ensure the action is allowed.
 
@@ -1052,8 +1046,6 @@ async def check_reset_password_call(
     ----------
     asession
         The SQLAlchemy async session to use for all database connections.
-    calling_user_db
-        The user object associated with the user that is resetting the password.
     user
         The user object with the new password and recovery code.
 
@@ -1065,16 +1057,9 @@ async def check_reset_password_call(
     Raises
     ------
     HTTPException
-        If the calling user is not the user resetting the password.
         If the user to update is not found.
         If the recovery code is incorrect.
     """
-
-    if calling_user_db.username != user.username:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Calling user is not the user resetting the password.",
-        )
 
     user_to_update = await check_if_user_exists(asession=asession, user=user)
 
