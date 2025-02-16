@@ -5,13 +5,17 @@ interface UserBody {
   sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
   username: string;
+  role: "admin" | "read_only";
   user_workspaces?: Workspace[];
 }
 interface UserBodyPassword extends UserBody {
   password: string;
 }
+interface UserBodyUpdate extends UserBody {
+  workspace_name: string;
+}
 
-const editUser = async (user_id: number, user: UserBody, token: string) => {
+const editUser = async (user_id: number, user: UserBodyUpdate, token: string) => {
   try {
     const response = await api.put(`/user/${user_id}`, user, {
       headers: { Authorization: `Bearer ${token}` },
@@ -24,6 +28,23 @@ const editUser = async (user_id: number, user: UserBody, token: string) => {
 
 const createUser = async (user: UserBodyPassword, token: string) => {
   try {
+    const response = await api.post("/user/", user, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error creating user");
+  }
+};
+const createNewUser = async (
+  usename: string,
+  password: string,
+  workspace_name: string,
+  role: string,
+  token: string,
+) => {
+  try {
+    const user = { username: usename, password, role, workspace_name };
     const response = await api.post("/user/", user, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -83,7 +104,6 @@ const resetPassword = async (
   username: string,
   recovery_code: string,
   password: string,
-  token: string,
 ) => {
   try {
     const response = await api.put(
@@ -92,7 +112,6 @@ const resetPassword = async (
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -129,7 +148,7 @@ const getCurrentWorkspace = async (token: string) => {
   }
 };
 
-export const checkIfUsernameExists = async (
+const checkIfUsernameExists = async (
   username: string,
   token: string,
 ): Promise<boolean> => {
@@ -209,6 +228,29 @@ const addUserToWorkspace = async (
     throw new Error("Error adding user to workspace");
   }
 };
+const removeUserFromWorkspace = async (
+  user_id: number,
+  workspace_name: string,
+  token: string,
+) => {
+  try {
+    const response = await api.delete(
+      `/user/${user_id}?remove_from_workspace_name=${workspace_name}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "You cannot remove the last admin from the workspace.",
+      };
+    }
+    throw new Error("Error removing user from workspace");
+  }
+};
 export {
   createUser,
   editUser,
@@ -224,5 +266,7 @@ export {
   editWorkspace,
   getCurrentWorkspace,
   addUserToWorkspace,
+  createNewUser,
+  removeUserFromWorkspace,
 };
-export type { UserBody, UserBodyPassword };
+export type { UserBody, UserBodyPassword, UserBodyUpdate };

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Button,
@@ -8,6 +8,8 @@ import {
   Paper,
   Tooltip,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { UserCard } from "./components/UserCard";
 import {
@@ -16,79 +18,110 @@ import {
   getUserList,
   getCurrentWorkspace,
   resetPassword,
-  UserBodyPassword,
   addUserToWorkspace,
   checkIfUsernameExists,
+  createNewUser,
+  removeUserFromWorkspace,
 } from "./api";
 import { useAuth } from "@/utils/auth";
-import { CreateUserModal, EditUserModal } from "./components/UserCreateModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
-import { createUser, UserBody } from "./api";
+import type { UserBody, UserBodyUpdate } from "./api";
 import { UserResetModal } from "./components/UserResetModal";
 import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
-import { Workspace } from "@/components/WorkspaceMenu";
-import { set } from "date-fns";
-import { get } from "http";
-import UserWorkspaceModal from "./components/UserWorkspaceModal";
+import type { Workspace } from "@/components/WorkspaceMenu";
 import UserSearchModal from "./components/UserWorkspaceModal";
+import { usePathname } from "next/navigation";
 
 const UserManagement: React.FC = () => {
-  const { token, username, userRole, workspaceName, loginWorkspace } = useAuth();
+  const { token, userRole, loginWorkspace } = useAuth();
+  const pathname = usePathname();
   const [currentWorkspace, setCurrentWorkspace] = React.useState<Workspace | null>();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
-  const [showUserResetModal, setShowUserResetModal] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserBody | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
   const [openEditWorkspaceModal, setOpenEditWorkspaceModal] =
     React.useState<boolean>(false);
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
-  const [showUserSearchModal, setShowUserSearchModal] = React.useState(false);
+  const [formType, setFormType] = React.useState<"add" | "create" | "edit">("add");
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
+  const [snackbarMessage, setSnackbarMessage] = React.useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ message: "", severity: "success" });
   React.useEffect(() => {
-    getCurrentWorkspace(token!).then((data: Workspace) => {
-      setCurrentWorkspace(data);
-      getUserList(token!).then((data: UserBody[]) => {
-        const sortedData = data.sort((a: UserBody, b: UserBody) =>
+    fetchUserData();
+  }, [token, showCreateModal, showEditModal]);
+  const fetchUserData = React.useCallback(() => {
+    setLoading(true);
+    if (!token) return;
+
+    getCurrentWorkspace(token)
+      .then((fetchedWorkspace: Workspace) => {
+        setCurrentWorkspace(fetchedWorkspace);
+
+        return getUserList(token);
+      })
+      .then((data: any) => {
+        const userData = data.map((user: any) => ({
+          username: user.username,
+          user_id: user.user_id,
+          user_workspaces: user.user_workspaces,
+          role: user.user_workspaces.find(
+            (workspace: any) =>
+              workspace.workspace_name === currentWorkspace?.workspace_name,
+          )?.user_role,
+        }));
+
+        const sortedData = userData.sort((a: UserBody, b: UserBody) =>
           a.username.localeCompare(b.username),
         );
-        setLoading(false);
+
         setUsers(sortedData);
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-    });
-  }, [loading]);
-  React.useEffect(() => {
-    if (recoveryCodes.length > 0) {
-      setShowConfirmationModal(true);
-    } else {
-      setShowConfirmationModal(false);
-    }
-  }, [recoveryCodes]);
+  }, [token, currentWorkspace]);
+
   const onWorkspaceModalClose = () => {
     setOpenEditWorkspaceModal(false);
   };
-  const handleRegisterModalContinue = (newRecoveryCodes: string[]) => {
+
+  const handleCreateModalContinue = (newRecoveryCodes: string[]) => {
     setRecoveryCodes(newRecoveryCodes);
-    setLoading(true);
     setShowCreateModal(false);
+    setSnackbarMessage({
+      message: "User created successfully",
+      severity: "success",
+    });
   };
+
   const handleEditModalContinue = (newRecoveryCodes: string[]) => {
     setLoading(true);
     setShowEditModal(false);
+    setSnackbarMessage({
+      message: "User edited successfully",
+      severity: "success",
+    });
   };
 
   const handleResetPassword = (user: UserBody) => {
     setCurrentUser(user);
-    setShowUserResetModal(true);
+    // setShowUserResetModal(true);
   };
 
   const handleEditUser = (user: UserBody) => {
+    setFormType("edit");
     setCurrentUser(user);
-    setShowEditModal(true);
+    setShowCreateModal(true);
   };
 
   const getUserRoleInWorkspace = (
@@ -103,6 +136,39 @@ const UserManagement: React.FC = () => {
     }
     return undefined;
   };
+
+  const handleRemoveUser = (userId: number, workspaceName: string) => {
+    setLoading(true);
+    removeUserFromWorkspace(userId, workspaceName, token!)
+      .then((data) => {
+        console.log("data", data);
+
+        if (data.require_workspace_switch) {
+          loginWorkspace(data.default_workspace_name);
+        }
+        if (data.status && data.status === 403) {
+          setSnackbarMessage({
+            message: data.message,
+            severity: "error",
+          });
+        } else {
+          setSnackbarMessage({
+            message: "User removed successfully",
+            severity: "success",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to remove user:", error);
+        setSnackbarMessage({
+          message: "Failed to remove user",
+          severity: "error",
+        });
+      })
+      .finally(() => {
+        fetchUserData();
+      });
+  };
   if (userRole !== "admin") {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
@@ -110,6 +176,28 @@ const UserManagement: React.FC = () => {
       </Box>
     );
   }
+
+  function handleUserModalClose(): void {
+    setShowCreateModal(false);
+  }
+
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarMessage({ message: "", severity: "info" });
+  };
+
+  useEffect(() => {
+    if (recoveryCodes.length > 0) {
+      setShowConfirmationModal(true);
+    } else {
+      setShowConfirmationModal(false);
+    }
+  }, [recoveryCodes]);
 
   return (
     <Layout.FlexBox
@@ -176,6 +264,7 @@ const UserManagement: React.FC = () => {
                 variant="contained"
                 color="primary"
                 onClick={() => {
+                  setFormType("add");
                   setShowCreateModal(true);
                 }}
               >
@@ -189,10 +278,11 @@ const UserManagement: React.FC = () => {
                 variant="contained"
                 color="primary"
                 onClick={() => {
+                  setFormType("create");
                   setShowCreateModal(true);
                 }}
               >
-                Create new user to workspace
+                Create new user and add workspace
               </Button>
             </>
           </Tooltip>
@@ -220,52 +310,21 @@ const UserManagement: React.FC = () => {
                 <Layout.FlexBox key={user.user_id}>
                   <UserCard
                     index={index}
+                    userId={user.user_id!}
                     username={user.username}
                     userRole={
                       getUserRoleInWorkspace(
                         user.user_workspaces!,
                         currentWorkspace!.workspace_name,
-                      )
-                        ? getUserRoleInWorkspace(
-                            user.user_workspaces!,
-                            currentWorkspace!.workspace_name,
-                          )
-                        : "read_only"
+                      ) || "read_only"
                     }
                     isLastItem={index === users.length - 1}
                     hoveredIndex={hoveredIndex}
                     setHoveredIndex={setHoveredIndex}
-                    onResetPassword={() => handleResetPassword(user)}
+                    onRemoveUser={(userId) =>
+                      handleRemoveUser(userId, currentWorkspace!.workspace_name)
+                    }
                     onEditUser={() => handleEditUser(user)}
-                  />
-                  <EditUserModal
-                    open={showEditModal}
-                    onClose={() => {
-                      setShowEditModal(false);
-                    }}
-                    user={currentUser!}
-                    isLoggedUser={currentUser?.username === username}
-                    onContinue={handleEditModalContinue}
-                    registerUser={(userToEdit: UserBody) => {
-                      return editUser(currentUser!.user_id!, userToEdit, token!);
-                    }}
-                    title={`Edit User: ${currentUser?.username}`}
-                    buttonTitle="Confirm"
-                  />
-                  <UserResetModal
-                    open={showUserResetModal}
-                    onClose={() => {
-                      setShowUserResetModal(false);
-                    }}
-                    onContinue={() => {}}
-                    resetPassword={(
-                      username: string,
-                      recoveryCode: string,
-                      password: string,
-                    ) => {
-                      return resetPassword(username, recoveryCode, password, token!);
-                    }}
-                    user={currentUser!}
                   />
                 </Layout.FlexBox>
               ))}
@@ -284,26 +343,14 @@ const UserManagement: React.FC = () => {
                   );
                 }}
                 loginWorkspace={(workspace: Workspace) => {
-                  return loginWorkspace(workspace.workspace_name);
+                  return loginWorkspace(workspace.workspace_name, pathname);
                 }}
+                setSnackMessage={setSnackbarMessage}
               />
             )}
-            <CreateUserModal
-              open={showCreateModal}
-              onClose={() => {
-                setShowCreateModal(false);
-              }}
-              onContinue={handleRegisterModalContinue}
-              registerUser={(user: UserBodyPassword | UserBody) => {
-                return createUser(user as UserBodyPassword, token!);
-              }}
-              buttonTitle="Confirm"
-            />
             <UserSearchModal
               open={showCreateModal}
-              onClose={() => {
-                setShowCreateModal(false);
-              }}
+              onClose={handleUserModalClose}
               checkUserExists={(username: string) => {
                 return checkIfUsernameExists(username, token!);
               }}
@@ -314,13 +361,35 @@ const UserManagement: React.FC = () => {
                   token!,
                 );
               }}
-              createUser={(username: string, password: string) => {
-                return addUserToWorkspace(
+              createUser={(
+                username: string,
+                password: string,
+                role: "admin" | "read_only",
+              ) => {
+                return createNewUser(
                   username,
+                  password,
                   currentWorkspace!.workspace_name,
+                  role,
                   token!,
                 );
               }}
+              editUser={(username: string, role: "admin" | "read_only") => {
+                return editUser(
+                  currentUser!.user_id!,
+                  {
+                    username,
+                    role,
+                    workspace_name: currentWorkspace?.workspace_name,
+                  } as UserBodyUpdate,
+                  token!,
+                );
+              }}
+              setSnackMessage={setSnackbarMessage}
+              onContinue={handleCreateModalContinue}
+              formType={formType}
+              users={users}
+              user={currentUser ? currentUser : undefined}
             />
             <ConfirmationModal
               open={showConfirmationModal}
@@ -333,6 +402,19 @@ const UserManagement: React.FC = () => {
           </Paper>
         )}
       </Box>
+      <Snackbar
+        open={snackbarMessage.message !== ""}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarMessage.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage.message}
+        </Alert>
+      </Snackbar>
     </Layout.FlexBox>
   );
 };

@@ -356,7 +356,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         </Tooltip>
         <Tooltip title="Add new content">
           <>
-            <AddButtonWithDropdown />
+            <AddButtonWithDropdown editAccess={editAccess} />
           </>
         </Tooltip>
         <DownloadModal
@@ -401,7 +401,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   );
 };
 
-function AddButtonWithDropdown(editAccess: boolean) {
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
@@ -416,15 +416,10 @@ function AddButtonWithDropdown(editAccess: boolean) {
   return (
     <>
       <ButtonGroup variant="contained" disabled={!editAccess}>
-        <Button
-          disabled={!editAccess}
-          component={Link}
-          href="/content/edit"
-          startIcon={<AddIcon />}
-        >
+        <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
-        <Button size="small" disabled={!editAccess} onClick={handleClick}>
+        <Button size="small" onClick={handleClick}>
           <ArrowDropDownIcon />
         </Button>
       </ButtonGroup>
@@ -446,7 +441,7 @@ function AddButtonWithDropdown(editAccess: boolean) {
       <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
   );
-}
+};
 
 const CardsGrid = ({
   displayLanguage,

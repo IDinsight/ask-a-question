@@ -23,12 +23,12 @@ import { appColors, sizes } from "@/utils";
 import {
   getRegisterOption,
   registerUser,
-  UserBody,
-  UserBodyPassword,
+  resetPassword,
 } from "@/app/user-management/api";
 import { AdminAlertModal, RegisterModal } from "./components/RegisterModal";
 import { ConfirmationModal } from "@/app/user-management/components/ConfirmationModal";
 import { LoadingButton } from "@mui/lab";
+import { UserResetModal } from "../user-management/components/UserResetModal";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
@@ -43,6 +43,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const { login, loginGoogle, loginError } = useAuth();
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
+  const [showUserResetModal, setShowUserResetModal] = React.useState(false);
+
   const [isRendered, setIsRendered] = React.useState<boolean>(false);
   const signinDiv = React.useCallback((node: HTMLDivElement | null) => {
     if (node !== null) {
@@ -132,6 +134,9 @@ const Login = () => {
   };
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
+  };
+  const handleResetPassword = () => {
+    setShowUserResetModal(true);
   };
   return isLoading ? (
     <Grid>
@@ -435,6 +440,16 @@ const Login = () => {
               Sign In
             </Button>
           </Box>
+          <Typography
+            variant="body2"
+            color="primary"
+            sx={{ cursor: "pointer", marginTop: 2 }}
+            onClick={() => {
+              setShowUserResetModal(true);
+            }}
+          >
+            Reset Password
+          </Typography>
         </Box>
         <AdminAlertModal
           open={showAdminAlertModal}
@@ -445,9 +460,8 @@ const Login = () => {
           open={showRegisterModal}
           onClose={handleRegisterModalClose}
           onContinue={handleRegisterModalContinue}
-          registerUser={(user: UserBodyPassword | UserBody) => {
-            const newUser = user as UserBodyPassword;
-            return registerUser(newUser.username, newUser.password);
+          registerUser={(username: string, password: string) => {
+            return registerUser(username, password);
           }}
         />
         <ConfirmationModal
@@ -455,6 +469,16 @@ const Login = () => {
           onClose={handleCloseConfirmationModal}
           recoveryCodes={recoveryCodes}
           closeButtonText="Back to Login"
+        />
+        <UserResetModal
+          open={showUserResetModal}
+          onClose={() => {
+            setShowUserResetModal(false);
+          }}
+          onContinue={() => {}}
+          resetPassword={(username: string, recoveryCode: string, password: string) => {
+            return resetPassword(username, recoveryCode, password);
+          }}
         />
       </Grid>
     </Grid>

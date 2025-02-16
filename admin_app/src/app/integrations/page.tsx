@@ -158,9 +158,9 @@ const KeyManagement = ({
             <Typography variant="body1">Generate your first API key</Typography>
           )}
           <LoadingButton
-            variant="contained"
+            variant={editAccess ? "contained" : "outlined"}
             onClick={currentKey ? handleConfirmationModalOpen : handleRenew}
-            disabled={editAccess}
+            disabled={!editAccess}
             loading={keyGenerationIsLoading}
             loadingPosition="start"
             startIcon={<AutorenewIcon />}

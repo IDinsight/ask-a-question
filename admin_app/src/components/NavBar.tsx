@@ -17,8 +17,9 @@ import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
-import { createWorkspace, getUser, getWorkspaceList } from "@/app/user-management/api";
+import { createWorkspace, getUser } from "@/app/user-management/api";
 import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
+import DefaultWorkspaceModal from "./DefaultWorkspaceModal";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -32,6 +33,7 @@ interface ScreenMenuProps {
 }
 const NavBar = () => {
   const { token, workspaceName, loginWorkspace } = useAuth();
+  const pathname = usePathname();
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
@@ -54,10 +56,9 @@ const NavBar = () => {
           getUserInfo={() => {
             return getUser(token!);
           }}
-          currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
           loginWorkspace={(workspace: Workspace) => {
-            return loginWorkspace(workspace.workspace_name);
+            return loginWorkspace(workspace.workspace_name, pathname);
           }}
         />
       </SmallScreenNavMenu>
@@ -66,10 +67,9 @@ const NavBar = () => {
           getUserInfo={() => {
             return getUser(token!);
           }}
-          currentWorkspaceName={workspaceName!}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
           loginWorkspace={(workspace: Workspace) => {
-            return loginWorkspace(workspace.workspace_name);
+            return loginWorkspace(workspace.workspace_name, pathname);
           }}
         />
       </LargeScreenNavMenu>
@@ -82,7 +82,7 @@ const NavBar = () => {
           return createWorkspace(workspace, token!);
         }}
         loginWorkspace={(workspace: Workspace) => {
-          return loginWorkspace(workspace.workspace_name);
+          return loginWorkspace(workspace.workspace_name, pathname);
         }}
       />
     </AppBar>

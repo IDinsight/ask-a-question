@@ -13,7 +13,7 @@ type AuthContextType = {
   workspaceName: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
-  loginWorkspace: (workspaceName: string) => void;
+  loginWorkspace: (workspaceName: string, currentPage?: string) => void;
   logout: () => void;
   loginGoogle: ({
     client_id,
@@ -104,7 +104,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   };
-  const loginWorkspace = async (workspaceName: string) => {
+  const loginWorkspace = async (workspaceName: string, currentPage?: string) => {
     const sourcePage = searchParams.has("sourcePage")
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/content";
@@ -113,8 +113,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       const { access_token, access_level, user_role, workspace_name } =
         await getLoginWorkspace(workspaceName, token);
       setLoginParams(access_token, access_level, user_role, workspace_name);
-
-      router.push(sourcePage);
+      console.log("workspaceName", currentPage);
+      if (currentPage) {
+        router.push(currentPage);
+      } else {
+        router.push(sourcePage);
+      }
     } catch (error: Error | any) {
       if (error.status === 401) {
         setLoginError("Invalid workspace name");

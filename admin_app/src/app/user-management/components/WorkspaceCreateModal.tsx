@@ -11,6 +11,7 @@ import {
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import React from "react";
 import { Workspace } from "@/components/WorkspaceMenu";
+import DefaultWorkspaceModal from "@/components/DefaultWorkspaceModal";
 interface WorkspaceCreateProps {
   open: boolean;
   onClose: () => void;
@@ -18,6 +19,12 @@ interface WorkspaceCreateProps {
   existingWorkspace?: Workspace;
   onCreate: (workspace: Workspace) => Promise<Workspace>;
   loginWorkspace: (workspace: Workspace) => void;
+  setSnackMessage?: React.Dispatch<
+    React.SetStateAction<{
+      message: string;
+      severity: "success" | "error" | "info" | "warning";
+    }>
+  >;
 }
 const WorkspaceCreateModal = ({
   open,
@@ -26,6 +33,7 @@ const WorkspaceCreateModal = ({
   existingWorkspace,
   onCreate,
   loginWorkspace,
+  setSnackMessage,
 }: WorkspaceCreateProps) => {
   const [errorMessage, setErrorMessage] = React.useState("");
   const [isWorkspaceNameEmpty, setIsWorkspaceNameEmpty] = React.useState(false);
@@ -49,7 +57,18 @@ const WorkspaceCreateModal = ({
         const workspace = Array.isArray(value) ? value[0] : value;
         loginWorkspace(workspace);
       });
-      onClose();
+      if (setSnackMessage) {
+        setSnackMessage({
+          message: isEdit
+            ? "Workspace edited successfully"
+            : "Workspace created successfully",
+          severity: "success",
+        });
+      }
+
+      setTimeout(() => {
+        onClose();
+      }, 3000);
     }
   };
   return (

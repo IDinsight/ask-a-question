@@ -7,6 +7,7 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import {
   Button,
   Dialog,
@@ -24,11 +25,12 @@ import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { appColors, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
+import DefaultWorkspaceModal from "./DefaultWorkspaceModal";
 
 export type User = {
   user_id: number;
   username: string;
-
+  is_default_workspace?: boolean[];
   user_workspaces: Workspace[];
 };
 export type Workspace = {
@@ -37,17 +39,16 @@ export type Workspace = {
   content_quota?: number;
   api_daily_quota?: number;
   user_role?: string;
+  is_default?: boolean;
 };
 
 interface WorkspaceMenuProps {
-  currentWorkspaceName: string;
   getUserInfo: () => Promise<User>;
   setOpenCreateWorkspaceModal: (value: boolean) => void;
   loginWorkspace: (workspace: Workspace) => void;
 }
 
 const WorkspaceMenu = ({
-  currentWorkspaceName,
   getUserInfo,
   setOpenCreateWorkspaceModal,
   loginWorkspace,
@@ -63,6 +64,8 @@ const WorkspaceMenu = ({
   const [persistedWorkspaceName, setPersistedWorkspaceName] =
     React.useState<string>("");
   const [persistedUserRole, setPersistedUserRole] = React.useState<string | null>(null);
+  const [openDefaultWorkspaceModal, setOpenDefaultWorkspaceModal] =
+    React.useState<boolean>(false);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -84,6 +87,12 @@ const WorkspaceMenu = ({
 
   React.useEffect(() => {
     getUserInfo().then((returnedUser: User) => {
+      const workspacesData = returnedUser.user_workspaces as Workspace[];
+      workspacesData.forEach((workspace, index) => {
+        workspace.is_default = returnedUser.is_default_workspace
+          ? returnedUser.is_default_workspace[index]
+          : false;
+      });
       setWorkspaces(returnedUser.user_workspaces);
     });
   }, []);
@@ -217,6 +226,18 @@ const WorkspaceMenu = ({
           <Divider />
           <MenuItem>
             <ListItemIcon>
+              <ModeEditIcon />
+            </ListItemIcon>
+            <ListItemText
+              onClick={() => {
+                setOpenDefaultWorkspaceModal(true);
+              }}
+            >
+              Change default workspace
+            </ListItemText>
+          </MenuItem>
+          <MenuItem>
+            <ListItemIcon>
               <AddIcon />
             </ListItemIcon>
             <ListItemText
@@ -235,6 +256,19 @@ const WorkspaceMenu = ({
         onConfirm={handleConfirmSwitchWorkspace}
         workspace={selectedWorkspace!}
       />
+      {workspaces && (
+        <DefaultWorkspaceModal
+          visible={openDefaultWorkspaceModal}
+          workspaces={workspaces}
+          onCancel={() => {
+            setOpenDefaultWorkspaceModal(false);
+          }}
+          onConfirm={() => {}}
+          selectedWorkspace={
+            workspaces.find((workspace) => workspace.is_default) || workspaces[0]
+          }
+        />
+      )}
     </Paper>
   );
 };
