@@ -356,17 +356,12 @@ class TestUserPasswordReset:
     """Tests for the PUT /user/reset-password endpoint."""
 
     def test_admin_1_reset_own_password(
-        self,
-        access_token_admin_1: str,
-        admin_user_1_in_workspace_1: dict[str, Any],
-        client: TestClient,
+        self, admin_user_1_in_workspace_1: dict[str, Any], client: TestClient
     ) -> None:
         """Test that an admin user can reset their password.
 
         Parameters
         ----------
-        access_token_admin_1
-            Admin access token in workspace 1.
         admin_user_1_in_workspace_1
             Admin user in workspace 1.
         client
@@ -380,7 +375,6 @@ class TestUserPasswordReset:
             random_string = "".join(random.choice(letters) for _ in range(8))
             response = client.put(
                 "/user/reset-password",
-                headers={"Authorization": f"Bearer {access_token_admin_1}"},
                 json={
                     "password": random_string,
                     "recovery_code": code,
@@ -391,7 +385,6 @@ class TestUserPasswordReset:
 
         response = client.put(
             "/user/reset-password",
-            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "password": "password",  # pragma: allowlist secret
                 "recovery_code": recovery_codes[-1],
@@ -402,17 +395,12 @@ class TestUserPasswordReset:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_non_admin_user_reset_password(
-        self,
-        access_token_read_only_1: str,
-        client: TestClient,
-        read_only_user_1_in_workspace_1: dict[str, Any],
+        self, client: TestClient, read_only_user_1_in_workspace_1: dict[str, Any]
     ) -> None:
         """Test that a non-admin user is allowed to reset their password.
 
         Parameters
         ----------
-        access_token_read_only_1
-            Read-only user access token in workspace 1.
         client
             Test client.
         read_only_user_1_in_workspace_1
@@ -423,7 +411,6 @@ class TestUserPasswordReset:
         username = read_only_user_1_in_workspace_1["username"]
         response = client.put(
             "/user/reset-password",
-            headers={"Authorization": f"Bearer {access_token_read_only_1}"},
             json={
                 "password": "password",  # pragma: allowlist secret
                 "recovery_code": recovery_codes[1],
@@ -433,22 +420,17 @@ class TestUserPasswordReset:
 
         assert response.status_code == status.HTTP_200_OK
 
-    def test_reset_password_invalid_recovery_code(
-        self, access_token_admin_1: str, client: TestClient
-    ) -> None:
+    def test_reset_password_invalid_recovery_code(self, client: TestClient) -> None:
         """Test that an invalid recovery code is rejected.
 
         Parameters
         ----------
-        access_token_admin_1
-            Admin access token in workspace 1.
         client
             Test client.
         """
 
         response = client.put(
             "/user/reset-password",
-            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "password": "password",  # pragma: allowlist secret
                 "recovery_code": "12345",
@@ -458,27 +440,17 @@ class TestUserPasswordReset:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reset_password_invalid_user(
-        self, access_token_admin_1: str, client: TestClient
-    ) -> None:
+    def test_reset_password_invalid_user(self, client: TestClient) -> None:
         """Test that an invalid user is rejected.
-
-        NB: This test used to raise a 404 error. However, now only a user can reset
-        their own passwords. Thus, this test will raise a 403 error. This test may not
-        be necessary anymore since the backend will first check if the user requesting
-        to reset the password is the current user.
 
         Parameters
         ----------
-        access_token_admin_1
-            Admin access token in workspace 1.
         client
             Test client.
         """
 
         response = client.put(
             "/user/reset-password",
-            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
                 "password": "password",  # pragma: allowlist secret
                 "recovery_code": "1234",
@@ -486,7 +458,7 @@ class TestUserPasswordReset:
             },
         )
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestUserFetching:

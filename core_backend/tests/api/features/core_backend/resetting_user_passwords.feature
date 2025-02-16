@@ -8,8 +8,8 @@ Feature: Resetting user passwords
         When Suzin tries to reset her own password
         Then Suzin should be able to reset her own password
         When Suzin tries to reset Mark's password
-        Then Suzin gets an error
+        Then Suzin should be able to reset Mark's password
         When Mark tries to reset Suzin's password
-        Then Mark gets an error
+        Then Mark should be able to reset Suzin's password
         When Poornima tries to reset Suzin's password
-        Then Poornima gets an error
+        Then Poornima should be able to reset Suzin's password
