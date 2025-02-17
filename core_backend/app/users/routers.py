@@ -873,8 +873,6 @@ async def check_remove_user_from_workspace_call(
             detail=f"Workspace does not exist: {remove_from_workspace_name}",
         ) from e
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
-    # users for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -886,8 +884,6 @@ async def check_remove_user_from_workspace_call(
             detail="User does not have the required role to remove users from the "
             "specified workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to remove
-    # users for non-admin users of a workspace.
 
     user_db = await get_user_by_id(asession=asession, user_id=user_id)
 

@@ -69,8 +69,6 @@ async def create_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
-    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -82,8 +80,6 @@ async def create_tag(
             detail="User does not have the required role to create tags in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
-    # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
     if not await is_tag_name_unique(
@@ -138,8 +134,6 @@ async def edit_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
-    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -151,8 +145,6 @@ async def edit_tag(
             detail="User does not have the required role to edit tags in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
-    # tags for non-admin users of a workspace.
 
     tag.tag_name = tag.tag_name.upper()
     old_tag = await get_tag_from_db(
@@ -257,8 +249,6 @@ async def delete_tag(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # tags for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -270,8 +260,6 @@ async def delete_tag(
             detail="User does not have the required role to delete tags in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # tags for non-admin users of a workspace.
 
     record = await get_tag_from_db(
         asession=asession, tag_id=tag_id, workspace_id=workspace_db.workspace_id

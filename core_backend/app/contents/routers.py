@@ -109,8 +109,6 @@ async def create_content(
         asession=asession, workspace_name=workspace_name
     )
 
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
-    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -122,8 +120,6 @@ async def create_content(
             detail="User does not have the required role to create content in the "
             "workspace.",
         )
-    # 1. HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to create
-    # content for non-admin users of a workspace.
 
     # 2.
     workspace_id = workspace_db.workspace_id
@@ -203,8 +199,6 @@ async def edit_content(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
-    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -216,8 +210,6 @@ async def edit_content(
             detail="User does not have the required role to edit content in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to edit
-    # content for non-admin users of a workspace.
 
     workspace_id = workspace_db.workspace_id
     old_content = await get_content_from_db(
@@ -329,8 +321,6 @@ async def archive_content(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to archive
-    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -342,8 +332,6 @@ async def archive_content(
             detail="User does not have the required role to archive content in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to archive
-    # content for non-admin users of a workspace.
 
     workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
@@ -396,8 +384,6 @@ async def delete_content(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -409,8 +395,6 @@ async def delete_content(
             detail="User does not have the required role to delete content in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to delete
-    # content for non-admin users of a workspace.
 
     workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
@@ -531,8 +515,6 @@ async def bulk_upload_contents(
         asession=asession, workspace_name=workspace_name
     )
 
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to upload
-    # content for non-admin users of a workspace.
     if not await user_has_required_role_in_workspace(
         allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
@@ -544,8 +526,6 @@ async def bulk_upload_contents(
             detail="User does not have the required role to upload content in the "
             "workspace.",
         )
-    # HACK FIX FOR FRONTEND: The frontend should hide/disable the ability to upload
-    # content for non-admin users of a workspace.
 
     # Ensure the file is a CSV.
     if file.filename is None or not file.filename.endswith(".csv"):
