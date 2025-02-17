@@ -31,17 +31,6 @@ const RegisterModal: React.FC<UserSearchModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // const initialState = {
-  //   username: "",
-  //   password: "",
-  //   confirmPassword: "",
-  //   role: "read_only" as "admin" | "read_only",
-  //   userExists: null,
-  //   isVerified: false,
-  //   loading: false,
-  //   error: "",
-  // };
-  // const [state, setState] = useState(initialState);
 
   const validateInputs = useCallback(() => {
     if (!username) {
