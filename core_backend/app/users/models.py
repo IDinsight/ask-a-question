@@ -146,14 +146,7 @@ class WorkspaceDB(Base):
 
 
 class UserWorkspaceDB(Base):
-    """ORM for managing user in workspaces.
-
-    TODO: A user's default workspace is assigned when the (new) user is created and
-    added to a workspace. There is currently no way to change a user's default
-    workspace. The exception is when a user is removed from a workspace that is also
-    their current default workspace. In this case, the user removal endpoint will
-    automatically assign the next earliest workspace as the user's default workspace.
-    """
+    """ORM for managing user in workspaces."""
 
     __tablename__ = "user_workspace"
 

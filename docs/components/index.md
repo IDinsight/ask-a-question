@@ -4,7 +4,7 @@ In this section you can find the different components within AAQ.
 
 ## User-facing Components
 
-There are 3 main components in Ask-A-Question.
+There are 5 main components in Ask-A-Question.
 
 <div class="grid cards" markdown>
 
@@ -16,6 +16,22 @@ There are 3 main components in Ask-A-Question.
     Explore usage dashboards.
 
     [:octicons-arrow-right-24: More info](./admin-app/index.md)
+
+- :material-api:{ .lg .middle .red} __Workspaces__
+
+    ---
+
+    Create dedicated workspaces for your data and users.
+
+    [:octicons-arrow-right-24: More info](./workspaces/index.md)
+
+- :material-api:{ .lg .middle .red} __Multi-turn Chat__
+
+    ---
+
+    Engage in multi-turn question-answering sessions with your data.
+
+    [:octicons-arrow-right-24: More info](./multi-turn-chat/index.md)
 
 - :material-api:{ .lg .middle .red} __The Question-Answering Service__
 
