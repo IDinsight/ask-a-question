@@ -17,7 +17,6 @@ import {
   editWorkspace,
   getUserList,
   getCurrentWorkspace,
-  resetPassword,
   addUserToWorkspace,
   checkIfUsernameExists,
   createNewUser,
@@ -26,13 +25,14 @@ import {
 import { useAuth } from "@/utils/auth";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import type { UserBody, UserBodyUpdate } from "./api";
-import { UserResetModal } from "./components/UserResetModal";
 import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
 import type { Workspace } from "@/components/WorkspaceMenu";
 import UserSearchModal from "./components/UserWorkspaceModal";
 import { usePathname } from "next/navigation";
+import ModeEditIcon from "@mui/icons-material/ModeEdit";
+import UserCreateModal from "./components/UserWorkspaceModal";
 
 const UserManagement: React.FC = () => {
   const { token, userRole, loginWorkspace } = useAuth();
@@ -104,20 +104,6 @@ const UserManagement: React.FC = () => {
     });
   };
 
-  const handleEditModalContinue = (newRecoveryCodes: string[]) => {
-    setLoading(true);
-    setShowEditModal(false);
-    setSnackbarMessage({
-      message: "User edited successfully",
-      severity: "success",
-    });
-  };
-
-  const handleResetPassword = (user: UserBody) => {
-    setCurrentUser(user);
-    // setShowUserResetModal(true);
-  };
-
   const handleEditUser = (user: UserBody) => {
     setFormType("edit");
     setCurrentUser(user);
@@ -141,8 +127,6 @@ const UserManagement: React.FC = () => {
     setLoading(true);
     removeUserFromWorkspace(userId, workspaceName, token!)
       .then((data) => {
-        console.log("data", data);
-
         if (data.require_workspace_switch) {
           loginWorkspace(data.default_workspace_name);
         }
@@ -229,22 +213,24 @@ const UserManagement: React.FC = () => {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
               alignItems: "center",
             }}
           >
             <Typography variant="h4">
               Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
             </Typography>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                setOpenEditWorkspaceModal(true);
-              }}
-            >
-              Edit Workspace
-            </Button>{" "}
+            <Tooltip title="Edit Workspace">
+              <Button
+                variant="text"
+                sx={{ color: appColors.primary }}
+                onClick={() => {
+                  setOpenEditWorkspaceModal(true);
+                }}
+              >
+                <ModeEditIcon />
+              </Button>
+            </Tooltip>
           </Box>
           <Typography variant="body1" align="left" color={appColors.darkGrey}>
             Edit workspace and add/remove users to workspace
@@ -268,7 +254,7 @@ const UserManagement: React.FC = () => {
                   setShowCreateModal(true);
                 }}
               >
-                Add existing user to workspace
+                Add existing user
               </Button>
             </>
           </Tooltip>
@@ -282,7 +268,7 @@ const UserManagement: React.FC = () => {
                   setShowCreateModal(true);
                 }}
               >
-                Create new user and add workspace
+                Create new user
               </Button>
             </>
           </Tooltip>
@@ -348,7 +334,7 @@ const UserManagement: React.FC = () => {
                 setSnackMessage={setSnackbarMessage}
               />
             )}
-            <UserSearchModal
+            <UserCreateModal
               open={showCreateModal}
               onClose={handleUserModalClose}
               checkUserExists={(username: string) => {

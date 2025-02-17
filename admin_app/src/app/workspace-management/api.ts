@@ -1,17 +1,19 @@
 import { Workspace } from "@/components/WorkspaceMenu";
-import api from "@/utils/api";
+import api, { CustomError } from "@/utils/api";
 import axios from "axios";
 interface UserBody {
   sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
   username: string;
   role: "admin" | "read_only";
+  is_default_workspace?: boolean[];
   user_workspaces?: Workspace[];
 }
 interface UserBodyPassword extends UserBody {
   password: string;
 }
-interface UserBodyUpdate extends UserBody {
+interface UserBodyUpdate extends Omit<UserBody, "is_default_workspace"> {
+  is_default_workspace?: boolean;
   workspace_name: string;
 }
 
@@ -21,8 +23,19 @@ const editUser = async (user_id: number, user: UserBodyUpdate, token: string) =>
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error editing user");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error editing workspace");
+    }
   }
 };
 
@@ -116,35 +129,19 @@ const resetPassword = async (
       },
     );
     return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const createWorkspace = async (workspace: Workspace, token: string) => {
-  try {
-    const response = await api.post("/workspace/", workspace, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const getCurrentWorkspace = async (token: string) => {
-  try {
-    const response = await api.get("/workspace/current-workspace", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching user info");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error resetting password");
+    }
   }
 };
 
@@ -172,6 +169,20 @@ const checkIfUsernameExists = async (
     throw new Error("Error checking username");
   }
 };
+
+const getCurrentWorkspace = async (token: string) => {
+  try {
+    const response = await api.get("/workspace/current-workspace", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching user info");
+  }
+};
+
 const getWorkspaceList = async (token: string) => {
   try {
     const response = await api.get("/workspace/", {
@@ -184,7 +195,6 @@ const getWorkspaceList = async (token: string) => {
 };
 const getLoginWorkspace = async (workspace_name: string, token: string | null) => {
   const data = { workspace_name };
-  console.log("data", data);
   try {
     const response = await api.post("/workspace/switch-workspace", data, {
       headers: { Authorization: `Bearer ${token}` },
@@ -193,6 +203,30 @@ const getLoginWorkspace = async (workspace_name: string, token: string | null) =
   } catch (error) {
     console.log(error);
     throw new Error("Error fetching workspace login token");
+  }
+};
+const createWorkspace = async (workspace: Workspace, token: string) => {
+  try {
+    const response = await api.post("/workspace/", workspace, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error creating workspace");
+    }
   }
 };
 const editWorkspace = async (
@@ -205,8 +239,19 @@ const editWorkspace = async (
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error editing workspace");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error editing workspace");
+    }
   }
 };
 

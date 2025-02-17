@@ -11,7 +11,7 @@ import { useAuth } from "@/utils/auth";
 import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
 import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
-import { getUser } from "../user-management/api";
+import { getCurrentWorkspace } from "../workspace-management/api";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
@@ -59,7 +59,7 @@ const KeyManagement = ({
       const setApiKeyInfo = async () => {
         setKeyInfoFetchIsLoading(true);
         try {
-          const data = await getUser(token!);
+          const data = await getCurrentWorkspace(token!);
           setCurrentKey(data.api_key_first_characters);
           const formatted_api_update_date = format(
             data.api_key_updated_datetime_utc,

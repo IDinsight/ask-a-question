@@ -12,7 +12,6 @@ import {
   DialogTitle,
   Button,
 } from "@mui/material";
-import LockResetIcon from "@mui/icons-material/LockReset";
 import Edit from "@mui/icons-material/Edit";
 import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 

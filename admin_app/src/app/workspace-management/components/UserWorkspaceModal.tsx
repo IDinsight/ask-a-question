@@ -16,8 +16,9 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { UserBody } from "../api";
+import { CustomError } from "@/utils/api";
 
-interface UserSearchModalProps {
+interface UserCreateModalProps {
   open: boolean;
   onClose: () => void;
   checkUserExists: (username: string) => Promise<boolean>;
@@ -40,7 +41,7 @@ interface UserSearchModalProps {
   onContinue: (data: string[]) => void;
 }
 
-const UserSearchModal: React.FC<UserSearchModalProps> = ({
+const UserCreateModal: React.FC<UserCreateModalProps> = ({
   open,
   onClose,
   checkUserExists,
@@ -64,23 +65,12 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
     text: string;
     severity: "error" | "warning" | "info" | "success";
   } | null>(null);
-  // const initialState = {
-  //   username: "",
-  //   password: "",
-  //   confirmPassword: "",
-  //   role: "read_only" as "admin" | "read_only",
-  //   userExists: null,
-  //   isVerified: false,
-  //   loading: false,
-  //   error: "",
-  // };
-  // const [state, setState] = useState(initialState);
+
   const isUserInWorkspace = useMemo(
     () => users.some((u) => u.username === username),
     [users, username],
   );
   const handleClose = useCallback(() => {
-    //setState(initialState);
     setUsername("");
     setPassword("");
     setConfirmPassword("");
@@ -131,6 +121,8 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
       }
       if (password !== confirmPassword) {
         setError({ text: "Passwords do not match.", severity: "error" });
+        setPassword("");
+        setConfirmPassword("");
         return false;
       }
     }
@@ -138,14 +130,31 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
     return true;
   }, [username, password, confirmPassword, formType]);
 
+  const handleError = (error: any) => {
+    let errorMsg = "Error processing request";
+    if (error) {
+      const customError = error as CustomError;
+      if (customError.message) {
+        errorMsg = customError.message;
+      }
+      setError({ text: errorMsg, severity: "error" });
+    }
+  };
   const actions: Record<"add" | "create" | "edit", () => Promise<void> | undefined> = {
-    create: async () => await createUser(username, password, role),
+    create: async () =>
+      await createUser(username, password, role).then((data) => {
+        if (data.recovery_codes) {
+          onContinue(data.recovery_codes);
+        }
+      }),
     add: async () => {
       if (isVerified && userExists) {
         await addUserToWorkspace(username);
       } else if (isVerified && !userExists) {
         await createUser(username, password, role).then((data) => {
-          onContinue(data.recovery_codes);
+          if (data.recovery_codes) {
+            onContinue(data.recovery_codes);
+          }
         });
       } else {
         setError({
@@ -179,16 +188,16 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
       setTimeout(() => {
         onClose();
       }, 300);
-    } catch {
-      setError({ text: "Error processing request.", severity: "error" });
+    } catch (error) {
+      handleError(error);
     } finally {
       setLoading(false);
-      handleClose();
     }
   }, [
     formType,
     username,
     password,
+    confirmPassword,
     role,
     isVerified,
     userExists,
@@ -217,7 +226,6 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
 
   useEffect(() => {
     if (formType === "edit" && user) {
-      console.log(user);
       setUsername(user.username);
       setRole(user.role);
     }
@@ -232,6 +240,7 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
           flexDirection="column"
           gap={2}
           margin="auto"
+          sx={{ paddingLeft: 3, paddingRight: 3 }}
         >
           <Avatar sx={{ bgcolor: "secondary.main", margin: "0 auto" }}>
             <LockOutlinedIcon />
@@ -239,8 +248,8 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
           <Typography variant="h6" align="center">
             {getTitle(formType)}
           </Typography>
-          {error && <Alert severity={error.severity}>{error.text}</Alert>}
-          <Box display="flex" gap={1}>
+
+          <Box display="flex" gap={1} width="100%" marginBottom={2}>
             <TextField
               fullWidth
               label="Username"
@@ -253,13 +262,14 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
             {formType == "add" && (
               <Button onClick={handleVerifyUser} disabled={loading || !username}>
                 {isVerified && userExists ? (
-                  <VerifiedIcon color="primary" fontSize="large" />
+                  <VerifiedIcon color="success" fontSize="large" />
                 ) : (
                   "Verify"
                 )}
               </Button>
             )}
           </Box>
+          {error && <Alert severity={error.severity}>{error.text}</Alert>}
           {(isVerified && userExists === false) || formType == "create" ? (
             <>
               <TextField
@@ -268,6 +278,7 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                sx={{ marginBottom: 2 }}
               />
               <TextField
                 fullWidth
@@ -275,23 +286,27 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                sx={{ marginBottom: 2 }}
               />
             </>
           ) : null}
-          <TextField
-            select
-            fullWidth
-            label="Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value as "admin" | "read_only")}
-            SelectProps={{
-              native: true,
-            }}
-          >
-            <option value="admin">Admin</option>
-            <option value="read_only">Read Only</option>
-          </TextField>
-          <Box display="flex" justifyContent="space-between">
+          {formType == "add" && !isVerified ? null : (
+            <TextField
+              select
+              fullWidth
+              label="Role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as "admin" | "read_only")}
+              SelectProps={{
+                native: true,
+              }}
+              sx={{ marginBottom: 2 }}
+            >
+              <option value="admin">Admin</option>
+              <option value="read_only">Read Only</option>
+            </TextField>
+          )}
+          <Box display="flex" justifyContent="space-between" width="100%">
             <Button variant="outlined" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
@@ -310,4 +325,4 @@ const UserSearchModal: React.FC<UserSearchModalProps> = ({
   );
 };
 
-export default UserSearchModal;
+export default UserCreateModal;

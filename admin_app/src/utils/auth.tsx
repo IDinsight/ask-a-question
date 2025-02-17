@@ -1,7 +1,6 @@
 "use client";
-import { getLoginWorkspace } from "@/app/user-management/api";
+import { getLoginWorkspace } from "@/app/workspace-management/api";
 import { apiCalls } from "@/utils/api";
-import { set } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
 
@@ -113,7 +112,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       const { access_token, access_level, user_role, workspace_name } =
         await getLoginWorkspace(workspaceName, token);
       setLoginParams(access_token, access_level, user_role, workspace_name);
-      console.log("workspaceName", currentPage);
       if (currentPage) {
         router.push(currentPage);
       } else {

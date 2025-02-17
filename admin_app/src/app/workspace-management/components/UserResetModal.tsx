@@ -14,6 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { CustomError } from "@/utils/api";
 
 interface UserModalProps {
   open: boolean;
@@ -76,10 +77,21 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
     const confirmPassword = data.get("confirm-password") as string;
     if (isFormValid(recoveryCode, password, confirmPassword)) {
       try {
-        await resetPassword(username, recoveryCode, password);
-        setStep(3);
+        const response = await resetPassword(username, recoveryCode, password);
+        if (response && response.username) {
+          setStep(3);
+        } else if (response.status && response.status === 400) {
+          setErrorMessage(response.data.detail);
+        } else {
+          setErrorMessage("Unable to reset password. Please try again later.");
+        }
       } catch (error) {
-        setErrorMessage("Failed to reset password. Please try again.");
+        let errorMsg = "An unexpected error occurred. Please try again later.";
+        const customError = error as CustomError;
+        if (customError && customError.message) {
+          errorMsg = customError.message;
+        }
+        setErrorMessage(errorMsg);
       }
     }
   };
@@ -183,7 +195,7 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label="New Password"
               type="password"
               onChange={() => setIsPasswordEmpty(false)}
             />
@@ -193,16 +205,22 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               helperText={isConfirmPasswordEmpty ? "Passwords do not match" : " "}
               required
               fullWidth
-              label="Confirm Password"
+              label="Confirm New Password"
               name="confirm-password"
               type="password"
               onChange={() => setIsConfirmPasswordEmpty(false)}
             />
             <Box mt={1} width="100%" display="flex" justifyContent="center">
-              <Button onClick={() => setStep(1)} sx={{ maxWidth: "120px", mr: 1 }}>
+              <Button
+                onClick={() => {
+                  setStep(1);
+                  setErrorMessage("");
+                }}
+                sx={{ maxWidth: "120px", mr: 1 }}
+              >
                 Back
               </Button>
-              <Button type="submit" variant="contained" sx={{ maxWidth: "120px" }}>
+              <Button type="submit" variant="contained">
                 Reset Password
               </Button>
             </Box>

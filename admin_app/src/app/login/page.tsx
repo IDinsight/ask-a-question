@@ -21,14 +21,15 @@ import * as React from "react";
 import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
 import {
+  checkIfUsernameExists,
   getRegisterOption,
   registerUser,
   resetPassword,
-} from "@/app/user-management/api";
+} from "@/app/workspace-management/api";
 import { AdminAlertModal, RegisterModal } from "./components/RegisterModal";
-import { ConfirmationModal } from "@/app/user-management/components/ConfirmationModal";
+import { ConfirmationModal } from "@/app/workspace-management/components/ConfirmationModal";
 import { LoadingButton } from "@mui/lab";
-import { UserResetModal } from "../user-management/components/UserResetModal";
+import { UserResetModal } from "../workspace-management/components/UserResetModal";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";

@@ -11,7 +11,7 @@ import {
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import React from "react";
 import { Workspace } from "@/components/WorkspaceMenu";
-import DefaultWorkspaceModal from "@/components/DefaultWorkspaceModal";
+import { CustomError } from "@/utils/api";
 interface WorkspaceCreateProps {
   open: boolean;
   onClose: () => void;
@@ -44,35 +44,59 @@ const WorkspaceCreateModal = ({
     }
     return true;
   };
+  const handleClose = () => {
+    setErrorMessage("");
+
+    onClose();
+  };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const workspaceName = data.get("workspace-name") as string;
     if (isFormValid(workspaceName)) {
-      onCreate({
-        workspace_name: workspaceName,
-        content_quota: 100,
-        api_daily_quota: 100,
-      }).then((value: Workspace | Workspace[]) => {
-        const workspace = Array.isArray(value) ? value[0] : value;
-        loginWorkspace(workspace);
-      });
-      if (setSnackMessage) {
-        setSnackMessage({
-          message: isEdit
-            ? "Workspace edited successfully"
-            : "Workspace created successfully",
-          severity: "success",
+      try {
+        const response = await onCreate({
+          workspace_name: workspaceName,
         });
-      }
+        if (
+          (Array.isArray(response) && response.length > 0) ||
+          response.workspace_name
+        ) {
+          const workspace = Array.isArray(response) ? response[0] : response;
+          loginWorkspace(workspace);
+          if (setSnackMessage) {
+            setSnackMessage({
+              message: isEdit
+                ? "Workspace edited successfully"
+                : "Workspace created successfully",
+              severity: "success",
+            });
+          }
+          setTimeout(() => {
+            onClose();
+          }, 3000);
+        } else if (Array.isArray(response) && response.length === 0) {
+          setErrorMessage("Workspace name already exists");
+        } else {
+          setErrorMessage("Error creating workspace");
+        }
+      } catch (error) {
+        let errorMessage = isEdit
+          ? "Error editing workspace"
+          : "Error creating workspace";
 
-      setTimeout(() => {
-        onClose();
-      }, 3000);
+        if (error) {
+          const customError = error as CustomError;
+          if (customError.message) {
+            errorMessage = customError.message;
+          }
+          setErrorMessage(errorMessage);
+        }
+      }
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
+    <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
       <DialogContent>
         <Box
           component="form"
@@ -134,7 +158,7 @@ const WorkspaceCreateModal = ({
               display: "flex",
               justifyContent: "flex-end",
               marginTop: 2,
-              gap: 2,
+              gap: 5,
             }}
           >
             <Button
@@ -145,12 +169,7 @@ const WorkspaceCreateModal = ({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ maxWidth: "120px" }}
-            >
+            <Button type="submit" variant="contained" sx={{ width: "auto" }}>
               {isEdit ? "Edit Workspace" : "Create Workspace"}
             </Button>
           </Box>

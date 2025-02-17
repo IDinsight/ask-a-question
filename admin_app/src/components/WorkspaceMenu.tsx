@@ -21,18 +21,11 @@ import {
   Typography,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { appColors, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
-import DefaultWorkspaceModal from "./DefaultWorkspaceModal";
+import { UserBody, UserBodyUpdate } from "@/app/workspace-management/api";
 
-export type User = {
-  user_id: number;
-  username: string;
-  is_default_workspace?: boolean[];
-  user_workspaces: Workspace[];
-};
 export type Workspace = {
   workspace_id?: number;
   workspace_name: string;
@@ -43,14 +36,16 @@ export type Workspace = {
 };
 
 interface WorkspaceMenuProps {
-  getUserInfo: () => Promise<User>;
+  getUserInfo: () => Promise<UserBody>;
   setOpenCreateWorkspaceModal: (value: boolean) => void;
+  editUser: (user_id: number, user: UserBodyUpdate) => Promise<any>;
   loginWorkspace: (workspace: Workspace) => void;
 }
 
 const WorkspaceMenu = ({
   getUserInfo,
   setOpenCreateWorkspaceModal,
+  editUser,
   loginWorkspace,
 }: WorkspaceMenuProps) => {
   const { workspaceName, userRole } = useAuth();
@@ -61,11 +56,13 @@ const WorkspaceMenu = ({
   );
   const [openConfirmSwitchWorkspaceDialog, setOpenConfirmSwitchWorkspaceDialog] =
     React.useState(false);
+  const [user, setUser] = React.useState<UserBody | null>(null);
   const [persistedWorkspaceName, setPersistedWorkspaceName] =
     React.useState<string>("");
   const [persistedUserRole, setPersistedUserRole] = React.useState<string | null>(null);
   const [openDefaultWorkspaceModal, setOpenDefaultWorkspaceModal] =
     React.useState<boolean>(false);
+  const [openSuccessModal, setOpenSuccessModal] = React.useState<boolean>(false);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -84,20 +81,38 @@ const WorkspaceMenu = ({
     loginWorkspace(workspace);
     handleCloseConfirmSwitchWorkspaceDialog();
   };
+  const handleConfirmDefaultWorkspace = async (workspace: Workspace) => {
+    const userId = user?.user_id;
+    const updatedUser = {
+      username: user?.username,
+      is_default_workspace: true,
+      workspace_name: workspace.workspace_name,
+    } as UserBodyUpdate;
+    editUser(userId!, updatedUser).then((response) => {
+      if (response && response.username) {
+        setOpenDefaultWorkspaceModal(false);
+        setOpenSuccessModal(true);
+      }
+    });
+  };
 
   React.useEffect(() => {
-    getUserInfo().then((returnedUser: User) => {
+    getUserInfo().then((returnedUser: UserBody) => {
+      setUser({
+        user_id: returnedUser.user_id,
+        username: returnedUser.username,
+      } as UserBody);
       const workspacesData = returnedUser.user_workspaces as Workspace[];
       workspacesData.forEach((workspace, index) => {
         workspace.is_default = returnedUser.is_default_workspace
           ? returnedUser.is_default_workspace[index]
           : false;
       });
-      setWorkspaces(returnedUser.user_workspaces);
+      setWorkspaces(returnedUser.user_workspaces!);
     });
   }, []);
   React.useEffect(() => {
-    // Save user to local storage when it changes
+    // Save workspace to local storage when it changes
     if (workspaceName) {
       localStorage.setItem("workspaceName", workspaceName);
     }
@@ -107,12 +122,12 @@ const WorkspaceMenu = ({
     }
   }, [workspaceName]);
   React.useEffect(() => {
-    // Retrieve user from local storage on component mount
+    // Retrieve workspace from local storage on component mount
     const storedWorkspace = localStorage.getItem("workspaceName");
     if (storedWorkspace) {
       setPersistedWorkspaceName(storedWorkspace);
     }
-    const storedRole = localStorage.getItem("role");
+    const storedRole = localStorage.getItem("userRole");
     if (storedRole) {
       if (storedRole === "admin" || storedRole === "read_only") {
         setPersistedUserRole(storedRole);
@@ -126,26 +141,23 @@ const WorkspaceMenu = ({
         backgroundColor: appColors.primary,
         border: `1px solid ${appColors.white}`,
         margin: sizes.baseGap,
+        borderRadius: "15px",
+        paddingLeft: sizes.tinyGap,
+        paddingRight: sizes.tinyGap,
       }}
     >
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu}>
-          <WorkspacesIcon
-            sx={{
-              width: sizes.icons.medium,
-              height: sizes.icons.medium,
-              color: appColors.white,
-            }}
-          />
-          <span style={{ fontSize: sizes.baseGap, color: appColors.white }}>
+          <Typography style={{ fontSize: sizes.baseGap, color: appColors.white }}>
             {persistedWorkspaceName}
-          </span>
+          </Typography>
 
           <KeyboardArrowDownIcon
             sx={{
               color: appColors.white,
-              width: sizes.icons.medium,
-              height: sizes.icons.medium,
+              width: sizes.icons.small,
+              height: sizes.icons.small,
+              paddingLeft: sizes.tinyGap,
             }}
           />
         </IconButton>
@@ -157,16 +169,10 @@ const WorkspaceMenu = ({
         onClose={handleCloseUserMenu}
       >
         <MenuList dense>
-          <Typography
-            variant="subtitle2"
-            sx={{ padding: "8px 16px", fontWeight: "bold", color: "gray" }}
-          >
-            Current Workspace: {persistedWorkspaceName}
-          </Typography>
           {persistedUserRole === "admin" && (
             <MenuItem
               onClick={() => {
-                window.location.href = "/user-management";
+                window.location.href = "/workspace-management";
               }}
               disabled={persistedUserRole !== "admin"}
             >
@@ -174,24 +180,13 @@ const WorkspaceMenu = ({
                 <SettingsIcon />
               </ListItemIcon>
               <ListItemText>Manage Workspace</ListItemText>
-              <span
-                style={{
-                  border: `1px solid ${appColors.primary}`,
-                  borderRadius: "4px",
-                  padding: "2px 4px",
-                  marginLeft: "8px",
-                  color: appColors.primary,
-                }}
-              >
-                {persistedUserRole === "admin" ? "Admin" : "Read only"}
-              </span>
             </MenuItem>
           )}
           <Divider />
 
           <Typography
             variant="subtitle2"
-            sx={{ padding: "8px 16px", fontWeight: "bold", color: "gray" }}
+            sx={{ padding: "4px 16px", fontWeight: "bold", color: "gray" }} // Less gap between text and border
           >
             Switch Workspace
           </Typography>
@@ -213,10 +208,14 @@ const WorkspaceMenu = ({
               <span
                 style={{
                   border: `1px solid ${appColors.primary}`,
-                  borderRadius: "4px",
+                  borderRadius: "12px",
                   padding: "2px 4px",
                   marginLeft: "auto",
                   color: appColors.primary,
+                  backgroundColor:
+                    workspace.user_role === "admin"
+                      ? appColors.dashboardLightGray
+                      : "transparent",
                 }}
               >
                 {workspace.user_role === "admin" ? "Admin" : "Read only"}
@@ -233,7 +232,7 @@ const WorkspaceMenu = ({
                 setOpenDefaultWorkspaceModal(true);
               }}
             >
-              Change default workspace
+              Set current workspace as default
             </ListItemText>
           </MenuItem>
           <MenuItem>
@@ -256,19 +255,28 @@ const WorkspaceMenu = ({
         onConfirm={handleConfirmSwitchWorkspace}
         workspace={selectedWorkspace!}
       />
-      {workspaces && (
-        <DefaultWorkspaceModal
-          visible={openDefaultWorkspaceModal}
-          workspaces={workspaces}
-          onCancel={() => {
+      {workspaces.find(
+        (workspace) => workspace.workspace_name == persistedWorkspaceName,
+      ) && (
+        <ConfirmDefaultWorkspaceDialog
+          open={openDefaultWorkspaceModal}
+          onClose={() => {
             setOpenDefaultWorkspaceModal(false);
           }}
-          onConfirm={() => {}}
-          selectedWorkspace={
-            workspaces.find((workspace) => workspace.is_default) || workspaces[0]
+          onConfirm={handleConfirmDefaultWorkspace}
+          workspace={
+            workspaces.find(
+              (workspace) => workspace.workspace_name == persistedWorkspaceName,
+            )!
           }
         />
       )}
+      <DefaultWorkspaceSuccessModal
+        open={openSuccessModal}
+        onClose={() => {
+          setOpenSuccessModal(false);
+        }}
+      />
     </Paper>
   );
 };
@@ -309,4 +317,63 @@ const ConfirmSwitchWorkspaceDialog = ({
   );
 };
 
+const ConfirmDefaultWorkspaceDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  workspace,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (workspace: Workspace) => void;
+  workspace: Workspace;
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Confirm Switch</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Are you sure you want to set the current workspace{" "}
+          <strong>{workspace?.workspace_name}</strong> as default?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            onConfirm(workspace);
+          }}
+          color="primary"
+        >
+          Confirm
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+const DefaultWorkspaceSuccessModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Success</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          The default workspace has been successfully modified.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 export default WorkspaceMenu;

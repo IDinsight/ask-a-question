@@ -17,9 +17,13 @@ import * as React from "react";
 import { useEffect } from "react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
-import { createWorkspace, getUser } from "@/app/user-management/api";
-import WorkspaceCreateModal from "@/app/user-management/components/WorkspaceCreateModal";
-import DefaultWorkspaceModal from "./DefaultWorkspaceModal";
+import {
+  createWorkspace,
+  editUser,
+  getUser,
+  UserBodyUpdate,
+} from "@/app/workspace-management/api";
+import WorkspaceCreateModal from "@/app/workspace-management/components/WorkspaceCreateModal";
 const pageDict = [
   { title: "Question Answering", path: "/content" },
   { title: "Urgency Detection", path: "/urgency-rules" },
@@ -57,6 +61,9 @@ const NavBar = () => {
             return getUser(token!);
           }}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+          editUser={(userId, user: UserBodyUpdate) => {
+            return editUser(userId, user, token!);
+          }}
           loginWorkspace={(workspace: Workspace) => {
             return loginWorkspace(workspace.workspace_name, pathname);
           }}
@@ -68,6 +75,9 @@ const NavBar = () => {
             return getUser(token!);
           }}
           setOpenCreateWorkspaceModal={setOpenCreateWorkspaceModal}
+          editUser={(userId, user: UserBodyUpdate) => {
+            return editUser(userId, user, token!);
+          }}
           loginWorkspace={(workspace: Workspace) => {
             return loginWorkspace(workspace.workspace_name, pathname);
           }}
@@ -309,9 +319,9 @@ const UserDropdown = () => {
         </MenuItem>
         {persistedRole === "admin" && (
           <MenuItem
-            key={"user-management"}
+            key={"workspace-management"}
             onClick={() => {
-              router.push("/user-management");
+              router.push("/workspace-management");
             }}
           >
             <Typography textAlign="center">User management</Typography>
