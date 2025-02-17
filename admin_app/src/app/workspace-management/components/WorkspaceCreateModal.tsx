@@ -132,7 +132,8 @@ const WorkspaceCreateModal = ({
               setIsWorkspaceNameEmpty(false);
             }}
           />
-          <Box display="flex" justifyContent="space-between" width="100%">
+          {/*TODO implement quota updates feature */}
+          {/* <Box display="flex" justifyContent="space-between" width="100%">
             <TextField
               disabled
               margin="none"
@@ -151,7 +152,7 @@ const WorkspaceCreateModal = ({
               sx={{ width: "48%" }}
               value={existingWorkspace ? existingWorkspace.api_daily_quota : ""}
             />
-          </Box>
+          </Box> */}
           <Box
             width="100%"
             style={{
@@ -170,7 +171,7 @@ const WorkspaceCreateModal = ({
               Cancel
             </Button>
             <Button type="submit" variant="contained" sx={{ width: "auto" }}>
-              {isEdit ? "Edit Workspace" : "Create Workspace"}
+              {isEdit ? "Edit Workspace" : "Create"}
             </Button>
           </Box>
         </Box>
