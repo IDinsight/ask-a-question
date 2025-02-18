@@ -186,7 +186,7 @@ const WorkspaceMenu = ({
 
           <Typography
             variant="subtitle2"
-            sx={{ padding: "4px 16px", fontWeight: "bold", color: "gray" }} // Less gap between text and border
+            sx={{ padding: "4px 16px", fontWeight: "bold", color: "gray" }}
           >
             Switch Workspace
           </Typography>

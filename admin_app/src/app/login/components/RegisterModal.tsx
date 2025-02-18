@@ -64,7 +64,7 @@ const RegisterModal: React.FC<UserSearchModalProps> = ({
       setLoading(false);
       onClose();
     }
-  }, [username, password, registerUser]);
+  }, [username, password, confirmPassword, registerUser]);
 
   return (
     <Dialog open={open} onClose={onClose}>
