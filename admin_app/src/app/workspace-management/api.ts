@@ -291,7 +291,7 @@ const removeUserFromWorkspace = async (
       return {
         status: 403,
         message: "You cannot remove the last admin from the workspace.",
-      };
+      } as CustomError;
     }
     throw new Error("Error removing user from workspace");
   }

@@ -16,7 +16,7 @@ import { getCurrentWorkspace } from "../workspace-management/api";
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
-  const disableEdit = userRole !== "admin";
+  const editAccess = userRole == "admin";
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
@@ -31,7 +31,7 @@ const IntegrationsPage = () => {
           maxWidth: "lg",
         }}
       >
-        <KeyManagement token={token} editAccess={!disableEdit} />
+        <KeyManagement token={token} editAccess={editAccess} />
         <Layout.Spacer multiplier={3} />
         <Connections />
       </Box>

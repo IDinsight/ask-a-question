@@ -144,12 +144,15 @@ const WorkspaceMenu = ({
         borderRadius: "15px",
         paddingLeft: sizes.tinyGap,
         paddingRight: sizes.tinyGap,
+        maxWidth: "fit-content",
       }}
     >
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu}>
           <Typography style={{ fontSize: sizes.baseGap, color: appColors.white }}>
-            {persistedWorkspaceName}
+            {persistedWorkspaceName.length > 20
+              ? `${persistedWorkspaceName.substring(0, 20)}...`
+              : persistedWorkspaceName}
           </Typography>
 
           <KeyboardArrowDownIcon
@@ -203,7 +206,9 @@ const WorkspaceMenu = ({
                   handleWorkspaceClick(workspace);
                 }}
               >
-                {workspace.workspace_name}
+                {workspace.workspace_name.length > 30
+                  ? `${workspace.workspace_name.substring(0, 30)}...`
+                  : workspace.workspace_name}
               </ListItemText>
               <span
                 style={{

@@ -17,6 +17,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { UserBody } from "../api";
 import { CustomError } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
 
 interface UserCreateModalProps {
   open: boolean;
@@ -54,6 +55,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
   setSnackMessage,
   onContinue,
 }) => {
+  const { username: currentUsername, logout: logout } = useAuth();
   const [username, setUsername] = useState<string>(user?.username || "");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -166,6 +168,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     edit: async () => {
       if (editUser) {
         await editUser(username, role);
+        if (username == currentUsername && role !== "admin") {
+          logout();
+        }
       } else {
         setError({
           text: "Edit user function is not defined.",
@@ -185,6 +190,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
         message: `User successfully ${formType === "add" ? "added" : formType + "d"}`,
         severity: "success",
       });
+
       setTimeout(() => {
         onClose();
       }, 300);
@@ -230,6 +236,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
       setRole(user.role);
     }
   }, [user, formType]);
+
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogContent>
@@ -248,6 +255,11 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           <Typography variant="h6" align="center">
             {getTitle(formType)}
           </Typography>
+          {formType == "edit" && user?.username == currentUsername && (
+            <Alert severity="warning" sx={{ width: "200px" }}>
+              Editing the current user role will revoke admin privileges
+            </Alert>
+          )}
 
           <Box display="flex" gap={1} width="100%" marginBottom={2}>
             <TextField

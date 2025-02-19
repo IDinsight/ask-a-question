@@ -29,10 +29,10 @@ import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
 import type { Workspace } from "@/components/WorkspaceMenu";
-import UserSearchModal from "./components/UserWorkspaceModal";
 import { usePathname } from "next/navigation";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import UserCreateModal from "./components/UserWorkspaceModal";
+import { CustomError } from "@/utils/api";
 
 const UserManagement: React.FC = () => {
   const { token, userRole, loginWorkspace } = useAuth();
@@ -40,7 +40,6 @@ const UserManagement: React.FC = () => {
   const [currentWorkspace, setCurrentWorkspace] = React.useState<Workspace | null>();
   const [users, setUsers] = React.useState<UserBody[]>([]);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
-  const [showEditModal, setShowEditModal] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserBody | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
@@ -55,7 +54,7 @@ const UserManagement: React.FC = () => {
   }>({ message: "", severity: "success" });
   React.useEffect(() => {
     fetchUserData();
-  }, [token, showCreateModal, showEditModal]);
+  }, [token, showCreateModal]);
   const fetchUserData = React.useCallback(() => {
     setLoading(true);
     if (!token) return;
@@ -105,8 +104,8 @@ const UserManagement: React.FC = () => {
   };
 
   const handleEditUser = (user: UserBody) => {
-    setFormType("edit");
     setCurrentUser(user);
+    setFormType("edit");
     setShowCreateModal(true);
   };
 
@@ -125,6 +124,21 @@ const UserManagement: React.FC = () => {
 
   const handleRemoveUser = (userId: number, workspaceName: string) => {
     setLoading(true);
+    const isOnlyAdmin =
+      users.filter(
+        (user) =>
+          getUserRoleInWorkspace(user.user_workspaces!, workspaceName) === "admin",
+      ).length === 1;
+
+    if (isOnlyAdmin) {
+      setSnackbarMessage({
+        message: "Cannot remove the only admin in the workspace",
+        severity: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
     removeUserFromWorkspace(userId, workspaceName, token!)
       .then((data) => {
         if (data.require_workspace_switch) {
@@ -143,9 +157,15 @@ const UserManagement: React.FC = () => {
         }
       })
       .catch((error) => {
+        const customError = error as CustomError;
+        let errorMessage = "Failed to remove user";
+        if (customError.message) {
+          errorMessage = customError.message;
+        }
+
         console.error("Failed to remove user:", error);
         setSnackbarMessage({
-          message: "Failed to remove user",
+          message: errorMessage,
           severity: "error",
         });
       })
@@ -161,7 +181,8 @@ const UserManagement: React.FC = () => {
     );
   }
 
-  function handleUserModalClose(): void {
+  function handleCreateModalClose(): void {
+    setCurrentUser(null);
     setShowCreateModal(false);
   }
 
@@ -258,7 +279,7 @@ const UserManagement: React.FC = () => {
               </Button>
             </>
           </Tooltip>
-          <Tooltip title="Edit workspace">
+          <Tooltip title="Create user">
             <>
               <Button
                 variant="contained"
@@ -336,7 +357,7 @@ const UserManagement: React.FC = () => {
             )}
             <UserCreateModal
               open={showCreateModal}
-              onClose={handleUserModalClose}
+              onClose={handleCreateModalClose}
               checkUserExists={(username: string) => {
                 return checkIfUsernameExists(username, token!);
               }}
