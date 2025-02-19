@@ -238,7 +238,10 @@ const UserManagement: React.FC = () => {
               alignItems: "center",
             }}
           >
-            <Typography variant="h4">
+            <Typography
+              variant="h4"
+              sx={{ wordBreak: "break-word", display: "inline-block" }}
+            >
               Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
             </Typography>
             <Tooltip title="Edit Workspace">
