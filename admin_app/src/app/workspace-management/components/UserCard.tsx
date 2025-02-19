@@ -1,30 +1,46 @@
-import React from "react";
-import { Avatar, Typography, ListItem, IconButton, ListItemIcon } from "@mui/material";
-import LockResetIcon from "@mui/icons-material/LockReset";
+import React, { useState } from "react";
+import {
+  Avatar,
+  Typography,
+  ListItem,
+  IconButton,
+  ListItemIcon,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from "@mui/material";
 import Edit from "@mui/icons-material/Edit";
+import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 
 interface UserCardProps {
   index: number;
+  userId: number;
   username: string;
-  isAdmin: boolean;
+  userRole: "admin" | "read_only";
   isLastItem: boolean;
   hoveredIndex: number;
   setHoveredIndex: (index: number) => void;
-  onResetPassword: () => void;
+  onRemoveUser: (userId: number) => void;
   onEditUser: () => void;
 }
 
 const UserCard: React.FC<UserCardProps> = ({
   index,
   username,
-  isAdmin,
+  userId,
+  userRole,
   isLastItem,
   hoveredIndex,
   setHoveredIndex,
-  onResetPassword,
+  onRemoveUser,
   onEditUser,
 }) => {
+  const [open, setOpen] = useState(false);
   const lastItemRef = React.useRef<HTMLLIElement>(null);
+
   const getUserInitials = (name: string) => {
     const initials = name
       .split(" ")
@@ -32,6 +48,19 @@ const UserCard: React.FC<UserCardProps> = ({
       .join("")
       .toUpperCase();
     return initials;
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleConfirmRemove = () => {
+    onRemoveUser(userId);
+    handleClose();
   };
 
   return (
@@ -64,10 +93,11 @@ const UserCard: React.FC<UserCardProps> = ({
               </IconButton>
               <IconButton
                 edge="end"
-                aria-label="reset password"
-                onClick={() => onResetPassword()}
+                aria-label="remove user"
+                title="Remove user from Workspace"
+                onClick={handleOpen}
               >
-                <LockResetIcon fontSize="small" color="primary" />
+                <GroupRemoveIcon fontSize="small" color="primary" />
               </IconButton>
             </>
           )
@@ -79,10 +109,35 @@ const UserCard: React.FC<UserCardProps> = ({
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <Typography variant="body1">{username}</Typography>
-          <Typography variant="body2">{isAdmin ? "Admin" : "User"}</Typography>
+          <Typography variant="body2">
+            {userRole == "admin" ? "Admin" : "Read only"}{" "}
+          </Typography>
         </div>
       </ListItem>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to remove {username} from the workspace?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmRemove} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
+
 export { UserCard };

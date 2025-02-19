@@ -8,9 +8,7 @@ interface ProtectedComponentProps {
   children: React.ReactNode;
 }
 
-const ProtectedComponent: React.FC<ProtectedComponentProps> = ({
-  children,
-}) => {
+const ProtectedComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
   const router = useRouter();
   const { token } = useAuth();
   const pathname = usePathname();
@@ -33,13 +31,11 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({
   }
 };
 
-const FullAccessComponent: React.FC<ProtectedComponentProps> = ({
-  children,
-}) => {
+const FullAccessComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
   const router = useRouter();
-  const { token, accessLevel } = useAuth();
+  const { token, userRole } = useAuth();
 
-  if (token && accessLevel == "fullaccess") {
+  if (token && userRole == "admin") {
     return <>{children}</>;
   } else {
     return (

@@ -13,6 +13,10 @@ const api = axios.create({
 
 import { AxiosResponse, AxiosError } from "axios";
 
+export type CustomError = {
+  status: number;
+  message: string;
+};
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {

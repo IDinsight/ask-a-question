@@ -42,7 +42,7 @@ const UrgencyRulesPage = () => {
   const [items, setItems] = useState<UrgencyRule[]>([]);
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
-  const { token, accessLevel } = useAuth();
+  const { token, accessLevel, userRole } = useAuth();
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
@@ -157,8 +157,9 @@ const UrgencyRulesPage = () => {
   const handleSidebarClose = () => {
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSidebar ? 5 : 0;
 
+  const sidebarGridWidth = openSidebar ? 5 : 0;
+  const editAccess = userRole === "admin";
   return (
     <Grid container>
       <Grid
@@ -217,7 +218,7 @@ const UrgencyRulesPage = () => {
                 <>
                   <Button
                     variant="contained"
-                    disabled={saving}
+                    disabled={saving || !editAccess}
                     onClick={() => createNewRecord()}
                     startIcon={<Add fontSize="small" />}
                   >
@@ -286,10 +287,15 @@ const UrgencyRulesPage = () => {
                                 aria-label="delete"
                                 sx={{ marginRight: 0.5 }}
                                 onClick={deleteItem(index)}
+                                disabled={!editAccess}
                               >
                                 <Delete fontSize="small" color="primary" />
                               </IconButton>
-                              <IconButton aria-label="edit" onClick={handleEdit(index)}>
+                              <IconButton
+                                aria-label="edit"
+                                onClick={handleEdit(index)}
+                                disabled={!editAccess}
+                              >
                                 <Edit fontSize="small" color="primary" />
                               </IconButton>
                             </>
@@ -298,9 +304,7 @@ const UrgencyRulesPage = () => {
                         disablePadding
                         onMouseEnter={() => setHoveredIndex(index)}
                         onMouseLeave={() => setHoveredIndex(-1)}
-                        onDoubleClick={
-                          currAccessLevel == "fullaccess" ? handleEdit(index) : () => {}
-                        }
+                        onDoubleClick={editAccess ? handleEdit(index) : () => {}}
                       >
                         <ListItemIcon>#{index + 1}</ListItemIcon>
                         {editableIndex === index ? (

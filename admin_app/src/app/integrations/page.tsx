@@ -11,12 +11,12 @@ import { useAuth } from "@/utils/auth";
 import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
 import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
-import { getUser } from "../user-management/api";
+import { getCurrentWorkspace } from "../workspace-management/api";
 
 const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
-  const { token, accessLevel } = useAuth();
-
+  const { token, accessLevel, userRole } = useAuth();
+  const editAccess = userRole == "admin";
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
@@ -31,7 +31,7 @@ const IntegrationsPage = () => {
           maxWidth: "lg",
         }}
       >
-        <KeyManagement token={token} editAccess={currAccessLevel === "fullaccess"} />
+        <KeyManagement token={token} editAccess={editAccess} />
         <Layout.Spacer multiplier={3} />
         <Connections />
       </Box>
@@ -59,7 +59,7 @@ const KeyManagement = ({
       const setApiKeyInfo = async () => {
         setKeyInfoFetchIsLoading(true);
         try {
-          const data = await getUser(token!);
+          const data = await getCurrentWorkspace(token!);
           setCurrentKey(data.api_key_first_characters);
           const formatted_api_update_date = format(
             data.api_key_updated_datetime_utc,
@@ -108,7 +108,7 @@ const KeyManagement = ({
     }
   };
 
-  return (
+  return editAccess ? (
     <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
         Your API Key
@@ -158,7 +158,7 @@ const KeyManagement = ({
             <Typography variant="body1">Generate your first API key</Typography>
           )}
           <LoadingButton
-            variant="contained"
+            variant={"contained"}
             onClick={currentKey ? handleConfirmationModalOpen : handleRenew}
             disabled={!editAccess}
             loading={keyGenerationIsLoading}
@@ -192,7 +192,7 @@ const KeyManagement = ({
         />
       </Layout.FlexBox>
     </Layout.FlexBox>
-  );
+  ) : null;
 };
 
 const Connections = () => {
