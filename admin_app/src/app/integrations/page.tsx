@@ -108,7 +108,7 @@ const KeyManagement = ({
     }
   };
 
-  return (
+  return editAccess ? (
     <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
         Your API Key
@@ -158,7 +158,7 @@ const KeyManagement = ({
             <Typography variant="body1">Generate your first API key</Typography>
           )}
           <LoadingButton
-            variant={editAccess ? "contained" : "outlined"}
+            variant={"contained"}
             onClick={currentKey ? handleConfirmationModalOpen : handleRenew}
             disabled={!editAccess}
             loading={keyGenerationIsLoading}
@@ -192,7 +192,7 @@ const KeyManagement = ({
         />
       </Layout.FlexBox>
     </Layout.FlexBox>
-  );
+  ) : null;
 };
 
 const Connections = () => {
