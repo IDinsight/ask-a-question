@@ -257,7 +257,7 @@ async def create_first_user(
 
     # 1.
     user.role = UserRoles.ADMIN
-    user.workspace_name = user.workspace_name or f"Workspace_{user.username}"
+    user.workspace_name = user.workspace_name or f"{user.username}'s Workspace"
     workspace_db_new, _ = await create_workspace(asession=asession, user=user)
 
     # 2.

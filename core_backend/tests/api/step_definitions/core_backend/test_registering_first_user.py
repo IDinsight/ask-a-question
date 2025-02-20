@@ -76,7 +76,7 @@ def check_first_user_return_response_is_successful(
     assert len(create_tony_json_response["recovery_codes"]) > 0
     assert create_tony_json_response["role"] == UserRoles.ADMIN
     assert create_tony_json_response["username"] == "Tony"
-    assert create_tony_json_response["workspace_name"] == "Workspace_Tony"
+    assert create_tony_json_response["workspace_name"] == "Tony's Workspace"
 
 
 @then("I am able to authenticate as Tony", target_fixture="access_token_tony")
@@ -132,7 +132,7 @@ def verify_workspace_and_role_for_tony(
     assert json_response["username"] == "Tony"
     assert (
         len(json_response["user_workspaces"]) == 1
-        and json_response["user_workspaces"][0]["workspace_name"] == "Workspace_Tony"
+        and json_response["user_workspaces"][0]["workspace_name"] == "Tony's Workspace"
         and json_response["user_workspaces"][0]["user_role"] == UserRoles.ADMIN
     )
 
@@ -207,7 +207,7 @@ def add_mark_as_second_user(access_token_tony: str, client: TestClient) -> None:
             "password": "123",
             "role": UserRoles.READ_ONLY,
             "username": "Mark",
-            "workspace_name": "Workspace_Tony",
+            "workspace_name": "Tony's Workspace",
         },
     )
     json_response = response.json()
@@ -228,7 +228,7 @@ def check_mark_return_response_is_successful(add_mark_response: dict[str, Any]) 
     assert add_mark_response["recovery_codes"]
     assert add_mark_response["role"] == UserRoles.READ_ONLY
     assert add_mark_response["username"] == "Mark"
-    assert add_mark_response["workspace_name"] == "Workspace_Tony"
+    assert add_mark_response["workspace_name"] == "Tony's Workspace"
 
 
 @then("Mark is able to authenticate himself")
