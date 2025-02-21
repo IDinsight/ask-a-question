@@ -28,14 +28,14 @@ import type { UserBody, UserBodyUpdate } from "./api";
 import { appColors, sizes } from "@/utils";
 import { Layout } from "@/components/Layout";
 import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
-import type { Workspace } from "@/components/WorkspaceMenu";
+import type { UserRole, Workspace } from "@/components/WorkspaceMenu";
 import { usePathname } from "next/navigation";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import UserCreateModal from "./components/UserWorkspaceModal";
 import { CustomError } from "@/utils/api";
 
 const UserManagement: React.FC = () => {
-  const { token, userRole, loginWorkspace } = useAuth();
+  const { token, userRole, loginWorkspace, username } = useAuth();
   const pathname = usePathname();
   const [currentWorkspace, setCurrentWorkspace] = React.useState<Workspace | null>();
   const [users, setUsers] = React.useState<UserBody[]>([]);
@@ -48,6 +48,9 @@ const UserManagement: React.FC = () => {
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [formType, setFormType] = React.useState<"add" | "create" | "edit">("add");
   const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
+  const [adminUsername, setAdminUsername] = React.useState<string>(
+    username || localStorage.getItem("username") || "",
+  );
   const [snackbarMessage, setSnackbarMessage] = React.useState<{
     message: string;
     severity: "success" | "error" | "info" | "warning";
@@ -55,6 +58,7 @@ const UserManagement: React.FC = () => {
   React.useEffect(() => {
     fetchUserData();
   }, [token, showCreateModal]);
+
   const fetchUserData = React.useCallback(() => {
     setLoading(true);
     if (!token) return;
@@ -76,18 +80,20 @@ const UserManagement: React.FC = () => {
           )?.user_role,
         }));
 
-        const sortedData = userData.sort((a: UserBody, b: UserBody) =>
-          a.username.localeCompare(b.username),
-        );
+        // Sort users by username, with the admin user always at the top
+        const sortedData = userData.sort((a: UserBody, b: UserBody) => {
+          if (a.username === adminUsername) return -1;
+          if (b.username === adminUsername) return 1;
+          return a.username.localeCompare(b.username);
+        });
 
         setUsers(sortedData);
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching user data:", error);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => {});
   }, [token, currentWorkspace]);
 
   const onWorkspaceModalClose = () => {
@@ -112,12 +118,12 @@ const UserManagement: React.FC = () => {
   const getUserRoleInWorkspace = (
     workspaces: Workspace[],
     workspaceName: string,
-  ): "admin" | "read_only" | undefined => {
+  ): UserRole | undefined => {
     const workspace = workspaces.find(
       (workspace) => workspace.workspace_name === workspaceName,
     );
     if (workspace) {
-      return workspace.user_role as "admin" | "read_only";
+      return workspace.user_role as UserRole;
     }
     return undefined;
   };
@@ -127,12 +133,13 @@ const UserManagement: React.FC = () => {
     const isOnlyAdmin =
       users.filter(
         (user) =>
-          getUserRoleInWorkspace(user.user_workspaces!, workspaceName) === "admin",
-      ).length === 1;
+          getUserRoleInWorkspace(user.user_workspaces!, workspaceName) === "admin" &&
+          user.user_id !== userId,
+      ).length === 0;
 
     if (isOnlyAdmin) {
       setSnackbarMessage({
-        message: "Cannot remove the only admin in the workspace",
+        message: "You cannot remove the only admin from the workspace",
         severity: "error",
       });
       setLoading(false);
@@ -144,17 +151,11 @@ const UserManagement: React.FC = () => {
         if (data.require_workspace_switch) {
           loginWorkspace(data.default_workspace_name);
         }
-        if (data.status && data.status === 403) {
-          setSnackbarMessage({
-            message: data.message,
-            severity: "error",
-          });
-        } else {
-          setSnackbarMessage({
-            message: "User removed successfully",
-            severity: "success",
-          });
-        }
+
+        setSnackbarMessage({
+          message: "User removed successfully",
+          severity: "success",
+        });
       })
       .catch((error) => {
         const customError = error as CustomError;
@@ -320,6 +321,7 @@ const UserManagement: React.FC = () => {
                 <Layout.FlexBox key={user.user_id}>
                   <UserCard
                     index={index}
+                    adminUsername={adminUsername}
                     userId={user.user_id!}
                     username={user.username}
                     userRole={
@@ -361,6 +363,7 @@ const UserManagement: React.FC = () => {
             <UserCreateModal
               open={showCreateModal}
               onClose={handleCreateModalClose}
+              adminUsername={adminUsername}
               checkUserExists={(username: string) => {
                 return checkIfUsernameExists(username, token!);
               }}
@@ -371,11 +374,7 @@ const UserManagement: React.FC = () => {
                   token!,
                 );
               }}
-              createUser={(
-                username: string,
-                password: string,
-                role: "admin" | "read_only",
-              ) => {
+              createUser={(username: string, password: string, role: UserRole) => {
                 return createNewUser(
                   username,
                   password,
@@ -384,7 +383,7 @@ const UserManagement: React.FC = () => {
                   token!,
                 );
               }}
-              editUser={(username: string, role: "admin" | "read_only") => {
+              editUser={(username: string, role: UserRole) => {
                 return editUser(
                   currentUser!.user_id!,
                   {

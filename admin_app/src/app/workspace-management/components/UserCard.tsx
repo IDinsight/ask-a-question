@@ -14,12 +14,14 @@ import {
 } from "@mui/material";
 import Edit from "@mui/icons-material/Edit";
 import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
+import { UserRole } from "@/components/WorkspaceMenu";
 
 interface UserCardProps {
   index: number;
+  adminUsername: string;
   userId: number;
   username: string;
-  userRole: "admin" | "read_only";
+  userRole: UserRole;
   isLastItem: boolean;
   hoveredIndex: number;
   setHoveredIndex: (index: number) => void;
@@ -30,6 +32,7 @@ interface UserCardProps {
 const UserCard: React.FC<UserCardProps> = ({
   index,
   username,
+  adminUsername,
   userId,
   userRole,
   isLastItem,
@@ -108,7 +111,18 @@ const UserCard: React.FC<UserCardProps> = ({
         </ListItemIcon>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <Typography variant="body1">{username}</Typography>
+          <Typography variant="body1" style={{ display: "flex", alignItems: "center" }}>
+            {username}
+            {username == adminUsername && (
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                style={{ marginLeft: 8 }}
+              >
+                (You)
+              </Typography>
+            )}
+          </Typography>
           <Typography variant="body2">
             {userRole == "admin" ? "Admin" : "Read only"}{" "}
           </Typography>
@@ -124,7 +138,9 @@ const UserCard: React.FC<UserCardProps> = ({
         <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to remove {username} from the workspace?
+            Are you sure you want to remove <strong>{username}</strong> from the
+            workspace? If the current workspace is the only workspace for this user, the
+            user will be <strong> deleted from the system</strong>.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

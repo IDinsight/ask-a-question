@@ -11,6 +11,7 @@ import {
   Typography,
   Box,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -18,19 +19,18 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { UserBody } from "../api";
 import { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
+import { UserRole } from "@/components/WorkspaceMenu";
+import { form } from "@bokeh/bokehjs/build/js/lib/core/dom";
 
 interface UserCreateModalProps {
   open: boolean;
   onClose: () => void;
+  adminUsername: string;
   checkUserExists: (username: string) => Promise<boolean>;
   addUserToWorkspace: (username: string) => Promise<void>;
-  createUser: (
-    username: string,
-    password: string,
-    role: "admin" | "read_only",
-  ) => Promise<any>;
+  createUser: (username: string, password: string, role: UserRole) => Promise<any>;
   formType: "add" | "create" | "edit";
-  editUser?: (username: string, role: "admin" | "read_only") => Promise<void>;
+  editUser?: (username: string, role: UserRole) => Promise<void>;
   users: UserBody[];
   user?: UserBody;
   setSnackMessage: React.Dispatch<
@@ -45,6 +45,7 @@ interface UserCreateModalProps {
 const UserCreateModal: React.FC<UserCreateModalProps> = ({
   open,
   onClose,
+  adminUsername,
   checkUserExists,
   addUserToWorkspace,
   createUser,
@@ -55,11 +56,12 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
   setSnackMessage,
   onContinue,
 }) => {
-  const { username: currentUsername, logout: logout } = useAuth();
+  const { logout: logout } = useAuth();
   const [username, setUsername] = useState<string>(user?.username || "");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [role, setRole] = useState<"admin" | "read_only">("read_only");
+
+  const [role, setRole] = useState<UserRole>("read_only");
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -168,7 +170,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     edit: async () => {
       if (editUser) {
         await editUser(username, role);
-        if (username == currentUsername && role !== "admin") {
+        if (username == adminUsername && role !== "admin") {
           logout();
         }
       } else {
@@ -233,10 +235,15 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
   useEffect(() => {
     if (formType === "edit" && user) {
       setUsername(user.username);
-      setRole(user.role);
+      if (user.role) {
+        setRole(user.role);
+      }
     }
-  }, [user, formType]);
+  }, [user, formType, user?.role]);
 
+  if (formType === "edit" && (!user || !user.role)) {
+    return null;
+  }
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogContent>
@@ -255,7 +262,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           <Typography variant="h6" align="center">
             {getTitle(formType)}
           </Typography>
-          {formType == "edit" && user?.username == currentUsername && (
+          {formType === "edit" && user?.username === adminUsername && (
             <Alert severity="warning" sx={{ width: "200px" }}>
               Editing the current user role will revoke admin privileges
             </Alert>
@@ -302,13 +309,13 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               />
             </>
           ) : null}
-          {formType == "add" && !isVerified ? null : (
+          {formType == "add" || (formType == "edit" && user && user.role) ? (
             <TextField
               select
               fullWidth
               label="Role"
               value={role}
-              onChange={(e) => setRole(e.target.value as "admin" | "read_only")}
+              onChange={(e) => setRole(e.target.value as UserRole)}
               SelectProps={{
                 native: true,
               }}
@@ -317,7 +324,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               <option value="admin">Admin</option>
               <option value="read_only">Read Only</option>
             </TextField>
-          )}
+          ) : null}
           <Box display="flex" justifyContent="space-between" width="100%">
             <Button variant="outlined" onClick={handleClose} disabled={loading}>
               Cancel

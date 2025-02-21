@@ -1,5 +1,6 @@
 "use client";
 import { getLoginWorkspace } from "@/app/workspace-management/api";
+import { UserRole } from "@/components/WorkspaceMenu";
 import { apiCalls } from "@/utils/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
@@ -8,7 +9,7 @@ type AuthContextType = {
   token: string | null;
   username: string | null;
   accessLevel: "readonly" | "fullaccess";
-  userRole: "admin" | "read_only" | null;
+  userRole: UserRole | null;
   workspaceName: string | null;
   loginError: string | null;
   login: (username: string, password: string) => void;
@@ -35,13 +36,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const getInitialRole = () => {
     if (typeof window !== "undefined") {
       const userRole = localStorage.getItem("userRole");
-      return userRole as "admin" | "read_only" | null;
+      return userRole as UserRole | null;
     }
     return null;
   };
-  const [userRole, setUserRole] = useState<"admin" | "read_only" | null>(
-    getInitialRole,
-  );
+  const [userRole, setUserRole] = useState<UserRole | null>(getInitialRole);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
@@ -68,7 +67,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const setLoginParams = (
     token: string,
     accessLevel: string,
-    user_role: "admin" | "read_only",
+    user_role: UserRole,
     workspaceName: string,
   ) => {
     localStorage.setItem("token", token);

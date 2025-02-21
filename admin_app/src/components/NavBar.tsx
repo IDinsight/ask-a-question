@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
-import WorkspaceMenu from "./WorkspaceMenu";
+import WorkspaceMenu, { UserRole } from "./WorkspaceMenu";
 import { type Workspace } from "./WorkspaceMenu";
 import {
   createWorkspace,
@@ -261,9 +261,7 @@ const UserDropdown = () => {
   const router = useRouter();
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
-  const [persistedRole, setPersistedRole] = React.useState<"admin" | "user" | null>(
-    null,
-  );
+  const [persistedRole, setPersistedRole] = React.useState<UserRole | null>(null);
 
   useEffect(() => {
     // Save user to local storage when it changes

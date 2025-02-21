@@ -285,12 +285,27 @@ const removeUserFromWorkspace = async (
         headers: { Authorization: `Bearer ${token}` },
       },
     );
+    console.log("I am in try");
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 403) {
-      return {
+  } catch (customError) {
+    console.log("I am in catch");
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status === 403
+    ) {
+      throw {
         status: 403,
         message: "You cannot remove the last admin from the workspace.",
+      } as CustomError;
+    } else if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: 404,
+        message: customError.response.data?.detail,
       } as CustomError;
     }
     throw new Error("Error removing user from workspace");
