@@ -45,7 +45,7 @@ class ContentDB(Base):
     __tablename__ = "content"
     __table_args__ = (
         Index(
-            "content_idx",
+            "ix_content_embedding",
             "content_embedding",
             postgresql_using="hnsw",
             postgresql_with={

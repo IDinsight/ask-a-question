@@ -141,7 +141,7 @@ class QueryResponseContentDB(Base):
     __tablename__ = "query_response_content"
     __table_args__ = (
         Index(
-            "idx_workspace_id_created_datetime", "workspace_id", "created_datetime_utc"
+            "ix_workspace_id_created_datetime", "workspace_id", "created_datetime_utc"
         ),
     )
 
