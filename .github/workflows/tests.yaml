@@ -109,5 +109,6 @@ jobs:
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
             ALIGN_SCORE_API=$ALIGN_SCORE_API
+          python -m alembic upgrade head
           python -m pytest -s -m "not rails and not alembic" --ignore-glob="tests/api/step_definitions/*" tests
           python -m pytest -m "not rails and not alembic" tests/api/step_definitions
