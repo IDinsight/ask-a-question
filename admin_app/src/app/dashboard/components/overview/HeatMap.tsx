@@ -1,7 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
-
 import { ApexOptions } from "apexcharts";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -13,7 +19,7 @@ const HeatMap = ({ data }: { data: any }) => {
       id: "usage-heatmap",
       width: "100%",
       height: "100%",
-      fontFamily: "Inter",
+      fontFamily: inter.style.fontFamily,
     },
     dataLabels: {
       enabled: false,
@@ -27,7 +33,7 @@ const HeatMap = ({ data }: { data: any }) => {
       style: {
         fontSize: "16px",
         fontWeight: 500,
-        fontFamily: "Inter",
+        fontFamily: inter.style.fontFamily,
         color: "#263238",
       },
     },
