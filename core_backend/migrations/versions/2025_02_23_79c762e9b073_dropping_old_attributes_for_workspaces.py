@@ -129,14 +129,10 @@ def upgrade() -> None:
 
     table_name = "query_response_content"
     existing_fks = {fk["name"] for fk in inspector.get_foreign_keys(table_name)}
-    old_fk_names = [
-        "fk_query_response_content_content_id_content",
-        "fk_query_response_content_query_id_query",
-    ]
-    for fk_name in old_fk_names:
-        if fk_name in existing_fks:
-            op.drop_constraint(fk_name, table_name, type_="foreignkey")
-    if "fk_query_response_content_query_id_query" not in existing_fks:
+    if "fk_query_response_content_query_id_query" in existing_fks:
+        op.drop_constraint(
+            "fk_query_response_content_query_id_query", table_name, type_="foreignkey"
+        )
         op.create_foreign_key(
             op.f("fk_query_response_content_query_id_query"),
             table_name,
@@ -145,7 +141,12 @@ def upgrade() -> None:
             ["query_id"],
             ondelete="CASCADE",
         )
-    if "fk_query_response_content_content_id_content" not in existing_fks:
+    if "fk_query_response_content_content_id_content" in existing_fks:
+        op.drop_constraint(
+            "fk_query_response_content_content_id_content",
+            table_name,
+            type_="foreignkey",
+        )
         op.create_foreign_key(
             op.f("fk_query_response_content_content_id_content"),
             table_name,
