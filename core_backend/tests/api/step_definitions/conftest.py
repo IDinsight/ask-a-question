@@ -142,7 +142,12 @@ async def setup_multiple_workspaces(  # pylint: disable=R0915
     assert json_response["require_register"] is True
     register_suzin_response = client.post(
         "/user/register-first-user",
-        json={"password": "123", "role": UserRoles.ADMIN, "username": "Suzin"},
+        json={
+            "password": "123",
+            "role": UserRoles.ADMIN,
+            "username": "Suzin",
+            "workspace_name": "Workspace_Suzin",
+        },
     )
     suzin_login_response = client.post(
         "/login", data={"username": "Suzin", "password": "123"}
