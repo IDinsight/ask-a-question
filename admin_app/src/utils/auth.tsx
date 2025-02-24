@@ -1,7 +1,7 @@
 "use client";
 import { getLoginWorkspace } from "@/app/workspace-management/api";
 import { UserRole } from "@/components/WorkspaceMenu";
-import { apiCalls } from "@/utils/api";
+import { apiCalls, CustomError } from "@/utils/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
 
@@ -89,12 +89,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         await apiCalls.getLoginToken(username, password);
       localStorage.setItem("username", username);
       setUsername(username);
-
       setLoginParams(access_token, access_level, user_role, workspace_name);
       router.push(sourcePage);
-    } catch (error: Error | any) {
+    } catch (error: CustomError | any) {
       if (error.status === 401) {
-        setLoginError("Invalid username or password");
+        setLoginError(error.message);
         console.error("Login error:", error);
       } else {
         console.error("Login error:", error);

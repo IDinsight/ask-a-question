@@ -49,14 +49,14 @@ def upgrade() -> None:
     connection = op.get_bind()
 
     # 2
-    users = connection.execute(sa.text('SELECT * FROM "user"')).mappings().all()
+    users = list(connection.execute(sa.text('SELECT * FROM "user"')))
 
     # 3
     for row in users:
-        api_daily_quota = row["api_daily_quota"] if row["api_daily_quota"] else 100
+        api_daily_quota = row["api_daily_quota"]
         api_key_first_characters = row["api_key_first_characters"]
         api_key_updated_datetime_utc = row["api_key_updated_datetime_utc"]
-        content_quota = row["content_quota"] if row["content_quota"] else 100
+        content_quota = row["content_quota"]
         created_datetime_utc = row["created_datetime_utc"]
         hashed_api_key = row["hashed_api_key"]
         # is_admin = row["is_admin"]  # Not needed for data migration

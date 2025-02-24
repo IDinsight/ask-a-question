@@ -11,7 +11,6 @@ import {
   Typography,
   Box,
   Alert,
-  CircularProgress,
 } from "@mui/material";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -20,7 +19,6 @@ import { UserBody } from "../api";
 import { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { UserRole } from "@/components/WorkspaceMenu";
-import { form } from "@bokeh/bokehjs/build/js/lib/core/dom";
 
 interface UserCreateModalProps {
   open: boolean;

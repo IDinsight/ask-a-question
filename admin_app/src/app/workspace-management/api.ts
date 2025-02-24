@@ -45,8 +45,19 @@ const createUser = async (user: UserBodyPassword, token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error creating user");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error creating user");
+    }
   }
 };
 const createNewUser = async (
@@ -62,7 +73,17 @@ const createNewUser = async (
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    }
     throw new Error("Error creating user");
   }
 };
@@ -72,8 +93,19 @@ const getUserList = async (token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error fetching user list");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching user list");
+    }
   }
 };
 
@@ -85,8 +117,19 @@ const getUser = async (token: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error fetching user info");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching user info");
+    }
   }
 };
 
@@ -94,8 +137,19 @@ const getRegisterOption = async () => {
   try {
     const response = await api.get("/user/require-register");
     return response.data;
-  } catch (error) {
-    throw new Error("Error fetching register option");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching register option");
+    }
   }
 };
 
@@ -109,8 +163,19 @@ const registerUser = async (username: string, password: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    console.error(error);
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error registering user");
+    }
   }
 };
 const resetPassword = async (
@@ -200,9 +265,19 @@ const getLoginWorkspace = async (workspace_name: string, token: string | null) =
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error fetching workspace login token");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching workspace login token");
+    }
   }
 };
 const createWorkspace = async (workspace: Workspace, token: string) => {
@@ -269,8 +344,19 @@ const addUserToWorkspace = async (
       },
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error adding user to workspace");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error adding user to workspace");
+    }
   }
 };
 const removeUserFromWorkspace = async (
