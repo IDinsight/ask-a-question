@@ -108,7 +108,7 @@ def upgrade() -> None:
 
         # 4. NB: All existing users must be created as ADMIN users in their own
         # workspace. Otherwise, we would have workspaces with no admin users.
-        user_role = "admin"
+        user_role = "ADMIN"
         connection.execute(
             sa.text(
                 """
