@@ -49,7 +49,7 @@ def upgrade() -> None:
     connection = op.get_bind()
 
     # 2
-    users = list(connection.execute(sa.text('SELECT * FROM "user"')))
+    users = connection.execute(sa.text('SELECT * FROM "user"')).mappings()
 
     # 3
     for row in users:
@@ -162,7 +162,7 @@ def upgrade() -> None:
                         WHERE user_id = :old_user_id
                     """
                 ),
-                {"workspace_id": new_workspace_id, "old_user_id": user_id},
+                {"new_workspace_id": new_workspace_id, "old_user_id": user_id},
             )
 
 
