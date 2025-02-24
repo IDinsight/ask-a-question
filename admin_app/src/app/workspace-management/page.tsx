@@ -59,41 +59,37 @@ const UserManagement: React.FC = () => {
     fetchUserData();
   }, [token, showCreateModal]);
 
-  const fetchUserData = React.useCallback(() => {
+  const fetchUserData = React.useCallback(async () => {
     setLoading(true);
     if (!token) return;
+    try {
+      const fetchedWorkspace = await getCurrentWorkspace(token);
+      setCurrentWorkspace(fetchedWorkspace);
+      const data = await getUserList(token);
+      const userData = data.map((user: any) => ({
+        username: user.username,
+        user_id: user.user_id,
+        user_workspaces: user.user_workspaces,
+        role: user.user_workspaces.find(
+          (workspace: any) =>
+            workspace.workspace_name === fetchedWorkspace?.workspace_name,
+        )?.user_role,
+      }));
 
-    getCurrentWorkspace(token)
-      .then((fetchedWorkspace: Workspace) => {
-        setCurrentWorkspace(fetchedWorkspace);
+      // Sort users by username, with the admin user always at the top
+      const sortedData = userData.sort((a: UserBody, b: UserBody) => {
+        if (a.username === adminUsername) return -1;
+        if (b.username === adminUsername) return 1;
+        return a.username.localeCompare(b.username);
+      });
 
-        return getUserList(token);
-      })
-      .then((data: any) => {
-        const userData = data.map((user: any) => ({
-          username: user.username,
-          user_id: user.user_id,
-          user_workspaces: user.user_workspaces,
-          role: user.user_workspaces.find(
-            (workspace: any) =>
-              workspace.workspace_name === currentWorkspace?.workspace_name,
-          )?.user_role,
-        }));
-
-        // Sort users by username, with the admin user always at the top
-        const sortedData = userData.sort((a: UserBody, b: UserBody) => {
-          if (a.username === adminUsername) return -1;
-          if (b.username === adminUsername) return 1;
-          return a.username.localeCompare(b.username);
-        });
-
-        setUsers(sortedData);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching user data:", error);
-      })
-      .finally(() => {});
+      setUsers(sortedData);
+      setLoading(false);
+    } catch (error: any) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [token, currentWorkspace]);
 
   const onWorkspaceModalClose = () => {

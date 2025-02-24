@@ -189,7 +189,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     try {
       await actions[formType]?.();
       setSnackMessage({
-        message: `User successfully ${formType === "add" ? "added" : formType + "d"}`,
+        message: `User successfully ${
+          formType === "add" ? "added" : formType === "edit" ? "edited" : formType + "d"
+        }`,
         severity: "success",
       });
 
@@ -241,9 +243,6 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     }
   }, [user, formType, user?.role]);
 
-  if (formType === "edit" && (!user || !user.role)) {
-    return null;
-  }
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogContent>
@@ -264,7 +263,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           </Typography>
           {formType === "edit" && user?.username === adminUsername && (
             <Alert severity="warning" sx={{ width: "200px" }}>
-              Editing the current user role will revoke admin privileges
+              Editing the current user will require to log in again
             </Alert>
           )}
 
@@ -309,7 +308,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               />
             </>
           ) : null}
-          {formType == "add" || (formType == "edit" && user && user.role) ? (
+          {formType == "add" ||
+          formType === "create" ||
+          (formType == "edit" && user && user.role) ? (
             <TextField
               select
               fullWidth
@@ -320,6 +321,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
                 native: true,
               }}
               sx={{ marginBottom: 2 }}
+              disabled={formType == "edit" && user?.username === adminUsername}
             >
               <option value="admin">Admin</option>
               <option value="read_only">Read Only</option>
