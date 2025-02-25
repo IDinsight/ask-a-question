@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
+import { inter } from "@/fonts";
 import { appColors } from "@/utils/index";
 import { ApexSeriesData } from "../../types";
 
@@ -18,7 +19,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, showDayOfWeek }
     chart: {
       type: "bar",
       stacked: true,
-      fontFamily: "Inter",
+      fontFamily: inter.style.fontFamily,
     },
     dataLabels: { enabled: false },
     xaxis: {

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
+import { inter } from "@/fonts";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -38,17 +39,27 @@ const LineChart: React.FC<LineChartProps> = ({
     title: {
       text: `Top content in the last ${timePeriod}`,
       align: "left",
-      style: { fontSize: "18px", fontWeight: 500, color: appColors.black },
+      style: {
+        fontSize: "18px",
+        fontWeight: 500,
+        color: appColors.black,
+        fontFamily: inter.style.fontFamily,
+      },
     },
     subtitle: {
       text: `Ordered by ${displayOrderBy} ${orderDirection} (Viewing page ${pageNumber} of results)`,
       align: "left",
-      style: { fontSize: "14px", fontWeight: 400, color: appColors.darkGrey },
+      style: {
+        fontSize: "14px",
+        fontWeight: 400,
+        color: appColors.darkGrey,
+        fontFamily: inter.style.fontFamily,
+      },
     },
     chart: {
       id: "content-performance-timeseries",
       stacked: false,
-      fontFamily: "Inter",
+      fontFamily: inter.style.fontFamily,
     },
     dataLabels: { enabled: false },
     xaxis: {
