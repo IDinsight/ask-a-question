@@ -28,3 +28,5 @@ scikit-learn==1.5.1
 bokeh==3.5.1
 faster-whisper==1.0.3
 sentry-sdk[fastapi]==2.17.0
+dotmap==1.3.30
+termcolor==2.5.0

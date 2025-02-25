@@ -38,6 +38,8 @@ import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
+import { ChatSideBar } from "./components/ChatSideBar";
+import { apiCalls } from "@/utils/api";
 
 const CARD_HEIGHT = 250;
 
@@ -64,24 +66,35 @@ const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
+
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
-  const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
-  const { token, accessLevel } = useAuth();
+  const [editAccess, setEditAccess] = React.useState(false);
+  const { token, userRole } = useAuth();
   const [snackMessage, setSnackMessage] = React.useState<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>({ message: null, color: undefined });
 
-  const [openSidebar, setOpenSideBar] = useState(false);
+  const [openSearchSidebar, setOpenSideBar] = useState(false);
+  const [openChatSidebar, setOpenChatSideBar] = useState(false);
   const handleSidebarToggle = () => {
-    setOpenSideBar(!openSidebar);
+    setOpenChatSideBar(false);
+    setOpenSideBar(!openSearchSidebar);
+  };
+  const handleChatSidebarToggle = () => {
+    setOpenSideBar(false);
+    setOpenChatSideBar(!openChatSidebar);
+  };
+  const handleChatSidebarClose = () => {
+    setOpenChatSideBar(false);
   };
   const handleSidebarClose = () => {
+    setOpenChatSideBar(false);
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSidebar ? 5 : 0;
+  const sidebarGridWidth = openSearchSidebar || openChatSidebar ? 5 : 0;
 
   React.useEffect(() => {
     if (token) {
@@ -94,12 +107,12 @@ const CardsPage = () => {
         }
       };
       fetchTags();
-      setCurrAccessLevel(accessLevel);
+      setEditAccess(userRole === "admin");
     } else {
       setTags([]);
-      setCurrAccessLevel("readonly");
+      setEditAccess(userRole === "admin");
     }
-  }, [accessLevel, token]);
+  }, [userRole, token]);
 
   const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
@@ -115,7 +128,10 @@ const CardsPage = () => {
           md={12 - sidebarGridWidth}
           lg={12 - sidebarGridWidth + 1}
           sx={{
-            display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+            display:
+              openSearchSidebar || openChatSidebar
+                ? { xs: "none", sm: "none", md: "block" }
+                : "block",
           }}
         >
           <Layout.FlexBox
@@ -154,7 +170,7 @@ const CardsPage = () => {
                 }}
               >
                 <CardsUtilityStrip
-                  editAccess={currAccessLevel === "fullaccess"}
+                  editAccess={editAccess}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   tags={tags}
@@ -168,43 +184,88 @@ const CardsPage = () => {
                   searchTerm={searchTerm}
                   tags={tags}
                   filterTags={filterTags}
-                  openSidebar={openSidebar}
+                  openSidebar={openSearchSidebar || openChatSidebar}
                   token={token}
-                  accessLevel={currAccessLevel}
+                  editAccess={editAccess}
                   setSnackMessage={setSnackMessage}
                 />
-                {!openSidebar && (
-                  <Fab
-                    variant="extended"
-                    sx={{
-                      bgcolor: "orange",
-                      width: "100px",
-                      alignSelf: "flex-end",
-                      marginRight: 2,
-                      marginBottom: 3,
-                    }}
-                    onClick={handleSidebarToggle}
-                  >
-                    <PlayArrowIcon />
-                    <Layout.Spacer horizontal multiplier={0.3} />
-                    Test
-                  </Fab>
-                )}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "flex-end",
+                    justifyContent: "flex-end",
+                    p: 1,
+                  }}
+                >
+                  {!openSearchSidebar && (
+                    <Fab
+                      variant="extended"
+                      sx={{
+                        bgcolor: "orange",
+                      }}
+                      onClick={handleSidebarToggle}
+                    >
+                      <PlayArrowIcon />
+                      <Layout.Spacer horizontal multiplier={0.3} />
+                      Test search
+                    </Fab>
+                  )}
+                  {!openChatSidebar && (
+                    <Fab
+                      variant="extended"
+                      sx={{
+                        bgcolor: "orange",
+                        ml: 2,
+                      }}
+                      onClick={handleChatSidebarToggle}
+                    >
+                      <PlayArrowIcon />
+                      <Layout.Spacer horizontal multiplier={0.3} />
+                      Test chat
+                    </Fab>
+                  )}
+                </Box>
               </Layout.FlexBox>
             </Box>
           </Layout.FlexBox>
         </Grid>
         <Grid
           item
-          xs={openSidebar ? 12 : 0}
-          sm={openSidebar ? 12 : 0}
+          xs={openSearchSidebar ? 12 : 0}
+          sm={openSearchSidebar ? 12 : 0}
           md={sidebarGridWidth}
           lg={sidebarGridWidth - 1}
           sx={{
-            display: openSidebar ? "block" : "none",
+            display: openSearchSidebar ? "block" : "none",
           }}
         >
           <SearchSidebar closeSidebar={handleSidebarClose} />
+        </Grid>
+        <Grid
+          item
+          xs={openChatSidebar ? 12 : 0}
+          sm={openChatSidebar ? 12 : 0}
+          md={sidebarGridWidth}
+          lg={sidebarGridWidth - 1}
+          sx={{
+            display: openChatSidebar ? "block" : "none",
+          }}
+        >
+          <ChatSideBar
+            closeSidebar={handleChatSidebarClose}
+            getResponse={(question: string, session_id) => {
+              return session_id
+                ? apiCalls.getChat(question, true, token!, session_id)
+                : apiCalls.getChat(question, true, token!);
+            }}
+            setSnackMessage={(message: string) => {
+              setSnackMessage({
+                message: message,
+                color: "error",
+              });
+            }}
+          />
         </Grid>
       </Grid>
       <Snackbar
@@ -295,7 +356,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         </Tooltip>
         <Tooltip title="Add new content">
           <>
-            <AddButtonWithDropdown />
+            <AddButtonWithDropdown editAccess={editAccess} />
           </>
         </Tooltip>
         <DownloadModal
@@ -340,8 +401,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   );
 };
 
-function AddButtonWithDropdown() {
-  const [editAccess, setEditAccess] = useState(true);
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
@@ -356,15 +416,10 @@ function AddButtonWithDropdown() {
   return (
     <>
       <ButtonGroup variant="contained" disabled={!editAccess}>
-        <Button
-          disabled={!editAccess}
-          component={Link}
-          href="/content/edit"
-          startIcon={<AddIcon />}
-        >
+        <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
-        <Button size="small" disabled={!editAccess} onClick={handleClick}>
+        <Button size="small" onClick={handleClick}>
           <ArrowDropDownIcon />
         </Button>
       </ButtonGroup>
@@ -386,7 +441,7 @@ function AddButtonWithDropdown() {
       <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
   );
-}
+};
 
 const CardsGrid = ({
   displayLanguage,
@@ -395,7 +450,7 @@ const CardsGrid = ({
   filterTags,
   openSidebar,
   token,
-  accessLevel,
+  editAccess,
   setSnackMessage,
 }: {
   displayLanguage: string;
@@ -404,7 +459,7 @@ const CardsGrid = ({
   filterTags: Tag[];
   openSidebar: boolean;
   token: string | null;
-  accessLevel: string;
+  editAccess: boolean;
   setSnackMessage: React.Dispatch<
     React.SetStateAction<{
       message: string | null;
@@ -613,7 +668,7 @@ const CardsGrid = ({
                         archiveContent={(content_id: number) => {
                           return archiveContent(content_id, token!);
                         }}
-                        editAccess={accessLevel === "fullaccess"}
+                        editAccess={editAccess}
                       />
                     </Grid>
                   );

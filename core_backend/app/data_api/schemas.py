@@ -1,110 +1,92 @@
+"""This module contains Pydantic models for data API queries and responses."""
+
 from datetime import datetime
-from typing import Dict, List
 
 from pydantic import BaseModel, ConfigDict
 
 
-class QueryResponseExtract(BaseModel):
-    """
-    Model when valid response is returned
-    """
+class ContentFeedbackExtract(BaseModel):
+    """Pydantic model for content feedback."""
 
-    response_id: int
-    search_results: Dict
-    llm_response: str | None
-    response_datetime_utc: datetime
+    content_id: int
+    feedback_datetime_utc: datetime
+    feedback_id: int
+    feedback_sentiment: str
+    feedback_text: str | None
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QueryResponseErrorExtract(BaseModel):
-    """
-    Model when error response is returned
-    """
+    """Pydantic model for when an error response is returned."""
 
+    error_datetime_utc: datetime
     error_id: int
     error_message: str
     error_type: str
-    error_datetime_utc: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QueryResponseExtract(BaseModel):
+    """Pydantic model for when a valid query response is returned."""
+
+    llm_response: str | None
+    response_datetime_utc: datetime
+    response_id: int
+    search_results: dict
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResponseFeedbackExtract(BaseModel):
-    """
-    Model for feedback on response
-    """
+    """Pydantic model for response feedback."""
 
+    feedback_datetime_utc: datetime
     feedback_id: int
     feedback_sentiment: str
     feedback_text: str | None
-    feedback_datetime_utc: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
-
-
-class ContentFeedbackExtract(BaseModel):
-    """
-    Model for feedback on content
-    """
-
-    feedback_id: int
-    feedback_sentiment: str
-    feedback_text: str | None
-    feedback_datetime_utc: datetime
-    content_id: int
-
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QueryExtract(BaseModel):
-    """
-    Main model that is returned for a query.
-    Contains all related child models
+    """Pydantic model for a query. Contains all related child models.
+
+    NB: The model contains the workspace ID.
     """
 
-    query_id: int
-    user_id: int
-    query_text: str
-    query_metadata: dict
+    content_feedback: list[ContentFeedbackExtract]
     query_datetime_utc: datetime
-    response: List[QueryResponseExtract]
-    response_feedback: List[ResponseFeedbackExtract]
-    content_feedback: List[ContentFeedbackExtract]
+    query_id: int
+    query_metadata: dict
+    query_text: str
+    response: list[QueryResponseExtract]
+    response_feedback: list[ResponseFeedbackExtract]
+    workspace_id: int
 
 
 class UrgencyQueryResponseExtract(BaseModel):
-    """
-    Model when valid response is returned
-    """
+    """Pydantic model when valid response is returned."""
 
-    urgency_response_id: int
+    details: dict
     is_urgent: bool
-    matched_rules: List[str] | None
-    details: Dict
+    matched_rules: list[str] | None
     response_datetime_utc: datetime
+    urgency_response_id: int
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UrgencyQueryExtract(BaseModel):
-    """
-    Main model that is returned for an urgency query.
-    Contains all related child models
+    """Pydantic model that is returned for an urgency query. Contains all related
+    child models.
+
+    NB: This model contains the workspace ID.
     """
 
-    urgency_query_id: int
-    user_id: int
-    message_text: str
     message_datetime_utc: datetime
+    message_text: str
     response: UrgencyQueryResponseExtract | None
+    urgency_query_id: int
+    workspace_id: int

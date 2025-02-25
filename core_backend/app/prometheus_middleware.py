@@ -1,3 +1,8 @@
+"""This module contains the PrometheusMiddleware class, which is a middleware for
+FastAPI that collects metrics about requests made to the application and exposes them
+on the `/metrics` endpoint.
+"""
+
 from typing import Callable
 
 from fastapi import FastAPI
@@ -8,15 +13,18 @@ from starlette.responses import Response
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
-    """
-    Prometheus middleware for FastAPI.
-    """
+    """Prometheus middleware for FastAPI."""
 
     def __init__(self, app: FastAPI) -> None:
-        """
-        This middleware will collect metrics about requests made to the application
+        """This middleware will collect metrics about requests made to the application
         and expose them on the `/metrics` endpoint.
+
+        Parameters
+        ----------
+        app
+            The FastAPI application instance.
         """
+
         super().__init__(app)
         self.counter = Counter(
             "requests",
@@ -30,8 +38,19 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """
-        Collect metrics about requests made to the application.
+        """Collect metrics about requests made to the application.
+
+        Parameters
+        ----------
+         request
+             The incoming request.
+         call_next
+             The next middleware in the chain.
+
+         Returns
+         -------
+         Response
+             The response to the incoming request.
         """
 
         if request.url.path == "/metrics":

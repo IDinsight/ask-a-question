@@ -3,7 +3,7 @@ import api from "../../utils/api";
 const createNewApiKey = async (token: string) => {
   try {
     const response = await api.put(
-      "/user/rotate-key",
+      "/workspace/rotate-key",
       {},
       {
         headers: {

@@ -3,7 +3,7 @@ database helper functions such as saving, updating, deleting, and retrieving con
 """
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -43,10 +43,9 @@ class ContentDB(Base):
     """
 
     __tablename__ = "content"
-
     __table_args__ = (
         Index(
-            "content_idx",
+            "ix_content_embedding",
             "content_embedding",
             postgresql_using="hnsw",
             postgresql_with={
@@ -57,37 +56,30 @@ class ContentDB(Base):
         ),
     )
 
-    content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
-    )
-
     content_embedding: Mapped[Vector] = mapped_column(
         Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
     )
-    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
-    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-
+    content_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     content_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-
+    content_tags = relationship(
+        "TagDB", secondary=content_tags_table, back_populates="contents"
+    )
+    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
+    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-
-    positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    content_tags = relationship(
-        "TagDB",
-        secondary=content_tags_table,
-        back_populates="contents",
+    workspace_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -101,37 +93,37 @@ class ContentDB(Base):
 
         return (
             f"ContentDB(content_id={self.content_id}, "
-            f"user_id={self.user_id}, "
             f"content_embedding=..., "
             f"content_title={self.content_title}, "
             f"content_text={self.content_text}, "
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
+            f"is_archived={self.is_archived}), "
             f"updated_datetime_utc={self.updated_datetime_utc}), "
-            f"is_archived={self.is_archived})"
+            f"workspace_id={self.workspace_id}"
         )
 
 
 async def save_content_to_db(
     *,
-    user_id: int,
+    asession: AsyncSession,
     content: ContentCreate,
     exclude_archived: bool = False,
-    asession: AsyncSession,
+    workspace_id: int,
 ) -> ContentDB:
     """Vectorize the content and save to the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the save.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     content
         The content to save.
     exclude_archived
         Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to save the content to.
 
     Returns
     -------
@@ -140,20 +132,22 @@ async def save_content_to_db(
     """
 
     metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
+        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "save_content_to_db",
     }
 
-    content_embedding = await _get_content_embeddings(content, metadata=metadata)
+    content_embedding = await _get_content_embeddings(
+        content=content, metadata=metadata
+    )
     content_db = ContentDB(
-        user_id=user_id,
         content_embedding=content_embedding,
-        content_title=content.content_title,
-        content_text=content.content_text,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
+        content_text=content.content_text,
+        content_title=content.content_title,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        workspace_id=workspace_id,
     )
     asession.add(content_db)
 
@@ -161,19 +155,20 @@ async def save_content_to_db(
     await asession.refresh(content_db)
 
     result = await get_content_from_db(
-        user_id=content_db.user_id,
+        asession=asession,
         content_id=content_db.content_id,
         exclude_archived=exclude_archived,
-        asession=asession,
+        workspace_id=content_db.workspace_id,
     )
     return result or content_db
 
 
 async def update_content_in_db(
-    user_id: int,
-    content_id: int,
-    content: ContentCreate,
+    *,
     asession: AsyncSession,
+    content: ContentCreate,
+    content_id: int,
+    workspace_id: int,
 ) -> ContentDB:
     """Update content and content embedding in the database.
 
@@ -182,14 +177,14 @@ async def update_content_in_db(
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the update.
-    content_id
-        The ID of the content to update.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     content
         The content to update.
-    asession
-        `AsyncSession` object for database transactions.
+    content_id
+        The ID of the content to update.
+    workspace_id
+        The ID of the workspace to update the content in.
 
     Returns
     -------
@@ -198,85 +193,56 @@ async def update_content_in_db(
     """
 
     metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
+        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "update_content_in_db",
     }
 
-    content_embedding = await _get_content_embeddings(content, metadata=metadata)
+    content_embedding = await _get_content_embeddings(
+        content=content, metadata=metadata
+    )
     content_db = ContentDB(
-        content_id=content_id,
-        user_id=user_id,
         content_embedding=content_embedding,
-        content_title=content.content_title,
-        content_text=content.content_text,
+        content_id=content_id,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
-        updated_datetime_utc=datetime.now(timezone.utc),
+        content_text=content.content_text,
+        content_title=content.content_title,
         is_archived=content.is_archived,
+        updated_datetime_utc=datetime.now(timezone.utc),
+        workspace_id=workspace_id,
     )
 
     content_db = await asession.merge(content_db)
     await asession.commit()
     await asession.refresh(content_db)
     result = await get_content_from_db(
-        user_id=content_db.user_id,
+        asession=asession,
         content_id=content_db.content_id,
         exclude_archived=False,  # Don't exclude for newly updated content!
-        asession=asession,
+        workspace_id=content_db.workspace_id,
     )
 
     return result or content_db
 
 
-async def increment_query_count(
-    user_id: int,
-    contents: Dict[int, QuerySearchResult] | None,
-    asession: AsyncSession,
-) -> None:
-    """Increment the query count for the content.
-
-    Parameters
-    ----------
-    user_id
-        The ID of the user requesting the query count increment.
-    contents
-        The content to increment the query count for.
-    asession
-        `AsyncSession` object for database transactions.
-    """
-
-    if contents is None:
-        return
-    for _, content in contents.items():
-        content_db = await get_content_from_db(
-            user_id=user_id, content_id=content.id, asession=asession
-        )
-        if content_db:
-            content_db.query_count = content_db.query_count + 1
-            await asession.merge(content_db)
-            await asession.commit()
-
-
 async def archive_content_from_db(
-    user_id: int,
-    content_id: int,
-    asession: AsyncSession,
+    *, asession: AsyncSession, content_id: int, workspace_id: int
 ) -> None:
     """Archive content from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the content to be archived.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     content_id
         The ID of the content to archived.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to archive the content from.
     """
 
     stmt = (
         update(ContentDB)
-        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.workspace_id == workspace_id)
         .where(ContentDB.content_id == content_id)
         .values(is_archived=True)
     )
@@ -285,20 +251,18 @@ async def archive_content_from_db(
 
 
 async def delete_content_from_db(
-    user_id: int,
-    content_id: int,
-    asession: AsyncSession,
+    *, asession: AsyncSession, content_id: int, workspace_id: int
 ) -> None:
     """Delete content from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the deletion.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     content_id
         The ID of the content to delete.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to delete the content from.
     """
 
     association_stmt = delete(content_tags_table).where(
@@ -307,7 +271,7 @@ async def delete_content_from_db(
     await asession.execute(association_stmt)
     stmt = (
         delete(ContentDB)
-        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.workspace_id == workspace_id)
         .where(ContentDB.content_id == content_id)
     )
     await asession.execute(stmt)
@@ -316,23 +280,23 @@ async def delete_content_from_db(
 
 async def get_content_from_db(
     *,
-    user_id: int,
+    asession: AsyncSession,
     content_id: int,
     exclude_archived: bool = True,
-    asession: AsyncSession,
-) -> Optional[ContentDB]:
+    workspace_id: int,
+) -> ContentDB | None:
     """Retrieve content from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the content.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     content_id
         The ID of the content to retrieve.
     exclude_archived
         Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace requesting the content.
 
     Returns
     -------
@@ -343,7 +307,7 @@ async def get_content_from_db(
     stmt = (
         select(ContentDB)
         .options(selectinload(ContentDB.content_tags))
-        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.workspace_id == workspace_id)
         .where(ContentDB.content_id == content_id)
     )
     if exclude_archived:
@@ -354,38 +318,39 @@ async def get_content_from_db(
 
 async def get_list_of_content_from_db(
     *,
-    user_id: int,
-    offset: int = 0,
-    limit: Optional[int] = None,
-    exclude_archived: bool = True,
     asession: AsyncSession,
-) -> List[ContentDB]:
-    """Retrieve all content from the database.
+    exclude_archived: bool = True,
+    limit: Optional[int] = None,
+    offset: int = 0,
+    workspace_id: int,
+) -> list[ContentDB]:
+    """Retrieve all content from the database for the specified workspace.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the content.
-    offset
-        The number of content items to skip.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    exclude_archived
+        Specifies whether to exclude archived content.
     limit
         The maximum number of content items to retrieve. If not specified, then all
         content items are retrieved.
-    exclude_archived
-        Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
+    offset
+        The number of content items to skip.
+    workspace_id
+        The ID of the workspace to retrieve content from.
 
     Returns
     -------
-    List[ContentDB]
-        A list of content objects if they exist, otherwise an empty list.
+    list[ContentDB]
+        A list of content objects in the specified workspace if they exist, otherwise
+    an empty list.
     """
 
     stmt = (
         select(ContentDB)
         .options(selectinload(ContentDB.content_tags))
-        .where(ContentDB.user_id == user_id)
+        .where(ContentDB.workspace_id == workspace_id)
         .order_by(ContentDB.content_id)
     )
     if exclude_archived:
@@ -400,9 +365,8 @@ async def get_list_of_content_from_db(
 
 
 async def _get_content_embeddings(
-    content: ContentCreate | ContentUpdate,
-    metadata: Optional[dict] = None,
-) -> List[float]:
+    *, content: ContentCreate | ContentUpdate, metadata: Optional[dict] = None
+) -> list[float]:
     """Vectorize the content.
 
     Parameters
@@ -414,101 +378,98 @@ async def _get_content_embeddings(
 
     Returns
     -------
-    List[float]
+    list[float]
         The vectorized content embedding.
     """
 
     text_to_embed = content.content_title + "\n" + content.content_text
-    return await embedding(text_to_embed, metadata=metadata)
+    return await embedding(metadata=metadata, text_to_embed=text_to_embed)
 
 
 async def get_similar_content_async(
     *,
-    user_id: int,
-    question: str,
-    n_similar: int,
     asession: AsyncSession,
-    metadata: Optional[dict] = None,
     exclude_archived: bool = True,
-) -> Dict[int, QuerySearchResult]:
+    metadata: Optional[dict] = None,
+    n_similar: int,
+    question: str,
+    workspace_id: int,
+) -> dict[int, QuerySearchResult]:
     """Get the most similar points in the vector table.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the similar content.
-    question
-        The question to search for similar content.
-    n_similar
-        The number of similar content items to retrieve.
     asession
-        `AsyncSession` object for database transactions.
-    metadata
-        The metadata to use for the embedding generation
+        The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
+    metadata
+        The metadata to use for the embedding generation
+    n_similar
+        The number of similar content items to retrieve.
+    question
+        The question to search for similar content.
+    workspace_id
+        The ID of the workspace to search for similar content in.
 
     Returns
     -------
-    Dict[int, QuerySearchResult]
+    dict[int, QuerySearchResult]
         A dictionary of similar content items if they exist, otherwise an empty
-        dictionary
+        dictionary.
     """
 
     metadata = metadata or {}
     metadata["generation_name"] = "get_similar_content_async"
 
-    question_embedding = await embedding(
-        question,
-        metadata=metadata,
-    )
+    question_embedding = await embedding(metadata=metadata, text_to_embed=question)
 
     return await get_search_results(
-        user_id=user_id,
-        question_embedding=question_embedding,
-        n_similar=n_similar,
-        exclude_archived=exclude_archived,
         asession=asession,
+        exclude_archived=exclude_archived,
+        n_similar=n_similar,
+        question_embedding=question_embedding,
+        workspace_id=workspace_id,
     )
 
 
 async def get_search_results(
     *,
-    user_id: int,
-    question_embedding: List[float],
-    n_similar: int,
-    exclude_archived: bool = True,
     asession: AsyncSession,
-) -> Dict[int, QuerySearchResult]:
+    exclude_archived: bool = True,
+    n_similar: int,
+    question_embedding: list[float],
+    workspace_id: int,
+) -> dict[int, QuerySearchResult]:
     """Get similar content to given embedding and return search results.
 
     NB: We first exclude archived content and then order by the cosine distance.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the similar content.
-    question_embedding
-        The embedding vector of the question to search for.
-    n_similar
-        The number of similar content items to retrieve.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
-    asession
-        `AsyncSession` object for database transactions.
+    n_similar
+        The number of similar content items to retrieve.
+    question_embedding
+        The embedding vector of the question to search for.
+    workspace_id
+        The ID of the workspace to search for similar content in.
 
     Returns
     -------
-    Dict[int, QuerySearchResult]
+    dict[int, QuerySearchResult]
         A dictionary of similar content items if they exist, otherwise an empty
-        dictionary
+        dictionary.
     """
 
     distance = ContentDB.content_embedding.cosine_distance(question_embedding).label(
         "distance"
     )
 
-    query = select(ContentDB, distance).where(ContentDB.user_id == user_id)
+    query = select(ContentDB, distance).where(ContentDB.workspace_id == workspace_id)
 
     if exclude_archived:
         query = query.where(ContentDB.is_archived == false())
@@ -520,33 +481,64 @@ async def get_search_results(
     results_dict = {}
     for i, r in enumerate(search_result):
         results_dict[i] = QuerySearchResult(
-            id=r[0].content_id,
-            title=r[0].content_title,
-            text=r[0].content_text,
             distance=r[1],
+            id=r[0].content_id,
+            text=r[0].content_text,
+            title=r[0].content_title,
         )
 
     return results_dict
 
 
+async def increment_query_count(
+    *,
+    asession: AsyncSession,
+    contents: dict[int, QuerySearchResult] | None,
+    workspace_id: int,
+) -> None:
+    """Increment the query count for the content.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    contents
+        The content to increment the query count for.
+    workspace_id
+        The ID of the workspace to increment the query count in.
+    """
+
+    if contents is None:
+        return
+    for content in contents.values():
+        content_db = await get_content_from_db(
+            asession=asession, content_id=content.id, workspace_id=workspace_id
+        )
+        if content_db:
+            content_db.query_count = content_db.query_count + 1
+            await asession.merge(content_db)
+            await asession.commit()
+
+
 async def update_votes_in_db(
-    user_id: int,
+    *,
+    asession: AsyncSession,
     content_id: int,
     vote: str,
-    asession: AsyncSession,
-) -> Optional[ContentDB]:
+    workspace_id: int,
+) -> ContentDB | None:
     """Update votes in the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user voting.
+    asession
+        The SQLAlchemy async session to use for all database connections
     content_id
         The ID of the content to vote on.
     vote
         The sentiment of the vote.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to vote on the content in.
 
     Returns
     -------
@@ -555,7 +547,7 @@ async def update_votes_in_db(
     """
 
     content_db = await get_content_from_db(
-        user_id=user_id, content_id=content_id, asession=asession
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
     if not content_db:
         return None

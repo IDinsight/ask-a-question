@@ -1,14 +1,6 @@
-import { RowDataType } from "@/app/dashboard/types";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Pagination from "@mui/material/Pagination";
-import TextField from "@mui/material/TextField";
-import { ApexOptions } from "apexcharts";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+"use client";
 
-import theme from "@/theme";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Paper,
   Table,
@@ -17,50 +9,43 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
 } from "@mui/material";
-import React from "react";
+import Pagination from "@mui/material/Pagination";
+import { ApexOptions } from "apexcharts";
+import Box from "@mui/material/Box";
+import theme from "@/theme";
+import dynamic from "next/dynamic";
+import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
+import { SortableTableHeader } from "./SortableTableHeader";
+const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
-
-const QueryCountTimeSeries = ({
-  queryCount,
-  isIncreasing,
-}: {
-  queryCount: number[];
+interface QueryCountTimeSeriesProps {
+  queryCount: ApexTSDataPoint[];
+  color: string;
   isIncreasing: boolean;
+}
+
+const QueryCountTimeSeries: React.FC<QueryCountTimeSeriesProps> = ({
+  queryCount,
+  color,
 }) => {
   const series = [
     {
       name: "Query Count",
-      data: queryCount,
+      data: queryCount.map((pt) => ({
+        x: new Date(pt.x).toISOString(),
+        y: pt.y,
+      })),
     },
   ];
   const options: ApexOptions = {
-    chart: {
-      stacked: false,
-      zoom: {
-        enabled: false,
-      },
-      sparkline: {
-        enabled: true,
-      },
-      background: "#fff",
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      width: 2,
-      curve: "smooth",
-    },
-    tooltip: {
-      x: {
-        show: false,
-      },
-    },
-    colors: isIncreasing ? ["#4CAF50"] : ["#FF1654"],
+    chart: { sparkline: { enabled: true }, background: "#fff" },
+    dataLabels: { enabled: false },
+    stroke: { width: 2, curve: "smooth" },
+    xaxis: { type: "datetime" },
+    tooltip: { x: { format: "MMM dd, yyyy" } },
+    colors: [color],
   };
   return (
     <ReactApexcharts
@@ -73,121 +58,104 @@ const QueryCountTimeSeries = ({
   );
 };
 
-const SortButton = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <Button
-      size="small"
-      onClick={onClick}
-      sx={{
-        width: "100%",
-        py: 0,
-        fontSize: "small",
-        fontWeight: 300,
-        textTransform: "none",
-        color: "text.secondary",
-        justifyContent: "left",
-        "&:hover": {
-          color: "text.primary",
-          backgroundColor: "transparent",
-          fontWeight: 500,
-        },
-      }}
-    >
-      <SwapVertIcon />
-      Sort
-    </Button>
-  );
-};
-const ContentsTable = ({
-  rows,
-  onClick,
-  rowsPerPage,
-}: {
+interface ContentsTableProps {
   rows: RowDataType[];
-  onClick: (content_id: number) => void;
   rowsPerPage: number;
+  chartColors: string[];
+  onClick: (content_id: number) => void;
+  onItemsToDisplayChange: (items: RowDataType[]) => void;
+  onSortChange: (column: string, direction: "ascending" | "descending") => void;
+  onPageChange: (newPage: number) => void;
+}
+
+const ContentsTable: React.FC<ContentsTableProps> = ({
+  rows,
+  rowsPerPage,
+  chartColors,
+  onClick,
+  onItemsToDisplayChange,
+  onSortChange,
+  onPageChange,
 }) => {
-  const [itemsToDisplay, setItemsToDisplay] = useState<RowDataType[]>([]);
   const [page, setPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<keyof RowDataType>("query_count");
-  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("ascending");
+  const [sortOrder, setSortOrder] = useState<"ascending" | "descending">("descending");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const percentageIncrease = (queryCount: number[]) => {
-    // if the last quarter is greater than the third quarter
-    // then the trend is increasing
+  const percentageIncrease = (queryCount: number[]): number => {
+    if (queryCount.length < 4) return 0;
     const queryLength = queryCount.length;
-
     const lastQuarter = queryCount.slice(
       Math.floor((queryLength / 4) * 3),
       queryLength,
     );
     const lastQuarterValue =
       lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
-
     const thirdQuarter = queryCount.slice(
       Math.floor((queryLength / 4) * 2),
       Math.floor((queryLength / 4) * 3),
     );
     const thirdQuarterValue =
       thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
-
-    return (lastQuarterValue - thirdQuarterValue) / thirdQuarterValue;
+    return (lastQuarterValue - thirdQuarterValue) / (thirdQuarterValue || 1);
   };
 
   const sortRows = <K extends keyof RowDataType>(
+    data: RowDataType[],
     byParam: K,
-    sortOrder: "ascending" | "descending",
+    order: "ascending" | "descending",
   ): RowDataType[] => {
-    return rows.sort((a: RowDataType, b: RowDataType) => {
-      const comparison =
-        byParam === "query_count_timeseries"
-          ? percentageIncrease(a[byParam] as number[]) >
-            percentageIncrease(b[byParam] as number[])
-            ? 1
-            : percentageIncrease(a[byParam] as number[]) <
-              percentageIncrease(b[byParam] as number[])
-            ? -1
-            : 0
-          : a[byParam] > b[byParam]
-          ? 1
-          : a[byParam] < b[byParam]
-          ? -1
-          : 0;
-
-      return sortOrder === "ascending" ? comparison : -comparison;
+    return [...data].sort((a, b) => {
+      let cmp = 0;
+      if (byParam === "query_count_timeseries") {
+        const diffA = percentageIncrease(
+          (a[byParam] as ApexTSDataPoint[]).map((p) => p.y),
+        );
+        const diffB = percentageIncrease(
+          (b[byParam] as ApexTSDataPoint[]).map((p) => p.y),
+        );
+        cmp = diffA - diffB;
+      } else {
+        cmp = (a[byParam] as number) - (b[byParam] as number);
+      }
+      return order === "ascending" ? cmp : -cmp;
     });
   };
 
-  const onSort = (column: keyof RowDataType) => {
-    if (column === sortColumn) {
-      setSortOrder(sortOrder === "ascending" ? "descending" : "ascending");
-    } else {
-      setSortOrder("ascending");
-    }
-    setSortColumn(column);
-    setItemsToDisplay(paginateRows(sortRows(column, sortOrder), page, rowsPerPage));
-  };
+  const filteredRows = useMemo(() => {
+    return searchTerm
+      ? rows.filter((r) => r.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      : rows;
+  }, [rows, searchTerm]);
 
-  const paginateRows = (rows: RowDataType[], page: number, rowsPerPage: number) => {
-    return rows.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const displayedRows = useMemo(() => {
+    const sorted = sortRows(filteredRows, sortColumn, sortOrder);
+    const start = (page - 1) * rowsPerPage;
+    return sorted.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, sortColumn, sortOrder, rowsPerPage]);
+
+  useEffect(() => {
+    onItemsToDisplayChange(displayedRows);
+  }, [displayedRows, onItemsToDisplayChange]);
+
+  const handleSort = (column: keyof RowDataType) => {
+    let newOrder: "ascending" | "descending" = "descending";
+    if (column === sortColumn) {
+      newOrder = sortOrder === "ascending" ? "descending" : "ascending";
+      setSortOrder(newOrder);
+    } else {
+      setSortColumn(column);
+      setSortOrder("descending");
+    }
+    onSortChange(column.toString(), newOrder);
   };
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-    setItemsToDisplay(paginateRows(rows, value, rowsPerPage));
+    onPageChange(value);
   };
 
-  useEffect(() => {
-    setItemsToDisplay(rows.slice(0, rowsPerPage));
-  }, [rows]);
-
-  const filterRowsByTitle = (title: string) => {
-    return paginateRows(
-      rows.filter((row) => row.title.toLowerCase().includes(title.toLowerCase())),
-      1,
-      rowsPerPage,
-    );
-  };
+  const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
 
   return (
     <TableContainer component={Paper} sx={{ marginTop: 3 }}>
@@ -195,76 +163,89 @@ const ContentsTable = ({
         <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
           <TableRow>
             <TableCell>Content Title</TableCell>
-            <TableCell>Daily Average Sent</TableCell>
-            <TableCell>Upvotes</TableCell>
-            <TableCell>Downvotes</TableCell>
-            <TableCell>Trend</TableCell>
+            <SortableTableHeader
+              label="Daily Average Sent"
+              columnKey="query_count"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Upvotes"
+              columnKey="positive_votes"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Downvotes"
+              columnKey="negative_votes"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <SortableTableHeader
+              label="Trend"
+              columnKey="query_count_timeseries"
+              sortColumn={sortColumn}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
           </TableRow>
           <TableRow>
-            <TableCell style={{ paddingTop: 0 }}>
+            <TableCell sx={{ paddingTop: 0 }}>
               <TextField
                 id="content-search"
                 placeholder="Search"
                 size="small"
-                sx={{
-                  width: "90%",
-                  marginTop: 1.5,
-                  bgcolor: "white",
-                }}
-                onChange={(e) => setItemsToDisplay(filterRowsByTitle(e.target.value))}
+                sx={{ width: "90%", mt: 1.5, bgcolor: "white" }}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </TableCell>
-            <TableCell>
-              <SortButton onClick={() => onSort("query_count")} />
-            </TableCell>
-            <TableCell>
-              <SortButton onClick={() => onSort("positive_votes")} />
-            </TableCell>
-            <TableCell>
-              <SortButton onClick={() => onSort("negative_votes")} />
-            </TableCell>
-            <TableCell>
-              <SortButton onClick={() => onSort("query_count_timeseries")} />
-            </TableCell>
+            <TableCell colSpan={4} />
           </TableRow>
         </TableHead>
         <TableBody>
-          {itemsToDisplay.map((row) => (
-            <TableRow
-              key={row.id}
-              onClick={() => onClick(row.id)}
-              sx={{
-                "&:hover": {
-                  boxShadow: "0px 0px 8px rgba(211, 211, 211, 0.75)",
-                  zIndex: "1000",
-                  cursor: "pointer",
-                },
-              }}
-            >
-              <TableCell style={{ width: "35%" }}>{row.title}</TableCell>
-              <TableCell style={{ width: "15%" }}>{row.query_count}</TableCell>
-              <TableCell style={{ width: "10%" }}>{row.positive_votes}</TableCell>
-              <TableCell style={{ width: "10%" }}>{row.negative_votes}</TableCell>
-              <TableCell style={{ width: "30%" }}>
-                <QueryCountTimeSeries
-                  queryCount={row.query_count_timeseries}
-                  isIncreasing={percentageIncrease(row.query_count_timeseries) > 0}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          {displayedRows.map((row, idx) => {
+            const color = chartColors[idx] || "#000";
+            return (
+              <TableRow
+                key={row.id}
+                onClick={() => onClick(row.id)}
+                sx={{
+                  "&:hover": {
+                    boxShadow: "0px 0px 8px rgba(211,211,211,0.75)",
+                    zIndex: 1000,
+                    cursor: "pointer",
+                  },
+                }}
+              >
+                <TableCell sx={{ width: "35%" }}>{row.title}</TableCell>
+                <TableCell sx={{ width: "15%" }}>{row.query_count}</TableCell>
+                <TableCell sx={{ width: "10%" }}>{row.positive_votes}</TableCell>
+                <TableCell sx={{ width: "10%" }}>{row.negative_votes}</TableCell>
+                <TableCell sx={{ width: "30%" }}>
+                  <QueryCountTimeSeries
+                    queryCount={row.query_count_timeseries}
+                    color={color}
+                    isIncreasing={
+                      percentageIncrease(row.query_count_timeseries.map((p) => p.y)) > 0
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       <Box
-        justifyContent="center"
-        justifySelf={"center"}
-        alignItems="center"
         sx={{
           display: "flex",
           flexDirection: "row",
-          flexGrow: 1,
-          marginTop: 2,
-          marginBottom: 4,
+          justifyContent: "center",
+          alignItems: "center",
+          mt: 2,
+          mb: 4,
         }}
       >
         <Pagination
@@ -273,7 +254,7 @@ const ContentsTable = ({
           showLastButton
           page={page}
           onChange={handlePageChange}
-          count={Math.ceil(rows.length / rowsPerPage)}
+          count={pageCount}
         />
       </Box>
     </TableContainer>

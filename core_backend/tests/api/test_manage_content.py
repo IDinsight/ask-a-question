@@ -1,15 +1,14 @@
+"""This module contains tests for the content management API endpoints."""
+
 from datetime import datetime, timezone
-from typing import Any, Dict, Generator
+from typing import Generator
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-from core_backend.app.auth.dependencies import create_access_token
 from core_backend.app.contents.models import ContentDB
 from core_backend.app.contents.routers import _convert_record_to_schema
-from core_backend.app.users.models import UserDB
-from core_backend.app.utils import get_key_hash, get_password_salted_hash
 
 from .conftest import async_fake_embedding
 
@@ -23,141 +22,176 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
         ("test title 2", "test content - with metadata", {"meta_key": "meta_value"}),
     ],
 )
-def existing_content_id(
-    request: pytest.FixtureRequest,
+def existing_content_id_in_workspace_1(
+    access_token_admin_1: str,
     client: TestClient,
-    fullaccess_token: str,
-    existing_tag_id: int,
+    existing_tag_id_in_workspace_1: int,
+    request: pytest.FixtureRequest,
 ) -> Generator[str, None, None]:
+    """Create a content record in workspace 1.
+
+    Parameters
+    ----------
+    access_token_admin_1
+        Access token for admin user 1.
+    client
+        The test client.
+    existing_tag_id_in_workspace_1
+        The tag ID for the tag created in workspace 1.
+    request
+        The pytest request object.
+
+    Yields
+    ------
+    Generator[str, None, None]
+        The content ID of the created content record in workspace 1.
+    """
+
     response = client.post(
         "/content",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
         json={
-            "content_title": request.param[0],
-            "content_text": request.param[1],
-            "content_tags": [],
             "content_metadata": request.param[2],
+            "content_tags": [],
+            "content_text": request.param[1],
+            "content_title": request.param[0],
         },
     )
     content_id = response.json()["content_id"]
+
     yield content_id
+
     client.delete(
         f"/content/{content_id}",
-        headers={"Authorization": f"Bearer {fullaccess_token}"},
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
     )
-
-
-@pytest.fixture(scope="class")
-def temp_user_token_and_quota(
-    request: pytest.FixtureRequest, client: TestClient, db_session: Session
-) -> Generator[tuple[str, int], None, None]:
-    username = request.param["username"]
-    content_quota = request.param["content_quota"]
-
-    temp_user_db = UserDB(
-        username=username,
-        hashed_password=get_password_salted_hash("temp_password"),
-        hashed_api_key=get_key_hash("temp_api_key"),
-        content_quota=content_quota,
-        is_admin=False,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    db_session.add(temp_user_db)
-    db_session.commit()
-    yield (create_access_token(username), content_quota)
-    db_session.delete(temp_user_db)
-    db_session.commit()
 
 
 class TestContentQuota:
+    """Tests for the content quota feature."""
+
     @pytest.mark.parametrize(
-        "temp_user_token_and_quota",
+        "temp_workspace_token_and_quota",
         [
-            {"username": "temp_user_limit_0", "content_quota": 0},
-            {"username": "temp_user_limit_1", "content_quota": 1},
-            {"username": "temp_user_limit_5", "content_quota": 5},
+            {
+                "content_quota": 0,
+                "username": "temp_user_limit_0",
+                "workspace_name": "temp_workspace_limit_0",
+            },
+            {
+                "content_quota": 1,
+                "username": "temp_user_limit_1",
+                "workspace_name": "temp_workspace_limit_1",
+            },
+            {
+                "content_quota": 5,
+                "username": "temp_user_limit_5",
+                "workspace_name": "temp_user_limit_5",
+            },
         ],
         indirect=True,
     )
     async def test_content_quota_integer(
-        self,
-        client: TestClient,
-        temp_user_token_and_quota: tuple[str, int],
+        self, client: TestClient, temp_workspace_token_and_quota: tuple[str, int]
     ) -> None:
-        temp_user_token, content_quota = temp_user_token_and_quota
+        """Test the content quota feature with integer values.
 
+        Parameters
+        ----------
+        client
+            The test client.
+        temp_workspace_token_and_quota
+            The temporary workspace token and content quota.
+        """
+
+        temp_workspace_token, content_quota = temp_workspace_token_and_quota
         added_content_ids = []
         for i in range(content_quota):
             response = client.post(
                 "/content",
-                headers={"Authorization": f"Bearer {temp_user_token}"},
+                headers={"Authorization": f"Bearer {temp_workspace_token}"},
                 json={
-                    "content_title": f"test title {i}",
-                    "content_text": f"test content {i}",
                     "content_language": "ENGLISH",
-                    "content_tags": [],
                     "content_metadata": {},
+                    "content_tags": [],
+                    "content_text": f"test content {i}",
+                    "content_title": f"test title {i}",
                 },
             )
-            assert response.status_code == 200
+            assert response.status_code == status.HTTP_200_OK
             added_content_ids.append(response.json()["content_id"])
 
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {temp_user_token}"},
+            headers={"Authorization": f"Bearer {temp_workspace_token}"},
             json={
-                "content_title": "test title",
-                "content_text": "test content",
                 "content_language": "ENGLISH",
-                "content_tags": [],
                 "content_metadata": {},
+                "content_tags": [],
+                "content_text": "test content",
+                "content_title": "test title",
             },
         )
-        assert response.status_code == 403
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
         for content_id in added_content_ids:
             response = client.delete(
                 f"/content/{content_id}",
-                headers={"Authorization": f"Bearer {temp_user_token}"},
+                headers={"Authorization": f"Bearer {temp_workspace_token}"},
             )
-            assert response.status_code == 200
+            assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.parametrize(
-        "temp_user_token_and_quota",
-        [{"username": "temp_user_unlimited", "content_quota": None}],
+        "temp_workspace_token_and_quota",
+        [
+            {
+                "content_quota": None,
+                "username": "temp_user_unlimited",
+                "workspace_name": "temp_workspace_unlimited",
+            }
+        ],
         indirect=True,
     )
     async def test_content_quota_unlimited(
-        self,
-        client: TestClient,
-        temp_user_token_and_quota: tuple[str, int],
+        self, client: TestClient, temp_workspace_token_and_quota: tuple[str, int]
     ) -> None:
-        temp_user_token, content_quota = temp_user_token_and_quota
+        """Test the content quota feature with unlimited quota.
 
-        # in this case we need to just be able to add content
+        Parameters
+        ----------
+        client
+            The test client.
+        temp_workspace_token_and_quota
+            The temporary workspace token and content quota.
+        """
+
+        temp_workspace_token, _ = temp_workspace_token_and_quota
+
+        # In this case we need to just be able to add content.
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {temp_user_token}"},
+            headers={"Authorization": f"Bearer {temp_workspace_token}"},
             json={
-                "content_title": "test title",
-                "content_text": "test content",
                 "content_language": "ENGLISH",
-                "content_tags": [],
                 "content_metadata": {},
+                "content_tags": [],
+                "content_text": "test content",
+                "content_title": "test title",
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
         content_id = response.json()["content_id"]
         response = client.delete(
             f"/content/{content_id}",
-            headers={"Authorization": f"Bearer {temp_user_token}"},
+            headers={"Authorization": f"Bearer {temp_workspace_token}"},
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
 
 class TestManageContent:
+    """Tests for the content management API endpoints."""
+
     @pytest.mark.parametrize(
         "content_title, content_text, content_metadata",
         [
@@ -170,33 +204,52 @@ class TestManageContent:
         client: TestClient,
         content_title: str,
         content_text: str,
-        fullaccess_token: str,
-        existing_tag_id: int,
-        content_metadata: Dict[Any, Any],
+        content_metadata: dict,
+        access_token_admin_1: str,
+        existing_tag_id_in_workspace_1: int,
     ) -> None:
-        content_tags = [existing_tag_id]
+        """Test creating and deleting content.
+
+        Parameters
+        ----------
+        client
+            The test client.
+        content_title
+            The title of the content.
+        content_text
+            The text of the content.
+        access_token_admin_1
+            The access token for admin user 1.
+        existing_tag_id_in_workspace_1
+            The ID of the existing tag in workspace 1.
+        content_metadata
+            The metadata of the content.
+        """
+
+        content_tags = [existing_tag_id_in_workspace_1]
         response = client.post(
             "/content",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
-                "content_title": content_title,
-                "content_text": content_text,
-                "content_tags": content_tags,
                 "content_metadata": content_metadata,
+                "content_tags": content_tags,
+                "content_text": content_text,
+                "content_title": content_title,
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         json_response = response.json()
         assert json_response["content_metadata"] == content_metadata
         assert json_response["content_tags"] == content_tags
         assert "content_id" in json_response
+        assert "workspace_id" in json_response
 
         response = client.delete(
             f"/content/{json_response['content_id']}",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.parametrize(
         "content_title, content_text, content_metadata",
@@ -211,139 +264,237 @@ class TestManageContent:
     )
     def test_edit_and_retrieve_content(
         self,
+        access_token_admin_1: str,
         client: TestClient,
-        existing_content_id: int,
-        content_title: str,
+        existing_content_id_in_workspace_1: int,
+        existing_tag_id_in_workspace_1: int,
+        content_metadata: dict,
         content_text: str,
-        fullaccess_token: str,
-        content_metadata: Dict[Any, Any],
-        existing_tag_id: int,
+        content_title: str,
     ) -> None:
-        content_tags = [existing_tag_id]
+        """Test editing and retrieving content.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            The access token for admin user 1.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        existing_tag_id_in_workspace_1
+            The ID of the existing tag in workspace 1.
+        content_metadata
+            The metadata of the content.
+        content_text
+            The text of the content.
+        content_title
+            The title of the content.
+        """
+
+        content_tags = [existing_tag_id_in_workspace_1]
         response = client.put(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
-                "content_title": content_title,
-                "content_text": content_text,
-                "content_tags": [existing_tag_id],
                 "content_metadata": content_metadata,
+                "content_tags": [existing_tag_id_in_workspace_1],
+                "content_text": content_text,
+                "content_title": content_title,
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
         response = client.get(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
-        assert response.status_code == 200
-        assert response.json()["content_title"] == content_title
-        assert response.json()["content_text"] == content_text
-        assert response.json()["content_tags"] == content_tags
-        edited_metadata = response.json()["content_metadata"]
-
+        json_response = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert json_response["content_title"] == content_title
+        assert json_response["content_text"] == content_text
+        assert json_response["content_tags"] == content_tags
+        edited_metadata = json_response["content_metadata"]
         assert all(edited_metadata[k] == v for k, v in content_metadata.items())
 
     def test_edit_content_not_found(
-        self, client: TestClient, fullaccess_token: str
+        self, access_token_admin_1: str, client: TestClient
     ) -> None:
+        """Test editing a content that does not exist.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            The access token for admin user 1.
+        client
+            The test client.
+        """
+
         response = client.put(
             "/content/12345",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
             json={
-                "content_title": "title",
-                "content_text": "sample text",
                 "content_metadata": {"key": "value"},
+                "content_text": "sample text",
+                "content_title": "title",
             },
         )
-
-        assert response.status_code == 404
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_list_content(
         self,
+        access_token_admin_1: str,
         client: TestClient,
-        existing_content_id: int,
-        fullaccess_token: str,
-        existing_tag_id: int,
+        existing_content_id_in_workspace_1: int,
+        existing_tag_id_in_workspace_1: int,
     ) -> None:
+        """Test listing content.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            The access token for admin user 1.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        existing_tag_id_in_workspace_1
+            The ID of the existing tag in workspace 1.
+        """
+
         response = client.get(
-            "/content", headers={"Authorization": f"Bearer {fullaccess_token}"}
+            "/content", headers={"Authorization": f"Bearer {access_token_admin_1}"}
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) > 0
 
     def test_delete_content(
-        self, client: TestClient, existing_content_id: int, fullaccess_token: str
+        self,
+        access_token_admin_1: str,
+        client: TestClient,
+        existing_content_id_in_workspace_1: int,
     ) -> None:
+        """Test deleting content.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            The access token for admin user 1.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        """
+
         response = client.delete(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
 
-class TestMultUserManageContent:
-    def test_user2_get_user1_content(
+class TestMultiUserManageContent:
+    """Tests for managing content with multiple users."""
+
+    def test_admin_2_get_admin_1_content(
         self,
+        access_token_admin_2: str,
         client: TestClient,
-        existing_content_id: str,
-        fullaccess_token_user2: str,
+        existing_content_id_in_workspace_1: str,
     ) -> None:
+        """Test admin user 2 getting admin user 1's content.
+
+        Parameters
+        ----------
+        access_token_admin_2
+            The access token for admin user 2.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        """
+
         response = client.get(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_2}"},
         )
-        assert response.status_code == 404
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_user2_edit_user1_content(
+    def test_admin_2_edit_admin_1_content(
         self,
+        access_token_admin_2: str,
         client: TestClient,
-        existing_content_id: str,
-        fullaccess_token_user2: str,
+        existing_content_id_in_workspace_1: str,
     ) -> None:
+        """Test admin user 2 editing admin user 1's content.
+
+        Parameters
+        ----------
+        access_token_admin_2
+            The access token for admin user 2.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        """
+
         response = client.put(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_2}"},
             json={
-                "content_title": "user2 title 3",
-                "content_text": "user2 test content 3",
                 "content_metadata": {},
+                "content_text": "admin2 test content 3",
+                "content_title": "admin2 title 3",
             },
         )
-        assert response.status_code == 404
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_user2_delete_user1_content(
+    def test_admin_2_delete_admin_1_content(
         self,
+        access_token_admin_2: str,
         client: TestClient,
-        existing_content_id: str,
-        fullaccess_token_user2: str,
+        existing_content_id_in_workspace_1: str,
     ) -> None:
+        """Test admin user 2 deleting admin user 1's content.
+
+        Parameters
+        ----------
+        access_token_admin_2
+            The access token for admin user 2.
+        client
+            The test client.
+        existing_content_id_in_workspace_1
+            The ID of the existing content in workspace 1.
+        """
+
         response = client.delete(
-            f"/content/{existing_content_id}",
-            headers={"Authorization": f"Bearer {fullaccess_token_user2}"},
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_2}"},
         )
-        assert response.status_code == 404
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 async def test_convert_record_to_schema() -> None:
+    """Test the conversion of a record to a schema."""
+
     content_id = 1
-    user_id = 123
+    workspace_id = 123
     record = ContentDB(
-        content_id=content_id,
-        user_id=user_id,
-        content_title="sample title for content",
-        content_text="sample text",
         content_embedding=await async_fake_embedding(),
+        content_id=content_id,
+        content_metadata={"extra_field": "extra value"},
+        content_text="sample text",
+        content_title="sample title for content",
+        created_datetime_utc=datetime.now(timezone.utc),
+        is_archived=False,
         positive_votes=0,
         negative_votes=0,
-        content_metadata={"extra_field": "extra value"},
-        created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
-        is_archived=False,
+        workspace_id=workspace_id,
     )
-    result = _convert_record_to_schema(record)
+    result = _convert_record_to_schema(record=record)
     assert result.content_id == content_id
-    assert result.user_id == user_id
+    assert result.workspace_id == workspace_id
     assert result.content_text == "sample text"
     assert result.content_metadata["extra_field"] == "extra value"

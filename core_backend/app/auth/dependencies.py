@@ -1,5 +1,7 @@
+"""This module contains authentication dependencies for the FastAPI application."""
+
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Dict, Optional, Union
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -10,19 +12,23 @@ from fastapi.security import (
     OAuth2PasswordBearer,
 )
 from jwt.exceptions import InvalidTokenError
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import CHECK_API_LIMIT
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,
-    get_user_by_api_key,
+    WorkspaceDB,
     get_user_by_username,
-    save_user_to_db,
+    get_user_default_workspace,
+    get_user_role_in_workspace,
 )
-from ..users.schemas import UserCreate
+from ..users.schemas import UserRoles
 from ..utils import (
+    get_key_hash,
     setup_logger,
     update_api_limits,
     verify_password_salted_hash,
@@ -41,89 +47,206 @@ bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
+class WorkspaceTokenNotFoundError(Exception):
+    """Exception raised when a workspace token is not found in the `WorkspaceDB`
+    database.
+    """
+
+
+async def authenticate_credentials(
+    *, password: str, username: str
+) -> AuthenticatedUser | None:
+    """Authenticate user using username and password.
+
+    Parameters
+    ----------
+    password
+        User password.
+    username
+        User username.
+
+    Returns
+    -------
+    AuthenticatedUser | None
+        Authenticated user if the user is authenticated, otherwise `None`.
+    """
+
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        try:
+            user_db = await get_user_by_username(asession=asession, username=username)
+            if verify_password_salted_hash(
+                key=password, stored_hash=user_db.hashed_password
+            ):
+                user_workspace_db = await get_user_default_workspace(
+                    asession=asession, user_db=user_db
+                )
+                user_role = await get_user_role_in_workspace(
+                    asession=asession, user_db=user_db, workspace_db=user_workspace_db
+                )
+                assert user_role is not None and user_role in UserRoles
+
+                # Hardcode "fullaccess" now, but may use it in the future.
+                return AuthenticatedUser(
+                    access_level="fullaccess",
+                    user_role=user_role,
+                    username=username,
+                    workspace_name=user_workspace_db.workspace_name,
+                )
+            return None
+        except UserNotFoundError:
+            return None
+
+
 async def authenticate_key(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> UserDB:
+) -> WorkspaceDB:
+    """Authenticate using basic bearer token. This is used by endpoints such as:
+
+    1. Data API
+    2. Question answering
+    3. Urgency detection
+
+    In case the JWT token is provided instead of the API key, it will fall back to the
+    JWT token authentication.
+
+    Parameters
+    ----------
+    credentials
+        The bearer token.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace object.
+
+    Raises
+    ------
+    HTTPException
+        If the credentials are invalid.
     """
-    Authenticate using basic bearer token. Used for calling
-    the question-answering endpoints. In case the JWT token is
-    provided instead of the API key, it will fall back to JWT
-    """
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    def _get_username_and_workspace_name_from_token(
+        *, token_: Annotated[str, Depends(oauth2_scheme)]
+    ) -> tuple[str, str]:
+        """Get username and workspace name from the JWT token.
+
+        Parameters
+        ----------
+        token_
+            The JWT token.
+
+        Returns
+        -------
+        tuple[str, str]
+            The username and workspace name.
+
+        Raises
+        ------
+        HTTPException
+            If the credentials are invalid.
+        """
+
+        try:
+            payload = jwt.decode(token_, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            username_ = payload.get("username", None)
+            workspace_name_ = payload.get("workspace_name", None)
+            if not (username_ and workspace_name_):
+                raise credentials_exception
+            return username_, workspace_name_
+        except InvalidTokenError as e:
+            raise credentials_exception from e
+
     token = credentials.credentials
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
         try:
-            user_db = await get_user_by_api_key(token, asession)
-            return user_db
-        except UserNotFoundError:
-            # Fall back to JWT token authentication if api key is not valid.
-            user_db = await get_current_user(token)
-            return user_db
+            workspace_db = await get_workspace_by_api_key(
+                asession=asession, token=token
+            )
+            return workspace_db
+        except WorkspaceTokenNotFoundError:
+            # Fall back to JWT token authentication if API key is not valid.
+            _, workspace_name = _get_username_and_workspace_name_from_token(
+                token_=token
+            )
+            stmt = select(WorkspaceDB).where(
+                WorkspaceDB.workspace_name == workspace_name
+            )
+            result = await asession.execute(stmt)
+            try:
+                workspace_db = result.scalar_one()
+                return workspace_db
+            except NoResultFound as err:
+                raise credentials_exception from err
 
 
-async def authenticate_credentials(
-    *, username: str, password: str
-) -> Optional[AuthenticatedUser]:
-    """
-    Authenticate user using username and password.
-    """
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_username(username, asession)
-            if verify_password_salted_hash(password, user_db.hashed_password):
-                # hardcode "fullaccess" now, but may use it in the future
-                return AuthenticatedUser(
-                    username=username,
-                    access_level="fullaccess",
-                    is_admin=user_db.is_admin,
-                )
-            else:
-                return None
-        except UserNotFoundError:
-            return None
+def create_access_token(
+    *, user_role: UserRoles, username: str, workspace_name: str
+) -> str:
+    """Create an access token for the user.
 
+    Parameters
+    ----------
+    user_role
+        The role of the user.
+    username
+        The username of the user to create the access token for.
+    workspace_name
+        The name of the workspace selected for the user.
 
-async def authenticate_or_create_google_user(
-    *, request: Request, google_email: str
-) -> Optional[AuthenticatedUser]:
+    Returns
+    -------
+    str
+        The access token.
     """
-    Check if user exists in Db. If not, create user
-    """
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as asession:
-        try:
-            user_db = await get_user_by_username(google_email, asession)
-            return AuthenticatedUser(
-                username=user_db.username,
-                access_level="fullaccess",
-                is_admin=user_db.is_admin,
-            )
-        except UserNotFoundError:
-            user = UserCreate(
-                username=google_email,
-                content_quota=DEFAULT_CONTENT_QUOTA,
-                api_daily_quota=DEFAULT_API_QUOTA,
-                is_admin=False,
-            )
-            user_db = await save_user_to_db(user, asession)
-            await update_api_limits(
-                request.app.state.redis, user_db.username, user_db.api_daily_quota
-            )
-            return AuthenticatedUser(
-                username=user_db.username,
-                access_level="fullaccess",
-                is_admin=user_db.is_admin,
-            )
+
+    payload: dict[str, str | datetime] = {}
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+
+    payload["exp"] = expire
+    payload["iat"] = datetime.now(timezone.utc)
+    payload["type"] = "access_token"
+    payload["user_role"] = user_role
+    payload["username"] = username
+    payload["workspace_name"] = workspace_name
+
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserDB:
+    """Get the current user from the access token.
+
+    NB: We have to check that both the username and workspace name are present in the
+    payload. If either one is missing, then this corresponds to the situation where
+    there are neither users nor workspaces present.
+
+    Parameters
+    ----------
+    token
+        The access token.
+
+    Returns
+    -------
+    UserDB
+        The user object.
+
+    Raises
+    ------
+    HTTPException
+        If the credentials are invalid.
     """
-    Get the current user from the access token
-    """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -131,16 +254,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
+        username = payload.get("username", None)
+        workspace_name = payload.get("workspace_name", None)
+        if not (username and workspace_name):
             raise credentials_exception
 
-        # fetch user from database
+        # Fetch user from database.
         async with AsyncSession(
             get_sqlalchemy_async_engine(), expire_on_commit=False
         ) as asession:
             try:
-                user_db = await get_user_by_username(username, asession)
+                user_db = await get_user_by_username(
+                    asession=asession, username=username
+                )
                 return user_db
             except UserNotFoundError as err:
                 raise credentials_exception from err
@@ -148,56 +274,136 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         raise credentials_exception from err
 
 
-def get_admin_user(user: Annotated[UserDB, Depends(get_current_user)]) -> UserDB:
-    """
-    Get the current user from the access token and check if it is an admin.
-    """
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions",
-        )
-    return user
+async def get_current_workspace_name(
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> str:
+    """Get the current workspace name from the access token.
 
+    NB: We have to check that both the username and workspace name are present in the
+    payload. If either one is missing, then this corresponds to the situation where
+    there are neither users nor workspaces present.
 
-def create_access_token(username: str) -> str:
+    NB: The workspace object cannot be retrieved in this module due to circular imports.
+    Instead, the workspace name is retrieved from the payload and the caller is
+    responsible for retrieving the workspace object.
+
+    Parameters
+    ----------
+    token
+        The access token.
+
+    Returns
+    -------
+    str
+        The workspace name.
+
+    Raises
+    ------
+    HTTPException
+        If the credentials are invalid.
     """
-    Create an access token for the user
-    """
-    payload: Dict[str, Union[str, datetime]] = {}
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        username = payload.get("username", None)
+        workspace_name = payload.get("workspace_name", None)
+        if not (username and workspace_name):
+            raise credentials_exception
+        return workspace_name
+    except InvalidTokenError as err:
+        raise credentials_exception from err
 
-    payload["exp"] = expire
-    payload["iat"] = datetime.now(timezone.utc)
-    payload["sub"] = username
-    payload["type"] = "access_token"
 
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+async def get_workspace_by_api_key(
+    *, asession: AsyncSession, token: str
+) -> WorkspaceDB:
+    """Retrieve a workspace by token.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    token
+        The token to use to retrieve the appropriate workspace.
+
+    Returns
+    -------
+    WorkspaceDB
+        The workspace object corresponding to the token.
+
+    Raises
+    ------
+    WorkspaceTokenNotFoundError
+        If the workspace with the specified token does not exist.
+    """
+
+    hashed_token = get_key_hash(key=token)
+    stmt = select(WorkspaceDB).where(WorkspaceDB.hashed_api_key == hashed_token)
+    result = await asession.execute(stmt)
+    try:
+        workspace_db = result.scalar_one()
+        return workspace_db
+    except NoResultFound as err:
+        raise WorkspaceTokenNotFoundError(
+            "Workspace with given token does not exist."
+        ) from err
 
 
 async def rate_limiter(
-    request: Request,
-    user_db: UserDB = Depends(authenticate_key),
+    request: Request, workspace_db: WorkspaceDB = Depends(authenticate_key)
 ) -> None:
+    """Rate limiter for the API calls. Gets daily quota and decrement it.
+
+    This is used by the following packages:
+
+    1. Question answering
+    2. Urgency detection
+
+    Parameters
+    ----------
+    request
+        The request object.
+    workspace_db
+        The workspace object.
+
+    Raises
+    ------
+    HTTPException
+        If the API call limit is reached.
+    RuntimeError
+        If the user belongs to multiple workspaces.
     """
-    Rate limiter for the API calls. Gets daily quota and decrement it
-    """
+
     if CHECK_API_LIMIT is False:
         return
-    username = user_db.username
-    key = f"remaining-calls:{username}"
+
+    workspace_name = workspace_db.workspace_name
+    key = f"remaining-calls:{workspace_name}"
     redis = request.app.state.redis
     ttl = await redis.ttl(key)
-    # if key does not exist, set the key and value
+
+    # If key does not exist, set the key and value.
     if ttl == REDIS_KEY_EXPIRED:
-        await update_api_limits(redis, username, user_db.api_daily_quota)
+        await update_api_limits(
+            api_daily_quota=workspace_db.api_daily_quota,
+            redis=redis,
+            workspace_name=workspace_name,
+        )
 
     nb_remaining = await redis.get(key)
 
     if nb_remaining != b"None":
         nb_remaining = int(nb_remaining)
         if nb_remaining <= 0:
-            raise HTTPException(status_code=429, detail="API call limit reached.")
-        await update_api_limits(redis, username, nb_remaining - 1)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"API call limit reached for workspace: {workspace_name}.",
+            )
+        await update_api_limits(
+            api_daily_quota=nb_remaining - 1, redis=redis, workspace_name=workspace_name
+        )

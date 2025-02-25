@@ -153,8 +153,15 @@ const Queries: React.FC<QueriesProps> = ({
             }}
           >
             <Table size="small">
-              <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
-                <TableRow sx={{ position: "sticky", top: 0, zIndex: 1 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 1,
+                    backgroundColor: theme.palette.lightgray.main,
+                  }}
+                >
                   <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
                   <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
                 </TableRow>

@@ -3,7 +3,6 @@
 """
 
 from datetime import datetime, timezone
-from typing import List
 
 from sqlalchemy import JSON, Boolean, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,20 +23,21 @@ class UrgencyQueryDB(Base):
 
     __tablename__ = "urgency_query"
 
-    urgency_query_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True, nullable=False
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
-    )
-    message_text: Mapped[str] = mapped_column(String, nullable=False)
+    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     message_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
-
+    message_text: Mapped[str] = mapped_column(String, nullable=False)
     response: Mapped["UrgencyResponseDB"] = relationship(
         "UrgencyResponseDB", back_populates="query", uselist=False, lazy=True
+    )
+    urgency_query_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, index=True, nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -50,29 +50,75 @@ class UrgencyQueryDB(Base):
         """
 
         return (
-            f"Urgency Query {self.urgency_query_id} for user #{self.user_id}\n"
-            f"message_text={self.message_text}"
+            f"Urgency Query {self.urgency_query_id} for workspace ID "
+            f"{self.workspace_id}\nmessage_text={self.message_text}"
+        )
+
+
+class UrgencyResponseDB(Base):
+    """ORM for managing urgency responses.
+
+    This database ties into the Admin app and allows the user to view, add, edit,
+    and delete content in the `urgency_response` table.
+    """
+
+    __tablename__ = "urgency_response"
+
+    details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
+    is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    matched_rules: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True)
+    query: Mapped[UrgencyQueryDB] = relationship(
+        "UrgencyQueryDB", back_populates="response", lazy=True
+    )
+    query_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("urgency_query.urgency_query_id", ondelete="CASCADE")
+    )
+    response_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    urgency_response_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, index=True, nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        """Construct the string representation of the `UrgencyResponseDB` object.
+
+        Returns
+        -------
+        str
+            A string representation of the `UrgencyResponseDB` object.
+        """
+
+        return (
+            f"Urgency Response {self.urgency_response_id} for query #{self.query_id} "
+            f"is_urgent={self.is_urgent}"
         )
 
 
 async def save_urgency_query_to_db(
-    user_id: int,
+    *,
+    asession: AsyncSession,
     feedback_secret_key: str,
     urgency_query: UrgencyQuery,
-    asession: AsyncSession,
+    workspace_id: int,
 ) -> UrgencyQueryDB:
-    """Saves a user query to the database.
+    """Save an urgent user query to the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting to save the urgency query to the database.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     feedback_secret_key
         The secret key for the feedback.
     urgency_query
         The urgency query to save to the database.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to save the urgent user query to.
 
     Returns
     -------
@@ -81,9 +127,9 @@ async def save_urgency_query_to_db(
     """
 
     urgency_query_db = UrgencyQueryDB(
-        user_id=user_id,
         feedback_secret_key=feedback_secret_key,
         message_datetime_utc=datetime.now(timezone.utc),
+        workspace_id=workspace_id,
         **urgency_query.model_dump(),
     )
     asession.add(urgency_query_db)
@@ -120,65 +166,22 @@ async def check_secret_key_match(
     return (query_record is not None) and (query_record[0] == secret_key)
 
 
-class UrgencyResponseDB(Base):
-    """ORM for managing urgency responses.
-
-    This database ties into the Admin app and allows the user to view, add, edit,
-    and delete content in the `urgency_response` table.
-    """
-
-    __tablename__ = "urgency_response"
-
-    urgency_response_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True, nullable=False
-    )
-    is_urgent: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    matched_rules: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
-    details: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
-    query_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("urgency_query.urgency_query_id")
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
-    )
-    response_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
-    query: Mapped[UrgencyQueryDB] = relationship(
-        "UrgencyQueryDB", back_populates="response", lazy=True
-    )
-
-    def __repr__(self) -> str:
-        """Construct the string representation of the `UrgencyResponseDB` object.
-
-        Returns
-        -------
-        str
-            A string representation of the `UrgencyResponseDB` object.
-        """
-
-        return (
-            f"Urgency Response {self.urgency_response_id} for query #{self.query_id} "
-            f"is_urgent={self.is_urgent}"
-        )
-
-
 async def save_urgency_response_to_db(
-    urgency_query_db: UrgencyQueryDB,
-    response: UrgencyResponse,
+    *,
     asession: AsyncSession,
+    response: UrgencyResponse,
+    urgency_query_db: UrgencyQueryDB,
 ) -> UrgencyResponseDB:
-    """Saves the user query response to the database.
+    """Saves the urgent user query response to the database.
 
     Parameters
     ----------
-    urgency_query_db
-        The urgency query database object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     response
         The urgency response object to save to the database.
-    asession
-        `AsyncSession` object for database transactions.
+    urgency_query_db
+        The urgency query database object.
 
     Returns
     -------
@@ -187,12 +190,12 @@ async def save_urgency_response_to_db(
     """
 
     urgency_query_responses_db = UrgencyResponseDB(
-        query_id=urgency_query_db.urgency_query_id,
-        user_id=urgency_query_db.user_id,
-        is_urgent=response.is_urgent,
         details=response.model_dump()["details"],
+        is_urgent=response.is_urgent,
         matched_rules=response.matched_rules,
+        query_id=urgency_query_db.urgency_query_id,
         response_datetime_utc=datetime.now(timezone.utc),
+        workspace_id=urgency_query_db.workspace_id,
     )
     asession.add(urgency_query_responses_db)
     await asession.commit()

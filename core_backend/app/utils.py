@@ -1,15 +1,17 @@
-"""This module contains utility functions for the backend application."""
+"""This module contains general utility functions for the backend application."""
 
 # pylint: disable=global-statement
 import hashlib
 import logging
 import mimetypes
 import os
+import random
 import secrets
+import string
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import Logger
-from typing import List, Optional
+from typing import Optional
 from uuid import uuid4
 
 import aiohttp
@@ -26,11 +28,10 @@ from .config import (
     LOG_LEVEL,
 )
 
-# To make 32-byte API keys (results in 43 characters)
+# To make 32-byte API keys (results in 43 characters).
 SECRET_KEY_N_BYTES = 32
 
-
-# To prefix trace_id with project name
+# To prefix trace_id with project name.
 LANGFUSE_PROJECT_NAME = None
 
 if LANGFUSE == "True":
@@ -46,51 +47,60 @@ if LANGFUSE == "True":
         )
 
 
-def generate_key() -> str:
-    """
-    Generate API key (default 32 byte = 43 characters)
-    """
-
-    return secrets.token_urlsafe(SECRET_KEY_N_BYTES)
+_HTTP_CLIENT: aiohttp.ClientSession | None = None
 
 
-def get_key_hash(key: str) -> str:
-    """Hashes the api key using SHA256."""
-    return hashlib.sha256(key.encode()).hexdigest()
+class HttpClient:
+    """HTTP client for calling other endpoints."""
 
+    session: aiohttp.ClientSession | None = None
 
-def get_password_salted_hash(key: str) -> str:
-    """Hashes the password using SHA256 with a salt."""
-    salt = os.urandom(16)
-    key_salt_combo = salt + key.encode()
-    hash_obj = hashlib.sha256(key_salt_combo)
-    return salt.hex() + hash_obj.hexdigest()
+    def __call__(self) -> aiohttp.ClientSession:
+        """Get AIOHTTP session."""
 
+        assert self.session is not None
+        return self.session
 
-def verify_password_salted_hash(key: str, stored_hash: str) -> bool:
-    """Verifies if the api key matches the hash."""
-    salt = bytes.fromhex(stored_hash[:32])
-    original_hash = stored_hash[32:]
-    key_salt_combo = salt + key.encode()
-    hash_obj = hashlib.sha256(key_salt_combo)
+    def start(self) -> None:
+        """Create AIOHTTP session."""
 
-    return hash_obj.hexdigest() == original_hash
+        self.session = aiohttp.ClientSession()
 
+    async def stop(self) -> None:
+        """Close AIOHTTP session."""
 
-def get_random_string(size: int) -> str:
-    """Generate a random string of fixed length."""
-    import random
-    import string
-
-    return "".join(random.choices(string.ascii_letters + string.digits, k=size))
+        if self.session is not None:
+            await self.session.close()
+        self.session = None
 
 
 def create_langfuse_metadata(
-    query_id: int | None = None,
+    *,
     feature_name: str | None = None,
-    user_id: int | None = None,
+    query_id: int | None = None,
+    workspace_id: int | None = None,
 ) -> dict:
-    """Create metadata for langfuse logging."""
+    """Create metadata for langfuse logging.
+
+    Parameters
+    ----------
+    feature_name
+        The name of the feature.
+    query_id
+        The ID of the query.
+    workspace_id
+        The ID of the workspace.
+
+    Returns
+    -------
+    dict
+        The metadata for langfuse logging.
+
+    Raises
+    ------
+    ValueError
+        If neither `query_id` nor `feature_name` is provided.
+    """
 
     trace_id_elements = []
     if query_id is not None:
@@ -103,206 +113,136 @@ def create_langfuse_metadata(
     if LANGFUSE_PROJECT_NAME is not None:
         trace_id_elements.insert(0, LANGFUSE_PROJECT_NAME)
 
-    metadata = {
-        "trace_id": "-".join(trace_id_elements),
-    }
-    if user_id is not None:
-        metadata["trace_user_id"] = "user_id-" + str(user_id)
+    metadata = {"trace_id": "-".join(trace_id_elements)}
+    if workspace_id is not None:
+        metadata["trace_workspace_id"] = "workspace_id-" + str(workspace_id)
 
     return metadata
 
 
-def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:
-    """
-    Get log level from string
-    """
-    log_level_dict = {
-        "CRITICAL": logging.CRITICAL,
-        "ERROR": logging.ERROR,
-        "WARNING": logging.WARNING,
-        "INFO": logging.INFO,
-        "DEBUG": logging.DEBUG,
-        "NOTSET": logging.NOTSET,
-    }
-
-    return log_level_dict.get(log_level_str.upper(), logging.INFO)
-
-
-def generate_secret_key() -> str:
-    """
-    Generate a secret key for the user query
-    """
-    return uuid4().hex
-
-
-async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List[float]:
+async def embedding(
+    *, metadata: Optional[dict] = None, text_to_embed: str
+) -> list[float]:
     """Get embedding for the given text.
+
     Parameters
     ----------
-    text_to_embed
-        The text to embed.
     metadata
         Metadata for `LiteLLM` embedding API.
+    text_to_embed
+        The text to embed.
+
     Returns
     -------
-    List[float]
+    list[float]
         The embedding for the given text.
     """
 
     metadata = metadata or {}
 
     content_embedding = await aembedding(
-        model=LITELLM_MODEL_EMBEDDING,
-        input=text_to_embed,
         api_base=LITELLM_ENDPOINT,
         api_key=LITELLM_API_KEY,
+        input=text_to_embed,
         metadata=metadata,
+        model=LITELLM_MODEL_EMBEDDING,
     )
 
     return content_embedding.data[0]["embedding"]
 
 
-def setup_logger(
-    name: str = __name__, log_level: int = get_log_level_from_str()
-) -> Logger:
-    """
-    Setup logger for the application
-    """
-    logger = logging.getLogger(name)
+def encode_api_limit(*, api_limit: int | None) -> int | str:
+    """Encode the API limit for Redis.
 
-    # If the logger already has handlers,
-    # assume it was already configured and return it.
-    if logger.handlers:
-        return logger
+    Parameters
+    ----------
+    api_limit
+        The API limit.
 
-    logger.setLevel(log_level)
-
-    formatter = logging.Formatter(
-        "%(asctime)s %(filename)20s%(lineno)4s : %(message)s",
-        datefmt="%m/%d/%Y %I:%M:%S %p",
-    )
-
-    handler = logging.StreamHandler()
-    handler.setLevel(log_level)
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
-
-    return logger
-
-
-class HttpClient:
-    """
-    HTTP client for call other endpoints
-    """
-
-    session: aiohttp.ClientSession | None = None
-
-    def start(self) -> None:
-        """
-        Create AIOHTTP session
-        """
-        self.session = aiohttp.ClientSession()
-
-    async def stop(self) -> None:
-        """
-        Close AIOHTTP session
-        """
-        if self.session is not None:
-            await self.session.close()
-        self.session = None
-
-    def __call__(self) -> aiohttp.ClientSession:
-        """
-        Get AIOHTTP session
-        """
-        assert self.session is not None
-        return self.session
-
-
-_HTTP_CLIENT: aiohttp.ClientSession | None = None
-
-
-def get_global_http_client() -> Optional[aiohttp.ClientSession]:
-    """Return the value for the global variable _HTTP_CLIENT.
-
-    :returns:
-        The value for the global variable _HTTP_CLIENT.
-    """
-
-    return _HTTP_CLIENT
-
-
-def set_global_http_client(http_client: HttpClient) -> None:
-    """Set the value for the global variable _HTTP_CLIENT.
-
-    :param http_client: The value to set for the global variable _HTTP_CLIENT.
-    """
-
-    global _HTTP_CLIENT
-    _HTTP_CLIENT = http_client()
-
-
-def get_http_client() -> aiohttp.ClientSession:
-    """
-    Get HTTP client
-    """
-
-    global_http_client = get_global_http_client()
-    if global_http_client is None or global_http_client.closed:
-        http_client = HttpClient()
-        http_client.start()
-        set_global_http_client(http_client)
-    new_http_client = get_global_http_client()
-    assert isinstance(new_http_client, aiohttp.ClientSession)
-    return new_http_client
-
-
-def encode_api_limit(api_limit: int | None) -> int | str:
-    """
-    Encode the api limit for redis
+    Returns
+    -------
+    int | str
+        The encoded API limit.
     """
 
     return int(api_limit) if api_limit is not None else "None"
 
 
-async def update_api_limits(
-    redis: aioredis.Redis, username: str, api_daily_quota: int | None
-) -> None:
-    """
-    Update the api limits for user in Redis
-    """
-    now = datetime.now(timezone.utc)
-    next_midnight = (now + timedelta(days=1)).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    key = f"remaining-calls:{username}"
-    expire_at = int(next_midnight.timestamp())
-    await redis.set(key, encode_api_limit(api_daily_quota))
-    if api_daily_quota is not None:
+def generate_key() -> str:
+    """Generate API key (default 32 byte = 43 characters).
 
-        await redis.expireat(key, expire_at)
+    Returns
+    -------
+    str
+        The generated API key.
+    """
+
+    return secrets.token_urlsafe(SECRET_KEY_N_BYTES)
 
 
-def generate_random_filename(extension: str) -> str:
+async def generate_public_url(*, blob_name: str, bucket_name: str) -> str:
+    """Generate a public URL for a GCS blob.
+
+    Parameters
+    ----------
+    blob_name
+        The name of the blob in the bucket.
+    bucket_name
+        The name of the GCS bucket.
+
+    Returns
+    -------
+    str
+        A public URL that allows access to the GCS file.
     """
-    Generate a random filename with the specified extension by concatenating
+
+    public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
+    return public_url
+
+
+def generate_random_filename(*, extension: str) -> str:
+    """Generate a random filename with the specified extension by concatenating
     multiple UUIDv4 strings.
 
-    Params:
-        extension (str): The file extension (e.g., '.wav', '.mp3').
+    Parameters
+    ----------
+    extension
+        The file extension (e.g., '.wav', '.mp3').
+
+    Returns
+    -------
+    str
+        The generated random filename.
     """
 
     random_filename = "".join([uuid4().hex for _ in range(5)])
     return f"{random_filename}{extension}"
 
 
-def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
-    """
-    Get file extension from MIME type.
+def generate_secret_key() -> str:
+    """Generate a secret key for the user query.
 
-    Params:
-        mime_type (str): The MIME type of the file.
+    Returns
+    -------
+    str
+        The generated secret key.
+    """
+
+    return uuid4().hex
+
+
+def get_file_extension_from_mime_type(*, mime_type: Optional[str]) -> str:
+    """Get file extension from MIME type.
+
+    Parameters
+    ----------
+    mime_type
+        The MIME type of the file.
+
+    Returns
+    -------
+    str
+        The file extension.
     """
 
     mime_to_extension = {
@@ -333,20 +273,252 @@ def get_file_extension_from_mime_type(mime_type: Optional[str]) -> str:
     return ".bin"
 
 
-async def upload_file_to_gcs(
-    bucket_name: str,
-    file_stream: BytesIO,
-    destination_blob_name: str,
-    content_type: Optional[str] = None,
-) -> None:
-    """
-    Upload a file stream to a Google Cloud Storage bucket and make it public.
+def get_global_http_client() -> Optional[aiohttp.ClientSession]:
+    """Return the value for the global variable _HTTP_CLIENT.
 
-    Params:
-        bucket_name (str): The name of the GCS bucket.
-        file_stream (BytesIO): The file stream to upload.
-        content_type (str): The content type of the file (e.g., 'audio/mpeg').
+    Returns
+    -------
+        The value for the global variable _HTTP_CLIENT.
     """
+
+    return _HTTP_CLIENT
+
+
+def get_http_client() -> aiohttp.ClientSession:
+    """Get HTTP client.
+
+    Returns
+    -------
+    aiohttp.ClientSession
+        The HTTP client.
+    """
+
+    global_http_client = get_global_http_client()
+    if global_http_client is None or global_http_client.closed:
+        http_client = HttpClient()
+        http_client.start()
+        set_global_http_client(http_client=http_client)
+    new_http_client = get_global_http_client()
+    assert isinstance(new_http_client, aiohttp.ClientSession)
+    return new_http_client
+
+
+def get_key_hash(*, key: str) -> str:
+    """Hash the API key using SHA256.
+
+    Parameters
+    ----------
+    key
+        The API key to hash.
+
+    Returns
+    -------
+    str
+        The hashed API key.
+    """
+
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def get_log_level_from_str(*, log_level_str: str = LOG_LEVEL) -> int:
+    """Get log level from string.
+
+    Parameters
+    ----------
+    log_level_str
+        The log level string.
+
+    Returns
+    -------
+    int
+        The log level.
+    """
+
+    log_level_dict = {
+        "CRITICAL": logging.CRITICAL,
+        "DEBUG": logging.DEBUG,
+        "ERROR": logging.ERROR,
+        "INFO": logging.INFO,
+        "NOTSET": logging.NOTSET,
+        "WARNING": logging.WARNING,
+    }
+
+    return log_level_dict.get(log_level_str.upper(), logging.INFO)
+
+
+def get_password_salted_hash(*, key: str) -> str:
+    """Hash the password using SHA256 with a salt.
+
+    Parameters
+    ----------
+    key
+        The password to hash.
+
+    Returns
+    -------
+    str
+        The hashed salted password.
+    """
+
+    salt = os.urandom(16)
+    key_salt_combo = salt + key.encode()
+    hash_obj = hashlib.sha256(key_salt_combo)
+    return salt.hex() + hash_obj.hexdigest()
+
+
+def get_random_int32() -> int:
+    """Generate a random 32-bit integer.
+
+    Returns
+    -------
+    int
+        The generated 32-bit integer.
+    """
+
+    return random.randint(-(2**31), 2**31 - 1)
+
+
+def get_random_string(*, size: int) -> str:
+    """Generate a random string of fixed length.
+
+    Parameters
+    ----------
+    size
+        The size of the random string to generate.
+
+    Returns
+    -------
+    str
+        The generated random string.
+    """
+
+    return "".join(random.choices(string.ascii_letters + string.digits, k=size))
+
+
+def set_global_http_client(*, http_client: HttpClient) -> None:
+    """Set the value for the global variable _HTTP_CLIENT.
+
+    Parameters
+    ----------
+    http_client
+        The value to set for the global variable _HTTP_CLIENT.
+    """
+
+    global _HTTP_CLIENT
+    _HTTP_CLIENT = http_client()
+
+
+def setup_logger(*, log_level: Optional[int] = None, name: str = __name__) -> Logger:
+    """Setup logger for the application.
+
+    Parameters
+    ----------
+    log_level
+        The log level for the logger.
+    name
+        The name of the logger.
+
+    Returns
+    -------
+    Logger
+        The configured logger.
+    """
+
+    log_level = log_level or get_log_level_from_str()
+    logger = logging.getLogger(name)
+
+    # If the logger already has handlers, assume it was already configured and return
+    # it.
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(log_level)
+
+    formatter = logging.Formatter(
+        "%(asctime)s %(filename)20s%(lineno)4s : %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+
+    handler = logging.StreamHandler()
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+
+    return logger
+
+
+def verify_password_salted_hash(*, key: str, stored_hash: str) -> bool:
+    """Verify if the API key matches the hash.
+
+    Parameters
+    ----------
+    key
+        The API key to verify.
+    stored_hash
+        The stored hash to compare against.
+
+    Returns
+    -------
+    bool
+        Specifies if the API key matches the hash.
+    """
+
+    salt = bytes.fromhex(stored_hash[:32])
+    original_hash = stored_hash[32:]
+    key_salt_combo = salt + key.encode()
+    hash_obj = hashlib.sha256(key_salt_combo)
+
+    return hash_obj.hexdigest() == original_hash
+
+
+async def update_api_limits(
+    *, api_daily_quota: int | None, redis: aioredis.Redis, workspace_name: str
+) -> None:
+    """Update the API limits for the workspace in Redis.
+
+    Parameters
+    ----------
+    api_daily_quota
+        The daily API quota for the workspace.
+    redis
+        The Redis instance.
+    workspace_name
+        The name of the workspace.
+    """
+
+    now = datetime.now(timezone.utc)
+    next_midnight = (now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    key = f"remaining-calls:{workspace_name}"
+    expire_at = int(next_midnight.timestamp())
+    await redis.set(key, encode_api_limit(api_limit=api_daily_quota))
+    if api_daily_quota is not None:
+        await redis.expireat(key, expire_at)
+
+
+async def upload_file_to_gcs(
+    *,
+    bucket_name: str,
+    content_type: Optional[str] = None,
+    destination_blob_name: str,
+    file_stream: BytesIO,
+) -> None:
+    """Upload a file stream to a Google Cloud Storage bucket and make it public.
+
+    Parameters
+    ----------
+    bucket_name
+        The name of the GCS bucket.
+    content_type
+        The content type of the file (e.g., 'audio/mpeg').
+    destination_blob_name
+        The name of the blob in the bucket.
+    file_stream
+        The file stream to upload.
+    """
+
     client = storage.Client()
     bucket = client.bucket(bucket_name)
 
@@ -354,19 +526,3 @@ async def upload_file_to_gcs(
 
     file_stream.seek(0)
     blob.upload_from_file(file_stream, content_type=content_type)
-
-
-async def generate_public_url(bucket_name: str, blob_name: str) -> str:
-    """
-    Generate a public URL for a GCS blob.
-
-    Params:
-        bucket_name (str): The name of the GCS bucket.
-        blob_name (str): The name of the blob in the bucket.
-
-    Returns:
-        str: A public URL that allows access to the GCS file.
-    """
-
-    public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
-    return public_url

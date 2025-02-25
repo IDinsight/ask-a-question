@@ -11,3 +11,4 @@ soundfile==0.12.1
 piper-tts==1.2.0
 pytest==7.4.2
 pytest-asyncio==0.23.2
+httpx==0.25.0

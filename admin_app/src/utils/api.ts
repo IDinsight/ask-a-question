@@ -13,6 +13,10 @@ const api = axios.create({
 
 import { AxiosResponse, AxiosError } from "axios";
 
+export type CustomError = {
+  status: number;
+  message: string;
+};
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -20,8 +24,11 @@ api.interceptors.response.use(
       console.log("Unauthorized request");
       const currentPath = window.location.pathname;
       const sourcePage = encodeURIComponent(currentPath);
-      localStorage.removeItem("token");
-      window.location.href = `/login?sourcePage=${sourcePage}`;
+      const token = localStorage.getItem("token");
+      if (token) {
+        localStorage.removeItem("token");
+        window.location.href = `/login?sourcePage=${sourcePage}`;
+      }
     }
     return Promise.reject(error);
   },
@@ -39,8 +46,18 @@ const getLoginToken = async (username: string, password: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    console.log(error);
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    }
+    console.log(customError);
     throw new Error("Error fetching login token");
   }
 };
@@ -87,6 +104,36 @@ const getSearch = async (
   }
 };
 
+const getChat = async (
+  question: string,
+  generate_llm_response: boolean,
+  token: string,
+  session_id?: number,
+): Promise<{ status: number; data?: any; error?: any }> => {
+  try {
+    const response = await api.post(
+      "/chat",
+      {
+        query_text: question,
+        generate_llm_response,
+        session_id,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    return { status: response.status, ...response.data };
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response) {
+      return { status: error.response.status, error: error.response.data };
+    } else {
+      console.error("Error returning chat response", error.message);
+      throw new Error(`Error returning chat response: ${error.message}`);
+    }
+  }
+};
 const postResponseFeedback = async (
   query_id: number,
   feedback_sentiment: string,
@@ -130,6 +177,7 @@ export const apiCalls = {
   getLoginToken,
   getGoogleLoginToken,
   getSearch,
+  getChat,
   postResponseFeedback,
   getUrgencyDetection,
 };
