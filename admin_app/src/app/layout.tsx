@@ -1,13 +1,10 @@
 import { PublicEnvScript } from "next-runtime-env";
-
 import theme from "@/theme";
 import AuthProvider from "@/utils/auth";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import React from "react";
-import { Suspense } from "react";
-const inter = Inter({ subsets: ["latin"] });
+import React, { Suspense } from "react";
+import { inter } from "@/fonts";
 
 export const metadata: Metadata = {
   title: "Ask A Question",
@@ -16,9 +13,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <head>
