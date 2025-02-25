@@ -170,10 +170,10 @@ async def authenticate_or_create_google_user(
         same gmail. Thus, we have to check if the authenticating user exists in the
         workspace.
     5. If the authenticating user exists in the workspace, then we return the
-        `AuthenticatedUser` model.
+        `AuthenticatedUser` model with the correct user's role in the workspace.
     6. Otherwise, we have a situation where someone else already created a workspace
         using the authenticated user's gmail and we raise an exception.
-    7. If the user does not exis in `UserDB`, then this is the first time that the
+    7. If the user does not exist in `UserDB`, then this is the first time that the
         Google user is authenticating. Thus, we create the user and the workspace.
 
     Parameters
