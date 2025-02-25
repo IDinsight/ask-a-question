@@ -75,7 +75,7 @@ setup-redis:
      -p 6379:6379 \
      -d redis:6.0-alpine
 
-make teardown-redis:
+teardown-redis:
 	@docker stop redis-local
 	@docker rm redis-local
 
