@@ -3,13 +3,7 @@
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { appColors } from "@/utils/index";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+import { inter } from "@/fonts";
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 

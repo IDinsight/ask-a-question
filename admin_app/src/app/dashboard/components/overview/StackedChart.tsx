@@ -1,15 +1,9 @@
 "use client";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
-import { Inter } from "next/font/google";
+import { inter } from "@/fonts";
 import { appColors } from "@/utils/index";
 import { ApexSeriesData } from "../../types";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
   ssr: false,
