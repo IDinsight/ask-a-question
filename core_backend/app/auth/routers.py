@@ -174,7 +174,14 @@ async def authenticate_or_create_google_user(
     6. Otherwise, we have a situation where someone else already created a workspace
         using the authenticated user's gmail and we raise an exception.
     7. If the user does not exist in `UserDB`, then this is the first time that the
-        Google user is authenticating. Thus, we create the user and the workspace.
+        Google user is authenticating.
+    8. We try to create the workspace using the default workspace name for the new
+        user. If the default workspace name already exists, then we raise an exception.
+        This corresponds to the situation where another user has already created a
+        workspace under the same name and the Google user is signing in for the very
+        time.
+    9. Finally, we update the API limits for the new workspace, create the user in
+        `UserDB`, and assign the user to the workspace with the role of ADMIN.
 
     Parameters
     ----------
@@ -243,15 +250,13 @@ async def authenticate_or_create_google_user(
             )
 
         # 7.
-        # Create the new user object with an ADMIN role and the specified workspace
-        # name.
         user = UserCreate(
             role=UserRoles.ADMIN, username=gmail, workspace_name=workspace_name
         )
         user_role = user.role
         assert user_role is not None and user_role in UserRoles
 
-        # Create the (new) workspace for the Google user.
+        # 8.
         workspace_db, is_new_workspace = await create_workspace(
             api_daily_quota=DEFAULT_API_QUOTA,
             asession=asession,
@@ -260,21 +265,18 @@ async def authenticate_or_create_google_user(
         )
         if not is_new_workspace:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Workspace for '{gmail}' already exists.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Workspace for '{gmail}' already exists. Contact the admin of "
+                f"that workspace to create an account for you.",
             )
 
-        # Update API limits for the Google user's workspace.
+        # 9.
         await update_api_limits(
             api_daily_quota=workspace_db.api_daily_quota,
             redis=request.app.state.redis,
             workspace_name=workspace_db.workspace_name,
         )
-
-        # Create the new user.
         user_db = await save_user_to_db(asession=asession, user=user)
-
-        # Assign user to the specified workspace with the specified role.
         _ = await create_user_workspace_role(
             asession=asession,
             is_default_workspace=True,
