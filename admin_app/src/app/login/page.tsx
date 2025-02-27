@@ -21,7 +21,6 @@ import * as React from "react";
 import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
 import {
-  checkIfUsernameExists,
   getRegisterOption,
   registerUser,
   resetPassword,
@@ -136,9 +135,7 @@ const Login = () => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-  const handleResetPassword = () => {
-    setShowUserResetModal(true);
-  };
+
   return isLoading ? (
     <Grid>
       {" "}
