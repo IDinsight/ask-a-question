@@ -100,13 +100,10 @@ const ChatSideBar = ({
       : getResponse(question);
     responsePromise
       .then((response) => {
-        const errorMessage = response.error
-          ? response.error.error_message
-          : "LLM Response failed.";
         const responseMessage = {
           dateTime: new Date().toISOString(),
           type: "response",
-          content: response.status == 200 ? response.llm_response : errorMessage,
+          content: response.llm_response,
           json: response,
         } as ResponseMessage;
 

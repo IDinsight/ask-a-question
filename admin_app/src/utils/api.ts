@@ -122,15 +122,23 @@ const getChat = async (
         headers: { Authorization: `Bearer ${token}` },
       },
     );
-
     return { status: response.status, ...response.data };
-  } catch (err) {
-    const error = err as AxiosError;
-    if (error.response) {
-      return { status: error.response.status, error: error.response.data };
+  } catch (error) {
+    const customError = error as AxiosError;
+
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: (customError.response.data as { error_message: string })
+          ?.error_message,
+      } as CustomError;
     } else {
-      console.error("Error returning chat response", error.message);
-      throw new Error(`Error returning chat response: ${error.message}`);
+      console.error("Error returning chat response", customError);
+      throw new Error(`Error returning chat response: ${customError}`);
     }
   }
 };
