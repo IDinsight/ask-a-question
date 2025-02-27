@@ -251,7 +251,7 @@ async def add_existing_user_to_workspace(
 
     return UserCreateWithCode(
         is_default_workspace=user.is_default_workspace,
-        recovery_codes=user_db.recovery_codes,
+        recovery_codes=user_db.recovery_codes if user_db.recovery_codes else [],
         role=user.role,
         username=user_db.username,
         workspace_name=workspace_db.workspace_name,

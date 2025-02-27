@@ -578,7 +578,6 @@ async def reset_password(
     """
 
     user_to_update = await check_reset_password_call(asession=asession, user=user)
-
     # 1.
     updated_recovery_codes = [
         val for val in user_to_update.recovery_codes if val != user.recovery_code
@@ -1064,7 +1063,10 @@ async def check_reset_password_call(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
         )
 
-    if user.recovery_code not in user_to_update.recovery_codes:
+    if (
+        not user.recovery_code
+        or user.recovery_code not in user_to_update.recovery_codes
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Recovery code is incorrect.",

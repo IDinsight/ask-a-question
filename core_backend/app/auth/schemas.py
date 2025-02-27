@@ -22,7 +22,6 @@ class AuthenticatedUser(BaseModel):
     user_role: UserRoles
     username: str
     workspace_name: str
-
     model_config = ConfigDict(from_attributes=True)
 
 
