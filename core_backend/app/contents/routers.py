@@ -1,6 +1,6 @@
-"""This module contains the FastAPI router for the content management endpoints."""
+"""This module contains FastAPI routers for content management endpoints."""
 
-from typing import Annotated, List, Optional
+from typing import Annotated, Optional
 
 import pandas as pd
 import sqlalchemy.exc
@@ -11,13 +11,18 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..config import CHECK_CONTENT_LIMIT
 from ..database import get_async_session
 from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate, TagRetrieve
-from ..users.models import UserDB, get_content_quota_by_userid
+from ..users.models import UserDB, user_has_required_role_in_workspace
+from ..users.schemas import UserRoles
 from ..utils import setup_logger
+from ..workspaces.utils import (
+    get_content_quota_by_workspace_id,
+    get_workspace_by_workspace_name,
+)
 from .models import (
     ContentDB,
     archive_content_from_db,
@@ -45,189 +50,369 @@ logger = setup_logger()
 
 
 class BulkUploadResponse(BaseModel):
-    """
-    Pydantic model for the csv-upload response
-    """
+    """Pydantic model for the CSV-upload response."""
 
-    tags: List[TagRetrieve]
-    contents: List[ContentRetrieve]
+    contents: list[ContentRetrieve]
+    tags: list[TagRetrieve]
 
 
 class ExceedsContentQuotaError(Exception):
-    """
-    Exception raised when a user is attempting to add
-    more content that their quota allows.
+    """Exception raised when a user is attempting to add more content that their quota
+    allows.
     """
 
 
 @router.post("/", response_model=ContentRetrieve)
 async def create_content(
     content: ContentCreate,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> Optional[ContentRetrieve]:
-    """
-    Create new content.
+    """Create new content.
 
-    ⚠️ To add tags, first use the tags endpoint to create tags.
+    NB: ⚠️ To add tags, first use the `tags` endpoint to create tags.
+
+    NB: Content is now created within a specified workspace.
+
+    The process is as follows:
+
+    1. Parameters for the endpoint are checked first.
+    2. Check if the content tags are valid.
+    3, Check if the created content would exceed the workspace content quota.
+    4. Save the content to the `ContentDB` database.
+
+    Parameters
+    ----------
+    content
+        The content object to create.
+    calling_user_db
+        The user object associated with the user that is creating the content.
+    workspace_name
+        The name of the workspace to create the content in.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    Optional[ContentRetrieve]
+        The created content.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to create content in the workspace.
+        If the content tags are invalid or the user would exceed their content quota.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to create content in the "
+            "workspace.",
+        )
+
+    # 2.
+    workspace_id = workspace_db.workspace_id
     is_tag_valid, content_tags = await validate_tags(
-        user_db.user_id, content.content_tags, asession
+        asession=asession, tags=content.content_tags, workspace_id=workspace_id
     )
     if not is_tag_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tag ids: {content_tags}",
+            detail=f"Invalid tag IDs: {content_tags}",
         )
+
     content.content_tags = content_tags
 
-    # Check if the user would exceed their content quota
+    # 3.
     if CHECK_CONTENT_LIMIT:
         try:
             await _check_content_quota_availability(
-                user_id=user_db.user_id,
-                n_contents_to_add=1,
-                asession=asession,
+                asession=asession, n_contents_to_add=1, workspace_id=workspace_id
             )
         except ExceedsContentQuotaError as e:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Exceeds content quota for user. {e}",
+                detail=f"Exceeds content quota for workspace. {e}",
             ) from e
 
+    # 4.
     content_db = await save_content_to_db(
-        user_id=user_db.user_id,
+        asession=asession,
         content=content,
         exclude_archived=False,  # Don't exclude for newly saved content!
-        asession=asession,
+        workspace_id=workspace_id,
     )
-    return _convert_record_to_schema(content_db)
+    return _convert_record_to_schema(record=content_db)
 
 
 @router.put("/{content_id}", response_model=ContentRetrieve)
 async def edit_content(
     content_id: int,
     content: ContentCreate,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """
-    Edit pre-existing content.
+    """Edit pre-existing content.
+
+    Parameters
+    ----------
+    content_id
+        The ID of the content to edit.
+    content
+        The content to edit.
+    calling_user_db
+        The user object associated with the user that is editing the content.
+    workspace_name
+        The name of the workspace that the content belongs in.
+    exclude_archived
+        Specifies whether to exclude archived contents.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    ContentRetrieve
+        The edited content.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to edit content in the workspace.
+        If the content to edit is not found.
+        If the tags are invalid.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to edit content in the "
+            "workspace.",
+        )
+
+    workspace_id = workspace_db.workspace_id
     old_content = await get_content_from_db(
-        user_id=user_db.user_id,
+        asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
-        asession=asession,
+        workspace_id=workspace_id,
     )
 
     if not old_content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     is_tag_valid, content_tags = await validate_tags(
-        user_db.user_id, content.content_tags, asession
+        asession=asession, tags=content.content_tags, workspace_id=workspace_id
     )
+
     if not is_tag_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tag ids: {content_tags}",
+            detail=f"Invalid tag IDs: {content_tags}",
         )
+
     content.content_tags = content_tags
     content.is_archived = old_content.is_archived
     updated_content = await update_content_in_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
-        content=content,
         asession=asession,
+        content=content,
+        content_id=content_id,
+        workspace_id=workspace_id,
     )
 
-    return _convert_record_to_schema(updated_content)
+    return _convert_record_to_schema(record=updated_content)
 
 
-@router.get("/", response_model=List[ContentRetrieve])
+@router.get("/", response_model=list[ContentRetrieve])
 async def retrieve_content(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     skip: int = 0,
     limit: int = 50,
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
-) -> List[ContentRetrieve]:
-    """
-    Retrieve all contents
+) -> list[ContentRetrieve]:
+    """Retrieve all contents for the specified workspace.
+
+    Parameters
+    ----------
+    workspace_name
+        The name of the workspace to retrieve content from.
+    skip
+        The number of contents to skip.
+    limit
+        The maximum number of contents to retrieve.
+    exclude_archived
+        Specifies whether to exclude archived contents.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    list[ContentRetrieve]
+        The retrieved contents from the specified workspace.
     """
 
-    records = await get_list_of_content_from_db(
-        user_id=user_db.user_id,
-        offset=skip,
-        limit=limit,
-        exclude_archived=exclude_archived,
-        asession=asession,
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
     )
-    contents = [_convert_record_to_schema(c) for c in records]
+    records = await get_list_of_content_from_db(
+        asession=asession,
+        exclude_archived=exclude_archived,
+        limit=limit,
+        offset=skip,
+        workspace_id=workspace_db.workspace_id,
+    )
+    contents = [_convert_record_to_schema(record=c) for c in records]
     return contents
 
 
 @router.patch("/{content_id}")
 async def archive_content(
     content_id: int,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> None:
-    """
-    Archive content by ID.
+    """Archive content by ID.
+
+    Parameters
+    ----------
+    content_id
+        The ID of the content to archive.
+    calling_user_db
+        The user object associated with the user that is archiving the content.
+    workspace_name
+        The name of the workspace to archive content in.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to archive content in the workspace.
+        If the content is not found.
     """
 
-    record = await get_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to archive content in the "
+            "workspace.",
+        )
+
+    workspace_id = workspace_db.workspace_id
+    record = await get_content_from_db(
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
 
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
+
     await archive_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
-        asession=asession,
+        asession=asession, content_id=content_id, workspace_id=workspace_id
     )
 
 
 @router.delete("/{content_id}")
 async def delete_content(
     content_id: int,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
+    exclude_archived: bool = True,
 ) -> None:
-    """
-    Delete content by ID
+    """Delete content by ID.
+
+    Parameters
+    ----------
+    content_id
+        The ID of the content to delete.
+    calling_user_db
+        The user object associated with the user that is deleting the content.
+    workspace_name
+        The name of the workspace to delete content from.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    exclude_archived
+        Specifies whether to exclude archived contents.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to delete content in the workspace.
+        If the content is not found.
+        If the deletion of the content with feedback is not allowed.
     """
 
-    record = await get_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
         asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to delete content in the "
+            "workspace.",
+        )
+
+    workspace_id = workspace_db.workspace_id
+    record = await get_content_from_db(
+        asession=asession,
+        content_id=content_id,
+        exclude_archived=exclude_archived,
+        workspace_id=workspace_id,
     )
 
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
     try:
         await delete_content_from_db(
-            user_id=user_db.user_id,
-            content_id=content_id,
-            asession=asession,
+            asession=asession, content_id=content_id, workspace_id=workspace_id
         )
     except sqlalchemy.exc.IntegrityError as e:
         logger.error(f"Error deleting content: {e}")
@@ -240,34 +425,58 @@ async def delete_content(
 @router.get("/{content_id}", response_model=ContentRetrieve)
 async def retrieve_content_by_id(
     content_id: int,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
-    """
-    Retrieve content by ID
+    """Retrieve content by ID.
+
+    Parameters
+    ----------
+    content_id
+        The ID of the content to retrieve.
+    workspace_name
+        The name of the workspace to retrieve content from.
+    exclude_archived
+        Specifies whether to exclude archived contents.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    ContentRetrieve
+        The retrieved content.
+
+    Raises
+    ------
+    HTTPException
+        If the content is not found.
     """
 
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
     record = await get_content_from_db(
-        user_id=user_db.user_id,
+        asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
-        asession=asession,
+        workspace_id=workspace_db.workspace_id,
     )
 
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Content id `{content_id}` not found",
+            detail=f"Content ID `{content_id}` not found",
         )
 
-    return _convert_record_to_schema(record)
+    return _convert_record_to_schema(record=record)
 
 
 @router.post("/csv-upload", response_model=BulkUploadResponse)
 async def bulk_upload_contents(
     file: UploadFile,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
@@ -275,9 +484,50 @@ async def bulk_upload_contents(
 
     Note: If there are any issues with the CSV, the endpoint will return a 400 error
     with the list of issues under 'detail' in the response body.
+
+    Parameters
+    ----------
+    file
+        The CSV file to upload.
+    calling_user_db
+        The user object associated with the user that is uploading the CSV.
+    workspace_name
+        The name of the workspace to upload the contents to.
+    exclude_archived
+        Specifies whether to exclude archived contents.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    BulkUploadResponse
+        The response containing the created tags and contents.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to upload content in the workspace.
+        If the file is not a CSV.
+        If the CSV file is empty or unreadable.
     """
 
-    # Ensure the file is a CSV
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to upload content in the "
+            "workspace.",
+        )
+
+    # Ensure the file is a CSV.
     if file.filename is None or not file.filename.endswith(".csv"):
         error_list_model = CustomErrorList(
             errors=[
@@ -292,69 +542,70 @@ async def bulk_upload_contents(
             detail=error_list_model.model_dump(),
         )
 
-    df = _load_csv(file)
-    await _csv_checks(df=df, user_id=user_db.user_id, asession=asession)
+    df = _load_csv(file=file)
+    workspace_id = workspace_db.workspace_id
+    await _csv_checks(asession=asession, df=df, workspace_id=workspace_id)
 
-    # Create each new tag in the database
+    # Create each new tag in the database.
     tags_col = "tags"
-    created_tags: List[TagRetrieve] = []
+    created_tags: list[TagRetrieve] = []
     tag_name_to_id_map: dict[str, int] = {}
     skip_tags = tags_col not in df.columns or df[tags_col].isnull().all()
     if not skip_tags:
         incoming_tags = _extract_unique_tags(tags_col=df[tags_col])
         tags_in_db = await get_list_of_tag_from_db(
-            user_id=user_db.user_id, asession=asession
+            asession=asession, workspace_id=workspace_id
         )
         tags_to_create = _get_tags_not_in_db(
-            tags_in_db=tags_in_db, incoming_tags=incoming_tags
+            incoming_tags=incoming_tags, tags_in_db=tags_in_db
         )
         for tag in tags_to_create:
             tag_create = TagCreate(tag_name=tag)
             tag_db = await save_tag_to_db(
-                user_id=user_db.user_id,
-                tag=tag_create,
-                asession=asession,
+                asession=asession, tag=tag_create, workspace_id=workspace_id
             )
             tags_in_db.append(tag_db)
 
-            # Convert the tag record to a schema (for response)
-            tag_retrieve = _convert_tag_record_to_schema(tag_db)
+            # Convert the tag record to a schema (for response).
+            tag_retrieve = _convert_tag_record_to_schema(record=tag_db)
             created_tags.append(tag_retrieve)
 
-        # tag name to tag id mapping
+        # Tag name to tag ID mapping.
         tag_name_to_id_map = {tag.tag_name: tag.tag_id for tag in tags_in_db}
 
-    # Add each row to the content database
+    # Add each row to the content database.
     created_contents = []
     for _, row in df.iterrows():
-        content_tags: List = []  # should be List[TagDB] but clashes with validate_tags
+        content_tags: list = []  # Should be list[TagDB] but clashes with validate_tags
         if tag_name_to_id_map and not pd.isna(row[tags_col]):
             tag_names = [
                 tag_name.strip().upper() for tag_name in row[tags_col].split(",")
             ]
             tag_ids = [tag_name_to_id_map[tag_name] for tag_name in tag_names]
-            _, content_tags = await validate_tags(user_db.user_id, tag_ids, asession)
+            _, content_tags = await validate_tags(
+                asession=asession, tags=tag_ids, workspace_id=workspace_id
+            )
 
         content = ContentCreate(
-            content_title=row["title"],
-            content_text=row["text"],
             content_tags=content_tags,
+            content_text=row["text"],
+            content_title=row["title"],
             content_metadata={},
         )
 
         content_db = await save_content_to_db(
-            user_id=user_db.user_id,
+            asession=asession,
             content=content,
             exclude_archived=exclude_archived,
-            asession=asession,
+            workspace_id=workspace_id,
         )
-        content_retrieve = _convert_record_to_schema(content_db)
+        content_retrieve = _convert_record_to_schema(record=content_db)
         created_contents.append(content_retrieve)
 
     return BulkUploadResponse(tags=created_tags, contents=created_contents)
 
 
-def _load_csv(file: UploadFile) -> pd.DataFrame:
+def _load_csv(*, file: UploadFile) -> pd.DataFrame:
     """Load the CSV file into a pandas DataFrame.
 
     Parameters
@@ -411,56 +662,60 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
 
 
 async def check_content_quota(
-    user_id: int,
-    n_contents_to_add: int,
+    *,
     asession: AsyncSession,
-    error_list: List[CustomError],
+    error_list: list[CustomError],
+    n_contents_to_add: int,
+    workspace_id: int,
 ) -> None:
     """Check if the user would exceed their content quota given the number of new
     contents to add.
 
     Parameters
     ----------
-    user_id
-        The user ID to check the content quota for.
-    n_contents_to_add
-        The number of new contents to add.
     asession
-        `AsyncSession` object for database transactions.
+        The SQLAlchemy async session to use for all database connections.
     error_list
         The list of errors to append to.
+    n_contents_to_add
+        The number of new contents to add.
+    workspace_id
+        The ID of the workspace to check the content quota for.
     """
 
     try:
         await _check_content_quota_availability(
-            user_id=user_id, n_contents_to_add=n_contents_to_add, asession=asession
+            asession=asession,
+            n_contents_to_add=n_contents_to_add,
+            workspace_id=workspace_id,
         )
     except ExceedsContentQuotaError as e:
         error_list.append(CustomError(type="exceeds_quota", description=str(e)))
 
 
 async def check_db_duplicates(
-    df: pd.DataFrame,
-    user_id: int,
+    *,
     asession: AsyncSession,
-    error_list: List[CustomError],
+    df: pd.DataFrame,
+    error_list: list[CustomError],
+    workspace_id: int,
 ) -> None:
     """Check for duplicates between the CSV and the database.
 
     Parameters
     ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
     df
         The DataFrame to check.
-    user_id
-        The user ID to check the content duplicates for.
-    asession
-        `AsyncSession` object for database transactions.
     error_list
         The list of errors to append to.
+    workspace_id
+        The ID of the workspace to check for content duplicates in.
     """
 
     contents_in_db = await get_list_of_content_from_db(
-        user_id=user_id, offset=0, limit=None, asession=asession
+        asession=asession, limit=None, offset=0, workspace_id=workspace_id
     )
     content_titles_in_db = {c.content_title.strip() for c in contents_in_db}
     content_texts_in_db = {c.content_text.strip() for c in contents_in_db}
@@ -481,17 +736,19 @@ async def check_db_duplicates(
         )
 
 
-async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) -> None:
+async def _csv_checks(
+    *, asession: AsyncSession, df: pd.DataFrame, workspace_id: int
+) -> None:
     """Perform checks on the CSV file to ensure it meets the requirements.
 
     Parameters
     ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
     df
         The DataFrame to check.
-    user_id
-        The user ID to check the content quota for.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace that the CSV contents are being uploaded to.
 
     Raises
     ------
@@ -499,14 +756,21 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         If the CSV file does not meet the requirements.
     """
 
-    error_list: List[CustomError] = []
-    check_required_columns(df, error_list)
-    await check_content_quota(user_id, len(df), asession, error_list)
-    clean_dataframe(df)
-    check_empty_values(df, error_list)
-    check_length_constraints(df, error_list)
-    check_duplicates(df, error_list)
-    await check_db_duplicates(df, user_id, asession, error_list)
+    error_list: list[CustomError] = []
+    check_required_columns(df=df, error_list=error_list)
+    await check_content_quota(
+        asession=asession,
+        error_list=error_list,
+        n_contents_to_add=len(df),
+        workspace_id=workspace_id,
+    )
+    clean_dataframe(df=df)
+    check_empty_values(df=df, error_list=error_list)
+    check_length_constraints(df=df, error_list=error_list)
+    check_duplicates(df=df, error_list=error_list)
+    await check_db_duplicates(
+        asession=asession, df=df, error_list=error_list, workspace_id=workspace_id
+    )
 
     if error_list:
         raise HTTPException(
@@ -515,7 +779,7 @@ async def _csv_checks(df: pd.DataFrame, user_id: int, asession: AsyncSession) ->
         )
 
 
-def check_duplicates(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+def check_duplicates(*, df: pd.DataFrame, error_list: list[CustomError]) -> None:
     """Check for duplicates in the DataFrame.
 
     Parameters
@@ -542,7 +806,7 @@ def check_duplicates(df: pd.DataFrame, error_list: List[CustomError]) -> None:
         )
 
 
-def check_empty_values(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+def check_empty_values(*, df: pd.DataFrame, error_list: list[CustomError]) -> None:
     """Check for empty values in the DataFrame.
 
     Parameters
@@ -569,7 +833,9 @@ def check_empty_values(df: pd.DataFrame, error_list: List[CustomError]) -> None:
         )
 
 
-def check_length_constraints(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+def check_length_constraints(
+    *, df: pd.DataFrame, error_list: list[CustomError]
+) -> None:
     """Check for length constraints in the DataFrame.
 
     Parameters
@@ -596,7 +862,7 @@ def check_length_constraints(df: pd.DataFrame, error_list: List[CustomError]) ->
         )
 
 
-def check_required_columns(df: pd.DataFrame, error_list: List[CustomError]) -> None:
+def check_required_columns(*, df: pd.DataFrame, error_list: list[CustomError]) -> None:
     """Check if the CSV file has the required columns.
 
     Parameters
@@ -626,7 +892,7 @@ def check_required_columns(df: pd.DataFrame, error_list: List[CustomError]) -> N
         )
 
 
-def clean_dataframe(df: pd.DataFrame) -> None:
+def clean_dataframe(*, df: pd.DataFrame) -> None:
     """Clean the DataFrame by stripping whitespace and replacing empty strings.
 
     Parameters
@@ -641,57 +907,56 @@ def clean_dataframe(df: pd.DataFrame) -> None:
 
 
 async def _check_content_quota_availability(
-    user_id: int,
-    n_contents_to_add: int,
-    asession: AsyncSession,
+    *, asession: AsyncSession, n_contents_to_add: int, workspace_id: int
 ) -> None:
-    """Raise an error if user would reach their content quota given n new contents.
+    """Raise an error if the workspace would reach its content quota given N new
+    contents.
 
     Parameters
     ----------
-    user_id
-        The user ID to check the content quota for.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     n_contents_to_add
         The number of new contents to add.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to check the content quota for.
 
     Raises
     ------
     ExceedsContentQuotaError
-        If the user would exceed their content quota.
+        If the workspace would exceed its content quota.
     """
 
-    # get content_quota value for this user from UserDB
-    content_quota = await get_content_quota_by_userid(
-        user_id=user_id, asession=asession
+    # Get the content quota value for the workspace from `WorkspaceDB`.
+    content_quota = await get_content_quota_by_workspace_id(
+        asession=asession, workspace_id=workspace_id
     )
 
-    # if content_quota is None, then there is no limit
+    # If `content_quota` is `None`, then there is no limit.
     if content_quota is not None:
-        # get the number of contents this user has already added
+        # Get the number of contents already used by the workspace. This is all the
+        # contents that have been added by users (i.e., admins) of the workspace.
         stmt = select(ContentDB).where(
-            (ContentDB.user_id == user_id) & (~ContentDB.is_archived)
+            (ContentDB.workspace_id == workspace_id) & (~ContentDB.is_archived)
         )
-        user_active_contents = (await asession.execute(stmt)).all()
-        n_contents_in_db = len(user_active_contents)
+        workspace_active_contents = (await asession.execute(stmt)).all()
+        n_contents_in_workspace_db = len(workspace_active_contents)
 
-        # error if total of existing and new contents exceeds the quota
-        if (n_contents_in_db + n_contents_to_add) > content_quota:
-            if n_contents_in_db > 0:
+        # Error if total of existing and new contents exceeds the quota.
+        if (n_contents_in_workspace_db + n_contents_to_add) > content_quota:
+            if n_contents_in_workspace_db > 0:
                 raise ExceedsContentQuotaError(
                     f"Adding {n_contents_to_add} new contents to the already existing "
-                    f"{n_contents_in_db} in the database would exceed the allowed "
-                    f"limit of {content_quota} contents."
+                    f"{n_contents_in_workspace_db} in the database would exceed the "
+                    f"allowed limit of {content_quota} contents."
                 )
-            else:
-                raise ExceedsContentQuotaError(
-                    f"Adding {n_contents_to_add} new contents to the database would "
-                    f"exceed the allowed limit of {content_quota} contents."
-                )
+            raise ExceedsContentQuotaError(
+                f"Adding {n_contents_to_add} new contents to the database would "
+                f"exceed the allowed limit of {content_quota} contents."
+            )
 
 
-def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
+def _extract_unique_tags(*, tags_col: pd.Series) -> list[str]:
     """Get unique UPPERCASE tags from a DataFrame column (comma-separated within
     column).
 
@@ -702,38 +967,41 @@ def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         A list of unique tags.
     """
 
-    # prep col
+    # Prep the column.
     tags_col = tags_col.dropna().astype(str)
-    # split and explode to have one tag per row
+
+    # Split and explode to have one tag per row.
     tags_flat = tags_col.str.split(",").explode()
-    # strip and uppercase
+
+    # Strip and uppercase.
     tags_flat = tags_flat.str.strip().str.upper()
-    # get unique tags as a list
+
+    # Get unique tags as a list.
     tags_unique_list = tags_flat.unique().tolist()
+
     return tags_unique_list
 
 
 def _get_tags_not_in_db(
-    tags_in_db: List[TagDB],
-    incoming_tags: List[str],
-) -> List[str]:
+    *, incoming_tags: list[str], tags_in_db: list[TagDB]
+) -> list[str]:
     """Compare tags fetched from the DB with incoming tags and return tags not in the
     DB.
 
     Parameters
     ----------
-    tags_in_db
-        List of `TagDB` objects fetched from the database.
     incoming_tags
         List of incoming tags.
+    tags_in_db
+        List of `TagDB` objects fetched from the database.
 
     Returns
     -------
-    List[str]
+    list[str]
         List of tags not in the database.
     """
 
@@ -743,7 +1011,7 @@ def _get_tags_not_in_db(
     return tags_not_in_db_list
 
 
-def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
+def _convert_record_to_schema(*, record: ContentDB) -> ContentRetrieve:
     """Convert `models.ContentDB` models to `ContentRetrieve` schema.
 
     Parameters
@@ -759,22 +1027,22 @@ def _convert_record_to_schema(record: ContentDB) -> ContentRetrieve:
 
     content_retrieve = ContentRetrieve(
         content_id=record.content_id,
-        user_id=record.user_id,
-        content_title=record.content_title,
-        content_text=record.content_text,
-        content_tags=[tag.tag_id for tag in record.content_tags],
-        positive_votes=record.positive_votes,
-        negative_votes=record.negative_votes,
         content_metadata=record.content_metadata,
+        content_tags=[tag.tag_id for tag in record.content_tags],
+        content_text=record.content_text,
+        content_title=record.content_title,
         created_datetime_utc=record.created_datetime_utc,
-        updated_datetime_utc=record.updated_datetime_utc,
         is_archived=record.is_archived,
+        negative_votes=record.negative_votes,
+        positive_votes=record.positive_votes,
+        updated_datetime_utc=record.updated_datetime_utc,
+        workspace_id=record.workspace_id,
     )
 
     return content_retrieve
 
 
-def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
+def _convert_tag_record_to_schema(*, record: TagDB) -> TagRetrieve:
     """Convert `models.TagDB` models to `TagRetrieve` schema.
 
     Parameters
@@ -789,11 +1057,11 @@ def _convert_tag_record_to_schema(record: TagDB) -> TagRetrieve:
     """
 
     tag_retrieve = TagRetrieve(
-        tag_id=record.tag_id,
-        user_id=record.user_id,
-        tag_name=record.tag_name,
         created_datetime_utc=record.created_datetime_utc,
+        tag_id=record.tag_id,
+        tag_name=record.tag_name,
         updated_datetime_utc=record.updated_datetime_utc,
+        workspace_id=record.workspace_id,
     )
 
     return tag_retrieve

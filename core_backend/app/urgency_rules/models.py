@@ -33,22 +33,24 @@ class UrgencyRuleDB(Base):
 
     __tablename__ = "urgency_rule"
 
-    urgency_rule_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
-    )
-    urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
-    urgency_rule_vector: Mapped[Vector] = mapped_column(
-        Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
-    )
-    urgency_rule_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
+    )
+    urgency_rule_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, nullable=False
+    )
+    urgency_rule_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=True)
+    urgency_rule_text: Mapped[str] = mapped_column(String, nullable=False)
+    urgency_rule_vector: Mapped[Vector] = mapped_column(
+        Vector(int(PGVECTOR_VECTOR_SIZE)), nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -64,18 +66,18 @@ class UrgencyRuleDB(Base):
 
 
 async def save_urgency_rule_to_db(
-    user_id: int, urgency_rule: UrgencyRuleCreate, asession: AsyncSession
+    *, asession: AsyncSession, urgency_rule: UrgencyRuleCreate, workspace_id: int
 ) -> UrgencyRuleDB:
     """Save urgency rule to the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user who created the urgency rule.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_rule
         The urgency rule to save to the database.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to save the urgency rule in.
 
     Returns
     -------
@@ -84,19 +86,19 @@ async def save_urgency_rule_to_db(
     """
 
     metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
+        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "save_urgency_rule_to_db",
     }
     urgency_rule_vector = await embedding(
-        urgency_rule.urgency_rule_text, metadata=metadata
+        metadata=metadata, text_to_embed=urgency_rule.urgency_rule_text
     )
     urgency_rule_db = UrgencyRuleDB(
-        user_id=user_id,
-        urgency_rule_text=urgency_rule.urgency_rule_text,
-        urgency_rule_vector=urgency_rule_vector,
-        urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
+        urgency_rule_text=urgency_rule.urgency_rule_text,
+        urgency_rule_vector=urgency_rule_vector,
+        workspace_id=workspace_id,
     )
     asession.add(urgency_rule_db)
     await asession.commit()
@@ -106,23 +108,24 @@ async def save_urgency_rule_to_db(
 
 
 async def update_urgency_rule_in_db(
-    user_id: int,
-    urgency_rule_id: int,
-    urgency_rule: UrgencyRuleCreate,
+    *,
     asession: AsyncSession,
+    urgency_rule: UrgencyRuleCreate,
+    urgency_rule_id: int,
+    workspace_id: int,
 ) -> UrgencyRuleDB:
     """Update urgency rule in the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user who updated the urgency rule.
-    urgency_rule_id
-        The ID of the urgency rule to update.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_rule
         The urgency rule to update.
-    asession
-        `AsyncSession` object for database transactions.
+    urgency_rule_id
+        The ID of the urgency rule to update.
+    workspace_id
+        The ID of the workspace to update the urgency rule in.
 
     Returns
     -------
@@ -131,19 +134,19 @@ async def update_urgency_rule_in_db(
     """
 
     metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
+        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "update_urgency_rule_in_db",
     }
     urgency_rule_vector = await embedding(
-        urgency_rule.urgency_rule_text, metadata=metadata
+        metadata=metadata, text_to_embed=urgency_rule.urgency_rule_text
     )
     urgency_rule_db = UrgencyRuleDB(
+        updated_datetime_utc=datetime.now(timezone.utc),
         urgency_rule_id=urgency_rule_id,
-        user_id=user_id,
+        urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
         urgency_rule_text=urgency_rule.urgency_rule_text,
         urgency_rule_vector=urgency_rule_vector,
-        urgency_rule_metadata=urgency_rule.urgency_rule_metadata,
-        updated_datetime_utc=datetime.now(timezone.utc),
+        workspace_id=workspace_id,
     )
     urgency_rule_db = await asession.merge(urgency_rule_db)
     await asession.commit()
@@ -153,23 +156,23 @@ async def update_urgency_rule_in_db(
 
 
 async def delete_urgency_rule_from_db(
-    user_id: int, urgency_rule_id: int, asession: AsyncSession
+    *, asession: AsyncSession, urgency_rule_id: int, workspace_id: int
 ) -> None:
     """Delete urgency rule from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting to delete the urgency rule.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_rule_id
         The ID of the urgency rule to delete.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace to delete the urgency rule from.
     """
 
     stmt = (
         delete(UrgencyRuleDB)
-        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.workspace_id == workspace_id)
         .where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
     )
     await asession.execute(stmt)
@@ -177,18 +180,18 @@ async def delete_urgency_rule_from_db(
 
 
 async def get_urgency_rule_by_id_from_db(
-    user_id: int, urgency_rule_id: int, asession: AsyncSession
+    *, asession: AsyncSession, urgency_rule_id: int, workspace_id: int
 ) -> UrgencyRuleDB | None:
     """Get urgency rule by ID from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the urgency rule.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     urgency_rule_id
         The ID of the urgency rule to retrieve.
-    asession
-        `AsyncSession` object for database
+    workspace_id
+        The ID of the workspace to retrieve the urgency rule from.
 
     Returns
     -------
@@ -198,7 +201,7 @@ async def get_urgency_rule_by_id_from_db(
 
     stmt = (
         select(UrgencyRuleDB)
-        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.workspace_id == workspace_id)
         .where(UrgencyRuleDB.urgency_rule_id == urgency_rule_id)
     )
     urgency_rule_row = (await asession.execute(stmt)).first()
@@ -206,31 +209,35 @@ async def get_urgency_rule_by_id_from_db(
 
 
 async def get_urgency_rules_from_db(
-    user_id: int, asession: AsyncSession, offset: int = 0, limit: Optional[int] = None
+    *,
+    asession: AsyncSession,
+    limit: Optional[int] = None,
+    offset: int = 0,
+    workspace_id: int,
 ) -> list[UrgencyRuleDB]:
     """Get urgency rules from the database.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the urgency rules.
     asession
-        `AsyncSession` object for database transactions.
+        The SQLAlchemy async session to use for all database connections.
     offset
         The number of urgency rule items to skip.
     limit
         The maximum number of urgency rule items to retrieve. If not specified, then
         all urgency rule items are retrieved.
+    workspace_id
+        The ID of the workspace to retrieve urgency rules from.
 
     Returns
     -------
-    List[UrgencyRuleDB]
+    list[UrgencyRuleDB]
         The list of urgency rules in the database.
     """
 
     stmt = (
         select(UrgencyRuleDB)
-        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.workspace_id == workspace_id)
         .order_by(UrgencyRuleDB.urgency_rule_id)
     )
     if offset > 0:
@@ -243,32 +250,30 @@ async def get_urgency_rules_from_db(
 
 
 async def get_cosine_distances_from_rules(
-    user_id: int,
-    message_text: str,
-    asession: AsyncSession,
+    *, asession: AsyncSession, message_text: str, workspace_id: int
 ) -> dict[int, UrgencyRuleCosineDistance]:
     """Get cosine distances from urgency rules.
 
     Parameters
     ----------
-    user_id
-        The ID of the user requesting the cosine distances from the urgency rules.
+    asession
+        The SQLAlchemy async session to use for all database connections.
     message_text
         The message text to compare against the urgency rules.
-    asession
-        `AsyncSession` object for database transactions.
+    workspace_id
+        The ID of the workspace containing the urgency rules.
 
     Returns
     -------
-    Dict[int, UrgencyRuleCosineDistance]
+    dict[int, UrgencyRuleCosineDistance]
         The dictionary of urgency rules and their cosine distances from `message_text`.
     """
 
     metadata = {
-        "trace_user_id": "user_id-" + str(user_id),
+        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "get_cosine_distances_from_rules",
     }
-    message_vector = await embedding(message_text, metadata=metadata)
+    message_vector = await embedding(metadata=metadata, text_to_embed=message_text)
     query = (
         select(
             UrgencyRuleDB,
@@ -276,7 +281,7 @@ async def get_cosine_distances_from_rules(
                 "distance"
             ),
         )
-        .where(UrgencyRuleDB.user_id == user_id)
+        .where(UrgencyRuleDB.workspace_id == workspace_id)
         .order_by("distance")
     )
 
@@ -285,8 +290,7 @@ async def get_cosine_distances_from_rules(
     results_dict = {}
     for i, r in enumerate(search_result):
         results_dict[i] = UrgencyRuleCosineDistance(
-            urgency_rule=r[0].urgency_rule_text,
-            distance=r[1],
+            distance=r[1], urgency_rule=r[0].urgency_rule_text
         )
 
     return results_dict

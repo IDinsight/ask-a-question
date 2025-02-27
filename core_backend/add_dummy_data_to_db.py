@@ -34,18 +34,18 @@ from app.question_answer.models import (
 )
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 
-# admin user (first user is admin)
+# Admin user (first user is admin).
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "fullaccess")
-_USER_ID = 1
 
+_WORKSPACE_ID = 1
 N_DATAPOINTS = 2000
-URGENCY_RATE = 0.1
 NEGATIVE_FEEDBACK_RATE = 0.1
+URGENCY_RATE = 0.1
 
 
 def add_year_data() -> None:
-    """Add N_DATAPOINTS of data for each day in the past year."""
+    """Add `N_DATAPOINTS` of data for each day in the past year."""
 
     now = datetime.now(timezone.utc)
     last_year = now - timedelta(days=365)
@@ -59,7 +59,7 @@ def add_year_data() -> None:
 
 
 def add_month_data() -> None:
-    """Add N_DATAPOINTS of data for each hour in the past month."""
+    """Add `N_DATAPOINTS` of data for each hour in the past month."""
 
     now = datetime.now(timezone.utc)
     last_month = now - timedelta(days=30)
@@ -73,7 +73,7 @@ def add_month_data() -> None:
 
 
 def add_week_data() -> None:
-    """Add N_DATAPOINTS of data for each hour in the past week."""
+    """Add `N_DATAPOINTS` of data for each hour in the past week."""
 
     now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=7)
@@ -87,7 +87,7 @@ def add_week_data() -> None:
 
 
 def add_day_data() -> None:
-    """Add N_DATAPOINTS of data for each hour in the past day."""
+    """Add `N_DATAPOINTS` of data for each hour in the past day."""
 
     now = datetime.now(timezone.utc)
     last_day = now - timedelta(hours=24)
@@ -149,19 +149,19 @@ def create_urgency_record(dt: datetime, is_urgent: bool, session: Session) -> No
     """
 
     urgency_db = UrgencyQueryDB(
-        user_id=_USER_ID,
-        message_text="test message",
-        message_datetime_utc=dt,
         feedback_secret_key="abc123",  # pragma: allowlist secret
+        message_datetime_utc=dt,
+        message_text="test message",
+        workspace_id=_WORKSPACE_ID,
     )
     session.add(urgency_db)
     session.commit()
     urgency_response = UrgencyResponseDB(
-        is_urgent=is_urgent,
         details={"details": "test details"},
+        is_urgent=is_urgent,
         query_id=urgency_db.urgency_query_id,
-        user_id=_USER_ID,
         response_datetime_utc=dt,
+        workspace_id=_WORKSPACE_ID,
     )
     session.add(urgency_response)
     session.commit()
@@ -184,13 +184,13 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
     """
 
     query_db = QueryDB(
-        user_id=_USER_ID,
-        session_id=1,
         feedback_secret_key="abc123",  # pragma: allowlist secret
-        query_text=generate_synthetic_query(),
+        query_datetime_utc=dt,
         query_generate_llm_response=False,
         query_metadata={},
-        query_datetime_utc=dt,
+        query_text=generate_synthetic_query(),
+        session_id=1,
+        workspace_id=_WORKSPACE_ID,
     )
     session.add(query_db)
     session.commit()
@@ -219,10 +219,10 @@ def create_response_feedback_record(
     sentiment = "negative" if is_negative else "positive"
     feedback_db = ResponseFeedbackDB(
         feedback_datetime_utc=dt,
-        query_id=query_id,
-        user_id=_USER_ID,
-        session_id=session_id,
         feedback_sentiment=sentiment,
+        query_id=query_id,
+        session_id=session_id,
+        workspace_id=_WORKSPACE_ID,
     )
     session.add(feedback_db)
     session.commit()
@@ -265,22 +265,31 @@ def create_content_feedback_record(
     content_ids = random.choices(all_content_ids, k=3)
     for content_id in content_ids:
         feedback_db = ContentFeedbackDB(
-            feedback_datetime_utc=dt,
-            query_id=query_id,
-            user_id=_USER_ID,
-            session_id=session_id,
             content_id=content_id,
+            feedback_datetime_utc=dt,
             feedback_sentiment=sentiment,
             feedback_text=sentiment_text,
+            query_id=query_id,
+            session_id=session_id,
+            workspace_id=_WORKSPACE_ID,
         )
         session.add(feedback_db)
         session.commit()
 
 
 def create_content_for_query(dt: datetime, query_id: int, session: Session) -> None:
+    """Create a `QueryResponseContentDB` record for a given `datetime` and `query_id`.
+
+    Parameters
+    ----------
+    dt
+        The datetime for which to create a record.
+    query_id
+        The ID of the query record.
+    session
+        `Session` object for database transactions.
     """
-    Create a QueryResponseContentDB record for a given datetime and query_id.
-    """
+
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
     content_ids = random.choices(
         all_content_ids,
@@ -289,17 +298,17 @@ def create_content_for_query(dt: datetime, query_id: int, session: Session) -> N
     )
     for content_id in content_ids:
         response_db = QueryResponseContentDB(
-            query_id=query_id,
             content_id=content_id,
-            user_id=1,
             created_datetime_utc=dt,
+            query_id=query_id,
+            workspace_id=_WORKSPACE_ID,
         )
         session.add(response_db)
         session.commit()
 
 
 def add_content_data() -> None:
-    """Add N_DATAPOINTS of content data to the database."""
+    """Add `N_DATAPOINTS` of content data to the database."""
 
     content = [
         "Ways to manage back pain during pregnancy",
@@ -320,19 +329,19 @@ def add_content_data() -> None:
         positive_votes = np.random.randint(0, query_count)
         negative_votes = np.random.randint(0, query_count - positive_votes)
         content_db = ContentDB(
-            user_id=_USER_ID,
             content_embedding=np.random.rand(int(PGVECTOR_VECTOR_SIZE))
             .astype(np.float32)
             .tolist(),
-            content_title=c,
-            content_text=f"Test content #{i}",
             content_metadata={},
+            content_text=f"Test content #{i}",
+            content_title=c,
             created_datetime_utc=datetime.now(timezone.utc),
-            updated_datetime_utc=datetime.now(timezone.utc),
-            query_count=query_count,
-            positive_votes=positive_votes,
-            negative_votes=negative_votes,
             is_archived=False,
+            negative_votes=negative_votes,
+            positive_votes=positive_votes,
+            query_count=query_count,
+            updated_datetime_utc=datetime.now(timezone.utc),
+            workspace_id=_WORKSPACE_ID,
         )
         session.add(content_db)
         session.commit()
@@ -431,7 +440,14 @@ QUERY_TEMPLATES = [
 
 
 def generate_synthetic_query() -> str:
-    """Generates a random human-like query related to maternal health."""
+    """Generate a random human-like query related to maternal health.
+
+    Returns
+    -------
+    str
+        The synthetic query.
+    """
+
     template = random.choice(QUERY_TEMPLATES)
     term = random.choice(MATERNAL_HEALTH_TERMS)
     return template.format(term=term)

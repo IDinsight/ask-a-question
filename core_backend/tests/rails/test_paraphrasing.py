@@ -1,5 +1,6 @@
+"""This module contains tests for the paraphrasing functionality."""
+
 from pathlib import Path
-from typing import Dict, List
 
 import pytest
 import yaml
@@ -17,38 +18,42 @@ pytestmark = pytest.mark.rails
 PARAPHRASE_FILE = "data/paraphrasing_data.txt"
 
 
-def read_test_data(file: str) -> List[Dict]:
-    """Reads test data from file and returns a list of strings"""
+def read_test_data(file: str) -> list[dict]:
+    """Reads test data from file and returns a list of strings."""
 
     file_path = Path(__file__).parent / file
 
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = yaml.safe_load(f)
         return content
 
 
 @pytest.mark.parametrize("test_data", read_test_data(PARAPHRASE_FILE))
-async def test_paraphrasing(test_data: Dict) -> None:
-    """Test paraphrasing texts"""
+async def test_paraphrasing(test_data: dict) -> None:
+    """Test paraphrasing texts."""
+
     message = test_data["message"]
     succeeds = test_data["succeeds"]
     contains = test_data.get("contains", [])
     missing = test_data.get("missing", [])
 
     question = QueryRefined(
+        generate_llm_response=False,
+        generate_tts=False,
         query_text=message,
-        user_id=124,
         query_text_original=message,
+        workspace_id=124,
     )
     response = QueryResponse(
+        feedback_secret_key="feedback-string",
+        llm_response="Dummy response",
         query_id=1,
         search_results=None,
-        llm_response="Dummy response",
-        feedback_secret_key="feedback-string",
+        session_id=None,
     )
 
     paraphrased_question, paraphrased_response = await _paraphrase_question(
-        question, response
+        query_refined=question, response=response
     )
     if succeeds:
         for text in contains:

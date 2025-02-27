@@ -31,6 +31,7 @@ markers = [
     "rails: marks tests that are testing rails. These call an LLM service."
 ]
 asyncio_mode = "auto"
+bdd_features_base_dir = "core_backend/tests/api/features"
 
 # Pytest coverage
 [tool.coverage.report]
@@ -42,3 +43,8 @@ exclude_lines = [
     "pragma: no cover",
 ]
 omit = ["*/tests/*"]
+
+[tool.coverage.run]
+branch = true
+concurrency = ["greenlet", "thread"]
+source = ["core_backend"]

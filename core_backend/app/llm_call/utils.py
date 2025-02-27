@@ -4,7 +4,7 @@ import json
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
-import requests
+import requests  # type: ignore
 from litellm import acompletion, token_counter
 
 from ..config import (
@@ -16,7 +16,7 @@ from ..config import (
 )
 from ..utils import setup_logger
 
-logger = setup_logger("LLM_call")
+logger = setup_logger(name="LLM_call")
 
 
 async def _ask_llm_async(
@@ -442,7 +442,7 @@ async def init_chat_history(
     logger.info(f"Initializing chat parameters for session: {session_id}")
     model_info_endpoint = LITELLM_ENDPOINT.rstrip("/") + "/model/info"
     model_info = requests.get(
-        model_info_endpoint, headers={"accept": "application/json"}
+        model_info_endpoint, headers={"accept": "application/json"}, timeout=600
     ).json()
     for dict_ in model_info["data"]:
         if dict_["model_name"] == "chat":
@@ -508,7 +508,7 @@ def log_chat_history(
             logger.info(f"\n{role}:\n({name}): {content}\n")
 
 
-def remove_json_markdown(text: str) -> str:
+def remove_json_markdown(*, text: str) -> str:
     """Remove json markdown from text.
 
     Parameters
@@ -525,7 +525,7 @@ def remove_json_markdown(text: str) -> str:
     text = text.strip()
     if text.startswith("```") and text.endswith("```"):
         text = text.removeprefix("```json").removesuffix("```")
-    text = text.replace("\{", "{").replace("\}", "}")
+    text = text.replace(r"\{", "{").replace(r"\}", "}")
     return text.strip()
 
 

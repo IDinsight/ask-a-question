@@ -16,27 +16,29 @@ from .utils import (
     remove_json_markdown,
 )
 
-logger = setup_logger("RAG")
+logger = setup_logger(name="RAG")
 
 
 async def get_llm_rag_answer(
-    question: str,
+    *,
     context: str,
-    original_language: IdentifiedLanguage,
     metadata: dict | None = None,
+    original_language: IdentifiedLanguage,
+    question: str,
 ) -> RAG:
     """Get an answer from the LLM model using RAG.
 
     Parameters
     ----------
-    question
-        The question to ask the LLM model.
     context
         The context to provide to the LLM model.
-    original_language
-        The original language of the question.
     metadata
         Additional metadata to provide to the LLM model.
+    original_language
+        The original language of the question.
+    question
+        The question to ask the LLM model.
+
     Returns
     -------
     RAG
@@ -47,14 +49,14 @@ async def get_llm_rag_answer(
     prompt = RAG.prompt.format(context=context, original_language=original_language)
 
     result = await _ask_llm_async(
-        user_message=question,
-        system_message=prompt,
+        json_=True,
         litellm_model=LITELLM_MODEL_GENERATION,
         metadata=metadata,
-        json_=True,
+        system_message=prompt,
+        user_message=question,
     )
 
-    result = remove_json_markdown(result)
+    result = remove_json_markdown(text=result)
 
     try:
         response = RAG.model_validate_json(result)
@@ -132,7 +134,7 @@ async def get_llm_rag_answer_with_chat_history(
         json_=True,
         metadata=metadata or {},
     )
-    result = remove_json_markdown(content)
+    result = remove_json_markdown(text=content)
     try:
         response = RAG.model_validate_json(result)
     except ValidationError as e:

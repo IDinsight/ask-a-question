@@ -38,7 +38,8 @@ load-plugins=pylint.extensions.check_elif,
              pylint.extensions.docstyle,
              pylint.extensions.mccabe,
              pylint.extensions.overlapping_exceptions,
-             pylint.extensions.redefined_variable_type
+             pylint.extensions.redefined_variable_type,
+             pylint_pytest
 
 # Pickle collected data for later comparisons.
 persistent=yes

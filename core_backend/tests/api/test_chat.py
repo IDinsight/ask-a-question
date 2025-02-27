@@ -1,6 +1,4 @@
-"""This module contains the unit tests related to multi-turn chat for question
-answering.
-"""
+"""This module contains tests related to multi-turn chat for question answering."""
 
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -32,7 +30,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
 
     query_text = "I have a stomachache."
     reset_chat_history = False
-    user_query_object = QueryBase(query_text=query_text)
+    user_query_object = QueryBase(generate_llm_response=False, query_text=query_text)
     assert user_query_object.generate_llm_response is False
     assert user_query_object.session_id is None
 
@@ -384,7 +382,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             }
         ]
         await redis_client.set(chat_cache_key, json.dumps(altered_chat_history))
-        _, _, new_chat_history, new_chat_params = await init_chat_history(
+        _, _, new_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=False, session_id=session_id
         )
         assert new_chat_history == [
@@ -419,7 +417,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
     with patch(
         "core_backend.app.llm_call.utils.requests.get", return_value=mock_response
     ):
-        _, _, reset_chat_history, new_chat_params = await init_chat_history(
+        _, _, reset_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=True, session_id=session_id
         )
         assert reset_chat_history == [

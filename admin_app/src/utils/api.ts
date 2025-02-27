@@ -13,6 +13,10 @@ const api = axios.create({
 
 import { AxiosResponse, AxiosError } from "axios";
 
+export type CustomError = {
+  status: number;
+  message: string;
+};
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -20,8 +24,11 @@ api.interceptors.response.use(
       console.log("Unauthorized request");
       const currentPath = window.location.pathname;
       const sourcePage = encodeURIComponent(currentPath);
-      localStorage.removeItem("token");
-      window.location.href = `/login?sourcePage=${sourcePage}`;
+      const token = localStorage.getItem("token");
+      if (token) {
+        localStorage.removeItem("token");
+        window.location.href = `/login?sourcePage=${sourcePage}`;
+      }
     }
     return Promise.reject(error);
   },
@@ -39,8 +46,18 @@ const getLoginToken = async (username: string, password: string) => {
       },
     });
     return response.data;
-  } catch (error) {
-    console.log(error);
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    }
+    console.log(customError);
     throw new Error("Error fetching login token");
   }
 };

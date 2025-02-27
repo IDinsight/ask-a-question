@@ -1,6 +1,5 @@
-"""
-Config for core_backend. Not that there are other config files within
-each endpoin module
+"""This module contains the main configuration parameters for the `core_backend`
+library. Note that there are other config files within each endpoint module.
 """
 
 import os

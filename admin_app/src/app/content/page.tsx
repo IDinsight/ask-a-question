@@ -66,11 +66,12 @@ const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
     LANGUAGE_OPTIONS[0].label,
   );
+
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
-  const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
-  const { token, accessLevel } = useAuth();
+  const [editAccess, setEditAccess] = React.useState(false);
+  const { token, userRole } = useAuth();
   const [snackMessage, setSnackMessage] = React.useState<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -106,12 +107,11 @@ const CardsPage = () => {
         }
       };
       fetchTags();
-      setCurrAccessLevel(accessLevel);
     } else {
       setTags([]);
-      setCurrAccessLevel("readonly");
     }
-  }, [accessLevel, token]);
+    setEditAccess(userRole === "admin");
+  }, [userRole, token]);
 
   const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
@@ -169,7 +169,7 @@ const CardsPage = () => {
                 }}
               >
                 <CardsUtilityStrip
-                  editAccess={currAccessLevel === "fullaccess"}
+                  editAccess={editAccess}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   tags={tags}
@@ -185,7 +185,7 @@ const CardsPage = () => {
                   filterTags={filterTags}
                   openSidebar={openSearchSidebar || openChatSidebar}
                   token={token}
-                  accessLevel={currAccessLevel}
+                  editAccess={editAccess}
                   setSnackMessage={setSnackMessage}
                 />
                 <Box
@@ -355,7 +355,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         </Tooltip>
         <Tooltip title="Add new content">
           <>
-            <AddButtonWithDropdown />
+            <AddButtonWithDropdown editAccess={editAccess} />
           </>
         </Tooltip>
         <DownloadModal
@@ -400,8 +400,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   );
 };
 
-function AddButtonWithDropdown() {
-  const [editAccess, setEditAccess] = useState(true);
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
@@ -416,15 +415,10 @@ function AddButtonWithDropdown() {
   return (
     <>
       <ButtonGroup variant="contained" disabled={!editAccess}>
-        <Button
-          disabled={!editAccess}
-          component={Link}
-          href="/content/edit"
-          startIcon={<AddIcon />}
-        >
+        <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
-        <Button size="small" disabled={!editAccess} onClick={handleClick}>
+        <Button size="small" onClick={handleClick}>
           <ArrowDropDownIcon />
         </Button>
       </ButtonGroup>
@@ -446,7 +440,7 @@ function AddButtonWithDropdown() {
       <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
   );
-}
+};
 
 const CardsGrid = ({
   displayLanguage,
@@ -455,7 +449,7 @@ const CardsGrid = ({
   filterTags,
   openSidebar,
   token,
-  accessLevel,
+  editAccess,
   setSnackMessage,
 }: {
   displayLanguage: string;
@@ -464,7 +458,7 @@ const CardsGrid = ({
   filterTags: Tag[];
   openSidebar: boolean;
   token: string | null;
-  accessLevel: string;
+  editAccess: boolean;
   setSnackMessage: React.Dispatch<
     React.SetStateAction<{
       message: string | null;
@@ -673,7 +667,7 @@ const CardsGrid = ({
                         archiveContent={(content_id: number) => {
                           return archiveContent(content_id, token!);
                         }}
-                        editAccess={accessLevel === "fullaccess"}
+                        editAccess={editAccess}
                       />
                     </Grid>
                   );

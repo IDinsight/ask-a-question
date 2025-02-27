@@ -13,7 +13,7 @@ env:
   POSTGRES_DB: postgres-test-db
   REDIS_HOST: redis://redis:6379
 jobs:
-  container-job:
+  alembic-tests:
     runs-on: ubuntu-20.04
     container: node:20.7-bullseye
     services:
@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - name: install dependencies
+      - name: Install dependencies
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -51,15 +51,64 @@ jobs:
         run: |
           python -m pip install -r core_backend/requirements.txt
           python -m pip install -r requirements-dev.txt
-      - name: Run Unit Tests
+      - name: Run Alembic Migration Tests
         env:
           PROMETHEUS_MULTIPROC_DIR: /tmp
           REDIS_HOST: ${{ env.REDIS_HOST }}
         run: |
           cd core_backend
           export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB \
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
             ALIGN_SCORE_API=$ALIGN_SCORE_API
           python -m alembic upgrade head
           python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
-          python -m pytest -m "not rails and not alembic" tests
+  unit-tests:
+    runs-on: ubuntu-20.04
+    container: node:20.7-bullseye
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:6.0-alpine
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y lsb-release && apt-get clean all
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Python libraries
+        run: |
+          python -m pip install -r core_backend/requirements.txt
+          python -m pip install -r requirements-dev.txt
+      - name: Run Unit Tests (Excluding Alembic)
+        env:
+          PROMETHEUS_MULTIPROC_DIR: /tmp
+          REDIS_HOST: ${{ env.REDIS_HOST }}
+        run: |
+          cd core_backend
+          export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
+            ALIGN_SCORE_API=$ALIGN_SCORE_API
+          python -m alembic upgrade head
+          python -m pytest -s -m "not rails and not alembic" --ignore-glob="tests/api/step_definitions/*" tests
+          python -m pytest -m "not rails and not alembic" tests/api/step_definitions

@@ -29,6 +29,14 @@ fresh-env :
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+# Linting
+lint-core-backend:
+	black core_backend/
+	ruff check core_backend/
+	mypy core_backend/app --ignore-missing-imports --explicit-package-base
+	mypy core_backend/tests --ignore-missing-imports --explicit-package-base
+	pylint core_backend/
+
 # Dev requirements
 setup-dev: setup-db setup-redis setup-llm-proxy
 teardown-dev: teardown-db teardown-redis teardown-llm-proxy
@@ -67,7 +75,7 @@ setup-redis:
      -p 6379:6379 \
      -d redis:6.0-alpine
 
-make teardown-redis:
+teardown-redis:
 	@docker stop redis-local
 	@docker rm redis-local
 

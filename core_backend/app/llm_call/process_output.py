@@ -1,6 +1,4 @@
-"""
-These are functions to check the LLM response
-"""
+"""This module contains functions for checking LLM responses."""
 
 from functools import wraps
 from typing import Any, Callable, Optional, TypedDict
@@ -37,16 +35,14 @@ from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
 from .llm_rag import get_llm_rag_answer, get_llm_rag_answer_with_chat_history
 from .utils import _ask_llm_async, remove_json_markdown
 
-logger = setup_logger("OUTPUT RAILS")
+logger = setup_logger(name="OUTPUT RAILS")
 
 
 class AlignScoreData(TypedDict):
-    """
-    Payload for the AlignScore API
-    """
+    """Payload for the AlignScore API."""
 
-    evidence: str
     claim: str
+    evidence: str
 
 
 async def generate_llm_query_response(
@@ -59,6 +55,7 @@ async def generate_llm_query_response(
     is generated based on the chat history.
 
     Only runs if the `generate_llm_response` flag is set to `True`.
+
     Requires "search_results" and "original_language" in the response.
 
     Parameters
@@ -88,7 +85,9 @@ async def generate_llm_query_response(
         logger.warning("No original_language found in the query.")
         return response, chat_history
 
-    context = get_context_string_from_search_results(response.search_results)
+    context = get_context_string_from_search_results(
+        search_results=response.search_results
+    )
     if chat_query_params:
         message_type = chat_query_params["message_type"]
         response.message_type = message_type
@@ -104,11 +103,10 @@ async def generate_llm_query_response(
         )
     else:
         rag_response = await get_llm_rag_answer(
-            # use the original query text
-            question=query_refined.query_text_original,
             context=context,
-            original_language=query_refined.original_language,
             metadata=metadata,
+            original_language=query_refined.original_language,
+            question=query_refined.query_text_original,  # Use the original query text
         )
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
@@ -116,14 +114,14 @@ async def generate_llm_query_response(
         response.llm_response = rag_response.answer
     else:
         response = QueryResponseError(
-            query_id=response.query_id,
-            session_id=response.session_id,
+            debug_info=response.debug_info,
+            error_message="LLM failed to generate an answer.",
+            error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
+            query_id=response.query_id,
             search_results=response.search_results,
-            debug_info=response.debug_info,
-            error_type=ErrorType.UNABLE_TO_GENERATE_RESPONSE,
-            error_message="LLM failed to generate an answer.",
+            session_id=response.session_id,
         )
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = None
@@ -132,11 +130,21 @@ async def generate_llm_query_response(
 
 
 def check_align_score__after(func: Callable) -> Callable:
-    """
-    Check the alignment score.
+    """Decorator to check the alignment score.
 
-    Only runs if the generate_llm_response flag is set to True.
+    Only runs if the `generate_llm_response` flag is set to `True`.
+
     Requires "llm_response" and "search_results" in the response.
+
+    Parameters
+    ----------
+    func
+        The function to wrap.
+
+    Returns
+    -------
+    Callable
+        The wrapped function.
     """
 
     @wraps(func)
@@ -146,8 +154,23 @@ def check_align_score__after(func: Callable) -> Callable:
         *args: Any,
         **kwargs: Any,
     ) -> QueryResponse | QueryResponseError:
-        """
-        Check the alignment score
+        """Check the alignment score.
+
+        Parameters
+        ----------
+        query_refined
+            The refined query object.
+        response
+            The query response object.
+        args
+            Additional positional arguments.
+        kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        QueryResponse | QueryResponseError
+            The updated response object.
         """
 
         response = await func(query_refined, response, *args, **kwargs)
@@ -156,32 +179,46 @@ def check_align_score__after(func: Callable) -> Callable:
             return response
 
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, user_id=query_refined.user_id
+            query_id=response.query_id, workspace_id=query_refined.workspace_id
         )
-        response = await _check_align_score(response, metadata)
+        response = await _check_align_score(metadata=metadata, response=response)
         return response
 
     return wrapper
 
 
 async def _check_align_score(
-    response: QueryResponse,
-    metadata: Optional[dict] = None,
+    *, metadata: Optional[dict] = None, response: QueryResponse
 ) -> QueryResponse:
-    """
-    Check the alignment score
+    """Check the alignment score.
 
-    Only runs if the generate_llm_response flag is set to True.
+    Only runs if the `generate_llm_response` flag is set to `True`.
+
     Requires "llm_response" and "search_results" in the response.
+
+    Parameters
+    ----------
+    metadata
+        The metadata to be used.
+    response
+        The query response object.
+
+    Returns
+    -------
+    QueryResponse
+        The updated response object.
     """
+
     if isinstance(response, QueryResponseError):
         logger.warning("Alignment score check skipped due to QueryResponseError.")
         return response
 
     if response.search_results is not None:
-        evidence = get_context_string_from_search_results(response.search_results)
+        evidence = get_context_string_from_search_results(
+            search_results=response.search_results
+        )
     else:
-        logger.warning(("No search_results found in the response."))
+        logger.warning("No search_results found in the response.")
         return response
 
     if response.llm_response is not None:
@@ -193,8 +230,10 @@ async def _check_align_score(
         )
         return response
 
-    align_score_data = AlignScoreData(evidence=evidence, claim=claim)
-    align_score = await _get_llm_align_score(align_score_data, metadata=metadata)
+    align_score_data = AlignScoreData(claim=claim, evidence=evidence)
+    align_score = await _get_llm_align_score(
+        align_score_data=align_score_data, metadata=metadata
+    )
 
     factual_consistency = {
         "score": align_score.score,
@@ -213,14 +252,14 @@ async def _check_align_score(
             )
         )
         response = QueryResponseError(
-            query_id=response.query_id,
-            session_id=response.session_id,
+            debug_info=response.debug_info,
+            error_message="Alignment score of LLM response was too low",
+            error_type=ErrorType.ALIGNMENT_TOO_LOW,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=None,
+            query_id=response.query_id,
             search_results=response.search_results,
-            debug_info=response.debug_info,
-            error_type=ErrorType.ALIGNMENT_TOO_LOW,
-            error_message="Alignment score of LLM response was too low",
+            session_id=response.session_id,
         )
 
     response.debug_info["factual_consistency"] = factual_consistency.copy()
@@ -229,22 +268,39 @@ async def _check_align_score(
 
 
 async def _get_llm_align_score(
-    align_score_data: AlignScoreData, metadata: Optional[dict] = None
+    *, align_score_data: AlignScoreData, metadata: Optional[dict] = None
 ) -> AlignmentScore:
+    """Get the alignment score from the LLM.
+
+    Parameters
+    ----------
+    align_score_data
+        The data to be used for the alignment score.
+    metadata
+        The metadata to be used.
+
+    Returns
+    -------
+    AlignmentScore
+        The alignment score object.
+
+    Raises
+    ------
+    RuntimeError
+        If the LLM alignment score response is not valid JSON.
     """
-    Get the alignment score from the LLM
-    """
+
     prompt = AlignmentScore.prompt.format(context=align_score_data["evidence"])
     result = await _ask_llm_async(
-        user_message=align_score_data["claim"],
-        system_message=prompt,
+        json_=True,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
-        json_=True,
+        system_message=prompt,
+        user_message=align_score_data["claim"],
     )
 
     try:
-        result = remove_json_markdown(result)
+        result = remove_json_markdown(text=result)
         alignment_score = AlignmentScore.model_validate_json(result)
     except ValidationError as e:
         logger.error(f"LLM alignment score response is not valid json: {e}")
@@ -256,11 +312,21 @@ async def _get_llm_align_score(
 
 
 def generate_tts__after(func: Callable) -> Callable:
-    """
-    Decorator to generate the TTS response.
+    """Decorator to generate the TTS response.
 
-    Only runs if the generate_tts flag is set to True.
+    Only runs if the `generate_tts` flag is set to `True`.
+
     Requires "llm_response" and alignment score is present in the response.
+
+    Parameters
+    ----------
+    func
+        The function to wrap.
+
+    Returns
+    -------
+    Callable
+        The wrapped function.
     """
 
     @wraps(func)
@@ -270,8 +336,23 @@ def generate_tts__after(func: Callable) -> Callable:
         *args: Any,
         **kwargs: Any,
     ) -> QueryAudioResponse | QueryResponseError:
-        """
-        Wrapper function to check conditions before generating TTS.
+        """Wrapper function to check conditions before generating TTS.
+
+        Parameters
+        ----------
+        query_refined
+            The refined query object.
+        response
+            The query response object.
+        args
+            Additional positional arguments.
+        kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        QueryAudioResponse | QueryResponseError
+            The updated response object.
         """
 
         response = await func(query_refined, response, *args, **kwargs)
@@ -286,18 +367,17 @@ def generate_tts__after(func: Callable) -> Callable:
         if isinstance(response, QueryResponse):
             logger.info("Converting response type QueryResponse to AudioResponse.")
             response = QueryAudioResponse(
-                query_id=response.query_id,
-                session_id=response.session_id,
+                debug_info=response.debug_info,
                 feedback_secret_key=response.feedback_secret_key,
                 llm_response=response.llm_response,
+                query_id=response.query_id,
                 search_results=response.search_results,
-                debug_info=response.debug_info,
+                session_id=response.session_id,
                 tts_filepath=None,
             )
 
         response = await _generate_tts_response(
-            query_refined,
-            response,
+            query_refined=query_refined, response=response
         )
 
         return response
@@ -306,13 +386,28 @@ def generate_tts__after(func: Callable) -> Callable:
 
 
 async def _generate_tts_response(
-    query_refined: QueryRefined,
-    response: QueryAudioResponse,
+    *, query_refined: QueryRefined, response: QueryAudioResponse
 ) -> QueryAudioResponse | QueryResponseError:
-    """
-    Generate the TTS response.
+    """Generate the TTS response.
 
     Requires valid `llm_response` and alignment score in the response.
+
+    Parameters
+    ----------
+    query_refined
+        The refined query object.
+    response
+        The query response object.
+
+    Returns
+    -------
+    QueryAudioResponse | QueryResponseError
+        The updated response object.
+
+    Raises
+    ------
+    ValueError
+        If the language is not provided.
     """
 
     if response.llm_response is None:
@@ -330,42 +425,44 @@ async def _generate_tts_response(
 
         if CUSTOM_TTS_ENDPOINT is not None:
             tts_file = await post_to_internal_tts(
-                text=response.llm_response,
                 endpoint_url=CUSTOM_TTS_ENDPOINT,
                 language=query_refined.original_language,
+                text=response.llm_response,
             )
 
         else:
             tts_file = await synthesize_speech(
-                text=response.llm_response,
-                language=query_refined.original_language,
+                language=query_refined.original_language, text=response.llm_response
             )
 
         content_type = "audio/wav"
-        file_extension = get_file_extension_from_mime_type(content_type)
-        unique_filename = generate_random_filename(file_extension)
+        file_extension = get_file_extension_from_mime_type(mime_type=content_type)
+        unique_filename = generate_random_filename(extension=file_extension)
         destination_blob_name = f"tts-voice-notes/{unique_filename}"
 
         await upload_file_to_gcs(
-            GCS_SPEECH_BUCKET, tts_file, destination_blob_name, content_type
+            bucket_name=GCS_SPEECH_BUCKET,
+            content_type=content_type,
+            destination_blob_name=destination_blob_name,
+            file_stream=tts_file,
         )
 
         tts_file_path = await generate_public_url(
-            GCS_SPEECH_BUCKET, destination_blob_name
+            blob_name=destination_blob_name, bucket_name=GCS_SPEECH_BUCKET
         )
 
         response.tts_filepath = tts_file_path
     except ValueError as e:
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
         return QueryResponseError(
-            query_id=response.query_id,
-            session_id=response.session_id,
-            feedback_secret_key=response.feedback_secret_key,
-            llm_response=response.llm_response,
-            search_results=response.search_results,
+            debug_info=response.debug_info,
             error_message="There was an issue generating the speech response.",
             error_type=ErrorType.TTS_ERROR,
-            debug_info=response.debug_info,
+            feedback_secret_key=response.feedback_secret_key,
+            llm_response=response.llm_response,
+            query_id=response.query_id,
+            search_results=response.search_results,
+            session_id=response.session_id,
         )
 
     return response
