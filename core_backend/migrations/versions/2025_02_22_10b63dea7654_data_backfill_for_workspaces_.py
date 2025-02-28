@@ -66,7 +66,7 @@ def upgrade() -> None:
 
         # Insert into `workspace` table.
         assert user_id is not None, f"{username = } {user_id = }"
-        workspace_name = f"{username}'s_Workspace"
+        workspace_name = f"{username}'s Workspace"
         result = connection.execute(
             sa.text(
                 """

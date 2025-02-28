@@ -107,11 +107,10 @@ const CardsPage = () => {
         }
       };
       fetchTags();
-      setEditAccess(userRole === "admin");
     } else {
       setTags([]);
-      setEditAccess(userRole === "admin");
     }
+    setEditAccess(userRole === "admin");
   }, [userRole, token]);
 
   const SnackbarSlideTransition = (props: SlideProps) => {

@@ -136,9 +136,6 @@ const Login = () => {
   const handleCloseConfirmationModal = () => {
     setShowConfirmationModal(false);
   };
-  const handleResetPassword = () => {
-    setShowUserResetModal(true);
-  };
   return isLoading ? (
     <Grid>
       {" "}

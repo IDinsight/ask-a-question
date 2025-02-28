@@ -2,7 +2,6 @@ import { Workspace } from "@/components/WorkspaceMenu";
 import api, { CustomError } from "@/utils/api";
 import axios from "axios";
 interface UserBody {
-  sort(arg0: (a: UserBody, b: UserBody) => number): unknown;
   user_id?: number;
   username: string;
   role: "admin" | "read_only";
