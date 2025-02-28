@@ -149,17 +149,65 @@ const CardsPage = () => {
               <Box
                 sx={{
                   display: "flex",
-                  flexDirection: "column",
+                  flexDirection: "row",
                   gap: 2,
                 }}
               >
-                <Typography variant="h4" align="left" color="primary">
-                  Question Answering
-                </Typography>
-                <Typography variant="body1" align="left" color={appColors.darkGrey}>
-                  Add, edit, and test content for question-answering. Questions sent to
-                  the search service will retrieve results from here.
-                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexGrow: 1,
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  <Typography variant="h4" align="left" color="primary">
+                    Question Answering
+                  </Typography>
+                  <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                    Add, edit, and test content for question-answering. Questions sent
+                    to the search service will retrieve results from here.
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    justifyContent: "flex-end",
+                    p: 1,
+                    gap: 2,
+                  }}
+                >
+                  <Fab
+                    variant="extended"
+                    size="small"
+                    disabled={openSearchSidebar}
+                    sx={{
+                      bgcolor: "orange",
+                      pr: 2,
+                    }}
+                    onClick={handleSidebarToggle}
+                  >
+                    <PlayArrowIcon />
+                    <Layout.Spacer horizontal multiplier={0.3} />
+                    search
+                  </Fab>
+                  <Fab
+                    variant="extended"
+                    size="small"
+                    disabled={openChatSidebar}
+                    sx={{
+                      bgcolor: "orange",
+                      pr: 2,
+                    }}
+                    onClick={handleChatSidebarToggle}
+                  >
+                    <PlayArrowIcon />
+                    <Layout.Spacer horizontal multiplier={0.3} />
+                    chat
+                  </Fab>
+                </Box>
               </Box>
               <Layout.FlexBox
                 sx={{
@@ -188,43 +236,6 @@ const CardsPage = () => {
                   editAccess={editAccess}
                   setSnackMessage={setSnackMessage}
                 />
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                    p: 1,
-                  }}
-                >
-                  {!openSearchSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                      }}
-                      onClick={handleSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test search
-                    </Fab>
-                  )}
-                  {!openChatSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                        ml: 2,
-                      }}
-                      onClick={handleChatSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test chat
-                    </Fab>
-                  )}
-                </Box>
               </Layout.FlexBox>
             </Box>
           </Layout.FlexBox>
