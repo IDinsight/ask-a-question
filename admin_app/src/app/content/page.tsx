@@ -214,6 +214,7 @@ const CardsPage = () => {
                   flexGrow: 1,
                   alignItems: "center",
                   paddingTop: 5,
+                  gap: 2,
                 }}
               >
                 <CardsUtilityStrip
@@ -225,7 +226,6 @@ const CardsPage = () => {
                   setFilterTags={setFilterTags}
                   setSnackMessage={setSnackMessage}
                 />
-                <Layout.Spacer multiplier={1} />
                 <CardsGrid
                   displayLanguage={displayLanguage}
                   searchTerm={searchTerm}
@@ -317,6 +317,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
       sx={{
         flexDirection: "row",
         justifyContent: "flex-end",
+        alignContent: "flex-end",
         width: "100%",
         flexWrap: "wrap",
         gap: sizes.baseGap,
@@ -325,16 +326,16 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
       <Layout.FlexBox
         sx={{
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "flex-start",
           flexWrap: "wrap",
           gap: sizes.baseGap,
         }}
       >
-        <Box sx={{ width: "300px" }}>
+        <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ width: "250px" }}>
+        <Box sx={{ minWidth: "130px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
@@ -355,6 +356,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           <>
             <Button
               variant="outlined"
+              size="small"
               disabled={!editAccess}
               onClick={() => {
                 setOpenDownloadModal(true);
@@ -394,6 +396,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   return (
     <Autocomplete
       multiple
+      size="small"
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
@@ -404,7 +407,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
         setFilterTags(updatedTags);
       }}
       renderInput={(params) => (
-        <TextField {...params} variant="standard" label="Filter by tags" />
+        <TextField {...params} variant="standard" label="Filter tags" />
       )}
       sx={{ color: appColors.white }}
     />
@@ -425,7 +428,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
 
   return (
     <>
-      <ButtonGroup variant="contained" disabled={!editAccess}>
+      <ButtonGroup variant="contained" size="small" disabled={!editAccess}>
         <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
