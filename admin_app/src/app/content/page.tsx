@@ -22,24 +22,26 @@ import {
   Typography,
 } from "@mui/material";
 
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { IconButton } from "@mui/material";
 
 import type { Content } from "@/app/content/edit/page";
-import ContentCard from "./components/ContentCard";
-import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { getContentList, getTagList, archiveContent } from "./api";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
+import { archiveContent, getContentList, getTagList } from "./api";
+import { ChatSideBar } from "./components/ChatSideBar";
+import ContentCard from "./components/ContentCard";
+import { DownloadModal } from "./components/DownloadModal";
 import { ImportModal } from "./components/ImportModal";
 import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { ChatSideBar } from "./components/ChatSideBar";
-import { apiCalls } from "@/utils/api";
 
 const CARD_HEIGHT = 250;
 
@@ -60,6 +62,24 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>;
+}
+
+interface CardsGridProps {
+  displayLanguage: string;
+  searchTerm: string;
+  tags: Tag[];
+  filterTags: Tag[];
+  openSidebar: boolean;
+  token: string | null;
+  editAccess: boolean;
+  setSnackMessage: React.Dispatch<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>;
+  openSearchSidebar: boolean;
+  handleSidebarToggle: () => void;
+  openChatSidebar: boolean;
+  handleChatSidebarToggle: () => void;
 }
 
 const CardsPage = () => {
@@ -137,6 +157,7 @@ const CardsPage = () => {
             sx={{
               alignItems: "center",
               paddingTop: 5,
+              paddingBottom: 5,
               paddingInline: 4,
             }}
           >
@@ -149,70 +170,37 @@ const CardsPage = () => {
               <Box
                 sx={{
                   display: "flex",
-                  flexDirection: "row",
+                  flexGrow: 1,
+                  flexDirection: "column",
                   gap: 2,
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexGrow: 1,
-                    flexDirection: "column",
-                    gap: 2,
-                  }}
-                >
-                  <Typography variant="h4" align="left" color="primary">
-                    Question Answering
-                  </Typography>
-                  <Typography variant="body1" align="left" color={appColors.darkGrey}>
-                    Add, edit, and test content for question-answering. Questions sent
-                    to the search service will retrieve results from here.
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                    gap: 1,
-                  }}
-                >
-                  <Fab
-                    variant="extended"
-                    size="small"
-                    disabled={openSearchSidebar}
-                    sx={{
-                      bgcolor: "orange",
-                      pr: 2,
+                <Typography variant="h4" align="left" color="primary">
+                  Question Answering
+                </Typography>
+                <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                  Add, edit, and test content for question-answering. Questions sent to
+                  the search service will retrieve results from here.
+                  <p />
+                  Content limit is 50.{" "}
+                  <a
+                    href="https://docs.ask-a-question.com/latest/contact_us/"
+                    style={{
+                      textDecoration: "underline",
+                      textDecorationColor: appColors.darkGrey,
+                      color: appColors.darkGrey,
                     }}
-                    onClick={handleSidebarToggle}
                   >
-                    <PlayArrowIcon />
-                    <Layout.Spacer horizontal multiplier={0.3} />
-                    search
-                  </Fab>
-                  <Fab
-                    variant="extended"
-                    size="small"
-                    disabled={openChatSidebar}
-                    sx={{
-                      bgcolor: "orange",
-                      pr: 2,
-                    }}
-                    onClick={handleChatSidebarToggle}
-                  >
-                    <PlayArrowIcon />
-                    <Layout.Spacer horizontal multiplier={0.3} />
-                    chat
-                  </Fab>
-                </Box>
+                    Contact us
+                  </a>{" "}
+                  for more.
+                </Typography>
               </Box>
               <Layout.FlexBox
                 sx={{
                   flexGrow: 1,
                   alignItems: "center",
-                  paddingTop: 5,
+                  paddingTop: 3,
                   gap: 2,
                 }}
               >
@@ -234,6 +222,10 @@ const CardsPage = () => {
                   token={token}
                   editAccess={editAccess}
                   setSnackMessage={setSnackMessage}
+                  openSearchSidebar={openSearchSidebar}
+                  handleSidebarToggle={handleSidebarToggle}
+                  openChatSidebar={openChatSidebar}
+                  handleChatSidebarToggle={handleChatSidebarToggle}
                 />
               </Layout.FlexBox>
             </Box>
@@ -464,21 +456,11 @@ const CardsGrid = ({
   token,
   editAccess,
   setSnackMessage,
-}: {
-  displayLanguage: string;
-  searchTerm: string;
-  tags: Tag[];
-  filterTags: Tag[];
-  openSidebar: boolean;
-  token: string | null;
-  editAccess: boolean;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string | null;
-      color: "success" | "info" | "warning" | "error" | undefined;
-    }>
-  >;
-}) => {
+  openSearchSidebar,
+  handleSidebarToggle,
+  openChatSidebar,
+  handleChatSidebarToggle,
+}: CardsGridProps) => {
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
   const [maxPages, setMaxPages] = React.useState<number>(1);
@@ -599,8 +581,6 @@ const CardsGrid = ({
             <CircularProgress />
           </div>
         </Layout.FlexBox>
-        <PageNavigation page={1} setPage={setPage} maxPages={maxPages} />
-        <Layout.Spacer multiplier={1} />
       </>
     );
   }
@@ -689,8 +669,78 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <Layout.Spacer multiplier={0.75} />
-      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
+      {/* PageNav and Test Fabs */}
+      <Layout.FlexBox
+        flexDirection={"row"}
+        alignItems={"center"}
+        justifyContent={"space-between"}
+        width={"100%"}
+        flexWrap={"wrap"}
+      >
+        <Layout.FlexBox flexDirection={"row"} alignItems={"center"}>
+          <IconButton
+            onClick={() => {
+              page > 1 && setPage(page - 1);
+            }}
+            disabled={page <= 1}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
+          </IconButton>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <Typography variant="subtitle2">
+            {maxPages === 0 ? 0 : page} of {maxPages}
+          </Typography>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <IconButton
+            onClick={() => {
+              page < maxPages && setPage(page + 1);
+            }}
+            disabled={page >= maxPages}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronRight color={page < maxPages ? "primary" : "disabled"} />
+          </IconButton>
+        </Layout.FlexBox>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+            gap: 1,
+          }}
+        >
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openSearchSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test search
+          </Fab>
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openChatSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleChatSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test chat
+          </Fab>
+        </Box>
+      </Layout.FlexBox>
     </>
   );
 };
