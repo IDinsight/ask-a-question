@@ -175,8 +175,7 @@ const CardsPage = () => {
                     flexDirection: "column",
                     alignItems: "flex-end",
                     justifyContent: "flex-end",
-                    p: 1,
-                    gap: 2,
+                    gap: 1,
                   }}
                 >
                   <Fab
