@@ -39,7 +39,6 @@ import { ChatSideBar } from "./components/ChatSideBar";
 import ContentCard from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { ImportModal } from "./components/ImportModal";
-import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
