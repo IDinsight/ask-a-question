@@ -383,23 +383,23 @@ const UrgencyRulesPage = () => {
                 </List>
               )}
             </Paper>
-            {!openSidebar && items.length > 0 && (
-              <Fab
-                variant="extended"
-                sx={{
-                  bgcolor: "orange",
-                  width: "100px",
-                  alignSelf: "flex-end",
-                  marginTop: 2,
-                  marginBottom: 3,
-                }}
-                onClick={handleSidebarToggle}
-              >
-                <PlayArrow />
-                <Layout.Spacer horizontal multiplier={0.4} />
-                Test
-              </Fab>
-            )}
+            <Fab
+              variant="extended"
+              size="small"
+              disabled={openSidebar}
+              sx={{
+                bgcolor: "orange",
+                alignSelf: "flex-end",
+                pr: 2,
+                marginTop: 2,
+                marginBottom: 3,
+              }}
+              onClick={handleSidebarToggle}
+            >
+              <PlayArrow />
+              <Layout.Spacer horizontal multiplier={0.3} />
+              Test
+            </Fab>
           </Box>
         </Layout.FlexBox>
       </Grid>
