@@ -138,7 +138,7 @@ const CardsPage = () => {
 
   return (
     <>
-      <Grid container>
+      <Grid container sx={{ height: "100%" }}>
         <Grid
           item
           xs={12}

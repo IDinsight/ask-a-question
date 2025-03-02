@@ -161,7 +161,7 @@ const UrgencyRulesPage = () => {
   const sidebarGridWidth = openSidebar ? 5 : 0;
   const editAccess = userRole === "admin";
   return (
-    <Grid container sx={{ height: "95vh" }}>
+    <Grid container sx={{ height: "100%" }}>
       <Grid
         item
         xs={12}
@@ -172,7 +172,7 @@ const UrgencyRulesPage = () => {
           display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
           height: "100%",
           paddingTop: 5,
-          paddingBottom: 2,
+          paddingInline: 4,
         }}
       >
         <Box
@@ -181,8 +181,6 @@ const UrgencyRulesPage = () => {
             flexDirection: "column",
             alignItems: "center",
             height: "100%",
-            paddingInline: 4,
-            gap: sizes.baseGap,
           }}
         >
           <Box
@@ -402,7 +400,7 @@ const UrgencyRulesPage = () => {
               </Paper>
               <Fab
                 variant="extended"
-                size="small"
+                size="medium"
                 disabled={openSidebar}
                 sx={{
                   bgcolor: "orange",

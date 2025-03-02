@@ -56,7 +56,7 @@ const TestSidebar = ({
       sx={{
         padding: 3,
         paddingTop: 4,
-        height: "94vh",
+        height: "100%",
       }}
     >
       <Box

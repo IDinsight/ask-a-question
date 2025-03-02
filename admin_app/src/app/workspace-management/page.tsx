@@ -1,38 +1,39 @@
 "use client";
-import React, { useEffect } from "react";
+import { Layout } from "@/components/Layout";
+import type { UserRole, Workspace } from "@/components/WorkspaceMenu";
+import { appColors, sizes } from "@/utils";
+import { CustomError } from "@/utils/api";
+import { useAuth } from "@/utils/auth";
+import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
+  IconButton,
   List,
   Paper,
+  Snackbar,
   Tooltip,
   Typography,
-  Snackbar,
-  Alert,
 } from "@mui/material";
-import { UserCard } from "./components/UserCard";
+import { usePathname } from "next/navigation";
+import React, { useEffect } from "react";
+import type { UserBody, UserBodyUpdate } from "./api";
 import {
-  editUser,
-  editWorkspace,
-  getUserList,
-  getCurrentWorkspace,
   addUserToWorkspace,
   checkIfUsernameExists,
   createNewUser,
+  editUser,
+  editWorkspace,
+  getCurrentWorkspace,
+  getUserList,
   removeUserFromWorkspace,
 } from "./api";
-import { useAuth } from "@/utils/auth";
 import { ConfirmationModal } from "./components/ConfirmationModal";
-import type { UserBody, UserBodyUpdate } from "./api";
-import { appColors, sizes } from "@/utils";
-import { Layout } from "@/components/Layout";
-import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
-import type { UserRole, Workspace } from "@/components/WorkspaceMenu";
-import { usePathname } from "next/navigation";
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
+import { UserCard } from "./components/UserCard";
 import UserCreateModal from "./components/UserWorkspaceModal";
-import { CustomError } from "@/utils/api";
+import WorkspaceCreateModal from "./components/WorkspaceCreateModal";
 
 const UserManagement: React.FC = () => {
   const { token, userRole, loginWorkspace, username } = useAuth();
@@ -172,7 +173,7 @@ const UserManagement: React.FC = () => {
   };
   if (userRole !== "admin") {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
         <Typography variant="h6">[403] Access Denied</Typography>
       </Box>
     );
@@ -208,13 +209,14 @@ const UserManagement: React.FC = () => {
         paddingTop: 5,
         paddingInline: 4,
         gap: sizes.baseGap,
-        height: "95vh",
+        height: "100%",
       }}
     >
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
+          height: "100%",
           width: "100%",
           maxWidth: "lg",
           minWidth: "sm",
@@ -233,24 +235,28 @@ const UserManagement: React.FC = () => {
               display: "flex",
               justifyContent: "flex-start",
               alignItems: "center",
+              gap: 1,
             }}
           >
             <Typography
               variant="h4"
-              sx={{ wordBreak: "break-word", display: "inline-block" }}
+              sx={{
+                wordBreak: "break-word",
+                display: "inline-block",
+                color: appColors.primary,
+              }}
             >
               Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
             </Typography>
-            <Tooltip title="Edit Workspace">
-              <Button
-                variant="text"
+            <Tooltip title="Edit workspace name">
+              <IconButton
                 sx={{ color: appColors.primary }}
                 onClick={() => {
                   setOpenEditWorkspaceModal(true);
                 }}
               >
                 <ModeEditIcon />
-              </Button>
+              </IconButton>
             </Tooltip>
           </Box>
           <Typography variant="body1" align="left" color={appColors.darkGrey}>
@@ -303,10 +309,10 @@ const UserManagement: React.FC = () => {
           <Paper
             elevation={0}
             sx={{
+              flexGrow: 1,
               paddingTop: 1,
-              paddingBottom: 10,
+              marginBottom: 5,
               paddingInline: 3,
-              minHeight: "65vh",
               overflowY: "auto",
               border: 0.5,
               borderColor: "lightgrey",
