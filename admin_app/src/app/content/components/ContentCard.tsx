@@ -108,6 +108,7 @@ const ContentCard = ({
             disabled={!editAccess}
             component={Link}
             href={`/content/edit?content_id=${content_id}`}
+            onClick={(event) => event.stopPropagation()}
           >
             <Edit fontSize="small" />
             <Layout.Spacer horizontal multiplier={0.3} />
