@@ -164,23 +164,19 @@ async def authenticate_or_create_google_user(
     1. The default workspace name for Google users is f"{gmail}'s Workspace" (and the
         default username is the gmail, and the default role is ADMIN).
     2. Check if the user exists in `UserDB`.
-    3. If the username already exists in `UserDB`, then the default workspace should
-        have already been created.
-    4. However, it is possible that another user also created a workspace using the
-        same gmail. Thus, we have to check if the authenticating user exists in the
-        workspace.
-    5. If the authenticating user exists in the workspace, then we return the
-        `AuthenticatedUser` model with the correct user's role in the workspace.
-    6. Otherwise, we have a situation where someone else already created a workspace
-        using the authenticated user's gmail and we raise an exception.
-    7. If the user does not exist in `UserDB`, then this is the first time that the
+    3. If the username already exists in `UserDB`, then a default workspace should
+        have already been associated with the user.
+    4. Check the user role in the workspace. If the authenticating user exists in the
+       workspace, then we return the`AuthenticatedUser` model with the correct user's
+       role in the workspace.
+    5. If the user does not exist in `UserDB`, then this is the first time that the
         Google user is authenticating.
-    8. We try to create the workspace using the default workspace name for the new
+    6. We try to create the workspace using the default workspace name for the new
         user. If the default workspace name already exists, then we raise an exception.
         This corresponds to the situation where another user has already created a
         workspace under the same name and the Google user is signing in for the very
         time.
-    9. Finally, we update the API limits for the new workspace, create the user in
+    7. Finally, we update the API limits for the new workspace, create the user in
         `UserDB`, and assign the user to the workspace with the role of ADMIN.
 
     Parameters
