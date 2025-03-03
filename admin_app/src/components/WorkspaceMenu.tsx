@@ -229,7 +229,7 @@ const WorkspaceMenu = ({
             </MenuItem>
           ))}
           <Divider />
-          <MenuItem>
+          <MenuItem disabled={persistedUserRole !== "admin"}>
             <ListItemIcon>
               <ModeEditIcon />
             </ListItemIcon>
