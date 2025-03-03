@@ -13,15 +13,13 @@ from ..users.models import (
     UserNotFoundError,
     create_user_workspace_role,
     get_user_by_username,
+    get_user_default_workspace,
+    get_user_role_in_workspace,
     save_user_to_db,
 )
 from ..users.schemas import UserCreate, UserRoles
 from ..utils import update_api_limits
-from ..workspaces.utils import (
-    WorkspaceNotFoundError,
-    create_workspace,
-    get_workspace_by_workspace_name,
-)
+from ..workspaces.utils import create_workspace
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import authenticate_credentials, create_access_token
 from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
@@ -161,6 +159,30 @@ async def authenticate_or_create_google_user(
     NB: Creating workspaces for Google users must happen in this module instead of
     `auth.dependencies` due to circular imports.
 
+    The process is as follows:
+
+    1. The default workspace name for Google users is f"{gmail}'s Workspace" (and the
+        default username is the gmail, and the default role is ADMIN).
+    2. Check if the user exists in `UserDB`.
+    3. If the username already exists in `UserDB`, then the default workspace should
+        have already been created.
+    4. However, it is possible that another user also created a workspace using the
+        same gmail. Thus, we have to check if the authenticating user exists in the
+        workspace.
+    5. If the authenticating user exists in the workspace, then we return the
+        `AuthenticatedUser` model with the correct user's role in the workspace.
+    6. Otherwise, we have a situation where someone else already created a workspace
+        using the authenticated user's gmail and we raise an exception.
+    7. If the user does not exist in `UserDB`, then this is the first time that the
+        Google user is authenticating.
+    8. We try to create the workspace using the default workspace name for the new
+        user. If the default workspace name already exists, then we raise an exception.
+        This corresponds to the situation where another user has already created a
+        workspace under the same name and the Google user is signing in for the very
+        time.
+    9. Finally, we update the API limits for the new workspace, create the user in
+        `UserDB`, and assign the user to the workspace with the role of ADMIN.
+
     Parameters
     ----------
     gmail
@@ -172,71 +194,83 @@ async def authenticate_or_create_google_user(
     -------
     AuthenticatedUser
         A Pydantic model containing the access level, username, and workspace name.
+
+    Raises
+    ------
+    HTTPException
+        If the workspace requested by the Google user already exists.
+        If the Google token is invalid.
     """
 
-    workspace_name = f"Workspace_{gmail}"
+    # 1.
+    workspace_name = f"{gmail}'s Workspace"
 
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as asession:
+        # 2.
         try:
-            # If the workspace already exists, then the Google user should have already
-            # been created.
-            _ = await get_workspace_by_workspace_name(
-                asession=asession, workspace_name=workspace_name
+            user_db = await get_user_by_username(asession=asession, username=gmail)
+        except UserNotFoundError:
+            user_db = None
+
+        if user_db is not None:
+            # 3.
+            workspace_db = await get_user_default_workspace(
+                asession=asession, user_db=user_db
             )
+
+            # 4.
+            user_role = await get_user_role_in_workspace(
+                asession=asession, user_db=user_db, workspace_db=workspace_db
+            )
+            assert user_role is not None and user_role in UserRoles, f"{user_role = }"
+            return AuthenticatedUser(
+                access_level="fullaccess",
+                user_role=user_role,
+                username=user_db.username,
+                workspace_name=workspace_db.workspace_name,
+            )
+
+        # 5.
+        user = UserCreate(
+            role=UserRoles.ADMIN, username=gmail, workspace_name=workspace_name
+        )
+        user_role = user.role
+        assert user_role is not None and user_role in UserRoles
+
+        # 6.
+        workspace_db, is_new_workspace = await create_workspace(
+            api_daily_quota=DEFAULT_API_QUOTA,
+            asession=asession,
+            content_quota=DEFAULT_CONTENT_QUOTA,
+            user=user,
+        )
+        if not is_new_workspace:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Workspace for '{gmail}' already exists. Contact the admin of "
                 f"that workspace to create an account for you.",
             )
-        except WorkspaceNotFoundError:
-            # Create the new user object with an ADMIN role and the specified workspace
-            # name.
-            user = UserCreate(
-                role=UserRoles.ADMIN,
-                username=gmail,
-                workspace_name=workspace_name,
-            )
-            user_role = user.role
-            assert user_role is not None and user_role in UserRoles
 
-            # Create the workspace for the Google user.
-            workspace_db, _ = await create_workspace(
-                api_daily_quota=DEFAULT_API_QUOTA,
-                asession=asession,
-                content_quota=DEFAULT_CONTENT_QUOTA,
-                user=user,
-            )
+        # 7.
+        await update_api_limits(
+            api_daily_quota=workspace_db.api_daily_quota,
+            redis=request.app.state.redis,
+            workspace_name=workspace_db.workspace_name,
+        )
+        user_db = await save_user_to_db(asession=asession, user=user)
+        _ = await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=True,
+            user_db=user_db,
+            user_role=user_role,
+            workspace_db=workspace_db,
+        )
 
-            # Update API limits for the Google user's workspace.
-            await update_api_limits(
-                api_daily_quota=workspace_db.api_daily_quota,
-                redis=request.app.state.redis,
-                workspace_name=workspace_db.workspace_name,
-            )
-
-            try:
-                # Check if the user already exists.
-                user_db = await get_user_by_username(
-                    asession=asession, username=user.username
-                )
-            except UserNotFoundError:
-                # Save the user to the `UserDB` database.
-                user_db = await save_user_to_db(asession=asession, user=user)
-
-            # Assign user to the specified workspace with the specified role.
-            _ = await create_user_workspace_role(
-                asession=asession,
-                is_default_workspace=True,
-                user_db=user_db,
-                user_role=user_role,
-                workspace_db=workspace_db,
-            )
-
-            return AuthenticatedUser(
-                access_level="fullaccess",
-                user_role=user_role,
-                username=user_db.username,
-                workspace_name=workspace_name,
-            )
+        return AuthenticatedUser(
+            access_level="fullaccess",
+            user_role=user_role,
+            username=user_db.username,
+            workspace_name=workspace_name,
+        )
