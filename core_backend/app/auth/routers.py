@@ -11,15 +11,15 @@ from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserNotFoundError,
-    check_if_user_exists_in_workspace,
     create_user_workspace_role,
     get_user_by_username,
+    get_user_default_workspace,
     get_user_role_in_workspace,
     save_user_to_db,
 )
 from ..users.schemas import UserCreate, UserRoles
 from ..utils import update_api_limits
-from ..workspaces.utils import create_workspace, get_workspace_by_workspace_name
+from ..workspaces.utils import create_workspace
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import authenticate_credentials, create_access_token
 from .schemas import AuthenticatedUser, AuthenticationDetails, GoogleLoginData
@@ -216,47 +216,30 @@ async def authenticate_or_create_google_user(
 
         if user_db is not None:
             # 3.
-            workspace_db = await get_workspace_by_workspace_name(
-                asession=asession, workspace_name=workspace_name
+            workspace_db = await get_user_default_workspace(
+                asession=asession, user_db=user_db
             )
 
-            # 4
-            user_exists_in_workspace = await check_if_user_exists_in_workspace(
-                asession=asession,
-                user_id=user_db.user_id,
-                workspace_id=workspace_db.workspace_id,
+            # 4.
+            user_role = await get_user_role_in_workspace(
+                asession=asession, user_db=user_db, workspace_db=workspace_db
+            )
+            assert user_role is not None and user_role in UserRoles, f"{user_role = }"
+            return AuthenticatedUser(
+                access_level="fullaccess",
+                user_role=user_role,
+                username=user_db.username,
+                workspace_name=workspace_db.workspace_name,
             )
 
-            # 5
-            if user_exists_in_workspace:
-                user_role = await get_user_role_in_workspace(
-                    asession=asession, user_db=user_db, workspace_db=workspace_db
-                )
-                assert (
-                    user_role is not None and user_role in UserRoles
-                ), f"{user_role = }"
-                return AuthenticatedUser(
-                    access_level="fullaccess",
-                    user_role=user_role,
-                    username=user_db.username,
-                    workspace_name=workspace_db.workspace_name,
-                )
-
-            # 6
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Workspace for '{gmail}' already exists. Contact the admin of "
-                f"that workspace to create an account for you.",
-            )
-
-        # 7.
+        # 5.
         user = UserCreate(
             role=UserRoles.ADMIN, username=gmail, workspace_name=workspace_name
         )
         user_role = user.role
         assert user_role is not None and user_role in UserRoles
 
-        # 8.
+        # 6.
         workspace_db, is_new_workspace = await create_workspace(
             api_daily_quota=DEFAULT_API_QUOTA,
             asession=asession,
@@ -270,7 +253,7 @@ async def authenticate_or_create_google_user(
                 f"that workspace to create an account for you.",
             )
 
-        # 9.
+        # 7.
         await update_api_limits(
             api_daily_quota=workspace_db.api_daily_quota,
             redis=request.app.state.redis,
