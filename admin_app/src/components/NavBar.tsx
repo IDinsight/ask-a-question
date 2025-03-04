@@ -109,6 +109,8 @@ const Logo = () => {
           height: 36,
           aspect_ratio: 1200 / 214,
           paddingTop: 0.3,
+          paddingInline: 0.5,
+          display: { xs: "none", sm: "block" },
         }}
       />
     </Link>
@@ -124,7 +126,6 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
   return (
     <Box
       alignItems="center"
-      gap={1.5}
       paddingRight={1.5}
       sx={{
         height: sizes.navbar,
