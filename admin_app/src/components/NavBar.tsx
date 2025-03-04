@@ -230,6 +230,7 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
               sx={{
                 margin: sizes.baseGap,
                 color: pathname === page.path ? appColors.white : appColors.outline,
+                whiteSpace: "nowrap",
               }}
             >
               {page.title}

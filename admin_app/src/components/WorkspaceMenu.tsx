@@ -150,7 +150,13 @@ const WorkspaceMenu = ({
     >
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu}>
-          <Typography style={{ fontSize: sizes.baseGap, color: appColors.white }}>
+          <Typography
+            style={{
+              fontSize: sizes.baseGap,
+              color: appColors.white,
+              whiteSpace: "nowrap",
+            }}
+          >
             {persistedWorkspaceName.length > 20
               ? `${persistedWorkspaceName.substring(0, 20)}...`
               : persistedWorkspaceName}
