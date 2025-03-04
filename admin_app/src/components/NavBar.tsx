@@ -129,7 +129,7 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
       sx={{
         height: sizes.navbar,
         flexGrow: 1,
-        display: { xs: "flex", md: "none" },
+        display: { xs: "flex", lg: "none" },
       }}
     >
       <IconButton
@@ -162,7 +162,7 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
         open={Boolean(anchorElNav)}
         onClose={() => setAnchorElNav(null)}
         sx={{
-          display: { xs: "block", md: "none" },
+          display: { xs: "block", lg: "none" },
           "& .MuiPaper-root": {
             backgroundColor: appColors.primary,
             color: "white",
@@ -206,7 +206,7 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
       sx={{
         height: sizes.navbar,
         flexGrow: 1,
-        display: { xs: "none", md: "flex" },
+        display: { xs: "none", lg: "flex" },
       }}
       paddingLeft={0.5}
       paddingRight={1.5}
