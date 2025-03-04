@@ -26,6 +26,7 @@ import {
 } from "./api";
 import { useAuth } from "@/utils/auth";
 import { UDSidebar } from "./components/UDSidebar";
+import { CustomError } from "@/utils/api";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -63,13 +64,13 @@ const UrgencyRulesPage = () => {
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        },
+        }
       );
     } else {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
-        token!,
+        token!
       ).then((data: UrgencyRule) => {
         const newItems = [...items];
         newItems[index] = data;
@@ -79,7 +80,10 @@ const UrgencyRulesPage = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -142,6 +146,11 @@ const UrgencyRulesPage = () => {
       getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Failed to fetch urgency rules";
+          if (customError && customError.message) {
+            errorMessage = customError.message;
+          }
           console.error(error);
         });
       setCurrAccessLevel(accessLevel);
@@ -169,7 +178,9 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+          display: openSidebar
+            ? { xs: "none", sm: "none", md: "block" }
+            : "block",
         }}
       >
         <Layout.FlexBox
@@ -201,10 +212,14 @@ const UrgencyRulesPage = () => {
               <Typography variant="h4" align="left" color="primary">
                 Urgency Detection
               </Typography>
-              <Typography variant="body1" align="left" color={appColors.darkGrey}>
+              <Typography
+                variant="body1"
+                align="left"
+                color={appColors.darkGrey}
+              >
                 Add, edit, and test urgency rules. Messages sent to the urgency
-                detection service will be flagged as urgent if any of the rules apply to
-                the message.
+                detection service will be flagged as urgent if any of the rules
+                apply to the message.
               </Typography>
             </Box>
             <Layout.FlexBox
@@ -304,7 +319,9 @@ const UrgencyRulesPage = () => {
                         disablePadding
                         onMouseEnter={() => setHoveredIndex(index)}
                         onMouseLeave={() => setHoveredIndex(-1)}
-                        onDoubleClick={editAccess ? handleEdit(index) : () => {}}
+                        onDoubleClick={
+                          editAccess ? handleEdit(index) : () => {}
+                        }
                       >
                         <ListItemIcon>#{index + 1}</ListItemIcon>
                         {editableIndex === index ? (
@@ -312,12 +329,12 @@ const UrgencyRulesPage = () => {
                             fullWidth
                             size="medium"
                             value={urgencyRule.urgency_rule_text}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              handleTextChange(e.target.value, index)
-                            }
-                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                              handleKeyDown(e, index)
-                            }
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => handleTextChange(e.target.value, index)}
+                            onKeyDown={(
+                              e: React.KeyboardEvent<HTMLInputElement>
+                            ) => handleKeyDown(e, index)}
                             onBlur={() => {
                               onBlur(index);
                             }}
@@ -329,7 +346,10 @@ const UrgencyRulesPage = () => {
                             InputProps={{
                               style: { backgroundColor: "white" },
                               endAdornment: (
-                                <InputAdornment position="end" sx={{ paddingRight: 2 }}>
+                                <InputAdornment
+                                  position="end"
+                                  sx={{ paddingRight: 2 }}
+                                >
                                   <IconButton
                                     onMouseDown={() => {
                                       addOrUpdateItem(index);
@@ -351,7 +371,7 @@ const UrgencyRulesPage = () => {
                               urgencyRule.updated_datetime_utc ? (
                                 "Last updated: " +
                                 new Date(
-                                  urgencyRule.updated_datetime_utc,
+                                  urgencyRule.updated_datetime_utc
                                 ).toLocaleString(undefined, {
                                   day: "numeric",
                                   month: "numeric",

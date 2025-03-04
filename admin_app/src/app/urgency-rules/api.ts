@@ -1,4 +1,5 @@
-import api from "@/utils/api";
+import api, { CustomError } from "@/utils/api";
+import axios from "axios";
 
 const getUrgencyRuleList = async (token: string) => {
   try {
@@ -7,6 +8,12 @@ const getUrgencyRuleList = async (token: string) => {
     });
     return response.data;
   } catch (error) {
+    const customError = error as CustomError;
+    let errorMessage = "Error fetching urgency rule list"
+    if (customError.message){
+      errorMessage = customError.message
+    }
+    
     throw new Error("Error fetching urgency rule list");
   }
 };
@@ -21,8 +28,18 @@ const addUrgencyRule = async (rule_text: string, token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error adding urgency rule");
+  } catch (customError) {
+    if (axios.isAxiosError(customError) &&
+    customError.response &&
+    customError.response.status != 500){
+      throw{
+        status: customError.response.status, 
+        message: customError.response.data?.detail
+      } as CustomError;
+    }
+    else{
+      throw new Error("Error adding urgency rule");
+    }
   }
 };
 
@@ -36,8 +53,20 @@ const updateUrgencyRule = async (rule_id: number, rule_text: string, token: stri
       },
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error updating urgency rule");
+  } catch (customError) {
+    if(
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ){
+      throw{
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError
+    }
+    else{
+      throw new Error("Error updating urgency rule");
+    }
   }
 };
 
@@ -47,8 +76,20 @@ const deleteUrgencyRule = async (rule_id: number, token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error deleting urgency rule");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500)
+      {
+        throw{
+          status: customError.response.status,
+          message: customError.response.data?.detail,
+        } as CustomError;
+      }
+      else{
+        throw new Error("Error deleting urgency rule");
+      }
   }
 };
 export { addUrgencyRule, getUrgencyRuleList, updateUrgencyRule, deleteUrgencyRule };
