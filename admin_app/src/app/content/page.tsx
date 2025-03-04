@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { MouseEvent, useEffect, useRef, useState } from "react";
+import React, { MouseEvent, useState } from "react";
 
 import {
   Alert,
@@ -469,29 +469,36 @@ const CardsGrid = ({
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const gridRef = useRef<HTMLDivElement>(null);
-  const calculateMaxCardsPerPage = () => {
-    if (!gridRef.current) {
-      return;
+  const gridRef = React.useRef<HTMLDivElement>(null);
+
+  // Callback ref to handle when the grid element mounts
+  const setGridRef = (node: HTMLDivElement | null) => {
+    (gridRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    if (node) {
+      calculateMaxCardsPerPage();
+      const resizeObserver = new ResizeObserver(() => {
+        setTimeout(calculateMaxCardsPerPage, 0);
+      });
+      resizeObserver.observe(node);
     }
+  };
+
+  const calculateMaxCardsPerPage = () => {
+    if (!gridRef.current) return;
 
     const gridWidth = gridRef.current.clientWidth;
     const gridHeight = gridRef.current.clientHeight;
-
     const newColumns = Math.max(1, Math.floor(gridWidth / CARD_MIN_WIDTH));
-    const rows = Math.max(1, Math.floor((gridHeight - 20) / CARD_HEIGHT));
+    const rows = Math.max(1, Math.floor((gridHeight - 50) / CARD_HEIGHT));
     const maxCards = rows * newColumns;
-
-    // FIX initial load issue
 
     setColumns(newColumns);
     setMaxCardsPerPage(maxCards);
   };
 
-  useEffect(() => {
-    calculateMaxCardsPerPage();
+  // Optionally, you can still use an effect for window resize
+  React.useEffect(() => {
     window.addEventListener("resize", calculateMaxCardsPerPage);
-
     return () => {
       window.removeEventListener("resize", calculateMaxCardsPerPage);
     };
@@ -591,20 +598,21 @@ const CardsGrid = ({
       }}
     >
       <Paper
-        ref={gridRef}
+        ref={setGridRef}
         elevation={0}
         sx={{
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
           height: "100%",
-          minHeight: "220px",
+          minHeight: "240px",
           width: "100%",
+          paddingBottom: 2,
           border: 0.5,
           borderColor: "lightgrey",
         }}
       >
-        <Grid container sx={{ height: "fit-content" }}>
+        <Grid container sx={{ height: "100%" }}>
           {cards.length === 0 ? (
             <Box
               sx={{
@@ -635,7 +643,7 @@ const CardsGrid = ({
               .map((item) => {
                 if (item.content_id !== null) {
                   return (
-                    <Grid item xs={12 / columns} key={item.content_id}>
+                    <Grid item xs={12 / columns} key={item.content_id} sx={{ py: 0.5 }}>
                       <ContentCard
                         title={item.content_title}
                         text={item.content_text}
