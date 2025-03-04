@@ -36,14 +36,11 @@ import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { archiveContent, getContentList, getTagList } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
-import ContentCard from "./components/ContentCard";
+import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { ImportModal } from "./components/ImportModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-
-const CARD_HEIGHT = 200;
-const CARD_MIN_WIDTH = 300;
 
 export interface Tag {
   tag_id: number;
@@ -488,8 +485,9 @@ const CardsGrid = ({
 
     const gridWidth = gridRef.current.clientWidth;
     const gridHeight = gridRef.current.clientHeight;
-    const newColumns = Math.max(1, Math.floor(gridWidth / CARD_MIN_WIDTH));
-    const rows = Math.max(1, Math.floor((gridHeight - 50) / CARD_HEIGHT));
+    // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
+    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
+    const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
     const maxCards = rows * newColumns;
 
     setColumns(newColumns);
@@ -605,14 +603,15 @@ const CardsGrid = ({
           flexDirection: "column",
           justifyContent: "flex-start",
           height: "100%",
-          minHeight: "240px",
+          minHeight: CARD_HEIGHT * 1.1,
+          maxHeight: CARD_HEIGHT * 4.5,
           width: "100%",
           paddingBottom: 2,
           border: 0.5,
           borderColor: "lightgrey",
         }}
       >
-        <Grid container sx={{ height: "100%" }}>
+        <Grid container sx={{ height: "hug-content" }}>
           {cards.length === 0 ? (
             <Box
               sx={{
@@ -643,7 +642,12 @@ const CardsGrid = ({
               .map((item) => {
                 if (item.content_id !== null) {
                   return (
-                    <Grid item xs={12 / columns} key={item.content_id} sx={{ py: 0.5 }}>
+                    <Grid
+                      item
+                      xs={12 / columns}
+                      key={item.content_id}
+                      sx={{ p: "5px" }}
+                    >
                       <ContentCard
                         title={item.content_title}
                         text={item.content_text}
