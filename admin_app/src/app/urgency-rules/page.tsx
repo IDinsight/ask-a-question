@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   List,
   ListItem,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   LinearProgress,
   Grid,
+  Snackbar,
+  Alert,
   Fab,
   Paper,
 } from "@mui/material";
@@ -26,6 +28,7 @@ import {
 } from "./api";
 import { useAuth } from "@/utils/auth";
 import { UDSidebar } from "./components/UDSidebar";
+import { CustomError } from "@/utils/api";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -43,6 +46,19 @@ const UrgencyRulesPage = () => {
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
+  const [snackbarMessage, setSnackbarMessage] = React.useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ message: "", severity: "success" });
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarMessage({ message: "", severity: "info" });
+  };
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
@@ -57,29 +73,56 @@ const UrgencyRulesPage = () => {
   const addOrUpdateItem = (index: number) => {
     setSaving(true);
     if (items[index].urgency_rule_id === null) {
-      addUrgencyRule(items[index].urgency_rule_text, token!).then(
-        (data: UrgencyRule) => {
+      addUrgencyRule(items[index].urgency_rule_text, token!)
+        .then((data: UrgencyRule) => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        },
-      );
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error adding urgency rule";
+          if (customError.message) {
+            errorMessage = customError.message;
+          }
+          setSnackbarMessage({
+            message: errorMessage,
+            severity: "error",
+          });
+          setSaving(false);
+        });
     } else {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
-        token!,
-      ).then((data: UrgencyRule) => {
-        const newItems = [...items];
-        newItems[index] = data;
-        setItems(newItems);
-        setSaving(false);
-      });
+        token!
+      )
+        .then((data: UrgencyRule) => {
+          const newItems = [...items];
+          newItems[index] = data;
+          setItems(newItems);
+          setSaving(false);
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error updating urgency rule";
+          if (customError.message) {
+            errorMessage = customError.message;
+          }
+          setSnackbarMessage({
+            message: errorMessage,
+            severity: "error",
+          });
+          setSaving(false);
+        });
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -124,10 +167,22 @@ const UrgencyRulesPage = () => {
       setItems(newItems);
       return;
     }
-    deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
-      newItems.splice(index, 1);
-      setItems(newItems);
-    });
+    deleteUrgencyRule(items[index].urgency_rule_id!, token!)
+      .then(() => {
+        newItems.splice(index, 1);
+        setItems(newItems);
+      })
+      .catch((error) => {
+        const customError = error as CustomError;
+        let errorMessage = "Error deleting urgency rule";
+        if (customError.message) {
+          errorMessage = customError.message;
+        }
+        setSnackbarMessage({
+          message: errorMessage,
+          severity: "error",
+        });
+      });
   };
 
   const onBlur = (index: number) => {
@@ -142,6 +197,15 @@ const UrgencyRulesPage = () => {
       getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Failed to fetch urgency rules";
+          if (customError && customError.message) {
+            errorMessage = customError.message;
+            setSnackbarMessage({
+              message: errorMessage,
+              severity: "error",
+            });
+          }
           console.error(error);
         });
       setCurrAccessLevel(accessLevel);
@@ -169,7 +233,9 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+          display: openSidebar
+            ? { xs: "none", sm: "none", md: "block" }
+            : "block",
           height: "100%",
           paddingTop: 5,
           paddingInline: 4,
@@ -204,10 +270,14 @@ const UrgencyRulesPage = () => {
               <Typography variant="h4" align="left" color="primary">
                 Urgency Detection
               </Typography>
-              <Typography variant="body1" align="left" color={appColors.darkGrey}>
+              <Typography
+                variant="body1"
+                align="left"
+                color={appColors.darkGrey}
+              >
                 Add, edit, and test urgency rules. Messages sent to the urgency
-                detection service will be flagged as urgent if any of the rules apply to
-                the message.
+                detection service will be flagged as urgent if any of the rules
+                apply to the message.
               </Typography>
             </Box>
             <Box
@@ -317,7 +387,9 @@ const UrgencyRulesPage = () => {
                           disablePadding
                           onMouseEnter={() => setHoveredIndex(index)}
                           onMouseLeave={() => setHoveredIndex(-1)}
-                          onDoubleClick={editAccess ? handleEdit(index) : () => {}}
+                          onDoubleClick={
+                            editAccess ? handleEdit(index) : () => {}
+                          }
                         >
                           <ListItemIcon>#{index + 1}</ListItemIcon>
                           {editableIndex === index ? (
@@ -325,12 +397,12 @@ const UrgencyRulesPage = () => {
                               fullWidth
                               size="medium"
                               value={urgencyRule.urgency_rule_text}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                handleTextChange(e.target.value, index)
-                              }
-                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                                handleKeyDown(e, index)
-                              }
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => handleTextChange(e.target.value, index)}
+                              onKeyDown={(
+                                e: React.KeyboardEvent<HTMLInputElement>
+                              ) => handleKeyDown(e, index)}
                               onBlur={() => {
                                 onBlur(index);
                               }}
@@ -367,7 +439,7 @@ const UrgencyRulesPage = () => {
                                 urgencyRule.updated_datetime_utc ? (
                                   "Last updated: " +
                                   new Date(
-                                    urgencyRule.updated_datetime_utc,
+                                    urgencyRule.updated_datetime_utc
                                   ).toLocaleString(undefined, {
                                     day: "numeric",
                                     month: "numeric",
