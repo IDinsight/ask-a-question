@@ -142,13 +142,16 @@ const TestSidebar = ({
           </IconButton>
         </Box>
       </Box>
+      {/* make sure this is working correctly */}
       {ResponseBox && (
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             flexGrow: 1,
-            minHeight: 0,
+            flexShrink: 1,
+            height: 0,
+            minHeight: "200px",
             padding: 2,
             overflowY: "auto",
           }}
