@@ -47,7 +47,7 @@ const ContentCard = ({
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            maxHeight: "250px",
+            height: "200px",
           },
           appStyles.hoverShadow,
           appStyles.shadow,
