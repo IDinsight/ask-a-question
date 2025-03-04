@@ -1,5 +1,7 @@
 import api, { CustomError } from "@/utils/api";
 import axios from "axios";
+import api, { CustomError } from "@/utils/api";
+import axios from "axios";
 
 const getUrgencyRuleList = async (token: string) => {
   try {
