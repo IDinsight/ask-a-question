@@ -479,8 +479,10 @@ const CardsGrid = ({
     const gridHeight = gridRef.current.clientHeight;
 
     const newColumns = Math.max(1, Math.floor(gridWidth / CARD_MIN_WIDTH));
-    const rows = Math.max(1, Math.floor(gridHeight / CARD_HEIGHT));
+    const rows = Math.max(1, Math.floor((gridHeight - 20) / CARD_HEIGHT));
     const maxCards = rows * newColumns;
+
+    // FIX initial load issue
 
     setColumns(newColumns);
     setMaxCardsPerPage(maxCards);
@@ -580,7 +582,6 @@ const CardsGrid = ({
   }
   return (
     <Box
-      ref={gridRef}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -590,11 +591,12 @@ const CardsGrid = ({
       }}
     >
       <Paper
+        ref={gridRef}
         elevation={0}
         sx={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           height: "100%",
           minHeight: "220px",
           width: "100%",
@@ -602,7 +604,7 @@ const CardsGrid = ({
           borderColor: "lightgrey",
         }}
       >
-        <Grid container sx={{ height: "100%" }}>
+        <Grid container sx={{ height: "fit-content" }}>
           {cards.length === 0 ? (
             <Box
               sx={{
