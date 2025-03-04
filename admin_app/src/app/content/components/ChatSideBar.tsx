@@ -149,8 +149,14 @@ const ChatSideBar = ({
       </Box>
       <Box
         sx={{
-          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
           flexGrow: 1,
+          flexShrink: 1,
+          height: 0,
+          minHeight: "200px",
+          padding: 2,
+          overflowY: "auto",
         }}
       >
         {messages.map((message, index) => (
