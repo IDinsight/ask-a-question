@@ -1,4 +1,5 @@
-import api from "@/utils/api";
+import api, { CustomError } from "@/utils/api";
+import axios from "axios";
 
 const getUrgencyRuleList = async (token: string) => {
   try {
@@ -6,8 +7,19 @@ const getUrgencyRuleList = async (token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error fetching urgency rule list");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching urgency rule list");
+    }
   }
 };
 
@@ -18,26 +30,52 @@ const addUrgencyRule = async (rule_text: string, token: string) => {
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error adding urgency rule");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status != 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error adding urgency rule");
+    }
   }
 };
 
-const updateUrgencyRule = async (rule_id: number, rule_text: string, token: string) => {
+const updateUrgencyRule = async (
+  rule_id: number,
+  rule_text: string,
+  token: string
+) => {
   try {
     const response = await api.put(
       `/urgency-rules/${rule_id}`,
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error updating urgency rule");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error updating urgency rule");
+    }
   }
 };
 
@@ -47,8 +85,24 @@ const deleteUrgencyRule = async (rule_id: number, token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error deleting urgency rule");
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error deleting urgency rule");
+    }
   }
 };
-export { addUrgencyRule, getUrgencyRuleList, updateUrgencyRule, deleteUrgencyRule };
+export {
+  addUrgencyRule,
+  getUrgencyRuleList,
+  updateUrgencyRule,
+  deleteUrgencyRule,
+};

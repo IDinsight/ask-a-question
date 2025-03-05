@@ -1,5 +1,6 @@
-import api from "../../utils/api";
+import api, { CustomError } from "../../utils/api";
 import { Period, CustomDashboardFrequency } from "./types";
+import axios from "axios";
 
 function buildURL(
   basePath: string,
@@ -10,7 +11,7 @@ function buildURL(
     frequency?: CustomDashboardFrequency;
     contentId?: number;
     extraPath?: string;
-  } = {},
+  } = {}
 ): string {
   let url = `${basePath}/${period}`;
   if (options.contentId !== undefined) {
@@ -44,8 +45,19 @@ async function fetchData(url: string, token: string, errorMessage: string) {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error(errorMessage);
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: errorMessage,
+      } as CustomError;
+    } else {
+      throw new Error(errorMessage);
+    }
   }
 }
 
@@ -54,7 +66,7 @@ const getOverviewPageData = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
+  frequency?: CustomDashboardFrequency
 ) => {
   const url = buildURL("/dashboard/overview", period, {
     startDate,
@@ -69,7 +81,7 @@ const fetchTopicsData = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
+  frequency?: CustomDashboardFrequency
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
@@ -84,7 +96,7 @@ const getEmbeddingData = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
+  frequency?: CustomDashboardFrequency
 ) => {
   const url = buildURL("/dashboard/topic_visualization", period, {
     startDate,
@@ -99,7 +111,7 @@ const generateNewTopics = async (
   token: string,
   startDate?: string,
   endDate?: string,
-  frequency?: CustomDashboardFrequency,
+  frequency?: CustomDashboardFrequency
 ) => {
   const url = buildURL("/dashboard/insights", period, {
     startDate,
@@ -114,13 +126,17 @@ const getPerformancePageData = async (
   period: Period,
   token: string,
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     startDate,
     endDate,
   });
-  return fetchData(url, token, "Error fetching dashboard performance page data");
+  return fetchData(
+    url,
+    token,
+    "Error fetching dashboard performance page data"
+  );
 };
 
 const getPerformanceDrawerData = async (
@@ -128,14 +144,18 @@ const getPerformanceDrawerData = async (
   contentId: number,
   token: string,
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
     startDate,
     endDate,
   });
-  return fetchData(url, token, "Error fetching dashboard performance drawer data");
+  return fetchData(
+    url,
+    token,
+    "Error fetching dashboard performance drawer data"
+  );
 };
 
 const getPerformanceDrawerAISummary = async (
@@ -143,7 +163,7 @@ const getPerformanceDrawerAISummary = async (
   contentId: number,
   token: string,
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ) => {
   const url = buildURL("/dashboard/performance", period, {
     contentId,
@@ -154,7 +174,7 @@ const getPerformanceDrawerAISummary = async (
   return fetchData(
     url,
     token,
-    "Error fetching dashboard performance drawer AI summary",
+    "Error fetching dashboard performance drawer AI summary"
   );
 };
 
