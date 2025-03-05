@@ -244,6 +244,7 @@ const UrgencyRulesPage = () => {
                 sx={{
                   display: "flex",
                   flexDirection: "column",
+                  flexGrow: 1,
                   overflowY: "auto",
                   paddingTop: 1,
                   paddingBottom: 10,
