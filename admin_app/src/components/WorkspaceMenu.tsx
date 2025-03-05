@@ -305,24 +305,21 @@ const ConfirmSwitchWorkspaceDialog = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Confirm Switch</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to switch to the workspace:{" "}
-          <strong>{workspace?.workspace_name}</strong>?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
+      <DialogTitle>
+        Switch to workspace <strong>{workspace?.workspace_name}</strong>?
+      </DialogTitle>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary">
-          Cancel
+          Stay
         </Button>
         <Button
           onClick={() => {
             onConfirm(workspace);
           }}
+          variant="contained"
           color="primary"
         >
-          Confirm
+          Switch
         </Button>
       </DialogActions>
     </Dialog>
