@@ -129,7 +129,6 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               Enter Username
             </Typography>
             <TextField
-              margin="normal"
               error={isUsernameEmpty}
               helperText={isUsernameEmpty ? "Please enter a username" : " "}
               required
@@ -178,7 +177,6 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               </Alert>
             )}
             <TextField
-              margin="normal"
               error={isRecoveryCodeEmpty}
               helperText={isRecoveryCodeEmpty ? "Please enter a recovery code" : " "}
               required
@@ -189,7 +187,6 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               onChange={() => setIsRecoveryCodeEmpty(false)}
             />
             <TextField
-              margin="normal"
               error={isPasswordEmpty}
               helperText={isPasswordEmpty ? "Please enter a password" : " "}
               required
@@ -200,7 +197,6 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               onChange={() => setIsPasswordEmpty(false)}
             />
             <TextField
-              margin="normal"
               error={isConfirmPasswordEmpty}
               helperText={isConfirmPasswordEmpty ? "Passwords do not match" : " "}
               required
