@@ -7,14 +7,19 @@ const getUrgencyRuleList = async (token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    const customError = error as CustomError;
-    let errorMessage = "Error fetching urgency rule list";
-    if (customError.message) {
-      errorMessage = customError.message;
+  } catch (customError) {
+    if (
+      axios.isAxiosError(customError) &&
+      customError.response &&
+      customError.response.status !== 500
+    ) {
+      throw {
+        status: customError.response.status,
+        message: customError.response.data?.detail,
+      } as CustomError;
+    } else {
+      throw new Error("Error fetching urgency rule list");
     }
-
-    throw new Error("Error fetching urgency rule list");
   }
 };
 
