@@ -122,10 +122,10 @@ const UserResetModal = ({ open, onClose, resetPassword }: UserModalProps) => {
               padding: "24px",
             }}
           >
-            <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 4 }}>
+            <Avatar sx={{ bgcolor: "secondary.main", marginBottom: 3 }}>
               <LockOutlinedIcon />
             </Avatar>
-            <Typography variant="h5" align="center" sx={{ marginBottom: 4 }}>
+            <Typography variant="h5" align="center" sx={{ marginBottom: 3 }}>
               Enter Username
             </Typography>
             <TextField
