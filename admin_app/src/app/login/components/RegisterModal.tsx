@@ -1,7 +1,7 @@
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Alert,
   Avatar,
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -12,7 +12,6 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useCallback, useState } from "react";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 interface UserSearchModalProps {
   open: boolean;
@@ -68,60 +67,54 @@ const RegisterModal: React.FC<UserSearchModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogContent>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          flexDirection="column"
-          gap={2}
-          margin="auto"
+      <DialogContent
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          minWidth: "300px",
+          gap: 4,
+          margin: 2,
+        }}
+      >
+        <Avatar sx={{ bgcolor: "secondary.main", margin: "0 auto" }}>
+          <LockOutlinedIcon />
+        </Avatar>
+        <Typography variant="h6" align="center">
+          Register first user
+        </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
+        <TextField
+          fullWidth
+          label="Username"
+          value={username}
+          onChange={(e) => {
+            setUsername(e.target.value);
+          }}
+        />
+        <TextField
+          fullWidth
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <TextField
+          fullWidth
+          label="Confirm Password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          onClick={handleAction}
         >
-          <Avatar sx={{ bgcolor: "secondary.main", margin: "0 auto" }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography variant="h6" align="center">
-            Register first user
-          </Typography>
-          {error && <Alert severity="error">{error}</Alert>}
-          <Box display="flex" gap={1}>
-            <TextField
-              fullWidth
-              label="Username"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-              }}
-            />
-          </Box>
-
-          <>
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Confirm Password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </>
-          <Box display="flex" justifyContent="space-between">
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={loading}
-              onClick={handleAction}
-            >
-              Register
-            </Button>
-          </Box>
-        </Box>
+          Register
+        </Button>
       </DialogContent>
     </Dialog>
   );
@@ -138,7 +131,7 @@ const AdminAlertModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose} disableEscapeKeyDown={true}>
-      <DialogTitle>{"Initial Setup"}</DialogTitle>
+      <DialogTitle>Initial Setup</DialogTitle>
       <DialogContent>
         <DialogContentText>
           You need to register an admin user before proceeding.
