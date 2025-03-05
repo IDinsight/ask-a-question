@@ -13,6 +13,10 @@ import {
   KeyRenewConfirmationModal,
   NewKeyModal,
 } from "./components/APIKeyModals";
+import {
+  KeyRenewConfirmationModal,
+  NewKeyModal,
+} from "./components/APIKeyModals";
 import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
 import { getCurrentWorkspace } from "../workspace-management/api";
@@ -26,10 +30,21 @@ const IntegrationsPage = () => {
     severity: "success" | "error" | "info" | "warning";
   } | null>(null);
 
+  const [snackbarMessage, setSnackbarMessage] = useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  } | null>(null);
+
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
 
+  const handleSnackbarMessage = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbarMessage({ message, severity });
+  };
   const handleSnackbarMessage = (
     message: string,
     severity: "success" | "error" | "info" | "warning"
@@ -58,9 +73,11 @@ const KeyManagement = ({
   token,
   editAccess,
   onSnackbarMessage,
+  onSnackbarMessage,
 }: {
   token: string | null;
   editAccess: boolean;
+  onSnackbarMessage?: (message: string, severity: "success" | "error") => void;
   onSnackbarMessage?: (message: string, severity: "success" | "error") => void;
 }) => {
   const [keyInfoFetchIsLoading, setKeyInfoFetchIsLoading] = useState(true);
@@ -81,6 +98,7 @@ const KeyManagement = ({
           const formatted_api_update_date = format(
             data.api_key_updated_datetime_utc,
             "HH:mm, dd-MM-yyyy"
+            "HH:mm, dd-MM-yyyy"
           );
           setCurrentKeyLastUpdated(formatted_api_update_date);
           setKeyInfoFetchIsLoading(false);
@@ -88,10 +106,7 @@ const KeyManagement = ({
           const customError = error as CustomError;
 
           console.error(error);
-          onSnackbarMessage?.(
-            customError.message || "Error fetching API key",
-            "error"
-          );
+          onSnackbarMessage(String(error), "error");
           setKeyInfoFetchIsLoading(false);
         }
       };
@@ -142,6 +157,11 @@ const KeyManagement = ({
       flexDirection="column"
       gap={sizes.baseGap}
     >
+    <Layout.FlexBox
+      key={"key-management"}
+      flexDirection="column"
+      gap={sizes.baseGap}
+    >
       <Typography variant="h4" color="primary">
         Workspace API Key
       </Typography>
@@ -151,9 +171,9 @@ const KeyManagement = ({
         gap={sizes.baseGap}
       >
         <Typography variant="body1" color={appColors.darkGrey}>
-          You will need your workspace API key to interact with AAQ from your
-          chat manager. You can generate a new key here, but keep in mind that
-          any old workspace key is invalidated if a new key is created.
+          You will need your API key to interact with AAQ from your chat
+          manager. You can generate a new key here, but keep in mind that any
+          old key is invalidated if a new key is created.
         </Typography>
         <Typography variant="body1" color={appColors.darkGrey}>
           Daily API limit is 100.{" "}
@@ -238,6 +258,8 @@ const Connections = () => {
         Connections
       </Typography>
       <Typography variant="body1" color={appColors.darkGrey}>
+        Click on the connection of your choice to see instructions on how to use
+        it with AAQ.
         Click on the connection of your choice to see instructions on how to use
         it with AAQ.
       </Typography>
