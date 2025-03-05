@@ -11,6 +11,7 @@ import {
   Typography,
   Box,
   Alert,
+  MenuItem,
 } from "@mui/material";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -25,7 +26,7 @@ interface UserCreateModalProps {
   onClose: () => void;
   adminUsername: string;
   checkUserExists: (username: string) => Promise<boolean>;
-  addUserToWorkspace: (username: string) => Promise<void>;
+  addUserToWorkspace: (username: string, role: UserRole) => Promise<void>;
   createUser: (username: string, password: string, role: UserRole) => Promise<any>;
   formType: "add" | "create" | "edit";
   editUser?: (username: string, role: UserRole) => Promise<void>;
@@ -151,7 +152,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
       }),
     add: async () => {
       if (isVerified && userExists) {
-        await addUserToWorkspace(username);
+        await addUserToWorkspace(username, role);
       } else if (isVerified && !userExists) {
         await createUser(username, password, role).then((data) => {
           if (data.recovery_codes) {
@@ -192,7 +193,6 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
         }`,
         severity: "success",
       });
-
       setTimeout(() => {
         onClose();
       }, 300);
@@ -313,12 +313,12 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
               SelectProps={{
-                native: true,
+                native: false,
               }}
               disabled={formType == "edit" && user?.username === adminUsername}
             >
-              <option value="admin">Admin</option>
-              <option value="read_only">Read Only</option>
+              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="read_only">Read Only</MenuItem>
             </TextField>
           ) : null}
           <Box

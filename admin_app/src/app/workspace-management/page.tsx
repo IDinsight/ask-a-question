@@ -369,10 +369,11 @@ const UserManagement: React.FC = () => {
               checkUserExists={(username: string) => {
                 return checkIfUsernameExists(username, token!);
               }}
-              addUserToWorkspace={(username: string) => {
+              addUserToWorkspace={(username: string, role: string) => {
                 return addUserToWorkspace(
                   username,
                   currentWorkspace!.workspace_name,
+                  role,
                   token!,
                 );
               }}
