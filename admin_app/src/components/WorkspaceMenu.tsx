@@ -270,6 +270,7 @@ const WorkspaceMenu = ({
       {workspaces.find(
         (workspace) => workspace.workspace_name == persistedWorkspaceName,
       ) && (
+        // TODO: Change this to just a pop-up toast
         <ConfirmDefaultWorkspaceDialog
           open={openDefaultWorkspaceModal}
           onClose={() => {
@@ -339,14 +340,15 @@ const ConfirmDefaultWorkspaceDialog = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Confirm Switch</DialogTitle>
+      <DialogTitle>
+        Change default workspace to <strong>{workspace?.workspace_name}</strong>?
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Are you sure you want to set the current workspace{" "}
-          <strong>{workspace?.workspace_name}</strong> as default?
+          You will directly enter this workspace next time you log in.
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose} color="primary">
           Cancel
         </Button>
@@ -354,6 +356,7 @@ const ConfirmDefaultWorkspaceDialog = ({
           onClick={() => {
             onConfirm(workspace);
           }}
+          variant="contained"
           color="primary"
         >
           Confirm
@@ -371,16 +374,11 @@ const DefaultWorkspaceSuccessModal = ({
 }) => {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Success</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          The default workspace has been successfully modified.
-        </DialogContentText>
+        <DialogContentText>Default workspace changed successfully.</DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Close
-        </Button>
+      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );
