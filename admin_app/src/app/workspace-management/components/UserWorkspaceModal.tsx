@@ -259,13 +259,14 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           <Typography variant="h6" align="center">
             {getTitle(formType)}
           </Typography>
-          {formType === "edit" && user?.username === adminUsername && (
+          {/* {formType === "edit" && user?.username === adminUsername && (
             <Alert severity="warning" sx={{ width: "200px" }}>
-              Editing the current user will require to log in again
+              Editing the current user will require to log in again.
             </Alert>
-          )}
+          )} */}
           <Box display="flex" gap={1} width="100%">
             <TextField
+              disabled={formType === "edit"}
               fullWidth
               label="Username"
               value={username}
