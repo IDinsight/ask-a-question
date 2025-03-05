@@ -251,7 +251,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           flexDirection="column"
           gap={2}
           margin="auto"
-          sx={{ paddingLeft: 3, paddingRight: 3 }}
+          sx={{ paddingInline: 2, paddingBottom: 2 }}
         >
           <Avatar sx={{ bgcolor: "secondary.main", margin: "0 auto" }}>
             <LockOutlinedIcon />
@@ -264,8 +264,7 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               Editing the current user will require to log in again
             </Alert>
           )}
-
-          <Box display="flex" gap={1} width="100%" marginBottom={2}>
+          <Box display="flex" gap={1} width="100%">
             <TextField
               fullWidth
               label="Username"
@@ -294,7 +293,6 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ marginBottom: 2 }}
               />
               <TextField
                 fullWidth
@@ -302,11 +300,10 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                sx={{ marginBottom: 2 }}
               />
             </>
           ) : null}
-          {formType == "add" ||
+          {(formType == "add" && isVerified) ||
           formType === "create" ||
           (formType == "edit" && user && user.role) ? (
             <TextField
@@ -318,14 +315,20 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
               SelectProps={{
                 native: true,
               }}
-              sx={{ marginBottom: 2 }}
               disabled={formType == "edit" && user?.username === adminUsername}
             >
               <option value="admin">Admin</option>
               <option value="read_only">Read Only</option>
             </TextField>
           ) : null}
-          <Box display="flex" justifyContent="space-between" width="100%">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: 1,
+              width: "100%",
+            }}
+          >
             <Button variant="outlined" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
