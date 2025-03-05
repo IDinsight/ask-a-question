@@ -105,18 +105,23 @@ const WorkspaceCreateModal = ({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 1,
             alignItems: "center",
-            padding: 3,
+            padding: 2,
+            gap: 2,
           }}
         >
           <Avatar sx={{ bgcolor: "secondary.main" }}>
             <CreateNewFolderIcon />
           </Avatar>
-          <Typography variant="h5" align="center" marginBottom={5}>
+          <Typography variant="h5" align="center" marginBottom={1}>
             {isEdit ? "Edit Workspace" : "Create New Workspace"}
           </Typography>
-          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+
+          {errorMessage && (
+            <Alert severity="error" sx={{ marginBottom: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
 
           <TextField
             margin="none"
@@ -130,6 +135,9 @@ const WorkspaceCreateModal = ({
             defaultValue={existingWorkspace?.workspace_name}
             onChange={() => {
               setIsWorkspaceNameEmpty(false);
+            }}
+            sx={{
+              marginTop: 2,
             }}
           />
           {/*TODO implement quota updates feature */}
@@ -157,21 +165,15 @@ const WorkspaceCreateModal = ({
             width="100%"
             style={{
               display: "flex",
-              justifyContent: "flex-end",
-              marginTop: 2,
-              gap: 5,
+              justifyContent: "space-between",
+              gap: 10,
             }}
           >
-            <Button
-              onClick={() => onClose()}
-              type="submit"
-              fullWidth
-              sx={{ maxWidth: "120px" }}
-            >
+            <Button onClick={() => onClose()} variant="outlined" type="submit">
               Cancel
             </Button>
-            <Button type="submit" variant="contained" sx={{ width: "auto" }}>
-              {isEdit ? "Edit Workspace" : "Create"}
+            <Button type="submit" variant="contained">
+              {isEdit ? "Edit" : "Create"}
             </Button>
           </Box>
         </Box>
