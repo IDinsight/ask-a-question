@@ -58,7 +58,7 @@ async def get_contents(
     Returns
     -------
     list[ContentRetrieve]
-        A list of ContentRetrieve objects containing all contents for the user.
+        A list of ContentRetrieve objects containing all contents in the workspace.
     """
 
     result = await asession.execute(
@@ -181,7 +181,7 @@ async def get_queries(
     Returns
     -------
     list[QueryExtract]
-        A list of QueryExtract objects containing all queries for the user.
+        A list of QueryExtract objects containing all queries for the workspace.
     """
 
     if isinstance(start_date, date):
