@@ -79,7 +79,7 @@ const AddEditContentPage = () => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "100%",
           width: "100%",
         }}
       >
@@ -90,8 +90,13 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox
-        flexDirection={"column"}
-        sx={{ p: sizes.doubleBaseGap, marginTop: 5 }}
+        sx={{
+          flexDirection: "column",
+          marginTop: 2,
+          marginBottom: 1,
+          p: sizes.doubleBaseGap,
+          gap: sizes.baseGap,
+        }}
       >
         <Header
           content_id={content_id}
@@ -99,25 +104,21 @@ const AddEditContentPage = () => {
             isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
           }
         />
-        <Layout.FlexBox flexDirection={"column"}>
-          <Layout.Spacer multiplier={2} />
-          <ContentBox
-            content={content}
-            setContent={setContent}
-            getTagList={() => {
-              return getTagList(token!);
-            }}
-            addTag={(tag: string) => {
-              return createTag(tag, token!);
-            }}
-            deleteTag={(tag_id: number) => {
-              return deleteTag(tag_id, token!);
-            }}
-            isSaved={isSaved}
-            setIsSaved={setIsSaved}
-          />
-          <Layout.Spacer multiplier={1} />
-        </Layout.FlexBox>
+        <ContentBox
+          content={content}
+          setContent={setContent}
+          getTagList={() => {
+            return getTagList(token!);
+          }}
+          addTag={(tag: string) => {
+            return createTag(tag, token!);
+          }}
+          deleteTag={(tag_id: number) => {
+            return deleteTag(tag_id, token!);
+          }}
+          isSaved={isSaved}
+          setIsSaved={setIsSaved}
+        />
       </Layout.FlexBox>
       <DiscardChangesModal
         open={openDiscardChangesModal}

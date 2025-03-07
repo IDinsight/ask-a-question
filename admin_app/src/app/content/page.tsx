@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { MouseEvent, useEffect, useState } from "react";
+import React, { MouseEvent, useState } from "react";
 
 import {
   Alert,
@@ -22,26 +22,25 @@ import {
   Typography,
 } from "@mui/material";
 
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { IconButton } from "@mui/material";
 
 import type { Content } from "@/app/content/edit/page";
-import ContentCard from "./components/ContentCard";
-import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { getContentList, getTagList, archiveContent } from "./api";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
+import { archiveContent, getContentList, getTagList } from "./api";
+import { ChatSideBar } from "./components/ChatSideBar";
+import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
+import { DownloadModal } from "./components/DownloadModal";
 import { ImportModal } from "./components/ImportModal";
-import { PageNavigation } from "./components/PageNavigation";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { ChatSideBar } from "./components/ChatSideBar";
-import { apiCalls } from "@/utils/api";
-
-const CARD_HEIGHT = 250;
 
 export interface Tag {
   tag_id: number;
@@ -60,6 +59,24 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>;
+}
+
+interface CardsGridProps {
+  displayLanguage: string;
+  searchTerm: string;
+  tags: Tag[];
+  filterTags: Tag[];
+  openSidebar: boolean;
+  token: string | null;
+  editAccess: boolean;
+  setSnackMessage: React.Dispatch<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>;
+  openSearchSidebar: boolean;
+  handleSidebarToggle: () => void;
+  openChatSidebar: boolean;
+  handleChatSidebarToggle: () => void;
 }
 
 const CardsPage = () => {
@@ -119,7 +136,7 @@ const CardsPage = () => {
 
   return (
     <>
-      <Grid container>
+      <Grid container sx={{ height: "100%" }}>
         <Grid
           item
           xs={12}
@@ -131,25 +148,34 @@ const CardsPage = () => {
               openSearchSidebar || openChatSidebar
                 ? { xs: "none", sm: "none", md: "block" }
                 : "block",
+            height: "100%",
+            paddingTop: 5,
+            paddingInline: 4,
           }}
         >
-          <Layout.FlexBox
+          <Box
             sx={{
+              display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              paddingTop: 5,
-              paddingInline: 4,
+              height: "100%",
             }}
           >
             <Box
               sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
                 width: "100%",
                 maxWidth: "lg",
+                minWidth: "sm",
               }}
             >
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "column",
+                  paddingBottom: 3,
                   gap: 2,
                 }}
               >
@@ -159,75 +185,46 @@ const CardsPage = () => {
                 <Typography variant="body1" align="left" color={appColors.darkGrey}>
                   Add, edit, and test content for question-answering. Questions sent to
                   the search service will retrieve results from here.
+                  <p />
+                  Content limit is 50.{" "}
+                  <a
+                    href="https://docs.ask-a-question.com/latest/contact_us/"
+                    style={{
+                      textDecoration: "underline",
+                      textDecorationColor: appColors.darkGrey,
+                      color: appColors.darkGrey,
+                    }}
+                  >
+                    Contact us
+                  </a>{" "}
+                  for more.
                 </Typography>
               </Box>
-              <Layout.FlexBox
-                sx={{
-                  flexGrow: 1,
-                  alignItems: "center",
-                  paddingTop: 5,
-                }}
-              >
-                <CardsUtilityStrip
-                  editAccess={editAccess}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                  tags={tags}
-                  filterTags={filterTags}
-                  setFilterTags={setFilterTags}
-                  setSnackMessage={setSnackMessage}
-                />
-                <Layout.Spacer multiplier={1} />
-                <CardsGrid
-                  displayLanguage={displayLanguage}
-                  searchTerm={searchTerm}
-                  tags={tags}
-                  filterTags={filterTags}
-                  openSidebar={openSearchSidebar || openChatSidebar}
-                  token={token}
-                  editAccess={editAccess}
-                  setSnackMessage={setSnackMessage}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                    p: 1,
-                  }}
-                >
-                  {!openSearchSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                      }}
-                      onClick={handleSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test search
-                    </Fab>
-                  )}
-                  {!openChatSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                        ml: 2,
-                      }}
-                      onClick={handleChatSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test chat
-                    </Fab>
-                  )}
-                </Box>
-              </Layout.FlexBox>
+              <CardsUtilityStrip
+                editAccess={editAccess}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                tags={tags}
+                filterTags={filterTags}
+                setFilterTags={setFilterTags}
+                setSnackMessage={setSnackMessage}
+              />
+              <CardsGrid
+                displayLanguage={displayLanguage}
+                searchTerm={searchTerm}
+                tags={tags}
+                filterTags={filterTags}
+                openSidebar={openSearchSidebar || openChatSidebar}
+                token={token}
+                editAccess={editAccess}
+                setSnackMessage={setSnackMessage}
+                openSearchSidebar={openSearchSidebar}
+                handleSidebarToggle={handleSidebarToggle}
+                openChatSidebar={openChatSidebar}
+                handleChatSidebarToggle={handleChatSidebarToggle}
+              />
             </Box>
-          </Layout.FlexBox>
+          </Box>
         </Grid>
         <Grid
           item
@@ -302,38 +299,43 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
   return (
-    <Layout.FlexBox
+    <Box
       sx={{
+        display: "flex",
         flexDirection: "row",
         justifyContent: "flex-end",
+        alignContent: "flex-end",
         width: "100%",
+        paddingBottom: 2,
         flexWrap: "wrap",
         gap: sizes.baseGap,
       }}
     >
-      <Layout.FlexBox
+      <Box
         sx={{
+          display: "flex",
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "flex-start",
           flexWrap: "wrap",
           gap: sizes.baseGap,
         }}
       >
-        <Box sx={{ width: "300px" }}>
+        <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ width: "250px" }}>
+        <Box sx={{ minWidth: "130px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
             setFilterTags={setFilterTags}
           />
         </Box>
-      </Layout.FlexBox>
-      <Layout.FlexBox sx={{ flexGrow: 1 }} />
-      <Layout.FlexBox
+      </Box>
+      <Box sx={{ flexGrow: 1 }} />
+      <Box
         sx={{
+          display: "flex",
           flexDirection: "row",
           alignSelf: "flex-end",
           alignItems: "center",
@@ -344,6 +346,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           <>
             <Button
               variant="outlined"
+              size="small"
               disabled={!editAccess}
               onClick={() => {
                 setOpenDownloadModal(true);
@@ -374,8 +377,8 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             });
           }}
         />
-      </Layout.FlexBox>
-    </Layout.FlexBox>
+      </Box>
+    </Box>
   );
 };
 
@@ -383,6 +386,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   return (
     <Autocomplete
       multiple
+      size="small"
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
@@ -393,7 +397,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
         setFilterTags(updatedTags);
       }}
       renderInput={(params) => (
-        <TextField {...params} variant="standard" label="Filter by tags" />
+        <TextField {...params} variant="standard" label="Filter tags" />
       )}
       sx={{ color: appColors.white }}
     />
@@ -414,7 +418,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
 
   return (
     <>
-      <ButtonGroup variant="contained" disabled={!editAccess}>
+      <ButtonGroup variant="contained" size="small" disabled={!editAccess}>
         <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
@@ -447,57 +451,55 @@ const CardsGrid = ({
   searchTerm,
   tags,
   filterTags,
-  openSidebar,
   token,
   editAccess,
   setSnackMessage,
-}: {
-  displayLanguage: string;
-  searchTerm: string;
-  tags: Tag[];
-  filterTags: Tag[];
-  openSidebar: boolean;
-  token: string | null;
-  editAccess: boolean;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string | null;
-      color: "success" | "info" | "warning" | "error" | undefined;
-    }>
-  >;
-}) => {
+  openSearchSidebar,
+  handleSidebarToggle,
+  openChatSidebar,
+  handleChatSidebarToggle,
+}: CardsGridProps) => {
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
   const [maxPages, setMaxPages] = React.useState<number>(1);
+  const [columns, setColumns] = React.useState<number>(1);
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const calculateMaxCardsPerPage = () => {
-    // set rows as per height of each card and height of grid (approximated from window height)
-    const gridHeight = window.innerHeight * 0.8;
-    const rows = Math.max(1, Math.floor(gridHeight / CARD_HEIGHT));
+  const gridRef = React.useRef<HTMLDivElement>(null);
 
-    // set columns as per width of grid - this should be changed if grid sizing changes
-    const gridWidth = window.innerWidth;
-    let columns;
-    if (gridWidth < 600) {
-      columns = 1;
-    } else if (gridWidth > 600 && gridWidth < 900) {
-      columns = 2;
-    } else if (gridWidth > 900 && gridWidth < 1200) {
-      columns = 3;
-    } else {
-      columns = 3;
+  // Callback ref to handle when the grid element mounts
+  const setGridRef = (node: HTMLDivElement | null) => {
+    (gridRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    if (node) {
+      calculateMaxCardsPerPage();
+      const resizeObserver = new ResizeObserver(() => {
+        setTimeout(calculateMaxCardsPerPage, 0);
+      });
+      resizeObserver.observe(node);
     }
-    const maxCards = rows * columns;
+  };
 
+  const calculateMaxCardsPerPage = () => {
+    if (!gridRef.current) return;
+
+    const gridWidth = gridRef.current.clientWidth;
+    const gridHeight = gridRef.current.clientHeight;
+    // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
+    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
+    const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
+    const maxCards = rows * newColumns;
+
+    setColumns(newColumns);
     setMaxCardsPerPage(maxCards);
   };
 
-  useEffect(() => {
-    calculateMaxCardsPerPage();
+  // Optionally, you can still use an effect for window resize
+  React.useEffect(() => {
     window.addEventListener("resize", calculateMaxCardsPerPage);
-    return () => window.removeEventListener("resize", calculateMaxCardsPerPage);
+    return () => {
+      window.removeEventListener("resize", calculateMaxCardsPerPage);
+    };
   }, []);
 
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -506,14 +508,6 @@ const CardsGrid = ({
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
       message: `Content removed successfully`,
-      color: "success",
-    });
-  };
-  const onSuccessfulDelete = (content_id: number) => {
-    setIsLoading(true);
-    setRefreshKey((prevKey) => prevKey + 1);
-    setSnackMessage({
-      message: `Content deleted successfully`,
       color: "success",
     });
   };
@@ -565,8 +559,10 @@ const CardsGrid = ({
   if (isLoading) {
     return (
       <>
-        <Layout.FlexBox
+        <Box
           sx={{
+            display: "flex",
+            flexDirection: "column",
             mx: sizes.baseGap,
             py: sizes.tinyGap,
             width: "98%",
@@ -585,34 +581,46 @@ const CardsGrid = ({
           >
             <CircularProgress />
           </div>
-        </Layout.FlexBox>
-        <PageNavigation page={1} setPage={setPage} maxPages={maxPages} />
-        <Layout.Spacer multiplier={1} />
+        </Box>
       </>
     );
   }
   return (
-    <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        gap: 2,
+      }}
+    >
       <Paper
+        ref={setGridRef}
         elevation={0}
         sx={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          minHeight: "60vh",
+          justifyContent: "flex-start",
+          height: "100%",
+          minHeight: CARD_HEIGHT * 1.1,
+          maxHeight: CARD_HEIGHT * 4.5,
           width: "100%",
+          paddingBottom: 2,
           border: 0.5,
           borderColor: "lightgrey",
         }}
       >
-        <Grid container>
+        <Grid container sx={{ height: "hug-content" }}>
           {cards.length === 0 ? (
-            <Layout.FlexBox
+            <Box
               sx={{
                 display: "flex",
                 flexDirection: "column",
+                flexGrow: 1,
                 justifyContent: "center",
                 alignItems: "center",
+                height: "100%",
                 width: "100%",
                 padding: sizes.doubleBaseGap,
               }}
@@ -627,7 +635,7 @@ const CardsGrid = ({
                   Try adding new content or changing your search or tag filters.
                 </Typography>
               </p>
-            </Layout.FlexBox>
+            </Box>
           ) : (
             cards
               .slice(maxCardsPerPage * (page - 1), maxCardsPerPage * page)
@@ -636,12 +644,9 @@ const CardsGrid = ({
                   return (
                     <Grid
                       item
-                      xs={12}
-                      sm={openSidebar ? 12 : 6}
-                      md={openSidebar ? 6 : 4}
-                      lg={openSidebar ? 6 : 4}
+                      xs={12 / columns}
                       key={item.content_id}
-                      sx={{ display: "grid", alignItems: "stretch" }}
+                      sx={{ p: "5px" }}
                     >
                       <ContentCard
                         title={item.content_title}
@@ -676,9 +681,84 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <Layout.Spacer multiplier={0.75} />
-      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
-    </>
+      {/* PageNav and Test Fabs */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          flexWrap: "wrap",
+          gap: 2,
+          paddingBottom: 4,
+        }}
+      >
+        <Box display={"flex"} flexDirection={"row"} alignItems={"center"}>
+          <IconButton
+            onClick={() => {
+              page > 1 && setPage(page - 1);
+            }}
+            disabled={page <= 1}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
+          </IconButton>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <Typography variant="subtitle2">
+            {maxPages === 0 ? 0 : page} of {maxPages}
+          </Typography>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <IconButton
+            onClick={() => {
+              page < maxPages && setPage(page + 1);
+            }}
+            disabled={page >= maxPages}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronRight color={page < maxPages ? "primary" : "disabled"} />
+          </IconButton>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+            gap: 1,
+          }}
+        >
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openSearchSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test search
+          </Fab>
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openChatSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleChatSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test chat
+          </Fab>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

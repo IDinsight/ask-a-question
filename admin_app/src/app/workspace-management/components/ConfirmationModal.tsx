@@ -64,7 +64,7 @@ const ConfirmationModal = ({
           }}
         />
 
-        <Box display="flex" justifyContent="center" mt={2}>
+        <Box display="flex" justifyContent="center" mt={1}>
           <Button
             variant="contained"
             onClick={() => {
@@ -72,13 +72,11 @@ const ConfirmationModal = ({
               setIsClicked(true);
             }}
             startIcon={isClicked ? <CheckIcon /> : <ContentCopyIcon />}
-            style={{ paddingLeft: "20px", paddingRight: "20px" }}
           >
             {isClicked ? "Copied" : "Copy"}
           </Button>
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={handleClose} color="primary" variant="contained" autoFocus>
           {closeButtonText}

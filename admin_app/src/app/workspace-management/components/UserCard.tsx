@@ -15,6 +15,7 @@ import {
 import Edit from "@mui/icons-material/Edit";
 import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 import { UserRole } from "@/components/WorkspaceMenu";
+import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
 
 interface UserCardProps {
   index: number;
@@ -135,20 +136,27 @@ const UserCard: React.FC<UserCardProps> = ({
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          Remove user <strong>{username}</strong> from workspace?
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to remove <strong>{username}</strong> from the
-            workspace? If the current workspace is the only workspace for this user, the
-            user will be <strong> deleted from the system</strong>.
+            If the current workspace is the only workspace for this user, the user will
+            be <strong> deleted from the system</strong>.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
+        <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+          <Button onClick={handleClose} variant="outlined" color="primary">
             Cancel
           </Button>
-          <Button onClick={handleConfirmRemove} color="primary" autoFocus>
-            Confirm
+          <Button
+            onClick={handleConfirmRemove}
+            variant="contained"
+            color="error"
+            startIcon={<PersonRemoveIcon />}
+            autoFocus
+          >
+            Remove
           </Button>
         </DialogActions>
       </Dialog>

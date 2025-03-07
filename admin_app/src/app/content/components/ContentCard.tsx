@@ -7,6 +7,9 @@ import React from "react";
 import { Layout } from "../../../components/Layout";
 import { Tag } from "@/app/content/page";
 
+const CARD_HEIGHT = 210;
+const CARD_MIN_WIDTH = 280;
+
 const ContentCard = ({
   title,
   text,
@@ -42,12 +45,12 @@ const ContentCard = ({
         sx={[
           {
             cursor: "pointer",
-            m: sizes.smallGap,
             p: sizes.baseGap,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            maxHeight: "250px",
+            height: CARD_HEIGHT,
+            minWidth: CARD_MIN_WIDTH,
           },
           appStyles.hoverShadow,
           appStyles.shadow,
@@ -108,6 +111,7 @@ const ContentCard = ({
             disabled={!editAccess}
             component={Link}
             href={`/content/edit?content_id=${content_id}`}
+            onClick={(event) => event.stopPropagation()}
           >
             <Edit fontSize="small" />
             <Layout.Spacer horizontal multiplier={0.3} />
@@ -151,4 +155,4 @@ const ContentCard = ({
   );
 };
 
-export default ContentCard;
+export { ContentCard, CARD_HEIGHT, CARD_MIN_WIDTH };

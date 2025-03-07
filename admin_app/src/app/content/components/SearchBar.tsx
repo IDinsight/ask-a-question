@@ -15,9 +15,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm 
       <TextField
         sx={{
           backgroundColor: appColors.white,
-          borderRadius: "5px",
         }}
         variant="outlined"
+        size="small"
         placeholder="Search"
         value={searchTerm}
         onChange={(e) => {

@@ -109,6 +109,8 @@ const Logo = () => {
           height: 36,
           aspect_ratio: 1200 / 214,
           paddingTop: 0.3,
+          paddingInline: 0.5,
+          display: { xs: "none", sm: "block" },
         }}
       />
     </Link>
@@ -124,12 +126,11 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
   return (
     <Box
       alignItems="center"
-      gap={1.5}
       paddingRight={1.5}
       sx={{
         height: sizes.navbar,
         flexGrow: 1,
-        display: { xs: "flex", md: "none" },
+        display: { xs: "flex", lg: "none" },
       }}
     >
       <IconButton
@@ -162,7 +163,7 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
         open={Boolean(anchorElNav)}
         onClose={() => setAnchorElNav(null)}
         sx={{
-          display: { xs: "block", md: "none" },
+          display: { xs: "block", lg: "none" },
           "& .MuiPaper-root": {
             backgroundColor: appColors.primary,
             color: "white",
@@ -206,7 +207,7 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
       sx={{
         height: sizes.navbar,
         flexGrow: 1,
-        display: { xs: "none", md: "flex" },
+        display: { xs: "none", lg: "flex" },
       }}
       paddingLeft={0.5}
       paddingRight={1.5}
@@ -230,6 +231,7 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
               sx={{
                 margin: sizes.baseGap,
                 color: pathname === page.path ? appColors.white : appColors.outline,
+                whiteSpace: "nowrap",
               }}
             >
               {page.title}

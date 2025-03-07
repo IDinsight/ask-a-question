@@ -111,7 +111,7 @@ const KeyManagement = ({
   return editAccess ? (
     <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
-        Your API Key
+        Workspace API Key
       </Typography>
       <Layout.FlexBox
         flexDirection="column"
@@ -119,9 +119,9 @@ const KeyManagement = ({
         gap={sizes.baseGap}
       >
         <Typography variant="body1" color={appColors.darkGrey}>
-          You will need your API key to interact with AAQ from your chat manager. You
-          can generate a new key here, but keep in mind that any old key is invalidated
-          if a new key is created.
+          You will need your workspace API key to interact with AAQ from your chat
+          manager. You can generate a new key here, but keep in mind that any old
+          workspace key is invalidated if a new key is created.
         </Typography>
         <Typography variant="body1" color={appColors.darkGrey}>
           Daily API limit is 100.{" "}
