@@ -71,15 +71,10 @@ async def _ask_llm_async(
     if not messages:
         assert isinstance(user_message, str) and isinstance(system_message, str)
         messages = [
-            {
-                "content": system_message,
-                "role": "system",
-            },
-            {
-                "content": user_message,
-                "role": "user",
-            },
+            {"content": system_message, "role": "system"},
+            {"content": user_message, "role": "user"},
         ]
+
     llm_generation_params = llm_generation_params or {
         "max_tokens": 1024,
         "temperature": 0,
@@ -87,17 +82,41 @@ async def _ask_llm_async(
 
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
 
-    llm_response_raw = await acompletion(
-        model=litellm_model,
-        messages=messages,
-        api_base=litellm_endpoint,
-        api_key=LITELLM_API_KEY,
-        metadata=metadata,
-        **extra_kwargs,
-        **llm_generation_params,
-    )
-    logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")
-    return llm_response_raw.choices[0].message.content
+    try:
+        llm_response_raw = await acompletion(
+            model=litellm_model,
+            messages=messages,
+            api_base=litellm_endpoint,
+            api_key=LITELLM_API_KEY,
+            metadata=metadata,
+            **extra_kwargs,
+            **llm_generation_params,
+        )
+    except Exception as err:
+        logger.error("Error calling the LLM", exc_info=True)
+        raise LLMCallException(f"Error during LLM call: {err}") from err
+
+    # Optionally check if the returned response contains an error field
+    if hasattr(llm_response_raw, "error") and llm_response_raw.error:
+        error_msg = getattr(llm_response_raw, "error", "Unknown error")
+        logger.error(f"LLM call returned an error: {error_msg}")
+        raise LLMCallException(f"LLM call returned an error: {error_msg}")
+
+    # Ensure that the response has valid content
+    try:
+        content = llm_response_raw.choices[0].message.content
+    except (AttributeError, IndexError) as e:
+        logger.error("LLM response structure is not as expected", exc_info=True)
+        raise LLMCallException("LLM response structure is not as expected") from e
+
+    logger.info(f"LLM output: {content}")
+    return content
+
+
+class LLMCallException(Exception):
+    """Custom exception for LLM call errors."""
+
+    pass
 
 
 def _truncate_chat_history(

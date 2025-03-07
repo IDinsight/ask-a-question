@@ -120,6 +120,12 @@ def create_langfuse_metadata(
     return metadata
 
 
+class EmbeddingCallException(Exception):
+    """Custom exception for embedding call errors."""
+
+    pass
+
+
 async def embedding(
     *, metadata: Optional[dict] = None, text_to_embed: str
 ) -> list[float]:
@@ -138,17 +144,25 @@ async def embedding(
         The embedding for the given text.
     """
 
-    metadata = metadata or {}
+    try:
+        content_embedding = await aembedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            metadata=metadata,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+    except Exception as err:
+        raise EmbeddingCallException(f"Error during embedding call: {err}") from err
 
-    content_embedding = await aembedding(
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-        input=text_to_embed,
-        metadata=metadata,
-        model=LITELLM_MODEL_EMBEDDING,
-    )
-
-    return content_embedding.data[0]["embedding"]
+    # Validate the response structure
+    try:
+        embedding_value = content_embedding.data[0]["embedding"]
+    except (AttributeError, IndexError, KeyError) as err:
+        raise EmbeddingCallException(
+            "Embedding response structure is not as expected"
+        ) from err
+    return embedding_value
 
 
 def encode_api_limit(*, api_limit: int | None) -> int | str:
