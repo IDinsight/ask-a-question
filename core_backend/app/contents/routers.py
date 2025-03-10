@@ -18,7 +18,7 @@ from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, valida
 from ..tags.schemas import TagCreate, TagRetrieve
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
-from ..utils import setup_logger
+from ..utils import EmbeddingCallException, setup_logger
 from ..workspaces.utils import (
     get_content_quota_by_workspace_id,
     get_workspace_by_workspace_name,
@@ -103,6 +103,7 @@ async def create_content(
     HTTPException
         If the user does not have the required role to create content in the workspace.
         If the content tags are invalid or the user would exceed their content quota.
+        If the embedding of the content fails.
     """
 
     workspace_db = await get_workspace_by_workspace_name(
@@ -147,12 +148,18 @@ async def create_content(
             ) from e
 
     # 4.
-    content_db = await save_content_to_db(
-        asession=asession,
-        content=content,
-        exclude_archived=False,  # Don't exclude for newly saved content!
-        workspace_id=workspace_id,
-    )
+    try:
+        content_db = await save_content_to_db(
+            asession=asession,
+            content=content,
+            exclude_archived=False,  # Don't exclude for newly saved content!
+            workspace_id=workspace_id,
+        )
+    except EmbeddingCallException as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error embedding content. Please check embedding service.",
+        ) from e
     return _convert_record_to_schema(record=content_db)
 
 
@@ -237,12 +244,18 @@ async def edit_content(
 
     content.content_tags = content_tags
     content.is_archived = old_content.is_archived
-    updated_content = await update_content_in_db(
-        asession=asession,
-        content=content,
-        content_id=content_id,
-        workspace_id=workspace_id,
-    )
+    try:
+        updated_content = await update_content_in_db(
+            asession=asession,
+            content=content,
+            content_id=content_id,
+            workspace_id=workspace_id,
+        )
+    except EmbeddingCallException as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error embedding content. Please check embedding service.",
+        ) from e
 
     return _convert_record_to_schema(record=updated_content)
 

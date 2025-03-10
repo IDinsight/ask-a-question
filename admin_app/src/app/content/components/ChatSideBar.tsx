@@ -100,13 +100,10 @@ const ChatSideBar = ({
       : getResponse(question);
     responsePromise
       .then((response) => {
-        const errorMessage = response.error
-          ? response.error.error_message
-          : "LLM Response failed.";
         const responseMessage = {
           dateTime: new Date().toISOString(),
           type: "response",
-          content: response.status == 200 ? response.llm_response : errorMessage,
+          content: response.llm_response,
           json: response,
         } as ResponseMessage;
 
@@ -133,7 +130,7 @@ const ChatSideBar = ({
         flexDirection: "column",
         padding: 3,
         paddingTop: 4,
-        height: "94vh",
+        height: "100%",
       }}
     >
       <Box
@@ -149,8 +146,14 @@ const ChatSideBar = ({
       </Box>
       <Box
         sx={{
-          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
           flexGrow: 1,
+          flexShrink: 1,
+          height: 0,
+          minHeight: "200px",
+          padding: 2,
+          overflowY: "auto",
         }}
       >
         {messages.map((message, index) => (

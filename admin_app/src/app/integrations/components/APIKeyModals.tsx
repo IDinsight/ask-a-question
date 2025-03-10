@@ -30,7 +30,7 @@ export const KeyRenewConfirmationModal = ({
   isLoading: boolean;
 }) => (
   <Dialog open={open} onClose={onClose}>
-    <DialogTitle>{"Are you sure you want to renew your API key?"}</DialogTitle>
+    <DialogTitle>{"Are you sure you want to renew the workspace API key?"}</DialogTitle>
     <DialogContent>
       <DialogContentText>
         {`If you proceed, your current key beginning with `}
@@ -82,17 +82,15 @@ export const NewKeyModal = ({
       <DialogTitle>{"Save your new key"}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Please save this secret key somewhere safe and accessible. For
-          security reasons,
+          Please save this secret key somewhere safe and accessible. For security
+          reasons,
           <Typography component="span" style={{ fontWeight: "bold" }}>
             {" you won't be able to view the full key again here. "}
           </Typography>
           If you lose this secret key, you'll need to generate a new one.
         </DialogContentText>
         <Layout.Spacer multiplier={1} />
-        <DialogContentText>
-          Note: The API key has 32 characters.
-        </DialogContentText>
+        <DialogContentText>Note: The API key has 32 characters.</DialogContentText>
         <Layout.Spacer multiplier={2} />
         <Layout.FlexBox
           flexDirection="row"

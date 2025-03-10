@@ -10,7 +10,7 @@ from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
-from ..utils import setup_logger
+from ..utils import EmbeddingCallException, setup_logger
 from ..workspaces.utils import get_workspace_by_workspace_name
 from .models import (
     UrgencyRuleDB,
@@ -78,12 +78,18 @@ async def create_urgency_rule(
             detail="User does not have the required role to create urgency rules in "
             "the workspace.",
         )
+    try:
 
-    urgency_rule_db = await save_urgency_rule_to_db(
-        asession=asession,
-        urgency_rule=urgency_rule,
-        workspace_id=workspace_db.workspace_id,
-    )
+        urgency_rule_db = await save_urgency_rule_to_db(
+            asession=asession,
+            urgency_rule=urgency_rule,
+            workspace_id=workspace_db.workspace_id,
+        )
+    except EmbeddingCallException as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error embedding rule. Please check embedding service.",
+        ) from e
     return _convert_record_to_schema(urgency_rule_db=urgency_rule_db)
 
 
@@ -255,13 +261,18 @@ async def update_urgency_rule(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Urgency Rule ID `{urgency_rule_id}` not found",
         )
-
-    urgency_rule_db = await update_urgency_rule_in_db(
-        asession=asession,
-        urgency_rule=urgency_rule,
-        urgency_rule_id=urgency_rule_id,
-        workspace_id=workspace_id,
-    )
+    try:
+        urgency_rule_db = await update_urgency_rule_in_db(
+            asession=asession,
+            urgency_rule=urgency_rule,
+            urgency_rule_id=urgency_rule_id,
+            workspace_id=workspace_id,
+        )
+    except EmbeddingCallException as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error embedding rule. Please check embedding service.",
+        ) from e
     return _convert_record_to_schema(urgency_rule_db=urgency_rule_db)
 
 
