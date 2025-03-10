@@ -1,4 +1,4 @@
-import api, { CustomError } from "../../utils/api";
+import api, { CustomError, handleApiError } from "../../utils/api";
 import { Period, CustomDashboardFrequency } from "./types";
 import axios from "axios";
 
@@ -46,18 +46,7 @@ async function fetchData(url: string, token: string, errorMessage: string) {
     });
     return response.data;
   } catch (customError) {
-    if (
-      axios.isAxiosError(customError) &&
-      customError.response &&
-      customError.response.status !== 500
-    ) {
-      throw {
-        status: customError.response.status,
-        message: errorMessage,
-      } as CustomError;
-    } else {
-      throw new Error(errorMessage);
-    }
+    handleApiError(customError, errorMessage);
   }
 }
 
