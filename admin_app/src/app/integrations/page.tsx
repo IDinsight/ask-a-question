@@ -106,7 +106,10 @@ const KeyManagement = ({
           const customError = error as CustomError;
 
           console.error(error);
-          onSnackbarMessage(String(error), "error");
+          onSnackbarMessage?.(
+            customError.message || "Error fetching API key",
+            "error"
+          );
           setKeyInfoFetchIsLoading(false);
         }
       };
