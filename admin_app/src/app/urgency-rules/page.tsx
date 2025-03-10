@@ -83,13 +83,7 @@ const UrgencyRulesPage = () => {
         .catch((error) => {
           const customError = error as CustomError;
           let errorMessage = "Error adding urgency rule";
-          if (customError.message) {
-            errorMessage = customError.message;
-          }
-          setSnackbarMessage({
-            message: errorMessage,
-            severity: "error",
-          });
+          handleCustomError(customError, errorMessage);
           setSaving(false);
         });
     } else {
@@ -107,13 +101,7 @@ const UrgencyRulesPage = () => {
         .catch((error) => {
           const customError = error as CustomError;
           let errorMessage = "Error updating urgency rule";
-          if (customError.message) {
-            errorMessage = customError.message;
-          }
-          setSnackbarMessage({
-            message: errorMessage,
-            severity: "error",
-          });
+          handleCustomError(customError, errorMessage);
           setSaving(false);
         });
     }
@@ -191,7 +179,17 @@ const UrgencyRulesPage = () => {
       setEditableIndex(-1);
     }
   };
-
+  const handleCustomError = (error: unknown, defaultMessage: string) => {
+    const customError = error as CustomError;
+    let errorMessage = defaultMessage;
+    if (customError && customError.message) {
+      errorMessage = customError.message;
+    }
+    setSnackbarMessage({
+      message: errorMessage,
+      severity: "error",
+    });
+  };
   useEffect(() => {
     if (token) {
       getUrgencyRuleList(token)
@@ -199,13 +197,7 @@ const UrgencyRulesPage = () => {
         .catch((error) => {
           const customError = error as CustomError;
           let errorMessage = "Failed to fetch urgency rules";
-          if (customError && customError.message) {
-            errorMessage = customError.message;
-            setSnackbarMessage({
-              message: errorMessage,
-              severity: "error",
-            });
-          }
+          handleCustomError(customError, errorMessage);
           console.error(error);
         });
       setCurrAccessLevel(accessLevel);

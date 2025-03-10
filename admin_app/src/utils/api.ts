@@ -17,6 +17,20 @@ export type CustomError = {
   status: number;
   message: string;
 };
+export const handleApiError = (customError: any, errorMessage: string) => {
+  if (
+    axios.isAxiosError(customError) &&
+    customError.response &&
+    customError.response.status !== 500
+  ) {
+    throw {
+      status: customError.response.status,
+      message: (customError.response.data as any)?.detail || errorMessage,
+    } as CustomError;
+  } else {
+    throw new Error(errorMessage);
+  }
+};
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -31,7 +45,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 const getLoginToken = async (username: string, password: string) => {
@@ -47,18 +61,10 @@ const getLoginToken = async (username: string, password: string) => {
     });
     return response.data;
   } catch (customError) {
-    if (
-      axios.isAxiosError(customError) &&
-      customError.response &&
-      customError.response.status !== 500
-    ) {
-      throw {
-        status: customError.response.status,
-        message: customError.response.data?.detail,
-      } as CustomError;
-    }
+    let error_message = "Error fetching login token";
+    handleApiError(customError, error_message);
     console.log(customError);
-    throw new Error("Error fetching login token");
+    throw new Error(error_message);
   }
 };
 
@@ -78,7 +84,7 @@ const getGoogleLoginToken = async (idToken: {
 const getSearch = async (
   question: string,
   generate_llm_response: boolean,
-  token: string,
+  token: string
 ): Promise<{ status: number; data?: any; error?: any }> => {
   try {
     const response = await api.post(
@@ -89,7 +95,7 @@ const getSearch = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     return { status: response.status, ...response.data };
@@ -108,7 +114,7 @@ const getChat = async (
   question: string,
   generate_llm_response: boolean,
   token: string,
-  session_id?: number,
+  session_id?: number
 ): Promise<{ status: number; data?: any; error?: any }> => {
   try {
     const response = await api.post(
@@ -120,7 +126,7 @@ const getChat = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     return { status: response.status, ...response.data };
@@ -138,7 +144,7 @@ const postResponseFeedback = async (
   query_id: number,
   feedback_sentiment: string,
   feedback_secret_key: string,
-  token: string,
+  token: string
 ) => {
   try {
     const response = await api.post(
@@ -150,7 +156,7 @@ const postResponseFeedback = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
   } catch (error) {
@@ -165,7 +171,7 @@ const getUrgencyDetection = async (search: string, token: string) => {
       { message_text: search },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
   } catch (error: any) {
