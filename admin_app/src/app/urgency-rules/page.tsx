@@ -225,7 +225,9 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+          display: openSidebar
+            ? { xs: "none", sm: "none", md: "block" }
+            : "block",
           height: "100%",
           paddingTop: 5,
           paddingInline: 4,
@@ -377,7 +379,9 @@ const UrgencyRulesPage = () => {
                           disablePadding
                           onMouseEnter={() => setHoveredIndex(index)}
                           onMouseLeave={() => setHoveredIndex(-1)}
-                          onDoubleClick={editAccess ? handleEdit(index) : () => {}}
+                          onDoubleClick={
+                            editAccess ? handleEdit(index) : () => {}
+                          }
                         >
                           <ListItemIcon>#{index + 1}</ListItemIcon>
                           {editableIndex === index ? (
@@ -385,12 +389,12 @@ const UrgencyRulesPage = () => {
                               fullWidth
                               size="medium"
                               value={urgencyRule.urgency_rule_text}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                handleTextChange(e.target.value, index)
-                              }
-                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                                handleKeyDown(e, index)
-                              }
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => handleTextChange(e.target.value, index)}
+                              onKeyDown={(
+                                e: React.KeyboardEvent<HTMLInputElement>
+                              ) => handleKeyDown(e, index)}
                               onBlur={() => {
                                 onBlur(index);
                               }}
@@ -427,7 +431,7 @@ const UrgencyRulesPage = () => {
                                 urgencyRule.updated_datetime_utc ? (
                                   "Last updated: " +
                                   new Date(
-                                    urgencyRule.updated_datetime_utc,
+                                    urgencyRule.updated_datetime_utc
                                   ).toLocaleString(undefined, {
                                     day: "numeric",
                                     month: "numeric",
@@ -491,7 +495,7 @@ const UrgencyRulesPage = () => {
               {snackbarMessage.message}
             </Alert>
           </Snackbar>
-        </Layout.FlexBox>
+        </Box>
       </Grid>
       <Grid
         item
