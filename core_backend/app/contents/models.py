@@ -76,6 +76,7 @@ class ContentDB(Base):
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     workspace_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
