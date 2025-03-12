@@ -40,6 +40,7 @@ import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCa
 import { DownloadModal } from "./components/DownloadModal";
 import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
 import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
+import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
@@ -298,6 +299,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
 }) => {
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
+  const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
 
   return (
     <Box
@@ -343,6 +345,20 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={() => {
+            setOpenIndexHistoryModal(true);
+          }}
+        >
+          Indexing History
+        </Button>
+        <IndexingStatusModal
+          open={openIndexHistoryModal}
+          onClose={() => setOpenIndexHistoryModal(false)}
+        />
         <Tooltip title="Download all contents">
           <>
             <Button
@@ -408,8 +424,8 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
 const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
-  const [openCsvModal, setOpenCsvModal] = useState(false);
-  const [openPdfModal, setOpenPdfModal] = useState(false);
+  const [openCSVModal, setOpenCSVModal] = useState(false);
+  const [openPDFModal, setOpenPDFModal] = useState(false);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -437,7 +453,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setOpenCsvModal(true);
+            setOpenCSVModal(true);
           }}
         >
           Import cards from CSV
@@ -445,14 +461,14 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setOpenPdfModal(true);
+            setOpenPDFModal(true);
           }}
         >
           Transform PDFs to cards
         </MenuItem>
       </Menu>
-      <ImportFromCSVModal open={openCsvModal} onClose={() => setOpenCsvModal(false)} />
-      <ImportFromPDFModal open={openPdfModal} onClose={() => setOpenPdfModal(false)} />
+      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
+      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
     </>
   );
 };
