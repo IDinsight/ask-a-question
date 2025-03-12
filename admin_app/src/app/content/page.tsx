@@ -38,7 +38,8 @@ import { archiveContent, getContentList, getTagList } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
-import { ImportModal } from "./components/ImportModal";
+import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
+import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
@@ -407,7 +408,8 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
 const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
-  const [openModal, setOpenModal] = useState(false);
+  const [openCsvModal, setOpenCsvModal] = useState(false);
+  const [openPdfModal, setOpenPdfModal] = useState(false);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -435,13 +437,22 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setOpenModal(true);
+            setOpenCsvModal(true);
           }}
         >
-          Import contents from file
+          Import cards from CSV
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setOpenPdfModal(true);
+          }}
+        >
+          Transform PDFs to cards
         </MenuItem>
       </Menu>
-      <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
+      <ImportFromCSVModal open={openCsvModal} onClose={() => setOpenCsvModal(false)} />
+      <ImportFromPDFModal open={openPdfModal} onClose={() => setOpenPdfModal(false)} />
     </>
   );
 };

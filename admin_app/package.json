@@ -25,14 +25,15 @@
     "react": "^18",
     "react-apexcharts": "^1.4.1",
     "react-datepicker": "^8.0.0",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-dropzone": "^14.3.8"
   },
   "devDependencies": {
+    "@types/google.accounts": "^0.0.14",
     "@types/node": "20.12.2",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^18",
     "@types/react-datepicker": "^7.0.0",
-    "@types/google.accounts": "^0.0.14",
-    "@types/papaparse": "^5.3.14",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.1.3",
