@@ -38,7 +38,7 @@ from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "fullaccess")
 
-_WORKSPACE_ID = 1
+_WORKSPACE_ID = 34
 N_DATAPOINTS = 2000
 NEGATIVE_FEEDBACK_RATE = 0.1
 URGENCY_RATE = 0.1
