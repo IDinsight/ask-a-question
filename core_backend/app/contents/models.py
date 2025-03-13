@@ -69,6 +69,7 @@ class ContentDB(Base):
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -76,7 +77,6 @@ class ContentDB(Base):
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     workspace_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("workspace.workspace_id", ondelete="CASCADE"),
@@ -100,6 +100,7 @@ class ContentDB(Base):
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
+            f"display_number={self.display_number}, "
             f"is_archived={self.is_archived}), "
             f"updated_datetime_utc={self.updated_datetime_utc}), "
             f"workspace_id={self.workspace_id}"
@@ -352,7 +353,7 @@ async def get_list_of_content_from_db(
         select(ContentDB)
         .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.workspace_id == workspace_id)
-        .order_by(ContentDB.content_id)
+        .order_by(ContentDB.display_number)
     )
     if exclude_archived:
         stmt = stmt.where(ContentDB.is_archived == false())
@@ -361,7 +362,7 @@ async def get_list_of_content_from_db(
     if isinstance(limit, int) and limit > 0:
         stmt = stmt.limit(limit)
     content_rows = (await asession.execute(stmt)).all()
-
+    print([c[0] for c in content_rows])
     return [c[0] for c in content_rows] if content_rows else []
 
 
