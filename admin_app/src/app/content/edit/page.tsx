@@ -34,6 +34,7 @@ import {
 
 export interface Content extends EditContentBody {
   content_id: number | null;
+  display_number: number;
   positive_votes: number;
   negative_votes: number;
   created_datetime_utc: string;

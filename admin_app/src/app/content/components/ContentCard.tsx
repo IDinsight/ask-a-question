@@ -14,6 +14,7 @@ const ContentCard = ({
   title,
   text,
   content_id,
+  display_number,
   last_modified,
   tags,
   positive_votes,
@@ -26,6 +27,7 @@ const ContentCard = ({
   title: string;
   text: string;
   content_id: number;
+  display_number: number;
   last_modified: string;
   tags: Tag[];
   positive_votes: number;
@@ -135,6 +137,7 @@ const ContentCard = ({
         title={title}
         text={text}
         content_id={content_id}
+        display_number={display_number}
         last_modified={last_modified}
         tags={tags}
         open={openReadModal}
