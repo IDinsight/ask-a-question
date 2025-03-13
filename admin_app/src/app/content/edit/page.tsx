@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
 import { LoadingButton } from "@mui/lab";
+import { CustomError } from "@/utils/api";
 import {
   Button,
   CircularProgress,
@@ -167,7 +168,14 @@ const ContentBox = ({
   const [inputVal, setInputVal] = React.useState<string>("");
   const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
   const [isSaving, setIsSaving] = React.useState(false);
-
+  const handleCustomError = (error: unknown, defaultMessage: string) => {
+    const customError = error as CustomError;
+    let errorMessage = defaultMessage;
+    if (customError && customError.message) {
+      errorMessage = customError.message;
+    }
+    setSnackMessage(errorMessage);
+  };
   const setMainPageSnackMessage = (message: string): void => {
     localStorage.setItem("editPageSnackMessage", message);
   };
@@ -187,7 +195,10 @@ const ContentBox = ({
         setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
-        console.error("Failed to fetch tags:", error);
+        const customError = error as CustomError;
+        let errorMessage = "Error fetching tags";
+        handleCustomError(customError, errorMessage);
+        console.error(errorMessage);
       }
     };
 
@@ -213,14 +224,15 @@ const ContentBox = ({
       setSaveError(false);
       return result.content_id;
     } catch (error: Error | any) {
+      const customError = error as CustomError;
       if (error.status === 403) {
         console.error("Content quota reached.");
-        setErrorMessage("Unable to save content: Content limit reached");
+        setErrorMessage(customError.message);
         setSaveError(true);
         return null;
       } else {
         console.error("Failed to save content:", error);
-        setErrorMessage("Failed to save content: Unexpected error occurred");
+        setErrorMessage(customError.message);
         setSaveError(true);
         return null;
       }

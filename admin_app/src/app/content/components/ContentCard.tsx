@@ -31,7 +31,7 @@ const ContentCard = ({
   positive_votes: number;
   negative_votes: number;
   onSuccessfulArchive: (content_id: number) => void;
-  onFailedArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number, error_message: string) => void;
   archiveContent: (content_id: number) => Promise<any>;
   editAccess: boolean;
 }) => {
