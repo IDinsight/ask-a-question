@@ -4,8 +4,6 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
 import sentry_sdk
-import sklearn  # noqa
-import torch  # noqa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess

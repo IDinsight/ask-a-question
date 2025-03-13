@@ -1,0 +1,106 @@
+services:
+  core_backend:
+    image: idinsight/aaq-backend:latest
+    build:
+      context: ../../core_backend
+      dockerfile: Dockerfile.dev
+    command: >
+      /bin/sh -c "
+      python -m alembic upgrade head &&
+      python main.py"
+    restart: always
+    volumes:
+      - ../../core_backend:/usr/src/aaq_backend
+      - temp:/usr/src/aaq_backend/temp
+      - ./.gcp_credentials.json:/app/credentials.json
+    env_file:
+      - .base.env
+      - .core_backend.env
+      - .litellm_proxy.env
+    environment:
+      - REDIS_HOST=redis://redis:6379
+      - LITELLM_ENDPOINT=http://litellm_proxy:4000
+      - POSTGRES_HOST=relational_db
+    depends_on:
+      - redis
+      - relational_db
+
+  admin_app:
+    image: idinsight/aaq-admin-app:latest
+    build:
+      context: ../../admin_app
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ../../admin_app:/app
+    depends_on:
+      - core_backend
+    restart: always
+    env_file:
+      - .base.env
+
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - .base.env
+
+  litellm_proxy:
+    image: ghcr.io/berriai/litellm:main-v1.40.10
+    restart: always
+    env_file:
+      - .litellm_proxy.env
+    volumes:
+      - ./litellm_proxy_config.yaml:/app/config.yaml
+      - ./.gcp_credentials.json:/app/credentials.json
+    ports: # Expose the port to port 4001 for debugging purposes
+      - 4001:4000
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+
+  huggingface-embeddings:
+    # image either refers to locally built image or defaults to the one from the registry
+    image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
+    profiles:
+      - huggingface-embeddings
+      - optional-components
+    volumes:
+      - $PWD/data:/data
+    command:
+      [
+        "--model-id",
+        "${HUGGINGFACE_MODEL}",
+        "--api-key",
+        "${HUGGINGFACE_EMBEDDINGS_API_KEY}",
+      ]
+    restart: always
+    env_file:
+      - .litellm_proxy.env
+
+  redis:
+    image: "redis:6.0-alpine"
+    ports: # Expose the port to port 6380 on the host machine for debugging
+      - "6380:6379"
+    restart: always
+
+  relational_db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    env_file:
+      - .core_backend.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    ports: # Expose the port to port 5434 on the host machine for debugging
+      - 5434:5432
+
+volumes:
+  caddy_data:
+  caddy_config:
+  temp:
+  db_volume:
