@@ -32,7 +32,7 @@ import { IconButton } from "@mui/material";
 import type { Content } from "@/app/content/edit/page";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
+import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { archiveContent, getContentList, getTagList } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
@@ -364,9 +364,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <DownloadModal
           open={openDownloadModal}
           onClose={() => setOpenDownloadModal(false)}
-          onFailedDownload={() => {
+          onFailedDownload={(error_message) => {
             setSnackMessage({
-              message: `Failed to download content`,
+              message: error_message,
               color: "error",
             });
           }}
@@ -542,9 +542,10 @@ const CardsGrid = ({
           }
         })
         .catch((error) => {
+          const customError = error as CustomError;
           console.error("Failed to fetch content:", error);
           setSnackMessage({
-            message: `Failed to fetch content`,
+            message: customError.message,
             color: "error",
           });
           setIsLoading(false);
@@ -663,9 +664,12 @@ const CardsGrid = ({
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
                         onSuccessfulArchive={onSuccessfulArchive}
-                        onFailedArchive={(content_id: number) => {
+                        onFailedArchive={(
+                          content_id: number,
+                          error_message: string,
+                        ) => {
                           setSnackMessage({
-                            message: `Failed to remove content`,
+                            message: error_message,
                             color: "error",
                           });
                         }}
