@@ -366,7 +366,6 @@ async def get_list_of_content_from_db(
     if isinstance(limit, int) and limit > 0:
         stmt = stmt.limit(limit)
     content_rows = (await asession.execute(stmt)).all()
-    print([c[0] for c in content_rows])
     return [c[0] for c in content_rows] if content_rows else []
 
 
