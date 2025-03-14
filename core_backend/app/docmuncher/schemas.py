@@ -16,7 +16,6 @@ class DocStatusEnum(str, Enum):
 class DocUploadResponse(BaseModel):
     """Pydantic model for document upload response."""
 
-    doc_id: int
     doc_name: str
     ingestion_job_id: int
     created_datetime_utc: datetime

@@ -16,6 +16,7 @@ from . import (
     contents,
     dashboard,
     data_api,
+    docmuncher,
     question_answer,
     tags,
     urgency_detection,
@@ -161,6 +162,7 @@ def create_app() -> FastAPI:
     app.include_router(contents.router)
     app.include_router(dashboard.router)
     app.include_router(data_api.router)
+    app.include_router(docmuncher.router)
     app.include_router(question_answer.router)
     app.include_router(tags.router)
     app.include_router(urgency_detection.router)

@@ -149,28 +149,34 @@ async def convert_markdown_chunks_to_cards(
         If the conversion fails.
     """
     for header_split in md_header_splits:
-        try:
-            card = ContentCreate(
-                content_metadata=header_split.metadata,
-                context_text=header_split.page_content,
-                context_title="--".join(
+        num_sub_chunks = int(len(header_split.page_content) / 2000 + 1)
+        for i in range(num_sub_chunks):
+            try:
+                title = "--".join(
                     [str(v) for v in header_split.metadata.values()]
                     + [header_split.page_content[:10]]
-                ),
-                context_tags=[tag_id],
-            )
-            await save_content_to_db(
-                asession=asession,
-                content=card,
-                exclude_archived=True,
-                workspace_id=workspace_id,
-            )
-        except Exception as e:
-            # TODO: this is a dumb way to handle errors in card creation
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to process PDF file: {e}",
-            ) from e
+                )
+                metadata = header_split.metadata
+                metadata["sub_chunk"] = i
+
+                card = ContentCreate(
+                    content_text=header_split.page_content[i * 2000 : (i + 1) * 2000],
+                    content_title=title,
+                    content_metadata=metadata,
+                    context_tags=[tag_id],
+                )
+                await save_content_to_db(
+                    asession=asession,
+                    content=card,
+                    exclude_archived=True,
+                    workspace_id=workspace_id,
+                )
+            except Exception as e:
+                # TODO: this is a dumb way to handle errors in card creation
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to process PDF file: {e}",
+                ) from e
     return {"detail": "Cards saved successfully"}
 
 
@@ -207,15 +213,18 @@ async def process_pdf_file(
     """
     # Update redis state operations
     redis = request.app.state.redis
-    job_status = redis.get(task_id)
-    if job_status is None:
+    job_status = await redis.get(task_id)
+    if not job_status:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found",
         )
-    job_status = DocUploadResponse.model_validate(job_status)
-    job_status.status = DocStatusEnum.in_progress
-    redis.set(task_id, job_status.model_dump_json())
+
+    job_status_pydantic = DocUploadResponse.model_validate(
+        json.loads(job_status.decode("utf-8"))
+    )
+    job_status_pydantic.status = DocStatusEnum.in_progress
+    await redis.set(task_id, job_status_pydantic.model_dump_json())
 
     # Process PDF
     try:
@@ -229,14 +238,14 @@ async def process_pdf_file(
         )
 
     except Exception as e:
-        job_status.status = DocStatusEnum.failed
-        redis.set(task_id, job_status.model_dump_json())
+        job_status_pydantic.status = DocStatusEnum.failed
+        await redis.set(task_id, job_status_pydantic.model_dump_json())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process PDF file: {e}",
         ) from e
-    finally:
-        job_status.status = DocStatusEnum.success
-        redis.set(task_id, job_status.model_dump_json())
+
+    job_status_pydantic.status = DocStatusEnum.success
+    await redis.set(task_id, job_status_pydantic.model_dump_json())
 
     return job_status

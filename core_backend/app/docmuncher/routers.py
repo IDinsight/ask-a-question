@@ -3,7 +3,6 @@ from typing import Annotated
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Depends,
     File,
     HTTPException,
@@ -34,18 +33,18 @@ TAG_METADATA = {
     "description": "_Requires user login._ Document management to create content",
 }
 
-router = APIRouter(prefix="/content", tags=[TAG_METADATA["name"]])
+router = APIRouter(prefix="/docmuncher", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
 @router.post("/upload", response_model=DocUploadResponse)
 async def upload_document(
     request: Request,
+    # background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(...)],
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
-    background_tasks: BackgroundTasks = Depends(),
 ) -> DocUploadResponse:
     """Upload document to create content.
 
@@ -119,11 +118,10 @@ async def upload_document(
         created_datetime_utc=created_datetime_utc,
         status=DocStatusEnum.not_started,
     )
-    redis.set(task_id, task_status.model_dump_json())
+    await redis.set(task_id, task_status.model_dump_json())
 
     # Start background task
-    background_tasks.add_task(
-        process_pdf_file,
+    await process_pdf_file(
         request=request,
         task_id=task_id,
         file=file,
@@ -131,6 +129,15 @@ async def upload_document(
         workspace_id=workspace_db.workspace_id,
         asession=asession,
     )
+    # background_tasks.add_task(
+    #     process_pdf_file,
+    #     request=request,
+    #     task_id=task_id,
+    #     file=file,
+    #     tag_id=tag_db.tag_id,
+    #     workspace_id=workspace_db.workspace_id,
+    #     asession=asession,
+    # )
 
     return task_status
 
@@ -138,7 +145,7 @@ async def upload_document(
 @router.get("/status", response_model=DocUploadResponse)
 async def get_doc_ingestion_status(
     request: Request,
-    ingestion_job_id: str,
+    ingestion_job_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
