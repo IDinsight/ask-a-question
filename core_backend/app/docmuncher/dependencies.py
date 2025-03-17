@@ -2,7 +2,7 @@ import json
 import os
 from typing import List
 
-from fastapi import File, HTTPException, Request, status
+from fastapi import HTTPException, Request, UploadFile, status
 from langchain.text_splitter import MarkdownHeaderTextSplitter
 from langchain_core.documents import Document
 from mistralai import DocumentURLChunk, Mistral
@@ -27,7 +27,7 @@ def get_mistral_client() -> Mistral:
     return MISTRAL_CLIENT
 
 
-def convert_pages_to_markdown(file: File) -> dict:
+def convert_pages_to_markdown(file: UploadFile) -> dict:
     """
     Convert a PDF file to dictionary of markdown text.
 
@@ -182,8 +182,8 @@ async def convert_markdown_chunks_to_cards(
 
 async def process_pdf_file(
     request: Request,
-    task_id: int,
-    file: File,
+    task_id: str,
+    file: UploadFile,
     tag_id: int,
     workspace_id: int,
     asession: AsyncSession,

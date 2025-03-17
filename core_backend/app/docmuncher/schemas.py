@@ -17,6 +17,6 @@ class DocUploadResponse(BaseModel):
     """Pydantic model for document upload response."""
 
     doc_name: str
-    ingestion_job_id: int
+    ingestion_job_id: str
     created_datetime_utc: datetime
     status: DocStatusEnum

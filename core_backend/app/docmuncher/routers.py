@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Annotated
+from uuid import uuid4
 
 from fastapi import (
     APIRouter,
@@ -111,7 +112,7 @@ async def upload_document(
     # Log task in redis
     redis = request.app.state.redis
     created_datetime_utc = datetime.now(timezone.utc)
-    task_id = hash(file.filename + str(created_datetime_utc))
+    task_id = str(uuid4())
     task_status = DocUploadResponse(
         doc_name=file.filename,
         ingestion_job_id=task_id,
@@ -145,7 +146,7 @@ async def upload_document(
 @router.get("/status", response_model=DocUploadResponse)
 async def get_doc_ingestion_status(
     request: Request,
-    ingestion_job_id: int,
+    ingestion_job_id: str,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
