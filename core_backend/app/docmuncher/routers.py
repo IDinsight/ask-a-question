@@ -140,6 +140,7 @@ async def upload_document(
     return task_status
 
 
+# TODO: Can deprecate if we don't use this endpoint
 @router.get("/status/task/{task_id}", response_model=DocIngestionStatus)
 async def get_doc_ingestion_status(
     request: Request,
@@ -196,14 +197,14 @@ async def get_doc_ingestion_status(
     return DocIngestionStatus.model_validate(json.loads(job_status.decode("utf-8")))
 
 
-@router.get("/status/{job_status}", response_model=list[DocIngestionStatus])
+@router.get("/status/{job_status}", response_model=dict)
 async def get_jobs_by_status_type(
     request: Request,
     job_status: DocStatusEnum,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[DocIngestionStatus]:
+) -> dict:
     """Get the status of all jobs with certain status.
 
     Parameters:
@@ -269,9 +270,12 @@ async def get_jobs_by_status_type(
             detail=f"No jobs of status {job_status} found",
         )
 
-    return sorted(
-        filtered_jobs_list, key=lambda x: x.created_datetime_utc, reverse=True
-    )
+    return {
+        "fraction_of_files": f"{len(filtered_jobs_list)}/{len(all_jobs)}",
+        "jobs": sorted(
+            filtered_jobs_list, key=lambda x: x.created_datetime_utc, reverse=True
+        ),
+    }
 
 
 @router.get("/status", response_model=list[DocIngestionStatus])
