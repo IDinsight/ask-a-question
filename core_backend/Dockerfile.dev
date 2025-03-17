@@ -31,9 +31,6 @@ RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://dow
 # Copy application code
 COPY . .
 
-# Make startup script executable
-RUN chmod +x startup.sh
-
 # Download required models
 RUN python -c "from transformers import AutoModel; AutoModel.from_pretrained('cross-encoder/ms-marco-MiniLM-L-6-v2')" && \
     python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
