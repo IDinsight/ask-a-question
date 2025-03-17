@@ -72,7 +72,7 @@ async def create_tag_per_file(
     return content_tags
 
 
-def convert_pages_to_markdown(file_name: str, content: str) -> dict:
+def convert_pages_to_markdown(file_name: str, content: bytes) -> dict:
     """
     Convert a PDF file to dictionary of markdown text.
 
@@ -234,7 +234,7 @@ async def process_pdf_file(
     request: Request,
     task_id: str,
     file_name: str,
-    content: str,
+    content: bytes,
     workspace_id: int,
     asession: AsyncSession,
 ) -> DocIngestionStatus:

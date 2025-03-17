@@ -114,6 +114,7 @@ async def upload_document(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="The zip file does not contain any PDF files.",
                 )
+        await file.close()
     elif file.filename.endswith(".pdf"):
         file_content = await file.read()
         pdf_files = [(file.filename, file_content)]
