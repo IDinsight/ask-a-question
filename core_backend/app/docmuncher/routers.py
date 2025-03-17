@@ -117,7 +117,7 @@ async def upload_document(
     elif file.filename.endswith(".pdf"):
         file_content = await file.read()
         pdf_files = [(file.filename, file_content)]
-        file.close()
+        await file.close()
 
     else:
         raise HTTPException(
@@ -151,7 +151,7 @@ async def upload_document(
             request=request,
             task_id=task_id,
             file_name=filename,
-            content=BytesIO(content).getvalue(),
+            content=content,
             workspace_id=workspace_db.workspace_id,
             asession=bg_asession,
         )
