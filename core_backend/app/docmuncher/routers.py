@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Annotated
 from uuid import uuid4
 
@@ -17,8 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
-from ..tags.schemas import TagCreate
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
@@ -51,8 +50,8 @@ async def upload_document(
     The process is as follows:
 
     1. Parameters for the endpoint are checked first.
-    2. Add a content tag for the uploaded document.
-    3, Start a document ingestion job and return a job ID.
+    2. Create a copy of the file and asession
+    3. Start a document ingestion job and return a job ID.
 
     Parameters
     ----------
@@ -94,6 +93,12 @@ async def upload_document(
             detail="User does not have the required role to ingest documents.",
         )
 
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No file name provided.",
+        )
+
     if not file.filename.endswith(".pdf"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,20 +106,13 @@ async def upload_document(
         )
 
     # 2.
-    tag = TagCreate(tag_name=file.filename.upper())
-    if not await is_tag_name_unique(
-        asession=asession, tag_name=tag.tag_name, workspace_id=workspace_db.workspace_id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tag name `{tag.tag_name}` already exists",
-        )
-    tag_db = await save_tag_to_db(
-        asession=asession, tag=tag, workspace_id=workspace_db.workspace_id
-    )
-    _, content_tags = await validate_tags(
-        asession=asession, tags=[tag_db.tag_id], workspace_id=workspace_db.workspace_id
-    )
+    # Copy file to keep it open
+    file_content = await file.read()
+
+    file_copy = UploadFile(filename=file.filename, file=BytesIO(file_content))
+
+    # Copy of the asession for the background task
+    bg_asession = AsyncSession(asession.bind)
 
     # 3.
     # Log task in redis
@@ -122,30 +120,20 @@ async def upload_document(
     created_datetime_utc = datetime.now(timezone.utc)
     task_id = str(uuid4())
     task_status = DocUploadResponse(
-        doc_name=file.filename,
+        doc_name=file_copy.filename,
         ingestion_job_id=task_id,
         created_datetime_utc=created_datetime_utc,
         status=DocStatusEnum.not_started,
     )
     await redis.set(task_id, task_status.model_dump_json())
 
-    # Start background task
-    # await process_pdf_file(
-    #     request=request,
-    #     task_id=task_id,
-    #     file=file,
-    #     content_tags=content_tags,
-    #     workspace_id=workspace_db.workspace_id,
-    #     asession=asession,
-    # )
     background_tasks.add_task(
         process_pdf_file,
         request=request,
         task_id=task_id,
-        file=file,
-        tag_id=tag_db.tag_id,
+        file=file_copy,
         workspace_id=workspace_db.workspace_id,
-        asession=asession,
+        asession=bg_asession,
     )
 
     return task_status

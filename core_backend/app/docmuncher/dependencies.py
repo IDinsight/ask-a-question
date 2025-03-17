@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import HTTPException, Request, UploadFile, status
@@ -10,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
+from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
+from ..tags.schemas import TagCreate
 from ..utils import setup_logger
 from .schemas import DocStatusEnum, DocUploadResponse
 
@@ -25,6 +28,41 @@ def get_mistral_client() -> Mistral:
     if MISTRAL_CLIENT is None:
         MISTRAL_CLIENT = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
     return MISTRAL_CLIENT
+
+
+async def create_tag_per_file(
+    filename: str, workspace_id: int, asession: AsyncSession
+) -> list:
+    """
+    Create a tag for a file.
+
+    Parameters
+    ----------
+    filename
+        The name of the file to create a tag for.
+    workspace_id
+        The workspace ID to save the tag in.
+    asession
+        The database session object.
+
+    Returns
+    -------
+    list
+        The content tags.
+    """
+    tag = TagCreate(tag_name=filename.upper())
+    if not await is_tag_name_unique(
+        asession=asession, tag_name=tag.tag_name, workspace_id=workspace_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Tag name `{tag.tag_name}` already exists",
+        )
+    tag_db = await save_tag_to_db(asession=asession, tag=tag, workspace_id=workspace_id)
+    _, content_tags = await validate_tags(
+        asession=asession, tags=[tag_db.tag_id], workspace_id=workspace_id
+    )
+    return content_tags
 
 
 def convert_pages_to_markdown(file: UploadFile) -> dict:
@@ -187,7 +225,6 @@ async def process_pdf_file(
     request: Request,
     task_id: str,
     file: UploadFile,
-    content_tags: list,
     workspace_id: int,
     asession: AsyncSession,
 ) -> DocUploadResponse:
@@ -229,8 +266,11 @@ async def process_pdf_file(
     job_status_pydantic.status = DocStatusEnum.in_progress
     await redis.set(task_id, job_status_pydantic.model_dump_json())
 
-    # Process PDF
+    # Process PDF file
     try:
+        content_tags = await create_tag_per_file(
+            filename=file.filename, workspace_id=workspace_id, asession=asession
+        )
         markdown_text = convert_pages_to_markdown(file)
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         await convert_markdown_chunks_to_cards(
@@ -242,6 +282,8 @@ async def process_pdf_file(
 
     except Exception as e:
         job_status_pydantic.status = DocStatusEnum.failed
+        job_status_pydantic.ingestion_message = str(e)
+        job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
         await redis.set(task_id, job_status_pydantic.model_dump_json())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -249,6 +291,7 @@ async def process_pdf_file(
         ) from e
 
     job_status_pydantic.status = DocStatusEnum.success
+    job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
     await redis.set(task_id, job_status_pydantic.model_dump_json())
 
     return job_status

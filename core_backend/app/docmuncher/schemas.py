@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -18,5 +19,7 @@ class DocUploadResponse(BaseModel):
 
     doc_name: str
     ingestion_job_id: str
+    ingestion_message: Optional[str] = ""
     created_datetime_utc: datetime
+    finished_datetime_utc: Optional[datetime] = None
     status: DocStatusEnum
