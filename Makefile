@@ -139,3 +139,13 @@ setup-embeddings: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 teardown-embeddings:
 	@docker stop huggingface-embeddings
 	@docker rm  huggingface-embeddings
+
+run-docker-compose-dev:
+	$(CONDA_ACTIVATE) $(PROJECT_NAME)
+	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev up --build -d --remove-orphans
+	@docker system prune -f
+
+stop-docker-compose-dev:
+	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev down
+
+restart-docker-compose-dev: stop-docker-compose-dev run-docker-compose-dev

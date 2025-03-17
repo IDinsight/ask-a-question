@@ -1,0 +1,41 @@
+FROM python:3.10-slim-buster
+
+LABEL maintainer="IDinsight"
+
+# Define arguments
+ARG NAME=aaq_backend
+ARG PORT=8000
+ARG HOME_DIR=/usr/src/${NAME}
+ARG WHISPER_MODEL_DIR=/whisper_models
+
+# Install packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev python3-dev ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up directories
+RUN mkdir -p ${HOME_DIR} ${WHISPER_MODEL_DIR} /tmp/prometheus
+
+# Set environment variables
+ENV PYTHONPATH="${PYTHONPATH}:${HOME_DIR}"
+ENV PORT=${PORT}
+ENV WHISPER_MODEL_DIR=${WHISPER_MODEL_DIR}
+
+# Set working directory
+WORKDIR ${HOME_DIR}
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Copy application code
+COPY . .
+
+# Download required models
+RUN python -c "from transformers import AutoModel; AutoModel.from_pretrained('cross-encoder/ms-marco-MiniLM-L-6-v2')" && \
+    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
+    python -c "from faster_whisper import WhisperModel; model = WhisperModel('tiny', download_root='${WHISPER_MODEL_DIR}')"
+
+EXPOSE ${PORT}
+
+CMD ["python", "main.py"]
