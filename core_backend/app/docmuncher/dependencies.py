@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import HTTPException, Request, UploadFile, status
+from fastapi import HTTPException, Request, status
 from langchain.text_splitter import MarkdownHeaderTextSplitter
 from langchain_core.documents import Document
 from mistralai import DocumentURLChunk, Mistral
@@ -72,14 +72,16 @@ async def create_tag_per_file(
     return content_tags
 
 
-def convert_pages_to_markdown(file: UploadFile) -> dict:
+def convert_pages_to_markdown(file_name: str, content: str) -> dict:
     """
     Convert a PDF file to dictionary of markdown text.
 
     Parameters
     ----------
-    file
-        The PDF file to convert.
+    file_name
+        The PDF filename to convert.
+    content
+        The content of the PDF file.
 
     Returns
     -------
@@ -93,8 +95,8 @@ def convert_pages_to_markdown(file: UploadFile) -> dict:
     try:
         uploaded_file = client.files.upload(
             file={
-                "file_name": file.filename,
-                "content": file.file.read(),
+                "file_name": file_name,
+                "content": content,
             },
             purpose="ocr",
         )
@@ -231,7 +233,8 @@ async def convert_markdown_chunks_to_cards(
 async def process_pdf_file(
     request: Request,
     task_id: str,
-    file: UploadFile,
+    file_name: str,
+    content: str,
     workspace_id: int,
     asession: AsyncSession,
 ) -> DocIngestionStatus:
@@ -242,8 +245,10 @@ async def process_pdf_file(
     ----------
     request
         The request object from FastAPI.
-    file
-        The PDF file to process.
+    filename
+        The PDF filename to process.
+    content
+        The content of the PDF file.
     content_tags
         The tag (associated with the filename) to save the cards with.
     workspace_id
@@ -278,9 +283,9 @@ async def process_pdf_file(
     # Process PDF file
     try:
         content_tags = await create_tag_per_file(
-            filename=file.filename, workspace_id=workspace_id, asession=asession
+            filename=file_name, workspace_id=workspace_id, asession=asession
         )
-        markdown_text = convert_pages_to_markdown(file)
+        markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         await convert_markdown_chunks_to_cards(
             md_header_splits=md_header_splits,
@@ -299,7 +304,6 @@ async def process_pdf_file(
             detail=f"Failed to process PDF file: {e}",
         ) from e
     finally:
-        await file.close()
         await asession.close()
 
     job_status_pydantic.status = DocStatusEnum.success

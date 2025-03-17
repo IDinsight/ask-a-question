@@ -1,4 +1,5 @@
 import json
+import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Annotated
@@ -17,6 +18,7 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
+from ..config import REDIS_DOC_INGEST_EXPIRY_TIME as REDIS_EXPIRATION_SECONDS
 from ..database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
@@ -37,7 +39,7 @@ router = APIRouter(prefix="/docmuncher", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
-@router.post("/upload", response_model=DocUploadResponse)
+@router.post("/upload", response_model=list[DocUploadResponse])
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -45,7 +47,7 @@ async def upload_document(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
-) -> DocUploadResponse:
+) -> list[DocUploadResponse]:
     """Upload pdf document to create content.
 
     The process is as follows:
@@ -57,7 +59,7 @@ async def upload_document(
     Parameters
     ----------
     file
-        The .pdf file to upload.
+        The .pdf or .zip file to upload.
     calling_user_db
         The user object associated with the user that is creating the content.
     workspace_name
@@ -67,7 +69,7 @@ async def upload_document(
 
     Returns
     -------
-    DocUploadResponse
+    list[DocUploadResponse]
         The response model for document upload.
 
     Raises
@@ -100,44 +102,61 @@ async def upload_document(
             detail="Filename is required",
         )
 
-    if not file.filename.endswith(".pdf"):
+    pdf_files = []
+    if file.filename.endswith(".zip"):
+        zip_file_content = await file.read()
+        with zipfile.ZipFile(BytesIO(zip_file_content)) as zip_file:
+            pdf_files = [
+                (f, zip_file.read(f)) for f in zip_file.namelist() if f.endswith(".pdf")
+            ]
+            if not pdf_files:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="The zip file does not contain any PDF files.",
+                )
+    elif file.filename.endswith(".pdf"):
+        file_content = await file.read()
+        pdf_files = [(file.filename, file_content)]
+        file.close()
+
+    else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only PDF files are supported for document ingestion.",
         )
 
     # 2.
-    # Copy file to keep it open
-    file_content = await file.read()
+    tasks: list[DocUploadResponse] = []
+    for filename, content in pdf_files:
+        bg_asession = AsyncSession(asession.bind)
 
-    file_copy = UploadFile(filename=file.filename, file=BytesIO(file_content))
+        # 3.
+        # Log task in redis
+        redis = request.app.state.redis
+        created_datetime_utc = datetime.now(timezone.utc)
+        task_id = f"{JOB_KEY_PREFIX}{str(uuid4())}"
+        task_status = DocUploadResponse(
+            doc_name=filename,
+            task_id=task_id,
+            created_datetime_utc=created_datetime_utc,
+            status=DocStatusEnum.not_started,
+        )
+        await redis.set(
+            task_id, task_status.model_dump_json(), ex=REDIS_EXPIRATION_SECONDS
+        )
+        tasks.append(task_status)
 
-    # Copy of the asession for the background task
-    bg_asession = AsyncSession(asession.bind)
+        background_tasks.add_task(
+            process_pdf_file,
+            request=request,
+            task_id=task_id,
+            file_name=filename,
+            content=BytesIO(content).getvalue(),
+            workspace_id=workspace_db.workspace_id,
+            asession=bg_asession,
+        )
 
-    # 3.
-    # Log task in redis
-    redis = request.app.state.redis
-    created_datetime_utc = datetime.now(timezone.utc)
-    task_id = f"{JOB_KEY_PREFIX}{str(uuid4())}"
-    task_status = DocUploadResponse(
-        doc_name=file_copy.filename,
-        task_id=task_id,
-        created_datetime_utc=created_datetime_utc,
-        status=DocStatusEnum.not_started,
-    )
-    await redis.set(task_id, task_status.model_dump_json())
-
-    background_tasks.add_task(
-        process_pdf_file,
-        request=request,
-        task_id=task_id,
-        file=file_copy,
-        workspace_id=workspace_db.workspace_id,
-        asession=bg_asession,
-    )
-
-    return task_status
+    return tasks
 
 
 # TODO: Can deprecate if we don't use this endpoint
