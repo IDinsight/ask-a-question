@@ -51,6 +51,12 @@ async def create_tag_per_file(
     list
         The content tags.
     """
+    if not filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is required",
+        )
+
     tag = TagCreate(tag_name=filename.upper())
     if not await is_tag_name_unique(
         asession=asession, tag_name=tag.tag_name, workspace_id=workspace_id
