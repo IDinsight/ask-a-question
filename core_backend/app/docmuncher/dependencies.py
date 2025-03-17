@@ -14,7 +14,7 @@ from ..contents.schemas import ContentCreate
 from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate
 from ..utils import setup_logger
-from .schemas import DocStatusEnum, DocUploadResponse
+from .schemas import DocIngestionStatus, DocStatusEnum
 
 logger = setup_logger()
 MISTRAL_CLIENT = None
@@ -227,7 +227,7 @@ async def process_pdf_file(
     file: UploadFile,
     workspace_id: int,
     asession: AsyncSession,
-) -> DocUploadResponse:
+) -> DocIngestionStatus:
     """
     Process a PDF file.
 
@@ -260,8 +260,10 @@ async def process_pdf_file(
             detail="Job not found",
         )
 
-    job_status_pydantic = DocUploadResponse.model_validate(
-        json.loads(job_status.decode("utf-8"))
+    job_status_pydantic = DocIngestionStatus(
+        **json.loads(job_status.decode("utf-8")),
+        error_trace="",
+        finished_datetime_utc=datetime.now(timezone.utc),
     )
     job_status_pydantic.status = DocStatusEnum.in_progress
     await redis.set(task_id, job_status_pydantic.model_dump_json())
@@ -282,7 +284,7 @@ async def process_pdf_file(
 
     except Exception as e:
         job_status_pydantic.status = DocStatusEnum.failed
-        job_status_pydantic.ingestion_message = str(e)
+        job_status_pydantic.error_trace = str(e)
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
         await redis.set(task_id, job_status_pydantic.model_dump_json())
         raise HTTPException(

@@ -25,7 +25,7 @@ from ..workspaces.utils import (
     get_workspace_by_workspace_name,
 )
 from .dependencies import process_pdf_file
-from .schemas import DocStatusEnum, DocUploadResponse
+from .schemas import DocIngestionStatus, DocStatusEnum, DocUploadResponse
 
 TAG_METADATA = {
     "name": "Document upload",
@@ -36,7 +36,7 @@ router = APIRouter(prefix="/docmuncher", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
-@router.post("/upload", response_model=DocUploadResponse)
+@router.post("/upload/pdf", response_model=DocUploadResponse)
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -45,7 +45,7 @@ async def upload_document(
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> DocUploadResponse:
-    """Upload document to create content.
+    """Upload pdf document to create content.
 
     The process is as follows:
 
@@ -56,7 +56,7 @@ async def upload_document(
     Parameters
     ----------
     file
-        The file to upload (.pdf or .zip).
+        The .pdf file to upload.
     calling_user_db
         The user object associated with the user that is creating the content.
     workspace_name
@@ -121,7 +121,7 @@ async def upload_document(
     task_id = str(uuid4())
     task_status = DocUploadResponse(
         doc_name=file_copy.filename,
-        ingestion_job_id=task_id,
+        task_id=task_id,
         created_datetime_utc=created_datetime_utc,
         status=DocStatusEnum.not_started,
     )
@@ -139,19 +139,19 @@ async def upload_document(
     return task_status
 
 
-@router.get("/status", response_model=DocUploadResponse)
+@router.get("/status", response_model=DocIngestionStatus)
 async def get_doc_ingestion_status(
     request: Request,
-    ingestion_job_id: str,
+    task_id: str,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
-) -> DocUploadResponse:
+) -> DocIngestionStatus:
     """Get document ingestion status.
 
     Parameters
     ----------
-    ingestion_job_id
+    task_id
         The ingestion job ID.
     calling_user_db
         The user object associated with the user that is checking the status.
@@ -186,10 +186,10 @@ async def get_doc_ingestion_status(
 
     # Query status response
     redis = request.app.state.redis
-    job_status = await redis.get(ingestion_job_id)
+    job_status = await redis.get(task_id)
     if not job_status:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found",
         )
-    return DocUploadResponse.model_validate(json.loads(job_status.decode("utf-8")))
+    return DocIngestionStatus.model_validate(json.loads(job_status.decode("utf-8")))
