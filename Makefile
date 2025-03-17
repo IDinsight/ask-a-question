@@ -140,12 +140,13 @@ teardown-embeddings:
 	@docker stop huggingface-embeddings
 	@docker rm  huggingface-embeddings
 
-rundev:
+
+run-docker-compose-dev:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME)
 	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev up --build -d --remove-orphans
 	@docker system prune -f
 
-stopdev:
+stop-docker-compose-dev:
 	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev down
 
-restartdev: stopdev rundev
+restart-docker-compose-dev: stop-docker-compose-dev run-docker-compose-dev
