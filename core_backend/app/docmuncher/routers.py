@@ -24,7 +24,7 @@ from ..utils import setup_logger
 from ..workspaces.utils import (
     get_workspace_by_workspace_name,
 )
-from .dependencies import process_pdf_file
+from .dependencies import JOB_KEY_PREFIX, process_pdf_file
 from .schemas import DocIngestionStatus, DocStatusEnum, DocUploadResponse
 
 TAG_METADATA = {
@@ -32,11 +32,12 @@ TAG_METADATA = {
     "description": "_Requires user login._ Document management to create content",
 }
 
+
 router = APIRouter(prefix="/docmuncher", tags=[TAG_METADATA["name"]])
 logger = setup_logger()
 
 
-@router.post("/upload/pdf", response_model=DocUploadResponse)
+@router.post("/upload", response_model=DocUploadResponse)
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -93,12 +94,6 @@ async def upload_document(
             detail="User does not have the required role to ingest documents.",
         )
 
-    if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No file name provided.",
-        )
-
     if not file.filename.endswith(".pdf"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -118,7 +113,7 @@ async def upload_document(
     # Log task in redis
     redis = request.app.state.redis
     created_datetime_utc = datetime.now(timezone.utc)
-    task_id = str(uuid4())
+    task_id = f"{JOB_KEY_PREFIX}{str(uuid4())}"
     task_status = DocUploadResponse(
         doc_name=file_copy.filename,
         task_id=task_id,
@@ -139,7 +134,7 @@ async def upload_document(
     return task_status
 
 
-@router.get("/status", response_model=DocIngestionStatus)
+@router.get("/status/task/{task_id}", response_model=DocIngestionStatus)
 async def get_doc_ingestion_status(
     request: Request,
     task_id: str,
@@ -181,7 +176,7 @@ async def get_doc_ingestion_status(
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User does not have the required role to ingest documents.",
+            detail="User does not have the required role to request ingestion status.",
         )
 
     # Query status response
@@ -193,3 +188,147 @@ async def get_doc_ingestion_status(
             detail="Job not found",
         )
     return DocIngestionStatus.model_validate(json.loads(job_status.decode("utf-8")))
+
+
+@router.get("/status/{job_status}", response_model=list[DocIngestionStatus])
+async def get_jobs_by_status_type(
+    request: Request,
+    job_status: DocStatusEnum,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[DocIngestionStatus]:
+    """Get the status of all jobs with certain status.
+
+    Parameters:
+    -----------
+    request
+        The request object from FastAPI.
+    job_status
+        The status of the job to get.
+    calling_user_db
+        The user object associated with the user that is checking the status.
+    workspace_name
+        The name of the workspace to check the status in.
+    asession
+        The database session object.
+
+    Returns:
+    --------
+    list[DocIngestionStatus]
+        The response from processing the PDF file.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to create content in the workspace.
+        OR
+        If no jobs are not found.
+    """
+    # Check params
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to request ingestion status.",
+        )
+
+    # Query status response
+    redis = request.app.state.redis
+    job_keys = await redis.keys(f"{JOB_KEY_PREFIX}*")
+    if not job_keys:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No jobs found",
+        )
+
+    all_jobs = await redis.mget(job_keys)
+    filtered_jobs_list = [
+        DocIngestionStatus.model_validate(json.loads(job.decode("utf-8")))
+        for job in all_jobs
+        if json.loads(job.decode("utf-8"))["status"] == job_status
+    ]
+
+    if not filtered_jobs_list:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No jobs of status {job_status} found",
+        )
+
+    return sorted(
+        filtered_jobs_list, key=lambda x: x.created_datetime_utc, reverse=True
+    )
+
+
+@router.get("/status", response_model=list[DocIngestionStatus])
+async def get_all_jobs(
+    request: Request,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[DocIngestionStatus]:
+    """Get the status of all jobs.
+
+    Parameters:
+    -----------
+    request
+        The request object from FastAPI.
+    calling_user_db
+        The user object associated with the user that is checking the status.
+    workspace_name
+        The name of the workspace to check the status in.
+    asession
+        The database session object.
+
+    Returns:
+    --------
+    list[DocIngestionStatus]
+        The response from processing the PDF file.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to create content in the workspace.
+        OR
+        If no jobs are not found.
+    """
+    # Check params
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to request ingestion status.",
+        )
+
+    # Query status response
+    redis = request.app.state.redis
+    job_keys = await redis.keys(f"{JOB_KEY_PREFIX}*")
+    if not job_keys:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No jobs found",
+        )
+
+    all_jobs = await redis.mget(job_keys)
+    all_jobs_list = [
+        DocIngestionStatus.model_validate(json.loads(job.decode("utf-8")))
+        for job in all_jobs
+    ]
+
+    return sorted(all_jobs_list, key=lambda x: x.created_datetime_utc, reverse=True)

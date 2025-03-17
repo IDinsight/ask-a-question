@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocStatusEnum(str, Enum):
@@ -17,7 +17,7 @@ class DocStatusEnum(str, Enum):
 class DocUploadResponse(BaseModel):
     """Pydantic model for document upload response."""
 
-    doc_name: str
+    doc_name: str | None = Field(default="Untitled.pdf")
     task_id: str
     created_datetime_utc: datetime
     status: DocStatusEnum

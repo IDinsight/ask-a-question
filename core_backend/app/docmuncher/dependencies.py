@@ -18,6 +18,7 @@ from .schemas import DocIngestionStatus, DocStatusEnum
 
 logger = setup_logger()
 MISTRAL_CLIENT = None
+JOB_KEY_PREFIX = "docmuncher_job_"
 
 
 def get_mistral_client() -> Mistral:
@@ -291,6 +292,9 @@ async def process_pdf_file(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process PDF file: {e}",
         ) from e
+    finally:
+        await file.close()
+        await asession.close()
 
     job_status_pydantic.status = DocStatusEnum.success
     job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
