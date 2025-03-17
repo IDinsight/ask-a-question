@@ -20,4 +20,11 @@ class Worker(UvicornWorker):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger.setLevel(logging.DEBUG)
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="debug")
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="debug",
+        root_path=BACKEND_ROOT_PATH,
+    )
