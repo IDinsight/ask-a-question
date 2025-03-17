@@ -15,10 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
-from ..tags.models import (
-    is_tag_name_unique,
-    save_tag_to_db,
-)
+from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
@@ -107,6 +104,9 @@ async def upload_document(
     tag_db = await save_tag_to_db(
         asession=asession, tag=tag, workspace_id=workspace_db.workspace_id
     )
+    _, content_tags = await validate_tags(
+        asession=asession, tags=[tag_db.tag_id], workspace_id=workspace_db.workspace_id
+    )
 
     # 3.
     # Log task in redis
@@ -126,7 +126,7 @@ async def upload_document(
         request=request,
         task_id=task_id,
         file=file,
-        tag_id=tag_db.tag_id,
+        content_tags=content_tags,
         workspace_id=workspace_db.workspace_id,
         asession=asession,
     )

@@ -125,7 +125,10 @@ def chunk_markdown_text_by_headers(markdown_text: dict) -> list:
 
 
 async def convert_markdown_chunks_to_cards(
-    md_header_splits: list, tag_id: int, workspace_id: int, asession: AsyncSession
+    md_header_splits: list,
+    content_tags: list,
+    workspace_id: int,
+    asession: AsyncSession,
 ) -> dict:
     """
     Convert markdown chunks to cards.
@@ -134,8 +137,8 @@ async def convert_markdown_chunks_to_cards(
     ----------
     md_header_splits
         The markdown header splits to convert to cards.
-    tag_id:
-        The tag ID (associated with the filename) to save the cards with.
+    content_tags:
+        The tags (associated with the filename) to save the cards with.
     workspace_id
         The workspace ID to save the cards in.
     asession
@@ -163,7 +166,7 @@ async def convert_markdown_chunks_to_cards(
                     content_text=header_split.page_content[i * 2000 : (i + 1) * 2000],
                     content_title=title,
                     content_metadata=metadata,
-                    context_tags=[tag_id],
+                    content_tags=content_tags,
                 )
                 await save_content_to_db(
                     asession=asession,
@@ -184,7 +187,7 @@ async def process_pdf_file(
     request: Request,
     task_id: str,
     file: UploadFile,
-    tag_id: int,
+    content_tags: list,
     workspace_id: int,
     asession: AsyncSession,
 ) -> DocUploadResponse:
@@ -197,8 +200,8 @@ async def process_pdf_file(
         The request object from FastAPI.
     file
         The PDF file to process.
-    tag_id
-        The tag ID (associated with the filename) to save the cards with.
+    content_tags
+        The tag (associated with the filename) to save the cards with.
     workspace_id
         The workspace ID to save the cards in.
     asession
@@ -232,7 +235,7 @@ async def process_pdf_file(
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         await convert_markdown_chunks_to_cards(
             md_header_splits=md_header_splits,
-            tag_id=tag_id,
+            content_tags=content_tags,
             workspace_id=workspace_id,
             asession=asession,
         )
