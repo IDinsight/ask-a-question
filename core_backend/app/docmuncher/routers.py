@@ -1,9 +1,11 @@
+import json
 from datetime import datetime, timezone
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     File,
     HTTPException,
@@ -38,7 +40,7 @@ logger = setup_logger()
 @router.post("/upload", response_model=DocUploadResponse)
 async def upload_document(
     request: Request,
-    # background_tasks: BackgroundTasks,
+    background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(...)],
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
@@ -92,6 +94,12 @@ async def upload_document(
             detail="User does not have the required role to ingest documents.",
         )
 
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF files are supported for document ingestion.",
+        )
+
     # 2.
     tag = TagCreate(tag_name=file.filename.upper())
     if not await is_tag_name_unique(
@@ -122,23 +130,23 @@ async def upload_document(
     await redis.set(task_id, task_status.model_dump_json())
 
     # Start background task
-    await process_pdf_file(
-        request=request,
-        task_id=task_id,
-        file=file,
-        content_tags=content_tags,
-        workspace_id=workspace_db.workspace_id,
-        asession=asession,
-    )
-    # background_tasks.add_task(
-    #     process_pdf_file,
+    # await process_pdf_file(
     #     request=request,
     #     task_id=task_id,
     #     file=file,
-    #     tag_id=tag_db.tag_id,
+    #     content_tags=content_tags,
     #     workspace_id=workspace_db.workspace_id,
     #     asession=asession,
     # )
+    background_tasks.add_task(
+        process_pdf_file,
+        request=request,
+        task_id=task_id,
+        file=file,
+        tag_id=tag_db.tag_id,
+        workspace_id=workspace_db.workspace_id,
+        asession=asession,
+    )
 
     return task_status
 
@@ -190,5 +198,10 @@ async def get_doc_ingestion_status(
 
     # Query status response
     redis = request.app.state.redis
-    doc_status = redis.get(ingestion_job_id)
-    return DocUploadResponse.model_validate(doc_status)
+    job_status = await redis.get(ingestion_job_id)
+    if not job_status:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+    return DocUploadResponse.model_validate(json.loads(job_status.decode("utf-8")))
