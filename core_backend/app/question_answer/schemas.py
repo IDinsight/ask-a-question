@@ -28,7 +28,7 @@ class ErrorType(str, Enum):
 class QueryBase(BaseModel):
     """Pydantic model for question answering query."""
 
-    chat_query_params: Optional[dict[str, Any]] = Field(
+    chat_query_params: SkipJsonSchema[Optional[dict[str, Any]]] = Field(
         default=None, description="Query parameters for chat"
     )
     generate_llm_response: bool = Field(False)
@@ -36,7 +36,7 @@ class QueryBase(BaseModel):
         default_factory=dict, examples=[{"some_key": "some_value"}]
     )
     query_text: str = Field(..., examples=["What is AAQ?"])
-    session_id: SkipJsonSchema[int | None] = Field(default=None, exclude=True)
+    session_id: int | None = Field(default=None, exclude=True)
 
     model_config = ConfigDict(from_attributes=True)
 
