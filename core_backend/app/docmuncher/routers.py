@@ -2,7 +2,7 @@ import json
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Annotated, Union
+from typing import Annotated
 from uuid import uuid4
 
 import pandas as pd
@@ -29,7 +29,6 @@ from ..workspaces.utils import (
 )
 from .dependencies import JOB_KEY_PREFIX, process_pdf_file
 from .schemas import (
-    DocIngestionStatusPdf,
     DocIngestionStatusZip,
     DocStatusEnum,
     DocUploadResponsePdf,
@@ -111,9 +110,9 @@ async def upload_document(
         )
 
     pdf_files = []
-    zip_file_name = None
+    parent_file_name = None
     if file.filename.endswith(".zip"):
-        zip_file_name = file.filename
+        parent_file_name = file.filename
         zip_file_content = await file.read()
         with zipfile.ZipFile(BytesIO(zip_file_content)) as zip_file:
             pdf_files = [
@@ -152,7 +151,7 @@ async def upload_document(
             upload_id=upload_id,
             user_id=calling_user_db.user_id,
             workspace_id=workspace_db.workspace_id,
-            zip_file_name=zip_file_name,
+            parent_file_name=parent_file_name,
             created_datetime_utc=datetime.now(timezone.utc),
             task_id=task_id,
             doc_name=filename,
@@ -181,10 +180,10 @@ async def upload_document(
             upload_id=upload_id,
             user_id=calling_user_db.user_id,
             workspace_id=workspace_db.workspace_id,
-            zip_file_name=file.filename,
+            parent_file_name=file.filename,
             created_datetime_utc=zip_created_datetime_utc,
             tasks=tasks,
-            zip_status=DocStatusEnum.not_started,
+            overall_status=DocStatusEnum.not_started,
         )
 
 
@@ -268,15 +267,13 @@ async def get_jobs_running_for_user(
     return True if num_processes_running > 0 else False
 
 
-@router.get(
-    "/status", response_model=list[Union[DocIngestionStatusPdf, DocIngestionStatusZip]]
-)
+@router.get("/status", response_model=list[DocIngestionStatusZip])
 async def get_all_jobs(
     request: Request,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[DocIngestionStatusPdf | DocIngestionStatusZip]:
+) -> list[DocIngestionStatusZip]:
     """Get the status of all jobs.
 
     Parameters:
@@ -353,52 +350,70 @@ async def get_all_jobs(
 
     groups = df.groupby("upload_id")
 
-    task_table: list[Union[DocIngestionStatusPdf, DocIngestionStatusZip]] = []
+    task_table: list[DocIngestionStatusZip] = []
     for upload_id, group in groups:
         if len(group) == 1:
             task = group.to_dict(orient="records")[0]
-            task_table.append(DocIngestionStatusPdf.model_validate(task))
+
+            zip_task = dict(
+                tasks=[task],
+                upload_id=upload_id,
+                user_id=int(task["user_id"]),
+                workspace_id=int(task["workspace_id"]),
+                parent_file_name=task["doc_name"],
+                created_datetime_utc=task["created_datetime_utc"],
+                overall_status=task["task_status"],
+                finished_datetime_utc=task["finished_datetime_utc"],
+                error_trace=task["error_trace"],
+                docs_total=1,
+                docs_indexed=(
+                    1
+                    if task["task_status"]
+                    not in [DocStatusEnum.in_progress, DocStatusEnum.not_started]
+                    else 0
+                ),
+                docs_failed=1 if task["task_status"] == DocStatusEnum.failed else 0,
+            )
+
+            task_table.append(DocIngestionStatusZip.model_validate(zip_task))
         else:
-            tasks = [
-                DocIngestionStatusPdf.model_validate(task)
-                for task in group.to_dict(orient="records")
-            ]
+            tasks = group.to_dict(orient="records")
             zip_task = dict(
                 tasks=tasks,
                 upload_id=upload_id,
-                user_id=int(tasks[0].user_id),
-                workspace_id=int(tasks[0].workspace_id),
-                zip_file_name=tasks[0].zip_file_name,
-                created_datetime_utc=tasks[0].created_datetime_utc,
+                user_id=int(tasks[0]["user_id"]),
+                workspace_id=int(tasks[0]["workspace_id"]),
+                parent_file_name=tasks[0]["parent_file_name"],
+                created_datetime_utc=tasks[0]["created_datetime_utc"],
                 docs_total=len(tasks),
             )
 
             # Get the zip status and docs indexed numbers
             num_docs_success = sum(
-                task.task_status == DocStatusEnum.success for task in tasks
+                task["task_status"] == DocStatusEnum.success for task in tasks
             )
             num_docs_failed = sum(
-                task.task_status == DocStatusEnum.failed for task in tasks
+                task["task_status"] == DocStatusEnum.failed for task in tasks
             )
             num_docs_in_progress = sum(
-                task.task_status == DocStatusEnum.in_progress for task in tasks
+                task["task_status"] == DocStatusEnum.in_progress for task in tasks
             )
 
             zip_task["docs_indexed"] = len(tasks) - num_docs_in_progress
             zip_task["docs_failed"] = num_docs_failed
 
             if num_docs_in_progress > 0:
-                zip_task["zip_status"] = DocStatusEnum.in_progress
+                zip_task["overall_status"] = DocStatusEnum.in_progress
                 zip_task["finished_datetime_utc"] = None
                 zip_task["error_trace"] = ""
 
             elif num_docs_success == len(tasks):
-                zip_task["zip_status"] = DocStatusEnum.success
-                zip_task["finished_datetime_utc"] = tasks[-1].finished_datetime_utc
+                zip_task["overall_status"] = DocStatusEnum.success
+                zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
                 zip_task["error_trace"] = ""
             else:
-                zip_task["zip_status"] = DocStatusEnum.failed
-                zip_task["finished_datetime_utc"] = tasks[-1].finished_datetime_utc
+                zip_task["overall_status"] = DocStatusEnum.failed
+                zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
                 zip_task["error_trace"] = (
                     f"{num_docs_failed} documents failed to ingest."
                 )

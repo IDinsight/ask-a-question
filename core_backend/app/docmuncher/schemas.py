@@ -20,7 +20,7 @@ class DocUploadResponseBase(BaseModel):
     upload_id: str
     user_id: int
     workspace_id: int
-    zip_file_name: Optional[str] = None
+    parent_file_name: Optional[str] = None
     created_datetime_utc: datetime
 
 
@@ -36,7 +36,7 @@ class DocUploadResponseZip(DocUploadResponseBase):
     """Pydantic model for document upload response with zip file."""
 
     tasks: list[DocUploadResponsePdf] = Field(default_factory=list)
-    zip_status: DocStatusEnum = DocStatusEnum.not_started
+    overall_status: DocStatusEnum = DocStatusEnum.not_started
 
 
 class DocIngestionStatusBase(BaseModel):
@@ -56,7 +56,7 @@ class DocIngestionStatusZip(DocUploadResponseBase, DocIngestionStatusBase):
     """Pydantic model for document ingestion status."""
 
     tasks: list[DocIngestionStatusPdf] = Field(default_factory=list)
-    zip_status: DocStatusEnum = DocStatusEnum.not_started
+    overall_status: DocStatusEnum = DocStatusEnum.not_started
     docs_indexed: int
     docs_failed: int
     docs_total: int
