@@ -14,7 +14,7 @@ from ..contents.schemas import ContentCreate
 from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
 from ..tags.schemas import TagCreate
 from ..utils import setup_logger
-from .schemas import DocIngestionStatus, DocStatusEnum
+from .schemas import DocIngestionStatusPdf, DocStatusEnum
 
 logger = setup_logger()
 MISTRAL_CLIENT = None
@@ -237,7 +237,7 @@ async def process_pdf_file(
     content: bytes,
     workspace_id: int,
     asession: AsyncSession,
-) -> DocIngestionStatus:
+) -> DocIngestionStatusPdf:
     """
     Process a PDF file.
 
@@ -272,12 +272,14 @@ async def process_pdf_file(
             detail="Job not found",
         )
 
-    job_status_pydantic = DocIngestionStatus(
-        **json.loads(job_status.decode("utf-8")),
+    job_status_dict = json.loads(job_status.decode("utf-8"))
+
+    job_status_pydantic = DocIngestionStatusPdf(
+        **job_status_dict,
         error_trace="",
-        finished_datetime_utc=datetime.now(timezone.utc),
+        finished_datetime_utc=None,
     )
-    job_status_pydantic.status = DocStatusEnum.in_progress
+    job_status_pydantic.task_status = DocStatusEnum.in_progress
     await redis.set(task_id, job_status_pydantic.model_dump_json())
 
     # Process PDF file
@@ -295,7 +297,7 @@ async def process_pdf_file(
         )
 
     except Exception as e:
-        job_status_pydantic.status = DocStatusEnum.failed
+        job_status_pydantic.task_status = DocStatusEnum.failed
         job_status_pydantic.error_trace = str(e)
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
         await redis.set(task_id, job_status_pydantic.model_dump_json())
@@ -306,7 +308,7 @@ async def process_pdf_file(
     finally:
         await asession.close()
 
-    job_status_pydantic.status = DocStatusEnum.success
+    job_status_pydantic.task_status = DocStatusEnum.success
     job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
     await redis.set(task_id, job_status_pydantic.model_dump_json())
 

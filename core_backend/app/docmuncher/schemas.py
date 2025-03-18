@@ -14,17 +14,49 @@ class DocStatusEnum(str, Enum):
     not_started = "Ingestion job created"
 
 
-class DocUploadResponse(BaseModel):
+class DocUploadResponseBase(BaseModel):
     """Pydantic model for document upload response."""
 
-    doc_name: str | None = Field(default="Untitled.pdf")
-    task_id: str
+    upload_id: str
+    user_id: int
+    workspace_id: int
+    zip_file_name: Optional[str] = None
     created_datetime_utc: datetime
-    status: DocStatusEnum
 
 
-class DocIngestionStatus(DocUploadResponse):
+class DocUploadResponsePdf(DocUploadResponseBase):
+    """Pydantic model for document upload response with pdf file."""
+
+    task_id: str
+    doc_name: str
+    task_status: DocStatusEnum = DocStatusEnum.not_started
+
+
+class DocUploadResponseZip(DocUploadResponseBase):
+    """Pydantic model for document upload response with zip file."""
+
+    tasks: list[DocUploadResponsePdf] = Field(default_factory=list)
+    zip_status: DocStatusEnum = DocStatusEnum.not_started
+
+
+class DocIngestionStatusBase(BaseModel):
     """Pydantic model for document ingestion status."""
 
     error_trace: Optional[str] = ""
     finished_datetime_utc: Optional[datetime] = None
+
+
+class DocIngestionStatusPdf(DocUploadResponsePdf, DocIngestionStatusBase):
+    """Pydantic model for document ingestion status."""
+
+    pass
+
+
+class DocIngestionStatusZip(DocUploadResponseBase, DocIngestionStatusBase):
+    """Pydantic model for document ingestion status."""
+
+    tasks: list[DocIngestionStatusPdf] = Field(default_factory=list)
+    zip_status: DocStatusEnum = DocStatusEnum.not_started
+    docs_indexed: int
+    docs_failed: int
+    docs_total: int
