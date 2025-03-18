@@ -2,7 +2,7 @@ import json
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, Union
 from uuid import uuid4
 
 import pandas as pd
@@ -269,7 +269,7 @@ async def get_jobs_running_for_user(
 
 
 @router.get(
-    "/status", response_model=list[DocIngestionStatusPdf | DocIngestionStatusZip]
+    "/status", response_model=list[Union[DocIngestionStatusPdf, DocIngestionStatusZip]]
 )
 async def get_all_jobs(
     request: Request,
@@ -353,7 +353,7 @@ async def get_all_jobs(
 
     groups = df.groupby("upload_id")
 
-    task_table = []
+    task_table: list[Union[DocIngestionStatusPdf, DocIngestionStatusZip]] = []
     for upload_id, group in groups:
         if len(group) == 1:
             task = group.to_dict(orient="records")[0]
@@ -384,7 +384,7 @@ async def get_all_jobs(
                 task.task_status == DocStatusEnum.in_progress for task in tasks
             )
 
-            zip_task["docs_indexed"] = zip_task["docs_total"] - num_docs_in_progress
+            zip_task["docs_indexed"] = len(tasks) - num_docs_in_progress
             zip_task["docs_failed"] = num_docs_failed
 
             if num_docs_in_progress > 0:
