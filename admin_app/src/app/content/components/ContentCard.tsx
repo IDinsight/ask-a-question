@@ -56,6 +56,10 @@ const ContentCard = ({
     selectedContents.includes(content_id),
   );
 
+  React.useEffect(() => {
+    setChecked(selectedContents.includes(content_id));
+  }, [selectedContents]);
+
   return (
     <>
       <Card
@@ -94,6 +98,8 @@ const ContentCard = ({
               const newChecked = e.target.checked;
               if (newChecked && !selectedContents.includes(content_id)) {
                 setSelectedContents([...selectedContents, content_id]);
+              } else if (!newChecked && selectedContents.includes(content_id)) {
+                setSelectedContents(selectedContents.filter((id) => id !== content_id));
               }
               setChecked(newChecked);
             }}
