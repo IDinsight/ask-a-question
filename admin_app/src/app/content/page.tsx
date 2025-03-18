@@ -465,7 +465,7 @@ const CardsGrid = ({
   const [columns, setColumns] = React.useState<number>(1);
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-
+  const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
   // Callback ref to handle when the grid element mounts
@@ -673,6 +673,8 @@ const CardsGrid = ({
                           return archiveContent(content_id, token!);
                         }}
                         editAccess={editAccess}
+                        selectedContents={selectedContents}
+                        setSelectedContents={setSelectedContents}
                       />
                     </Grid>
                   );
