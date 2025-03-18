@@ -178,6 +178,7 @@ const ContentCard = ({
             size="medium"
             onClick={(event) => {
               event.stopPropagation();
+              setSelectedContents(selectedContents.filter((id) => id !== content_id));
               setOpenArchiveModal(true);
             }}
           >

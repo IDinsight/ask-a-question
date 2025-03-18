@@ -9,7 +9,9 @@ import {
   Button,
   ButtonGroup,
   CircularProgress,
+  Divider,
   Fab,
+  Fade,
   Grid,
   Menu,
   MenuItem,
@@ -23,7 +25,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import { ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Delete,
+  Delete as DeleteIcon,
+  WarningAmber as WarningIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -884,8 +893,6 @@ const CardsGrid = ({
   );
 };
 
-export default CardsPage;
-
 const ConfirmDeleteModal: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -901,72 +908,135 @@ const ConfirmDeleteModal: React.FC<{
     }
   };
 
+  // Handle enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && confirmationText.toLowerCase() === "delete") {
+      handleConfirm();
+    }
+  };
+
   return (
     <Modal
       open={open}
       onClose={onClose}
+      closeAfterTransition
       aria-labelledby="confirm-delete-modal-title"
       aria-describedby="confirm-delete-modal-description"
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 400,
-          bgcolor: "background.paper",
-          border: "2px solid #000",
-          boxShadow: 24,
-          p: 4,
-          borderRadius: 2,
-        }}
-      >
-        <Typography
-          id="confirm-delete-modal-title"
-          variant="h6"
-          component="h2"
-          gutterBottom
-        >
-          Confirm Deletion
-        </Typography>
-        <Typography id="confirm-delete-modal-description" variant="body1" gutterBottom>
-          Are you sure you want to delete {selectedContentsCount} content
-          {selectedContentsCount > 1 ? "s" : ""}? This action cannot be undone.
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          Type <strong>delete</strong> in the field below to confirm.
-        </Typography>
-        <TextField
-          fullWidth
-          variant="outlined"
-          size="small"
-          value={confirmationText}
-          onChange={(e) => setConfirmationText(e.target.value)}
-          placeholder="Type 'delete' to confirm"
-          sx={{ mt: 2 }}
-        />
-        <Box
+      <Fade in={open}>
+        <Paper
+          elevation={6}
           sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 2,
-            mt: 3,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 450,
+            maxWidth: "90vw",
+            bgcolor: "background.paper",
+            borderRadius: 3,
+            overflow: "hidden",
           }}
         >
-          <Button variant="outlined" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleConfirm}
-            disabled={confirmationText.toLowerCase() !== "delete"}
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "error.light",
+              py: 2,
+              px: 3,
+              color: "white",
+            }}
           >
-            Delete
-          </Button>
-        </Box>
-      </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <DeleteIcon />
+              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
+                Confirm Deletion
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Divider />
+
+          {/* Content */}
+          <Box sx={{ p: 3 }}>
+            <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
+              This action cannot be undone
+            </Alert>
+
+            <Typography
+              id="confirm-delete-modal-description"
+              variant="body1"
+              sx={{ mb: 3 }}
+            >
+              You are about to permanently delete{" "}
+              <strong>{selectedContentsCount}</strong> content
+              {selectedContentsCount > 1 ? "s" : ""}.
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Type <strong>delete</strong> to confirm:
+            </Typography>
+
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              value={confirmationText}
+              onChange={(e) => setConfirmationText(e.target.value)}
+              placeholder="Type 'delete' to confirm"
+              onKeyDown={handleKeyDown}
+              autoFocus
+              InputProps={{
+                sx: { borderRadius: 1.5 },
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              p: 3,
+              pt: 1,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirm}
+              disabled={confirmationText.toLowerCase() !== "delete"}
+              startIcon={<DeleteIcon />}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                boxShadow: 2,
+              }}
+            >
+              Delete Items
+            </Button>
+          </Box>
+        </Paper>
+      </Fade>
     </Modal>
   );
 };
+
+export default CardsPage;
