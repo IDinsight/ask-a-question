@@ -22,7 +22,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -55,6 +55,8 @@ interface TagsFilterProps {
 
 interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   editAccess: boolean;
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -77,6 +79,8 @@ interface CardsGridProps {
   handleSidebarToggle: () => void;
   openChatSidebar: boolean;
   handleChatSidebarToggle: () => void;
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 const CardsPage = () => {
@@ -96,6 +100,7 @@ const CardsPage = () => {
 
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
+  const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -205,6 +210,8 @@ const CardsPage = () => {
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 tags={tags}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
                 filterTags={filterTags}
                 setFilterTags={setFilterTags}
                 setSnackMessage={setSnackMessage}
@@ -222,6 +229,8 @@ const CardsPage = () => {
                 handleSidebarToggle={handleSidebarToggle}
                 openChatSidebar={openChatSidebar}
                 handleChatSidebarToggle={handleChatSidebarToggle}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
               />
             </Box>
           </Box>
@@ -292,6 +301,8 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   searchTerm,
   setSearchTerm,
   tags,
+  selectedContents,
+  setSelectedContents,
   filterTags,
   setFilterTags,
   setSnackMessage,
@@ -303,7 +314,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
       sx={{
         display: "flex",
         flexDirection: "row",
-        justifyContent: "flex-end",
+        justifyContent: "space-between",
         alignContent: "flex-end",
         width: "100%",
         paddingBottom: 2,
@@ -311,6 +322,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         gap: sizes.baseGap,
       }}
     >
+      {/* Left section - Search and Filters */}
       <Box
         sx={{
           display: "flex",
@@ -332,7 +344,49 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           />
         </Box>
       </Box>
-      <Box sx={{ flexGrow: 1 }} />
+
+      {/* Middle section - Selection Control Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: sizes.smallGap,
+        }}
+      >
+        <Button
+          variant="outlined"
+          size="small"
+          //onClick={handleSelectAll}
+          disabled={!editAccess}
+        >
+          Select All
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            setSelectedContents([]);
+          }}
+          disabled={!editAccess || selectedContents.length === 0}
+        >
+          Deselect All
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          //onClick={}
+          disabled={!editAccess || selectedContents.length === 0}
+
+          // startIcon={<Delete />}
+        >
+          Delete
+        </Button>
+      </Box>
+
+      {/* Right section - Download and Add buttons */}
       <Box
         sx={{
           display: "flex",
@@ -458,6 +512,8 @@ const CardsGrid = ({
   handleSidebarToggle,
   openChatSidebar,
   handleChatSidebarToggle,
+  selectedContents,
+  setSelectedContents,
 }: CardsGridProps) => {
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
@@ -465,7 +521,6 @@ const CardsGrid = ({
   const [columns, setColumns] = React.useState<number>(1);
   const [cards, setCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
   // Callback ref to handle when the grid element mounts
@@ -673,6 +728,7 @@ const CardsGrid = ({
                           return archiveContent(content_id, token!);
                         }}
                         editAccess={editAccess}
+                        isSelectMode={selectedContents.length > 0}
                         selectedContents={selectedContents}
                         setSelectedContents={setSelectedContents}
                       />
