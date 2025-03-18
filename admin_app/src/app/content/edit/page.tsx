@@ -249,6 +249,7 @@ const ContentBox = ({
       updated_datetime_utc: "",
       positive_votes: 0,
       negative_votes: 0,
+      display_number: 0,
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
