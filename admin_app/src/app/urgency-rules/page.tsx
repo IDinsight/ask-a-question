@@ -482,6 +482,19 @@ const UrgencyRulesPage = () => {
               </Fab>
             </Box>
           </Box>
+          <Snackbar
+            open={snackbarMessage.message !== ""}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarMessage.severity}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </Grid>
       <Grid
