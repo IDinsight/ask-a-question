@@ -187,7 +187,7 @@ async def upload_document(
         )
 
 
-@router.get("/status/user", response_model=bool)
+@router.get("/status", response_model=bool)
 async def get_jobs_running_for_user(
     request: Request,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -248,16 +248,13 @@ async def get_jobs_running_for_user(
     all_jobs_list = [json.loads(job.decode("utf-8")) for job in all_jobs]
 
     user_workspace_jobs = [
-        job
-        for job in all_jobs_list
-        if job["user_id"] == calling_user_db.user_id
-        and job["workspace_id"] == workspace_db.workspace_id
+        job for job in all_jobs_list if job["workspace_id"] == workspace_db.workspace_id
     ]
 
     if len(user_workspace_jobs) == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No jobs found for this user in workspace {workspace_name}",
+            detail=f"No jobs found in workspace {workspace_name}",
         )
 
     num_processes_running = sum(
@@ -267,7 +264,7 @@ async def get_jobs_running_for_user(
     return True if num_processes_running > 0 else False
 
 
-@router.get("/status", response_model=list[DocIngestionStatusZip])
+@router.get("/status/data", response_model=list[DocIngestionStatusZip])
 async def get_all_jobs(
     request: Request,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -329,16 +326,13 @@ async def get_all_jobs(
 
     # Filter jobs for the workspace and user
     user_workspace_jobs = [
-        job
-        for job in all_jobs_list
-        if job["user_id"] == calling_user_db.user_id
-        and job["workspace_id"] == workspace_db.workspace_id
+        job for job in all_jobs_list if job["workspace_id"] == workspace_db.workspace_id
     ]
 
     if len(user_workspace_jobs) == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No jobs found for this user in workspace {workspace_name}",
+            detail=f"No jobs found in workspace {workspace_name}",
         )
 
     # Convert to pandas for easy grouping
