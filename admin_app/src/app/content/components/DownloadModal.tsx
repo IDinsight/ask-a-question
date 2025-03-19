@@ -14,7 +14,7 @@ import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
 import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
-import { CustomError } from "@/utils/api";
+import { CustomError, handleApiError } from "@/utils/api";
 
 interface ContentDownload {
   content_id: number | null;
@@ -125,9 +125,11 @@ const DownloadModal = ({
       const filename = `content_${timestamp}.csv`;
       downloadCSV(csv, filename);
     } catch (error) {
-      const customError = error as CustomError;
-      console.error(customError.message, error);
-      onFailedDownload(customError.message);
+      try {
+        handleApiError(error, "Failed to download content");
+      } catch (apiError: any) {
+        onFailedDownload(apiError.message);
+      }
     } finally {
       setLoading(false);
       onClose();

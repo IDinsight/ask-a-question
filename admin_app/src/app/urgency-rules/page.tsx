@@ -52,7 +52,7 @@ const UrgencyRulesPage = () => {
   }>({ message: "", severity: "success" });
   const handleSnackbarClose = (
     event?: React.SyntheticEvent | Event,
-    reason?: string
+    reason?: string,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -90,7 +90,7 @@ const UrgencyRulesPage = () => {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
-        token!
+        token!,
       )
         .then((data: UrgencyRule) => {
           const newItems = [...items];
@@ -107,10 +107,7 @@ const UrgencyRulesPage = () => {
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
-  ) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === "Enter") {
       addOrUpdateItem(index);
       setEditableIndex(-1);
@@ -225,12 +222,7 @@ const UrgencyRulesPage = () => {
         md={12 - sidebarGridWidth}
         lg={12 - sidebarGridWidth + 1}
         sx={{
-          display: openSidebar
-            ? { xs: "none", sm: "none", md: "block" }
-            : "block",
-          display: openSidebar
-            ? { xs: "none", sm: "none", md: "block" }
-            : "block",
+          display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
           height: "100%",
           paddingTop: 5,
           paddingInline: 4,
@@ -265,14 +257,10 @@ const UrgencyRulesPage = () => {
               <Typography variant="h4" align="left" color="primary">
                 Urgency Detection
               </Typography>
-              <Typography
-                variant="body1"
-                align="left"
-                color={appColors.darkGrey}
-              >
+              <Typography variant="body1" align="left" color={appColors.darkGrey}>
                 Add, edit, and test urgency rules. Messages sent to the urgency
-                detection service will be flagged as urgent if any of the rules
-                apply to the message.
+                detection service will be flagged as urgent if any of the rules apply to
+                the message.
               </Typography>
             </Box>
             <Box
@@ -382,12 +370,7 @@ const UrgencyRulesPage = () => {
                           disablePadding
                           onMouseEnter={() => setHoveredIndex(index)}
                           onMouseLeave={() => setHoveredIndex(-1)}
-                          onDoubleClick={
-                            editAccess ? handleEdit(index) : () => {}
-                          }
-                          onDoubleClick={
-                            editAccess ? handleEdit(index) : () => {}
-                          }
+                          onDoubleClick={editAccess ? handleEdit(index) : () => {}}
                         >
                           <ListItemIcon>#{index + 1}</ListItemIcon>
                           {editableIndex === index ? (
@@ -395,18 +378,12 @@ const UrgencyRulesPage = () => {
                               fullWidth
                               size="medium"
                               value={urgencyRule.urgency_rule_text}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => handleTextChange(e.target.value, index)}
-                              onKeyDown={(
-                                e: React.KeyboardEvent<HTMLInputElement>
-                              ) => handleKeyDown(e, index)}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => handleTextChange(e.target.value, index)}
-                              onKeyDown={(
-                                e: React.KeyboardEvent<HTMLInputElement>
-                              ) => handleKeyDown(e, index)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                handleTextChange(e.target.value, index)
+                              }
+                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                                handleKeyDown(e, index)
+                              }
                               onBlur={() => {
                                 onBlur(index);
                               }}
@@ -443,8 +420,7 @@ const UrgencyRulesPage = () => {
                                 urgencyRule.updated_datetime_utc ? (
                                   "Last updated: " +
                                   new Date(
-                                    urgencyRule.updated_datetime_utc
-                                    urgencyRule.updated_datetime_utc
+                                    urgencyRule.updated_datetime_utc,
                                   ).toLocaleString(undefined, {
                                     day: "numeric",
                                     month: "numeric",

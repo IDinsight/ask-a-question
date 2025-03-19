@@ -25,7 +25,10 @@ export const handleApiError = (customError: any, errorMessage: string) => {
   ) {
     throw {
       status: customError.response.status,
-      message: (customError.response.data as any)?.detail || errorMessage,
+      message:
+        (customError.response.data as any)?.detail ||
+        (customError.response.data as any)?.message ||
+        errorMessage,
     } as CustomError;
   } else {
     throw new Error(errorMessage);
@@ -45,7 +48,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 const getLoginToken = async (username: string, password: string) => {
@@ -64,7 +67,6 @@ const getLoginToken = async (username: string, password: string) => {
     let error_message = "Error fetching login token";
     handleApiError(customError, error_message);
     console.log(customError);
-    throw new Error(error_message);
   }
 };
 
@@ -78,14 +80,15 @@ const getGoogleLoginToken = async (idToken: {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching Google login token");
+    handleApiError(error, "Error fetching Google login token");
+    console.error("Error fetching Google login token", error);
   }
 };
 const getSearch = async (
   question: string,
   generate_llm_response: boolean,
-  token: string
-): Promise<{ status: number; data?: any; error?: any }> => {
+  token: string,
+): Promise<{ status: number; data?: any; error?: any } | undefined> => {
   try {
     const response = await api.post(
       "/search",
@@ -95,7 +98,7 @@ const getSearch = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     return { status: response.status, ...response.data };
@@ -104,8 +107,8 @@ const getSearch = async (
     if (error.response) {
       return { status: error.response.status, error: error.response.data };
     } else {
+      handleApiError(error, "Error performing search");
       console.error("Error performing search", error.message);
-      throw new Error(`Error performing search: ${error.message}`);
     }
   }
 };
@@ -114,8 +117,8 @@ const getChat = async (
   question: string,
   generate_llm_response: boolean,
   token: string,
-  session_id?: number
-): Promise<{ status: number; data?: any; error?: any }> => {
+  session_id?: number,
+): Promise<{ status: number; data?: any; error?: any } | undefined> => {
   try {
     const response = await api.post(
       "/chat",
@@ -126,7 +129,7 @@ const getChat = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     return { status: response.status, ...response.data };
@@ -135,8 +138,8 @@ const getChat = async (
     if (error.response) {
       return { status: error.response.status, error: error.response.data };
     } else {
+      handleApiError(error, "Error returning chat response");
       console.error("Error returning chat response", error.message);
-      throw new Error(`Error returning chat response: ${error.message}`);
     }
   }
 };
@@ -144,7 +147,7 @@ const postResponseFeedback = async (
   query_id: number,
   feedback_sentiment: string,
   feedback_secret_key: string,
-  token: string
+  token: string,
 ) => {
   try {
     const response = await api.post(
@@ -156,11 +159,12 @@ const postResponseFeedback = async (
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return response.data;
   } catch (error) {
-    throw new Error("Error sending response feedback");
+    handleApiError(error, "Error sending response feedback");
+    console.error("Error sending response feedback", error);
   }
 };
 
@@ -171,11 +175,12 @@ const getUrgencyDetection = async (search: string, token: string) => {
       { message_text: search },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error fetching urgency detection: ${error.message}`);
+    handleApiError(error, "Error fetching urgency detection");
+    console.error("Error fetching urgency detection", error.message);
   }
 };
 
