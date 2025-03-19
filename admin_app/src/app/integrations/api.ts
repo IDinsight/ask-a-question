@@ -1,4 +1,5 @@
-import api from "../../utils/api";
+import api, { CustomError, handleApiError } from "../../utils/api";
+import axios from "axios";
 
 const createNewApiKey = async (token: string) => {
   try {
@@ -13,8 +14,9 @@ const createNewApiKey = async (token: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error rotating API key");
+  } catch (customError) {
+    let error_message = "Error rotating API key";
+    handleApiError(customError, error_message);
   }
 };
 

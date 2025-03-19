@@ -17,6 +17,23 @@ export type CustomError = {
   status: number;
   message: string;
 };
+export const handleApiError = (customError: any, errorMessage: string) => {
+  if (
+    axios.isAxiosError(customError) &&
+    customError.response &&
+    customError.response.status !== 500
+  ) {
+    throw {
+      status: customError.response.status,
+      message:
+        (customError.response.data as any)?.detail ||
+        (customError.response.data as any)?.message ||
+        errorMessage,
+    } as CustomError;
+  } else {
+    throw new Error(errorMessage);
+  }
+};
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -47,18 +64,9 @@ const getLoginToken = async (username: string, password: string) => {
     });
     return response.data;
   } catch (customError) {
-    if (
-      axios.isAxiosError(customError) &&
-      customError.response &&
-      customError.response.status !== 500
-    ) {
-      throw {
-        status: customError.response.status,
-        message: customError.response.data?.detail,
-      } as CustomError;
-    }
+    let error_message = "Error fetching login token";
+    handleApiError(customError, error_message);
     console.log(customError);
-    throw new Error("Error fetching login token");
   }
 };
 
@@ -72,14 +80,15 @@ const getGoogleLoginToken = async (idToken: {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching Google login token");
+    handleApiError(error, "Error fetching Google login token");
+    console.error("Error fetching Google login token", error);
   }
 };
 const getSearch = async (
   question: string,
   generate_llm_response: boolean,
   token: string,
-): Promise<{ status: number; data?: any; error?: any }> => {
+): Promise<{ status: number; data?: any; error?: any } | undefined> => {
   try {
     const response = await api.post(
       "/search",
@@ -98,8 +107,8 @@ const getSearch = async (
     if (error.response) {
       return { status: error.response.status, error: error.response.data };
     } else {
+      handleApiError(error, "Error performing search");
       console.error("Error performing search", error.message);
-      throw new Error(`Error performing search: ${error.message}`);
     }
   }
 };
@@ -109,7 +118,7 @@ const getChat = async (
   generate_llm_response: boolean,
   token: string,
   session_id?: number,
-): Promise<{ status: number; data?: any; error?: any }> => {
+): Promise<{ status: number; data?: any; error?: any } | undefined> => {
   try {
     const response = await api.post(
       "/chat",
@@ -129,8 +138,8 @@ const getChat = async (
     if (error.response) {
       return { status: error.response.status, error: error.response.data };
     } else {
+      handleApiError(error, "Error returning chat response");
       console.error("Error returning chat response", error.message);
-      throw new Error(`Error returning chat response: ${error.message}`);
     }
   }
 };
@@ -154,7 +163,8 @@ const postResponseFeedback = async (
     );
     return response.data;
   } catch (error) {
-    throw new Error("Error sending response feedback");
+    handleApiError(error, "Error sending response feedback");
+    console.error("Error sending response feedback", error);
   }
 };
 
@@ -169,7 +179,8 @@ const getUrgencyDetection = async (search: string, token: string) => {
     );
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error fetching urgency detection: ${error.message}`);
+    handleApiError(error, "Error fetching urgency detection");
+    console.error("Error fetching urgency detection", error.message);
   }
 };
 
