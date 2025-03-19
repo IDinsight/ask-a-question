@@ -652,6 +652,7 @@ const CardsGrid = ({
                         title={item.content_title}
                         text={item.content_text}
                         content_id={item.content_id}
+                        display_number={item.display_number}
                         last_modified={item.updated_datetime_utc}
                         tags={
                           tags

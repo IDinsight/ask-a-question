@@ -34,6 +34,7 @@ import {
 
 export interface Content extends EditContentBody {
   content_id: number | null;
+  display_number: number;
   positive_votes: number;
   negative_votes: number;
   created_datetime_utc: string;
@@ -99,7 +100,7 @@ const AddEditContentPage = () => {
         }}
       >
         <Header
-          content_id={content_id}
+          display_number={content?.display_number || null}
           onBack={() =>
             isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
           }
@@ -248,6 +249,7 @@ const ContentBox = ({
       updated_datetime_utc: "",
       positive_votes: 0,
       negative_votes: 0,
+      display_number: 0,
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
@@ -570,23 +572,23 @@ const ContentBox = ({
 };
 
 const Header = ({
-  content_id,
+  display_number,
   onBack,
 }: {
-  content_id: number | null;
+  display_number: number | null;
   onBack: () => void;
 }) => {
   return (
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft style={{ cursor: "pointer" }} onClick={onBack} />
       <Layout.Spacer multiplier={1} horizontal />
-      {content_id ? (
+      {display_number ? (
         <>
           <Typography variant="h5">Edit Content</Typography>
           <Layout.Spacer multiplier={2} horizontal />
           <Typography variant="h5">{`\u2022`}</Typography>
           <Layout.Spacer multiplier={2} horizontal />
-          <Typography variant="h5">#{content_id}</Typography>
+          <Typography variant="h5">#{display_number}</Typography>
         </>
       ) : (
         <Typography variant="h5">Add Content</Typography>
