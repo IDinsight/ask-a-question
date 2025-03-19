@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Annotated
 from uuid import uuid4
 
-import pandas as pd
+import numpy as np
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -187,7 +187,7 @@ async def upload_document(
         )
 
 
-@router.get("/status", response_model=bool)
+@router.get("/status/is_job_running", response_model=bool)
 async def get_jobs_running_for_user(
     request: Request,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -335,19 +335,18 @@ async def get_all_jobs(
             detail=f"No jobs found in workspace {workspace_name}",
         )
 
-    # Convert to pandas for easy grouping
-    df = pd.DataFrame(user_workspace_jobs)
-    df.created_datetime_utc = pd.to_datetime(df.created_datetime_utc)
-    df.finished_datetime_utc = pd.to_datetime(df.finished_datetime_utc)
-    df = df.sort_values(by="created_datetime_utc", ascending=False)
-    df[pd.isna(df.error_trace)] = ""
-
-    groups = df.groupby("upload_id")
+    # Group jobs by upload id
+    upload_ids = np.unique(
+        [str(job["upload_id"]) for job in user_workspace_jobs]
+    ).tolist()
 
     task_table: list[DocIngestionStatusZip] = []
-    for upload_id, group in groups:
+    for upload_id in upload_ids:
+        group = [job for job in user_workspace_jobs if job["upload_id"] == upload_id]
+        tasks = sorted(group, key=lambda x: x["created_datetime_utc"])
+
         if len(group) == 1:
-            task = group.to_dict(orient="records")[0]
+            task = tasks[0]
 
             zip_task = dict(
                 tasks=[task],
@@ -371,7 +370,6 @@ async def get_all_jobs(
 
             task_table.append(DocIngestionStatusZip.model_validate(zip_task))
         else:
-            tasks = group.to_dict(orient="records")
             zip_task = dict(
                 tasks=tasks,
                 upload_id=upload_id,
