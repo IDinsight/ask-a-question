@@ -38,7 +38,9 @@ import { archiveContent, getContentList, getTagList } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
-import { ImportModal } from "./components/ImportModal";
+import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
+import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
+import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 
@@ -297,6 +299,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
 }) => {
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
+  const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
 
   return (
     <Box
@@ -342,6 +345,20 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={() => {
+            setOpenIndexHistoryModal(true);
+          }}
+        >
+          Indexing History
+        </Button>
+        <IndexingStatusModal
+          open={openIndexHistoryModal}
+          onClose={() => setOpenIndexHistoryModal(false)}
+        />
         <Tooltip title="Download all contents">
           <>
             <Button
@@ -407,7 +424,8 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
 const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
-  const [openModal, setOpenModal] = useState(false);
+  const [openCSVModal, setOpenCSVModal] = useState(false);
+  const [openPDFModal, setOpenPDFModal] = useState(false);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -435,13 +453,22 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setOpenModal(true);
+            setOpenCSVModal(true);
           }}
         >
-          Import contents from file
+          Import cards from CSV
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setOpenPDFModal(true);
+          }}
+        >
+          Transform PDFs to cards
         </MenuItem>
       </Menu>
-      <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
+      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
+      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
     </>
   );
 };

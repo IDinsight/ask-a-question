@@ -4,8 +4,6 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
 import sentry_sdk
-import sklearn  # noqa
-import torch  # noqa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CollectorRegistry, make_asgi_app, multiprocess
@@ -18,6 +16,7 @@ from . import (
     contents,
     dashboard,
     data_api,
+    docmuncher,
     question_answer,
     tags,
     urgency_detection,
@@ -163,6 +162,7 @@ def create_app() -> FastAPI:
     app.include_router(contents.router)
     app.include_router(dashboard.router)
     app.include_router(data_api.router)
+    app.include_router(docmuncher.router)
     app.include_router(question_answer.router)
     app.include_router(tags.router)
     app.include_router(urgency_detection.router)
