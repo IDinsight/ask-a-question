@@ -36,7 +36,7 @@ class QueryBase(BaseModel):
         default_factory=dict, examples=[{"some_key": "some_value"}]
     )
     query_text: str = Field(..., examples=["What is AAQ?"])
-    session_id: int | None = Field(default=None, exclude=True)
+    session_id: int | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -25,6 +25,11 @@ services:
       - redis
       - relational_db
 
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../core_backend
+
   admin_app:
     image: idinsight/aaq-admin-app:latest
     build:
@@ -37,6 +42,10 @@ services:
     restart: always
     env_file:
       - .base.env
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../admin_app
 
   caddy:
     image: caddy:2.7.6
