@@ -81,9 +81,9 @@ async def generate_llm_query_response(
     if response.search_results is None:
         logger.warning("No search_results found in the response.")
         return response, chat_history
-    if query_refined.original_language is None:
-        logger.warning("No original_language found in the query.")
-        return response, chat_history
+    # if query_refined.original_language is None:
+    #     logger.warning("No original_language found in the query.")
+    #     return response, chat_history
 
     context = get_context_string_from_search_results(
         search_results=response.search_results
@@ -97,7 +97,7 @@ async def generate_llm_query_response(
             context=context,
             message_type=message_type,
             metadata=metadata,
-            original_language=query_refined.original_language,
+            # original_language=query_refined.original_language,
             question=query_refined.query_text_original,
             session_id=chat_query_params["session_id"],
         )
@@ -105,7 +105,7 @@ async def generate_llm_query_response(
         rag_response = await get_llm_rag_answer(
             context=context,
             metadata=metadata,
-            original_language=query_refined.original_language,
+            # original_language=query_refined.original_language,
             question=query_refined.query_text_original,  # Use the original query text
         )
 

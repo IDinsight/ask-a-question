@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from ..config import LITELLM_MODEL_GENERATION
 from ..utils import setup_logger
-from .llm_prompts import RAG, RAG_FAILURE_MESSAGE, ChatHistory, IdentifiedLanguage
+from .llm_prompts import RAG, RAG_FAILURE_MESSAGE, ChatHistory
 from .utils import (
     _ask_llm_async,
     append_messages_to_chat_history,
@@ -23,7 +23,7 @@ async def get_llm_rag_answer(
     *,
     context: str,
     metadata: dict | None = None,
-    original_language: IdentifiedLanguage,
+    # original_language: IdentifiedLanguage,
     question: str,
 ) -> RAG:
     """Get an answer from the LLM model using RAG.
@@ -46,7 +46,10 @@ async def get_llm_rag_answer(
     """
 
     metadata = metadata or {}
-    prompt = RAG.prompt.format(context=context, original_language=original_language)
+    prompt = RAG.prompt.format(
+        context=context,
+        # original_language=original_language
+    )
 
     result = await _ask_llm_async(
         json_=True,
@@ -74,7 +77,7 @@ async def get_llm_rag_answer_with_chat_history(
     context: str,
     message_type: str,
     metadata: dict | None = None,
-    original_language: IdentifiedLanguage,
+    # original_language: IdentifiedLanguage,
     question: str,
     session_id: str,
 ) -> tuple[RAG, list[dict[str, str | None]]]:
@@ -111,7 +114,7 @@ async def get_llm_rag_answer_with_chat_history(
             ChatHistory.system_message_generate_response.format(
                 failure_message=RAG_FAILURE_MESSAGE,
                 message_type=message_type,
-                original_language=original_language,
+                # original_language=original_language,
             )
         )
     content = (

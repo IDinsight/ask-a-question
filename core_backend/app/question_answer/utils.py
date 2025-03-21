@@ -23,6 +23,6 @@ def get_context_string_from_search_results(
     for key, result in search_results.items():
         if not isinstance(result, QuerySearchResult):
             result = QuerySearchResult(**result)
-        context_list.append(f"{key}. {result.title}\n{result.text}")
+        context_list.append(f"**{key}. {result.title}**\n{result.text}")
     context_string = "\n\n".join(context_list)
     return context_string
