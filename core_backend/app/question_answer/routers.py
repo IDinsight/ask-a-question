@@ -30,12 +30,8 @@ from ..database import get_async_session
 from ..llm_call.llm_prompts import ChatHistory
 from ..llm_call.process_input import (
     classify_safety__before,
-    identify_language__before,
-    paraphrase_question__before,
-    translate_question__before,
 )
 from ..llm_call.process_output import (
-    check_align_score__after,
     generate_llm_query_response,
     generate_tts__after,
 )
@@ -442,10 +438,7 @@ async def voice_search(
         )
 
 
-@identify_language__before
 @classify_safety__before
-@translate_question__before
-@paraphrase_question__before
 async def get_search_response(
     query_refined: QueryRefined,
     response: QueryResponse,
@@ -563,7 +556,6 @@ def rerank_search_results(
 
 
 @generate_tts__after
-@check_align_score__after
 async def get_generation_response(
     query_refined: QueryRefined, response: QueryResponse
 ) -> QueryResponse | QueryResponseError:
