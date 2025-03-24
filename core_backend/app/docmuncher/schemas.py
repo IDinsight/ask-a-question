@@ -37,6 +37,7 @@ class DocUploadResponseZip(DocUploadResponseBase):
 
     tasks: list[DocUploadResponsePdf] = Field(default_factory=list)
     overall_status: DocStatusEnum = DocStatusEnum.not_started
+    docs_total: int
 
 
 class DocIngestionStatusBase(BaseModel):

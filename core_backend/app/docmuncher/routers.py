@@ -180,10 +180,11 @@ async def upload_document(
             upload_id=upload_id,
             user_id=calling_user_db.user_id,
             workspace_id=workspace_db.workspace_id,
-            parent_file_name=file.filename,
+            parent_file_name=parent_file_name,
             created_datetime_utc=zip_created_datetime_utc,
             tasks=tasks,
             overall_status=DocStatusEnum.not_started,
+            docs_total=len(pdf_files),
         )
 
 
@@ -377,7 +378,7 @@ async def get_all_jobs(
                 workspace_id=int(tasks[0]["workspace_id"]),
                 parent_file_name=tasks[0]["parent_file_name"],
                 created_datetime_utc=tasks[0]["created_datetime_utc"],
-                docs_total=len(tasks),
+                docs_total=len(group),
             )
 
             # Get the zip status and docs indexed numbers
@@ -403,12 +404,16 @@ async def get_all_jobs(
                 zip_task["overall_status"] = DocStatusEnum.success
                 zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
                 zip_task["error_trace"] = ""
-            else:
+            elif num_docs_failed == len(tasks):
                 zip_task["overall_status"] = DocStatusEnum.failed
                 zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
                 zip_task["error_trace"] = (
                     f"{num_docs_failed} documents failed to ingest."
                 )
+            else:
+                zip_task["overall_status"] = DocStatusEnum.not_started
+                zip_task["finished_datetime_utc"] = None
+                zip_task["error_trace"] = ""
 
             task_table.append(DocIngestionStatusZip.model_validate(zip_task))
     return task_table
