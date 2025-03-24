@@ -13,7 +13,7 @@ import {
 import { useDropzone } from "react-dropzone";
 import { Layout } from "@/components/Layout";
 import { LoadingButton } from "@mui/lab";
-import { bulkUploadContents } from "../api"; // Assuming similar API function for PDF upload
+import { postDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
 
 interface CustomError {
@@ -30,7 +30,7 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   open,
   onClose,
 }) => {
-  const { token, accessLevel } = useAuth();
+  const { token } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -81,7 +81,7 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
       // add artificial delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
       try {
-        const response = await bulkUploadContents(files[0], token!); // Assuming similar API function for PDF upload
+        const response = await postDocumentToIndex(files[0], token!);
         if (response.status === 200) {
           setImportSuccess(true);
           setFiles([]);

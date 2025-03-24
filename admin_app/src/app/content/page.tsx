@@ -34,7 +34,7 @@ import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { archiveContent, getContentList, getTagList } from "./api";
+import { archiveContent, getContentList, getTagList, getIndexingStatus } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
@@ -298,8 +298,19 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setFilterTags,
   setSnackMessage,
 }) => {
+  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
+  const [showIndexButton, setShowIndexButton] = React.useState(false);
+  const [isJobRunning, setIsJobRunning] = React.useState(false);
+
+  React.useEffect(() => {
+    if (token) {
+      getIndexingStatus(token).then((data) => {
+        setShowIndexButton(data === true || data == false);
+      });
+    }
+  }, [token]);
 
   return (
     <Box
@@ -345,20 +356,24 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
-        <Button
-          variant="outlined"
-          color="primary"
-          size="small"
-          onClick={() => {
-            setOpenIndexHistoryModal(true);
-          }}
-        >
-          Indexing History
-        </Button>
-        <IndexingStatusModal
-          open={openIndexHistoryModal}
-          onClose={() => setOpenIndexHistoryModal(false)}
-        />
+        {showIndexButton && (
+          <>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={() => {
+                setOpenIndexHistoryModal(true);
+              }}
+            >
+              Indexing History
+            </Button>
+            <IndexingStatusModal
+              open={openIndexHistoryModal}
+              onClose={() => setOpenIndexHistoryModal(false)}
+            />
+          </>
+        )}
         <Tooltip title="Download all contents">
           <>
             <Button

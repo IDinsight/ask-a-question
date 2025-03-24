@@ -19,106 +19,46 @@ import {
 import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
-
-interface IndexRow {
-  fileName: string;
-  status: "Ongoing" | "Done" | "Error";
-  docsIndexed: string;
-  errorTrace: string;
-  created_at: string;
-  finished_at: string;
-}
+import { DocIndexingStatusRow, getDocIndexingStatusData } from "../api";
 
 interface IndexingStatusModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-// Dummy since no API
-const dummyData = (): IndexRow[] => {
-  return [
-    {
-      fileName: "sales_report_2025.pdf",
-      status: "Done",
-      docsIndexed: "42",
-      errorTrace: "",
-      created_at: "2025-03-10 09:15:23",
-      finished_at: "2025-03-10 09:17:45",
-    },
-    {
-      fileName: "product_catalog.xlsx",
-      status: "Ongoing",
-      docsIndexed: "18",
-      errorTrace: "",
-      created_at: "2025-03-12 11:32:08",
-      finished_at: "",
-    },
-    {
-      fileName: "customer_feedback.csv",
-      status: "Error",
-      docsIndexed: "0",
-      errorTrace: "Invalid file format",
-      created_at: "2025-03-11 14:22:56",
-      finished_at: "2025-03-11 14:23:10",
-    },
-    {
-      fileName: "financial_summary_Q1.docx",
-      status: "Done",
-      docsIndexed: "15",
-      errorTrace: "",
-      created_at: "2025-03-09 16:45:12",
-      finished_at: "2025-03-09 16:48:37",
-    },
-    {
-      fileName: "financial_summary_Q1.docx",
-      status: "Done",
-      docsIndexed: "15",
-      errorTrace: "",
-      created_at: "2025-03-09 16:45:12",
-      finished_at: "2025-03-09 16:48:37",
-    },
-    {
-      fileName: "financial_summary_Q1.docx",
-      status: "Done",
-      docsIndexed: "15",
-      errorTrace: "",
-      created_at: "2025-03-09 16:45:12",
-      finished_at: "2025-03-09 16:48:37",
-    },
-    {
-      fileName: "financial_summary_Q1.docx",
-      status: "Done",
-      docsIndexed: "15",
-      errorTrace: "",
-      created_at: "2025-03-09 16:45:12",
-      finished_at: "2025-03-09 16:48:37",
-    },
-  ];
-};
-
 export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
   open,
   onClose,
 }) => {
   const { token } = useAuth();
-  const [indexEntries, setIndexEntries] = useState<IndexRow[]>([]);
+  const [indexEntries, setIndexEntries] = useState<DocIndexingStatusRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState<boolean>(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && token) {
       setIsClosing(false);
-      fetchIndexingStatus();
-    }
-  }, [open]);
-
-  const fetchIndexingStatus = async () => {
-    try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("random/endpoint", {
+      getDocIndexingStatusData(token)
+        .then((data) => {
+          setIndexEntries(data);
+        })
+        .catch((err) => {
+          console.error("Error fetching indexing status:", err);
+          setError("Failed to load indexing status. Showing demo data instead.");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [open, token]);
+
+  const fetchIndexingData = async () => {
+    try {
+      const response = await fetch("docmuncher/status/data", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -134,7 +74,6 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
     } catch (err) {
       console.error("Error fetching indexing status:", err);
       setError("Failed to load indexing status. Showing demo data instead.");
-      setIndexEntries(dummyData());
     } finally {
       setLoading(false);
     }
@@ -311,7 +250,6 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
               {error}
             </Alert>
             <Layout.Spacer multiplier={2} />
-            {/* Display table with dummy data even when there's an error */}
             {renderTable()}
           </>
         ) : (
