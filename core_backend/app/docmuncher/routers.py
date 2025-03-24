@@ -391,8 +391,13 @@ async def get_all_jobs(
             num_docs_in_progress = sum(
                 task["task_status"] == DocStatusEnum.in_progress for task in tasks
             )
+            num_docs_not_started = sum(
+                task["task_status"] == DocStatusEnum.not_started for task in tasks
+            )
 
-            zip_task["docs_indexed"] = len(tasks) - num_docs_in_progress
+            zip_task["docs_indexed"] = (
+                len(tasks) - num_docs_in_progress - num_docs_not_started
+            )
             zip_task["docs_failed"] = num_docs_failed
 
             if num_docs_in_progress > 0:

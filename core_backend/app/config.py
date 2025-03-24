@@ -95,7 +95,7 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 REDIS_CHAT_CACHE_EXPIRY_TIME = 3600
-REDIS_DOC_INGEST_EXPIRY_TIME = 60  # 3600 * 24
+REDIS_DOC_INGEST_EXPIRY_TIME = 3600 * 24
 
 # Google Cloud storage
 GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
