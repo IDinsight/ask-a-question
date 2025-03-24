@@ -48,7 +48,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
         })
         .catch((err) => {
           console.error("Error fetching indexing status:", err);
-          setError("Failed to load indexing status. Showing demo data instead.");
+          setError("Failed to load indexing status.");
         })
         .finally(() => {
           setLoading(false);
@@ -73,7 +73,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
       setIndexEntries(data);
     } catch (err) {
       console.error("Error fetching indexing status:", err);
-      setError("Failed to load indexing status. Showing demo data instead.");
+      setError("Failed to load indexing status.");
     } finally {
       setLoading(false);
     }

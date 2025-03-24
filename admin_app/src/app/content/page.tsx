@@ -305,11 +305,43 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   const [isJobRunning, setIsJobRunning] = React.useState(false);
 
   React.useEffect(() => {
-    if (token) {
-      getIndexingStatus(token).then((data) => {
-        setShowIndexButton(data === true || data == false);
-      });
-    }
+    let pollingInterval: NodeJS.Timeout | null = null;
+
+    const checkIndexingStatus = async () => {
+      if (token) {
+        const data = await getIndexingStatus(token);
+        setShowIndexButton(data === true || data === false);
+        if (data === true) {
+          setIsJobRunning(true);
+          if (!pollingInterval) {
+            pollingInterval = setInterval(async () => {
+              const status = await getIndexingStatus(token);
+              if (status === false) {
+                setIsJobRunning(false);
+                if (pollingInterval) {
+                  clearInterval(pollingInterval);
+                  pollingInterval = null;
+                }
+              }
+            }, 3000);
+          }
+        } else {
+          setIsJobRunning(false);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+          }
+        }
+      }
+    };
+
+    checkIndexingStatus();
+
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
   }, [token]);
 
   return (
@@ -365,8 +397,11 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
               onClick={() => {
                 setOpenIndexHistoryModal(true);
               }}
+              startIcon={
+                isJobRunning ? <CircularProgress size={12} color="inherit" /> : null
+              }
             >
-              Indexing History
+              {isJobRunning ? "Indexing" : "Indexing History"}
             </Button>
             <IndexingStatusModal
               open={openIndexHistoryModal}
