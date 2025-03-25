@@ -203,7 +203,7 @@ return an empty list.
 
 For "answer", understand the conversation history, ADDITIONAL RELEVANT \
 INFORMATION, and the user's LATEST MESSAGE, and then provide a response to \
-the user's LATEST MESSAGE. If no useful information was found in the \
+the user's LATEST MESSAGE. If no useful information was found in \
 either the conversation history or the ADDITIONAL RELEVANT INFORMATION, \
 respond by acknowledging the user's message and clarifying what you can \
 do for the user.
