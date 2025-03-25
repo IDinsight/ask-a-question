@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import ReactMarkdown from "react-markdown";
 import TypingAnimation from "@/components/TypingAnimation";
 import { Close, Send } from "@mui/icons-material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -249,7 +249,7 @@ const MessageBox = (message: Message) => {
   const avatarOrder = message.type === "question" ? 2 : 0;
   const contentOrder = 1;
   const messageBubbleStyles = {
-    py: 1.5,
+    py: 0,
     px: 2,
     borderRadius: "15px",
     bgcolor: message.type === "question" ? appColors.lightGrey : appColors.primary,
@@ -286,7 +286,9 @@ const MessageBox = (message: Message) => {
 
       <Box sx={messageBubbleStyles}>
         <Typography component={"span"} variant="body1" align="left">
-          {typeof message.content === "string" ? message.content : null}
+          <ReactMarkdown>
+            {typeof message.content === "string" ? message.content : ""}
+          </ReactMarkdown>
         </Typography>
         {message.hasOwnProperty("json") && (
           <Link
