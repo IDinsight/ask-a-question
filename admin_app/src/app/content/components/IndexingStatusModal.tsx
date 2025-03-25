@@ -56,29 +56,6 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
     }
   }, [open, token]);
 
-  const fetchIndexingData = async () => {
-    try {
-      const response = await fetch("docmuncher/status/data", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setIndexEntries(data);
-    } catch (err) {
-      console.error("Error fetching indexing status:", err);
-      setError("Failed to load indexing status.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleClose = () => {
     setIsClosing(true);
     onClose();
