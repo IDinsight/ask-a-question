@@ -307,35 +307,28 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   React.useEffect(() => {
     let pollingInterval: NodeJS.Timeout | null = null;
 
-    const checkIndexingStatus = async () => {
+    const fetchIndexingStatus = async () => {
       if (token) {
         const data = await getIndexingStatus(token);
         setShowIndexButton(data === true || data === false);
-        if (data === true) {
-          setIsJobRunning(true);
-          if (!pollingInterval) {
-            pollingInterval = setInterval(async () => {
-              const status = await getIndexingStatus(token);
-              if (status === false) {
-                setIsJobRunning(false);
-                if (pollingInterval) {
-                  clearInterval(pollingInterval);
-                  pollingInterval = null;
-                }
+        setIsJobRunning(data === true);
+
+        if (data === true && !pollingInterval) {
+          pollingInterval = setInterval(async () => {
+            const status = await getIndexingStatus(token);
+            if (status === false) {
+              setIsJobRunning(false);
+              if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
               }
-            }, 3000);
-          }
-        } else {
-          setIsJobRunning(false);
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-          }
+            }
+          }, 3000);
         }
       }
     };
 
-    checkIndexingStatus();
+    fetchIndexingStatus();
 
     return () => {
       if (pollingInterval) {

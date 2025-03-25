@@ -142,8 +142,6 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   color: appColors.primary,
                   backgroundColor: appColors.white,
                   position: "sticky",
-                  top: 0,
-                  zIndex: 1,
                 }}
               >
                 Docs Indexed
@@ -190,8 +188,20 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
             ) : (
               indexEntries.map((entry, index) => (
                 <TableRow key={index}>
-                  <TableCell>{entry.fileName}</TableCell>
-                  <TableCell>{entry.status}</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>{entry.fileName}</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      color:
+                        entry.status === "Done"
+                          ? "green"
+                          : entry.status === "Ongoing"
+                          ? "darkorange"
+                          : "red",
+                    }}
+                  >
+                    {entry.status}
+                  </TableCell>
                   <TableCell>{entry.docsIndexed}</TableCell>
                   <TableCell>{formatDate(entry.created_at)}</TableCell>
                   <TableCell>{formatDate(entry.finished_at)}</TableCell>
