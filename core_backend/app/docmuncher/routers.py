@@ -396,25 +396,40 @@ async def get_all_jobs(
             )
 
             zip_task["docs_indexed"] = (
-                len(tasks) - num_docs_in_progress - num_docs_not_started
+                len(tasks)
+                - num_docs_in_progress
+                - num_docs_not_started
+                - num_docs_failed
             )
             zip_task["docs_failed"] = num_docs_failed
 
-            if num_docs_in_progress > 0:
+            if num_docs_failed > 0:
+                failed_files = [
+                    task["doc_name"]
+                    for task in tasks
+                    if task["task_status"] == DocStatusEnum.failed
+                ]
+                failed_files_preview = ", ".join(failed_files[:3]) + (
+                    "..." if len(failed_files) > 3 else ""
+                )
+                zip_task["overall_status"] = DocStatusEnum.failed
+                zip_task["finished_datetime_utc"] = tasks[-1].get(
+                    "finished_datetime_utc", None
+                )
+                zip_task["error_trace"] = (
+                    f"{num_docs_failed} documents failed to ingest. "
+                    f"Failed files: {failed_files_preview}"
+                )
+            elif num_docs_in_progress > 0:
                 zip_task["overall_status"] = DocStatusEnum.in_progress
                 zip_task["finished_datetime_utc"] = None
                 zip_task["error_trace"] = ""
-
             elif num_docs_success == len(tasks):
                 zip_task["overall_status"] = DocStatusEnum.success
-                zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
-                zip_task["error_trace"] = ""
-            elif num_docs_failed == len(tasks):
-                zip_task["overall_status"] = DocStatusEnum.failed
-                zip_task["finished_datetime_utc"] = tasks[-1]["finished_datetime_utc"]
-                zip_task["error_trace"] = (
-                    f"{num_docs_failed} documents failed to ingest."
+                zip_task["finished_datetime_utc"] = tasks[-1].get(
+                    "finished_datetime_utc", None
                 )
+                zip_task["error_trace"] = ""
             else:
                 zip_task["overall_status"] = DocStatusEnum.not_started
                 zip_task["finished_datetime_utc"] = None

@@ -273,17 +273,17 @@ async def process_pdf_file(
         )
 
     job_status_dict = json.loads(job_status.decode("utf-8"))
-
     job_status_pydantic = DocIngestionStatusPdf(
         **job_status_dict,
         error_trace="",
         finished_datetime_utc=None,
     )
-    job_status_pydantic.task_status = DocStatusEnum.in_progress
-    await redis.set(task_id, job_status_pydantic.model_dump_json())
 
-    # Process PDF file
     try:
+        job_status_pydantic.task_status = DocStatusEnum.in_progress
+        await redis.set(task_id, job_status_pydantic.model_dump_json())
+
+        # Process PDF file
         content_tags = await create_tag_per_file(
             filename=file_name, workspace_id=workspace_id, asession=asession
         )
@@ -296,20 +296,17 @@ async def process_pdf_file(
             asession=asession,
         )
 
+        job_status_pydantic.task_status = DocStatusEnum.success
+        job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
+
     except Exception as e:
+        logger.error(f"Error processing file {file_name}: {str(e)}")
         job_status_pydantic.task_status = DocStatusEnum.failed
         job_status_pydantic.error_trace = str(e)
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
-        await redis.set(task_id, job_status_pydantic.model_dump_json())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process PDF file: {e}",
-        ) from e
+
     finally:
+        await redis.set(task_id, job_status_pydantic.model_dump_json())
         await asession.close()
 
-    job_status_pydantic.task_status = DocStatusEnum.success
-    job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
-    await redis.set(task_id, job_status_pydantic.model_dump_json())
-
-    return job_status
+    return job_status_pydantic
