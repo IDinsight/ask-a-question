@@ -9,10 +9,13 @@ import {
   Button,
   ButtonGroup,
   CircularProgress,
+  Divider,
   Fab,
+  Fade,
   Grid,
   Menu,
   MenuItem,
+  Modal,
   Paper,
   Slide,
   SlideProps,
@@ -22,7 +25,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Delete,
+  Delete as DeleteIcon,
+  WarningAmber as WarningIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -41,6 +51,7 @@ import { DownloadModal } from "./components/DownloadModal";
 import { ImportModal } from "./components/ImportModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
+import { set } from "date-fns";
 
 export interface Tag {
   tag_id: number;
@@ -55,17 +66,20 @@ interface TagsFilterProps {
 
 interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   editAccess: boolean;
+  cards: Content[];
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>;
+  handleDelete: () => void;
 }
 
 interface CardsGridProps {
   displayLanguage: string;
-  searchTerm: string;
   tags: Tag[];
-  filterTags: Tag[];
+  cards: Content[];
   openSidebar: boolean;
   token: string | null;
   editAccess: boolean;
@@ -77,6 +91,10 @@ interface CardsGridProps {
   handleSidebarToggle: () => void;
   openChatSidebar: boolean;
   handleChatSidebarToggle: () => void;
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
+  isLoading: boolean;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const CardsPage = () => {
@@ -96,6 +114,11 @@ const CardsPage = () => {
 
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
+  const [cards, setCards] = React.useState<Content[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -133,7 +156,76 @@ const CardsPage = () => {
   const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
   };
+  const handleBulkDeleteModalClose = () => {
+    setOpenBulkDeleteModal(false);
+    setSelectedContents([]);
+  };
 
+  const handleDelete = async (selectedContents: number[]) => {
+    const promises = selectedContents.map((content_id) =>
+      archiveContent(content_id, token!),
+    );
+    try {
+      await Promise.all(promises);
+      setSnackMessage({
+        message: `Deleted ${selectedContents.length} content${
+          selectedContents.length > 1 ? "s" : ""
+        }`,
+        color: "success",
+      });
+    } catch (error) {
+      console.error("Failed to delete content:", error);
+      setSnackMessage({
+        message: `Failed to delete content`,
+        color: "error",
+      });
+    } finally {
+      setSelectedContents([]);
+      setOpenBulkDeleteModal(false);
+      setRefreshKey((prevKey) => prevKey + 1);
+    }
+  };
+  React.useEffect(() => {
+    if (token) {
+      getContentList({ token: token, skip: 0 })
+        .then((data) => {
+          const filteredData = data.filter((card: Content) => {
+            const matchesSearchTerm =
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const matchesAllTags = filterTags.some((fTag) =>
+              card.content_tags.includes(fTag.tag_id),
+            );
+
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+          });
+
+          setCards(filteredData);
+          setIsLoading(false);
+
+          const message = localStorage.getItem("editPageSnackMessage");
+          if (message) {
+            setSnackMessage({
+              message: message,
+              color: "success",
+            });
+            localStorage.removeItem("editPageSnackMessage");
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to fetch content:", error);
+          setSnackMessage({
+            message: `Failed to fetch content`,
+            color: "error",
+          });
+          setIsLoading(false);
+        });
+    } else {
+      setCards([]);
+      setIsLoading(false);
+    }
+  }, [searchTerm, filterTags, token, refreshKey]);
   return (
     <>
       <Grid container sx={{ height: "100%" }}>
@@ -204,16 +296,21 @@ const CardsPage = () => {
                 editAccess={editAccess}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
+                cards={cards}
                 tags={tags}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
                 filterTags={filterTags}
                 setFilterTags={setFilterTags}
                 setSnackMessage={setSnackMessage}
+                handleDelete={() => {
+                  setOpenBulkDeleteModal(true);
+                }}
               />
               <CardsGrid
                 displayLanguage={displayLanguage}
-                searchTerm={searchTerm}
                 tags={tags}
-                filterTags={filterTags}
+                cards={cards}
                 openSidebar={openSearchSidebar || openChatSidebar}
                 token={token}
                 editAccess={editAccess}
@@ -222,6 +319,18 @@ const CardsPage = () => {
                 handleSidebarToggle={handleSidebarToggle}
                 openChatSidebar={openChatSidebar}
                 handleChatSidebarToggle={handleChatSidebarToggle}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
+                isLoading={isLoading}
+                setRefreshKey={setRefreshKey}
+              />
+              <ConfirmDeleteModal
+                open={openBulkDeleteModal}
+                onClose={handleBulkDeleteModalClose}
+                onConfirm={() => {
+                  handleDelete(selectedContents);
+                }}
+                selectedContentsCount={selectedContents.length}
               />
             </Box>
           </Box>
@@ -291,19 +400,31 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   editAccess,
   searchTerm,
   setSearchTerm,
+  cards,
   tags,
+  selectedContents,
+  setSelectedContents,
   filterTags,
   setFilterTags,
   setSnackMessage,
+  handleDelete,
 }) => {
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
 
+  const handleSelectAll = () => {
+    const allContentIds = cards.map((card) => card.content_id!);
+    setSelectedContents(allContentIds);
+  };
+
+  const handleDeSelectAll = () => {
+    setSelectedContents([]);
+  };
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "row",
-        justifyContent: "flex-end",
+        justifyContent: "space-between",
         alignContent: "flex-end",
         width: "100%",
         paddingBottom: 2,
@@ -311,6 +432,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         gap: sizes.baseGap,
       }}
     >
+      {/* Left section - Search and Filters */}
       <Box
         sx={{
           display: "flex",
@@ -332,7 +454,50 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           />
         </Box>
       </Box>
-      <Box sx={{ flexGrow: 1 }} />
+
+      {/* Middle section - Selection Control Buttons */}
+      {selectedContents.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: sizes.smallGap,
+          }}
+        >
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleSelectAll}
+            disabled={!editAccess}
+          >
+            Select All
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleDeSelectAll}
+            disabled={!editAccess || selectedContents.length === 0}
+          >
+            Deselect All
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={() => {
+              handleDelete();
+            }}
+            disabled={!editAccess || selectedContents.length === 0}
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </Box>
+      )}
+
+      {/* Right section - Download and Add buttons */}
       <Box
         sx={{
           display: "flex",
@@ -447,10 +612,8 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
 };
 
 const CardsGrid = ({
-  displayLanguage,
-  searchTerm,
   tags,
-  filterTags,
+  cards,
   token,
   editAccess,
   setSnackMessage,
@@ -458,14 +621,17 @@ const CardsGrid = ({
   handleSidebarToggle,
   openChatSidebar,
   handleChatSidebarToggle,
+  selectedContents,
+  setSelectedContents,
+  isLoading,
+  setRefreshKey,
 }: CardsGridProps) => {
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
-  const [maxPages, setMaxPages] = React.useState<number>(1);
+  const [maxPages, setMaxPages] = React.useState<number>(
+    Math.ceil(cards.length / maxCardsPerPage),
+  );
   const [columns, setColumns] = React.useState<number>(1);
-  const [cards, setCards] = React.useState<Content[]>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
-
   const gridRef = React.useRef<HTMLDivElement>(null);
 
   // Callback ref to handle when the grid element mounts
@@ -502,9 +668,15 @@ const CardsGrid = ({
     };
   }, []);
 
-  const [refreshKey, setRefreshKey] = React.useState(0);
+  React.useEffect(() => {
+    setMaxPages(Math.ceil(cards.length / maxCardsPerPage));
+  }, [cards, maxCardsPerPage]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [cards]);
+
   const onSuccessfulArchive = (content_id: number) => {
-    setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
       message: `Content removed successfully`,
@@ -653,6 +825,7 @@ const CardsGrid = ({
                         title={item.content_title}
                         text={item.content_text}
                         content_id={item.content_id}
+                        display_number={item.display_number}
                         last_modified={item.updated_datetime_utc}
                         tags={
                           tags
@@ -677,6 +850,9 @@ const CardsGrid = ({
                           return archiveContent(content_id, token!);
                         }}
                         editAccess={editAccess}
+                        isSelectMode={selectedContents.length > 0}
+                        selectedContents={selectedContents}
+                        setSelectedContents={setSelectedContents}
                       />
                     </Grid>
                   );
@@ -763,6 +939,152 @@ const CardsGrid = ({
         </Box>
       </Box>
     </Box>
+  );
+};
+
+const ConfirmDeleteModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  selectedContentsCount: number;
+}> = ({ open, onClose, onConfirm, selectedContentsCount }) => {
+  const [confirmationText, setConfirmationText] = React.useState<string>("");
+
+  const handleConfirm = () => {
+    if (confirmationText.toLowerCase() === "delete") {
+      onConfirm();
+      setConfirmationText("");
+    }
+  };
+
+  // Handle enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && confirmationText.toLowerCase() === "delete") {
+      handleConfirm();
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      closeAfterTransition
+      aria-labelledby="confirm-delete-modal-title"
+      aria-describedby="confirm-delete-modal-description"
+    >
+      <Fade in={open}>
+        <Paper
+          elevation={6}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 450,
+            maxWidth: "90vw",
+            bgcolor: "background.paper",
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "error.light",
+              py: 2,
+              px: 3,
+              color: "white",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <DeleteIcon />
+              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
+                Confirm Deletion
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Divider />
+
+          {/* Content */}
+          <Box sx={{ p: 3 }}>
+            <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
+              This action cannot be undone
+            </Alert>
+
+            <Typography
+              id="confirm-delete-modal-description"
+              variant="body1"
+              sx={{ mb: 3 }}
+            >
+              You are about to permanently delete{" "}
+              <strong>{selectedContentsCount}</strong> content
+              {selectedContentsCount > 1 ? "s" : ""}.
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Type <strong>delete</strong> to confirm:
+            </Typography>
+
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              value={confirmationText}
+              onChange={(e) => setConfirmationText(e.target.value)}
+              placeholder="Type 'delete' to confirm"
+              onKeyDown={handleKeyDown}
+              autoFocus
+              InputProps={{
+                sx: { borderRadius: 1.5 },
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              p: 3,
+              pt: 1,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirm}
+              disabled={confirmationText.toLowerCase() !== "delete"}
+              startIcon={<DeleteIcon />}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                boxShadow: 2,
+              }}
+            >
+              Delete Items
+            </Button>
+          </Box>
+        </Paper>
+      </Fade>
+    </Modal>
   );
 };
 

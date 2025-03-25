@@ -19,8 +19,8 @@ interface InsightProps {
   customDateParams?: CustomDateParams;
 }
 
-const POLLING_INTERVAL = 3000;
-const POLLING_TIMEOUT = 90000;
+const POLLING_INTERVAL = 3 * 1000;
+const POLLING_TIMEOUT = 3 * 60 * 1000;
 
 const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
   const { token } = useAuth();
@@ -51,7 +51,10 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
   const runRefresh = (period: Period) => {
     const periodKey = period;
     setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: true }));
-    setDataStatusByTimePeriod((prev) => ({ ...prev, [periodKey]: "in_progress" }));
+    setDataStatusByTimePeriod((prev) => ({
+      ...prev,
+      [periodKey]: "in_progress",
+    }));
 
     if (
       period === "custom" &&
@@ -69,8 +72,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
           pollData(period);
         })
         .catch((error) => {
-          setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: false }));
-          setDataStatusByTimePeriod((prev) => ({ ...prev, [periodKey]: "error" }));
+          setRefreshingByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: false,
+          }));
+          setDataStatusByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: "error",
+          }));
           setSnackMessage({
             message: error.message || "There was a system error.",
             color: "error",
@@ -83,8 +92,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
           pollData(period);
         })
         .catch((error) => {
-          setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: false }));
-          setDataStatusByTimePeriod((prev) => ({ ...prev, [periodKey]: "error" }));
+          setRefreshingByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: false,
+          }));
+          setDataStatusByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: "error",
+          }));
           setSnackMessage({
             message: error.message || "There was a system error.",
             color: "error",
@@ -102,8 +117,14 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
       try {
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime >= POLLING_TIMEOUT) {
-          setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: false }));
-          setDataStatusByTimePeriod((prev) => ({ ...prev, [periodKey]: "error" }));
+          setRefreshingByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: false,
+          }));
+          setDataStatusByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: "error",
+          }));
           clearInterval(pollingTimerRef.current[periodKey]!);
           pollingTimerRef.current[periodKey] = null;
           setSnackMessage({
@@ -140,7 +161,10 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
             ...prev,
             [periodKey]: dataFromBackendResponse,
           }));
-          setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: false }));
+          setRefreshingByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: false,
+          }));
           clearInterval(pollingTimerRef.current[periodKey]!);
           pollingTimerRef.current[periodKey] = null;
           setSnackMessage({
@@ -155,7 +179,10 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
             ...prev,
             [periodKey]: dataFromBackendResponse,
           }));
-          setRefreshingByTimePeriod((prev) => ({ ...prev, [periodKey]: false }));
+          setRefreshingByTimePeriod((prev) => ({
+            ...prev,
+            [periodKey]: false,
+          }));
           clearInterval(pollingTimerRef.current[periodKey]!);
           pollingTimerRef.current[periodKey] = null;
           setSnackMessage({
@@ -270,32 +297,18 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
       setAiSummary("Not available.");
     }
   };
-
   useEffect(() => {
-    const currentData = dataByTimePeriod[timePeriod] || {
-      status: "not_started",
-      refreshTimeStamp: "",
-      data: [],
-      unclustered_queries: [],
-      error_message: "",
-      failure_step: "",
-    };
-    if (selectedTopicId !== null) {
-      const selectedTopic = currentData.data.find(
-        (topic) => topic.topic_id === selectedTopicId,
-      );
-      if (selectedTopic) {
-        setTopicQueries(selectedTopic.topic_samples);
-        setAiSummary(selectedTopic.topic_summary);
-      } else {
-        setTopicQueries([]);
-        setAiSummary("Not available.");
+    const periodKey = timePeriod;
+    if (dataByTimePeriod[periodKey]) {
+      updateUIForCurrentTimePeriod(dataByTimePeriod[periodKey]);
+      if (
+        dataStatusByTimePeriod[periodKey] === "in_progress" &&
+        !pollingTimerRef.current[periodKey]
+      ) {
+        pollData(timePeriod);
       }
-    } else {
-      setTopicQueries([]);
-      setAiSummary("Not available.");
     }
-  }, [dataByTimePeriod, selectedTopicId, timePeriod]);
+  }, [timePeriod, dataByTimePeriod, dataStatusByTimePeriod]);
 
   const currentData = dataByTimePeriod[timePeriod] || {
     status: "not_started",
@@ -351,7 +364,9 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
           />
         </Box>
       </Paper>
+
       <BokehPlot timePeriod={timePeriod} token={token} />
+
       <Snackbar
         open={snackMessage.message !== null}
         autoHideDuration={5000}

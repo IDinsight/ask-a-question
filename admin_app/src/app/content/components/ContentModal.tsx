@@ -15,6 +15,7 @@ const ContentViewModal = ({
   title,
   text,
   content_id,
+  display_number,
   positive_votes,
   negative_votes,
   last_modified,
@@ -26,6 +27,7 @@ const ContentViewModal = ({
   title: string;
   text: string;
   content_id: number;
+  display_number: number;
   last_modified: string;
   tags: Tag[];
   positive_votes: number;
@@ -54,7 +56,7 @@ const ContentViewModal = ({
           }}
         >
           <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
-            <Typography variant="h5">Content #{content_id}</Typography>
+            <Typography variant="h5">Content #{display_number}</Typography>
             <IconButton onClick={onClose}>
               <Close />
             </IconButton>
