@@ -69,6 +69,7 @@ class ContentDB(Base):
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -99,6 +100,7 @@ class ContentDB(Base):
             f"content_metadata={self.content_metadata}, "
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
+            f"display_number={self.display_number}, "
             f"is_archived={self.is_archived}), "
             f"updated_datetime_utc={self.updated_datetime_utc}), "
             f"workspace_id={self.workspace_id}"
@@ -139,12 +141,16 @@ async def save_content_to_db(
     content_embedding = await _get_content_embeddings(
         content=content, metadata=metadata
     )
+    latest_display_number = await get_latest_display_number(
+        asession=asession, workspace_id=workspace_id
+    )
     content_db = ContentDB(
         content_embedding=content_embedding,
         content_metadata=content.content_metadata,
         content_tags=content.content_tags,
         content_text=content.content_text,
         content_title=content.content_title,
+        display_number=latest_display_number + 1,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
         workspace_id=workspace_id,
@@ -351,7 +357,7 @@ async def get_list_of_content_from_db(
         select(ContentDB)
         .options(selectinload(ContentDB.content_tags))
         .where(ContentDB.workspace_id == workspace_id)
-        .order_by(ContentDB.content_id)
+        .order_by(ContentDB.display_number)
     )
     if exclude_archived:
         stmt = stmt.where(ContentDB.is_archived == false())
@@ -360,7 +366,6 @@ async def get_list_of_content_from_db(
     if isinstance(limit, int) and limit > 0:
         stmt = stmt.limit(limit)
     content_rows = (await asession.execute(stmt)).all()
-
     return [c[0] for c in content_rows] if content_rows else []
 
 
@@ -561,3 +566,32 @@ async def update_votes_in_db(
     content_db = await asession.merge(content_db)
     await asession.commit()
     return content_db
+
+
+async def get_latest_display_number(
+    *, asession: AsyncSession, workspace_id: int
+) -> int:
+    """Get the latest display number from the database.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to get the latest display number from.
+
+    Returns
+    -------
+    int
+        The latest display number if it exists, otherwise 0.
+    """
+
+    stmt = (
+        select(ContentDB.display_number)
+        .where(ContentDB.workspace_id == workspace_id)
+        .order_by(ContentDB.display_number.desc())
+        .limit(1)
+    )
+    result = await asession.execute(stmt)
+    latest_display_number = result.scalar_one_or_none()
+    return latest_display_number or 0

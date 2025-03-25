@@ -1045,6 +1045,7 @@ def _convert_record_to_schema(*, record: ContentDB) -> ContentRetrieve:
         content_text=record.content_text,
         content_title=record.content_title,
         created_datetime_utc=record.created_datetime_utc,
+        display_number=record.display_number,
         is_archived=record.is_archived,
         negative_votes=record.negative_votes,
         positive_votes=record.positive_votes,

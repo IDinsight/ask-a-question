@@ -95,6 +95,7 @@ def convert_content_to_pydantic_model(*, content: ContentDB) -> ContentRetrieve:
         content_text=content.content_text,
         content_title=content.content_title,
         created_datetime_utc=content.created_datetime_utc,
+        display_number=content.display_number,
         is_archived=content.is_archived,
         negative_votes=content.negative_votes,
         positive_votes=content.positive_votes,
