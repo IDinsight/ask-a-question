@@ -14,36 +14,40 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: chat
     litellm_params:
+      api_key: "os.environ/OPENAI_API_KEY"
+      model: gpt-4o-mini
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
-      api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-1.5-flash-preview-0514
-      safety_settings:
-        - category: HARM_CATEGORY_HARASSMENT
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_HATE_SPEECH
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_DANGEROUS_CONTENT
-          threshold: BLOCK_ONLY_HIGH
+      # api_base: "os.environ/VERTEXAI_ENDPOINT"
+      # model: vertex_ai/gemini-2.0-flash
+      # safety_settings:
+      #   - category: HARM_CATEGORY_HARASSMENT
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_HATE_SPEECH
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_DANGEROUS_CONTENT
+      #     threshold: BLOCK_ONLY_HIGH
   - model_name: chat-fallback
     litellm_params:
       api_key: "os.environ/OPENAI_API_KEY"
       model: gpt-4o-mini
   - model_name: generate-response
     litellm_params:
+      api_key: "os.environ/OPENAI_API_KEY"
+      model: gpt-4o-mini
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
-      api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-1.5-flash-preview-0514
-      safety_settings:
-        - category: HARM_CATEGORY_HARASSMENT
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_HATE_SPEECH
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
-          threshold: BLOCK_ONLY_HIGH
-        - category: HARM_CATEGORY_DANGEROUS_CONTENT
-          threshold: BLOCK_ONLY_HIGH
+      # api_base: "os.environ/VERTEXAI_ENDPOINT"
+      # model: vertex_ai/gemini-1.5-flash-preview-0514
+      # safety_settings:
+      #   - category: HARM_CATEGORY_HARASSMENT
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_HATE_SPEECH
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+      #     threshold: BLOCK_ONLY_HIGH
+      #   - category: HARM_CATEGORY_DANGEROUS_CONTENT
+      #     threshold: BLOCK_ONLY_HIGH
   - model_name: generate-response-fallback
     litellm_params:
       model: gpt-4o
@@ -80,7 +84,7 @@ model_list:
     litellm_params:
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
       api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-1.5-flash-preview-0514
+      model: vertex_ai/gemini-2.0-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
