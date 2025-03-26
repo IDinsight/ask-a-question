@@ -18,7 +18,7 @@ model_list:
       # model: gpt-4o-mini
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
       api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.0-flash-001
+      model: vertex_ai/gemini-2.0-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
@@ -38,7 +38,7 @@ model_list:
       # model: gpt-4o-mini
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
       api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.0-flash-001
+      model: vertex_ai/gemini-2.0-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
@@ -84,7 +84,7 @@ model_list:
     litellm_params:
       # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
       api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.0-flash-001
+      model: vertex_ai/gemini-2.0-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
