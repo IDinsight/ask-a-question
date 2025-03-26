@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { appColors, sizes } from "@/utils";
 import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
 import { Box, Button, Chip, Fade, IconButton, Modal, Typography } from "@mui/material";
@@ -106,10 +107,9 @@ const ContentViewModal = ({
               sx={{
                 overflowWrap: "break-word",
                 hyphens: "auto",
-                whiteSpace: "pre-wrap",
               }}
             >
-              {text}
+              <ReactMarkdown>{text}</ReactMarkdown>
             </Typography>
           </Layout.FlexBox>
           <Layout.FlexBox
