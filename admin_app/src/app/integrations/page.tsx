@@ -7,7 +7,7 @@ import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
-
+import { CustomError } from "@/utils/api";
 import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
 import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
@@ -17,6 +17,11 @@ const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
   const editAccess = userRole == "admin";
+  const [snackbarMessage, setSnackbarMessage] = useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  } | null>(null);
+
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
@@ -42,9 +47,11 @@ const IntegrationsPage = () => {
 const KeyManagement = ({
   token,
   editAccess,
+  onSnackbarMessage,
 }: {
   token: string | null;
   editAccess: boolean;
+  onSnackbarMessage?: (message: string, severity: "success" | "error") => void;
 }) => {
   const [keyInfoFetchIsLoading, setKeyInfoFetchIsLoading] = useState(true);
   const [currentKey, setCurrentKey] = useState("");
@@ -68,7 +75,10 @@ const KeyManagement = ({
           setCurrentKeyLastUpdated(formatted_api_update_date);
           setKeyInfoFetchIsLoading(false);
         } catch (error) {
+          const customError = error as CustomError;
+
           console.error(error);
+          onSnackbarMessage?.(customError.message || "Error fetching API key", "error");
           setKeyInfoFetchIsLoading(false);
         }
       };
@@ -101,6 +111,8 @@ const KeyManagement = ({
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
     } catch (error) {
+      const customError = error as CustomError;
+      onSnackbarMessage?.(customError.message || "Error rotating API key", "error");
       console.error(error);
     } finally {
       setKeyGenerationIsLoading(false);
