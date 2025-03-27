@@ -1,5 +1,16 @@
 import api, { handleApiError } from "@/utils/api";
 
+type IndexingStatusResponse = boolean | { detail: string };
+
+export interface DocIndexingStatusRow {
+  fileName: string;
+  status: "Ongoing" | "Done" | "Error";
+  docsIndexed: string;
+  errorTrace: string;
+  created_at: string;
+  finished_at: string;
+}
+
 interface ContentBody {
   content_title: string;
   content_text: string;
@@ -152,6 +163,84 @@ const deleteTag = async (tag_id: number, token: string) => {
     handleApiError(error, errorMessage);
   }
 };
+
+const getIndexingStatus = async (token: string): Promise<IndexingStatusResponse> => {
+  try {
+    const response = await api.get("/docmuncher/status/is_job_running", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error("Unexpected response status");
+    }
+  } catch (error) {
+    throw new Error("Error fetching indexing status");
+  }
+};
+
+const postDocumentToIndex = async (file: File, token: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await api.post("/docmuncher/upload", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return { status: response.status, detail: response.data };
+  } catch (error) {
+    throw new Error("Error indexing document");
+  }
+};
+
+const getDocIndexingStatusData = async (
+  token: string,
+): Promise<DocIndexingStatusRow[]> => {
+  try {
+    const response = await api.get("/docmuncher/status/data", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const formatDate = (dateString: string) => {
+      if (!dateString) return "—";
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }).format(date);
+    };
+
+    return response.data
+      .map((entry: any) => ({
+        fileName: entry.parent_file_name,
+        status:
+          entry.overall_status === "Success"
+            ? "Done"
+            : entry.overall_status === "Failed"
+            ? "Error"
+            : "Ongoing",
+        docsIndexed: `${entry.docs_indexed} of ${entry.docs_total}`,
+        errorTrace: entry.error_trace || "",
+        created_at: formatDate(entry.created_datetime_utc),
+        finished_at: formatDate(entry.finished_datetime_utc),
+      }))
+      .sort(
+        (a: DocIndexingStatusRow, b: DocIndexingStatusRow) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  } catch (error) {
+    throw new Error("Error fetching indexing status");
+  }
+};
+
 export {
   getContentList,
   getContent,
@@ -163,4 +252,7 @@ export {
   createTag,
   getTagList,
   deleteTag,
+  getIndexingStatus,
+  postDocumentToIndex,
+  getDocIndexingStatusData,
 };
