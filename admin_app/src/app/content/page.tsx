@@ -42,7 +42,7 @@ import { IconButton } from "@mui/material";
 import type { Content } from "@/app/content/edit/page";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
+import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { archiveContent, getContentList, getTagList } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
@@ -529,9 +529,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <DownloadModal
           open={openDownloadModal}
           onClose={() => setOpenDownloadModal(false)}
-          onFailedDownload={() => {
+          onFailedDownload={(error_message) => {
             setSnackMessage({
-              message: `Failed to download content`,
+              message: error_message,
               color: "error",
             });
           }}
@@ -684,6 +684,51 @@ const CardsGrid = ({
     });
   };
 
+  React.useEffect(() => {
+    if (token) {
+      getContentList({ token: token, skip: 0 })
+        .then((data) => {
+          const filteredData = data.filter((card: Content) => {
+            const matchesSearchTerm =
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const matchesAllTags = filterTags.some((fTag) =>
+              card.content_tags.includes(fTag.tag_id),
+            );
+
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+          });
+
+          setCards(filteredData);
+          setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
+          setIsLoading(false);
+
+          const message = localStorage.getItem("editPageSnackMessage");
+          if (message) {
+            setSnackMessage({
+              message: message,
+              color: "success",
+            });
+            localStorage.removeItem("editPageSnackMessage");
+          }
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          console.error("Failed to fetch content:", error);
+          setSnackMessage({
+            message: customError.message,
+            color: "error",
+          });
+          setIsLoading(false);
+        });
+    } else {
+      setCards([]);
+      setMaxPages(1);
+      setIsLoading(false);
+    }
+  }, [searchTerm, filterTags, maxCardsPerPage, token, refreshKey]);
+
   if (isLoading) {
     return (
       <>
@@ -792,9 +837,12 @@ const CardsGrid = ({
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
                         onSuccessfulArchive={onSuccessfulArchive}
-                        onFailedArchive={(content_id: number) => {
+                        onFailedArchive={(
+                          content_id: number,
+                          error_message: string,
+                        ) => {
                           setSnackMessage({
-                            message: `Failed to remove content`,
+                            message: error_message,
                             color: "error",
                           });
                         }}

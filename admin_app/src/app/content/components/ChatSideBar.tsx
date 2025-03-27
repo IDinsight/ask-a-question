@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 
 import { appColors, sizes } from "@/utils";
+import { CustomError } from "@/utils/api";
 
 interface ResponseSummary {
   index: string;
@@ -69,7 +70,7 @@ const ChatSideBar = ({
     setQuestion(event.target.value);
   };
 
-  const processErrorMessage = (error: Error) => {
+  const processErrorMessage = (error: CustomError) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       {
@@ -112,7 +113,7 @@ const ChatSideBar = ({
           setSessionId(response.session_id);
         }
       })
-      .catch((error: Error) => {
+      .catch((error: CustomError) => {
         processErrorMessage(error);
         setSnackMessage(error.message);
         console.error(error);

@@ -10,6 +10,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Tag } from "@/app/content/page";
+import { CustomError } from "@/utils/api";
 
 const ContentViewModal = ({
   title,
@@ -180,7 +181,7 @@ const ArchiveContentModal = ({
   open: boolean;
   onClose: () => void;
   onSuccessfulArchive: (content_id: number) => void;
-  onFailedArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number, error_message: string) => void;
   archiveContent: (content_id: number) => Promise<any>;
 }) => {
   return (
@@ -208,8 +209,9 @@ const ArchiveContentModal = ({
                   onSuccessfulArchive(content_id);
                 })
                 .catch((err) => {
-                  console.log("error", err);
-                  onFailedArchive(content_id);
+                  const customError = err as CustomError;
+                  console.log("error", customError.message);
+                  onFailedArchive(content_id, customError.message);
                 });
             };
             handleArchiveContent(Number(content_id));
