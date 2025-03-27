@@ -214,9 +214,10 @@ const CardsPage = () => {
           }
         })
         .catch((error) => {
+          const customError = error as CustomError;
           console.error("Failed to fetch content:", error);
           setSnackMessage({
-            message: `Failed to fetch content`,
+            message: customError.message || "Failed to fetch content",
             color: "error",
           });
           setIsLoading(false);
@@ -683,51 +684,6 @@ const CardsGrid = ({
       color: "success",
     });
   };
-
-  React.useEffect(() => {
-    if (token) {
-      getContentList({ token: token, skip: 0 })
-        .then((data) => {
-          const filteredData = data.filter((card: Content) => {
-            const matchesSearchTerm =
-              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
-
-            const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id),
-            );
-
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
-          });
-
-          setCards(filteredData);
-          setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
-          setIsLoading(false);
-
-          const message = localStorage.getItem("editPageSnackMessage");
-          if (message) {
-            setSnackMessage({
-              message: message,
-              color: "success",
-            });
-            localStorage.removeItem("editPageSnackMessage");
-          }
-        })
-        .catch((error) => {
-          const customError = error as CustomError;
-          console.error("Failed to fetch content:", error);
-          setSnackMessage({
-            message: customError.message,
-            color: "error",
-          });
-          setIsLoading(false);
-        });
-    } else {
-      setCards([]);
-      setMaxPages(1);
-      setIsLoading(false);
-    }
-  }, [searchTerm, filterTags, maxCardsPerPage, token, refreshKey]);
 
   if (isLoading) {
     return (
