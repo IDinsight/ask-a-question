@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Chip,
   CircularProgress,
   Divider,
   Fab,
@@ -610,12 +611,12 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
   const truncateTagName = (tagName: string): string => {
-    return tagName.length > 15 ? `${tagName.slice(0, 15)}...` : tagName;
+    return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
   };
   return (
     <Autocomplete
       multiple
-      size="small"
+      size="medium"
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
@@ -628,6 +629,15 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       renderInput={(params) => (
         <TextField {...params} variant="standard" label="Filter tags" />
       )}
+      ListboxProps={{
+        sx: {
+          maxWidth: "300px",
+          "& .MuiAutocomplete-option": {
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          },
+        },
+      }}
       sx={{ color: appColors.white }}
     />
   );
