@@ -616,7 +616,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   return (
     <Autocomplete
       multiple
-      size="medium"
+      size="small"
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
