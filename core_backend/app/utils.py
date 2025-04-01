@@ -17,6 +17,7 @@ from uuid import uuid4
 import aiohttp
 import litellm
 from google.cloud import storage  # type: ignore
+from langfuse.decorators import langfuse_context
 from litellm import aembedding
 from redis import asyncio as aioredis
 
@@ -76,6 +77,7 @@ def create_langfuse_metadata(
     *,
     feature_name: str | None = None,
     query_id: int | None = None,
+    session_id: int | None = None,
     workspace_id: int | None = None,
 ) -> dict:
     """Create metadata for langfuse logging.
@@ -86,6 +88,8 @@ def create_langfuse_metadata(
         The name of the feature.
     query_id
         The ID of the query.
+    session_id
+        The ID of the session if it exists.
     workspace_id
         The ID of the workspace.
 
@@ -99,21 +103,12 @@ def create_langfuse_metadata(
     ValueError
         If neither `query_id` nor `feature_name` is provided.
     """
+    metadata = {}
 
-    trace_id_elements = []
-    if query_id is not None:
-        trace_id_elements += ["query_id", str(query_id)]
-    elif feature_name is not None:
-        trace_id_elements += ["feature_name", feature_name]
-    else:
-        raise ValueError("Either `query_id` or `feature_name` must be provided.")
+    metadata["trace_id"] = langfuse_context.get_current_trace_id()
 
-    if LANGFUSE_PROJECT_NAME is not None:
-        trace_id_elements.insert(0, LANGFUSE_PROJECT_NAME)
-
-    metadata = {"trace_id": "-".join(trace_id_elements)}
-    if workspace_id is not None:
-        metadata["trace_workspace_id"] = "workspace_id-" + str(workspace_id)
+    if session_id is not None:
+        metadata["session_id"] = session_id
 
     return metadata
 
@@ -141,6 +136,10 @@ async def embedding(
     list[float]
         The embedding for the given text.
     """
+    if metadata is None:
+        metadata = {}
+
+    metadata["trace_id"] = langfuse_context.get_current_trace_id()
 
     try:
         content_embedding = await aembedding(

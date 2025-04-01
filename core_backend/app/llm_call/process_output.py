@@ -179,7 +179,7 @@ def check_align_score__after(func: Callable) -> Callable:
             return response
 
         metadata = create_langfuse_metadata(
-            query_id=response.query_id, workspace_id=query_refined.workspace_id
+            workspace_id=query_refined.workspace_id, session_id=query_refined.session_id
         )
         response = await _check_align_score(metadata=metadata, response=response)
         return response

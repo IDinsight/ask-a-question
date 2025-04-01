@@ -138,7 +138,6 @@ async def save_content_to_db(
     """
 
     metadata = {
-        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "save_content_to_db",
     }
 
@@ -204,7 +203,6 @@ async def update_content_in_db(
     """
 
     metadata = {
-        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "update_content_in_db",
     }
 
@@ -428,9 +426,6 @@ async def get_similar_content_async(
         A dictionary of similar content items if they exist, otherwise an empty
         dictionary.
     """
-
-    metadata = metadata or {}
-    metadata["generation_name"] = "get_similar_content_async"
 
     question_embedding = await embedding(metadata=metadata, text_to_embed=question)
 

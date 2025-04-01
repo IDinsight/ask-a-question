@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 import redis.asyncio as aioredis
 import requests  # type: ignore
+from langfuse.decorators import langfuse_context
 from litellm import acompletion, token_counter
 
 from ..config import (
@@ -60,9 +61,11 @@ async def _ask_llm_async(
     str
         The appropriate response from the LLM model.
     """
+    if metadata is None:
+        metadata = {}
 
-    if metadata is not None:
-        metadata["generation_name"] = litellm_model
+    metadata["generation_name"] = litellm_model
+    metadata["trace_id"] = langfuse_context.get_current_trace_id()
 
     extra_kwargs = {}
     if json_:
@@ -319,6 +322,7 @@ async def get_chat_response(
     chat_params: dict[str, Any],
     message_params: str | dict[str, Any],
     session_id: str,
+    workspace_id: str | None = None,
     **kwargs: Any,
 ) -> str:
     """Get the appropriate chat response.
@@ -337,6 +341,8 @@ async def get_chat_response(
         will be used to string format `prompt`.
     session_id
         The session ID for the chat.
+    workspace_id
+        The workspace ID for the chat.
     kwargs
         Additional keyword arguments for `_ask_llm_async`.
 
@@ -367,6 +373,7 @@ async def get_chat_response(
         role="user",
         total_tokens_for_next_generation=total_tokens_for_next_generation,
     )
+
     message_content = await _ask_llm_async(
         litellm_model=LITELLM_MODEL_CHAT,
         llm_generation_params={
