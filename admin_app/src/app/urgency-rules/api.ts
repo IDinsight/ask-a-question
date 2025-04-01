@@ -1,4 +1,4 @@
-import api from "@/utils/api";
+import api, { handleApiError } from "@/utils/api";
 
 const getUrgencyRuleList = async (token: string) => {
   try {
@@ -6,8 +6,9 @@ const getUrgencyRuleList = async (token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error fetching urgency rule list");
+  } catch (customError) {
+    let error_message = "Error fetching urgency rule list";
+    handleApiError(customError, error_message);
   }
 };
 
@@ -18,26 +19,32 @@ const addUrgencyRule = async (rule_text: string, token: string) => {
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error adding urgency rule");
+  } catch (customError) {
+    let error_message = "Error adding urgency rule";
+    handleApiError(customError, error_message);
   }
 };
 
-const updateUrgencyRule = async (rule_id: number, rule_text: string, token: string) => {
+const updateUrgencyRule = async (
+  rule_id: number,
+  rule_text: string,
+  token: string
+) => {
   try {
     const response = await api.put(
       `/urgency-rules/${rule_id}`,
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
     return response.data;
-  } catch (error) {
-    throw new Error("Error updating urgency rule");
+  } catch (customError) {
+    let error_message = "Error updating urgency rule";
+    handleApiError(customError, error_message);
   }
 };
 
@@ -47,8 +54,14 @@ const deleteUrgencyRule = async (rule_id: number, token: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    throw new Error("Error deleting urgency rule");
+  } catch (customError) {
+    let error_message = "Error deleting urgency rule";
+    handleApiError(customError, error_message);
   }
 };
-export { addUrgencyRule, getUrgencyRuleList, updateUrgencyRule, deleteUrgencyRule };
+export {
+  addUrgencyRule,
+  getUrgencyRuleList,
+  updateUrgencyRule,
+  deleteUrgencyRule,
+};

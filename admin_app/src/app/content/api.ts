@@ -1,4 +1,4 @@
-import api from "@/utils/api";
+import api, { handleApiError } from "@/utils/api";
 
 type IndexingStatusResponse = boolean | { detail: string };
 
@@ -31,7 +31,8 @@ const getContentList = async ({
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching content list");
+    let errorMessage = "Error fetching content list";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -42,7 +43,8 @@ const getContent = async (content_id: number, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching content");
+    let errorMessage = "Error fetching content";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -57,7 +59,8 @@ const archiveContent = async (content_id: number, token: string) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error("Error archiving content");
+    let errorMessage = "Error archiving content";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -68,7 +71,8 @@ const deleteContent = async (content_id: number, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error deleting content");
+    let errorMessage = "Error deleting content";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -79,7 +83,8 @@ const editContent = async (content_id: number, content: ContentBody, token: stri
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error editing content");
+    let errorMessage = "Error editing content";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -90,7 +95,8 @@ const createContent = async (content: ContentBody, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error creating content");
+    let errorMessage = "Error creating content";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -129,7 +135,8 @@ const createTag = async (tag: string, token: string) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error("Error creating tag");
+    let errorMessage = "Error creating tag";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -140,7 +147,8 @@ const getTagList = async (token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error fetching tag list");
+    let errorMessage = "Error fetching tag list";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -151,7 +159,8 @@ const deleteTag = async (tag_id: number, token: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error deleting tag");
+    let errorMessage = "Error deleting tag";
+    handleApiError(error, errorMessage);
   }
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   List,
   ListItem,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   LinearProgress,
   Grid,
+  Snackbar,
+  Alert,
   Fab,
   Paper,
 } from "@mui/material";
@@ -26,6 +28,7 @@ import {
 } from "./api";
 import { useAuth } from "@/utils/auth";
 import { UDSidebar } from "./components/UDSidebar";
+import { CustomError } from "@/utils/api";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -43,6 +46,19 @@ const UrgencyRulesPage = () => {
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
+  const [snackbarMessage, setSnackbarMessage] = React.useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ message: "", severity: "success" });
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarMessage({ message: "", severity: "info" });
+  };
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
@@ -57,25 +73,37 @@ const UrgencyRulesPage = () => {
   const addOrUpdateItem = (index: number) => {
     setSaving(true);
     if (items[index].urgency_rule_id === null) {
-      addUrgencyRule(items[index].urgency_rule_text, token!).then(
-        (data: UrgencyRule) => {
+      addUrgencyRule(items[index].urgency_rule_text, token!)
+        .then((data: UrgencyRule) => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        },
-      );
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error adding urgency rule";
+          handleCustomError(customError, errorMessage);
+          setSaving(false);
+        });
     } else {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
         token!,
-      ).then((data: UrgencyRule) => {
-        const newItems = [...items];
-        newItems[index] = data;
-        setItems(newItems);
-        setSaving(false);
-      });
+      )
+        .then((data: UrgencyRule) => {
+          const newItems = [...items];
+          newItems[index] = data;
+          setItems(newItems);
+          setSaving(false);
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error updating urgency rule";
+          handleCustomError(customError, errorMessage);
+          setSaving(false);
+        });
     }
   };
 
@@ -124,10 +152,22 @@ const UrgencyRulesPage = () => {
       setItems(newItems);
       return;
     }
-    deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
-      newItems.splice(index, 1);
-      setItems(newItems);
-    });
+    deleteUrgencyRule(items[index].urgency_rule_id!, token!)
+      .then(() => {
+        newItems.splice(index, 1);
+        setItems(newItems);
+      })
+      .catch((error) => {
+        const customError = error as CustomError;
+        let errorMessage = "Error deleting urgency rule";
+        if (customError.message) {
+          errorMessage = customError.message;
+        }
+        setSnackbarMessage({
+          message: errorMessage,
+          severity: "error",
+        });
+      });
   };
 
   const onBlur = (index: number) => {
@@ -136,12 +176,25 @@ const UrgencyRulesPage = () => {
       setEditableIndex(-1);
     }
   };
-
+  const handleCustomError = (error: unknown, defaultMessage: string) => {
+    const customError = error as CustomError;
+    let errorMessage = defaultMessage;
+    if (customError && customError.message) {
+      errorMessage = customError.message;
+    }
+    setSnackbarMessage({
+      message: errorMessage,
+      severity: "error",
+    });
+  };
   useEffect(() => {
     if (token) {
       getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Failed to fetch urgency rules";
+          handleCustomError(customError, errorMessage);
           console.error(error);
         });
       setCurrAccessLevel(accessLevel);
@@ -418,6 +471,19 @@ const UrgencyRulesPage = () => {
               </Fab>
             </Box>
           </Box>
+          <Snackbar
+            open={snackbarMessage.message !== ""}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarMessage.severity}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </Grid>
       <Grid
