@@ -486,7 +486,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ minWidth: "130px" }}>
+        <Box sx={{ minWidth: "200px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
@@ -610,7 +610,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
   const truncateTagName = (tagName: string): string => {
-    return tagName.length > 20 ? `${tagName.slice(0, 17)}...` : tagName;
+    return tagName.length > 15 ? `${tagName.slice(0, 15)}...` : tagName;
   };
   return (
     <Autocomplete
