@@ -609,6 +609,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 };
 
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+  const truncateTagName = (tagName: string): string => {
+    return tagName.length > 20 ? `${tagName.slice(0, 17)}...` : tagName;
+  };
   return (
     <Autocomplete
       multiple
@@ -616,7 +619,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
-      getOptionLabel={(option) => option.tag_name}
+      getOptionLabel={(option) => truncateTagName(option.tag_name)}
       noOptionsText="No tags found"
       value={filterTags}
       onChange={(event, updatedTags) => {
