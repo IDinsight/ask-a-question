@@ -4,7 +4,7 @@ from bertopic import BERTopic
 
 from ..config import LITELLM_MODEL_DASHBOARD_SUMMARY, LITELLM_MODEL_TOPIC_MODEL
 from ..dashboard.config import DISABLE_DASHBOARD_LLM
-from ..utils import create_langfuse_metadata, setup_logger
+from ..utils import setup_logger
 from .llm_prompts import TopicModelLabelling, get_feedback_summary_prompt
 from .utils import _ask_llm_async
 
@@ -32,17 +32,12 @@ async def generate_ai_summary(
     str
         The AI summary.
     """
-
-    metadata = create_langfuse_metadata(
-        feature_name="dashboard", workspace_id=workspace_id
-    )
     ai_feedback_summary_prompt = get_feedback_summary_prompt(
         content=content_text, content_title=content_title
     )
 
     ai_summary = await _ask_llm_async(
         litellm_model=LITELLM_MODEL_DASHBOARD_SUMMARY,
-        metadata=metadata,
         system_message=ai_feedback_summary_prompt,
         user_message="\n".join(feedback),
     )
@@ -108,9 +103,6 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
         return {"topic_title": topic_title, "topic_summary": topic_summary}
 
     # If LLM is enabled, proceed with LLM-based label generation.
-    metadata = create_langfuse_metadata(
-        feature_name="topic-modeling", workspace_id=workspace_id
-    )
     topic_model_labelling = TopicModelLabelling(context=context)
 
     combined_texts = "\n".join(
@@ -120,7 +112,6 @@ Hint: To enable full AI summaries please set the DASHBOARD_LLM environment varia
     topic_json = await _ask_llm_async(
         json_=True,
         litellm_model=LITELLM_MODEL_TOPIC_MODEL,
-        metadata=metadata,
         system_message=topic_model_labelling.get_prompt(),
         user_message=combined_texts,
     )
