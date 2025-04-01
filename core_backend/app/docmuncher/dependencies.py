@@ -284,11 +284,12 @@ async def process_pdf_file(
         await redis.set(task_id, job_status_pydantic.model_dump_json())
 
         # Process PDF file
+
+        markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
+        md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         content_tags = await create_tag_per_file(
             filename=file_name, workspace_id=workspace_id, asession=asession
         )
-        markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
-        md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         await convert_markdown_chunks_to_cards(
             md_header_splits=md_header_splits,
             content_tags=content_tags,

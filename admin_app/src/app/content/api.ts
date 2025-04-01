@@ -164,7 +164,9 @@ const deleteTag = async (tag_id: number, token: string) => {
   }
 };
 
-const getIndexingStatus = async (token: string): Promise<IndexingStatusResponse> => {
+const getIndexingStatus = async (
+  token: string,
+): Promise<IndexingStatusResponse | undefined> => {
   try {
     const response = await api.get("/docmuncher/status/is_job_running", {
       headers: { Authorization: `Bearer ${token}` },
@@ -176,7 +178,8 @@ const getIndexingStatus = async (token: string): Promise<IndexingStatusResponse>
       throw new Error("Unexpected response status");
     }
   } catch (error) {
-    throw new Error("Error fetching indexing status");
+    let errorMessage = "Error fetching indexing status";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -199,7 +202,7 @@ const postDocumentToIndex = async (file: File, token: string) => {
 
 const getDocIndexingStatusData = async (
   token: string,
-): Promise<DocIndexingStatusRow[]> => {
+): Promise<DocIndexingStatusRow[] | undefined> => {
   try {
     const response = await api.get("/docmuncher/status/data", {
       headers: { Authorization: `Bearer ${token}` },
@@ -237,7 +240,8 @@ const getDocIndexingStatusData = async (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   } catch (error) {
-    throw new Error("Error fetching indexing status");
+    let errorMessage = "Error fetching indexing status";
+    handleApiError(error, errorMessage);
   }
 };
 
