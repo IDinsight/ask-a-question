@@ -17,11 +17,6 @@ const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
   const editAccess = userRole == "admin";
-  const [snackbarMessage, setSnackbarMessage] = useState<{
-    message: string;
-    severity: "success" | "error" | "info" | "warning";
-  } | null>(null);
-
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
