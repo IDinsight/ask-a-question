@@ -10,7 +10,7 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
-from langfuse.decorators import langfuse_context, observe
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
