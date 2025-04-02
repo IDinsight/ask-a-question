@@ -335,33 +335,33 @@ class IdentifiedScript(str, Enum):
 
     LATIN = "Latin"
     DEVANAGARI = "Devanagari"
-    ARABIC = "Arabic"
-    CYRILLIC = "Cyrillic"
-    CHINESE = "Chinese"
-    JAPANESE = "Japanese"
-    KOREAN = "Korean"
-    THAI = "Thai"
+    # ARABIC = "Arabic"
+    # CYRILLIC = "Cyrillic"
+    # CHINESE = "Chinese"
+    # JAPANESE = "Japanese"
+    # KOREAN = "Korean"
+    # THAI = "Thai"
     BENGALI = "Bengali"
     TAMIL = "Tamil"
     TELUGU = "Telugu"
     KANNADA = "Kannada"
     MALAYALAM = "Malayalam"
     GUJARATI = "Gujarati"
-    GURMUKHI = "Gurmukhi"
-    ORIYA = "Oriya"
-    SINHALA = "Sinhala"
-    MYANMAR = "Myanmar"
-    ETHIOPIC = "Ethiopic"
-    GEORGIAN = "Georgian"
-    ARMENIAN = "Armenian"
-    HEBREW = "Hebrew"
-    GREEK = "Greek"
-    TIBETAN = "Tibetan"
-    MONGOLIAN = "Mongolian"
-    KHMER = "Khmer"
-    LAO = "Lao"
-    VIETNAMESE = "Vietnamese"
-    THAI_LAO = "Thai-Lao"
+    # GURMUKHI = "Gurmukhi"
+    # ORIYA = "Oriya"
+    # SINHALA = "Sinhala"
+    # MYANMAR = "Myanmar"
+    # ETHIOPIC = "Ethiopic"
+    # GEORGIAN = "Georgian"
+    # ARMENIAN = "Armenian"
+    # HEBREW = "Hebrew"
+    # GREEK = "Greek"
+    # TIBETAN = "Tibetan"
+    # MONGOLIAN = "Mongolian"
+    # KHMER = "Khmer"
+    # LAO = "Lao"
+    # VIETNAMESE = "Vietnamese"
+    # THAI_LAO = "Thai-Lao"
     UNKNOWN = "Unknown"
 
     @classmethod
@@ -400,34 +400,6 @@ class LanguageIdentificationResponse(BaseModel):
     script: IdentifiedScript
 
     model_config = ConfigDict(strict=True)
-
-
-LANGUAGE_ID_PROMPT = f"""\
-You are a high-performing language identification bot that classifies the \
-language and script of the user input.
-
-For each input, identify:
-1. The language (must be one of {{member_names}})
-2. The script (must be one of {", ".join(IdentifiedScript.get_supported_scripts())})
-
-If the user input is:
-1. in one of the supported languages, respond with that language and its script
-2. written in a mix of languages, respond with the dominant language and its script
-3. in a real language but not a supported language, respond with UNSUPPORTED and \
-its script
-4. unintelligible or gibberish, respond with UNINTELLIGIBLE and Latin
-
-Examples:
-"How many beds are there?" -> {{"language": "ENGLISH", "script": "Latin"}}
-"vahaan kitane bistar hain?" -> {{"language": "HINDI", "script": "Latin"}}
-"वहाँ कितने बिस्तर हैं?" -> {{"language": "HINDI", "script": "Devanagari"}}
-"Bonjour, comment allez-vous?" -> {{"language": "FRENCH", "script": "Latin"}}
-"Jambo, habari gani?" -> {{"language": "SWAHILI", "script": "Latin"}}
-"asdfjkl" -> {{"language": "UNINTELLIGIBLE", "script": "Latin"}}
-"مرحبا كيف حالك" -> {{"language": "UNSUPPORTED", "script": "Arabic"}}
-
-Respond with a JSON object containing "language" and "script" keys.
-"""
 
 
 class IdentifiedLanguage(str, Enum):
@@ -488,6 +460,36 @@ class IdentifiedLanguage(str, Enum):
         """
 
         return LANGUAGE_ID_PROMPT.format(member_names=cls._member_names_).strip()
+
+
+LANGUAGE_ID_PROMPT = (
+    f"""\
+You are a high-performing language identification bot that classifies the \
+language and script of the user input.
+
+For each input, identify:
+1. The language (must be one of {", ".join(IdentifiedLanguage._member_names_)})
+2. The script (must be one of {", ".join(IdentifiedScript._member_names_)})
+
+If the user input is:
+1. in one of the supported languages, respond with that language and its script
+2. written in a mix of languages, respond with the dominant language and its script
+3. in a real language but not a supported language, respond with UNSUPPORTED and \
+its script
+4. unintelligible or gibberish, respond with UNINTELLIGIBLE and Latin"""
+    + """
+Examples:
+"How many beds are there?" -> {{"language": "ENGLISH", "script": "Latin"}}
+"vahaan kitane bistar hain?" -> {{"language": "HINDI", "script": "Latin"}}
+"वहाँ कितने बिस्तर हैं?" -> {{"language": "HINDI", "script": "Devanagari"}}
+"Bonjour, comment allez-vous?" -> {{"language": "FRENCH", "script": "Latin"}}
+"Jambo, habari gani?" -> {{"language": "SWAHILI", "script": "Latin"}}
+"asdfjkl" -> {{"language": "UNINTELLIGIBLE", "script": "Latin"}}
+"مرحبا كيف حالك" -> {{"language": "UNSUPPORTED", "script": "Arabic"}}
+
+Respond with a JSON object containing "language" and "script" keys.
+"""
+)
 
 
 class RAG(BaseModel):
