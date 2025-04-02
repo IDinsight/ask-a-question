@@ -9,6 +9,7 @@ from langchain_core.documents import Document
 from mistralai import DocumentURLChunk, Mistral
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import REDIS_DOC_INGEST_EXPIRY_TIME
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
 from ..tags.models import is_tag_name_unique, save_tag_to_db
@@ -264,7 +265,8 @@ async def process_pdf_file(
     HTTPException
         If the processing fails.
     """
-    # Update redis state operations
+    # --- Update redis state operations ---
+    # Get redis client and the job status
     redis = request.app.state.redis
     job_status = await redis.get(task_id)
     if not job_status:
@@ -281,6 +283,18 @@ async def process_pdf_file(
     )
 
     try:
+        # Acquire a lock for this file
+        lock = f"lock:{file_name}"
+        acquired_lock = await redis.set(
+            lock, "1", nx=True, ex=REDIS_DOC_INGEST_EXPIRY_TIME
+        )
+
+        if not acquired_lock:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail=f"File `{file_name}` has already been converted.",
+            )
+
         job_status_pydantic.task_status = DocStatusEnum.in_progress
         await redis.set(task_id, job_status_pydantic.model_dump_json())
 
