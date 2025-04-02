@@ -167,7 +167,7 @@ const deleteTag = async (tag_id: number, token: string) => {
 const getIndexingStatus = async (
   token: string,
 ): Promise<IndexingStatusResponse | undefined> => {
-
+  try {
     const response = await api.get("/docmuncher/status/is_job_running", {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -180,7 +180,6 @@ const getIndexingStatus = async (
   } catch (error) {
     let errorMessage = "Error fetching indexing status";
     handleApiError(error, errorMessage);
-
   }
 };
 
@@ -204,7 +203,6 @@ const postDocumentToIndex = async (file: File, token: string) => {
 const getDocIndexingStatusData = async (
   token: string,
 ): Promise<DocIndexingStatusRow[] | undefined> => {
-
   try {
     const response = await api.get("/docmuncher/status/data", {
       headers: { Authorization: `Bearer ${token}` },

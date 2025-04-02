@@ -113,6 +113,7 @@ async def save_content_to_db(
     content: ContentCreate,
     exclude_archived: bool = False,
     workspace_id: int,
+    commit: bool = True,
 ) -> ContentDB:
     """Vectorize the content and save to the database.
 
@@ -126,6 +127,9 @@ async def save_content_to_db(
         Specifies whether to exclude archived content.
     workspace_id
         The ID of the workspace to save the content to.
+    commit
+        Specifies whether to commit the changes to the database.
+        If `False`, the changes will not be committed.
 
     Returns
     -------
@@ -157,8 +161,9 @@ async def save_content_to_db(
     )
     asession.add(content_db)
 
-    await asession.commit()
-    await asession.refresh(content_db)
+    if commit:
+        await asession.commit()
+        await asession.refresh(content_db)
 
     result = await get_content_from_db(
         asession=asession,

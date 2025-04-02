@@ -26,7 +26,7 @@
     "react-apexcharts": "^1.4.1",
     "react-datepicker": "^8.0.0",
     "react-dom": "^18",
-    "react-dropzone": "^14.3.8"
+    "react-dropzone": "^14.3.8",
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {

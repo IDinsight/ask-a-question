@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
-from ..tags.models import is_tag_name_unique, save_tag_to_db, validate_tags
+from ..tags.models import is_tag_name_unique, save_tag_to_db
 from ..tags.schemas import TagCreate
 from ..utils import setup_logger
 from .schemas import DocIngestionStatusPdf, DocStatusEnum
@@ -65,11 +65,11 @@ async def create_tag_per_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Tag name `{tag.tag_name}` already exists",
         )
-    tag_db = await save_tag_to_db(asession=asession, tag=tag, workspace_id=workspace_id)
-    _, content_tags = await validate_tags(
-        asession=asession, tags=[tag_db.tag_id], workspace_id=workspace_id
+    tag_db = await save_tag_to_db(
+        asession=asession, tag=tag, workspace_id=workspace_id, commmit=False
     )
-    return content_tags
+
+    return [tag_db]
 
 
 def convert_pages_to_markdown(file_name: str, content: bytes) -> dict:
@@ -220,6 +220,7 @@ async def convert_markdown_chunks_to_cards(
                     content=card,
                     exclude_archived=True,
                     workspace_id=workspace_id,
+                    commit=False,
                 )
             except Exception as e:
                 # TODO: this is a dumb way to handle errors in card creation
@@ -284,7 +285,6 @@ async def process_pdf_file(
         await redis.set(task_id, job_status_pydantic.model_dump_json())
 
         # Process PDF file
-
         markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         content_tags = await create_tag_per_file(
@@ -297,11 +297,17 @@ async def process_pdf_file(
             asession=asession,
         )
 
+        # Commit the changes to the database
+        await asession.commit()
+
+        # Update the job status
         job_status_pydantic.task_status = DocStatusEnum.success
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
 
     except Exception as e:
         logger.error(f"Error processing file {file_name}: {str(e)}")
+        await asession.rollback()
+
         job_status_pydantic.task_status = DocStatusEnum.failed
         job_status_pydantic.error_trace = str(e)
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
