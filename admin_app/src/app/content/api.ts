@@ -2,6 +2,19 @@ import api, { handleApiError } from "@/utils/api";
 
 type IndexingStatusResponse = boolean | { detail: string };
 
+export interface DocIndexingTask {
+  error_trace: string;
+  finished_datetime_utc: string;
+  upload_id: string;
+  user_id: number;
+  workspace_id: number;
+  parent_file_name: string;
+  created_datetime_utc: string;
+  task_id: string;
+  doc_name: string;
+  task_status: string;
+}
+
 export interface DocIndexingStatusRow {
   fileName: string;
   status: "Ongoing" | "Done" | "Error";
@@ -9,6 +22,7 @@ export interface DocIndexingStatusRow {
   errorTrace: string;
   created_at: string;
   finished_at: string;
+  tasks: DocIndexingTask[];
 }
 
 interface ContentBody {
@@ -231,6 +245,7 @@ const getDocIndexingStatusData = async (
         errorTrace: entry.error_trace || "",
         created_at: formatDate(entry.created_datetime_utc),
         finished_at: formatDate(entry.finished_datetime_utc),
+        tasks: entry.tasks || [],
       }))
       .sort(
         (a: DocIndexingStatusRow, b: DocIndexingStatusRow) =>
