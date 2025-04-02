@@ -103,7 +103,7 @@ REFERENCE TEXT:
 {context}
 
 IMPORTANT NOTES ON THE "answer" FIELD:
-- Answer in the language of the question ({original_language}).
+- Answer in the language {original_language} in the script {original_script}.
 - Answer should be concise, to the point, and no longer than 80 words.
 - Do not include any information that is not present in the REFERENCE TEXT.
 """
@@ -182,6 +182,61 @@ class AlignmentScore(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
+CHAT_RESPONSE_PROMPT = """\
+You are an AI assistant designed to help users with their
+questions/concerns. You interact with users via a chat interface. You will
+be provided with ADDITIONAL RELEVANT INFORMATION that can address the
+user's questions/concerns.
+
+BEFORE answering the user's LATEST MESSAGE, follow these steps:
+
+1. Review the conversation history to ensure that you understand the
+context in which the user's LATEST MESSAGE is being asked.
+2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you
+understand the most useful information related to the user's LATEST
+MESSAGE.
+
+When you have completed the above steps, you will then write a JSON, whose
+TypeScript Interface is given below:
+
+interface Response {{
+    extracted_info: string[];
+    answer: string;
+}}
+
+For "extracted_info", extract from the provided ADDITIONAL RELEVANT
+INFORMATION the most useful information related to the LATEST MESSAGE asked
+by the user, and list them one by one. If no useful information is found,
+return an empty list.
+
+For "answer", understand the conversation history, ADDITIONAL RELEVANT
+INFORMATION, and the user's LATEST MESSAGE, and then provide an answer to
+the user's LATEST MESSAGE. If no useful information was found in the
+either the conversation history or the ADDITIONAL RELEVANT INFORMATION,
+respond with {failure_message}.
+
+EXAMPLE RESPONSES:
+{{"extracted_info": [
+    "Pineapples are a blend of pinecones and apples.",
+    "Pineapples have the shape of a pinecone."
+    ],
+    "answer": "The 'pine-' from pineapples likely come from the fact that
+    pineapples are a hybrid of pinecones and apples and its pinecone-like
+    shape."
+}}
+{{"extracted_info": [], "answer": "{failure_message}"}}
+
+IMPORTANT NOTES ON THE "answer" FIELD:
+- Keep in mind that the user is asking a {message_type} question.
+- Answer in the language {original_language} in the script {original_script}.
+- Answer should be concise and to the point.
+- Do not include any information that is not present in the ADDITIONAL
+RELEVANT INFORMATION.
+
+Only output the JSON response, without any additional text.
+"""
+
+
 class ChatHistory:
     """Contains the prompts and models for the chat history task."""
 
@@ -227,62 +282,7 @@ class ChatHistory:
         ),
         prompt_kws={"valid_message_types": _valid_message_types},
     )
-    system_message_generate_response = format_prompt(
-        prompt=textwrap.dedent(
-            """You are an AI assistant designed to help users with their
-            questions/concerns. You interact with users via a chat interface. You will
-            be provided with ADDITIONAL RELEVANT INFORMATION that can address the
-            user's questions/concerns.
-
-            BEFORE answering the user's LATEST MESSAGE, follow these steps:
-
-            1. Review the conversation history to ensure that you understand the
-            context in which the user's LATEST MESSAGE is being asked.
-            2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you
-            understand the most useful information related to the user's LATEST
-            MESSAGE.
-
-            When you have completed the above steps, you will then write a JSON, whose
-            TypeScript Interface is given below:
-
-            interface Response {{
-                extracted_info: string[];
-                answer: string;
-            }}
-
-            For "extracted_info", extract from the provided ADDITIONAL RELEVANT
-            INFORMATION the most useful information related to the LATEST MESSAGE asked
-            by the user, and list them one by one. If no useful information is found,
-            return an empty list.
-
-            For "answer", understand the conversation history, ADDITIONAL RELEVANT
-            INFORMATION, and the user's LATEST MESSAGE, and then provide an answer to
-            the user's LATEST MESSAGE. If no useful information was found in the
-            either the conversation history or the ADDITIONAL RELEVANT INFORMATION,
-            respond with {failure_message}.
-
-            EXAMPLE RESPONSES:
-            {{"extracted_info": [
-                "Pineapples are a blend of pinecones and apples.",
-                "Pineapples have the shape of a pinecone."
-                ],
-              "answer": "The 'pine-' from pineapples likely come from the fact that
-               pineapples are a hybrid of pinecones and apples and its pinecone-like
-               shape."
-            }}
-            {{"extracted_info": [], "answer": "{failure_message}"}}
-
-            IMPORTANT NOTES ON THE "answer" FIELD:
-            - Keep in mind that the user is asking a {message_type} question.
-            - Answer in the language of the question ({original_language}).
-            - Answer should be concise and to the point.
-            - Do not include any information that is not present in the ADDITIONAL
-            RELEVANT INFORMATION.
-
-            Only output the JSON response, without any additional text.
-            """
-        )
-    )
+    system_message_generate_response = CHAT_RESPONSE_PROMPT
 
     class ChatHistoryConstructSearchQuery(BaseModel):
         """Pydantic model for the output of the construct search query chat history."""
@@ -328,6 +328,106 @@ class ChatHistory:
             ).model_dump()
         except ValueError as e:
             raise ValueError(f"Error validating the output: {e}") from e
+
+
+class IdentifiedScript(str, Enum):
+    """Script used in the user's input."""
+
+    LATIN = "Latin"
+    DEVANAGARI = "Devanagari"
+    ARABIC = "Arabic"
+    CYRILLIC = "Cyrillic"
+    CHINESE = "Chinese"
+    JAPANESE = "Japanese"
+    KOREAN = "Korean"
+    THAI = "Thai"
+    BENGALI = "Bengali"
+    TAMIL = "Tamil"
+    TELUGU = "Telugu"
+    KANNADA = "Kannada"
+    MALAYALAM = "Malayalam"
+    GUJARATI = "Gujarati"
+    GURMUKHI = "Gurmukhi"
+    ORIYA = "Oriya"
+    SINHALA = "Sinhala"
+    MYANMAR = "Myanmar"
+    ETHIOPIC = "Ethiopic"
+    GEORGIAN = "Georgian"
+    ARMENIAN = "Armenian"
+    HEBREW = "Hebrew"
+    GREEK = "Greek"
+    TIBETAN = "Tibetan"
+    MONGOLIAN = "Mongolian"
+    KHMER = "Khmer"
+    LAO = "Lao"
+    VIETNAMESE = "Vietnamese"
+    THAI_LAO = "Thai-Lao"
+    UNKNOWN = "Unknown"
+
+    @classmethod
+    def _missing_(cls, value: str) -> IdentifiedScript:  # type: ignore[override]
+        """If script identified is not one of the supported scripts, it is
+        classified as UNKNOWN.
+
+        Parameters
+        ----------
+        value
+            The script identified.
+
+        Returns
+        -------
+        Script
+            The identified script (i.e., UNKNOWN).
+        """
+        return cls.UNKNOWN
+
+    @classmethod
+    def get_supported_scripts(cls) -> list[str]:
+        """Return a list of supported scripts.
+
+        Returns
+        -------
+        list[str]
+            A list of supported scripts.
+        """
+        return [script.value for script in cls if script != cls.UNKNOWN]
+
+
+class LanguageIdentificationResponse(BaseModel):
+    """Pydantic model for the language identification response."""
+
+    language: IdentifiedLanguage
+    script: IdentifiedScript
+
+    model_config = ConfigDict(strict=True)
+
+
+LANGUAGE_ID_PROMPT = f"""\
+You are a high-performing language identification bot that classifies the \
+language and script of the user input.
+
+For each input, identify:
+1. The language (must be one of {{member_names}})
+2. The script (must be one of {", ".join(IdentifiedScript.get_supported_scripts())})
+
+If the user input is:
+1. in one of the supported languages, respond with that language and its script
+2. written in a mix of languages, respond with the dominant language and its script
+3. in a real language but not a supported language, respond with UNSUPPORTED and \
+its script
+4. unintelligible or gibberish, respond with UNINTELLIGIBLE and Latin
+
+Examples:
+"How many beds are there?" -> {{"language": "ENGLISH", "script": "Latin"}}
+"vahaan kitane bistar hain?" -> {{"language": "HINDI", "script": "Latin"}}
+"वहाँ कितने बिस्तर हैं?" -> {{"language": "HINDI", "script": "Devanagari"}}
+"Bonjour, comment allez-vous?" -> {{"language": "FRENCH", "script": "Latin"}}
+"Jambo, habari gani?" -> {{"language": "SWAHILI", "script": "Latin"}}
+"asdfjkl" -> {{"language": "UNINTELLIGIBLE", "script": "Latin"}}
+"مرحبا كيف حالك" -> {{"language": "UNSUPPORTED", "script": "Arabic"}}
+
+Respond with a JSON object containing "language" and "script" keys.
+"""
 
 
 class IdentifiedLanguage(str, Enum):
@@ -387,21 +487,7 @@ class IdentifiedLanguage(str, Enum):
             The prompt for the language identification bot.
         """
 
-        return textwrap.dedent(
-            f"""
-            You are a high-performing language identification bot that classifies the
-            language of the user input into one of {", ".join(cls._member_names_)}.
-
-            If the user input is
-            1. in one of the supported languages, then respond with that language.
-            2. written in a mix of languages, then respond with the dominant language.
-            3. in a real language but not a supported language, then respond with
-            UNSUPPORTED.
-            4. unintelligible or gibberish, then respond with UNINTELLIGIBLE.
-
-            Answer should be a single word and strictly one of
-            [{", ".join(cls._member_names_)}]"""
-        ).strip()
+        return LANGUAGE_ID_PROMPT.format(member_names=cls._member_names_).strip()
 
 
 class RAG(BaseModel):

@@ -3,6 +3,8 @@
 from functools import wraps
 from typing import Any, Callable, Optional
 
+from pydantic import ValidationError
+
 from ..config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
     LITELLM_MODEL_PARAPHRASE,
@@ -22,9 +24,11 @@ from .llm_prompts import (
     TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_PROMPT,
     IdentifiedLanguage,
+    IdentifiedScript,
+    LanguageIdentificationResponse,
     SafetyClassification,
 )
-from .utils import _ask_llm_async
+from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger(name="INPUT RAILS")
 
@@ -84,7 +88,7 @@ async def _identify_language(
     query_refined: QueryRefined,
     response: QueryResponse | QueryResponseError,
 ) -> tuple[QueryRefined, QueryResponse | QueryResponseError]:
-    """Identify the language of the question.
+    """Identify the language and script of the question.
 
     Parameters
     ----------
@@ -104,19 +108,27 @@ async def _identify_language(
     if isinstance(response, QueryResponseError):
         return query_refined, response
 
-    llm_identified_lang = await _ask_llm_async(
+    json_str = await _ask_llm_async(
+        json_=True,
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         metadata=metadata,
         system_message=IdentifiedLanguage.get_prompt(),
         user_message=query_refined.query_text,
     )
 
-    identified_lang = getattr(
-        IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
-    )
+    try:
+        cleaned_json_str = remove_json_markdown(text=json_str)
+        lang_info = LanguageIdentificationResponse.model_validate_json(cleaned_json_str)
+        identified_lang = lang_info["language"]
+        identified_script = lang_info["script"]
+    except ValidationError:
+        identified_lang = IdentifiedLanguage.UNSUPPORTED
+        identified_script = IdentifiedScript.LATIN
+
     query_refined.original_language = identified_lang
     response.debug_info["original_query"] = query_refined.query_text_original
     response.debug_info["original_language"] = identified_lang
+    response.debug_info["original_script"] = identified_script
 
     processed_response = _process_identified_language_response(
         identified_language=identified_lang, response=response
