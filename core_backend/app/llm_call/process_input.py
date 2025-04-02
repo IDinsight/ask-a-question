@@ -19,6 +19,7 @@ from ..question_answer.schemas import (
 )
 from ..utils import create_langfuse_metadata, setup_logger
 from .llm_prompts import (
+    LANGUAGE_ID_PROMPT,
     PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_PROMPT,
     TRANSLATE_FAILED_MESSAGE,
@@ -115,7 +116,7 @@ async def _identify_language(
         json_=True,
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         metadata=metadata,
-        system_message=IdentifiedLanguage.get_prompt(),
+        system_message=LANGUAGE_ID_PROMPT,
         user_message=query_refined.query_text,
     )
 
