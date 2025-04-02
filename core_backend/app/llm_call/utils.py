@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import redis.asyncio as aioredis
 import requests  # type: ignore
-from langfuse.decorators import langfuse_context
+from langfuse.decorators import langfuse_context  # type: ignore
 from litellm import acompletion, token_counter
 
 from ..config import (

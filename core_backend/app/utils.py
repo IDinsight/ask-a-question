@@ -17,7 +17,7 @@ from uuid import uuid4
 import aiohttp
 import litellm
 from google.cloud import storage  # type: ignore
-from langfuse.decorators import langfuse_context
+from langfuse.decorators import langfuse_context  # type: ignore
 from litellm import aembedding
 from redis import asyncio as aioredis
 

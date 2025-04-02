@@ -17,7 +17,7 @@ from fastapi import (
     Request,
     status,
 )
-from langfuse.decorators import langfuse_context, observe
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_workspace_name

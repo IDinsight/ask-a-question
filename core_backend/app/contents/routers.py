@@ -6,7 +6,7 @@ import pandas as pd
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
-from langfuse.decorators import observe
+from langfuse.decorators import observe  # type: ignore
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
 from sqlalchemy import select
