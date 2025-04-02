@@ -72,7 +72,7 @@ class TagDB(Base):
 
 
 async def save_tag_to_db(
-    *, asession: AsyncSession, tag: TagCreate, workspace_id: int
+    *, asession: AsyncSession, tag: TagCreate, workspace_id: int, commmit: bool = True
 ) -> TagDB:
     """Save a tag in the `TagDB` database.
 
@@ -84,6 +84,8 @@ async def save_tag_to_db(
         The tag to be saved.
     workspace_id
         The ID of the workspace that the tag belongs to.
+    commmit
+        Specifies whether to commit the changes to the database.
 
     Returns
     -------
@@ -101,8 +103,9 @@ async def save_tag_to_db(
 
     asession.add(tag_db)
 
-    await asession.commit()
-    await asession.refresh(tag_db)
+    if commmit:
+        await asession.commit()
+        await asession.refresh(tag_db)
 
     return tag_db
 
