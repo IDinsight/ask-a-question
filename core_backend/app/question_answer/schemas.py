@@ -6,7 +6,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.json_schema import SkipJsonSchema
 
-from ..llm_call.llm_prompts import IdentifiedLanguage
+from ..llm_call.llm_prompts import IdentifiedLanguage, IdentifiedScript
 from ..schemas import FeedbackSentiment, QuerySearchResult
 
 
@@ -49,6 +49,7 @@ class QueryRefined(QueryBase):
 
     generate_tts: bool = Field(False)
     original_language: IdentifiedLanguage | None = None
+    original_script: IdentifiedScript | None = None
     query_text_original: str
     workspace_id: int
 
