@@ -57,6 +57,9 @@ const ContentCard = ({
   const [checked, setChecked] = React.useState<boolean>(
     selectedContents.includes(content_id),
   );
+  const truncateTagName = (tagName: string): string => {
+    return tagName.length > 15 ? `${tagName.slice(0, 15)}...` : tagName;
+  };
 
   React.useEffect(() => {
     setChecked(selectedContents.includes(content_id));
@@ -112,7 +115,7 @@ const ContentCard = ({
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
               <Chip
-                label={tags[0].tag_name}
+                label={truncateTagName(tags[0].tag_name)}
                 size="small"
                 sx={{
                   bgcolor: appColors.white,
