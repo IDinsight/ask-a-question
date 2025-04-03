@@ -10,6 +10,7 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +48,6 @@ from ..llm_call.utils import (
 from ..schemas import QuerySearchResult
 from ..users.models import WorkspaceDB
 from ..utils import (
-    create_langfuse_metadata,
     generate_random_filename,
     get_random_int32,
     setup_logger,
@@ -101,6 +101,7 @@ router = APIRouter(
         }
     },
 )
+@observe()
 async def chat(
     user_query: QueryBase,
     request: Request,
@@ -148,6 +149,7 @@ async def chat(
             asession=asession,
             workspace_db=workspace_db,
         )
+        langfuse_context.update_current_trace(name="chat")
         return response
     except LLMCallException:
         return JSONResponse(
@@ -170,6 +172,7 @@ async def chat(
         }
     },
 )
+@observe()
 async def search(
     user_query: QueryBase,
     request: Request,
@@ -225,6 +228,12 @@ async def search(
             response = await get_generation_response(
                 query_refined=user_query_refined_template, response=response
             )
+
+        langfuse_context.update_current_trace(
+            name="search",
+            session_id=user_query_refined_template.session_id,
+            metadata={"query_id": response.query_id, "workspace_id": workspace_id},
+        )
 
         await save_query_response_to_db(
             asession=asession,
@@ -282,6 +291,7 @@ async def search(
         },
     },
 )
+@observe()
 async def voice_search(
     file_url: str,
     request: Request,
@@ -374,6 +384,12 @@ async def voice_search(
             response = await get_generation_response(
                 query_refined=user_query_refined_template, response=response
             )
+
+        langfuse_context.update_current_trace(
+            name="voice-search",
+            session_id=user_query_refined_template.session_id,
+            metadata={"query_id": response.query_id, "workspace_id": workspace_id},
+        )
 
         await save_query_response_to_db(
             asession=asession,
@@ -479,10 +495,6 @@ async def get_search_response(
 
     # No checks for errors: always do the embeddings search even if some guardrails
     # have failed.
-    metadata = create_langfuse_metadata(
-        query_id=response.query_id, workspace_id=workspace_id
-    )
-
     if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
         raise ValueError(
             f"`n_to_crossencoder`({n_to_crossencoder}) must be less than or equal to "
@@ -492,7 +504,6 @@ async def get_search_response(
     search_results = await get_similar_content_async(
         asession=asession,
         exclude_archived=exclude_archived,
-        metadata=metadata,
         n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
         question=query_refined.query_text,  # Use latest transformed version of the text
         workspace_id=workspace_id,
@@ -583,12 +594,9 @@ async def get_generation_response(
     if not query_refined.generate_llm_response:
         return response
 
-    metadata = create_langfuse_metadata(
-        query_id=response.query_id, workspace_id=query_refined.workspace_id
-    )
-
     response, chat_history = await generate_llm_query_response(
-        query_refined=query_refined, response=response, metadata=metadata
+        query_refined=query_refined,
+        response=response,
     )
     if query_refined.chat_query_params and chat_history:
         chat_cache_key = query_refined.chat_query_params["chat_cache_key"]

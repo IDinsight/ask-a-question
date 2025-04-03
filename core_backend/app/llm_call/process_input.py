@@ -15,7 +15,7 @@ from ..question_answer.schemas import (
     QueryResponse,
     QueryResponseError,
 )
-from ..utils import create_langfuse_metadata, setup_logger
+from ..utils import setup_logger
 from .llm_prompts import (
     PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_PROMPT,
@@ -69,11 +69,8 @@ def identify_language__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, workspace_id=query_refined.workspace_id
-        )
         query_refined, response = await _identify_language(
-            metadata=metadata, query_refined=query_refined, response=response
+            query_refined=query_refined, response=response
         )
         response = await func(query_refined, response, *args, **kwargs)
         return response
@@ -227,12 +224,8 @@ def translate_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, workspace_id=query_refined.workspace_id
-        )
-
         query_refined, response = await _translate_question(
-            metadata=metadata, query_refined=query_refined, response=response
+            query_refined=query_refined, response=response
         )
         response = await func(query_refined, response, *args, **kwargs)
 
@@ -354,12 +347,8 @@ def classify_safety__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, workspace_id=query_refined.workspace_id
-        )
-
         query_refined, response = await _classify_safety(
-            metadata=metadata, query_refined=query_refined, response=response
+            query_refined=query_refined, response=response
         )
         response = await func(query_refined, response, *args, **kwargs)
         return response
@@ -471,13 +460,9 @@ def paraphrase_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        metadata = create_langfuse_metadata(
-            query_id=response.query_id, workspace_id=query_refined.workspace_id
-        )
-
         if not query_refined.chat_query_params:
             query_refined, response = await _paraphrase_question(
-                metadata=metadata, query_refined=query_refined, response=response
+                query_refined=query_refined, response=response
             )
         response = await func(query_refined, response, *args, **kwargs)
 

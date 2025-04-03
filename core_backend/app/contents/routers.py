@@ -6,6 +6,7 @@ import pandas as pd
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
+from langfuse.decorators import observe  # type: ignore
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -63,6 +64,7 @@ class ExceedsContentQuotaError(Exception):
 
 
 @router.post("/", response_model=ContentRetrieve)
+@observe()
 async def create_content(
     content: ContentCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -164,6 +166,7 @@ async def create_content(
 
 
 @router.put("/{content_id}", response_model=ContentRetrieve)
+@observe()
 async def edit_content(
     content_id: int,
     content: ContentCreate,
