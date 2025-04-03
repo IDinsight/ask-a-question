@@ -20,13 +20,9 @@ import {
   Box,
 } from "@mui/material";
 import { Layout } from "@/components/Layout";
-import { appColors, sizes } from "@/utils";
+import { appColors } from "@/utils";
 import { useAuth } from "@/utils/auth";
-import {
-  DocIndexingStatusRow,
-  DocIndexingTask,
-  getDocIndexingStatusData,
-} from "../api";
+import { DocIndexingStatusRow, formatDate, getDocIndexingStatusData } from "../api";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
@@ -38,15 +34,30 @@ interface IndexingStatusModalProps {
 interface RowProps {
   entry: DocIndexingStatusRow;
   index: number;
+  columnWidths: { [key: string]: string };
 }
 
-const Row: React.FC<RowProps> = ({ entry, index }) => {
-  const [open, setOpen] = useState(false);
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "—";
-    return dateString;
+const getColumnStyles = () => {
+  return {
+    expandToggle: "48px",
+    fileName: "25%",
+    status: "15%",
+    docsIndexed: "15%",
+    createdAt: "15%",
+    finishedAt: "15%",
+    errorTrace: "15%",
   };
+};
+
+const wrapStyle = {
+  whiteSpace: "normal" as const,
+  wordBreak: "break-word" as const,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
+  const [open, setOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -63,52 +74,93 @@ const Row: React.FC<RowProps> = ({ entry, index }) => {
 
   const hasMultipleTasks = entry.tasks.length > 1;
 
+  const mainCellPadding = {
+    paddingLeft: 2,
+    paddingRight: 2,
+    paddingTop: 1.5,
+    paddingBottom: 1.5,
+  };
+
+  const nestedCellPadding = {
+    paddingLeft: 3.5,
+    paddingRight: 2,
+    paddingTop: 1.5,
+    paddingBottom: 1.5,
+  };
+
+  const toggleCellPadding = {
+    paddingLeft: 1,
+    paddingRight: 1,
+    paddingTop: 1,
+    paddingBottom: 1,
+  };
+
+  const nestedRowStyle = {
+    backgroundColor: "#fafafa",
+  };
+
   return (
     <>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
-        <TableCell>
+      <TableRow
+        sx={{
+          "& > *": { borderBottom: "unset" },
+          cursor: hasMultipleTasks ? "pointer" : "default",
+          "&:hover": hasMultipleTasks ? { backgroundColor: "#f5f5f5" } : {},
+        }}
+        onClick={hasMultipleTasks ? () => setOpen(!open) : undefined}
+      >
+        <TableCell sx={{ width: columnWidths.expandToggle, ...toggleCellPadding }}>
           {hasMultipleTasks && (
             <IconButton
               size="small"
-              onClick={() => setOpen(!open)}
-              sx={{ marginRight: 1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(!open);
+              }}
             >
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </IconButton>
           )}
         </TableCell>
-        <TableCell sx={{ fontWeight: "bold" }}>
-          {hasMultipleTasks
-            ? entry.fileName
-            : entry.tasks[0]?.doc_name || entry.fileName}
-        </TableCell>
         <TableCell
           sx={{
+            ...wrapStyle,
+            ...mainCellPadding,
             fontWeight: "bold",
-            color: getStatusColor(
-              hasMultipleTasks
-                ? entry.status
-                : entry.tasks[0]?.task_status || entry.status,
-            ),
+            width: columnWidths.fileName,
           }}
         >
-          {hasMultipleTasks
-            ? entry.status
-            : entry.tasks[0]?.task_status || entry.status}
-        </TableCell>
-        <TableCell>{entry.docsIndexed}</TableCell>
-        <TableCell>
-          {hasMultipleTasks
-            ? formatDate(entry.created_at)
-            : formatDate(entry.tasks[0]?.created_datetime_utc || entry.created_at)}
-        </TableCell>
-        <TableCell>
-          {hasMultipleTasks
-            ? formatDate(entry.finished_at)
-            : formatDate(entry.tasks[0]?.finished_datetime_utc || entry.finished_at)}
+          {entry.fileName}
         </TableCell>
         <TableCell
           sx={{
+            ...mainCellPadding,
+            fontWeight: "bold",
+            width: columnWidths.status,
+            color:
+              entry.status === "Done"
+                ? "green"
+                : entry.status === "Ongoing"
+                ? "darkorange"
+                : "red",
+          }}
+        >
+          {entry.status}
+        </TableCell>
+        <TableCell sx={{ ...mainCellPadding, width: columnWidths.docsIndexed }}>
+          {entry.docsIndexed}
+        </TableCell>
+        <TableCell sx={{ ...mainCellPadding, width: columnWidths.createdAt }}>
+          {entry.created_at}
+        </TableCell>
+        <TableCell sx={{ ...mainCellPadding, width: columnWidths.finishedAt }}>
+          {entry.finished_at}
+        </TableCell>
+        <TableCell
+          sx={{
+            ...wrapStyle,
+            ...mainCellPadding,
+            width: columnWidths.errorTrace,
             color:
               (hasMultipleTasks ? entry.status : entry.tasks[0]?.task_status) ===
               "Failed"
@@ -116,40 +168,69 @@ const Row: React.FC<RowProps> = ({ entry, index }) => {
                 : "inherit",
           }}
         >
-          {hasMultipleTasks
-            ? entry.errorTrace
-            : entry.tasks[0]?.error_trace || entry.errorTrace}
+          {entry.errorTrace}
         </TableCell>
       </TableRow>
       {hasMultipleTasks && (
         <TableRow>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+          <TableCell style={{ padding: 0 }} colSpan={7}>
             <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box sx={{ margin: 1 }}>
-                <Typography variant="h6" gutterBottom component="div">
-                  Tasks
-                </Typography>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Document Name</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Created At</TableCell>
-                      <TableCell>Finished At</TableCell>
-                      <TableCell>Error Trace</TableCell>
-                    </TableRow>
-                  </TableHead>
+              <Box sx={{ padding: 0 }}>
+                <Table size="small" padding="none">
                   <TableBody>
                     {entry.tasks.map((task, taskIndex) => (
-                      <TableRow key={taskIndex}>
-                        <TableCell>{task.doc_name}</TableCell>
-                        <TableCell sx={{ color: getStatusColor(task.task_status) }}>
-                          {task.task_status}
-                        </TableCell>
-                        <TableCell>{formatDate(task.created_datetime_utc)}</TableCell>
-                        <TableCell>{formatDate(task.finished_datetime_utc)}</TableCell>
+                      <TableRow key={taskIndex} sx={nestedRowStyle}>
                         <TableCell
                           sx={{
+                            width: columnWidths.expandToggle,
+                            ...toggleCellPadding,
+                          }}
+                        />
+                        <TableCell
+                          sx={{
+                            ...wrapStyle,
+                            ...nestedCellPadding,
+                            width: columnWidths.fileName,
+                          }}
+                        >
+                          {task.doc_name}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...nestedCellPadding,
+                            width: columnWidths.status,
+                            color: getStatusColor(task.task_status),
+                          }}
+                        >
+                          {task.task_status}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...nestedCellPadding,
+                            width: columnWidths.docsIndexed,
+                          }}
+                        />
+                        <TableCell
+                          sx={{
+                            ...nestedCellPadding,
+                            width: columnWidths.createdAt,
+                          }}
+                        >
+                          {formatDate(task.created_datetime_utc)}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...nestedCellPadding,
+                            width: columnWidths.finishedAt,
+                          }}
+                        >
+                          {formatDate(task.finished_datetime_utc)}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...wrapStyle,
+                            ...nestedCellPadding,
+                            width: columnWidths.errorTrace,
                             color:
                               task.task_status === "Failed" ? "error.main" : "inherit",
                           }}
@@ -179,6 +260,22 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState<boolean>(false);
 
+  const columnWidths = getColumnStyles();
+
+  const mainCellPadding = {
+    paddingLeft: 2,
+    paddingRight: 2,
+    paddingTop: 1.5,
+    paddingBottom: 1.5,
+  };
+
+  const toggleCellPadding = {
+    paddingLeft: 1,
+    paddingRight: 1,
+    paddingTop: 1,
+    paddingBottom: 1,
+  };
+
   useEffect(() => {
     if (open && token) {
       setIsClosing(false);
@@ -191,11 +288,9 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
         })
         .catch((err) => {
           console.error("Error fetching indexing status:", err);
-          console.log("Indexing status data:");
           setError("Failed to load indexing status.");
         })
         .finally(() => {
-          console.log("Indexing status data:", indexEntries);
           setLoading(false);
         });
     }
@@ -226,7 +321,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
           position: "relative",
         }}
       >
-        <Table stickyHeader>
+        <Table stickyHeader padding="none">
           <TableHead>
             <TableRow>
               <TableCell
@@ -237,6 +332,8 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   position: "sticky",
                   top: 0,
                   zIndex: 1,
+                  width: columnWidths.expandToggle,
+                  ...toggleCellPadding,
                 }}
               />
               <TableCell
@@ -247,6 +344,8 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   position: "sticky",
                   top: 0,
                   zIndex: 1,
+                  width: columnWidths.fileName,
+                  ...mainCellPadding,
                 }}
               >
                 File Name
@@ -259,6 +358,8 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   position: "sticky",
                   top: 0,
                   zIndex: 1,
+                  width: columnWidths.status,
+                  ...mainCellPadding,
                 }}
               >
                 Status
@@ -269,6 +370,10 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   color: appColors.primary,
                   backgroundColor: appColors.white,
                   position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  width: columnWidths.docsIndexed,
+                  ...mainCellPadding,
                 }}
               >
                 Docs Indexed
@@ -279,6 +384,10 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   color: appColors.primary,
                   backgroundColor: appColors.white,
                   position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  width: columnWidths.createdAt,
+                  ...mainCellPadding,
                 }}
               >
                 Created At
@@ -289,6 +398,10 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   color: appColors.primary,
                   backgroundColor: appColors.white,
                   position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  width: columnWidths.finishedAt,
+                  ...mainCellPadding,
                 }}
               >
                 Finished At
@@ -299,6 +412,10 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   color: appColors.primary,
                   backgroundColor: appColors.white,
                   position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  width: columnWidths.errorTrace,
+                  ...mainCellPadding,
                 }}
               >
                 Error Trace
@@ -314,7 +431,12 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
               </TableRow>
             ) : (
               indexEntries.map((entry, index) => (
-                <Row key={index} entry={entry} index={index} />
+                <Row
+                  key={index}
+                  entry={entry}
+                  index={index}
+                  columnWidths={columnWidths}
+                />
               ))
             )}
           </TableBody>

@@ -30,6 +30,19 @@ interface ContentBody {
   content_text: string;
   content_metadata: Record<string, unknown>;
 }
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+};
 const getContentList = async ({
   token,
   skip = 0,
@@ -219,19 +232,6 @@ const getDocIndexingStatusData = async (
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const formatDate = (dateString: string) => {
-      if (!dateString) return "—";
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }).format(date);
-    };
-
     return response.data
       .map((entry: any) => ({
         fileName: entry.parent_file_name,
@@ -245,7 +245,7 @@ const getDocIndexingStatusData = async (
         errorTrace: entry.error_trace || "",
         created_at: formatDate(entry.created_datetime_utc),
         finished_at: formatDate(entry.finished_datetime_utc),
-        tasks: entry.tasks || [],
+        tasks: (entry.tasks as DocIndexingTask[]) || [],
       }))
       .sort(
         (a: DocIndexingStatusRow, b: DocIndexingStatusRow) =>
@@ -257,6 +257,7 @@ const getDocIndexingStatusData = async (
 };
 
 export {
+  formatDate,
   getContentList,
   getContent,
   archiveContent,
