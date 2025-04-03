@@ -55,6 +55,10 @@ const wrapStyle = {
   overflow: "hidden",
   textOverflow: "ellipsis",
 };
+const handleEmptyDate = (dateString: string) => {
+  if (!dateString) return "—";
+  return dateString;
+};
 
 const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
   const [open, setOpen] = useState(false);
@@ -151,10 +155,10 @@ const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
           {entry.docsIndexed}
         </TableCell>
         <TableCell sx={{ ...mainCellPadding, width: columnWidths.createdAt }}>
-          {entry.created_at}
+          {handleEmptyDate(entry.created_at)}
         </TableCell>
         <TableCell sx={{ ...mainCellPadding, width: columnWidths.finishedAt }}>
-          {entry.finished_at}
+          {handleEmptyDate(entry.finished_at)}
         </TableCell>
         <TableCell
           sx={{
@@ -216,7 +220,7 @@ const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
                             width: columnWidths.createdAt,
                           }}
                         >
-                          {formatDate(task.created_datetime_utc)}
+                          {handleEmptyDate(formatDate(task.created_datetime_utc))}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -224,7 +228,7 @@ const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
                             width: columnWidths.finishedAt,
                           }}
                         >
-                          {formatDate(task.finished_datetime_utc)}
+                          {handleEmptyDate(formatDate(task.finished_datetime_utc))}
                         </TableCell>
                         <TableCell
                           sx={{
