@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from typing import List
+from typing import Dict
 
 from fastapi import HTTPException, Request, status
 from langchain.text_splitter import MarkdownHeaderTextSplitter
@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import REDIS_DOC_INGEST_EXPIRY_TIME
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
+from ..llm_call.llm_prompts import SYSTEM_DOCMUNCHER, USER_DOCMUNCHER
+from ..llm_call.utils import _ask_llm_async
 from ..tags.models import is_tag_name_unique, save_tag_to_db
 from ..tags.schemas import TagCreate
 from ..utils import setup_logger
@@ -119,7 +121,7 @@ def convert_pages_to_markdown(file_name: str, content: bytes) -> dict:
     return markdown_text
 
 
-def chunk_markdown_text_by_headers(markdown_text: dict) -> list:
+def chunk_markdown_text_by_headers(markdown_text: dict) -> dict:
     """
     Chunk markdown text by headers.
 
@@ -142,28 +144,44 @@ def chunk_markdown_text_by_headers(markdown_text: dict) -> list:
         ("###", "Header 3"),
     ]
 
-    md_header_splits: List[Document] = []
+    md_header_splits: Dict[int, Dict] = {}
 
     try:
-        for page in markdown_text["pages"]:
-            markdown = page["markdown"]
-            # TODO: test performance with Experimental splitter also
+        # First split markdown by headers
+        headers_to_split_on = [
+            ("#", "Header 1"),
+            ("##", "Header 2"),
+            ("###", "Header 3"),
+            ("####", "Header 4"),
+        ]
+
+        for i, page in enumerate(markdown_text["pages"]):
             markdown_splitter = MarkdownHeaderTextSplitter(
                 headers_to_split_on, return_each_line=True
             )
-            header_splits = markdown_splitter.split_text(markdown)
-
-            for header_split in header_splits:
-                metadata = header_split.metadata
+            header_splits = markdown_splitter.split_text(page["markdown"])
+            md_header_splits[i] = {}
+            for j, header_split in enumerate(header_splits):
+                header_split.metadata.update(
+                    {
+                        "page": i,
+                        "chunk": j,
+                    }
+                )
+                # Update headers in metadata
                 for header in headers_to_split_on:
                     if (
-                        (header[1] not in metadata.keys())
-                        and (len(md_header_splits) > 0)
-                        and (header[1] in md_header_splits[-1].metadata.keys())
+                        (header[1] not in header_split.metadata.keys())
+                        and (len(md_header_splits[i]) > 0)
+                        and (header[1] in md_header_splits[i][j - 1].metadata.keys())
                     ):
-                        metadata[header[1]] = md_header_splits[-1].metadata[header[1]]
-                header_split.metadata = metadata
-                md_header_splits.append(header_split)
+                        header_split.metadata[header[1]] = md_header_splits[i][
+                            j - 1
+                        ].metadata[header[1]]
+                md_header_splits[i][j] = header_split
+
+        # Next merge chunks to ensure continuity across pages, and generate titles
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -172,8 +190,87 @@ def chunk_markdown_text_by_headers(markdown_text: dict) -> list:
     return md_header_splits
 
 
+async def merge_chunks_for_continuity(md_header_splits: dict) -> list:
+    """
+    Merge cards for continuity across pages.
+
+    Parameters
+    ----------
+    md_header_splits
+        The markdown header splits to merge.
+
+    Returns
+    -------
+    list
+        The merged markdown header splits.
+    HTTPException
+        If the merging fails.
+    """
+    try:
+        merged_chunks = []
+        md_chunks_list = list(md_header_splits.values())
+
+        for i, page in enumerate(md_chunks_list):
+            for j, chunk in enumerate(page.values()):
+                is_last_chunk = j == len(page) - 1
+                is_last_page = i == len(md_chunks_list) - 1
+                next_page_has_headers = not is_last_page and any(
+                    "Header" in k for k in md_chunks_list[i + 1][0].metadata.keys()
+                )
+
+                if is_last_chunk and (next_page_has_headers or is_last_page):
+                    chunk.metadata["title"] = await _ask_llm_async(
+                        json_=False,
+                        litellm_model="gpt-4o",
+                        metadata=chunk.metadata,
+                        system_message=SYSTEM_DOCMUNCHER,
+                        user_message=USER_DOCMUNCHER.format(
+                            meta=json.dumps(chunk.metadata), content=chunk.page_content
+                        ),
+                    )
+                    merged_chunks.append(chunk)
+                elif is_last_chunk:
+                    next_chunk = md_chunks_list[i + 1][0]
+                    combined_content = chunk.page_content + next_chunk.page_content
+                    combined_metadata = {**chunk.metadata, **next_chunk.metadata}
+                    combined_metadata["page"] = chunk.metadata["page"]
+                    combined_metadata["chunk"] = chunk.metadata["chunk"]
+
+                    combined_metadata["title"] = await _ask_llm_async(
+                        json_=False,
+                        litellm_model="gpt-4o",
+                        metadata=chunk.metadata,
+                        system_message=SYSTEM_DOCMUNCHER,
+                        user_message=USER_DOCMUNCHER.format(
+                            meta=json.dumps(combined_metadata), content=combined_content
+                        ),
+                    )
+                    merged_chunks.append(
+                        Document(
+                            metadata=combined_metadata, page_content=combined_content
+                        )
+                    )
+                else:
+                    chunk.metadata["title"] = await _ask_llm_async(
+                        json_=False,
+                        litellm_model="gpt-4o",
+                        metadata=chunk.metadata,
+                        system_message=SYSTEM_DOCMUNCHER,
+                        user_message=USER_DOCMUNCHER.format(
+                            meta=json.dumps(chunk.metadata), content=chunk.page_content
+                        ),
+                    )
+                    merged_chunks.append(chunk)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to merge cards for continuity: {e}",
+        ) from e
+    return merged_chunks
+
+
 async def convert_markdown_chunks_to_cards(
-    md_header_splits: list,
+    merged_chunks: list,
     content_tags: list,
     workspace_id: int,
     asession: AsyncSession,
@@ -183,7 +280,7 @@ async def convert_markdown_chunks_to_cards(
 
     Parameters
     ----------
-    md_header_splits
+    merged_chunks
         The markdown header splits to convert to cards.
     content_tags:
         The tags (associated with the filename) to save the cards with.
@@ -199,36 +296,32 @@ async def convert_markdown_chunks_to_cards(
     HTTPException
         If the conversion fails.
     """
-    for header_split in md_header_splits:
-        num_sub_chunks = int(len(header_split.page_content) / 2000 + 1)
-        for i in range(num_sub_chunks):
-            try:
-                title = "--".join(
-                    [str(v) for v in header_split.metadata.values()]
-                    + [header_split.page_content[:10]]
-                )
-                metadata = header_split.metadata
-                metadata["sub_chunk"] = i
 
-                card = ContentCreate(
-                    content_text=header_split.page_content[i * 2000 : (i + 1) * 2000],
-                    content_title=title,
-                    content_metadata=metadata,
-                    content_tags=content_tags,
-                )
-                await save_content_to_db(
-                    asession=asession,
-                    content=card,
-                    exclude_archived=True,
-                    workspace_id=workspace_id,
-                    commit=False,
-                )
-            except Exception as e:
-                # TODO: this is a dumb way to handle errors in card creation
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to process PDF file: {e}",
-                ) from e
+    try:
+        for header_split in merged_chunks:
+            metadata = header_split.metadata
+            title = metadata.pop("title")
+
+            card = ContentCreate(
+                content_text=header_split.page_content,
+                content_title=title,
+                content_metadata=metadata,
+                content_tags=content_tags,
+            )
+            await save_content_to_db(
+                asession=asession,
+                content=card,
+                exclude_archived=True,
+                workspace_id=workspace_id,
+                commit=False,
+            )
+
+    except Exception as e:
+        # TODO: this is a dumb way to handle errors in card creation
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process PDF file: {e}",
+        ) from e
     return {"detail": "Cards saved successfully"}
 
 
@@ -301,11 +394,14 @@ async def process_pdf_file(
         # Process PDF file
         markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
+        merged_chunks = await merge_chunks_for_continuity(md_header_splits)
+
+        # Create the tags and save the merged cards to the database
         content_tags = await create_tag_per_file(
             filename=file_name, workspace_id=workspace_id, asession=asession
         )
         await convert_markdown_chunks_to_cards(
-            md_header_splits=md_header_splits,
+            merged_chunks=merged_chunks,
             content_tags=content_tags,
             workspace_id=workspace_id,
             asession=asession,
@@ -325,6 +421,9 @@ async def process_pdf_file(
         job_status_pydantic.task_status = DocStatusEnum.failed
         job_status_pydantic.error_trace = str(e)
         job_status_pydantic.finished_datetime_utc = datetime.now(timezone.utc)
+
+        # Release the lock
+        await redis.delete(lock)
 
     finally:
         await redis.set(task_id, job_status_pydantic.model_dump_json())

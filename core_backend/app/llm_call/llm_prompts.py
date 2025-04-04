@@ -109,6 +109,20 @@ IMPORTANT NOTES ON THE "answer" FIELD:
 """
 )
 
+# ---- Generate titles for DocMuncher Cards -----
+SYSTEM_DOCMUNCHER = """
+You are an excellent linguist.
+Look at the content and metadata that the user provides and generate an
+appropriate title of 8 WORDS OR LESS that captures the essence of the content.
+The title should be in English.
+"""
+
+USER_DOCMUNCHER = """
+Please generate a title for the following content:\n
+Metadata: {meta} \n
+Content: {content}"
+"""
+
 
 class AlignmentScore(BaseModel):
     """Alignment score of the user's input."""
