@@ -73,6 +73,7 @@ jobs:
             admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password 
             admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key 
             gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json 
+            mistral-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-mistral-api-key
 
       - name: Copy GCP credentials JSON
         working-directory: deployment/docker-compose
@@ -134,6 +135,7 @@ jobs:
               -e LANGFUSE=True \
               -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
+              -e MISTRAL_API_KEY="${{ steps.secrets.outputs.mistral-api-key }}" \
               -e BACKEND_ROOT_PATH=/api \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f || true
