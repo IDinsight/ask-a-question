@@ -36,16 +36,14 @@ LANGFUSE_PROJECT_NAME = None
 
 if LANGFUSE == "True":
     langFuseLogger = litellm.utils.langFuseLogger
-    if langFuseLogger is None:
-        langFuseLogger = litellm.integrations.langfuse.LangFuseLogger()
-        LANGFUSE_PROJECT_NAME = (
-            langFuseLogger.Langfuse.client.projects.get().data[0].name
-        )
-    elif isinstance(langFuseLogger, litellm.integrations.langfuse.LangFuseLogger):
-        LANGFUSE_PROJECT_NAME = (
-            langFuseLogger.Langfuse.client.projects.get().data[0].name
-        )
-
+    if langFuseLogger is not None:
+        try:
+            LANGFUSE_PROJECT_NAME = (
+                langFuseLogger.Langfuse.client.projects.get().data[0].name
+            )
+        except Exception as e:
+            print(f"Failed to get Langfuse project name: {e}")
+            LANGFUSE_PROJECT_NAME = None
 
 _HTTP_CLIENT: aiohttp.ClientSession | None = None
 
@@ -120,6 +118,12 @@ def create_langfuse_metadata(
     return metadata
 
 
+class EmbeddingCallException(Exception):
+    """Custom exception for embedding call errors."""
+
+    pass
+
+
 async def embedding(
     *, metadata: Optional[dict] = None, text_to_embed: str
 ) -> list[float]:
@@ -138,17 +142,25 @@ async def embedding(
         The embedding for the given text.
     """
 
-    metadata = metadata or {}
+    try:
+        content_embedding = await aembedding(
+            api_base=LITELLM_ENDPOINT,
+            api_key=LITELLM_API_KEY,
+            input=text_to_embed,
+            metadata=metadata,
+            model=LITELLM_MODEL_EMBEDDING,
+        )
+    except Exception as err:
+        raise EmbeddingCallException(f"Error during embedding call: {err}") from err
 
-    content_embedding = await aembedding(
-        api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
-        input=text_to_embed,
-        metadata=metadata,
-        model=LITELLM_MODEL_EMBEDDING,
-    )
-
-    return content_embedding.data[0]["embedding"]
+    # Validate the response structure
+    try:
+        embedding_value = content_embedding.data[0]["embedding"]
+    except (AttributeError, IndexError, KeyError) as err:
+        raise EmbeddingCallException(
+            "Embedding response structure is not as expected"
+        ) from err
+    return embedding_value
 
 
 def encode_api_limit(*, api_limit: int | None) -> int | str:

@@ -475,6 +475,56 @@ class TestMultiUserManageContent:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
+def test_display_number_increases(
+    client: TestClient,
+    access_token_admin_1: str,
+    existing_tag_id_in_workspace_1: int,
+) -> None:
+    """Test creating and deleting content.
+
+    Parameters
+    ----------
+    client
+        The test client.
+    access_token_admin_1
+        The access token for admin user 1.
+    existing_tag_id_in_workspace_1
+        The ID of the existing tag in workspace 1.
+    content_metadata
+        The metadata of the content.
+    """
+
+    content_tags = [existing_tag_id_in_workspace_1]
+    response = client.post(
+        "/content",
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        json={
+            "content_metadata": {},
+            "content_tags": content_tags,
+            "content_text": "Content text 1",
+            "content_title": "Content title 1",
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+    json_response = response.json()
+    display_number = json_response["display_number"]
+
+    response = client.post(
+        "/content",
+        headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        json={
+            "content_metadata": {},
+            "content_tags": content_tags,
+            "content_text": "Content text 2",
+            "content_title": "Content title 2",
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+    json_response = response.json()
+    display_number_2 = json_response["display_number"]
+    assert display_number_2 == display_number + 1
+
+
 async def test_convert_record_to_schema() -> None:
     """Test the conversion of a record to a schema."""
 
@@ -487,6 +537,7 @@ async def test_convert_record_to_schema() -> None:
         content_text="sample text",
         content_title="sample title for content",
         created_datetime_utc=datetime.now(timezone.utc),
+        display_number=2,
         is_archived=False,
         positive_votes=0,
         negative_votes=0,

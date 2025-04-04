@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Tag } from "../page";
 import { LoadingButton } from "@mui/lab";
+import { CustomError } from "@/utils/api";
 import {
   Button,
   CircularProgress,
@@ -34,6 +35,7 @@ import {
 
 export interface Content extends EditContentBody {
   content_id: number | null;
+  display_number: number;
   positive_votes: number;
   negative_votes: number;
   created_datetime_utc: string;
@@ -79,7 +81,7 @@ const AddEditContentPage = () => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "100%",
           width: "100%",
         }}
       >
@@ -90,34 +92,35 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox
-        flexDirection={"column"}
-        sx={{ p: sizes.doubleBaseGap, marginTop: 5 }}
+        sx={{
+          flexDirection: "column",
+          marginTop: 2,
+          marginBottom: 1,
+          p: sizes.doubleBaseGap,
+          gap: sizes.baseGap,
+        }}
       >
         <Header
-          content_id={content_id}
+          display_number={content?.display_number || null}
           onBack={() =>
             isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
           }
         />
-        <Layout.FlexBox flexDirection={"column"}>
-          <Layout.Spacer multiplier={2} />
-          <ContentBox
-            content={content}
-            setContent={setContent}
-            getTagList={() => {
-              return getTagList(token!);
-            }}
-            addTag={(tag: string) => {
-              return createTag(tag, token!);
-            }}
-            deleteTag={(tag_id: number) => {
-              return deleteTag(tag_id, token!);
-            }}
-            isSaved={isSaved}
-            setIsSaved={setIsSaved}
-          />
-          <Layout.Spacer multiplier={1} />
-        </Layout.FlexBox>
+        <ContentBox
+          content={content}
+          setContent={setContent}
+          getTagList={() => {
+            return getTagList(token!);
+          }}
+          addTag={(tag: string) => {
+            return createTag(tag, token!);
+          }}
+          deleteTag={(tag_id: number) => {
+            return deleteTag(tag_id, token!);
+          }}
+          isSaved={isSaved}
+          setIsSaved={setIsSaved}
+        />
       </Layout.FlexBox>
       <DiscardChangesModal
         open={openDiscardChangesModal}
@@ -166,7 +169,14 @@ const ContentBox = ({
   const [inputVal, setInputVal] = React.useState<string>("");
   const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
   const [isSaving, setIsSaving] = React.useState(false);
-
+  const handleCustomError = (error: unknown, defaultMessage: string) => {
+    const customError = error as CustomError;
+    let errorMessage = defaultMessage;
+    if (customError && customError.message) {
+      errorMessage = customError.message;
+    }
+    setSnackMessage(errorMessage);
+  };
   const setMainPageSnackMessage = (message: string): void => {
     localStorage.setItem("editPageSnackMessage", message);
   };
@@ -186,7 +196,10 @@ const ContentBox = ({
         setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
-        console.error("Failed to fetch tags:", error);
+        const customError = error as CustomError;
+        let errorMessage = "Error fetching tags";
+        handleCustomError(customError, errorMessage);
+        console.error(errorMessage);
       }
     };
 
@@ -212,14 +225,15 @@ const ContentBox = ({
       setSaveError(false);
       return result.content_id;
     } catch (error: Error | any) {
+      const customError = error as CustomError;
       if (error.status === 403) {
         console.error("Content quota reached.");
-        setErrorMessage("Unable to save content: Content limit reached");
+        setErrorMessage(customError.message);
         setSaveError(true);
         return null;
       } else {
         console.error("Failed to save content:", error);
-        setErrorMessage("Failed to save content: Unexpected error occurred");
+        setErrorMessage(customError.message);
         setSaveError(true);
         return null;
       }
@@ -247,6 +261,7 @@ const ContentBox = ({
       updated_datetime_utc: "",
       positive_votes: 0,
       negative_votes: 0,
+      display_number: 0,
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
@@ -569,23 +584,23 @@ const ContentBox = ({
 };
 
 const Header = ({
-  content_id,
+  display_number,
   onBack,
 }: {
-  content_id: number | null;
+  display_number: number | null;
   onBack: () => void;
 }) => {
   return (
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft style={{ cursor: "pointer" }} onClick={onBack} />
       <Layout.Spacer multiplier={1} horizontal />
-      {content_id ? (
+      {display_number ? (
         <>
           <Typography variant="h5">Edit Content</Typography>
           <Layout.Spacer multiplier={2} horizontal />
           <Typography variant="h5">{`\u2022`}</Typography>
           <Layout.Spacer multiplier={2} horizontal />
-          <Typography variant="h5">#{content_id}</Typography>
+          <Typography variant="h5">#{display_number}</Typography>
         </>
       ) : (
         <Typography variant="h5">Add Content</Typography>

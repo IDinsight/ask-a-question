@@ -33,6 +33,7 @@ class ContentRetrieve(ContentCreate):
     """Pydantic model for content retrieval response."""
 
     content_id: int
+    display_number: int
     created_datetime_utc: datetime
     is_archived: bool
     negative_votes: int

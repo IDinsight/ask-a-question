@@ -168,8 +168,8 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         <Box mt="auto" p={2} bgcolor="#e8f3fe" borderRadius={1} textAlign="center">
           <Typography variant="caption">
             Note: Frequency setting for custom timeframes will only affect bar graphs in
-            the Overview page. The selected frequency will not affect Performance or
-            Insights pages.
+            the Overview page. The selected frequency will not affect Content
+            Performance or Query Topics pages.
           </Typography>
         </Box>
       </DialogContent>

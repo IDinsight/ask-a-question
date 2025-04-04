@@ -1,16 +1,28 @@
 import { ContentViewModal, ArchiveContentModal } from "./ContentModal";
 import { appColors, appStyles, sizes } from "@/utils";
 import { Delete, Edit } from "@mui/icons-material";
-import { Box, Button, Card, Chip, IconButton, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  Checkbox,
+  Chip,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
 import React from "react";
 import { Layout } from "../../../components/Layout";
 import { Tag } from "@/app/content/page";
 
+const CARD_HEIGHT = 210;
+const CARD_MIN_WIDTH = 280;
+
 const ContentCard = ({
   title,
   text,
   content_id,
+  display_number,
   last_modified,
   tags,
   positive_votes,
@@ -19,40 +31,83 @@ const ContentCard = ({
   onFailedArchive,
   archiveContent,
   editAccess,
+  isSelectMode,
+  selectedContents,
+  setSelectedContents,
 }: {
   title: string;
   text: string;
   content_id: number;
+  display_number: number;
   last_modified: string;
   tags: Tag[];
   positive_votes: number;
   negative_votes: number;
   onSuccessfulArchive: (content_id: number) => void;
-  onFailedArchive: (content_id: number) => void;
+  onFailedArchive: (content_id: number, error_message: string) => void;
   archiveContent: (content_id: number) => Promise<any>;
   editAccess: boolean;
+  isSelectMode: boolean;
+  selectedContents: number[];
+  setSelectedContents: (selectedContents: number[]) => void;
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
+  const [isHovered, setIsHovered] = React.useState<boolean>(false);
+  const [checked, setChecked] = React.useState<boolean>(
+    selectedContents.includes(content_id),
+  );
+
+  React.useEffect(() => {
+    setChecked(selectedContents.includes(content_id));
+  }, [selectedContents]);
 
   return (
     <>
       <Card
         onClick={() => setOpenReadModal(true)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         sx={[
           {
             cursor: "pointer",
-            m: sizes.smallGap,
             p: sizes.baseGap,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            maxHeight: "250px",
+            height: CARD_HEIGHT,
+            minWidth: CARD_MIN_WIDTH,
+            position: "relative",
           },
           appStyles.hoverShadow,
           appStyles.shadow,
         ]}
       >
+        <Box
+          sx={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            opacity: isHovered || isSelectMode ? 1 : 0,
+            transition: "opacity 0.2s ease-in-out",
+            zIndex: 1,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={checked}
+            onChange={(e) => {
+              const newChecked = e.target.checked;
+              if (newChecked && !selectedContents.includes(content_id)) {
+                setSelectedContents([...selectedContents, content_id]);
+              } else if (!newChecked && selectedContents.includes(content_id)) {
+                setSelectedContents(selectedContents.filter((id) => id !== content_id));
+              }
+              setChecked(newChecked);
+            }}
+            size="small"
+          />
+        </Box>
         <Layout.FlexBox flexDirection="row" justifyContent="end" sx={{ width: "98%" }}>
           {tags && tags.length > 0 && (
             <Box display="flex" flexDirection="row" alignItems="center">
@@ -102,12 +157,17 @@ const ContentCard = ({
         <Layout.FlexBox
           flexDirection={"row"}
           gap={sizes.tinyGap}
-          sx={{ alignItems: "center" }}
+          sx={{
+            alignItems: "center",
+            opacity: isHovered ? 1 : 0,
+            transition: "opacity 0.2s ease-in-out",
+          }}
         >
           <Button
             disabled={!editAccess}
             component={Link}
             href={`/content/edit?content_id=${content_id}`}
+            onClick={(event) => event.stopPropagation()}
           >
             <Edit fontSize="small" />
             <Layout.Spacer horizontal multiplier={0.3} />
@@ -120,6 +180,7 @@ const ContentCard = ({
             size="medium"
             onClick={(event) => {
               event.stopPropagation();
+              setSelectedContents(selectedContents.filter((id) => id !== content_id));
               setOpenArchiveModal(true);
             }}
           >
@@ -131,6 +192,7 @@ const ContentCard = ({
         title={title}
         text={text}
         content_id={content_id}
+        display_number={display_number}
         last_modified={last_modified}
         tags={tags}
         open={openReadModal}
@@ -151,4 +213,4 @@ const ContentCard = ({
   );
 };
 
-export default ContentCard;
+export { ContentCard, CARD_HEIGHT, CARD_MIN_WIDTH };

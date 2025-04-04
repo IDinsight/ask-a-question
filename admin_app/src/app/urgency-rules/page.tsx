@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   List,
   ListItem,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   LinearProgress,
   Grid,
+  Snackbar,
+  Alert,
   Fab,
   Paper,
 } from "@mui/material";
@@ -26,6 +28,7 @@ import {
 } from "./api";
 import { useAuth } from "@/utils/auth";
 import { UDSidebar } from "./components/UDSidebar";
+import { CustomError } from "@/utils/api";
 
 class UrgencyRule {
   urgency_rule_id: number | null = null;
@@ -43,6 +46,19 @@ const UrgencyRulesPage = () => {
   const [backupRuleText, setBackupRuleText] = useState("");
   const [currAccessLevel, setCurrAccessLevel] = useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
+  const [snackbarMessage, setSnackbarMessage] = React.useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ message: "", severity: "success" });
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarMessage({ message: "", severity: "info" });
+  };
   const handleEdit = (index: number) => () => {
     setBackupRuleText(items[index].urgency_rule_text);
     setEditableIndex(index);
@@ -57,25 +73,37 @@ const UrgencyRulesPage = () => {
   const addOrUpdateItem = (index: number) => {
     setSaving(true);
     if (items[index].urgency_rule_id === null) {
-      addUrgencyRule(items[index].urgency_rule_text, token!).then(
-        (data: UrgencyRule) => {
+      addUrgencyRule(items[index].urgency_rule_text, token!)
+        .then((data: UrgencyRule) => {
           const newItems = [...items];
           newItems[index] = data;
           setItems(newItems);
           setSaving(false);
-        },
-      );
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error adding urgency rule";
+          handleCustomError(customError, errorMessage);
+          setSaving(false);
+        });
     } else {
       updateUrgencyRule(
         items[index].urgency_rule_id!,
         items[index].urgency_rule_text,
         token!,
-      ).then((data: UrgencyRule) => {
-        const newItems = [...items];
-        newItems[index] = data;
-        setItems(newItems);
-        setSaving(false);
-      });
+      )
+        .then((data: UrgencyRule) => {
+          const newItems = [...items];
+          newItems[index] = data;
+          setItems(newItems);
+          setSaving(false);
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Error updating urgency rule";
+          handleCustomError(customError, errorMessage);
+          setSaving(false);
+        });
     }
   };
 
@@ -124,10 +152,22 @@ const UrgencyRulesPage = () => {
       setItems(newItems);
       return;
     }
-    deleteUrgencyRule(items[index].urgency_rule_id!, token!).then(() => {
-      newItems.splice(index, 1);
-      setItems(newItems);
-    });
+    deleteUrgencyRule(items[index].urgency_rule_id!, token!)
+      .then(() => {
+        newItems.splice(index, 1);
+        setItems(newItems);
+      })
+      .catch((error) => {
+        const customError = error as CustomError;
+        let errorMessage = "Error deleting urgency rule";
+        if (customError.message) {
+          errorMessage = customError.message;
+        }
+        setSnackbarMessage({
+          message: errorMessage,
+          severity: "error",
+        });
+      });
   };
 
   const onBlur = (index: number) => {
@@ -136,12 +176,25 @@ const UrgencyRulesPage = () => {
       setEditableIndex(-1);
     }
   };
-
+  const handleCustomError = (error: unknown, defaultMessage: string) => {
+    const customError = error as CustomError;
+    let errorMessage = defaultMessage;
+    if (customError && customError.message) {
+      errorMessage = customError.message;
+    }
+    setSnackbarMessage({
+      message: errorMessage,
+      severity: "error",
+    });
+  };
   useEffect(() => {
     if (token) {
       getUrgencyRuleList(token)
         .then((data) => setItems(data))
         .catch((error) => {
+          const customError = error as CustomError;
+          let errorMessage = "Failed to fetch urgency rules";
+          handleCustomError(customError, errorMessage);
           console.error(error);
         });
       setCurrAccessLevel(accessLevel);
@@ -161,7 +214,7 @@ const UrgencyRulesPage = () => {
   const sidebarGridWidth = openSidebar ? 5 : 0;
   const editAccess = userRole === "admin";
   return (
-    <Grid container>
+    <Grid container sx={{ height: "100%" }}>
       <Grid
         item
         xs={12}
@@ -170,21 +223,24 @@ const UrgencyRulesPage = () => {
         lg={12 - sidebarGridWidth + 1}
         sx={{
           display: openSidebar ? { xs: "none", sm: "none", md: "block" } : "block",
+          height: "100%",
+          paddingTop: 5,
+          paddingInline: 4,
         }}
       >
-        <Layout.FlexBox
+        <Box
           sx={{
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            paddingTop: 5,
-            paddingInline: 4,
-            gap: sizes.baseGap,
-            height: "95vh",
+            height: "100%",
           }}
         >
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
+              height: "100%",
               width: "100%",
               maxWidth: "lg",
               minWidth: "sm",
@@ -207,11 +263,12 @@ const UrgencyRulesPage = () => {
                 the message.
               </Typography>
             </Box>
-            <Layout.FlexBox
+            <Box
               sx={{
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "flex-end",
+                paddingBottom: 2,
               }}
             >
               <Tooltip title="Add new urgency rule">
@@ -226,182 +283,208 @@ const UrgencyRulesPage = () => {
                   </Button>
                 </>
               </Tooltip>
-            </Layout.FlexBox>
-            <Layout.Spacer />
-            <Paper
-              elevation={0}
+            </Box>
+            <Box
               sx={{
-                paddingTop: 1,
-                paddingBottom: 10,
-                paddingInline: 3,
-                height: "65vh",
-                overflowY: "auto",
-                border: 0.5,
-                borderColor: "lightgrey",
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+                minHeight: 0,
               }}
             >
-              {items.length === 0 ? (
-                <Layout.FlexBox
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: "100%",
-                    padding: sizes.doubleBaseGap,
-                  }}
-                >
-                  <p>
-                    <Typography variant="h6" color={appColors.darkGrey}>
-                      No rules yet.
-                    </Typography>
-                  </p>
-                  <p>
-                    <Typography variant="body1" color={appColors.darkGrey}>
-                      Click the NEW button to add your first rule.
-                    </Typography>
-                  </p>
-                </Layout.FlexBox>
-              ) : (
-                <List>
-                  {items.map((urgencyRule: UrgencyRule, index: number) => {
-                    const isLastItem = index === items.length - 1;
-                    return (
-                      <ListItem
-                        key={index}
-                        ref={isLastItem ? lastItemRef : null}
-                        sx={{
-                          borderBottom: 1,
-                          borderColor: "divider",
-                          marginBottom: 2,
-                          overflowWrap: "break-word",
-                          hyphens: "auto",
-                          whiteSpace: "pre-wrap",
-                        }}
-                        secondaryAction={
-                          index === hoveredIndex &&
-                          currAccessLevel == "fullaccess" && (
-                            <>
-                              <IconButton
-                                edge="end"
-                                aria-label="delete"
-                                sx={{ marginRight: 0.5 }}
-                                onClick={deleteItem(index)}
-                                disabled={!editAccess}
-                              >
-                                <Delete fontSize="small" color="primary" />
-                              </IconButton>
-                              <IconButton
-                                aria-label="edit"
-                                onClick={handleEdit(index)}
-                                disabled={!editAccess}
-                              >
-                                <Edit fontSize="small" color="primary" />
-                              </IconButton>
-                            </>
-                          )
-                        }
-                        disablePadding
-                        onMouseEnter={() => setHoveredIndex(index)}
-                        onMouseLeave={() => setHoveredIndex(-1)}
-                        onDoubleClick={editAccess ? handleEdit(index) : () => {}}
-                      >
-                        <ListItemIcon>#{index + 1}</ListItemIcon>
-                        {editableIndex === index ? (
-                          <TextField
-                            fullWidth
-                            size="medium"
-                            value={urgencyRule.urgency_rule_text}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              handleTextChange(e.target.value, index)
-                            }
-                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                              handleKeyDown(e, index)
-                            }
-                            onBlur={() => {
-                              onBlur(index);
-                            }}
-                            sx={{
-                              paddingRight: 12,
-                              paddingLeft: 0,
-                              marginBottom: 1,
-                            }}
-                            InputProps={{
-                              style: { backgroundColor: "white" },
-                              endAdornment: (
-                                <InputAdornment position="end" sx={{ paddingRight: 2 }}>
-                                  <IconButton
-                                    onMouseDown={() => {
-                                      addOrUpdateItem(index);
-                                      setEditableIndex(-1);
-                                    }}
-                                    edge="end"
+              <Paper
+                elevation={0}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  paddingTop: 1,
+                  paddingBottom: 10,
+                  paddingInline: 3,
+                  border: 0.5,
+                  borderColor: "lightgrey",
+                }}
+              >
+                {items.length === 0 ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      padding: sizes.doubleBaseGap,
+                    }}
+                  >
+                    <p>
+                      <Typography variant="h6" color={appColors.darkGrey}>
+                        No rules yet.
+                      </Typography>
+                    </p>
+                    <p>
+                      <Typography variant="body1" color={appColors.darkGrey}>
+                        Click the NEW button to add your first rule.
+                      </Typography>
+                    </p>
+                  </Box>
+                ) : (
+                  <List>
+                    {items.map((urgencyRule: UrgencyRule, index: number) => {
+                      const isLastItem = index === items.length - 1;
+                      return (
+                        <ListItem
+                          key={index}
+                          ref={isLastItem ? lastItemRef : null}
+                          sx={{
+                            borderBottom: 1,
+                            borderColor: "divider",
+                            marginBottom: 2,
+                            overflowWrap: "break-word",
+                            hyphens: "auto",
+                            whiteSpace: "pre-wrap",
+                          }}
+                          secondaryAction={
+                            index === hoveredIndex &&
+                            currAccessLevel == "fullaccess" && (
+                              <>
+                                <IconButton
+                                  edge="end"
+                                  aria-label="delete"
+                                  sx={{ marginRight: 0.5 }}
+                                  onClick={deleteItem(index)}
+                                  disabled={!editAccess}
+                                >
+                                  <Delete fontSize="small" color="primary" />
+                                </IconButton>
+                                <IconButton
+                                  aria-label="edit"
+                                  onClick={handleEdit(index)}
+                                  disabled={!editAccess}
+                                >
+                                  <Edit fontSize="small" color="primary" />
+                                </IconButton>
+                              </>
+                            )
+                          }
+                          disablePadding
+                          onMouseEnter={() => setHoveredIndex(index)}
+                          onMouseLeave={() => setHoveredIndex(-1)}
+                          onDoubleClick={editAccess ? handleEdit(index) : () => {}}
+                        >
+                          <ListItemIcon>#{index + 1}</ListItemIcon>
+                          {editableIndex === index ? (
+                            <TextField
+                              fullWidth
+                              size="medium"
+                              value={urgencyRule.urgency_rule_text}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                handleTextChange(e.target.value, index)
+                              }
+                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                                handleKeyDown(e, index)
+                              }
+                              onBlur={() => {
+                                onBlur(index);
+                              }}
+                              sx={{
+                                paddingRight: 12,
+                                paddingLeft: 0,
+                                marginBottom: 1,
+                              }}
+                              InputProps={{
+                                style: { backgroundColor: "white" },
+                                endAdornment: (
+                                  <InputAdornment
+                                    position="end"
+                                    sx={{ paddingRight: 2 }}
                                   >
-                                    <Send fontSize="small" />
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        ) : (
-                          <ListItemText
-                            id={`checkbox-list-label-${index}`}
-                            primary={urgencyRule.urgency_rule_text}
-                            secondary={
-                              urgencyRule.updated_datetime_utc ? (
-                                "Last updated: " +
-                                new Date(
-                                  urgencyRule.updated_datetime_utc,
-                                ).toLocaleString(undefined, {
-                                  day: "numeric",
-                                  month: "numeric",
-                                  year: "numeric",
-                                  hour: "numeric",
-                                  minute: "numeric",
-                                  hour12: true,
-                                })
-                              ) : (
-                                <Typography component="span">
-                                  <Layout.Spacer multiplier={0.8} />
-                                  <LinearProgress color="secondary" />
-                                </Typography>
-                              )
-                            }
-                            sx={{
-                              paddingTop: 0.3,
-                              paddingBottom: 0.3,
-                              paddingRight: 12,
-                              ".MuiListItemText-secondary": {
-                                fontSize: "0.75rem",
-                              },
-                            }}
-                          />
-                        )}
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              )}
-            </Paper>
-            {!openSidebar && items.length > 0 && (
+                                    <IconButton
+                                      onMouseDown={() => {
+                                        addOrUpdateItem(index);
+                                        setEditableIndex(-1);
+                                      }}
+                                      edge="end"
+                                    >
+                                      <Send fontSize="small" />
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          ) : (
+                            <ListItemText
+                              id={`checkbox-list-label-${index}`}
+                              primary={urgencyRule.urgency_rule_text}
+                              secondary={
+                                urgencyRule.updated_datetime_utc ? (
+                                  "Last updated: " +
+                                  new Date(
+                                    urgencyRule.updated_datetime_utc,
+                                  ).toLocaleString(undefined, {
+                                    day: "numeric",
+                                    month: "numeric",
+                                    year: "numeric",
+                                    hour: "numeric",
+                                    minute: "numeric",
+                                    hour12: true,
+                                  })
+                                ) : (
+                                  <Typography component="span">
+                                    <Layout.Spacer multiplier={0.8} />
+                                    <LinearProgress color="secondary" />
+                                  </Typography>
+                                )
+                              }
+                              sx={{
+                                paddingTop: 0.3,
+                                paddingBottom: 0.3,
+                                paddingRight: 12,
+                                ".MuiListItemText-secondary": {
+                                  fontSize: "0.75rem",
+                                },
+                              }}
+                            />
+                          )}
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                )}
+              </Paper>
               <Fab
                 variant="extended"
+                size="medium"
+                disabled={openSidebar}
                 sx={{
                   bgcolor: "orange",
-                  width: "100px",
                   alignSelf: "flex-end",
+                  pr: 2,
                   marginTop: 2,
                   marginBottom: 3,
                 }}
                 onClick={handleSidebarToggle}
               >
                 <PlayArrow />
-                <Layout.Spacer horizontal multiplier={0.4} />
+                <Layout.Spacer horizontal multiplier={0.3} />
                 Test
               </Fab>
-            )}
+            </Box>
           </Box>
-        </Layout.FlexBox>
+          <Snackbar
+            open={snackbarMessage.message !== ""}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarMessage.severity}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage.message}
+            </Alert>
+          </Snackbar>
+        </Box>
       </Grid>
       <Grid
         item

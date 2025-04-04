@@ -7,7 +7,7 @@ import { Layout } from "@/components/Layout";
 import { appColors, sizes } from "@/utils";
 import { createNewApiKey } from "./api";
 import { useAuth } from "@/utils/auth";
-
+import { CustomError } from "@/utils/api";
 import { KeyRenewConfirmationModal, NewKeyModal } from "./components/APIKeyModals";
 import ConnectionsGrid from "./components/ConnectionsGrid";
 import { LoadingButton } from "@mui/lab";
@@ -17,10 +17,21 @@ const IntegrationsPage = () => {
   const [currAccessLevel, setCurrAccessLevel] = React.useState("readonly");
   const { token, accessLevel, userRole } = useAuth();
   const editAccess = userRole == "admin";
+  const [snackbarMessage, setSnackbarMessage] = useState<{
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  } | null>(null);
+
   React.useEffect(() => {
     setCurrAccessLevel(accessLevel);
   }, [accessLevel]);
 
+  const handleSnackbarMessage = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning",
+  ) => {
+    setSnackbarMessage({ message, severity });
+  };
   return (
     <Layout.FlexBox sx={{ alignItems: "center" }}>
       <Box
@@ -42,9 +53,11 @@ const IntegrationsPage = () => {
 const KeyManagement = ({
   token,
   editAccess,
+  onSnackbarMessage,
 }: {
   token: string | null;
   editAccess: boolean;
+  onSnackbarMessage?: (message: string, severity: "success" | "error") => void;
 }) => {
   const [keyInfoFetchIsLoading, setKeyInfoFetchIsLoading] = useState(true);
   const [currentKey, setCurrentKey] = useState("");
@@ -68,7 +81,10 @@ const KeyManagement = ({
           setCurrentKeyLastUpdated(formatted_api_update_date);
           setKeyInfoFetchIsLoading(false);
         } catch (error) {
+          const customError = error as CustomError;
+
           console.error(error);
+          onSnackbarMessage?.(customError.message || "Error fetching API key", "error");
           setKeyInfoFetchIsLoading(false);
         }
       };
@@ -101,6 +117,8 @@ const KeyManagement = ({
       setConfirmationModalOpen(false);
       setNewKeyModalOpen(true);
     } catch (error) {
+      const customError = error as CustomError;
+      onSnackbarMessage?.(customError.message || "Error rotating API key", "error");
       console.error(error);
     } finally {
       setKeyGenerationIsLoading(false);
@@ -111,7 +129,7 @@ const KeyManagement = ({
   return editAccess ? (
     <Layout.FlexBox key={"key-management"} flexDirection="column" gap={sizes.baseGap}>
       <Typography variant="h4" color="primary">
-        Your API Key
+        Workspace API Key
       </Typography>
       <Layout.FlexBox
         flexDirection="column"
@@ -119,9 +137,9 @@ const KeyManagement = ({
         gap={sizes.baseGap}
       >
         <Typography variant="body1" color={appColors.darkGrey}>
-          You will need your API key to interact with AAQ from your chat manager. You
-          can generate a new key here, but keep in mind that any old key is invalidated
-          if a new key is created.
+          You will need your workspace API key to interact with AAQ from your chat
+          manager. You can generate a new key here, but keep in mind that any old
+          workspace key is invalidated if a new key is created.
         </Typography>
         <Typography variant="body1" color={appColors.darkGrey}>
           Daily API limit is 100.{" "}

@@ -14,6 +14,7 @@ import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
 import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
+import { CustomError, handleApiError } from "@/utils/api";
 
 interface ContentDownload {
   content_id: number | null;
@@ -40,7 +41,7 @@ const DownloadModal = ({
 }: {
   open: boolean;
   onClose: () => void;
-  onFailedDownload: () => void;
+  onFailedDownload: (error_message: string) => void;
   onNoDataFound: () => void;
 }) => {
   const { token, accessLevel } = useAuth();
@@ -98,7 +99,7 @@ const DownloadModal = ({
   const handleDownloadContent = async (
     fetchAndTransformContents: () => Promise<any[]>,
     onNoDataFound: () => void,
-    onFailedDownload: () => void,
+    onFailedDownload: (error_message: string) => void,
     setLoading: (loading: boolean) => void,
     onClose: () => void,
   ) => {
@@ -124,8 +125,11 @@ const DownloadModal = ({
       const filename = `content_${timestamp}.csv`;
       downloadCSV(csv, filename);
     } catch (error) {
-      console.error("Failed to download content", error);
-      onFailedDownload();
+      try {
+        handleApiError(error, "Failed to download content");
+      } catch (apiError: any) {
+        onFailedDownload(apiError.message);
+      }
     } finally {
       setLoading(false);
       onClose();

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { MouseEvent, useEffect, useState } from "react";
+import React, { MouseEvent, useState } from "react";
 
 import {
   Alert,
@@ -9,10 +9,13 @@ import {
   Button,
   ButtonGroup,
   CircularProgress,
+  Divider,
   Fab,
+  Fade,
   Grid,
   Menu,
   MenuItem,
+  Modal,
   Paper,
   Slide,
   SlideProps,
@@ -22,26 +25,35 @@ import {
   Typography,
 } from "@mui/material";
 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Delete,
+  Delete as DeleteIcon,
+  WarningAmber as WarningIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { IconButton } from "@mui/material";
 
 import type { Content } from "@/app/content/edit/page";
-import ContentCard from "./components/ContentCard";
-import { DownloadModal } from "./components/DownloadModal";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
-import { getContentList, getTagList, archiveContent } from "./api";
+import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { ImportModal } from "./components/ImportModal";
-import { PageNavigation } from "./components/PageNavigation";
+import { archiveContent, getContentList, getTagList, getIndexingStatus } from "./api";
+import { ChatSideBar } from "./components/ChatSideBar";
+import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
+import { DownloadModal } from "./components/DownloadModal";
+import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
+import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
+import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { ChatSideBar } from "./components/ChatSideBar";
-import { apiCalls } from "@/utils/api";
-
-const CARD_HEIGHT = 250;
+import { set } from "date-fns";
 
 export interface Tag {
   tag_id: number;
@@ -56,10 +68,35 @@ interface TagsFilterProps {
 
 interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   editAccess: boolean;
+  cards: Content[];
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
   }>;
+  handleDelete: () => void;
+}
+
+interface CardsGridProps {
+  displayLanguage: string;
+  tags: Tag[];
+  cards: Content[];
+  openSidebar: boolean;
+  token: string | null;
+  editAccess: boolean;
+  setSnackMessage: React.Dispatch<{
+    message: string | null;
+    color: "success" | "info" | "warning" | "error" | undefined;
+  }>;
+  openSearchSidebar: boolean;
+  handleSidebarToggle: () => void;
+  openChatSidebar: boolean;
+  handleChatSidebarToggle: () => void;
+  selectedContents: number[];
+  setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
+  isLoading: boolean;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const CardsPage = () => {
@@ -79,6 +116,11 @@ const CardsPage = () => {
 
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
+  const [cards, setCards] = React.useState<Content[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -116,10 +158,80 @@ const CardsPage = () => {
   const SnackbarSlideTransition = (props: SlideProps) => {
     return <Slide {...props} direction="up" />;
   };
+  const handleBulkDeleteModalClose = () => {
+    setOpenBulkDeleteModal(false);
+    setSelectedContents([]);
+  };
 
+  const handleDelete = async (selectedContents: number[]) => {
+    const promises = selectedContents.map((content_id) =>
+      archiveContent(content_id, token!),
+    );
+    try {
+      await Promise.all(promises);
+      setSnackMessage({
+        message: `Deleted ${selectedContents.length} content${
+          selectedContents.length > 1 ? "s" : ""
+        }`,
+        color: "success",
+      });
+    } catch (error) {
+      console.error("Failed to delete content:", error);
+      setSnackMessage({
+        message: `Failed to delete content`,
+        color: "error",
+      });
+    } finally {
+      setSelectedContents([]);
+      setOpenBulkDeleteModal(false);
+      setRefreshKey((prevKey) => prevKey + 1);
+    }
+  };
+  React.useEffect(() => {
+    if (token) {
+      getContentList({ token: token, skip: 0 })
+        .then((data) => {
+          const filteredData = data.filter((card: Content) => {
+            const matchesSearchTerm =
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const matchesAllTags = filterTags.some((fTag) =>
+              card.content_tags.includes(fTag.tag_id),
+            );
+
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+          });
+
+          setCards(filteredData);
+          setIsLoading(false);
+
+          const message = localStorage.getItem("editPageSnackMessage");
+          if (message) {
+            setSnackMessage({
+              message: message,
+              color: "success",
+            });
+            localStorage.removeItem("editPageSnackMessage");
+          }
+        })
+        .catch((error) => {
+          const customError = error as CustomError;
+          console.error("Failed to fetch content:", error);
+          setSnackMessage({
+            message: customError.message || "Failed to fetch content",
+            color: "error",
+          });
+          setIsLoading(false);
+        });
+    } else {
+      setCards([]);
+      setIsLoading(false);
+    }
+  }, [searchTerm, filterTags, token, refreshKey]);
   return (
     <>
-      <Grid container>
+      <Grid container sx={{ height: "100%" }}>
         <Grid
           item
           xs={12}
@@ -131,25 +243,34 @@ const CardsPage = () => {
               openSearchSidebar || openChatSidebar
                 ? { xs: "none", sm: "none", md: "block" }
                 : "block",
+            height: "100%",
+            paddingTop: 5,
+            paddingInline: 4,
           }}
         >
-          <Layout.FlexBox
+          <Box
             sx={{
+              display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              paddingTop: 5,
-              paddingInline: 4,
+              height: "100%",
             }}
           >
             <Box
               sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
                 width: "100%",
                 maxWidth: "lg",
+                minWidth: "sm",
               }}
             >
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "column",
+                  paddingBottom: 3,
                   gap: 2,
                 }}
               >
@@ -159,75 +280,63 @@ const CardsPage = () => {
                 <Typography variant="body1" align="left" color={appColors.darkGrey}>
                   Add, edit, and test content for question-answering. Questions sent to
                   the search service will retrieve results from here.
+                  <p />
+                  Content limit is 50.{" "}
+                  <a
+                    href="https://docs.ask-a-question.com/latest/contact_us/"
+                    style={{
+                      textDecoration: "underline",
+                      textDecorationColor: appColors.darkGrey,
+                      color: appColors.darkGrey,
+                    }}
+                  >
+                    Contact us
+                  </a>{" "}
+                  for more.
                 </Typography>
               </Box>
-              <Layout.FlexBox
-                sx={{
-                  flexGrow: 1,
-                  alignItems: "center",
-                  paddingTop: 5,
+              <CardsUtilityStrip
+                editAccess={editAccess}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                cards={cards}
+                tags={tags}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
+                filterTags={filterTags}
+                setFilterTags={setFilterTags}
+                setSnackMessage={setSnackMessage}
+                handleDelete={() => {
+                  setOpenBulkDeleteModal(true);
                 }}
-              >
-                <CardsUtilityStrip
-                  editAccess={editAccess}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                  tags={tags}
-                  filterTags={filterTags}
-                  setFilterTags={setFilterTags}
-                  setSnackMessage={setSnackMessage}
-                />
-                <Layout.Spacer multiplier={1} />
-                <CardsGrid
-                  displayLanguage={displayLanguage}
-                  searchTerm={searchTerm}
-                  tags={tags}
-                  filterTags={filterTags}
-                  openSidebar={openSearchSidebar || openChatSidebar}
-                  token={token}
-                  editAccess={editAccess}
-                  setSnackMessage={setSnackMessage}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                    p: 1,
-                  }}
-                >
-                  {!openSearchSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                      }}
-                      onClick={handleSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test search
-                    </Fab>
-                  )}
-                  {!openChatSidebar && (
-                    <Fab
-                      variant="extended"
-                      sx={{
-                        bgcolor: "orange",
-                        ml: 2,
-                      }}
-                      onClick={handleChatSidebarToggle}
-                    >
-                      <PlayArrowIcon />
-                      <Layout.Spacer horizontal multiplier={0.3} />
-                      Test chat
-                    </Fab>
-                  )}
-                </Box>
-              </Layout.FlexBox>
+              />
+              <CardsGrid
+                displayLanguage={displayLanguage}
+                tags={tags}
+                cards={cards}
+                openSidebar={openSearchSidebar || openChatSidebar}
+                token={token}
+                editAccess={editAccess}
+                setSnackMessage={setSnackMessage}
+                openSearchSidebar={openSearchSidebar}
+                handleSidebarToggle={handleSidebarToggle}
+                openChatSidebar={openChatSidebar}
+                handleChatSidebarToggle={handleChatSidebarToggle}
+                selectedContents={selectedContents}
+                setSelectedContents={setSelectedContents}
+                isLoading={isLoading}
+                setRefreshKey={setRefreshKey}
+              />
+              <ConfirmDeleteModal
+                open={openBulkDeleteModal}
+                onClose={handleBulkDeleteModalClose}
+                onConfirm={() => {
+                  handleDelete(selectedContents);
+                }}
+                selectedContentsCount={selectedContents.length}
+              />
             </Box>
-          </Layout.FlexBox>
+          </Box>
         </Grid>
         <Grid
           item
@@ -294,56 +403,176 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   editAccess,
   searchTerm,
   setSearchTerm,
+  cards,
   tags,
+  selectedContents,
+  setSelectedContents,
   filterTags,
   setFilterTags,
   setSnackMessage,
+  handleDelete,
 }) => {
+  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
+  const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
+  const [showIndexButton, setShowIndexButton] = React.useState(false);
+  const [isJobRunning, setIsJobRunning] = React.useState(false);
 
+  React.useEffect(() => {
+    let pollingInterval: NodeJS.Timeout | null = null;
+
+    const fetchIndexingStatus = async () => {
+      if (token) {
+        const data = await getIndexingStatus(token);
+        setShowIndexButton(data === true || data === false);
+        setIsJobRunning(data === true);
+
+        if (data === true && !pollingInterval) {
+          pollingInterval = setInterval(async () => {
+            const status = await getIndexingStatus(token);
+            if (status === false) {
+              setIsJobRunning(false);
+              if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+              }
+            }
+          }, 3000);
+        }
+      }
+    };
+
+    fetchIndexingStatus();
+
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [token]);
+
+  const handleSelectAll = () => {
+    const allContentIds = cards.map((card) => card.content_id!);
+    setSelectedContents(allContentIds);
+  };
+
+  const handleDeSelectAll = () => {
+    setSelectedContents([]);
+  };
   return (
-    <Layout.FlexBox
+    <Box
       sx={{
+        display: "flex",
         flexDirection: "row",
-        justifyContent: "flex-end",
+        justifyContent: "space-between",
+        alignContent: "flex-end",
         width: "100%",
+        paddingBottom: 2,
         flexWrap: "wrap",
         gap: sizes.baseGap,
       }}
     >
-      <Layout.FlexBox
+      {/* Left section - Search and Filters */}
+      <Box
         sx={{
+          display: "flex",
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "flex-start",
           flexWrap: "wrap",
           gap: sizes.baseGap,
         }}
       >
-        <Box sx={{ width: "300px" }}>
+        <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ width: "250px" }}>
+        <Box sx={{ minWidth: "130px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
             setFilterTags={setFilterTags}
           />
         </Box>
-      </Layout.FlexBox>
-      <Layout.FlexBox sx={{ flexGrow: 1 }} />
-      <Layout.FlexBox
+      </Box>
+
+      {/* Middle section - Selection Control Buttons */}
+      {selectedContents.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: sizes.smallGap,
+          }}
+        >
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleSelectAll}
+            disabled={!editAccess}
+          >
+            Select All
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleDeSelectAll}
+            disabled={!editAccess || selectedContents.length === 0}
+          >
+            Deselect All
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={() => {
+              handleDelete();
+            }}
+            disabled={!editAccess || selectedContents.length === 0}
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </Box>
+      )}
+
+      {/* Right section - Download and Add buttons */}
+      <Box
         sx={{
+          display: "flex",
           flexDirection: "row",
           alignSelf: "flex-end",
           alignItems: "center",
           gap: sizes.smallGap,
         }}
       >
+        {showIndexButton && (
+          <>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={() => {
+                setOpenIndexHistoryModal(true);
+              }}
+              startIcon={
+                isJobRunning ? <CircularProgress size={12} color="inherit" /> : null
+              }
+            >
+              {isJobRunning ? "Indexing" : "Indexing History"}
+            </Button>
+            <IndexingStatusModal
+              open={openIndexHistoryModal}
+              onClose={() => setOpenIndexHistoryModal(false)}
+            />
+          </>
+        )}
         <Tooltip title="Download all contents">
           <>
             <Button
               variant="outlined"
+              size="small"
               disabled={!editAccess}
               onClick={() => {
                 setOpenDownloadModal(true);
@@ -361,9 +590,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <DownloadModal
           open={openDownloadModal}
           onClose={() => setOpenDownloadModal(false)}
-          onFailedDownload={() => {
+          onFailedDownload={(error_message) => {
             setSnackMessage({
-              message: `Failed to download content`,
+              message: error_message,
               color: "error",
             });
           }}
@@ -374,8 +603,8 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             });
           }}
         />
-      </Layout.FlexBox>
-    </Layout.FlexBox>
+      </Box>
+    </Box>
   );
 };
 
@@ -383,6 +612,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   return (
     <Autocomplete
       multiple
+      size="small"
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
@@ -393,7 +623,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
         setFilterTags(updatedTags);
       }}
       renderInput={(params) => (
-        <TextField {...params} variant="standard" label="Filter by tags" />
+        <TextField {...params} variant="standard" label="Filter tags" />
       )}
       sx={{ color: appColors.white }}
     />
@@ -403,7 +633,8 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
 const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
-  const [openModal, setOpenModal] = useState(false);
+  const [openCSVModal, setOpenCSVModal] = useState(false);
+  const [openPDFModal, setOpenPDFModal] = useState(false);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -414,7 +645,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
 
   return (
     <>
-      <ButtonGroup variant="contained" disabled={!editAccess}>
+      <ButtonGroup variant="contained" size="small" disabled={!editAccess}>
         <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
           New
         </Button>
@@ -431,142 +662,106 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setOpenModal(true);
+            setOpenCSVModal(true);
           }}
         >
-          Import contents from file
+          Import cards from CSV
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setOpenPDFModal(true);
+          }}
+        >
+          Transform PDFs to cards
         </MenuItem>
       </Menu>
-      <ImportModal open={openModal} onClose={() => setOpenModal(false)} />
+      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
+      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
     </>
   );
 };
 
 const CardsGrid = ({
-  displayLanguage,
-  searchTerm,
   tags,
-  filterTags,
-  openSidebar,
+  cards,
   token,
   editAccess,
   setSnackMessage,
-}: {
-  displayLanguage: string;
-  searchTerm: string;
-  tags: Tag[];
-  filterTags: Tag[];
-  openSidebar: boolean;
-  token: string | null;
-  editAccess: boolean;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string | null;
-      color: "success" | "info" | "warning" | "error" | undefined;
-    }>
-  >;
-}) => {
+  openSearchSidebar,
+  handleSidebarToggle,
+  openChatSidebar,
+  handleChatSidebarToggle,
+  selectedContents,
+  setSelectedContents,
+  isLoading,
+  setRefreshKey,
+}: CardsGridProps) => {
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
-  const [maxPages, setMaxPages] = React.useState<number>(1);
-  const [cards, setCards] = React.useState<Content[]>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [maxPages, setMaxPages] = React.useState<number>(
+    Math.ceil(cards.length / maxCardsPerPage),
+  );
+  const [columns, setColumns] = React.useState<number>(1);
+  const gridRef = React.useRef<HTMLDivElement>(null);
+
+  // Callback ref to handle when the grid element mounts
+  const setGridRef = (node: HTMLDivElement | null) => {
+    (gridRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    if (node) {
+      calculateMaxCardsPerPage();
+      const resizeObserver = new ResizeObserver(() => {
+        setTimeout(calculateMaxCardsPerPage, 0);
+      });
+      resizeObserver.observe(node);
+    }
+  };
 
   const calculateMaxCardsPerPage = () => {
-    // set rows as per height of each card and height of grid (approximated from window height)
-    const gridHeight = window.innerHeight * 0.8;
-    const rows = Math.max(1, Math.floor(gridHeight / CARD_HEIGHT));
+    if (!gridRef.current) return;
 
-    // set columns as per width of grid - this should be changed if grid sizing changes
-    const gridWidth = window.innerWidth;
-    let columns;
-    if (gridWidth < 600) {
-      columns = 1;
-    } else if (gridWidth > 600 && gridWidth < 900) {
-      columns = 2;
-    } else if (gridWidth > 900 && gridWidth < 1200) {
-      columns = 3;
-    } else {
-      columns = 3;
-    }
-    const maxCards = rows * columns;
+    const gridWidth = gridRef.current.clientWidth;
+    const gridHeight = gridRef.current.clientHeight;
+    // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
+    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
+    const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
+    const maxCards = rows * newColumns;
 
+    setColumns(newColumns);
     setMaxCardsPerPage(maxCards);
   };
 
-  useEffect(() => {
-    calculateMaxCardsPerPage();
+  // Optionally, you can still use an effect for window resize
+  React.useEffect(() => {
     window.addEventListener("resize", calculateMaxCardsPerPage);
-    return () => window.removeEventListener("resize", calculateMaxCardsPerPage);
+    return () => {
+      window.removeEventListener("resize", calculateMaxCardsPerPage);
+    };
   }, []);
 
-  const [refreshKey, setRefreshKey] = React.useState(0);
+  React.useEffect(() => {
+    setMaxPages(Math.ceil(cards.length / maxCardsPerPage));
+  }, [cards, maxCardsPerPage]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [cards]);
+
   const onSuccessfulArchive = (content_id: number) => {
-    setIsLoading(true);
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
       message: `Content removed successfully`,
       color: "success",
     });
   };
-  const onSuccessfulDelete = (content_id: number) => {
-    setIsLoading(true);
-    setRefreshKey((prevKey) => prevKey + 1);
-    setSnackMessage({
-      message: `Content deleted successfully`,
-      color: "success",
-    });
-  };
-
-  React.useEffect(() => {
-    if (token) {
-      getContentList({ token: token, skip: 0 })
-        .then((data) => {
-          const filteredData = data.filter((card: Content) => {
-            const matchesSearchTerm =
-              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
-
-            const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id),
-            );
-
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
-          });
-
-          setCards(filteredData);
-          setMaxPages(Math.ceil(filteredData.length / maxCardsPerPage));
-          setIsLoading(false);
-
-          const message = localStorage.getItem("editPageSnackMessage");
-          if (message) {
-            setSnackMessage({
-              message: message,
-              color: "success",
-            });
-            localStorage.removeItem("editPageSnackMessage");
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to fetch content:", error);
-          setSnackMessage({
-            message: `Failed to fetch content`,
-            color: "error",
-          });
-          setIsLoading(false);
-        });
-    } else {
-      setCards([]);
-      setMaxPages(1);
-      setIsLoading(false);
-    }
-  }, [searchTerm, filterTags, maxCardsPerPage, token, refreshKey]);
 
   if (isLoading) {
     return (
       <>
-        <Layout.FlexBox
+        <Box
           sx={{
+            display: "flex",
+            flexDirection: "column",
             mx: sizes.baseGap,
             py: sizes.tinyGap,
             width: "98%",
@@ -585,34 +780,46 @@ const CardsGrid = ({
           >
             <CircularProgress />
           </div>
-        </Layout.FlexBox>
-        <PageNavigation page={1} setPage={setPage} maxPages={maxPages} />
-        <Layout.Spacer multiplier={1} />
+        </Box>
       </>
     );
   }
   return (
-    <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        gap: 2,
+      }}
+    >
       <Paper
+        ref={setGridRef}
         elevation={0}
         sx={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          minHeight: "60vh",
+          justifyContent: "flex-start",
+          height: "100%",
+          minHeight: CARD_HEIGHT * 1.1,
+          maxHeight: CARD_HEIGHT * 4.5,
           width: "100%",
+          paddingBottom: 2,
           border: 0.5,
           borderColor: "lightgrey",
         }}
       >
-        <Grid container>
+        <Grid container sx={{ height: "hug-content" }}>
           {cards.length === 0 ? (
-            <Layout.FlexBox
+            <Box
               sx={{
                 display: "flex",
                 flexDirection: "column",
+                flexGrow: 1,
                 justifyContent: "center",
                 alignItems: "center",
+                height: "100%",
                 width: "100%",
                 padding: sizes.doubleBaseGap,
               }}
@@ -627,7 +834,7 @@ const CardsGrid = ({
                   Try adding new content or changing your search or tag filters.
                 </Typography>
               </p>
-            </Layout.FlexBox>
+            </Box>
           ) : (
             cards
               .slice(maxCardsPerPage * (page - 1), maxCardsPerPage * page)
@@ -636,17 +843,15 @@ const CardsGrid = ({
                   return (
                     <Grid
                       item
-                      xs={12}
-                      sm={openSidebar ? 12 : 6}
-                      md={openSidebar ? 6 : 4}
-                      lg={openSidebar ? 6 : 4}
+                      xs={12 / columns}
                       key={item.content_id}
-                      sx={{ display: "grid", alignItems: "stretch" }}
+                      sx={{ p: "5px" }}
                     >
                       <ContentCard
                         title={item.content_title}
                         text={item.content_text}
                         content_id={item.content_id}
+                        display_number={item.display_number}
                         last_modified={item.updated_datetime_utc}
                         tags={
                           tags
@@ -658,9 +863,12 @@ const CardsGrid = ({
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
                         onSuccessfulArchive={onSuccessfulArchive}
-                        onFailedArchive={(content_id: number) => {
+                        onFailedArchive={(
+                          content_id: number,
+                          error_message: string,
+                        ) => {
                           setSnackMessage({
-                            message: `Failed to remove content`,
+                            message: error_message,
                             color: "error",
                           });
                         }}
@@ -668,6 +876,9 @@ const CardsGrid = ({
                           return archiveContent(content_id, token!);
                         }}
                         editAccess={editAccess}
+                        isSelectMode={selectedContents.length > 0}
+                        selectedContents={selectedContents}
+                        setSelectedContents={setSelectedContents}
                       />
                     </Grid>
                   );
@@ -676,9 +887,230 @@ const CardsGrid = ({
           )}
         </Grid>
       </Paper>
-      <Layout.Spacer multiplier={0.75} />
-      <PageNavigation page={page} setPage={setPage} maxPages={maxPages} />
-    </>
+      {/* PageNav and Test Fabs */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          flexWrap: "wrap",
+          gap: 2,
+          paddingBottom: 4,
+        }}
+      >
+        <Box display={"flex"} flexDirection={"row"} alignItems={"center"}>
+          <IconButton
+            onClick={() => {
+              page > 1 && setPage(page - 1);
+            }}
+            disabled={page <= 1}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
+          </IconButton>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <Typography variant="subtitle2">
+            {maxPages === 0 ? 0 : page} of {maxPages}
+          </Typography>
+          <Layout.Spacer horizontal multiplier={0.5} />
+          <IconButton
+            onClick={() => {
+              page < maxPages && setPage(page + 1);
+            }}
+            disabled={page >= maxPages}
+            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
+          >
+            <ChevronRight color={page < maxPages ? "primary" : "disabled"} />
+          </IconButton>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+            gap: 1,
+          }}
+        >
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openSearchSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test search
+          </Fab>
+          <Fab
+            variant="extended"
+            size="small"
+            disabled={openChatSidebar}
+            sx={{
+              bgcolor: "orange",
+              pr: 2,
+            }}
+            onClick={handleChatSidebarToggle}
+          >
+            <PlayArrowIcon />
+            <Layout.Spacer horizontal multiplier={0.3} />
+            test chat
+          </Fab>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+const ConfirmDeleteModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  selectedContentsCount: number;
+}> = ({ open, onClose, onConfirm, selectedContentsCount }) => {
+  const [confirmationText, setConfirmationText] = React.useState<string>("");
+
+  const handleConfirm = () => {
+    if (confirmationText.toLowerCase() === "delete") {
+      onConfirm();
+      setConfirmationText("");
+    }
+  };
+
+  // Handle enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && confirmationText.toLowerCase() === "delete") {
+      handleConfirm();
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      closeAfterTransition
+      aria-labelledby="confirm-delete-modal-title"
+      aria-describedby="confirm-delete-modal-description"
+    >
+      <Fade in={open}>
+        <Paper
+          elevation={6}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 450,
+            maxWidth: "90vw",
+            bgcolor: "background.paper",
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "error.light",
+              py: 2,
+              px: 3,
+              color: "white",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <DeleteIcon />
+              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
+                Confirm Deletion
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Divider />
+
+          {/* Content */}
+          <Box sx={{ p: 3 }}>
+            <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
+              This action cannot be undone
+            </Alert>
+
+            <Typography
+              id="confirm-delete-modal-description"
+              variant="body1"
+              sx={{ mb: 3 }}
+            >
+              You are about to permanently delete{" "}
+              <strong>{selectedContentsCount}</strong> content
+              {selectedContentsCount > 1 ? "s" : ""}.
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Type <strong>delete</strong> to confirm:
+            </Typography>
+
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              value={confirmationText}
+              onChange={(e) => setConfirmationText(e.target.value)}
+              placeholder="Type 'delete' to confirm"
+              onKeyDown={handleKeyDown}
+              autoFocus
+              InputProps={{
+                sx: { borderRadius: 1.5 },
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              p: 3,
+              pt: 1,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirm}
+              disabled={confirmationText.toLowerCase() !== "delete"}
+              startIcon={<DeleteIcon />}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                boxShadow: 2,
+              }}
+            >
+              Delete Items
+            </Button>
+          </Box>
+        </Paper>
+      </Fade>
+    </Modal>
   );
 };
 

@@ -60,14 +60,14 @@ const createUser = async (user: UserBodyPassword, token: string) => {
   }
 };
 const createNewUser = async (
-  usename: string,
+  username: string,
   password: string,
   workspace_name: string,
   role: string,
   token: string,
 ) => {
   try {
-    const user = { username: usename, password, role, workspace_name };
+    const user = { username: username, password, role, workspace_name };
     const response = await api.post("/user/", user, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -328,16 +328,21 @@ const editWorkspace = async (
     }
   }
 };
-
 const addUserToWorkspace = async (
   username: string,
   workspace_name: string,
+  role: string,
   token: string,
 ) => {
   try {
     const response = await api.post(
       "/user/add-existing-user-to-workspace",
-      { username, workspace_name },
+      {
+        username,
+        role,
+        workspace_name,
+        is_default_workspace: true,
+      },
       {
         headers: { Authorization: `Bearer ${token}` },
       },
@@ -370,10 +375,8 @@ const removeUserFromWorkspace = async (
         headers: { Authorization: `Bearer ${token}` },
       },
     );
-    console.log("I am in try");
     return response.data;
   } catch (customError) {
-    console.log("I am in catch");
     if (
       axios.isAxiosError(customError) &&
       customError.response &&

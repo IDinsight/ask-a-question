@@ -10,8 +10,10 @@ export default function RootLayout({
 }>) {
   return (
     <ProtectedComponent>
-      <NavBar />
-      <Box paddingTop={"60px"}>{children}</Box>
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+        <NavBar />
+        <Box sx={{ flexGrow: 1, overflow: "auto", paddingTop: "60px" }}>{children}</Box>
+      </Box>
     </ProtectedComponent>
   );
 }

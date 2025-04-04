@@ -62,17 +62,18 @@ jobs:
         uses: "google-github-actions/get-secretmanager-secrets@v2"
         with:
           secrets: |-
-            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain 
-            jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret 
-            google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id 
-            langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key 
-            langfuse-public-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-public-key 
-            db-host:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-host 
-            db-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-password 
-            admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username 
-            admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password 
-            admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key 
+            domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
+            jwt-secret:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-jwt-secret
+            google-login-client-id:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-google-login-client-id
+            langfuse-secret-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-secret-key
+            langfuse-public-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-langfuse-public-key
+            db-host:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-host
+            db-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-db-password
+            admin-username:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-username
+            admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
+            admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
             gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
+            mistral-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-mistral-api-key
 
       - name: Copy GCP credentials JSON
         working-directory: deployment/docker-compose
@@ -134,6 +135,7 @@ jobs:
               -e LANGFUSE=True \
               -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
               -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
+              -e MISTRAL_API_KEY="${{ steps.secrets.outputs.mistral-api-key }}" \
               -e BACKEND_ROOT_PATH=/api \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f || true

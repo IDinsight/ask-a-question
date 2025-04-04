@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import ReactMarkdown from "react-markdown";
 import TypingAnimation from "@/components/TypingAnimation";
 import { Close, Send } from "@mui/icons-material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 
 import { appColors, sizes } from "@/utils";
+import { CustomError } from "@/utils/api";
 
 interface ResponseSummary {
   index: string;
@@ -69,7 +70,7 @@ const ChatSideBar = ({
     setQuestion(event.target.value);
   };
 
-  const processErrorMessage = (error: Error) => {
+  const processErrorMessage = (error: CustomError) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       {
@@ -100,13 +101,10 @@ const ChatSideBar = ({
       : getResponse(question);
     responsePromise
       .then((response) => {
-        const errorMessage = response.error
-          ? response.error.error_message
-          : "LLM Response failed.";
         const responseMessage = {
           dateTime: new Date().toISOString(),
           type: "response",
-          content: response.status == 200 ? response.llm_response : errorMessage,
+          content: response.llm_response,
           json: response,
         } as ResponseMessage;
 
@@ -115,7 +113,7 @@ const ChatSideBar = ({
           setSessionId(response.session_id);
         }
       })
-      .catch((error: Error) => {
+      .catch((error: CustomError) => {
         processErrorMessage(error);
         setSnackMessage(error.message);
         console.error(error);
@@ -133,7 +131,7 @@ const ChatSideBar = ({
         flexDirection: "column",
         padding: 3,
         paddingTop: 4,
-        height: "94vh",
+        height: "100%",
       }}
     >
       <Box
@@ -149,8 +147,14 @@ const ChatSideBar = ({
       </Box>
       <Box
         sx={{
-          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
           flexGrow: 1,
+          flexShrink: 1,
+          height: 0,
+          minHeight: "200px",
+          padding: 2,
+          overflowY: "auto",
         }}
       >
         {messages.map((message, index) => (
@@ -246,7 +250,7 @@ const MessageBox = (message: Message) => {
   const avatarOrder = message.type === "question" ? 2 : 0;
   const contentOrder = 1;
   const messageBubbleStyles = {
-    py: 1.5,
+    py: 0,
     px: 2,
     borderRadius: "15px",
     bgcolor: message.type === "question" ? appColors.lightGrey : appColors.primary,
@@ -283,7 +287,9 @@ const MessageBox = (message: Message) => {
 
       <Box sx={messageBubbleStyles}>
         <Typography component={"span"} variant="body1" align="left">
-          {typeof message.content === "string" ? message.content : null}
+          <ReactMarkdown>
+            {typeof message.content === "string" ? message.content : ""}
+          </ReactMarkdown>
         </Typography>
         {message.hasOwnProperty("json") && (
           <Link

@@ -54,16 +54,20 @@ const TestSidebar = ({
     <Paper
       elevation={2}
       sx={{
+        height: "100%",
         padding: 3,
         paddingTop: 4,
-        height: "94vh",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        marginBottom={4}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 4,
+        }}
       >
         <Typography variant="h6">{title}</Typography>
         <IconButton onClick={closeSidebar}>
@@ -75,6 +79,7 @@ const TestSidebar = ({
           display: "flex",
           flexDirection: "column",
           padding: 2,
+          marginBottom: 4,
           border: 1,
           borderRadius: 1,
           borderColor: "grey.400",
@@ -137,20 +142,23 @@ const TestSidebar = ({
           </IconButton>
         </Box>
       </Box>
-      <Box
-        sx={{
-          flexGrow: 1,
-          marginTop: 4,
-          marginBottom: 4,
-          padding: 2,
-          overflowY: "scroll",
-          height: "75%",
-        }}
-      >
-        {ResponseBox && (
+      {/* make sure this is working correctly */}
+      {ResponseBox && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            flexShrink: 1,
+            height: 0,
+            minHeight: "200px",
+            padding: 2,
+            overflowY: "auto",
+          }}
+        >
           <ResponseBox loading={loading} responseBoxData={response} token={token} />
-        )}
-      </Box>
+        </Box>
+      )}
     </Paper>
   );
 };

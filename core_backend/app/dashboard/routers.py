@@ -1,6 +1,7 @@
 """This module contains FastAPI routers for dashboard endpoints."""
 
 import json
+import os
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Optional
 
@@ -18,7 +19,7 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_workspace_name
-from ..database import get_async_session
+from ..database import get_async_session, get_sqlalchemy_async_engine
 from ..users.models import WorkspaceDB
 from ..utils import setup_logger
 from ..workspaces.utils import get_workspace_by_workspace_name
@@ -47,6 +48,8 @@ from .schemas import (
     TopicsData,
 )
 from .topic_modeling import topic_model_queries
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TAG_METADATA = {
     "name": "Dashboard",
@@ -328,7 +331,6 @@ async def refresh_insights_frequency(
 
     background_tasks.add_task(
         refresh_insights,
-        asession=asession,
         end_date=end_dt,
         request=request,
         start_date=start_dt,
@@ -512,7 +514,6 @@ def get_freq_start_end_date(
 
 async def refresh_insights(
     *,
-    asession: AsyncSession = Depends(get_async_session),
     end_date: date,
     request: Request,
     start_date: date,
@@ -538,60 +539,62 @@ async def refresh_insights(
     workspace_db
         The workspace database object.
     """
-
-    redis = request.app.state.redis
-    await redis.set(
-        f"{workspace_db.workspace_name}_insights_{timeframe}_results",
-        TopicsData(
-            data=[],
-            refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-            status="in_progress",
-        ).model_dump_json(),
-    )
-
-    step = None
-    try:
-        step = "Retrieve queries"
-        time_period_queries = await get_raw_queries(
-            asession=asession,
-            end_date=end_date,
-            start_date=start_date,
-            workspace_id=workspace_db.workspace_id,
-        )
-
-        step = "Retrieve contents"
-        content_data = await get_raw_contents(
-            asession=asession, workspace_id=workspace_db.workspace_id
-        )
-
-        topic_output, embeddings_df = await topic_model_queries(
-            content_data=content_data,
-            query_data=time_period_queries,
-            workspace_id=workspace_db.workspace_id,
-        )
-
-        step = "Write to Redis"
-        embeddings_json = embeddings_df.to_json(orient="split")
-        embeddings_key = f"{workspace_db.workspace_name}_embeddings_{timeframe}"
-        await redis.set(embeddings_key, embeddings_json)
-        await redis.set(
-            f"{workspace_db.workspace_name}_insights_{timeframe}_results",
-            topic_output.model_dump_json(),
-        )
-        return
-    except Exception as e:  # pylint: disable=W0718
-        error_msg = str(e)
-        logger.error(error_msg)
+    async with AsyncSession(
+        get_sqlalchemy_async_engine(), expire_on_commit=False
+    ) as asession:
+        redis = request.app.state.redis
         await redis.set(
             f"{workspace_db.workspace_name}_insights_{timeframe}_results",
             TopicsData(
                 data=[],
-                error_message=error_msg,
-                failure_step=step,
                 refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
-                status="error",
+                status="in_progress",
             ).model_dump_json(),
         )
+
+        step = None
+        try:
+            step = "Retrieve queries"
+            time_period_queries = await get_raw_queries(
+                asession=asession,
+                end_date=end_date,
+                start_date=start_date,
+                workspace_id=workspace_db.workspace_id,
+            )
+
+            step = "Retrieve contents"
+            content_data = await get_raw_contents(
+                asession=asession, workspace_id=workspace_db.workspace_id
+            )
+
+            topic_output, embeddings_df = await topic_model_queries(
+                content_data=content_data,
+                query_data=time_period_queries,
+                workspace_id=workspace_db.workspace_id,
+            )
+
+            step = "Write to Redis"
+            embeddings_json = embeddings_df.to_json(orient="split")
+            embeddings_key = f"{workspace_db.workspace_name}_embeddings_{timeframe}"
+            await redis.set(embeddings_key, embeddings_json)
+            await redis.set(
+                f"{workspace_db.workspace_name}_insights_{timeframe}_results",
+                topic_output.model_dump_json(),
+            )
+            return
+        except Exception as e:  # pylint: disable=W0718
+            error_msg = str(e)
+            logger.error(error_msg)
+            await redis.set(
+                f"{workspace_db.workspace_name}_insights_{timeframe}_results",
+                TopicsData(
+                    data=[],
+                    error_message=error_msg,
+                    failure_step=step,
+                    refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                    status="error",
+                ).model_dump_json(),
+            )
 
 
 async def retrieve_overview(

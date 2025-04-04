@@ -21,7 +21,13 @@ interface CustomError {
   description: string;
 }
 
-const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+const ImportFromCSVModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   const { token, accessLevel } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -95,12 +101,14 @@ const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) 
     <Dialog
       open={open}
       onClose={handleClose}
-      aria-labelledby="import-dialog-title"
-      aria-describedby="import-dialog-description"
+      aria-labelledby="import-csv-dialog-title"
+      aria-describedby="import-csv-dialog-description"
     >
-      <DialogTitle id="import-dialog-title">Import New Contents</DialogTitle>
+      <DialogTitle id="import-csv-dialog-title">
+        Import New Content From CSV
+      </DialogTitle>
       <DialogContent>
-        <DialogContentText id="import-dialog-description">
+        <DialogContentText id="import-csv-dialog-description">
           <p>
             You can use this feature to import new contents from a CSV file into AAQ.
           </p>
@@ -193,4 +201,4 @@ const ImportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 };
 
-export { ImportModal };
+export { ImportFromCSVModal };

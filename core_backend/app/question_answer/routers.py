@@ -39,6 +39,7 @@ from ..llm_call.process_output import (
     generate_tts__after,
 )
 from ..llm_call.utils import (
+    LLMCallException,
     append_message_content_to_chat_history,
     get_chat_response,
     init_chat_history,
@@ -131,21 +132,32 @@ async def chat(
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
     """
+    try:
+        # 1.
+        user_query = await init_user_query_and_chat_histories(
+            redis_client=request.app.state.redis,
+            reset_chat_history=reset_chat_history,
+            user_query=user_query,
+        )
 
-    # 1.
-    user_query = await init_user_query_and_chat_histories(
-        redis_client=request.app.state.redis,
-        reset_chat_history=reset_chat_history,
-        user_query=user_query,
-    )
+        # 2
 
-    # 2.
-    return await search(
-        user_query=user_query,
-        request=request,
-        asession=asession,
-        workspace_db=workspace_db,
-    )
+        response = await search(
+            user_query=user_query,
+            request=request,
+            asession=asession,
+            workspace_db=workspace_db,
+        )
+        return response
+    except LLMCallException:
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={
+                "error_message": (
+                    "LLM call returned an error: Please check LLM configuration"
+                )
+            },
+        )
 
 
 @router.post(
@@ -186,63 +198,74 @@ async def search(
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
     """
+    try:
+        workspace_id = workspace_db.workspace_id
+        user_query_db, user_query_refined_template, response_template = (
+            await get_user_query_and_response(
+                asession=asession,
+                generate_tts=False,
+                user_query=user_query,
+                workspace_id=workspace_id,
+            )
+        )
+        assert isinstance(user_query_db, QueryDB)
 
-    workspace_id = workspace_db.workspace_id
-    user_query_db, user_query_refined_template, response_template = (
-        await get_user_query_and_response(
+        response = await get_search_response(
             asession=asession,
-            generate_tts=False,
-            user_query=user_query,
+            exclude_archived=True,
+            n_similar=int(N_TOP_CONTENT),
+            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+            query_refined=user_query_refined_template,
+            request=request,
+            response=response_template,
             workspace_id=workspace_id,
         )
-    )
-    assert isinstance(user_query_db, QueryDB)
 
-    response = await get_search_response(
-        asession=asession,
-        exclude_archived=True,
-        n_similar=int(N_TOP_CONTENT),
-        n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
-        query_refined=user_query_refined_template,
-        request=request,
-        response=response_template,
-        workspace_id=workspace_id,
-    )
+        if user_query.generate_llm_response:
+            response = await get_generation_response(
+                query_refined=user_query_refined_template, response=response
+            )
 
-    if user_query.generate_llm_response:
-        response = await get_generation_response(
-            query_refined=user_query_refined_template, response=response
+        await save_query_response_to_db(
+            asession=asession,
+            response=response,
+            user_query_db=user_query_db,
+            workspace_id=workspace_id,
+        )
+        await increment_query_count(
+            asession=asession,
+            contents=response.search_results,
+            workspace_id=workspace_id,
+        )
+        await save_content_for_query_to_db(
+            asession=asession,
+            contents=response.search_results,
+            query_id=response.query_id,
+            session_id=user_query.session_id,
+            workspace_id=workspace_id,
         )
 
-    await save_query_response_to_db(
-        asession=asession,
-        response=response,
-        user_query_db=user_query_db,
-        workspace_id=workspace_id,
-    )
-    await increment_query_count(
-        asession=asession, contents=response.search_results, workspace_id=workspace_id
-    )
-    await save_content_for_query_to_db(
-        asession=asession,
-        contents=response.search_results,
-        query_id=response.query_id,
-        session_id=user_query.session_id,
-        workspace_id=workspace_id,
-    )
+        if isinstance(response, QueryResponseError):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            )
 
-    if isinstance(response, QueryResponseError):
+        if isinstance(response, QueryResponse):
+            return response
+
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error_message": "Internal server error"},
         )
-
-    if isinstance(response, QueryResponse):
-        return response
-
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"message": "Internal server error"},
-    )
+    except LLMCallException:
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={
+                "error_message": (
+                    "LLM call returned an error: Please check LLM configuration"
+                )
+            },
+        )
 
 
 @router.post(

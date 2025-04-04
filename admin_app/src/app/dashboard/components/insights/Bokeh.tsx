@@ -43,7 +43,6 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
     if (token) {
       try {
         const data = await getEmbeddingData(timePeriod, token);
-
         const { embed } = await import("@bokeh/bokehjs");
 
         if (plotRef.current) {
@@ -56,7 +55,7 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
       } catch (error: any) {
         console.error("Error fetching the plot:", error);
         setLoadError(`There was a system failure. Ensure you have both content and queries present
-          and clicked the "Generate Insights" button.`);
+          and clicked the "Run Discovery" button.`);
       } finally {
         setLoading(false);
       }
