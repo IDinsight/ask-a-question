@@ -36,16 +36,14 @@ LANGFUSE_PROJECT_NAME = None
 
 if LANGFUSE == "True":
     langFuseLogger = litellm.utils.langFuseLogger
-    if langFuseLogger is None:
-        langFuseLogger = litellm.integrations.langfuse.LangFuseLogger()
-        LANGFUSE_PROJECT_NAME = (
-            langFuseLogger.Langfuse.client.projects.get().data[0].name
-        )
-    elif isinstance(langFuseLogger, litellm.integrations.langfuse.LangFuseLogger):
-        LANGFUSE_PROJECT_NAME = (
-            langFuseLogger.Langfuse.client.projects.get().data[0].name
-        )
-
+    if langFuseLogger is not None:
+        try:
+            LANGFUSE_PROJECT_NAME = (
+                langFuseLogger.Langfuse.client.projects.get().data[0].name
+            )
+        except Exception as e:
+            print(f"Failed to get Langfuse project name: {e}")
+            LANGFUSE_PROJECT_NAME = None
 
 _HTTP_CLIENT: aiohttp.ClientSession | None = None
 

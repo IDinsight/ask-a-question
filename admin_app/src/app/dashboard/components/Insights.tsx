@@ -298,17 +298,30 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
     }
   };
   useEffect(() => {
-    const periodKey = timePeriod;
-    if (dataByTimePeriod[periodKey]) {
-      updateUIForCurrentTimePeriod(dataByTimePeriod[periodKey]);
-      if (
-        dataStatusByTimePeriod[periodKey] === "in_progress" &&
-        !pollingTimerRef.current[periodKey]
-      ) {
-        pollData(timePeriod);
+    const currentData = dataByTimePeriod[timePeriod] || {
+      status: "not_started",
+      refreshTimeStamp: "",
+      data: [],
+      unclustered_queries: [],
+      error_message: "",
+      failure_step: "",
+    };
+    if (selectedTopicId !== null) {
+      const selectedTopic = currentData.data.find(
+        (topic) => topic.topic_id === selectedTopicId,
+      );
+      if (selectedTopic) {
+        setTopicQueries(selectedTopic.topic_samples);
+        setAiSummary(selectedTopic.topic_summary);
+      } else {
+        setTopicQueries([]);
+        setAiSummary("Not available.");
       }
+    } else {
+      setTopicQueries([]);
+      setAiSummary("Not available.");
     }
-  }, [timePeriod, dataByTimePeriod, dataStatusByTimePeriod]);
+  }, [dataByTimePeriod, selectedTopicId, timePeriod]);
 
   const currentData = dataByTimePeriod[timePeriod] || {
     status: "not_started",
