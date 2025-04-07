@@ -109,16 +109,31 @@ IMPORTANT NOTES ON THE "answer" FIELD:
 """
 )
 
-# ---- Generate titles for DocMuncher Cards -----
-SYSTEM_DOCMUNCHER = """
+# ---- Generate summaries for DocMuncher Cards -----
+SYSTEM_DOCMUNCHER_TITLE = """
 You are an excellent linguist.
 Look at the content and metadata that the user provides and generate an
 appropriate title of 8 WORDS OR LESS that captures the essence of the content.
 The title should be in English.
 """
 
-USER_DOCMUNCHER = """
+USER_DOCMUNCHER_TITLE = """
 Please generate a title for the following content:\n
+Metadata: {meta} \n
+Content: {content}"
+"""
+
+SYSTEM_DOCMUNCHER_TABLE = """
+You are an excellent data analyst. You need to help non-technical people
+understand technical information.
+Look at the table and metadata that the user provides and PARAPHRASE the
+information in the table so a layman can understand it.
+I will share this information directly with the user, so just give me the
+PARAPHRASED information, without conversational references to the table.
+"""
+
+USER_DOCMUNCHER_TABLE = """
+Please paraphrase the following table:\n
 Metadata: {meta} \n
 Content: {content}"
 """

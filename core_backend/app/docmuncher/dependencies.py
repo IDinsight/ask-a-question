@@ -12,12 +12,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import REDIS_DOC_INGEST_EXPIRY_TIME
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
-from ..llm_call.llm_prompts import SYSTEM_DOCMUNCHER, USER_DOCMUNCHER
+from ..llm_call.llm_prompts import (
+    SYSTEM_DOCMUNCHER_TABLE,
+    SYSTEM_DOCMUNCHER_TITLE,
+    USER_DOCMUNCHER_TABLE,
+    USER_DOCMUNCHER_TITLE,
+)
 from ..llm_call.utils import _ask_llm_async
 from ..tags.models import is_tag_name_unique, save_tag_to_db
 from ..tags.schemas import TagCreate
 from ..utils import setup_logger
 from .schemas import DocIngestionStatusPdf, DocStatusEnum
+from .utils import is_content_single_line, is_image_only_card, is_table_in_card
 
 logger = setup_logger()
 MISTRAL_CLIENT = None
@@ -214,52 +220,21 @@ async def merge_chunks_for_continuity(md_header_splits: dict) -> list:
             for j, chunk in enumerate(page.values()):
                 is_last_chunk = j == len(page) - 1
                 is_last_page = i == len(md_chunks_list) - 1
-                next_page_has_headers = not is_last_page and any(
-                    "Header" in k for k in md_chunks_list[i + 1][0].metadata.keys()
-                )
 
-                if is_last_chunk and (next_page_has_headers or is_last_page):
-                    chunk.metadata["title"] = await _ask_llm_async(
-                        json_=False,
-                        litellm_model="gpt-4o",
-                        metadata=chunk.metadata,
-                        system_message=SYSTEM_DOCMUNCHER,
-                        user_message=USER_DOCMUNCHER.format(
-                            meta=json.dumps(chunk.metadata), content=chunk.page_content
-                        ),
-                    )
-                    merged_chunks.append(chunk)
-                elif is_last_chunk:
+                if is_last_chunk and not is_last_page:
                     next_chunk = md_chunks_list[i + 1][0]
                     combined_content = chunk.page_content + next_chunk.page_content
                     combined_metadata = {**chunk.metadata, **next_chunk.metadata}
                     combined_metadata["page"] = chunk.metadata["page"]
                     combined_metadata["chunk"] = chunk.metadata["chunk"]
 
-                    combined_metadata["title"] = await _ask_llm_async(
-                        json_=False,
-                        litellm_model="gpt-4o",
-                        metadata=chunk.metadata,
-                        system_message=SYSTEM_DOCMUNCHER,
-                        user_message=USER_DOCMUNCHER.format(
-                            meta=json.dumps(combined_metadata), content=combined_content
-                        ),
-                    )
+                    combined_metadata["title"] = "Placeholder title"
                     merged_chunks.append(
                         Document(
                             metadata=combined_metadata, page_content=combined_content
                         )
                     )
                 else:
-                    chunk.metadata["title"] = await _ask_llm_async(
-                        json_=False,
-                        litellm_model="gpt-4o",
-                        metadata=chunk.metadata,
-                        system_message=SYSTEM_DOCMUNCHER,
-                        user_message=USER_DOCMUNCHER.format(
-                            meta=json.dumps(chunk.metadata), content=chunk.page_content
-                        ),
-                    )
                     merged_chunks.append(chunk)
     except Exception as e:
         raise HTTPException(
@@ -267,6 +242,51 @@ async def merge_chunks_for_continuity(md_header_splits: dict) -> list:
             detail=f"Failed to merge cards for continuity: {e}",
         ) from e
     return merged_chunks
+
+
+async def deal_with_incorrectly_formatted_cards(merged_chunks: list) -> list:
+    """
+    Deal with incorrectly formatted cards.
+
+    Parameters
+    ----------
+    merged_chunks
+        The merged markdown header splits to process.
+
+    Returns
+    -------
+    list
+        The processed merged markdown header splits.
+    HTTPException
+        If the processing fails.
+    """
+    final_merged_chunks = []
+    for chunk in merged_chunks:
+        if is_image_only_card(chunk) or is_content_single_line(chunk):
+            continue
+
+        if is_table_in_card(chunk):
+            chunk.page_content = await _ask_llm_async(
+                json_=False,
+                litellm_model="gpt-4o",
+                metadata=chunk.metadata,
+                system_message=SYSTEM_DOCMUNCHER_TABLE,
+                user_message=USER_DOCMUNCHER_TABLE.format(
+                    meta=json.dumps(chunk.metadata), content=chunk.page_content
+                ),
+            )
+
+        chunk.metadata["title"] = await _ask_llm_async(
+            json_=False,
+            litellm_model="gpt-4o",
+            metadata=chunk.metadata,
+            system_message=SYSTEM_DOCMUNCHER_TITLE,
+            user_message=USER_DOCMUNCHER_TITLE.format(
+                meta=json.dumps(chunk.metadata), content=chunk.page_content
+            ),
+        )
+        final_merged_chunks.append(chunk)
+    return final_merged_chunks
 
 
 async def convert_markdown_chunks_to_cards(
@@ -395,13 +415,16 @@ async def process_pdf_file(
         markdown_text = convert_pages_to_markdown(file_name=file_name, content=content)
         md_header_splits = chunk_markdown_text_by_headers(markdown_text)
         merged_chunks = await merge_chunks_for_continuity(md_header_splits)
+        final_merged_chunks = await deal_with_incorrectly_formatted_cards(
+            merged_chunks=merged_chunks
+        )
 
         # Create the tags and save the merged cards to the database
         content_tags = await create_tag_per_file(
             filename=file_name, workspace_id=workspace_id, asession=asession
         )
         await convert_markdown_chunks_to_cards(
-            merged_chunks=merged_chunks,
+            merged_chunks=final_merged_chunks,
             content_tags=content_tags,
             workspace_id=workspace_id,
             asession=asession,
