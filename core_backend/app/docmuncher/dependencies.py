@@ -206,6 +206,7 @@ async def convert_markdown_chunks_to_cards(
                     [str(v) for v in header_split.metadata.values()]
                     + [header_split.page_content[:10]]
                 )
+                title = title[:150]  # Make sure the title is less than 150 characters
                 metadata = header_split.metadata
                 metadata["sub_chunk"] = i
 
