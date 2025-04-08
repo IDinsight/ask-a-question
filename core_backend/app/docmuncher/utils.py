@@ -2,6 +2,10 @@ import re
 
 from langchain_core.documents import Document
 
+from ..config import LITELLM_MODEL_DOCMUNCHER_SINGLE_LINE
+from ..llm_call.llm_prompts import SYSTEM_SINGLE_LINE_CARD, USER_SINGLE_LINE_CARD
+from ..llm_call.utils import _ask_llm_async
+
 
 def is_image_only_card(chunk: Document) -> bool:
     """
@@ -59,7 +63,7 @@ def is_table_in_card(chunk: Document) -> bool:
     return False
 
 
-def is_content_single_line(chunk: Document) -> bool:
+async def is_content_single_line(chunk: Document) -> bool:
     """
     Determine if a card contains only a single line of content.
 
@@ -74,5 +78,13 @@ def is_content_single_line(chunk: Document) -> bool:
         True if the card contains only a single line of content, False otherwise.
     """
     content = chunk.page_content.strip()
-
-    return len(content.split("\n")) == 1 and len(content.strip()) > 0
+    if len(content.split("\n")) > 1:
+        return False
+    is_single_line = await _ask_llm_async(
+        json_=False,
+        litellm_model=LITELLM_MODEL_DOCMUNCHER_SINGLE_LINE,
+        metadata=chunk.metadata,
+        system_message=SYSTEM_SINGLE_LINE_CARD,
+        user_message=USER_SINGLE_LINE_CARD.format(content=content),
+    )
+    return is_single_line == "True"

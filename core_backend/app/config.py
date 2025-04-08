@@ -59,6 +59,17 @@ LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
 LITELLM_MODEL_TOPIC_MODEL = os.environ.get(
     "LITELLM_MODEL_TOPIC_MODEL", "openai/topic-label"
 )
+
+LITELLM_MODEL_DOCMUNCHER_TITLE = os.environ.get(
+    "LITELLM_MODEL_DOCMUNCHER", "openai/docmuncher-title"
+)
+LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE = os.environ.get(
+    "LITELLM_MODEL_DOCMUNCHER", "openai/docmuncher-paraphrase-table"
+)
+LITELLM_MODEL_DOCMUNCHER_SINGLE_LINE = os.environ.get(
+    "LITELLM_MODEL_DOCMUNCHER", "openai/docmuncher-single-line"
+)
+
 # On/Off Topic variables
 SERVICE_IDENTITY = os.environ.get(
     "SERVICE_IDENTITY", "air pollution and air quality chatbot"

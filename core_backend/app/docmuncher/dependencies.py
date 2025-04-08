@@ -9,7 +9,11 @@ from langchain_core.documents import Document
 from mistralai import DocumentURLChunk, Mistral
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import REDIS_DOC_INGEST_EXPIRY_TIME
+from ..config import (
+    LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE,
+    LITELLM_MODEL_DOCMUNCHER_TITLE,
+    REDIS_DOC_INGEST_EXPIRY_TIME,
+)
 from ..contents.models import save_content_to_db
 from ..contents.schemas import ContentCreate
 from ..llm_call.llm_prompts import (
@@ -186,8 +190,6 @@ def chunk_markdown_text_by_headers(markdown_text: dict) -> dict:
                         ].metadata[header[1]]
                 md_header_splits[i][j] = header_split
 
-        # Next merge chunks to ensure continuity across pages, and generate titles
-
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -262,23 +264,24 @@ async def deal_with_incorrectly_formatted_cards(merged_chunks: list) -> list:
     """
     final_merged_chunks = []
     for chunk in merged_chunks:
-        if is_image_only_card(chunk) or is_content_single_line(chunk):
+        is_single_line = await is_content_single_line(chunk)
+        is_image_card = is_image_only_card(chunk)
+        if is_image_card or is_single_line:
             continue
 
         if is_table_in_card(chunk):
             chunk.page_content = await _ask_llm_async(
                 json_=False,
-                litellm_model="gpt-4o",
+                litellm_model=LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE,
                 metadata=chunk.metadata,
                 system_message=SYSTEM_DOCMUNCHER_TABLE,
                 user_message=USER_DOCMUNCHER_TABLE.format(
                     meta=json.dumps(chunk.metadata), content=chunk.page_content
                 ),
             )
-
         chunk.metadata["title"] = await _ask_llm_async(
             json_=False,
-            litellm_model="gpt-4o",
+            litellm_model=LITELLM_MODEL_DOCMUNCHER_TITLE,
             metadata=chunk.metadata,
             system_message=SYSTEM_DOCMUNCHER_TITLE,
             user_message=USER_DOCMUNCHER_TITLE.format(
@@ -418,6 +421,7 @@ async def process_pdf_file(
         final_merged_chunks = await deal_with_incorrectly_formatted_cards(
             merged_chunks=merged_chunks
         )
+        print(final_merged_chunks)
 
         # Create the tags and save the merged cards to the database
         content_tags = await create_tag_per_file(

@@ -138,6 +138,20 @@ Metadata: {meta} \n
 Content: {content}"
 """
 
+SYSTEM_SINGLE_LINE_CARD = """
+You are an excellent linguist. Look at the content that the user provides and
+decide whether the content is a caption / subtitle OR a a paragraph of text
+containing meaningful information.
+If the content is a caption / subtitle, please respond with True.
+Otherwise, respond with False.
+"""
+
+USER_SINGLE_LINE_CARD = """
+Please decide whether the following content is a caption / subtitle OR a
+paragraph of text containing meaningful information:\n
+Content: {content}"
+"""
+
 
 class AlignmentScore(BaseModel):
     """Alignment score of the user's input."""
