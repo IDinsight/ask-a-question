@@ -14,7 +14,7 @@ import { LoadingButton } from "@mui/lab";
 import { Content } from "../edit/page";
 import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
-import { CustomError, handleApiError } from "@/utils/api";
+import { handleApiError } from "@/utils/api";
 
 interface ContentDownload {
   content_id: number | null;
