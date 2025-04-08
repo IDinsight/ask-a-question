@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
-from langfuse.decorators import langfuse_context, observe
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name

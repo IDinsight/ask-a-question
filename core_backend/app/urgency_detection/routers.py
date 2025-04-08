@@ -3,7 +3,7 @@
 from typing import Callable
 
 from fastapi import APIRouter, Depends
-from langfuse.decorators import langfuse_context, observe
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
