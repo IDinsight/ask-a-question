@@ -288,7 +288,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
 
       getDocIndexingStatusData(token)
         .then((data) => {
-          setIndexEntries(data);
+          setIndexEntries(data || []);
         })
         .catch((err) => {
           console.error("Error fetching indexing status:", err);
