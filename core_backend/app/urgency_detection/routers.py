@@ -3,6 +3,7 @@
 from typing import Callable
 
 from fastapi import APIRouter, Depends
+from langfuse.decorators import langfuse_context, observe
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
@@ -56,6 +57,7 @@ def urgency_classifier(classifier_func: Callable) -> Callable:
 
 
 @router.post("/urgency-detect", response_model=UrgencyResponse)
+@observe()
 async def classify_text(
     urgency_query: UrgencyQuery,
     asession: AsyncSession = Depends(get_async_session),
@@ -99,6 +101,14 @@ async def classify_text(
         asession=asession,
         urgency_query=urgency_query,
         workspace_id=workspace_db.workspace_id,
+    )
+
+    langfuse_context.update_current_trace(
+        name="urgency_detection",
+        metadata={
+            "urgency_query_id": urgency_query_db.urgency_query_id,
+            "workspace_id": workspace_db.workspace_id,
+        },
     )
 
     await save_urgency_response_to_db(
