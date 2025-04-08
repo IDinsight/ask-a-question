@@ -421,7 +421,6 @@ async def process_pdf_file(
         final_merged_chunks = await deal_with_incorrectly_formatted_cards(
             merged_chunks=merged_chunks
         )
-        print(final_merged_chunks)
 
         # Create the tags and save the merged cards to the database
         content_tags = await create_tag_per_file(
