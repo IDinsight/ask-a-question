@@ -70,7 +70,7 @@ async def create_tag_per_file(
             detail="Filename is required",
         )
 
-    tag = TagCreate(tag_name=filename.upper())
+    tag = TagCreate(tag_name=filename.upper()[:50])
     if not await is_tag_name_unique(
         asession=asession, tag_name=tag.tag_name, workspace_id=workspace_id
     ):
