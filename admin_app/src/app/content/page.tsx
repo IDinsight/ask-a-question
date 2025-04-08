@@ -494,7 +494,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ minWidth: "130px" }}>
+        <Box sx={{ minWidth: "200px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
@@ -617,6 +617,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 };
 
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+  const truncateTagName = (tagName: string): string => {
+    return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
+  };
   return (
     <Autocomplete
       multiple
@@ -624,7 +627,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
-      getOptionLabel={(option) => option.tag_name}
+      getOptionLabel={(option) => truncateTagName(option.tag_name)}
       noOptionsText="No tags found"
       value={filterTags}
       onChange={(event, updatedTags) => {
@@ -633,6 +636,15 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       renderInput={(params) => (
         <TextField {...params} variant="standard" label="Filter tags" />
       )}
+      ListboxProps={{
+        sx: {
+          maxWidth: "300px",
+          "& .MuiAutocomplete-option": {
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          },
+        },
+      }}
       sx={{ color: appColors.white }}
     />
   );
