@@ -8,7 +8,6 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Chip,
   CircularProgress,
   Divider,
   Fab,
@@ -54,7 +53,6 @@ import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
 import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { set } from "date-fns";
 
 export interface Tag {
   tag_id: number;
