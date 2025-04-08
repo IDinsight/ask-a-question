@@ -29,7 +29,7 @@ class QueryBase(BaseModel):
     """Pydantic model for question answering query."""
 
     chat_query_params: SkipJsonSchema[Optional[dict[str, Any]]] = Field(
-        default=None, description="Query parameters for chat", exclude=True
+        default=None, description="Query parameters for chat"
     )
     generate_llm_response: bool = Field(False)
     query_metadata: dict = Field(
