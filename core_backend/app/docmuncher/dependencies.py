@@ -288,6 +288,7 @@ async def deal_with_incorrectly_formatted_cards(merged_chunks: list) -> list:
                 meta=json.dumps(chunk.metadata), content=chunk.page_content
             ),
         )
+        chunk.metadata["title"] = chunk.metadata["title"].strip('"')
         final_merged_chunks.append(chunk)
     return final_merged_chunks
 
