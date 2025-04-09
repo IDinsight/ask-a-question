@@ -234,6 +234,11 @@ IMPORTANT NOTES ON THE "answer" FIELD:
 RELEVANT INFORMATION.
 
 Only output the JSON response, without any additional text.
+
+
+<ADDITIONAL RELEVANT INFORMATION>
+{additional_info}
+</ADDITIONAL RELEVANT INFORMATION>
 """
 
 
@@ -396,20 +401,14 @@ class IdentifiedScript(str, Enum):
 
     LATIN = "Latin"
     DEVANAGARI = "Devanagari"
-    # ARABIC = "Arabic"
-    # CYRILLIC = "Cyrillic"
-    # CHINESE = "Chinese"
-    # JAPANESE = "Japanese"
-    # KOREAN = "Korean"
-    # THAI = "Thai"
-    # BENGALI = "Bengali"
-    # TAMIL = "Tamil"
-    # TELUGU = "Telugu"
-    # KANNADA = "Kannada"
-    # MALAYALAM = "Malayalam"
-    # GUJARATI = "Gujarati"
-    # GURMUKHI = "Gurmukhi"
-    # ORIYA = "Oriya"
+    BENGALI = "Bengali"
+    TAMIL = "Tamil"
+    TELUGU = "Telugu"
+    KANNADA = "Kannada"
+    MALAYALAM = "Malayalam"
+    GUJARATI = "Gujarati"
+    GURMUKHI = "Gurmukhi"
+    ORIYA = "Oriya"
     # SINHALA = "Sinhala"
     # MYANMAR = "Myanmar"
     # ETHIOPIC = "Ethiopic"

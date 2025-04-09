@@ -23,6 +23,7 @@ class ErrorType(str, Enum):
     UNABLE_TO_TRANSLATE = "unable_to_translate"
     UNINTELLIGIBLE_INPUT = "unintelligible_input"
     UNSUPPORTED_LANGUAGE = "unsupported_language"
+    UNSUPPORTED_SCRIPT = "unsupported_script"
 
 
 class QueryBase(BaseModel):
