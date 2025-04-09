@@ -13,7 +13,7 @@ pytest-cov==6.0.0
 pytest-order==1.3.0
 pytest-randomly==3.16.0
 pytest-xdist==3.5.0
-httpx==0.25.0
+httpx==0.28.1
 trio==0.22.2
 mkdocs-material==9.5.3
 pymdown-extensions==10.3
