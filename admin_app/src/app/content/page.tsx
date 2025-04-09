@@ -44,7 +44,12 @@ import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { archiveContent, getContentList, getTagList, getIndexingStatus } from "./api";
+import {
+  archiveContent,
+  getContentList,
+  getTagList,
+  useGetIndexingStatus,
+} from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
@@ -412,53 +417,10 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
   handleDelete,
 }) => {
-  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
-  const [showIndexButton, setShowIndexButton] = React.useState(false);
-  const [isJobRunning, setIsJobRunning] = React.useState(false);
 
-  React.useEffect(() => {
-    let pollingInterval: NodeJS.Timeout | null = null;
-
-    const fetchIndexingStatus = async () => {
-      if (token) {
-        try {
-          const data = await getIndexingStatus(token);
-          setShowIndexButton(data === true || data === false);
-          setIsJobRunning(data === true);
-
-          if (data === true && !pollingInterval) {
-            pollingInterval = setInterval(async () => {
-              const status = await getIndexingStatus(token);
-              if (status === false) {
-                setIsJobRunning(false);
-                if (pollingInterval) {
-                  clearInterval(pollingInterval);
-                  pollingInterval = null;
-                }
-              }
-            }, 3000);
-          }
-        } catch (error) {
-          const error_message = error as CustomError;
-          setSnackMessage({
-            message: error_message.message || "Error fetching indexing status",
-            color: "info",
-          });
-          console.error("Error fetching indexing status", error);
-        }
-      }
-    };
-
-    fetchIndexingStatus();
-
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [token]);
+  const { data } = useGetIndexingStatus();
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -556,7 +518,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
-        {showIndexButton && (
+        {typeof data === "boolean" && (
           <>
             <Button
               variant="outlined"
@@ -566,10 +528,10 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 setOpenIndexHistoryModal(true);
               }}
               startIcon={
-                isJobRunning ? <CircularProgress size={12} color="inherit" /> : null
+                data === true ? <CircularProgress size={12} color="inherit" /> : null
               }
             >
-              {isJobRunning ? "Processing PDF" : "PDF Upload Status"}
+              {data === true ? "Processing PDF" : "PDF Upload Status"}
             </Button>
             <IndexingStatusModal />
           </>

@@ -13,7 +13,7 @@ import {
 import { useDropzone } from "react-dropzone";
 import { Layout } from "@/components/Layout";
 import { LoadingButton } from "@mui/lab";
-import { postDocumentToIndex } from "../api";
+import { usePostDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
 import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
 
@@ -31,13 +31,13 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   open,
   onClose,
 }) => {
-  const { token } = useAuth();
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
+  const { mutate: postDocumentToIndex } = usePostDocumentToIndex();
 
   useEffect(() => {
     if (!open) {
@@ -82,33 +82,22 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
       setImportErrorMessages([]);
       // add artificial delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
-      try {
-        const response = await postDocumentToIndex(files[0], token!);
-        if (response.status === 200) {
-          setImportSuccess(true);
-          setFiles([]);
-        } else {
-          console.error("Error uploading file:", response.detail);
-          if (response.detail.errors) {
-            const errorDescriptions = response.detail.errors.map(
-              (error: CustomError) => error.description,
-            );
-            setImportErrorMessages(errorDescriptions);
-          } else {
+      postDocumentToIndex(
+        { file: files[0] },
+        {
+          onSuccess: () => {
+            setImportSuccess(true);
+            setFiles([]);
+          },
+          onError: (error) => {
             setImportErrorMessages(["An unknown error occurred"]);
-          }
-        }
-      } catch (error) {
-        console.error("Error during import:", error);
-        setImportErrorMessages([
-          "An unexpected error occurred. Please try again later.",
-        ]);
-      } finally {
-        setLoading(false);
-        setFiles([]);
-      }
+          },
+          onSettled: () => {
+            setLoading(false);
+          },
+        },
+      );
     } else {
-      console.error("No file selected");
       setImportErrorMessages(["No file selected"]);
     }
   };

@@ -1,5 +1,6 @@
 import api, { handleApiError } from "@/utils/api";
-
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/utils/auth";
 type IndexingStatusResponse = boolean | { detail: string };
 
 export interface DocIndexingTask {
@@ -29,6 +30,11 @@ interface ContentBody {
   content_title: string;
   content_text: string;
   content_metadata: Record<string, unknown>;
+}
+
+interface DocumentUploadResponse {
+  status: number;
+  detail: any;
 }
 
 const formatDate = (dateString: string) => {
@@ -191,40 +197,52 @@ const deleteTag = async (tag_id: number, token: string) => {
   }
 };
 
-const getIndexingStatus = async (
-  token: string,
-): Promise<IndexingStatusResponse | undefined> => {
-  try {
-    const response = await api.get("/docmuncher/status/is_job_running", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.status === 200) {
-      return response.data;
-    } else {
-      throw new Error("Unexpected response status");
-    }
-  } catch (error) {
-    let errorMessage = "Error fetching indexing status";
-    handleApiError(error, errorMessage);
-  }
+const useGetIndexingStatus = () => {
+  const { token } = useAuth();
+  return useQuery<IndexingStatusResponse>({
+    queryKey: ["indexingStatus"],
+    queryFn: async () => {
+      try {
+        const response = await api.get("/docmuncher/status/is_job_running", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      } catch (error) {
+        const errorMessage = "Error fetching indexing status";
+        handleApiError(error, errorMessage);
+        throw error;
+      }
+    },
+    enabled: !!token,
+    refetchInterval: (query) => (query.state.data === true ? 3000 : false),
+    refetchIntervalInBackground: true,
+  });
 };
 
-const postDocumentToIndex = async (file: File, token: string) => {
-  const formData = new FormData();
-  formData.append("file", file);
+const usePostDocumentToIndex = () => {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation<DocumentUploadResponse, Error, { file: File }>({
+    mutationFn: async ({ file }) => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-  try {
-    const response = await api.post("/docmuncher/upload", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return { status: response.status, detail: response.data };
-  } catch (error) {
-    throw new Error("Error indexing document");
-  }
+      try {
+        const response = await api.post("/docmuncher/upload", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        return { status: response.status, detail: response.data };
+      } catch (error) {
+        throw new Error("Error indexing document");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["indexingStatus"] });
+    },
+  });
 };
 
 const getDocIndexingStatusData = async (
@@ -272,7 +290,7 @@ export {
   createTag,
   getTagList,
   deleteTag,
-  getIndexingStatus,
-  postDocumentToIndex,
+  useGetIndexingStatus,
+  usePostDocumentToIndex,
   getDocIndexingStatusData,
 };
