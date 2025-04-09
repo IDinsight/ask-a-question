@@ -11,11 +11,11 @@ class ContentCreate(BaseModel):
     content_metadata: dict = Field(default_factory=dict)
     content_tags: list = Field(default_factory=list)
     content_text: str = Field(
-        max_length=2000,
+        # max_length=2000,
         examples=["This is an example content."],
     )
     content_title: str = Field(
-        max_length=150,
+        # max_length=150,
         examples=["Example Content Title"],
     )
     is_archived: bool = False

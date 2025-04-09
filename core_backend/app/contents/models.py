@@ -13,7 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    String,
+    Text,
     delete,
     false,
     select,
@@ -64,8 +64,8 @@ class ContentDB(Base):
     content_tags = relationship(
         "TagDB", secondary=content_tags_table, back_populates="contents"
     )
-    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
+    content_text: Mapped[str] = mapped_column(Text, nullable=False)
+    content_title: Mapped[str] = mapped_column(Text, nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

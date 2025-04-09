@@ -997,7 +997,7 @@ def _extract_unique_tags(*, tags_col: pd.Series) -> list[str]:
     tags_flat = tags_flat.str.strip().str.upper()
 
     # Get unique tags as a list.
-    tags_unique_list = tags_flat.unique().tolist()
+    tags_unique_list = list(tags_flat.unique())
 
     return tags_unique_list
 
@@ -1021,8 +1021,8 @@ def _get_tags_not_in_db(
         List of tags not in the database.
     """
 
-    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
-    tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
+    tags_in_db_list: list[str] = [tag_json.tag_name for tag_json in tags_in_db]
+    tags_not_in_db_list: list[str] = list(set(incoming_tags) - set(tags_in_db_list))
 
     return tags_not_in_db_list
 
