@@ -28,6 +28,7 @@ export const handleApiError = (customError: any, errorMessage: string) => {
       message:
         (customError.response.data as any)?.detail ||
         (customError.response.data as any)?.message ||
+        (customError.response.data as any)?.error_message ||
         errorMessage,
     } as CustomError;
   } else {
@@ -66,7 +67,6 @@ const getLoginToken = async (username: string, password: string) => {
   } catch (customError) {
     let error_message = "Error fetching login token";
     handleApiError(customError, error_message);
-    console.log(customError);
   }
 };
 
@@ -131,16 +131,11 @@ const getChat = async (
         headers: { Authorization: `Bearer ${token}` },
       },
     );
-
     return { status: response.status, ...response.data };
   } catch (err) {
     const error = err as AxiosError;
-    if (error.response) {
-      return { status: error.response.status, error: error.response.data };
-    } else {
-      handleApiError(error, "Error returning chat response");
-      console.error("Error returning chat response", error.message);
-    }
+    handleApiError(error, "Error returning chat response");
+    console.error("Error returning chat response", error.message);
   }
 };
 const postResponseFeedback = async (
