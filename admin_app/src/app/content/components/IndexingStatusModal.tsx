@@ -380,7 +380,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
                   ...mainCellPadding,
                 }}
               >
-                Docs Indexed
+                Documents Processed
               </TableCell>
               <TableCell
                 sx={{
@@ -461,14 +461,14 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
         onExited: handleExited,
       }}
     >
-      <DialogTitle id="indexing-status-dialog-title">Indexing Status</DialogTitle>
+      <DialogTitle id="indexing-status-dialog-title">PDF Processing Status</DialogTitle>
       <DialogContent>
         <Typography
           variant="body1"
           color="text.secondary"
           id="indexing-status-dialog-description"
         >
-          Indexing status of ongoing and previous uploads.
+          Processing status of ongoing and previous uploads.
         </Typography>
 
         <Layout.Spacer multiplier={2} />

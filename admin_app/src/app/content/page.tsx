@@ -568,7 +568,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 isJobRunning ? <CircularProgress size={12} color="inherit" /> : null
               }
             >
-              {isJobRunning ? "Indexing" : "Indexing History"}
+              {isJobRunning ? "Processing PDF" : "PDF Upload Status"}
             </Button>
             <IndexingStatusModal
               open={openIndexHistoryModal}
@@ -693,7 +693,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
             setOpenPDFModal(true);
           }}
         >
-          Transform PDFs to cards
+          Generate cards from PDF
         </MenuItem>
       </Menu>
       <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />

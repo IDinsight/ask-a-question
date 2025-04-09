@@ -27,7 +27,8 @@
     "react-datepicker": "^8.0.0",
     "react-dom": "^18",
     "react-dropzone": "^14.3.8",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/google.accounts": "^0.0.14",
