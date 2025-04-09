@@ -15,6 +15,7 @@ import { Layout } from "@/components/Layout";
 import { LoadingButton } from "@mui/lab";
 import { postDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
+import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
 
 interface CustomError {
   type: string;
@@ -31,6 +32,7 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   onClose,
 }) => {
   const { token } = useAuth();
+  const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -110,18 +112,6 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
       setImportErrorMessages(["No file selected"]);
     }
   };
-
-  // modal auto-close after successful import
-  useEffect(() => {
-    let timerId: NodeJS.Timeout;
-    if (importSuccess) {
-      timerId = setTimeout(() => {
-        onClose();
-        window.location.reload();
-      }, 1000);
-    }
-    return () => clearTimeout(timerId);
-  }, [importSuccess]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -203,23 +193,53 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
         {importSuccess && (
           <>
             <Layout.Spacer multiplier={2} />
-            <Alert variant="standard" severity="success">
+            <Alert
+              variant="standard"
+              severity="success"
+              action={
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      onClose();
+                      setOpenIndexHistoryModal(true);
+                    }}
+                  >
+                    Check Status
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    onClick={onClose}
+                  >
+                    Close
+                  </Button>
+                </Box>
+              }
+            >
               File uploaded successfully!
             </Alert>
           </>
         )}
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <LoadingButton
-          variant="contained"
-          disabled={files.length === 0 || loading || !!error}
-          autoFocus
-          loading={loading}
-          onClick={handleSubmit}
-        >
-          {importSuccess ? "Imported" : "Import"}
-        </LoadingButton>
+        {!importSuccess && (
+          <>
+            <Button onClick={onClose}>Cancel</Button>
+            <LoadingButton
+              variant="contained"
+              disabled={files.length === 0 || loading || !!error}
+              autoFocus
+              loading={loading}
+              onClick={handleSubmit}
+            >
+              Import
+            </LoadingButton>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );
