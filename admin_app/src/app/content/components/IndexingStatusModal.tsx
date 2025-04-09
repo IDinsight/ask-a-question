@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
@@ -25,11 +27,7 @@ import { useAuth } from "@/utils/auth";
 import { DocIndexingStatusRow, formatDate, getDocIndexingStatusData } from "../api";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-
-interface IndexingStatusModalProps {
-  open: boolean;
-  onClose: () => void;
-}
+import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
 
 interface RowProps {
   entry: DocIndexingStatusRow;
@@ -254,16 +252,13 @@ const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
   );
 };
 
-export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
-  open,
-  onClose,
-}) => {
+export const IndexingStatusModal: React.FC = () => {
   const { token } = useAuth();
   const [indexEntries, setIndexEntries] = useState<DocIndexingStatusRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState<boolean>(false);
-
+  const { isOpen, setIsOpen } = useShowIndexingStatusStore();
   const columnWidths = getColumnStyles();
 
   const mainCellPadding = {
@@ -281,7 +276,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
   };
 
   useEffect(() => {
-    if (open && token) {
+    if (isOpen && token) {
       setIsClosing(false);
       setLoading(true);
       setError(null);
@@ -298,11 +293,11 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
           setLoading(false);
         });
     }
-  }, [open, token]);
+  }, [isOpen, token]);
 
   const handleClose = () => {
     setIsClosing(true);
-    onClose();
+    setIsOpen(false);
   };
 
   const handleExited = () => {
@@ -451,7 +446,7 @@ export const IndexingStatusModal: React.FC<IndexingStatusModalProps> = ({
 
   return (
     <Dialog
-      open={open}
+      open={isOpen}
       onClose={handleClose}
       fullWidth
       maxWidth="md"

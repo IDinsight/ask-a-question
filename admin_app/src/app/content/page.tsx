@@ -53,6 +53,7 @@ import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
 import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
+import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
 
 export interface Tag {
   tag_id: number;
@@ -413,7 +414,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 }) => {
   const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
-  const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
+  const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [showIndexButton, setShowIndexButton] = React.useState(false);
   const [isJobRunning, setIsJobRunning] = React.useState(false);
 
@@ -570,10 +571,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             >
               {isJobRunning ? "Processing PDF" : "PDF Upload Status"}
             </Button>
-            <IndexingStatusModal
-              open={openIndexHistoryModal}
-              onClose={() => setOpenIndexHistoryModal(false)}
-            />
+            <IndexingStatusModal />
           </>
         )}
         <Tooltip title="Download all contents">
