@@ -220,7 +220,7 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
                 </Box>
               }
             >
-              File uploaded successfully!
+              Successfully started PDF processing!
             </Alert>
           </>
         )}
