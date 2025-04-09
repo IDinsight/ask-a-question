@@ -127,19 +127,26 @@ async def _identify_language(
         identified_script = IdentifiedScript.LATIN
 
     query_refined.original_language = identified_lang
+    query_refined.original_script = identified_script
+
     response.debug_info["original_query"] = query_refined.query_text_original
     response.debug_info["original_language"] = identified_lang
     response.debug_info["original_script"] = identified_script
 
     processed_response = _process_identified_language_response(
-        identified_language=identified_lang, response=response
+        identified_language=identified_lang,
+        identified_script=identified_script,
+        response=response,
     )
 
     return query_refined, processed_response
 
 
 def _process_identified_language_response(
-    *, identified_language: IdentifiedLanguage, response: QueryResponse
+    *,
+    identified_language: IdentifiedLanguage,
+    identified_script: IdentifiedScript,
+    response: QueryResponse,
 ) -> QueryResponse | QueryResponseError:
     """Process the identified language and return the response.
 
@@ -147,6 +154,8 @@ def _process_identified_language_response(
     ----------
     identified_language
         The identified language.
+    identified_script
+        The identified script.
     response
         The response object.
 
@@ -157,20 +166,31 @@ def _process_identified_language_response(
     """
 
     supported_languages_list = IdentifiedLanguage.get_supported_languages()
+    supported_scripts_list = IdentifiedScript.get_supported_scripts()
 
-    if identified_language in supported_languages_list:
+    if (
+        identified_language in supported_languages_list
+        and identified_script in supported_scripts_list
+    ):
         return response
 
     supported_languages = ", ".join(supported_languages_list)
+    supported_scripts = ", ".join(supported_scripts_list)
 
-    match identified_language:
-        case IdentifiedLanguage.UNINTELLIGIBLE:
+    if identified_language == IdentifiedLanguage.UNINTELLIGIBLE:
+        error_message = (
+            "Unintelligible input. "
+            + f"The following languages are supported: {supported_languages}."
+        )
+        error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
+    else:
+        if identified_script == IdentifiedScript.UNKNOWN:
             error_message = (
-                "Unintelligible input. "
-                + f"The following languages are supported: {supported_languages}."
+                "Unsupported script. "
+                + f"Only the following scripts are supported: {supported_scripts}"
             )
-            error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
-        case _:
+            error_type = ErrorType.UNSUPPORTED_SCRIPT
+        else:
             error_message = (
                 "Unsupported language. Only the following languages "
                 + f"are supported: {supported_languages}."
@@ -190,7 +210,7 @@ def _process_identified_language_response(
     error_response.debug_info.update(response.debug_info)
 
     logger.info(
-        f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value} "
+        f"LANGUAGE IDENTIFICATION FAILED due to {error_message} "
         f"language on query id: {str(response.query_id)}"
     )
 

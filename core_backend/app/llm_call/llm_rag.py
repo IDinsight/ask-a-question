@@ -127,24 +127,14 @@ async def get_llm_rag_answer_with_chat_history(
                 message_type=message_type,
                 original_language=original_language,
                 original_script=original_script,
+                additional_info=context,
             )
         )
-    content = (
-        question
-        + f""""\n\n
-    ADDITIONAL RELEVANT INFORMATION BELOW
-    =====================================
 
-    {context}
-
-    ADDITIONAL RELEVANT INFORMATION ABOVE
-    =====================================
-    """
-    )
     content = await get_chat_response(
         chat_history=chat_history,
         chat_params=chat_params,
-        message_params=content,
+        message_params=question,
         session_id=session_id,
         json_=True,
         metadata=metadata or {},

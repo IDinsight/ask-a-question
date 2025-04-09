@@ -843,10 +843,6 @@ async def get_user_query_and_response(
         query_text_original=user_query.query_text,
         workspace_id=workspace_id,
     )
-    if user_query_refined.chat_query_params:
-        user_query_refined.query_text = user_query_refined.chat_query_params.pop(
-            "search_query"
-        )
 
     # Prepare the placeholder response object.
     response_template = QueryResponse(
