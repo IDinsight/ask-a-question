@@ -220,7 +220,7 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
                 </Box>
               }
             >
-              Successfully started PDF processing!
+              Card generation task successfully started!
             </Alert>
           </>
         )}
