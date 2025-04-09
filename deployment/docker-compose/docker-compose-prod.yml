@@ -23,6 +23,13 @@ services:
     depends_on:
       - redis
       - relational_db
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: core_backend
+        awslogs-create-group: "true"
 
   admin_app:
     image: idinsight/aaq-admin-app:latest
@@ -34,6 +41,13 @@ services:
     restart: always
     env_file:
       - .base.env
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: admin_app
+        awslogs-create-group: "true"
 
   caddy:
     image: caddy:2.7.6
@@ -48,6 +62,13 @@ services:
       - caddy_config:/config
     env_file:
       - .base.env
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: caddy
+        awslogs-create-group: "true"
 
   litellm_proxy:
     image: ghcr.io/berriai/litellm:main-v1.61.7
@@ -60,12 +81,26 @@ services:
     ports: # Expose the port to port 4001 for debugging purposes
       - 4001:4000
     command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: litellm_proxy
+        awslogs-create-group: "true"
 
   redis:
     image: "redis:6.0-alpine"
     # ports: # Expose the port to port 6380 on the host machine for debugging
     #   - "6380:6379"
     restart: always
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: redis
+        awslogs-create-group: "true"
 
   relational_db:
     image: pgvector/pgvector:pg16
@@ -76,6 +111,13 @@ services:
       - db_volume:/var/lib/postgresql/data
     ports: # Expose the port to port 5434 on the host machine for debugging
       - 5434:5432
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "naukriwaala-aaq-testing"
+        awslogs-stream: relational_db
+        awslogs-create-group: "true"
 
 volumes:
   caddy_data:
