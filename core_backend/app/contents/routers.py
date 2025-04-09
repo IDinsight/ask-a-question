@@ -1004,7 +1004,7 @@ def _extract_unique_tags(*, tags_col: pd.Series) -> list[str]:
 
 def _get_tags_not_in_db(
     *, incoming_tags: list[str], tags_in_db: list[TagDB]
-) -> list[str] | str:
+) -> list[str]:
     """Compare tags fetched from the DB with incoming tags and return tags not in the
     DB.
 
