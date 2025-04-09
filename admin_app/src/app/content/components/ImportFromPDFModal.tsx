@@ -126,13 +126,13 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle id="import-pdf-dialog-title">
-        Import New Content From PDF
+        Generate New Content From PDF
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="import-pdf-dialog-description">
           <Typography>
-            You can use this feature to import new contents from PDF files into AAQ. The
-            system will automatically create cards from file content.
+            You can use this feature to generate new contents from PDF files into AAQ.
+            The system will automatically create cards from file content.
           </Typography>
           <p>
             ⚠️ Maximum file size is 100MB.
