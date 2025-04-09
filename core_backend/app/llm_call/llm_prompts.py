@@ -330,6 +330,67 @@ class ChatHistory:
             raise ValueError(f"Error validating the output: {e}") from e
 
 
+class IdentifiedLanguage(str, Enum):
+    """Identified language of the user's input."""
+
+    # AFRIKAANS = "AFRIKAANS"
+    ENGLISH = "ENGLISH"
+    FRENCH = "FRENCH"
+    HINDI = "HINDI"
+    MARATHI = "MARATHI"
+    SWAHILI = "SWAHILI"
+    UNINTELLIGIBLE = "UNINTELLIGIBLE"
+    UNSUPPORTED = "UNSUPPORTED"
+    # XHOSA = "XHOSA"
+    # ZULU = "ZULU"
+
+    @classmethod
+    def get_supported_languages(cls) -> list[str]:
+        """Return a list of supported languages.
+
+        Returns
+        -------
+        list[str]
+            A list of supported languages.
+        """
+
+        return [
+            lang
+            for lang in cls._member_names_
+            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
+        ]
+
+    @classmethod
+    def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
+        """If language identified is not one of the supported language, it is
+        classified as UNSUPPORTED.
+
+        Parameters
+        ----------
+        value
+            The language identified.
+
+        Returns
+        -------
+        IdentifiedLanguage
+            The identified language (i.e., UNSUPPORTED).
+        """
+
+        return cls.UNSUPPORTED
+
+    @classmethod
+    def get_prompt(cls) -> str:
+        """Return the prompt for the language identification bot.
+
+        Returns
+        -------
+        str
+            The prompt for the language identification bot.
+        """
+
+        return LANGUAGE_ID_PROMPT.format(member_names=cls._member_names_).strip()
+
+
 class IdentifiedScript(str, Enum):
     """Script used in the user's input."""
 
@@ -341,12 +402,12 @@ class IdentifiedScript(str, Enum):
     # JAPANESE = "Japanese"
     # KOREAN = "Korean"
     # THAI = "Thai"
-    BENGALI = "Bengali"
-    TAMIL = "Tamil"
-    TELUGU = "Telugu"
-    KANNADA = "Kannada"
-    MALAYALAM = "Malayalam"
-    GUJARATI = "Gujarati"
+    # BENGALI = "Bengali"
+    # TAMIL = "Tamil"
+    # TELUGU = "Telugu"
+    # KANNADA = "Kannada"
+    # MALAYALAM = "Malayalam"
+    # GUJARATI = "Gujarati"
     # GURMUKHI = "Gurmukhi"
     # ORIYA = "Oriya"
     # SINHALA = "Sinhala"
@@ -400,66 +461,6 @@ class LanguageIdentificationResponse(BaseModel):
     script: IdentifiedScript
 
     model_config = ConfigDict(strict=True)
-
-
-class IdentifiedLanguage(str, Enum):
-    """Identified language of the user's input."""
-
-    # AFRIKAANS = "AFRIKAANS"
-    ENGLISH = "ENGLISH"
-    FRENCH = "FRENCH"
-    HINDI = "HINDI"
-    SWAHILI = "SWAHILI"
-    UNINTELLIGIBLE = "UNINTELLIGIBLE"
-    UNSUPPORTED = "UNSUPPORTED"
-    # XHOSA = "XHOSA"
-    # ZULU = "ZULU"
-
-    @classmethod
-    def get_supported_languages(cls) -> list[str]:
-        """Return a list of supported languages.
-
-        Returns
-        -------
-        list[str]
-            A list of supported languages.
-        """
-
-        return [
-            lang
-            for lang in cls._member_names_
-            if lang not in ("UNINTELLIGIBLE", "UNSUPPORTED")
-        ]
-
-    @classmethod
-    def _missing_(cls, value: str) -> IdentifiedLanguage:  # type: ignore[override]
-        """If language identified is not one of the supported language, it is
-        classified as UNSUPPORTED.
-
-        Parameters
-        ----------
-        value
-            The language identified.
-
-        Returns
-        -------
-        IdentifiedLanguage
-            The identified language (i.e., UNSUPPORTED).
-        """
-
-        return cls.UNSUPPORTED
-
-    @classmethod
-    def get_prompt(cls) -> str:
-        """Return the prompt for the language identification bot.
-
-        Returns
-        -------
-        str
-            The prompt for the language identification bot.
-        """
-
-        return LANGUAGE_ID_PROMPT.format(member_names=cls._member_names_).strip()
 
 
 LANGUAGE_ID_PROMPT = (
