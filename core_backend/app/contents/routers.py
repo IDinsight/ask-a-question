@@ -997,7 +997,7 @@ def _extract_unique_tags(*, tags_col: pd.Series) -> list[str]:
     tags_flat = tags_flat.str.strip().str.upper()
 
     # Get unique tags as a list.
-    tags_unique_list = tags_flat.unique().tolist()
+    tags_unique_list = list(tags_flat.unique())
 
     return tags_unique_list
 
