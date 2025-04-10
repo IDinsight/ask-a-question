@@ -117,8 +117,8 @@ async def _identify_language(
         user_message=query_refined.query_text,
     )
 
+    cleaned_json_str = remove_json_markdown(text=json_str)
     try:
-        cleaned_json_str = remove_json_markdown(text=json_str)
         lang_info = LanguageIdentificationResponse.model_validate_json(cleaned_json_str)
         identified_lang = lang_info.language
         identified_script = lang_info.script
