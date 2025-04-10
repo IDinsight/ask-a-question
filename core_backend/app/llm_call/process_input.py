@@ -184,6 +184,7 @@ def _process_identified_language_response(
         )
         error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
     else:
+        # TODO: create types for language x script combos
         if identified_script == IdentifiedScript.UNKNOWN:
             error_message = (
                 "Unsupported script. "
