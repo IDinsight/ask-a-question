@@ -1053,11 +1053,13 @@ class TestErrorResponses:
         [
             ("ENGLISH", "Latin", False, None),
             ("HINDI", "Devanagari", False, None),
-            ("UNINTELLIGIBLE", True, ErrorType.UNINTELLIGIBLE_INPUT),
-            ("GIBBERISH", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("UNSUPPORTED", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("SOME_UNSUPPORTED_LANG", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("don't kow", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("UNINTELLIGIBLE", "Latin", True, ErrorType.UNINTELLIGIBLE_INPUT),
+            ("UNINTELLIGIBLE", "Unknown", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("GIBBERISH", "Unknwon", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("GIBBERISH", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("UNSUPPORTED", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("SOME_UNSUPPORTED_LANG", "Unknown", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("don't kow", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
         ],
     )
     async def test_language_identify_error(
