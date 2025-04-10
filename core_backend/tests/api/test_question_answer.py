@@ -13,7 +13,6 @@ from fastapi.testclient import TestClient
 from core_backend.app.llm_call.llm_prompts import (
     AlignmentScore,
     IdentifiedLanguage,
-    LanguageIdentificationResponse,
 )
 from core_backend.app.llm_call.process_input import (
     _classify_safety,
@@ -1115,9 +1114,9 @@ class TestErrorResponses:
                 The identified language and script model json string.
             """
 
-            return LanguageIdentificationResponse(
-                language=identified_lang_str, script=identified_script_str
-            ).model_dump_json()
+            return f"""
+            {{"language": "{identified_lang_str}", "script": "{identified_script_str}"}}
+            """.strip()
 
         monkeypatch.setattr(
             "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
