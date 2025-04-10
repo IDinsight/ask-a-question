@@ -167,11 +167,12 @@ def _process_identified_language_response(
 
     supported_languages_list = IdentifiedLanguage.get_supported_languages()
     supported_scripts_list = IdentifiedScript.get_supported_scripts()
-    supported_languages_str = ", ".join(supported_languages_list)
-    suported_scripts_str = ", ".join(supported_scripts_list)
 
     language_ok = identified_language in supported_languages_list
     script_ok = identified_script in supported_scripts_list
+
+    supported_languages_str = ", ".join(supported_languages_list)
+    suported_scripts_str = ", ".join(supported_scripts_list)
 
     if language_ok and script_ok:
         return response
@@ -209,7 +210,7 @@ def _process_identified_language_response(
 
     logger.info(
         f"LANGUAGE IDENTIFICATION FAILED due to {error_message} "
-        f"language on query id: {str(response.query_id)}"
+        f"on query id: {str(response.query_id)}"
     )
 
     return error_response
