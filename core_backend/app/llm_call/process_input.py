@@ -167,34 +167,31 @@ def _process_identified_language_response(
 
     supported_languages_list = IdentifiedLanguage.get_supported_languages()
     supported_scripts_list = IdentifiedScript.get_supported_scripts()
+    supported_languages_str = ", ".join(supported_languages_list)
+    suported_scripts_str = ", ".join(supported_scripts_list)
 
-    if (
-        identified_language in supported_languages_list
-        and identified_script in supported_scripts_list
-    ):
+    language_ok = identified_language in supported_languages_list
+    script_ok = identified_script in supported_scripts_list
+
+    if language_ok and script_ok:
         return response
-
-    supported_languages = ", ".join(supported_languages_list)
-    supported_scripts = ", ".join(supported_scripts_list)
-
-    if identified_language == IdentifiedLanguage.UNINTELLIGIBLE:
+    elif language_ok and not script_ok:
         error_message = (
-            "Unintelligible input. "
-            + f"The following languages are supported: {supported_languages}."
+            "Unsupported script. "
+            + f"Only the following scripts are supported: {suported_scripts_str}"
         )
-        error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
-    else:
-        # TODO: create types for language x script combos
-        if identified_script == IdentifiedScript.UNKNOWN:
+        error_type: ErrorType = ErrorType.UNSUPPORTED_SCRIPT
+    else:  # regardless of script, language is not "ok"
+        if identified_language == IdentifiedLanguage.UNINTELLIGIBLE:
             error_message = (
-                "Unsupported script. "
-                + f"Only the following scripts are supported: {supported_scripts}"
+                "Unintelligible input. "
+                + f"The following languages are supported: {supported_languages_str}."
             )
-            error_type = ErrorType.UNSUPPORTED_SCRIPT
+            error_type = ErrorType.UNINTELLIGIBLE_INPUT
         else:
             error_message = (
                 "Unsupported language. Only the following languages "
-                + f"are supported: {supported_languages}."
+                + f"are supported: {supported_languages_str}."
             )
             error_type = ErrorType.UNSUPPORTED_LANGUAGE
 
