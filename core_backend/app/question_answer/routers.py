@@ -1073,7 +1073,6 @@ async def init_user_query_and_chat_histories(
         "chat_params": chat_params,
         "message_type": search_query_json_response["message_type"],
         "redis_client": redis_client,
-        "search_query": search_query_json_response["query"],
         "session_id": session_id,
     }
     user_query.generate_llm_response = True

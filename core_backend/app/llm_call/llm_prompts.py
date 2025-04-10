@@ -276,9 +276,7 @@ class ChatHistory:
 
             {{
                 "message_type": "The type of the user's LATEST MESSAGE. List of valid
-                options are: {valid_message_types},
-                "query": "The vector database query that you have constructed based on
-                the user's LATEST MESSAGE and the conversation history."
+                options are: {valid_message_types}"
             }}
 
             Do NOT attempt to answer the user's question/concern. Only output the JSON
