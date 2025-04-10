@@ -1053,7 +1053,7 @@ class TestErrorResponses:
             ("ENGLISH", "LATIN", False, None),
             ("HINDI", "DEVANAGARI", False, None),
             ("UNINTELLIGIBLE", "LATIN", True, ErrorType.UNINTELLIGIBLE_INPUT),
-            ("UNINTELLIGIBLE", "UNKNOWN", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("UNINTELLIGIBLE", "UNKNOWN", True, ErrorType.UNINTELLIGIBLE_INPUT),
             ("GIBBERISH", "UNKNOWN", True, ErrorType.UNSUPPORTED_SCRIPT),
             ("GIBBERISH", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
             ("UNSUPPORTED", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
