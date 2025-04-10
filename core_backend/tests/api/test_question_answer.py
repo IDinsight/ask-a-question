@@ -1050,15 +1050,15 @@ class TestErrorResponses:
     @pytest.mark.parametrize(
         "identified_lang_str,identified_script_str,should_error,expected_error_type",
         [
-            ("ENGLISH", "Latin", False, None),
-            ("HINDI", "Devanagari", False, None),
-            ("UNINTELLIGIBLE", "Latin", True, ErrorType.UNINTELLIGIBLE_INPUT),
-            ("UNINTELLIGIBLE", "Unknown", True, ErrorType.UNSUPPORTED_SCRIPT),
-            ("GIBBERISH", "Unknwon", True, ErrorType.UNSUPPORTED_SCRIPT),
-            ("GIBBERISH", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("UNSUPPORTED", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("SOME_UNSUPPORTED_LANG", "Unknown", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("don't kow", "Latin", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("ENGLISH", "LATIN", False, None),
+            ("HINDI", "DEVANAGARI", False, None),
+            ("UNINTELLIGIBLE", "LATIN", True, ErrorType.UNINTELLIGIBLE_INPUT),
+            ("UNINTELLIGIBLE", "UNKNOWN", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("GIBBERISH", "UNKNOWN", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("GIBBERISH", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("UNSUPPORTED", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("SOME_UNSUPPORTED_LANG", "UNKNOWN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("don't kow", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
         ],
     )
     async def test_language_identify_error(
