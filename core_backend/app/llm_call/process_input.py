@@ -493,10 +493,9 @@ def paraphrase_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        if not query_refined.chat_query_params:
-            query_refined, response = await _paraphrase_question(
-                query_refined=query_refined, response=response
-            )
+        query_refined, response = await _paraphrase_question(
+            query_refined=query_refined, response=response
+        )
         response = await func(query_refined, response, *args, **kwargs)
 
         return response
