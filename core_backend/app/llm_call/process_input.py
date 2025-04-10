@@ -120,8 +120,8 @@ async def _identify_language(
     cleaned_json_str = remove_json_markdown(text=json_str)
     try:
         lang_info = LanguageIdentificationResponse.model_validate_json(cleaned_json_str)
-        identified_lang = getattr(IdentifiedLanguage, lang_info.language)
-        identified_script = getattr(IdentifiedScript, lang_info.script)
+        identified_lang = getattr(IdentifiedLanguage, lang_info.language.upper())
+        identified_script = getattr(IdentifiedScript, lang_info.script.upper())
     except ValidationError:
         identified_lang = IdentifiedLanguage.UNSUPPORTED
         identified_script = IdentifiedScript.LATIN

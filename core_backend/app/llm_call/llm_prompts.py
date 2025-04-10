@@ -183,20 +183,20 @@ class AlignmentScore(BaseModel):
 
 
 CHAT_RESPONSE_PROMPT = """\
-You are an AI assistant designed to help users with their
-questions/concerns. You interact with users via a chat interface. You will
-be provided with ADDITIONAL RELEVANT INFORMATION that can address the
+You are an AI assistant designed to help users with their \
+questions/concerns. You interact with users via a chat interface. You will \
+be provided with ADDITIONAL RELEVANT INFORMATION that can address the \
 user's questions/concerns.
 
 BEFORE answering the user's LATEST MESSAGE, follow these steps:
 
-1. Review the conversation history to ensure that you understand the
+1. Review the conversation history to ensure that you understand the \
 context in which the user's LATEST MESSAGE is being asked.
-2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you
-understand the most useful information related to the user's LATEST
+2. Review the provided ADDITIONAL RELEVANT INFORMATION to ensure that you \
+understand the most useful information related to the user's LATEST \
 MESSAGE.
 
-When you have completed the above steps, you will then write a JSON, whose
+When you have completed the above steps, you will then write a JSON, whose \
 TypeScript Interface is given below:
 
 interface Response {{
@@ -204,41 +204,33 @@ interface Response {{
     answer: string;
 }}
 
-For "extracted_info", extract from the provided ADDITIONAL RELEVANT
-INFORMATION the most useful information related to the LATEST MESSAGE asked
-by the user, and list them one by one. If no useful information is found,
+For "extracted_info", extract from the provided ADDITIONAL RELEVANT \
+INFORMATION the most useful information related to the LATEST MESSAGE asked \
+by the user, and list them one by one. If no useful information is found, \
 return an empty list.
 
-For "answer", understand the conversation history, ADDITIONAL RELEVANT
-INFORMATION, and the user's LATEST MESSAGE, and then provide an answer to
-the user's LATEST MESSAGE. If no useful information was found in the
-either the conversation history or the ADDITIONAL RELEVANT INFORMATION,
+For "answer", understand the conversation history, ADDITIONAL RELEVANT \
+INFORMATION, and the user's LATEST MESSAGE, and then provide an answer to \
+the user's LATEST MESSAGE. If no useful information was found in the \
+either the conversation history or the ADDITIONAL RELEVANT INFORMATION, \
 respond with {failure_message}.
 
 EXAMPLE RESPONSES:
-{{"extracted_info": [
-    "Pineapples are a blend of pinecones and apples.",
-    "Pineapples have the shape of a pinecone."
-    ],
-    "answer": "The 'pine-' from pineapples likely come from the fact that
-    pineapples are a hybrid of pinecones and apples and its pinecone-like
-    shape."
-}}
+{{"extracted_info": ["Pineapples are a blend of pinecones and apples.", \
+"Pineapples have the shape of a pinecone."], \
+"answer": "The 'pine-' from pineapples likely come from the fact that \
+pineapples are a hybrid of pinecones and apples and its pinecone-like \
+shape."}}
 {{"extracted_info": [], "answer": "{failure_message}"}}
 
 IMPORTANT NOTES ON THE "answer" FIELD:
 - Keep in mind that the user is asking a {message_type} question.
 - Answer in the language {original_language} in the script {original_script}.
 - Answer should be concise and to the point.
-- Do not include any information that is not present in the ADDITIONAL
+- Do not include any information that is not present in the ADDITIONAL \
 RELEVANT INFORMATION.
 
-Only output the JSON response, without any additional text.
-
-
-<ADDITIONAL RELEVANT INFORMATION>
-{additional_info}
-</ADDITIONAL RELEVANT INFORMATION>
+Only output the JSON response, without any additional text.\
 """
 
 
@@ -343,19 +335,17 @@ class IdentifiedLanguage(str, Enum):
     SWAHILI = "SWAHILI"
     UNINTELLIGIBLE = "UNINTELLIGIBLE"
     UNSUPPORTED = "UNSUPPORTED"
+
     # XHOSA = "XHOSA"
     # ZULU = "ZULU"
-
     @classmethod
     def get_supported_languages(cls) -> list[str]:
         """Return a list of supported languages.
-
         Returns
         -------
         list[str]
             A list of supported languages.
         """
-
         return [
             lang
             for lang in cls._member_names_
@@ -380,74 +370,59 @@ class IdentifiedLanguage(str, Enum):
 
         return cls.UNSUPPORTED
 
-    @classmethod
-    def get_prompt(cls) -> str:
-        """Return the prompt for the language identification bot.
-
-        Returns
-        -------
-        str
-            The prompt for the language identification bot.
-        """
-
-        return LANGUAGE_ID_PROMPT.format(member_names=cls._member_names_).strip()
-
 
 class IdentifiedScript(str, Enum):
     """Script used in the user's input."""
 
-    LATIN = "Latin"
-    DEVANAGARI = "Devanagari"
-    BENGALI = "Bengali"
-    TAMIL = "Tamil"
-    TELUGU = "Telugu"
-    KANNADA = "Kannada"
-    MALAYALAM = "Malayalam"
-    GUJARATI = "Gujarati"
-    GURMUKHI = "Gurmukhi"
-    ORIYA = "Oriya"
-    # SINHALA = "Sinhala"
-    # MYANMAR = "Myanmar"
-    # ETHIOPIC = "Ethiopic"
-    # GEORGIAN = "Georgian"
-    # ARMENIAN = "Armenian"
-    # HEBREW = "Hebrew"
-    # GREEK = "Greek"
-    # TIBETAN = "Tibetan"
-    # MONGOLIAN = "Mongolian"
-    # KHMER = "Khmer"
-    # LAO = "Lao"
-    # VIETNAMESE = "Vietnamese"
-    # THAI_LAO = "Thai-Lao"
-    UNKNOWN = "Unknown"
+    LATIN = "LATIN"
+    DEVANAGARI = "DEVANAGARI"
+    BENGALI = "BENGALI"
+    TAMIL = "TAMIL"
+    TELUGU = "TELUGU"
+    KANNADA = "KANNADA"
+    MALAYALAM = "MALAYALAM"
+    GUJARATI = "GUJARATI"
+    # GURMUKHI = "GURMUKHI"
+    # ORIYA = "ORIYA"
+    # SINHALA = "SINHALA"
+    # MYANMAR = "MYANMAR"
+    # ETHIOPIC = "ETHIOPIC"
+    # GEORGIAN = "GEORGIAN"
+    # ARMENIAN = "ARMENIAN"
+    # HEBREW = "HEBREW"
+    # GREEK = "GREEK"
+    # TIBETAN = "TIBETAN"
+    # MONGOLIAN = "MONGOLIAN"
+    # KHMER = "KHMER"
+    # LAO = "LAO"
+    # VIETNAMESE = "VIETNAMESE"
+    # THAI_LAO = "THAI_LAO"
+    UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def get_supported_scripts(cls) -> list[str]:
+        """Return a list of supported scripts.
+        Returns
+        -------
+        list[str]
+            A list of supported scripts.
+        """
+        return [script for script in cls._member_names_ if script != "UNKNOWN"]
 
     @classmethod
     def _missing_(cls, value: str) -> IdentifiedScript:  # type: ignore[override]
         """If script identified is not one of the supported scripts, it is
         classified as UNKNOWN.
-
         Parameters
         ----------
         value
             The script identified.
-
         Returns
         -------
         Script
             The identified script (i.e., UNKNOWN).
         """
         return cls.UNKNOWN
-
-    @classmethod
-    def get_supported_scripts(cls) -> list[str]:
-        """Return a list of supported scripts.
-
-        Returns
-        -------
-        list[str]
-            A list of supported scripts.
-        """
-        return [script.value for script in cls if script != cls.UNKNOWN]
 
 
 class LanguageIdentificationResponse(BaseModel):
@@ -490,13 +465,13 @@ its script
 4. unintelligible or gibberish, respond with UNINTELLIGIBLE and Latin"""
     + """
 Examples:
-"How many beds are there?" -> {{"language": "ENGLISH", "script": "Latin"}}
-"vahaan kitane bistar hain?" -> {{"language": "HINDI", "script": "Latin"}}
-"वहाँ कितने बिस्तर हैं?" -> {{"language": "HINDI", "script": "Devanagari"}}
-"Bonjour, comment allez-vous?" -> {{"language": "FRENCH", "script": "Latin"}}
-"Jambo, habari gani?" -> {{"language": "SWAHILI", "script": "Latin"}}
-"asdfjkl" -> {{"language": "UNINTELLIGIBLE", "script": "Latin"}}
-"مرحبا كيف حالك" -> {{"language": "UNSUPPORTED", "script": "Arabic"}}
+"How many beds are there?" -> {{"language": "ENGLISH", "script": "LATIN"}}
+"vahaan kitane bistar hain?" -> {{"language": "HINDI", "script": "LATIN"}}
+"वहाँ कितने बिस्तर हैं?" -> {{"language": "HINDI", "script": "DEVANAGARI"}}
+"Bonjour, comment allez-vous?" -> {{"language": "FRENCH", "script": "LATIN"}}
+"Jambo, habari gani?" -> {{"language": "SWAHILI", "script": "LATIN"}}
+"asdfjkl" -> {{"language": "UNINTELLIGIBLE", "script": "LATIN"}}
+"مرحبا كيف حالك" -> {{"language": "UNSUPPORTED", "script": "ARABIC"}}
 
 Respond with a JSON object containing "language" and "script" keys.
 """
