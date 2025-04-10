@@ -456,6 +456,7 @@ async def voice_search(
         },
     },
 )
+@observe()
 async def voice_chat(
     file_url: str,
     request: Request,
@@ -563,6 +564,12 @@ async def voice_chat(
             response = await get_generation_response(
                 query_refined=user_query_refined_template, response=response
             )
+
+        langfuse_context.update_current_trace(
+            name="voice-chat",
+            session_id=user_query_refined_template.session_id,
+            metadata={"query_id": response.query_id, "workspace_id": workspace_id},
+        )
 
         await save_query_response_to_db(
             asession=asession,
