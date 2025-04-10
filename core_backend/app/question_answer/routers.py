@@ -442,6 +442,197 @@ async def voice_search(
         )
 
 
+@router.post(
+    "/voice-chat",
+    response_model=QueryAudioResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Bad Request",
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": QueryResponseError,
+            "description": "Internal Server Error",
+        },
+    },
+)
+@observe()
+async def voice_chat(
+    file_url: str,
+    request: Request,
+    session_id: int | None = None,
+    reset_chat_history: bool = False,
+    asession: AsyncSession = Depends(get_async_session),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
+) -> QueryAudioResponse | JSONResponse:
+    """Endpoint to transcribe audio from a provided URL, generate an LLM response, by
+    default `generate_tts` is set to `True`, and return a public random URL of an audio
+    file containing the spoken version of the generated response.
+
+    Parameters
+    ----------
+    file_url
+        The URL of the audio file.
+    request
+        The FastAPI request object.
+    session_id
+        The session ID for the chat, in case of a continuation of a previous chat.
+    reset_chat_history
+        Specifies whether to reset the chat history.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_db
+        The authenticated workspace object.
+
+    Returns
+    -------
+    QueryAudioResponse | JSONResponse
+        The query audio response object or an appropriate JSON response.
+    """
+
+    workspace_id = workspace_db.workspace_id
+
+    try:
+        file_stream, content_type, file_extension = await download_file_from_url(
+            file_url=file_url
+        )
+        assert isinstance(file_stream, BytesIO)
+
+        unique_filename = generate_random_filename(extension=file_extension)
+        destination_blob_name = f"stt-voice-notes/{unique_filename}"
+
+        await upload_file_to_gcs(
+            bucket_name=GCS_SPEECH_BUCKET,
+            content_type=content_type,
+            destination_blob_name=destination_blob_name,
+            file_stream=file_stream,
+        )
+
+        file_path = f"temp/{unique_filename}"
+        with open(file_path, "wb") as f:
+            file_stream.seek(0)
+            f.write(file_stream.read())
+        file_stream.seek(0)
+
+        if CUSTOM_STT_ENDPOINT is not None:
+            transcription = await post_to_speech_stt(
+                file_path=file_path, endpoint_url=CUSTOM_STT_ENDPOINT
+            )
+            transcription_result = transcription["text"]
+        else:
+            transcription_result = await transcribe_audio(audio_filename=file_path)
+
+        user_query = QueryBase(
+            generate_llm_response=True,
+            query_metadata={},
+            query_text=transcription_result,
+            session_id=session_id,
+        )
+
+        # 1.
+        user_query = await init_user_query_and_chat_histories(
+            redis_client=request.app.state.redis,
+            reset_chat_history=reset_chat_history,
+            user_query=user_query,
+        )
+
+        # 2.
+        (
+            user_query_db,
+            user_query_refined_template,
+            response_template,
+        ) = await get_user_query_and_response(
+            asession=asession,
+            generate_tts=True,
+            user_query=user_query,
+            workspace_id=workspace_id,
+        )
+        assert isinstance(user_query_db, QueryDB)
+
+        response = await get_search_response(
+            asession=asession,
+            exclude_archived=True,
+            n_similar=int(N_TOP_CONTENT),
+            n_to_crossencoder=int(N_TOP_CONTENT_TO_CROSSENCODER),
+            query_refined=user_query_refined_template,
+            request=request,
+            response=response_template,
+            workspace_id=workspace_id,
+        )
+
+        if user_query.generate_llm_response:  # Should be always true in this case
+            response = await get_generation_response(
+                query_refined=user_query_refined_template, response=response
+            )
+
+        langfuse_context.update_current_trace(
+            name="voice-chat",
+            session_id=user_query_refined_template.session_id,
+            metadata={"query_id": response.query_id, "workspace_id": workspace_id},
+        )
+
+        await save_query_response_to_db(
+            asession=asession,
+            response=response,
+            user_query_db=user_query_db,
+            workspace_id=workspace_id,
+        )
+        await increment_query_count(
+            asession=asession,
+            contents=response.search_results,
+            workspace_id=workspace_id,
+        )
+        await save_content_for_query_to_db(
+            asession=asession,
+            contents=response.search_results,
+            query_id=response.query_id,
+            session_id=user_query.session_id,
+            workspace_id=workspace_id,
+        )
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            file_stream.close()
+
+        if isinstance(response, QueryResponseError):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            )
+
+        if isinstance(response, QueryAudioResponse):
+            return response
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": "Internal server error"},
+        )
+
+    # Unsure where to place this
+    except LLMCallException:
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={
+                "error_message": (
+                    "LLM call returned an error: Please check LLM configuration"
+                )
+            },
+        )
+
+    except ValueError as ve:
+        logger.error(f"ValueError: {str(ve)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": f"Value error: {str(ve)}"},
+        )
+
+    except Exception as e:  # pylint: disable=W0718
+        logger.error(f"Unexpected error: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": "Internal server error"},
+        )
+
+
 @identify_language__before
 @classify_safety__before
 @translate_question__before
