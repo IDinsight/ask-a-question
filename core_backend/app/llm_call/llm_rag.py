@@ -18,6 +18,7 @@ from .llm_prompts import (
 from .utils import (
     _ask_llm_async,
     append_messages_to_chat_history,
+    format_prompt,
     get_chat_response,
     remove_json_markdown,
 )
@@ -127,14 +128,19 @@ async def get_llm_rag_answer_with_chat_history(
                 message_type=message_type,
                 original_language=original_language,
                 original_script=original_script,
-                additional_info=context,
             )
         )
 
+    user_message_with_context = format_prompt(
+        prompt=f"""{question}\n\n
+        <ADDITIONAL RELEVANT INFORMATION>
+        {context}
+        </ADDITIONAL RELEVANT INFORMATION>"""
+    )
     content = await get_chat_response(
         chat_history=chat_history,
         chat_params=chat_params,
-        message_params=question,
+        message_params=user_message_with_context,
         session_id=session_id,
         json_=True,
         metadata=metadata or {},
