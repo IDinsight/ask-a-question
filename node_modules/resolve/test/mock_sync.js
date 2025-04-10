@@ -211,4 +211,3 @@ test('readPackageSync', function (t) {
         );
     });
 });
-

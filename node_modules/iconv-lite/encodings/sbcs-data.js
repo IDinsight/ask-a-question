@@ -176,4 +176,3 @@ module.exports = {
     "mac": "macintosh",
     "csmacintosh": "macintosh",
 };
-

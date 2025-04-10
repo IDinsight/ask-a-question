@@ -97,7 +97,7 @@ primary guiding principle is:
 ## Installation
 
 This module is distributed via [npm][npm] which is bundled with [node][node] and
-should be installed as one of your project's `devDependencies`.  
+should be installed as one of your project's `devDependencies`.
 Starting from RTL version 16, you'll also need to install
 `@testing-library/dom`:
 

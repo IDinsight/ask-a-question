@@ -14,13 +14,13 @@
 
 ## 0.6.0 / 2020-06-08
   * Updated 'gb18030' encoding to :2005 edition (see https://github.com/whatwg/encoding/issues/22).
-  * Removed `iconv.extendNodeEncodings()` mechanism. It was deprecated 5 years ago and didn't work 
+  * Removed `iconv.extendNodeEncodings()` mechanism. It was deprecated 5 years ago and didn't work
     in recent Node versions.
-  * Reworked Streaming API behavior in browser environments to fix #204. Streaming API will be 
-    excluded by default in browser packs, saving ~100Kb bundle size, unless enabled explicitly using 
+  * Reworked Streaming API behavior in browser environments to fix #204. Streaming API will be
+    excluded by default in browser packs, saving ~100Kb bundle size, unless enabled explicitly using
     `iconv.enableStreamingAPI(require('stream'))`.
   * Updates to development environment & tests:
-    * Added ./test/webpack private package to test complex new use cases that need custom environment. 
+    * Added ./test/webpack private package to test complex new use cases that need custom environment.
       It's tested as a separate job in Travis CI.
     * Updated generation code for the new EUC-KR index file format from Encoding Standard.
     * Removed Buffer() constructor in tests (#197 by @gabrielschulhof).
@@ -36,7 +36,7 @@
 ## 0.5.1 / 2020-01-18
 
   * Added cp720 encoding (#221, by @kr-deps)
-  * (minor) Changed Changelog.md formatting to use h2. 
+  * (minor) Changed Changelog.md formatting to use h2.
 
 
 ## 0.5.0 / 2019-06-26
@@ -144,7 +144,7 @@
 
 ## 0.4.9 / 2015-05-24
 
- * Streamlined BOM handling: strip BOM by default, add BOM when encoding if 
+ * Streamlined BOM handling: strip BOM by default, add BOM when encoding if
    addBOM: true. Added docs to Readme.
  * UTF16 now uses UTF16-LE by default.
  * Fixed minor issue with big5 encoding.
@@ -155,7 +155,7 @@
 
 
 ## 0.4.8 / 2015-04-14
- 
+
  * added alias UNICODE-1-1-UTF-7 for UTF-7 encoding (#94)
 
 
@@ -163,12 +163,12 @@
 
  * stop official support of Node.js v0.8. Should still work, but no guarantees.
    reason: Packages needed for testing are hard to get on Travis CI.
- * work in environment where Object.prototype is monkey patched with enumerable 
+ * work in environment where Object.prototype is monkey patched with enumerable
    props (#89).
 
 
 ## 0.4.6 / 2015-01-12
- 
+
  * fix rare aliases of single-byte encodings (thanks @mscdex)
  * double the timeout for dbcs tests to make them less flaky on travis
 
@@ -208,5 +208,3 @@
  * browserify compatibility added
  * (optional) extend core primitive encodings to make usage even simpler
  * moved from vows to mocha as the testing framework
-
-

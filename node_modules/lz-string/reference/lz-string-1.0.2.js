@@ -16,7 +16,7 @@ var LZString = {
       data.position++;
     }
   },
-  
+
   writeBits : function(numBits, value, data) {
     if (typeof(value)=="string")
       value = value.charCodeAt(0);
@@ -25,7 +25,7 @@ var LZString = {
       value = value >> 1;
     }
   },
-  
+
   produceW : function (context) {
     if (Object.prototype.hasOwnProperty.call(context.dictionaryToCreate,context.w)) {
       if (context.w.charCodeAt(0)<256) {
@@ -42,7 +42,7 @@ var LZString = {
     }
     this.decrementEnlargeIn(context);
   },
-  
+
   decrementEnlargeIn : function(context) {
     context.enlargeIn--;
     if (context.enlargeIn == 0) {
@@ -50,7 +50,7 @@ var LZString = {
       context.numBits++;
     }
   },
-  
+
   compress: function (uncompressed) {
     var context = {
       dictionary: {},
@@ -64,14 +64,14 @@ var LZString = {
       result: "",
       data: {string:"", val:0, position:0}
     }, i;
-    
+
     for (i = 0; i < uncompressed.length; i += 1) {
       context.c = uncompressed.charAt(i);
       if (!Object.prototype.hasOwnProperty.call(context.dictionary,context.c)) {
         context.dictionary[context.c] = context.dictSize++;
         context.dictionaryToCreate[context.c] = true;
       }
-      
+
       context.wc = context.w + context.c;
       if (Object.prototype.hasOwnProperty.call(context.dictionary,context.wc)) {
         context.w = context.wc;
@@ -82,20 +82,20 @@ var LZString = {
         context.w = String(context.c);
       }
     }
-    
+
     // Output the code for w.
     if (context.w !== "") {
       this.produceW(context);
     }
-    
+
     // Mark the end of the stream
     this.writeBits(context.numBits, 2, context.data);
-    
+
     // Flush the last char
     while (context.data.val>0) this.writeBit(0,context.data)
     return context.data.string;
   },
-  
+
   readBit : function(data) {
     var res = data.val & data.position;
     data.position >>= 1;
@@ -106,7 +106,7 @@ var LZString = {
     //data.val = (data.val << 1);
     return res>0 ? 1 : 0;
   },
-  
+
   readBits : function(numBits, data) {
     var res = 0;
     var maxpower = Math.pow(2,numBits);
@@ -117,7 +117,7 @@ var LZString = {
     }
     return res;
   },
-  
+
   decompress: function (compressed) {
     var dictionary = {},
         next,
@@ -132,45 +132,45 @@ var LZString = {
         errorCount=0,
         literal,
         data = {string:compressed, val:compressed.charCodeAt(0), position:32768, index:1};
-    
+
     for (i = 0; i < 3; i += 1) {
       dictionary[i] = i;
     }
-    
+
     next = this.readBits(2, data);
     switch (next) {
-      case 0: 
+      case 0:
         c = String.fromCharCode(this.readBits(8, data));
         break;
-      case 1: 
+      case 1:
         c = String.fromCharCode(this.readBits(16, data));
         break;
-      case 2: 
+      case 2:
         return "";
     }
     dictionary[3] = c;
     w = result = c;
     while (true) {
       c = this.readBits(numBits, data);
-      
+
       switch (c) {
-        case 0: 
+        case 0:
           if (errorCount++ > 10000) return "Error";
           c = String.fromCharCode(this.readBits(8, data));
           dictionary[dictSize++] = c;
           c = dictSize-1;
           enlargeIn--;
           break;
-        case 1: 
+        case 1:
           c = String.fromCharCode(this.readBits(16, data));
           dictionary[dictSize++] = c;
           c = dictSize-1;
           enlargeIn--;
           break;
-        case 2: 
+        case 2:
           return result;
       }
-      
+
       if (enlargeIn == 0) {
         enlargeIn = Math.pow(2, numBits);
         numBits++;
@@ -186,18 +186,18 @@ var LZString = {
         }
       }
       result += entry;
-      
+
       // Add w+entry[0] to the dictionary.
       dictionary[dictSize++] = w + entry.charAt(0);
       enlargeIn--;
-      
+
       w = entry;
-      
+
       if (enlargeIn == 0) {
         enlargeIn = Math.pow(2, numBits);
         numBits++;
       }
-      
+
     }
     return result;
   }

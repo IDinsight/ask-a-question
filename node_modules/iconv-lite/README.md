@@ -1,7 +1,7 @@
 ## iconv-lite: Pure JS character encoding conversion
 
  * No need for native code compilation. Quick to install, works on Windows and in sandboxed environments like [Cloud9](http://c9.io).
- * Used in popular projects like [Express.js (body_parser)](https://github.com/expressjs/body-parser), 
+ * Used in popular projects like [Express.js (body_parser)](https://github.com/expressjs/body-parser),
    [Grunt](http://gruntjs.com/), [Nodemailer](http://www.nodemailer.com/), [Yeoman](http://yeoman.io/) and others.
  * Faster than [node-iconv](https://github.com/bnoordhuis/node-iconv) (see below for performance comparison).
  * Intuitive encode/decode API, including Streaming support.
@@ -10,7 +10,7 @@
  * React Native is supported (need to install `stream` module to enable Streaming API).
  * License: MIT.
 
-[![NPM Stats](https://nodei.co/npm/iconv-lite.png)](https://npmjs.org/package/iconv-lite/)  
+[![NPM Stats](https://nodei.co/npm/iconv-lite.png)](https://npmjs.org/package/iconv-lite/)
 [![Build Status](https://travis-ci.org/ashtuchkin/iconv-lite.svg?branch=master)](https://travis-ci.org/ashtuchkin/iconv-lite)
 [![npm](https://img.shields.io/npm/v/iconv-lite.svg)](https://npmjs.org/package/iconv-lite/)
 [![npm downloads](https://img.shields.io/npm/dm/iconv-lite.svg)](https://npmjs.org/package/iconv-lite/)
@@ -63,8 +63,8 @@ http.createServer(function(req, res) {
 
  *  All node.js native encodings: utf8, ucs2 / utf16-le, ascii, binary, base64, hex.
  *  Additional unicode encodings: utf16, utf16-be, utf-7, utf-7-imap, utf32, utf32-le, and utf32-be.
- *  All widespread singlebyte encodings: Windows 125x family, ISO-8859 family, 
-    IBM/DOS codepages, Macintosh family, KOI8 family, all others supported by iconv library. 
+ *  All widespread singlebyte encodings: Windows 125x family, ISO-8859 family,
+    IBM/DOS codepages, Macintosh family, KOI8 family, all others supported by iconv library.
     Aliases like 'latin1', 'us-ascii' also supported.
  *  All widespread multibyte encodings: CP932, CP936, CP949, CP950, GB2312, GBK, GB18030, Big5, Shift_JIS, EUC-JP.
 
@@ -77,7 +77,7 @@ Multibyte encodings are generated from [Unicode.org mappings](http://www.unicode
 
 ## Encoding/decoding speed
 
-Comparison with node-iconv module (1000x256kb, on MacBook Pro, Core i5/2.6 GHz, Node v0.12.0). 
+Comparison with node-iconv module (1000x256kb, on MacBook Pro, Core i5/2.6 GHz, Node v0.12.0).
 Note: your results may vary, so please always check on your hardware.
 
     operation             iconv@2.1.4   iconv-lite@0.4.7
@@ -97,21 +97,21 @@ Note: your results may vary, so please always check on your hardware.
 
 This library supports UTF-16LE, UTF-16BE and UTF-16 encodings. First two are straightforward, but UTF-16 is trying to be
 smart about endianness in the following ways:
- * Decoding: uses BOM and 'spaces heuristic' to determine input endianness. Default is UTF-16LE, but can be 
+ * Decoding: uses BOM and 'spaces heuristic' to determine input endianness. Default is UTF-16LE, but can be
    overridden with `defaultEncoding: 'utf-16be'` option. Strips BOM unless `stripBOM: false`.
  * Encoding: uses UTF-16LE and writes BOM by default. Use `addBOM: false` to override.
 
 ## UTF-32 Encodings
 
-This library supports UTF-32LE, UTF-32BE and UTF-32 encodings. Like the UTF-16 encoding above, UTF-32 defaults to UTF-32LE, but uses BOM and 'spaces heuristics' to determine input endianness. 
+This library supports UTF-32LE, UTF-32BE and UTF-32 encodings. Like the UTF-16 encoding above, UTF-32 defaults to UTF-32LE, but uses BOM and 'spaces heuristics' to determine input endianness.
  * The default of UTF-32LE can be overridden with the `defaultEncoding: 'utf-32be'` option. Strips BOM unless `stripBOM: false`.
  * Encoding: uses UTF-32LE and writes BOM by default. Use `addBOM: false` to override. (`defaultEncoding: 'utf-32be'` can also be used here to change encoding.)
 
 ## Other notes
 
-When decoding, be sure to supply a Buffer to decode() method, otherwise [bad things usually happen](https://github.com/ashtuchkin/iconv-lite/wiki/Use-Buffers-when-decoding).  
-Untranslatable characters are set to � or ?. No transliteration is currently supported.  
-Node versions 0.10.31 and 0.11.13 are buggy, don't use them (see #65, #77).  
+When decoding, be sure to supply a Buffer to decode() method, otherwise [bad things usually happen](https://github.com/ashtuchkin/iconv-lite/wiki/Use-Buffers-when-decoding).
+Untranslatable characters are set to � or ?. No transliteration is currently supported.
+Node versions 0.10.31 and 0.11.13 are buggy, don't use them (see #65, #77).
 
 ## Testing
 
@@ -120,7 +120,7 @@ $ git clone git@github.com:ashtuchkin/iconv-lite.git
 $ cd iconv-lite
 $ npm install
 $ npm test
-    
+
 $ # To view performance:
 $ node test/performance.js
 

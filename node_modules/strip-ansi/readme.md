@@ -43,4 +43,3 @@ The maintainers of strip-ansi and thousands of other packages are working with T
 
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Josh Junon](https://github.com/qix-)
-

@@ -232,11 +232,11 @@ type TAriaQueryMap<E, K, V> = {
   ## 5.1.3
 
   No changes, just trying to get the NPM build to reflect the changes in v5.1.2
-  
+
   ## 5.2.0
 
   [Update] The 5.2.x minor version contains breaking changes and should be skipped.
-  
+
   Commit f7f6120 contains a substantial audit and update of the project to match the ARIA spec. Testing coverage was substantially improved. It really locks down the project's output.
 
   - e2e3eff docs: update README to WAI-ARIA 1.2 spec (#499)

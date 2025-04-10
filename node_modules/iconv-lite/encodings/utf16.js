@@ -116,7 +116,7 @@ Utf16Decoder.prototype.write = function(buf) {
         // Codec is not chosen yet. Accumulate initial bytes.
         this.initialBufs.push(buf);
         this.initialBufsLen += buf.length;
-        
+
         if (this.initialBufsLen < 16) // We need more bytes to use space heuristic (see below)
             return '';
 
@@ -193,5 +193,3 @@ function detectEncoding(bufs, defaultEncoding) {
     // Couldn't decide (likely all zeros or not enough data).
     return defaultEncoding || 'utf-16le';
 }
-
-

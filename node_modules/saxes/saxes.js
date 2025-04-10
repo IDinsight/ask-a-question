@@ -954,7 +954,7 @@ class SaxesParser {
         let { i: start } = this;
         const { chunk } = this;
         // eslint-disable-next-line no-labels, no-restricted-syntax
-        loop: 
+        loop:
         // eslint-disable-next-line no-constant-condition
         while (true) {
             switch (this.getCode()) {
@@ -1633,7 +1633,7 @@ class SaxesParser {
         let { i: start, forbiddenState } = this;
         const { chunk, textHandler: handler } = this;
         // eslint-disable-next-line no-labels, no-restricted-syntax
-        scanLoop: 
+        scanLoop:
         // eslint-disable-next-line no-constant-condition
         while (true) {
             switch (this.getCode()) {
@@ -1711,7 +1711,7 @@ class SaxesParser {
         const { chunk, textHandler: handler } = this;
         let nonSpace = false;
         // eslint-disable-next-line no-labels, no-restricted-syntax
-        outRootLoop: 
+        outRootLoop:
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const code = this.getCode();

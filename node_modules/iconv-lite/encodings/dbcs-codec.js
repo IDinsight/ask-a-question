@@ -42,7 +42,7 @@ function DBCSCodec(codecOptions, iconv) {
     this.decodeTables = [];
     this.decodeTables[0] = UNASSIGNED_NODE.slice(0); // Create root node.
 
-    // Sometimes a MBCS char corresponds to a sequence of unicode chars. We store them as arrays of integers here. 
+    // Sometimes a MBCS char corresponds to a sequence of unicode chars. We store them as arrays of integers here.
     this.decodeTableSeq = [];
 
     // Actual mapping tables consist of chunks. Use them to fill up decode tables.
@@ -93,7 +93,7 @@ function DBCSCodec(codecOptions, iconv) {
 
     this.defaultCharUnicode = iconv.defaultCharUnicode;
 
-    
+
     // Encode tables: Unicode -> DBCS.
 
     // `encodeTable` is array mapping from unicode char to encoded char. All its values are integers for performance.
@@ -102,7 +102,7 @@ function DBCSCodec(codecOptions, iconv) {
     //         == UNASSIGNED -> no conversion found. Output a default char.
     //         <= SEQ_START  -> it's an index in encodeTableSeq, see below. The character starts a sequence.
     this.encodeTable = [];
-    
+
     // `encodeTableSeq` is used when a sequence of unicode characters is encoded as a single code. We use a tree of
     // objects where keys correspond to characters in sequence and leafs are the encoded dbcs values. A special DEF_CHAR key
     // means end of sequence (needed when one sequence is a strict subsequence of another).
@@ -120,7 +120,7 @@ function DBCSCodec(codecOptions, iconv) {
                 for (var j = val.from; j <= val.to; j++)
                     skipEncodeChars[j] = true;
         }
-        
+
     // Use decode trie to recursively fill out encode tables.
     this._fillEncodeTable(0, 0, skipEncodeChars);
 
@@ -198,7 +198,7 @@ DBCSCodec.prototype._addDecodeChunk = function(chunk) {
                 else
                     writeTable[curAddr++] = code; // Basic char
             }
-        } 
+        }
         else if (typeof part === "number") { // Integer, meaning increasing sequence starting with prev character.
             var charCode = writeTable[curAddr - 1] + 1;
             for (var l = 0; l < part; l++)
@@ -229,7 +229,7 @@ DBCSCodec.prototype._setEncodeChar = function(uCode, dbcsCode) {
 }
 
 DBCSCodec.prototype._setEncodeSequence = function(seq, dbcsCode) {
-    
+
     // Get the root of character tree according to first character of the sequence.
     var uCode = seq[0];
     var bucket = this._getEncodeBucket(uCode);
@@ -303,7 +303,7 @@ function DBCSEncoder(options, codec) {
     // Encoder state
     this.leadSurrogate = -1;
     this.seqObj = undefined;
-    
+
     // Static data
     this.encodeTable = codec.encodeTable;
     this.encodeTableSeq = codec.encodeTableSeq;
@@ -325,7 +325,7 @@ DBCSEncoder.prototype.write = function(str) {
         }
         else {
             var uCode = nextChar;
-            nextChar = -1;    
+            nextChar = -1;
         }
 
         // 1. Handle surrogates.
@@ -347,7 +347,7 @@ DBCSEncoder.prototype.write = function(str) {
                     // Incomplete surrogate pair - only trail surrogate found.
                     uCode = UNASSIGNED;
                 }
-                
+
             }
         }
         else if (leadSurrogate !== -1) {
@@ -388,7 +388,7 @@ DBCSEncoder.prototype.write = function(str) {
             var subtable = this.encodeTable[uCode >> 8];
             if (subtable !== undefined)
                 dbcsCode = subtable[uCode & 0xFF];
-            
+
             if (dbcsCode <= SEQ_START) { // Sequence start
                 seqObj = this.encodeTableSeq[SEQ_START-dbcsCode];
                 continue;
@@ -411,7 +411,7 @@ DBCSEncoder.prototype.write = function(str) {
         // 3. Write dbcsCode character.
         if (dbcsCode === UNASSIGNED)
             dbcsCode = this.defaultCharSingleByte;
-        
+
         if (dbcsCode < 0x100) {
             newBuf[j++] = dbcsCode;
         }
@@ -463,7 +463,7 @@ DBCSEncoder.prototype.end = function() {
         newBuf[j++] = this.defaultCharSingleByte;
         this.leadSurrogate = -1;
     }
-    
+
     return newBuf.slice(0, j);
 }
 
@@ -487,7 +487,7 @@ function DBCSDecoder(options, codec) {
 
 DBCSDecoder.prototype.write = function(buf) {
     var newBuf = Buffer.alloc(buf.length*2),
-        nodeIdx = this.nodeIdx, 
+        nodeIdx = this.nodeIdx,
         prevBytes = this.prevBytes, prevOffset = this.prevBytes.length,
         seqStart = -this.prevBytes.length, // idx of the start of current parsed sequence.
         uCode;
@@ -498,7 +498,7 @@ DBCSDecoder.prototype.write = function(buf) {
         // Lookup in current trie node.
         var uCode = this.decodeTables[nodeIdx][curByte];
 
-        if (uCode >= 0) { 
+        if (uCode >= 0) {
             // Normal character, just use it.
         }
         else if (uCode === UNASSIGNED) { // Unknown char.
@@ -510,9 +510,9 @@ DBCSDecoder.prototype.write = function(buf) {
             if (i >= 3) {
                 var ptr = (buf[i-3]-0x81)*12600 + (buf[i-2]-0x30)*1260 + (buf[i-1]-0x81)*10 + (curByte-0x30);
             } else {
-                var ptr = (prevBytes[i-3+prevOffset]-0x81)*12600 + 
-                          (((i-2 >= 0) ? buf[i-2] : prevBytes[i-2+prevOffset])-0x30)*1260 + 
-                          (((i-1 >= 0) ? buf[i-1] : prevBytes[i-1+prevOffset])-0x81)*10 + 
+                var ptr = (prevBytes[i-3+prevOffset]-0x81)*12600 +
+                          (((i-2 >= 0) ? buf[i-2] : prevBytes[i-2+prevOffset])-0x30)*1260 +
+                          (((i-1 >= 0) ? buf[i-1] : prevBytes[i-1+prevOffset])-0x81)*10 +
                           (curByte-0x30);
             }
             var idx = findIdx(this.gb18030.gbChars, ptr);
@@ -535,7 +535,7 @@ DBCSDecoder.prototype.write = function(buf) {
             throw new Error("iconv-lite internal error: invalid decoding table value " + uCode + " at " + nodeIdx + "/" + curByte);
 
         // Write the character to buffer, handling higher planes using surrogate pair.
-        if (uCode >= 0x10000) { 
+        if (uCode >= 0x10000) {
             uCode -= 0x10000;
             var uCodeLead = 0xD800 | (uCode >> 10);
             newBuf[j++] = uCodeLead & 0xFF;
@@ -594,4 +594,3 @@ function findIdx(table, val) {
     }
     return l;
 }
-

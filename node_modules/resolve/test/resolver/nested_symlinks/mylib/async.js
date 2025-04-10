@@ -23,4 +23,3 @@ require('resolve')('buffer/', { preserveSymlinks: false }, function (err, result
     c = result.replace(process.cwd(), '$CWD');
     if (b && c) { test(); }
 });
-

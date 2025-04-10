@@ -10,4 +10,3 @@ if (process.argv.length < 3) {
 console.log(lzString.compress(fs.readFileSync(process.argv[2], {
   encoding: 'utf8',
 })));
-
