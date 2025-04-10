@@ -291,7 +291,6 @@ class ChatHistory:
         """Pydantic model for the output of the construct search query chat history."""
 
         message_type: Literal["FOLLOW-UP", "NEW"]
-        query: str
 
     @staticmethod
     def parse_json(*, chat_type: Literal["search"], json_str: str) -> dict[str, str]:
