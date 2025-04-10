@@ -7,7 +7,7 @@ import textwrap
 from enum import Enum
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .utils import format_prompt, remove_json_markdown
 
@@ -453,8 +453,22 @@ class IdentifiedScript(str, Enum):
 class LanguageIdentificationResponse(BaseModel):
     """Pydantic model for the language identification response."""
 
-    language: IdentifiedLanguage
-    script: IdentifiedScript
+    language: str
+    script: str
+
+    @field_validator("language")
+    def validate_language(cls, value: str) -> str:
+        """Make sure language input is a valid IdentifiedLanguage"""
+        if value not in IdentifiedLanguage._member_names_:
+            raise ValueError(f"Invalid language: {value}")
+        return value
+
+    @field_validator("script")
+    def validate_script(cls, value: str) -> str:
+        """Make sure script input is a valid IdentifiedScript"""
+        if value not in IdentifiedScript._member_names_:
+            raise ValueError(f"Invalid script: {value}")
+        return value
 
     model_config = ConfigDict(strict=True)
 
