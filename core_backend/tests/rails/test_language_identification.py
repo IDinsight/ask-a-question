@@ -77,7 +77,7 @@ async def test_language_identification(
         expected_language = "UNSUPPORTED"
 
     if expected_script not in available_scripts:
-        expected_script = "Unknown"
+        expected_script = "UNKNOWN"
 
     _, response = await _identify_language(query_refined=question, response=response)
 
