@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
+from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage, IdentifiedScript
 from core_backend.app.llm_call.process_input import _identify_language
 from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
 
@@ -22,19 +22,38 @@ def available_languages() -> list[str]:
     return list(IdentifiedLanguage)
 
 
-def read_test_data(file: str) -> list[tuple[str, str]]:
+@pytest.fixture(scope="module")
+def available_scripts() -> list[str]:
+    """Returns a list of available languages."""
+
+    return list(IdentifiedScript)
+
+
+def read_test_data(file: str) -> list[tuple[str, str, str]]:
     """Reads test data from file and returns a list of strings."""
 
     file_path = Path(__file__).parent / file
 
     with open(file_path, "r", encoding="utf-8") as f:
         content = yaml.safe_load(f)
-        return [(key, value) for key, values in content.items() for value in values]
+        data = [
+            (language, script, text)
+            for language, script_dict in content.items()
+            for script, texts in script_dict.items()
+            for text in texts
+        ]
+        return data
 
 
-@pytest.mark.parametrize("expected_label, content", read_test_data(LANGUAGE_FILE))
+@pytest.mark.parametrize(
+    "expected_language,expected_script,content", read_test_data(LANGUAGE_FILE)
+)
 async def test_language_identification(
-    available_languages: list[str], expected_label: str, content: str
+    available_languages: list[str],
+    available_scripts: list[str],
+    expected_language: str,
+    expected_script: str,
+    content: str,
 ) -> None:
     """Test language identification."""
 
@@ -53,8 +72,15 @@ async def test_language_identification(
         search_results=None,
         session_id=None,
     )
-    if expected_label not in available_languages:
-        expected_label = "UNSUPPORTED"
+
+    if expected_language not in available_languages:
+        expected_language = "UNSUPPORTED"
+
+    if expected_script not in available_scripts:
+        expected_script = "UNKNOWN"
+
     _, response = await _identify_language(query_refined=question, response=response)
 
-    assert response.debug_info["original_language"] == expected_label
+    assert response.debug_info["original_language"] == expected_language
+    if expected_language not in ("UNINTELLIGIBLE", "UNSUPPORTED"):
+        assert response.debug_info["original_script"] == expected_script

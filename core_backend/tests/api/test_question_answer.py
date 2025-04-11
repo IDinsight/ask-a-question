@@ -10,7 +10,10 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
+from core_backend.app.llm_call.llm_prompts import (
+    AlignmentScore,
+    IdentifiedLanguage,
+)
 from core_backend.app.llm_call.process_input import (
     _classify_safety,
     _identify_language,
@@ -1045,20 +1048,25 @@ class TestErrorResponses:
         )
 
     @pytest.mark.parametrize(
-        "identified_lang_str,should_error,expected_error_type",
+        "identified_lang_str,identified_script_str,should_error,expected_error_type",
         [
-            ("ENGLISH", False, None),
-            ("HINDI", False, None),
-            ("UNINTELLIGIBLE", True, ErrorType.UNINTELLIGIBLE_INPUT),
-            ("GIBBERISH", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("UNSUPPORTED", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("SOME_UNSUPPORTED_LANG", True, ErrorType.UNSUPPORTED_LANGUAGE),
-            ("don't kow", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("ENGLISH", "LATIN", False, None),
+            ("HINDI", "DEVANAGARI", False, None),
+            ("UNINTELLIGIBLE", "LATIN", True, ErrorType.UNINTELLIGIBLE_INPUT),
+            ("UNINTELLIGIBLE", "UNKNOWN", True, ErrorType.UNINTELLIGIBLE_INPUT),
+            ("ENGLISH", "UNKNOWN", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("ENGLISH", "Some unsupported script", True, ErrorType.UNSUPPORTED_SCRIPT),
+            ("GIBBERISH", "UNKNOWN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("GIBBERISH", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("UNSUPPORTED", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("SOME_UNSUPPORTED_LANG", "UNKNOWN", True, ErrorType.UNSUPPORTED_LANGUAGE),
+            ("don't kow", "LATIN", True, ErrorType.UNSUPPORTED_LANGUAGE),
         ],
     )
     async def test_language_identify_error(
         self,
         identified_lang_str: str,
+        identified_script_str: str,
         should_error: bool,
         expected_error_type: ErrorType,
         monkeypatch: pytest.MonkeyPatch,
@@ -1084,6 +1092,7 @@ class TestErrorResponses:
             generate_llm_response=False,
             generate_tts=False,
             original_language=None,
+            original_script=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
             workspace_id=124,
@@ -1104,10 +1113,12 @@ class TestErrorResponses:
             Returns
             -------
             str
-                The identified language string.
+                The identified language and script model json string.
             """
 
-            return identified_lang_str
+            return f"""
+            {{"language": "{identified_lang_str}", "script": "{identified_script_str}"}}
+            """.strip()
 
         monkeypatch.setattr(
             "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
@@ -1233,6 +1244,7 @@ class TestErrorResponses:
             generate_llm_response=False,
             generate_tts=False,
             original_language=None,
+            original_script=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
             workspace_id=124,
