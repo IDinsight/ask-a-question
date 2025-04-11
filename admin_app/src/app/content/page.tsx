@@ -163,25 +163,52 @@ const CardsPage = () => {
   };
 
   const handleDelete = async (selectedContents: number[]) => {
-    const promises = selectedContents.map((content_id) =>
-      archiveContent(content_id, token!),
-    );
+    const BATCH_SIZE = 20;
+    let successCount = 0;
+    let failedContentIds: number[] = [];
+
     try {
-      await Promise.all(promises);
-      setSnackMessage({
-        message: `Deleted ${selectedContents.length} content${
-          selectedContents.length > 1 ? "s" : ""
-        }`,
-        color: "success",
-      });
+      for (let i = 0; i < selectedContents.length; i += BATCH_SIZE) {
+        const batch = selectedContents.slice(i, i + BATCH_SIZE);
+
+        const results = await Promise.all(
+          batch.map(async (content_id) => {
+            try {
+              await archiveContent(content_id, token!);
+              successCount++;
+              return { success: true, content_id };
+            } catch (error) {
+              console.error(`Failed to delete content ID ${content_id}:`, error);
+              failedContentIds.push(content_id);
+              return { success: false, content_id };
+            }
+          }),
+        );
+      }
+
+      if (failedContentIds.length === 0) {
+        setSnackMessage({
+          message: `Successfully deleted ${successCount} content${
+            successCount > 1 ? "s" : ""
+          }`,
+          color: "success",
+        });
+      } else {
+        setSnackMessage({
+          message: `Deleted ${successCount} content${
+            successCount > 1 ? "s" : ""
+          }, failed to delete ${failedContentIds.length}`,
+          color: "warning",
+        });
+      }
     } catch (error) {
-      console.error("Failed to delete content:", error);
+      console.error("Unexpected error during batch deletion:", error);
       setSnackMessage({
-        message: `Failed to delete content`,
+        message: "An unexpected error occurred during deletion",
         color: "error",
       });
     } finally {
-      setSelectedContents([]);
+      setSelectedContents(failedContentIds);
       setOpenBulkDeleteModal(false);
       setRefreshKey((prevKey) => prevKey + 1);
     }
