@@ -13,7 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    String,
+    Text,
     delete,
     false,
     select,
@@ -64,8 +64,8 @@ class ContentDB(Base):
     content_tags = relationship(
         "TagDB", secondary=content_tags_table, back_populates="contents"
     )
-    content_text: Mapped[str] = mapped_column(String(length=2000), nullable=False)
-    content_title: Mapped[str] = mapped_column(String(length=150), nullable=False)
+    content_text: Mapped[str] = mapped_column(Text, nullable=False)
+    content_title: Mapped[str] = mapped_column(Text, nullable=False)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -113,6 +113,7 @@ async def save_content_to_db(
     content: ContentCreate,
     exclude_archived: bool = False,
     workspace_id: int,
+    commit: bool = True,
 ) -> ContentDB:
     """Vectorize the content and save to the database.
 
@@ -126,6 +127,9 @@ async def save_content_to_db(
         Specifies whether to exclude archived content.
     workspace_id
         The ID of the workspace to save the content to.
+    commit
+        Specifies whether to commit the changes to the database.
+        If `False`, the changes will not be committed.
 
     Returns
     -------
@@ -134,7 +138,6 @@ async def save_content_to_db(
     """
 
     metadata = {
-        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "save_content_to_db",
     }
 
@@ -157,8 +160,9 @@ async def save_content_to_db(
     )
     asession.add(content_db)
 
-    await asession.commit()
-    await asession.refresh(content_db)
+    if commit:
+        await asession.commit()
+        await asession.refresh(content_db)
 
     result = await get_content_from_db(
         asession=asession,
@@ -199,7 +203,6 @@ async def update_content_in_db(
     """
 
     metadata = {
-        "trace_workspace_id": "workspace_id-" + str(workspace_id),
         "generation_name": "update_content_in_db",
     }
 
@@ -423,9 +426,6 @@ async def get_similar_content_async(
         A dictionary of similar content items if they exist, otherwise an empty
         dictionary.
     """
-
-    metadata = metadata or {}
-    metadata["generation_name"] = "get_similar_content_async"
 
     question_embedding = await embedding(metadata=metadata, text_to_embed=question)
 

@@ -53,7 +53,6 @@ import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
 import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { set } from "date-fns";
 
 export interface Tag {
   tag_id: number;
@@ -280,7 +279,7 @@ const CardsPage = () => {
                 <Typography variant="body1" align="left" color={appColors.darkGrey}>
                   Add, edit, and test content for question-answering. Questions sent to
                   the search service will retrieve results from here.
-                  <p />
+                  <br />
                   Content limit is 50.{" "}
                   <a
                     href="https://docs.ask-a-question.com/latest/contact_us/"
@@ -423,21 +422,30 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 
     const fetchIndexingStatus = async () => {
       if (token) {
-        const data = await getIndexingStatus(token);
-        setShowIndexButton(data === true || data === false);
-        setIsJobRunning(data === true);
+        try {
+          const data = await getIndexingStatus(token);
+          setShowIndexButton(data === true || data === false);
+          setIsJobRunning(data === true);
 
-        if (data === true && !pollingInterval) {
-          pollingInterval = setInterval(async () => {
-            const status = await getIndexingStatus(token);
-            if (status === false) {
-              setIsJobRunning(false);
-              if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
+          if (data === true && !pollingInterval) {
+            pollingInterval = setInterval(async () => {
+              const status = await getIndexingStatus(token);
+              if (status === false) {
+                setIsJobRunning(false);
+                if (pollingInterval) {
+                  clearInterval(pollingInterval);
+                  pollingInterval = null;
+                }
               }
-            }
-          }, 3000);
+            }, 3000);
+          }
+        } catch (error) {
+          const error_message = error as CustomError;
+          setSnackMessage({
+            message: error_message.message || "Error fetching indexing status",
+            color: "info",
+          });
+          console.error("Error fetching indexing status", error);
         }
       }
     };
@@ -486,7 +494,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
         <Box sx={{ width: "200px" }}>
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </Box>
-        <Box sx={{ minWidth: "130px" }}>
+        <Box sx={{ minWidth: "200px" }}>
           <TagsFilter
             tags={tags}
             filterTags={filterTags}
@@ -609,6 +617,9 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
 };
 
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+  const truncateTagName = (tagName: string): string => {
+    return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
+  };
   return (
     <Autocomplete
       multiple
@@ -616,7 +627,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       limitTags={1}
       id="tags-autocomplete"
       options={tags}
-      getOptionLabel={(option) => option.tag_name}
+      getOptionLabel={(option) => truncateTagName(option.tag_name)}
       noOptionsText="No tags found"
       value={filterTags}
       onChange={(event, updatedTags) => {
@@ -625,6 +636,15 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       renderInput={(params) => (
         <TextField {...params} variant="standard" label="Filter tags" />
       )}
+      ListboxProps={{
+        sx: {
+          maxWidth: "300px",
+          "& .MuiAutocomplete-option": {
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          },
+        },
+      }}
       sx={{ color: appColors.white }}
     />
   );
@@ -822,18 +842,15 @@ const CardsGrid = ({
                 height: "100%",
                 width: "100%",
                 padding: sizes.doubleBaseGap,
+                gap: 2,
               }}
             >
-              <p>
-                <Typography variant="h6" color={appColors.darkGrey}>
-                  No content found.
-                </Typography>
-              </p>
-              <p>
-                <Typography variant="body1" color={appColors.darkGrey}>
-                  Try adding new content or changing your search or tag filters.
-                </Typography>
-              </p>
+              <Typography variant="h6" color={appColors.darkGrey}>
+                No content found.
+              </Typography>
+              <Typography variant="body1" color={appColors.darkGrey}>
+                Try adding new content or changing your search or tag filters.
+              </Typography>
             </Box>
           ) : (
             cards

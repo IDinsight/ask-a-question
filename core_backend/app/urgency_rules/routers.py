@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
@@ -32,6 +33,7 @@ logger = setup_logger(name=__name__)
 
 
 @router.post("/", response_model=UrgencyRuleRetrieve)
+@observe()
 async def create_urgency_rule(
     urgency_rule: UrgencyRuleCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -84,6 +86,13 @@ async def create_urgency_rule(
             asession=asession,
             urgency_rule=urgency_rule,
             workspace_id=workspace_db.workspace_id,
+        )
+        langfuse_context.update_current_trace(
+            name="create_urgency_rule",
+            metadata={
+                "urgency_rule_id": urgency_rule_db.urgency_rule_id,
+                "workspace_id": workspace_db.workspace_id,
+            },
         )
     except EmbeddingCallException as e:
         raise HTTPException(
@@ -200,6 +209,7 @@ async def delete_urgency_rule(
 
 
 @router.put("/{urgency_rule_id}", response_model=UrgencyRuleRetrieve)
+@observe()
 async def update_urgency_rule(
     urgency_rule_id: int,
     urgency_rule: UrgencyRuleCreate,
@@ -267,6 +277,13 @@ async def update_urgency_rule(
             urgency_rule=urgency_rule,
             urgency_rule_id=urgency_rule_id,
             workspace_id=workspace_id,
+        )
+        langfuse_context.update_current_trace(
+            name="update_urgency_rule",
+            metadata={
+                "urgency_rule_id": urgency_rule_db.urgency_rule_id,
+                "workspace_id": workspace_db.workspace_id,
+            },
         )
     except EmbeddingCallException as e:
         raise HTTPException(

@@ -2,6 +2,19 @@ import api, { handleApiError } from "@/utils/api";
 
 type IndexingStatusResponse = boolean | { detail: string };
 
+export interface DocIndexingTask {
+  error_trace: string;
+  finished_datetime_utc: string;
+  upload_id: string;
+  user_id: number;
+  workspace_id: number;
+  parent_file_name: string;
+  created_datetime_utc: string;
+  task_id: string;
+  doc_name: string;
+  task_status: string;
+}
+
 export interface DocIndexingStatusRow {
   fileName: string;
   status: "Ongoing" | "Done" | "Error";
@@ -9,6 +22,7 @@ export interface DocIndexingStatusRow {
   errorTrace: string;
   created_at: string;
   finished_at: string;
+  tasks: DocIndexingTask[];
 }
 
 interface ContentBody {
@@ -16,6 +30,19 @@ interface ContentBody {
   content_text: string;
   content_metadata: Record<string, unknown>;
 }
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+};
 const getContentList = async ({
   token,
   skip = 0,
@@ -164,7 +191,9 @@ const deleteTag = async (tag_id: number, token: string) => {
   }
 };
 
-const getIndexingStatus = async (token: string): Promise<IndexingStatusResponse> => {
+const getIndexingStatus = async (
+  token: string,
+): Promise<IndexingStatusResponse | undefined> => {
   try {
     const response = await api.get("/docmuncher/status/is_job_running", {
       headers: { Authorization: `Bearer ${token}` },
@@ -176,7 +205,8 @@ const getIndexingStatus = async (token: string): Promise<IndexingStatusResponse>
       throw new Error("Unexpected response status");
     }
   } catch (error) {
-    throw new Error("Error fetching indexing status");
+    let errorMessage = "Error fetching indexing status";
+    handleApiError(error, errorMessage);
   }
 };
 
@@ -199,24 +229,11 @@ const postDocumentToIndex = async (file: File, token: string) => {
 
 const getDocIndexingStatusData = async (
   token: string,
-): Promise<DocIndexingStatusRow[]> => {
+): Promise<DocIndexingStatusRow[] | undefined> => {
   try {
     const response = await api.get("/docmuncher/status/data", {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    const formatDate = (dateString: string) => {
-      if (!dateString) return "—";
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }).format(date);
-    };
 
     return response.data
       .map((entry: any) => ({
@@ -231,17 +248,20 @@ const getDocIndexingStatusData = async (
         errorTrace: entry.error_trace || "",
         created_at: formatDate(entry.created_datetime_utc),
         finished_at: formatDate(entry.finished_datetime_utc),
+        tasks: (entry.tasks as DocIndexingTask[]) || [],
       }))
       .sort(
         (a: DocIndexingStatusRow, b: DocIndexingStatusRow) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   } catch (error) {
-    throw new Error("Error fetching indexing status");
+    let errorMessage = "Error fetching indexing status";
+    handleApiError(error, errorMessage);
   }
 };
 
 export {
+  formatDate,
   getContentList,
   getContent,
   archiveContent,

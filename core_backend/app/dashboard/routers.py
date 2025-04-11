@@ -2,6 +2,7 @@
 
 import json
 import os
+import random
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal, Optional
 
@@ -16,6 +17,7 @@ from fastapi import (
     Request,
     status,
 )
+from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_workspace_name
@@ -119,6 +121,7 @@ async def retrieve_content_details(
     "/performance/{timeframe}/{content_id}/ai-summary",
     response_model=AIFeedbackSummary,
 )
+@observe()
 async def retrieve_content_ai_summary(
     content_id: int,
     timeframe: DashboardTimeFilter,
@@ -168,6 +171,14 @@ async def retrieve_content_ai_summary(
         max_feedback_records=int(MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY),
         start_date=start_dt,
         workspace_id=workspace_db.workspace_id,
+    )
+
+    langfuse_context.update_current_trace(
+        name="content_feedback_summary",
+        session_id=create_session_id(
+            f"content_{content_id}_feedback", start_dt, end_dt
+        ),
+        metadata={"content_id": content_id, "workspace_id": workspace_db.workspace_id},
     )
 
     return AIFeedbackSummary(ai_summary=ai_summary)
@@ -512,6 +523,7 @@ def get_freq_start_end_date(
             raise ValueError(f"Invalid time frequency: {timeframe}")
 
 
+@observe()
 async def refresh_insights(
     *,
     end_date: date,
@@ -571,6 +583,12 @@ async def refresh_insights(
                 content_data=content_data,
                 query_data=time_period_queries,
                 workspace_id=workspace_db.workspace_id,
+            )
+
+            langfuse_context.update_current_trace(
+                name="topic_modeling",
+                session_id=create_session_id("topic_modeling", start_date, end_date),
+                metadata={"workspace_id": workspace_db.workspace_id},
             )
 
             step = "Write to Redis"
@@ -704,3 +722,14 @@ async def retrieve_performance(
         workspace_id=workspace_id,
     )
     return DashboardPerformance(content_time_series=content_time_series)
+
+
+def create_session_id(
+    prefix: str, start_dt: date | datetime, end_dt: date | datetime
+) -> str:
+    return (
+        prefix
+        + "-"
+        + f"{start_dt:%Y%m%d_%H%M%S}-{end_dt:%Y%m%d_%H%M%S}-"
+        + f"{random.randint(0, 1000):04}"
+    )

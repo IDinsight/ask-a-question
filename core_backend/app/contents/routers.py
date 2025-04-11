@@ -6,6 +6,7 @@ import pandas as pd
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
+from langfuse.decorators import observe  # type: ignore
 from pandas.errors import EmptyDataError, ParserError
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -63,6 +64,7 @@ class ExceedsContentQuotaError(Exception):
 
 
 @router.post("/", response_model=ContentRetrieve)
+@observe()
 async def create_content(
     content: ContentCreate,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
@@ -164,6 +166,7 @@ async def create_content(
 
 
 @router.put("/{content_id}", response_model=ContentRetrieve)
+@observe()
 async def edit_content(
     content_id: int,
     content: ContentCreate,
@@ -994,7 +997,7 @@ def _extract_unique_tags(*, tags_col: pd.Series) -> list[str]:
     tags_flat = tags_flat.str.strip().str.upper()
 
     # Get unique tags as a list.
-    tags_unique_list = tags_flat.unique().tolist()
+    tags_unique_list = list(tags_flat.unique())
 
     return tags_unique_list
 
@@ -1018,8 +1021,8 @@ def _get_tags_not_in_db(
         List of tags not in the database.
     """
 
-    tags_in_db_list = [tag_json.tag_name for tag_json in tags_in_db]
-    tags_not_in_db_list = list(set(incoming_tags) - set(tags_in_db_list))
+    tags_in_db_list: list[str] = [tag_json.tag_name for tag_json in tags_in_db]
+    tags_not_in_db_list: list[str] = list(set(incoming_tags) - set(tags_in_db_list))
 
     return tags_not_in_db_list
 
