@@ -114,7 +114,8 @@ async def _identify_language(
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         metadata=metadata,
         system_message=LANGUAGE_ID_PROMPT,
-        user_message=query_refined.query_text,
+        # Always use the original query text for language and script detection
+        user_message=query_refined.query_text_original,
     )
 
     cleaned_json_str = remove_json_markdown(text=json_str)
@@ -256,9 +257,10 @@ def translate_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        query_refined, response = await _translate_question(
-            query_refined=query_refined, response=response
-        )
+        if not query_refined.chat_query_params:
+            query_refined, response = await _translate_question(
+                query_refined=query_refined, response=response
+            )
         response = await func(query_refined, response, *args, **kwargs)
 
         return response
@@ -492,9 +494,11 @@ def paraphrase_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        query_refined, response = await _paraphrase_question(
-            query_refined=query_refined, response=response
-        )
+        if not query_refined.chat_query_params:
+            query_refined, response = await _paraphrase_question(
+                query_refined=query_refined, response=response
+            )
+
         response = await func(query_refined, response, *args, **kwargs)
 
         return response

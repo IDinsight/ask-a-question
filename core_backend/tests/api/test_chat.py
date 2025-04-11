@@ -85,6 +85,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
             chat_query_params["chat_cache_key"] == f"chatCache:{user_query.session_id}"
         )
         assert chat_query_params["message_type"] == "NEW"
+        assert chat_query_params["search_query"] == "stomachache and possible remedies"
 
 
 async def test__ask_llm_async() -> None:
