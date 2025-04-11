@@ -844,6 +844,13 @@ async def get_user_query_and_response(
         workspace_id=workspace_id,
     )
 
+    # In case of a chat query, use the optimized query as the base query_text.
+    # Note that for language identification, we use query_text_original.
+    if user_query_refined.chat_query_params:
+        user_query_refined.query_text = user_query_refined.chat_query_params.pop(
+            "search_query"
+        )
+
     # Prepare the placeholder response object.
     response_template = QueryResponse(
         debug_info={},
@@ -1072,6 +1079,7 @@ async def init_user_query_and_chat_histories(
         "chat_history": user_assistant_chat_history,
         "chat_params": chat_params,
         "message_type": search_query_json_response["message_type"],
+        "search_query": search_query_json_response["query"],
         "redis_client": redis_client,
         "session_id": session_id,
     }

@@ -268,7 +268,9 @@ class ChatHistory:
 
             {{
                 "message_type": "The type of the user's LATEST MESSAGE. List of valid
-                options are: {valid_message_types}"
+                options are: {valid_message_types}",
+                "query": "The vector database query that you have constructed based on
+                the user's LATEST MESSAGE and the conversation history."
             }}
 
             Do NOT attempt to answer the user's question/concern. Only output the JSON
@@ -283,6 +285,7 @@ class ChatHistory:
         """Pydantic model for the output of the construct search query chat history."""
 
         message_type: Literal["FOLLOW-UP", "NEW"]
+        query: str
 
     @staticmethod
     def parse_json(*, chat_type: Literal["search"], json_str: str) -> dict[str, str]:
