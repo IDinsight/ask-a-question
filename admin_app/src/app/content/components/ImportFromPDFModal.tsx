@@ -13,8 +13,9 @@ import {
 import { useDropzone } from "react-dropzone";
 import { Layout } from "@/components/Layout";
 import { LoadingButton } from "@mui/lab";
-import { postDocumentToIndex } from "../api";
+import { usePostDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
+import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
 
 interface CustomError {
   type: string;
@@ -31,11 +32,13 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   onClose,
 }) => {
   const { token } = useAuth();
+  const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
+  const { mutate: postDocumentToIndex } = usePostDocumentToIndex(token!);
 
   useEffect(() => {
     if (!open) {
@@ -80,59 +83,36 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
       setImportErrorMessages([]);
       // add artificial delay to show loading spinner (for UX)
       await new Promise((resolve) => setTimeout(resolve, 500));
-      try {
-        const response = await postDocumentToIndex(files[0], token!);
-        if (response.status === 200) {
-          setImportSuccess(true);
-          setFiles([]);
-        } else {
-          console.error("Error uploading file:", response.detail);
-          if (response.detail.errors) {
-            const errorDescriptions = response.detail.errors.map(
-              (error: CustomError) => error.description,
-            );
-            setImportErrorMessages(errorDescriptions);
-          } else {
+      postDocumentToIndex(
+        { file: files[0] },
+        {
+          onSuccess: () => {
+            setImportSuccess(true);
+            setFiles([]);
+          },
+          onError: (error) => {
             setImportErrorMessages(["An unknown error occurred"]);
-          }
-        }
-      } catch (error) {
-        console.error("Error during import:", error);
-        setImportErrorMessages([
-          "An unexpected error occurred. Please try again later.",
-        ]);
-      } finally {
-        setLoading(false);
-        setFiles([]);
-      }
+          },
+          onSettled: () => {
+            setLoading(false);
+          },
+        },
+      );
     } else {
-      console.error("No file selected");
       setImportErrorMessages(["No file selected"]);
     }
   };
 
-  // modal auto-close after successful import
-  useEffect(() => {
-    let timerId: NodeJS.Timeout;
-    if (importSuccess) {
-      timerId = setTimeout(() => {
-        onClose();
-        window.location.reload();
-      }, 1000);
-    }
-    return () => clearTimeout(timerId);
-  }, [importSuccess]);
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle id="import-pdf-dialog-title">
-        Import New Content From PDF
+        Generate New Content From PDF
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="import-pdf-dialog-description">
           <Typography>
-            You can use this feature to import new contents from PDF files into AAQ. The
-            system will automatically create cards from file content.
+            You can use this feature to generate new contents from PDF files into AAQ.
+            The system will automatically create cards from file content.
           </Typography>
           <p>
             ⚠️ Maximum file size is 100MB.
@@ -203,23 +183,45 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
         {importSuccess && (
           <>
             <Layout.Spacer multiplier={2} />
-            <Alert variant="standard" severity="success">
-              File uploaded successfully!
+            <Alert
+              variant="standard"
+              severity="success"
+              action={
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      onClose();
+                      setOpenIndexHistoryModal(true);
+                    }}
+                  >
+                    Check Status
+                  </Button>
+                </Box>
+              }
+            >
+              Card generation task successfully started!
             </Alert>
           </>
         )}
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <LoadingButton
-          variant="contained"
-          disabled={files.length === 0 || loading || !!error}
-          autoFocus
-          loading={loading}
-          onClick={handleSubmit}
-        >
-          {importSuccess ? "Imported" : "Import"}
-        </LoadingButton>
+        {!importSuccess && (
+          <>
+            <LoadingButton
+              variant="contained"
+              disabled={files.length === 0 || loading || !!error}
+              autoFocus
+              loading={loading}
+              onClick={handleSubmit}
+            >
+              Import
+            </LoadingButton>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

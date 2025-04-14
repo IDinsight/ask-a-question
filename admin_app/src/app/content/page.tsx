@@ -44,17 +44,25 @@ import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import { archiveContent, getContentList, getTagList, getIndexingStatus } from "./api";
+import {
+  archiveContent,
+  getContentList,
+  getTagList,
+  useGetIndexingStatus,
+} from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
-import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
+import {
+  CARD_HEIGHT,
+  CARD_MIN_WIDTH,
+  ContentCard,
+} from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
 import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
 import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
-import { search } from "@bokeh/bokehjs/build/js/lib/core/dom";
-
+import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
 interface TagsFilterProps {
   tags: Tag[];
   filterTags: Tag[];
@@ -97,7 +105,7 @@ interface CardsGridProps {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label,
+    LANGUAGE_OPTIONS[0].label
   );
 
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -117,7 +125,8 @@ const CardsPage = () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
-  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] =
+    React.useState<boolean>(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -176,11 +185,14 @@ const CardsPage = () => {
               successCount++;
               return { success: true, content_id };
             } catch (error) {
-              console.error(`Failed to delete content ID ${content_id}:`, error);
+              console.error(
+                `Failed to delete content ID ${content_id}:`,
+                error
+              );
               failedContentIds.push(content_id);
               return { success: false, content_id };
             }
-          }),
+          })
         );
       }
 
@@ -219,14 +231,20 @@ const CardsPage = () => {
           setAllCards(data);
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+              card.content_title
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+              card.content_text
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
 
             const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id),
+              card.content_tags.includes(fTag.tag_id)
             );
 
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+            return (
+              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
+            );
           });
 
           setCards(filteredData);
@@ -305,9 +323,13 @@ const CardsPage = () => {
                 <Typography variant="h4" align="left" color="primary">
                   Question Answering
                 </Typography>
-                <Typography variant="body1" align="left" color={appColors.darkGrey}>
-                  Add, edit, and test content for question-answering. Questions sent to
-                  the search service will retrieve results from here.
+                <Typography
+                  variant="body1"
+                  align="left"
+                  color={appColors.darkGrey}
+                >
+                  Add, edit, and test content for question-answering. Questions
+                  sent to the search service will retrieve results from here.
                   <br />
                   Content limit is 50.{" "}
                   <a
@@ -441,53 +463,11 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
   handleDelete,
 }) => {
-  const { token } = useAuth();
-  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
-  const [openIndexHistoryModal, setOpenIndexHistoryModal] = React.useState(false);
-  const [showIndexButton, setShowIndexButton] = React.useState(false);
-  const [isJobRunning, setIsJobRunning] = React.useState(false);
+  const [openDownloadModal, setOpenDownloadModal] =
+    React.useState<boolean>(false);
+  const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
 
-  React.useEffect(() => {
-    let pollingInterval: NodeJS.Timeout | null = null;
-
-    const fetchIndexingStatus = async () => {
-      if (token) {
-        try {
-          const data = await getIndexingStatus(token);
-          setShowIndexButton(data === true || data === false);
-          setIsJobRunning(data === true);
-
-          if (data === true && !pollingInterval) {
-            pollingInterval = setInterval(async () => {
-              const status = await getIndexingStatus(token);
-              if (status === false) {
-                setIsJobRunning(false);
-                if (pollingInterval) {
-                  clearInterval(pollingInterval);
-                  pollingInterval = null;
-                }
-              }
-            }, 3000);
-          }
-        } catch (error) {
-          const error_message = error as CustomError;
-          console.error("Error fetching indexing status:", error);
-          setSnackMessage({
-            message: error_message.message || "Error fetching indexing status",
-            color: "info",
-          });
-        }
-      }
-    };
-
-    fetchIndexingStatus();
-
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [token]);
+  const { data } = useGetIndexingStatus();
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -585,7 +565,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
-        {showIndexButton && (
+        {typeof data === "boolean" && (
           <>
             <Button
               variant="outlined"
@@ -595,15 +575,14 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 setOpenIndexHistoryModal(true);
               }}
               startIcon={
-                isJobRunning ? <CircularProgress size={12} color="inherit" /> : null
+                data === true ? (
+                  <CircularProgress size={12} color="inherit" />
+                ) : null
               }
             >
-              {isJobRunning ? "Indexing" : "Indexing History"}
+              {data === true ? "Processing PDF" : "PDF Upload Status"}
             </Button>
-            <IndexingStatusModal
-              open={openIndexHistoryModal}
-              onClose={() => setOpenIndexHistoryModal(false)}
-            />
+            <IndexingStatusModal />
           </>
         )}
         <Tooltip title="Download all contents">
@@ -646,7 +625,11 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   );
 };
 
-const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({
+  tags,
+  filterTags,
+  setFilterTags,
+}) => {
   const truncateTagName = (tagName: string): string => {
     return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
   };
@@ -680,7 +663,9 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
   );
 };
 
-const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({
+  editAccess,
+}) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openCSVModal, setOpenCSVModal] = useState(false);
@@ -723,11 +708,17 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
             setOpenPDFModal(true);
           }}
         >
-          Transform PDFs to cards
+          Generate cards from PDF
         </MenuItem>
       </Menu>
-      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
-      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
+      <ImportFromCSVModal
+        open={openCSVModal}
+        onClose={() => setOpenCSVModal(false)}
+      />
+      <ImportFromPDFModal
+        open={openPDFModal}
+        onClose={() => setOpenPDFModal(false)}
+      />
     </>
   );
 };
@@ -751,7 +742,7 @@ const CardsGrid = ({
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
   const [maxPages, setMaxPages] = React.useState<number>(
-    Math.ceil(cards.length / maxCardsPerPage),
+    Math.ceil(cards.length / maxCardsPerPage)
   );
 
   const [columns, setColumns] = React.useState<number>(1);
@@ -775,7 +766,10 @@ const CardsGrid = ({
     const gridWidth = gridRef.current.clientWidth;
     const gridHeight = gridRef.current.clientHeight;
     // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
-    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
+    const newColumns = Math.max(
+      1,
+      Math.floor(gridWidth / (CARD_MIN_WIDTH + 10))
+    );
     const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
     const maxCards = rows * newColumns;
 
@@ -800,7 +794,9 @@ const CardsGrid = ({
   }, [cards]);
 
   const getRelatedContent = (content_ids: number[]) => {
-    return allCards.filter((content) => content_ids.includes(content.content_id!));
+    return allCards.filter((content) =>
+      content_ids.includes(content.content_id!)
+    );
   };
 
   const onSuccessfulArchive = (content_id: number) => {
@@ -909,17 +905,19 @@ const CardsGrid = ({
                         tags={
                           tags
                             ? tags.filter((tag) =>
-                                item.content_tags.includes(tag.tag_id),
+                                item.content_tags.includes(tag.tag_id)
                               )
                             : []
                         }
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
-                        related_contents={getRelatedContent(item.related_contents_id)}
+                        related_contents={getRelatedContent(
+                          item.related_contents_id
+                        )}
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(
                           content_id: number,
-                          error_message: string,
+                          error_message: string
                         ) => {
                           setSnackMessage({
                             message: error_message,
@@ -1082,7 +1080,11 @@ const ConfirmDeleteModal: React.FC<{
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <DeleteIcon />
-              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
+              <Typography
+                id="confirm-delete-modal-title"
+                variant="h6"
+                component="h2"
+              >
                 Confirm Deletion
               </Typography>
             </Box>

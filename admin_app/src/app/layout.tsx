@@ -5,6 +5,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import { inter } from "@/fonts";
+import QueryProvider from "@/utils/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Ask A Question",
@@ -22,12 +23,14 @@ export default function RootLayout({
         <PublicEnvScript />
       </head>
       <body className={inter.className}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Suspense>
-            <AuthProvider>{children}</AuthProvider>
-          </Suspense>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Suspense>
+              <AuthProvider>{children}</AuthProvider>
+            </Suspense>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
