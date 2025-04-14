@@ -9,10 +9,26 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
-import { Tag } from "@/app/content/page";
 import { CustomError } from "@/utils/api";
+import { Content, Tag } from "../types";
 
-const ContentViewModal = ({
+interface ContentViewModalProps {
+  title: string;
+  text: string;
+  content_id: number;
+  display_number: number;
+  last_modified: string;
+  tags: Tag[];
+  related_contents: Content[];
+  positive_votes: number;
+  negative_votes: number;
+  open: boolean;
+  onClose: () => void;
+  editAccess: boolean;
+  onRelatedContentClick: (content: Content) => void;
+}
+
+const ContentViewModal: React.FC<ContentViewModalProps> = ({
   title,
   text,
   content_id,
@@ -21,21 +37,11 @@ const ContentViewModal = ({
   negative_votes,
   last_modified,
   tags,
+  related_contents,
   open,
   onClose,
   editAccess,
-}: {
-  title: string;
-  text: string;
-  content_id: number;
-  display_number: number;
-  last_modified: string;
-  tags: Tag[];
-  positive_votes: number;
-  negative_votes: number;
-  open: boolean;
-  onClose: () => void;
-  editAccess: boolean;
+  onRelatedContentClick,
 }) => {
   return (
     <Modal
@@ -88,10 +94,11 @@ const ContentViewModal = ({
               </Layout.FlexBox>
             </Layout.FlexBox>
           )}
+
           <Layout.FlexBox
             flexDirection={"column"}
             sx={{
-              maxHeight: "60vh", // this controls overall modal height too
+              maxHeight: "60vh",
               padding: sizes.baseGap,
               marginTop: 1,
               overflowY: "auto",
@@ -113,6 +120,38 @@ const ContentViewModal = ({
               <ReactMarkdown>{text}</ReactMarkdown>
             </Typography>
           </Layout.FlexBox>
+          {related_contents && related_contents.length > 0 && (
+            <Layout.FlexBox
+              flexDirection={"column"}
+              sx={{
+                my: sizes.smallGap,
+              }}
+            >
+              <Typography variant="subtitle1" gutterBottom>
+                Related Contents
+              </Typography>
+              <Layout.FlexBox
+                sx={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  py: sizes.smallGap,
+                  alignItems: "center",
+                  gap: sizes.smallGap,
+                }}
+              >
+                {related_contents.map((content) => (
+                  <Chip
+                    key={content.content_id}
+                    variant="outlined"
+                    onClick={() => {
+                      onRelatedContentClick(content);
+                    }}
+                    label={content.content_title}
+                  />
+                ))}
+              </Layout.FlexBox>
+            </Layout.FlexBox>
+          )}
           <Layout.FlexBox
             sx={{
               flexDirection: "row",
@@ -169,20 +208,22 @@ const ContentViewModal = ({
   );
 };
 
-const ArchiveContentModal = ({
-  content_id,
-  open,
-  onClose,
-  onSuccessfulArchive,
-  onFailedArchive,
-  archiveContent,
-}: {
+interface ArchiveContentModalProps {
   content_id: number;
   open: boolean;
   onClose: () => void;
   onSuccessfulArchive: (content_id: number) => void;
   onFailedArchive: (content_id: number, error_message: string) => void;
   archiveContent: (content_id: number) => Promise<any>;
+}
+
+const ArchiveContentModal: React.FC<ArchiveContentModalProps> = ({
+  content_id,
+  open,
+  onClose,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
 }) => {
   return (
     <Dialog
@@ -204,13 +245,12 @@ const ArchiveContentModal = ({
         <Button
           onClick={() => {
             const handleArchiveContent = async (content_id: number) => {
-              const results = archiveContent(content_id)
+              archiveContent(content_id)
                 .then((res) => {
                   onSuccessfulArchive(content_id);
                 })
                 .catch((err) => {
                   const customError = err as CustomError;
-                  console.log("error", customError.message);
                   onFailedArchive(content_id, customError.message);
                 });
             };

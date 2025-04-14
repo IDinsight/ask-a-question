@@ -19,6 +19,7 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.dialects.postgresql import ARRAY  # or JSON
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
@@ -74,6 +75,9 @@ class ContentDB(Base):
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    related_contents_id: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), nullable=False, default=list
+    )
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -156,6 +160,7 @@ async def save_content_to_db(
         display_number=latest_display_number + 1,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        related_contents_id=content.related_contents_id,
         workspace_id=workspace_id,
     )
     asession.add(content_db)
@@ -218,6 +223,7 @@ async def update_content_in_db(
         content_title=content.content_title,
         is_archived=content.is_archived,
         updated_datetime_utc=datetime.now(timezone.utc),
+        related_contents_id=content.related_contents_id,
         workspace_id=workspace_id,
     )
 
@@ -595,3 +601,38 @@ async def get_latest_display_number(
     result = await asession.execute(stmt)
     latest_display_number = result.scalar_one_or_none()
     return latest_display_number or 0
+
+
+async def validate_related_contents(
+    *, asession: AsyncSession, related_contents: list[int], workspace_id: int
+) -> tuple[bool, list[int]]:
+    """Validates related contents to make sure the contents exist in the database.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    tags
+        A list of contents IDs to validate.
+    workspace_id
+        The ID of the workspace that the tags are being created in.
+
+    Returns
+    -------
+    tuple[bool, list[int] | set[int]]
+        A tuple containing a boolean value indicating whether the contents are valid
+         and a list of content IDs.
+    """
+
+    stmt = (
+        select(ContentDB)
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.content_id.in_(related_contents))
+        .where(ContentDB.is_archived == false())
+    )
+    contents_db = (await asession.execute(stmt)).all()
+    content_rows = [c[0] for c in contents_db] if contents_db else []
+    if len(related_contents) != len(content_rows):
+        valid_contents = set([c.content_id for c in content_rows])
+        return False, list(valid_contents)
+    return True, related_contents
