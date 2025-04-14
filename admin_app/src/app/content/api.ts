@@ -219,8 +219,7 @@ const useGetIndexingStatus = () => {
   });
 };
 
-const usePostDocumentToIndex = () => {
-  const { token } = useAuth();
+const usePostDocumentToIndex = (token: string) => {
   const queryClient = useQueryClient();
   return useMutation<DocumentUploadResponse, Error, { file: File }>({
     mutationFn: async ({ file }) => {

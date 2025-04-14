@@ -31,13 +31,14 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   open,
   onClose,
 }) => {
+  const { token } = useAuth();
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
-  const { mutate: postDocumentToIndex } = usePostDocumentToIndex();
+  const { mutate: postDocumentToIndex } = usePostDocumentToIndex(token!);
 
   useEffect(() => {
     if (!open) {
@@ -198,14 +199,6 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
                   >
                     Check Status
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    size="small"
-                    onClick={onClose}
-                  >
-                    Close
-                  </Button>
                 </Box>
               }
             >
@@ -215,9 +208,9 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
         )}
       </DialogContent>
       <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
+        <Button onClick={onClose}>Cancel</Button>
         {!importSuccess && (
           <>
-            <Button onClick={onClose}>Cancel</Button>
             <LoadingButton
               variant="contained"
               disabled={files.length === 0 || loading || !!error}
