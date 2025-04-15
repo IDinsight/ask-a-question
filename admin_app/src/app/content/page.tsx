@@ -63,6 +63,7 @@ import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
+
 interface TagsFilterProps {
   tags: Tag[];
   filterTags: Tag[];
@@ -185,14 +186,11 @@ const CardsPage = () => {
               successCount++;
               return { success: true, content_id };
             } catch (error) {
-              console.error(
-                `Failed to delete content ID ${content_id}:`,
-                error
-              );
+              console.error(`Failed to delete content ID ${content_id}:`, error);
               failedContentIds.push(content_id);
               return { success: false, content_id };
             }
-          })
+          }),
         );
       }
 
@@ -463,8 +461,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
   handleDelete,
 }) => {
-  const [openDownloadModal, setOpenDownloadModal] =
-    React.useState<boolean>(false);
+  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
 
   const { data } = useGetIndexingStatus();
@@ -575,9 +572,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 setOpenIndexHistoryModal(true);
               }}
               startIcon={
-                data === true ? (
-                  <CircularProgress size={12} color="inherit" />
-                ) : null
+                data === true ? <CircularProgress size={12} color="inherit" /> : null
               }
             >
               {data === true ? "Processing PDF" : "PDF Upload Status"}
