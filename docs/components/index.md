@@ -83,4 +83,13 @@ There are 5 main components in Ask-A-Question.
 
     [:octicons-arrow-right-24: More info](./voice-service/index.md)
 
+
+- :material-api:{ .lg .middle .red} __Document Ingestion__
+
+    ---
+
+    _(Optional)_ Supports .pdf or .zip file ingestion to create content cards
+
+    [:octicons-arrow-right-24: More info](./docmuncher/index.md)
+
 </div>
