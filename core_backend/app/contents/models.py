@@ -9,18 +9,22 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     Boolean,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
     Integer,
     Text,
+    column,
     delete,
     false,
     select,
+    true,
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+from sqlalchemy.sql import case
 
 from ..config import (
     PGVECTOR_DISTANCE,
@@ -70,6 +74,17 @@ class ContentDB(Base):
         DateTime(timezone=True), nullable=False
     )
     display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        Computed(
+            case(
+                (column("is_archived") == true(), false()),
+                (column("is_validated") == false(), false()),
+                else_=true(),
+            )
+        ),
+    )
+    is_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
