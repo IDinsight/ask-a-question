@@ -269,6 +269,7 @@ async def retrieve_content(
     skip: int = 0,
     limit: int = 50,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[ContentRetrieve]:
     """Retrieve all contents for the specified workspace.
@@ -283,6 +284,8 @@ async def retrieve_content(
         The maximum number of contents to retrieve.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -291,13 +294,13 @@ async def retrieve_content(
     list[ContentRetrieve]
         The retrieved contents from the specified workspace.
     """
-
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
     records = await get_list_of_content_from_db(
         asession=asession,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         limit=limit,
         offset=skip,
         workspace_id=workspace_db.workspace_id,
@@ -443,6 +446,7 @@ async def retrieve_content_by_id(
     content_id: int,
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """Retrieve content by ID.
@@ -455,6 +459,8 @@ async def retrieve_content_by_id(
         The name of the workspace to retrieve content from.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -468,7 +474,6 @@ async def retrieve_content_by_id(
     HTTPException
         If the content is not found.
     """
-
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
@@ -476,6 +481,7 @@ async def retrieve_content_by_id(
         asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         workspace_id=workspace_db.workspace_id,
     )
 
@@ -494,6 +500,7 @@ async def bulk_upload_contents(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
@@ -511,6 +518,8 @@ async def bulk_upload_contents(
         The name of the workspace to upload the contents to.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -613,6 +622,7 @@ async def bulk_upload_contents(
             asession=asession,
             content=content,
             exclude_archived=exclude_archived,
+            exclude_unvalidated=exclude_unvalidated,
             workspace_id=workspace_id,
         )
         content_retrieve = _convert_record_to_schema(record=content_db)

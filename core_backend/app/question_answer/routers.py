@@ -646,6 +646,7 @@ async def get_search_response(
     request: Request,
     workspace_id: int,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
 ) -> QueryResponse | QueryResponseError:
     """Get similar content and construct the LLM answer for the user query.
 
@@ -671,6 +672,8 @@ async def get_search_response(
         The ID of the workspace that the contents of the search query belong to.
     exclude_archived
         Specifies whether to exclude archived content.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated content.
 
     Returns
     -------
@@ -695,6 +698,7 @@ async def get_search_response(
     search_results = await get_similar_content_async(
         asession=asession,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
         question=query_refined.query_text,  # Use latest transformed version of the text
         workspace_id=workspace_id,

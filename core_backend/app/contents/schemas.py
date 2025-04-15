@@ -19,6 +19,7 @@ class ContentCreate(BaseModel):
         examples=["Example Content Title"],
     )
     is_archived: bool = False
+    is_validated: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 
