@@ -32,6 +32,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ../../admin_app:/app
+      - /app/node_modules
     depends_on:
       - core_backend
     restart: always
