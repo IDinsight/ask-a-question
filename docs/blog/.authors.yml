@@ -23,3 +23,7 @@ authors:
     name: Mustafa
     description: BE Computer Engineering Student
     avatar: https://raw.githubusercontent.com/IDinsight/ask-a-question/VoiceApi/blogpost/docs/blog/author-avatars/mustafa.jpg
+  Tony:
+    name: Tony
+    description: Data Scientist
+    avatar: https://raw.githubusercontent.com/IDinsight/ask-a-question/main/docs/blog/author-avatars/tony.png
