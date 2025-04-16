@@ -163,7 +163,7 @@ const ContentViewModal = ({
                     setRefreshKey((prev) => prev + 1);
                   }}
                 >
-                  Validate
+                  Approve
                 </Button>
                 <Button
                   variant="outlined"
@@ -173,7 +173,7 @@ const ContentViewModal = ({
                     archiveContent(content_id);
                   }}
                 >
-                  Archive
+                  Reject
                 </Button>
               </Layout.FlexBox>
             )}
