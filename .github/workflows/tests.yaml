@@ -14,7 +14,7 @@ env:
   REDIS_HOST: redis://redis:6379
 jobs:
   alembic-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container: node:20.7-bullseye
     services:
       postgres:
