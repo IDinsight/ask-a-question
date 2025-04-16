@@ -49,6 +49,7 @@ const formatDate = (dateString: string) => {
     second: "2-digit",
   }).format(date);
 };
+
 const getContentList = async ({
   token,
   skip = 0,
@@ -210,6 +211,8 @@ const deleteTag = async (tag_id: number, token: string) => {
 };
 
 const useGetIndexingStatus = (token: string) => {
+  const queryClient = useQueryClient();
+
   return useQuery<IndexingStatusResponse>({
     queryKey: ["indexingStatus"],
     queryFn: async () => {
@@ -217,6 +220,7 @@ const useGetIndexingStatus = (token: string) => {
         const response = await api.get("/docmuncher/status/is_job_running", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        queryClient.invalidateQueries({ queryKey: ["unvalidatedCount"] });
         return response.data;
       } catch (error) {
         const errorMessage = "Error fetching indexing status";
