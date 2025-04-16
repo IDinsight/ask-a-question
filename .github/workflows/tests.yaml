@@ -14,7 +14,7 @@ env:
   REDIS_HOST: redis://redis:6379
 jobs:
   alembic-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: node:20.7-bullseye
     services:
       postgres:
@@ -63,7 +63,7 @@ jobs:
           python -m alembic upgrade head
           python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
   unit-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: node:20.7-bullseye
     services:
       postgres:
