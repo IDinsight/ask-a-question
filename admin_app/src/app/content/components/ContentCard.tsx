@@ -203,6 +203,9 @@ const ContentCard = ({
         negative_votes={negative_votes}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
+        setRefreshKey={function (value: React.SetStateAction<number>): void {
+          throw new Error("Function not implemented.");
+        }}
       />
       <ArchiveContentModal
         content_id={content_id}
