@@ -461,6 +461,8 @@ async def get_unvalidated_card_count(
         )
     workspace_id = workspace_db.workspace_id
     count = await get_unvalidated_count(asession=asession, workspace_id=workspace_id)
+    if count is None:
+        return -1
     return count
 
 

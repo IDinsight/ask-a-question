@@ -297,7 +297,9 @@ async def mark_content_as_validated(
     await asession.commit()
 
 
-async def get_unvalidated_count(*, asession: AsyncSession, workspace_id: int) -> int:
+async def get_unvalidated_count(
+    *, asession: AsyncSession, workspace_id: int
+) -> int | None:
     """Get the number of unvalidated content cards"""
 
     stmt = (
