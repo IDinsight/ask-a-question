@@ -331,6 +331,7 @@ async def convert_markdown_chunks_to_cards(
                 content_title=title,
                 content_metadata=metadata,
                 content_tags=content_tags,
+                is_validated=False,
             )
             await save_content_to_db(
                 asession=asession,

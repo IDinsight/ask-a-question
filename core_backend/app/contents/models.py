@@ -9,18 +9,23 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     Boolean,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
     Integer,
     Text,
+    column,
     delete,
     false,
+    func,
     select,
+    true,
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+from sqlalchemy.sql import case
 
 from ..config import (
     PGVECTOR_DISTANCE,
@@ -70,6 +75,17 @@ class ContentDB(Base):
         DateTime(timezone=True), nullable=False
     )
     display_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        Computed(
+            case(
+                (column("is_archived") == true(), false()),
+                (column("is_validated") == false(), false()),
+                else_=true(),
+            )
+        ),
+    )
+    is_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     positive_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     negative_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -101,8 +117,10 @@ class ContentDB(Base):
             f"content_tags={self.content_tags}, "
             f"created_datetime_utc={self.created_datetime_utc}, "
             f"display_number={self.display_number}, "
-            f"is_archived={self.is_archived}), "
-            f"updated_datetime_utc={self.updated_datetime_utc}), "
+            f"is_archived={self.is_archived}, "
+            f"is_validated={self.is_validated}, "
+            f"is_active={self.is_active}, "
+            f"updated_datetime_utc={self.updated_datetime_utc}, "
             f"workspace_id={self.workspace_id}"
         )
 
@@ -153,6 +171,7 @@ async def save_content_to_db(
         content_tags=content.content_tags,
         content_text=content.content_text,
         content_title=content.content_title,
+        is_validated=content.is_validated,
         display_number=latest_display_number + 1,
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
@@ -228,6 +247,7 @@ async def update_content_in_db(
         asession=asession,
         content_id=content_db.content_id,
         exclude_archived=False,  # Don't exclude for newly updated content!
+        exclude_unvalidated=False,
         workspace_id=content_db.workspace_id,
     )
 
@@ -257,6 +277,35 @@ async def archive_content_from_db(
     )
     await asession.execute(stmt)
     await asession.commit()
+
+
+async def mark_content_as_validated(
+    *, asession: AsyncSession, content_id: int, workspace_id: int
+) -> None:
+    """Validate the content card after user verification"""
+    stmt = (
+        update(ContentDB)
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.content_id == content_id)
+        .values(is_validated=True)
+    )
+    await asession.execute(stmt)
+    await asession.commit()
+
+
+async def get_unvalidated_count(
+    *, asession: AsyncSession, workspace_id: int
+) -> int | None:
+    """Get the number of unvalidated content cards"""
+
+    stmt = (
+        select(func.count())
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.is_validated == false())
+        .where(ContentDB.is_archived == false())
+    )
+    count = (await asession.execute(stmt)).scalar()
+    return count
 
 
 async def delete_content_from_db(
@@ -292,6 +341,7 @@ async def get_content_from_db(
     asession: AsyncSession,
     content_id: int,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     workspace_id: int,
 ) -> ContentDB | None:
     """Retrieve content from the database.
@@ -304,6 +354,8 @@ async def get_content_from_db(
         The ID of the content to retrieve.
     exclude_archived
         Specifies whether to exclude archived content.
+    exclude
+        Specifies whether to exclude content based on additional criteria.
     workspace_id
         The ID of the workspace requesting the content.
 
@@ -321,6 +373,8 @@ async def get_content_from_db(
     )
     if exclude_archived:
         stmt = stmt.where(ContentDB.is_archived == false())
+    if exclude_unvalidated:
+        stmt = stmt.where(ContentDB.is_validated == true())
     content_row = (await asession.execute(stmt)).first()
     return content_row[0] if content_row else None
 
@@ -329,6 +383,7 @@ async def get_list_of_content_from_db(
     *,
     asession: AsyncSession,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     limit: Optional[int] = None,
     offset: int = 0,
     workspace_id: int,
@@ -341,6 +396,8 @@ async def get_list_of_content_from_db(
         The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated content.
     limit
         The maximum number of content items to retrieve. If not specified, then all
         content items are retrieved.
@@ -364,6 +421,8 @@ async def get_list_of_content_from_db(
     )
     if exclude_archived:
         stmt = stmt.where(ContentDB.is_archived == false())
+    if exclude_unvalidated:
+        stmt = stmt.where(ContentDB.is_validated == true())
     if offset > 0:
         stmt = stmt.offset(offset)
     if isinstance(limit, int) and limit > 0:
@@ -398,6 +457,7 @@ async def get_similar_content_async(
     *,
     asession: AsyncSession,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     metadata: Optional[dict] = None,
     n_similar: int,
     question: str,
@@ -411,6 +471,8 @@ async def get_similar_content_async(
         The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated content.
     metadata
         The metadata to use for the embedding generation
     n_similar
@@ -432,6 +494,7 @@ async def get_similar_content_async(
     return await get_search_results(
         asession=asession,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         n_similar=n_similar,
         question_embedding=question_embedding,
         workspace_id=workspace_id,
@@ -442,13 +505,15 @@ async def get_search_results(
     *,
     asession: AsyncSession,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     n_similar: int,
     question_embedding: list[float],
     workspace_id: int,
 ) -> dict[int, QuerySearchResult]:
     """Get similar content to given embedding and return search results.
 
-    NB: We first exclude archived content and then order by the cosine distance.
+    NB: We first exclude archived and unvalidated content and then order
+    by the cosine distance.
 
     Parameters
     ----------
@@ -456,6 +521,8 @@ async def get_search_results(
         The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived content.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated content.
     n_similar
         The number of similar content items to retrieve.
     question_embedding
@@ -478,6 +545,8 @@ async def get_search_results(
 
     if exclude_archived:
         query = query.where(ContentDB.is_archived == false())
+    if exclude_unvalidated:
+        query = query.where(ContentDB.is_validated == true())
 
     query = query.order_by(distance).limit(n_similar)
 
@@ -595,3 +664,38 @@ async def get_latest_display_number(
     result = await asession.execute(stmt)
     latest_display_number = result.scalar_one_or_none()
     return latest_display_number or 0
+
+
+async def get_next_unvalidated_content_card(
+    asession: AsyncSession, workspace_id: int
+) -> ContentDB | None:
+    """Retrieve the next unvalidated content card for the specified workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to retrieve the content from.
+
+    Returns
+    -------
+    ContentDB
+        The next unvalidated content card.
+
+    Raises
+    ------
+    HTTPException
+        If no unvalidated content is found.
+    """
+    stmt = (
+        select(ContentDB)
+        .options(selectinload(ContentDB.content_tags))
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.is_validated == false())
+        .where(ContentDB.is_archived == false())
+        .order_by(ContentDB.display_number.asc())
+        .limit(1)
+    )
+    content_row = (await asession.execute(stmt)).first()
+    return content_row[0] if content_row else None

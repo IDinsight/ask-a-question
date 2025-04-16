@@ -17,7 +17,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-22.04
-    container: node:20.7-bullseye
+    container: node:20-bookworm
 
     services:
       postgres:

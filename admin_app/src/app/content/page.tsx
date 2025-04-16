@@ -49,6 +49,8 @@ import {
   getContentList,
   getTagList,
   useGetIndexingStatus,
+  useGetNextUnvalidatedCard,
+  useGetUnvalidatedCardsCount,
 } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
@@ -59,6 +61,7 @@ import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
+import { ContentViewModal } from "./components/ContentModal";
 
 export interface Tag {
   tag_id: number;
@@ -76,6 +79,7 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   cards: Content[];
   selectedContents: number[];
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -338,6 +342,7 @@ const CardsPage = () => {
                 filterTags={filterTags}
                 setFilterTags={setFilterTags}
                 setSnackMessage={setSnackMessage}
+                setRefreshKey={setRefreshKey}
                 handleDelete={() => {
                   setOpenBulkDeleteModal(true);
                 }}
@@ -442,12 +447,21 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   filterTags,
   setFilterTags,
   setSnackMessage,
+  setRefreshKey,
   handleDelete,
 }) => {
+  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
+  const [showContentModal, setShowContentModal] = React.useState(false);
+  React.useState<boolean>(false);
 
-  const { data } = useGetIndexingStatus();
+  const { data: indexingStatus } = useGetIndexingStatus(token!);
+  const { data: unvalidatedCardsCount } = useGetUnvalidatedCardsCount(token!);
+  const { data: nextUnvalidatedCard } = useGetNextUnvalidatedCard(
+    token!,
+    showContentModal && unvalidatedCardsCount > 0,
+  );
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -502,6 +516,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             alignItems: "center",
             justifyContent: "center",
             gap: sizes.smallGap,
+            alignSelf: "flex-end",
           }}
         >
           <Button
@@ -536,35 +551,66 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
       )}
 
       {/* Right section - Download and Add buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignSelf: "flex-end",
-          alignItems: "center",
-          gap: sizes.smallGap,
-        }}
-      >
-        {typeof data === "boolean" && (
+      {selectedContents.length < 1 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "flex-end",
+            alignItems: "center",
+            gap: sizes.smallGap,
+          }}
+        >
           <>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={() => {
-                setOpenIndexHistoryModal(true);
-              }}
-              startIcon={
-                data === true ? <CircularProgress size={12} color="inherit" /> : null
-              }
-            >
-              {data === true ? "Processing PDF" : "PDF Upload Status"}
-            </Button>
-            <IndexingStatusModal />
+            {unvalidatedCardsCount > 0 && (
+              <>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  onClick={() => setShowContentModal(true)}
+                >
+                  Validate Cards ({unvalidatedCardsCount})
+                </Button>
+                <ContentViewModal
+                  title={nextUnvalidatedCard?.content_title}
+                  text={nextUnvalidatedCard?.content_text}
+                  content_id={nextUnvalidatedCard?.content_id}
+                  display_number={nextUnvalidatedCard?.display_number}
+                  last_modified={nextUnvalidatedCard?.updated_datetime_utc}
+                  tags={[{ tag_id: 0, tag_name: "Unavailable" }]}
+                  positive_votes={nextUnvalidatedCard?.positive_votes}
+                  negative_votes={nextUnvalidatedCard?.negative_votes}
+                  open={showContentModal}
+                  onClose={() => setShowContentModal(false)}
+                  setRefreshKey={setRefreshKey}
+                  editAccess={editAccess}
+                  validation_mode={true}
+                />
+              </>
+            )}
+            {typeof indexingStatus === "boolean" && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  onClick={() => {
+                    setOpenIndexHistoryModal(true);
+                  }}
+                  startIcon={
+                    indexingStatus === true ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : null
+                  }
+                >
+                  {indexingStatus === true ? "Processing PDF" : "PDF Upload Status"}
+                </Button>
+                <IndexingStatusModal />
+              </>
+            )}
           </>
-        )}
-        <Tooltip title="Download all contents">
-          <>
+          <Tooltip title="Download all contents">
             <Button
               variant="outlined"
               size="small"
@@ -575,30 +621,28 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             >
               <DownloadIcon />
             </Button>
-          </>
-        </Tooltip>
-        <Tooltip title="Add new content">
-          <>
+          </Tooltip>
+          <Tooltip title="Add new content">
             <AddButtonWithDropdown editAccess={editAccess} />
-          </>
-        </Tooltip>
-        <DownloadModal
-          open={openDownloadModal}
-          onClose={() => setOpenDownloadModal(false)}
-          onFailedDownload={(error_message) => {
-            setSnackMessage({
-              message: error_message,
-              color: "error",
-            });
-          }}
-          onNoDataFound={() => {
-            setSnackMessage({
-              message: `No data to download`,
-              color: "info",
-            });
-          }}
-        />
-      </Box>
+          </Tooltip>
+          <DownloadModal
+            open={openDownloadModal}
+            onClose={() => setOpenDownloadModal(false)}
+            onFailedDownload={(error_message) => {
+              setSnackMessage({
+                message: error_message,
+                color: "error",
+              });
+            }}
+            onNoDataFound={() => {
+              setSnackMessage({
+                message: `No data to download`,
+                color: "info",
+              });
+            }}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
