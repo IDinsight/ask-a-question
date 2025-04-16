@@ -24,6 +24,7 @@ const ContentViewModal = ({
   tags,
   open,
   onClose,
+  setRefreshKey,
   editAccess,
   validation_mode = false,
 }: {
@@ -37,6 +38,7 @@ const ContentViewModal = ({
   negative_votes: number;
   open: boolean;
   onClose: () => void;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   editAccess: boolean;
   validation_mode?: boolean;
 }) => {
@@ -155,6 +157,10 @@ const ContentViewModal = ({
                   disabled={!editAccess}
                   onClick={() => {
                     validateCard(content_id);
+                    setTimeout(() => {
+                      setRefreshKey((prev) => prev + 1);
+                    }, 500);
+                    setRefreshKey((prev) => prev + 1);
                   }}
                 >
                   Validate

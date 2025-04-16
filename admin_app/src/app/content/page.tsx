@@ -79,6 +79,7 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   cards: Content[];
   selectedContents: number[];
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -341,6 +342,7 @@ const CardsPage = () => {
                 filterTags={filterTags}
                 setFilterTags={setFilterTags}
                 setSnackMessage={setSnackMessage}
+                setRefreshKey={setRefreshKey}
                 handleDelete={() => {
                   setOpenBulkDeleteModal(true);
                 }}
@@ -445,6 +447,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   filterTags,
   setFilterTags,
   setSnackMessage,
+  setRefreshKey,
   handleDelete,
 }) => {
   const { token } = useAuth();
@@ -453,12 +456,12 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   const [showContentModal, setShowContentModal] = React.useState(false);
   React.useState<boolean>(false);
 
-  const { data: nextUnvalidatedCard } = useGetNextUnvalidatedCard(
-    token!,
-    showContentModal,
-  );
   const { data: indexingStatus } = useGetIndexingStatus(token!);
   const { data: unvalidatedCardsCount } = useGetUnvalidatedCardsCount(token!);
+  const { data: nextUnvalidatedCard } = useGetNextUnvalidatedCard(
+    token!,
+    showContentModal && unvalidatedCardsCount > 0,
+  );
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -578,6 +581,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 negative_votes={nextUnvalidatedCard?.negative_votes}
                 open={showContentModal}
                 onClose={() => setShowContentModal(false)}
+                setRefreshKey={setRefreshKey}
                 editAccess={editAccess}
                 validation_mode={true}
               />
