@@ -63,7 +63,7 @@ jobs:
           python -m alembic upgrade head
           python -m pytest -m "not rails and alembic" tests/api/test_alembic_migrations.py
   unit-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container: node:20.7-bullseye
     services:
       postgres:
