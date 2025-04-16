@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Tag } from "@/app/content/page";
 import { CustomError } from "@/utils/api";
+import { useValidateContentCard, useArchiveContentCard } from "../api";
 
 const ContentViewModal = ({
   title,
@@ -24,19 +25,24 @@ const ContentViewModal = ({
   open,
   onClose,
   editAccess,
+  validation_mode = false,
 }: {
   title: string;
   text: string;
   content_id: number;
   display_number: number;
   last_modified: string;
-  tags: Tag[];
+  tags?: Tag[];
   positive_votes: number;
   negative_votes: number;
   open: boolean;
   onClose: () => void;
   editAccess: boolean;
+  validation_mode?: boolean;
 }) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const { mutate: validateCard } = useValidateContentCard(token!);
+  const { mutate: archiveContent } = useArchiveContentCard(token!);
   return (
     <Modal
       open={open as boolean}
@@ -124,16 +130,47 @@ const ContentViewModal = ({
               paddingInline: 1,
             }}
           >
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={!editAccess}
-              component={Link}
-              href={`/content/edit?content_id=${content_id}`}
-              startIcon={<Edit />}
-            >
-              Edit
-            </Button>
+            {!validation_mode && (
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!editAccess}
+                component={Link}
+                href={`/content/edit?content_id=${content_id}`}
+                startIcon={<Edit />}
+              >
+                Edit
+              </Button>
+            )}
+            {validation_mode && (
+              <Layout.FlexBox
+                sx={{
+                  flexDirection: "row",
+                  gap: sizes.baseGap,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={!editAccess}
+                  onClick={() => {
+                    validateCard(content_id);
+                  }}
+                >
+                  Validate
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  disabled={!editAccess}
+                  onClick={() => {
+                    archiveContent(content_id);
+                  }}
+                >
+                  Archive
+                </Button>
+              </Layout.FlexBox>
+            )}
             <Typography variant="body2" color={appColors.darkGrey}>
               Last modified{" "}
               {new Date(last_modified).toLocaleString(undefined, {

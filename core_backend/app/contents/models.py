@@ -18,6 +18,7 @@ from sqlalchemy import (
     column,
     delete,
     false,
+    func,
     select,
     true,
     update,
@@ -282,7 +283,7 @@ async def archive_content_from_db(
     await asession.commit()
 
 
-async def validate_content_card(
+async def mark_content_as_validated(
     *, asession: AsyncSession, content_id: int, workspace_id: int
 ) -> None:
     """Validate the content card after user verification"""
@@ -294,6 +295,19 @@ async def validate_content_card(
     )
     await asession.execute(stmt)
     await asession.commit()
+
+
+async def get_unvalidated_count(*, asession: AsyncSession, workspace_id: int) -> int:
+    """Get the number of unvalidated content cards"""
+
+    stmt = (
+        select(func.count())
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.is_validated == false())
+        .where(ContentDB.is_archived == false())
+    )
+    count = (await asession.execute(stmt)).scalar()
+    return count
 
 
 async def delete_content_from_db(
@@ -652,3 +666,38 @@ async def get_latest_display_number(
     result = await asession.execute(stmt)
     latest_display_number = result.scalar_one_or_none()
     return latest_display_number or 0
+
+
+async def get_next_unvalidated_content_card(
+    asession: AsyncSession, workspace_id: int
+) -> ContentDB | None:
+    """Retrieve the next unvalidated content card for the specified workspace.
+
+    Parameters
+    ----------
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_id
+        The ID of the workspace to retrieve the content from.
+
+    Returns
+    -------
+    ContentDB
+        The next unvalidated content card.
+
+    Raises
+    ------
+    HTTPException
+        If no unvalidated content is found.
+    """
+    stmt = (
+        select(ContentDB)
+        .options(selectinload(ContentDB.content_tags))
+        .where(ContentDB.workspace_id == workspace_id)
+        .where(ContentDB.is_validated == false())
+        .where(ContentDB.is_archived == false())
+        .order_by(ContentDB.display_number.asc())
+        .limit(1)
+    )
+    content_row = (await asession.execute(stmt)).first()
+    return content_row[0] if content_row else None

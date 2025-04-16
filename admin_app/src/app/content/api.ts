@@ -81,6 +81,18 @@ const getContent = async (content_id: number, token: string) => {
   }
 };
 
+const useArchiveContentCard = (token: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (content_id: number) => archiveContent(content_id, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unvalidatedCount"] });
+      queryClient.invalidateQueries({ queryKey: ["nextUnvalidatedCard"] });
+    },
+  });
+};
+
 const archiveContent = async (content_id: number, token: string) => {
   try {
     const response = await api.patch(
@@ -197,8 +209,7 @@ const deleteTag = async (tag_id: number, token: string) => {
   }
 };
 
-const useGetIndexingStatus = () => {
-  const { token } = useAuth();
+const useGetIndexingStatus = (token: string) => {
   return useQuery<IndexingStatusResponse>({
     queryKey: ["indexingStatus"],
     queryFn: async () => {
@@ -216,6 +227,70 @@ const useGetIndexingStatus = () => {
     enabled: !!token,
     refetchInterval: (query) => (query.state.data === true ? 3000 : false),
     refetchIntervalInBackground: true,
+  });
+};
+
+const useGetUnvalidatedCardsCount = (token: string) => {
+  return useQuery({
+    queryKey: ["unvalidatedCount"],
+    queryFn: async () => {
+      try {
+        const response = await api.get("/content/unvalidated-count", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      } catch (error) {
+        const errorMessage = "Error fetching unvalidated count";
+        handleApiError(error, errorMessage);
+        throw error;
+      }
+    },
+    enabled: !!token,
+  });
+};
+
+const useGetNextUnvalidatedCard = (token: string, isEnabled: boolean = false) => {
+  return useQuery({
+    queryKey: ["nextUnvalidatedCard"],
+    queryFn: async () => {
+      try {
+        const response = await api.get("/content/next-unvalidated", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      } catch (error) {
+        const errorMessage = "Error fetching next unvalidated card";
+        handleApiError(error, errorMessage);
+        throw error;
+      }
+    },
+    enabled: !!token && isEnabled,
+  });
+};
+
+const useValidateContentCard = (token: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (content_id: number) => {
+      try {
+        const response = await api.patch(
+          `/content/validate/${content_id}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        return response.data;
+      } catch (error) {
+        const errorMessage = "Error validating content card";
+        handleApiError(error, errorMessage);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unvalidatedCount"] });
+      queryClient.invalidateQueries({ queryKey: ["nextUnvalidatedCard"] });
+    },
   });
 };
 
@@ -292,4 +367,8 @@ export {
   useGetIndexingStatus,
   usePostDocumentToIndex,
   getDocIndexingStatusData,
+  useGetUnvalidatedCardsCount,
+  useGetNextUnvalidatedCard,
+  useValidateContentCard,
+  useArchiveContentCard,
 };

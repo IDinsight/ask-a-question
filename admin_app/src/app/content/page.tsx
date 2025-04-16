@@ -49,6 +49,8 @@ import {
   getContentList,
   getTagList,
   useGetIndexingStatus,
+  useGetNextUnvalidatedCard,
+  useGetUnvalidatedCardsCount,
 } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
 import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
@@ -59,6 +61,7 @@ import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
+import { ContentViewModal } from "./components/ContentModal";
 
 export interface Tag {
   tag_id: number;
@@ -444,10 +447,18 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSnackMessage,
   handleDelete,
 }) => {
+  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
+  const [showContentModal, setShowContentModal] = React.useState(false);
+  React.useState<boolean>(false);
 
-  const { data } = useGetIndexingStatus();
+  const { data: nextUnvalidatedCard } = useGetNextUnvalidatedCard(
+    token!,
+    showContentModal,
+  );
+  const { data: indexingStatus } = useGetIndexingStatus(token!);
+  const { data: unvalidatedCardsCount } = useGetUnvalidatedCardsCount(token!);
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -545,42 +556,68 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
           gap: sizes.smallGap,
         }}
       >
-        {typeof data === "boolean" && (
-          <>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={() => {
-                setOpenIndexHistoryModal(true);
-              }}
-              startIcon={
-                data === true ? <CircularProgress size={12} color="inherit" /> : null
-              }
-            >
-              {data === true ? "Processing PDF" : "PDF Upload Status"}
-            </Button>
-            <IndexingStatusModal />
-          </>
-        )}
+        <>
+          {unvalidatedCardsCount > 0 && (
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                color="error"
+                onClick={() => setShowContentModal(true)}
+              >
+                Validate Cards ({unvalidatedCardsCount})
+              </Button>
+              <ContentViewModal
+                title={nextUnvalidatedCard?.content_title}
+                text={nextUnvalidatedCard?.content_text}
+                content_id={nextUnvalidatedCard?.content_id}
+                display_number={nextUnvalidatedCard?.display_number}
+                last_modified={nextUnvalidatedCard?.updated_datetime_utc}
+                tags={[{ tag_id: 0, tag_name: "Unavailable" }]}
+                positive_votes={nextUnvalidatedCard?.positive_votes}
+                negative_votes={nextUnvalidatedCard?.negative_votes}
+                open={showContentModal}
+                onClose={() => setShowContentModal(false)}
+                editAccess={editAccess}
+                validation_mode={true}
+              />
+            </>
+          )}
+          {typeof indexingStatus === "boolean" && (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                onClick={() => {
+                  setOpenIndexHistoryModal(true);
+                }}
+                startIcon={
+                  indexingStatus === true ? (
+                    <CircularProgress size={12} color="inherit" />
+                  ) : null
+                }
+              >
+                {indexingStatus === true ? "Processing PDF" : "PDF Upload Status"}
+              </Button>
+              <IndexingStatusModal />
+            </>
+          )}
+        </>
         <Tooltip title="Download all contents">
-          <>
-            <Button
-              variant="outlined"
-              size="small"
-              disabled={!editAccess}
-              onClick={() => {
-                setOpenDownloadModal(true);
-              }}
-            >
-              <DownloadIcon />
-            </Button>
-          </>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={!editAccess}
+            onClick={() => {
+              setOpenDownloadModal(true);
+            }}
+          >
+            <DownloadIcon />
+          </Button>
         </Tooltip>
         <Tooltip title="Add new content">
-          <>
-            <AddButtonWithDropdown editAccess={editAccess} />
-          </>
+          <AddButtonWithDropdown editAccess={editAccess} />
         </Tooltip>
         <DownloadModal
           open={openDownloadModal}
