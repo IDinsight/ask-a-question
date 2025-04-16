@@ -44,16 +44,22 @@ nav:
               - Content Feedback: components/qa-service/content-feedback.md
           - Urgency Detection Service:
               - components/urgency-detection/index.md
+          - Workspaces:
+              - components/workspaces/index.md
       - Internal components:
           - LLM Proxy Server:
               - components/litellm-proxy/index.md
           - Hugging Face Embeddings:
               - components/huggingface-embeddings/index.md
               - How to use: components/huggingface-embeddings/how-to-use.md
+          - Multi-turn Chat:
+              - components/multi-turn-chat/index.md
           - Voice Service:
               - components/voice-service/index.md
               - In-house models: components/voice-service/in-house-models.md
               - External APIs: components/voice-service/external-apis.md
+          - DocMuncher:
+              - components/docmuncher/index.md
 
   - Integrations:
       - integrations/index.md
