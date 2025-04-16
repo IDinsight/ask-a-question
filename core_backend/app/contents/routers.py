@@ -789,7 +789,6 @@ async def bulk_upload_contents(
             asession=asession,
             content=content,
             exclude_archived=exclude_archived,
-            exclude_unvalidated=exclude_unvalidated,
             workspace_id=workspace_id,
         )
         content_retrieve = _convert_record_to_schema(record=content_db)

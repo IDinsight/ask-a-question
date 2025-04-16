@@ -130,7 +130,6 @@ async def save_content_to_db(
     asession: AsyncSession,
     content: ContentCreate,
     exclude_archived: bool = False,
-    exclude_unvalidated: bool = False,
     workspace_id: int,
     commit: bool = True,
 ) -> ContentDB:
@@ -144,8 +143,6 @@ async def save_content_to_db(
         The content to save.
     exclude_archived
         Specifies whether to exclude archived content.
-    exclude_unvalidated
-        Specifies whether to exclude unvalidated content.
     workspace_id
         The ID of the workspace to save the content to.
     commit
@@ -190,7 +187,6 @@ async def save_content_to_db(
         asession=asession,
         content_id=content_db.content_id,
         exclude_archived=exclude_archived,
-        exclude_unvalidated=exclude_unvalidated,
         workspace_id=content_db.workspace_id,
     )
     return result or content_db
