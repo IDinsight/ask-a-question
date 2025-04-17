@@ -3,6 +3,8 @@
 from functools import wraps
 from typing import Any, Callable, Optional
 
+from pydantic import ValidationError
+
 from ..config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
     LITELLM_MODEL_PARAPHRASE,
@@ -17,14 +19,17 @@ from ..question_answer.schemas import (
 )
 from ..utils import setup_logger
 from .llm_prompts import (
+    LANGUAGE_ID_PROMPT,
     PARAPHRASE_FAILED_MESSAGE,
     PARAPHRASE_PROMPT,
     TRANSLATE_FAILED_MESSAGE,
     TRANSLATE_PROMPT,
     IdentifiedLanguage,
+    IdentifiedScript,
+    LanguageIdentificationResponse,
     SafetyClassification,
 )
-from .utils import _ask_llm_async
+from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger(name="INPUT RAILS")
 
@@ -84,7 +89,7 @@ async def _identify_language(
     query_refined: QueryRefined,
     response: QueryResponse | QueryResponseError,
 ) -> tuple[QueryRefined, QueryResponse | QueryResponseError]:
-    """Identify the language of the question.
+    """Identify the language and script of the question.
 
     Parameters
     ----------
@@ -104,29 +109,45 @@ async def _identify_language(
     if isinstance(response, QueryResponseError):
         return query_refined, response
 
-    llm_identified_lang = await _ask_llm_async(
+    json_str = await _ask_llm_async(
+        json_=True,
         litellm_model=LITELLM_MODEL_LANGUAGE_DETECT,
         metadata=metadata,
-        system_message=IdentifiedLanguage.get_prompt(),
-        user_message=query_refined.query_text,
+        system_message=LANGUAGE_ID_PROMPT,
+        # Always use the original query text for language and script detection
+        user_message=query_refined.query_text_original,
     )
 
-    identified_lang = getattr(
-        IdentifiedLanguage, llm_identified_lang, IdentifiedLanguage.UNSUPPORTED
-    )
+    cleaned_json_str = remove_json_markdown(text=json_str)
+    try:
+        lang_info = LanguageIdentificationResponse.model_validate_json(cleaned_json_str)
+        identified_lang = IdentifiedLanguage(lang_info.language.upper())
+        identified_script = IdentifiedScript(lang_info.script.upper())
+    except ValidationError:
+        identified_lang = IdentifiedLanguage.UNSUPPORTED
+        identified_script = IdentifiedScript.LATIN
+
     query_refined.original_language = identified_lang
+    query_refined.original_script = identified_script
+
     response.debug_info["original_query"] = query_refined.query_text_original
     response.debug_info["original_language"] = identified_lang
+    response.debug_info["original_script"] = identified_script
 
     processed_response = _process_identified_language_response(
-        identified_language=identified_lang, response=response
+        identified_language=identified_lang,
+        identified_script=identified_script,
+        response=response,
     )
 
     return query_refined, processed_response
 
 
 def _process_identified_language_response(
-    *, identified_language: IdentifiedLanguage, response: QueryResponse
+    *,
+    identified_language: IdentifiedLanguage,
+    identified_script: IdentifiedScript,
+    response: QueryResponse,
 ) -> QueryResponse | QueryResponseError:
     """Process the identified language and return the response.
 
@@ -134,6 +155,8 @@ def _process_identified_language_response(
     ----------
     identified_language
         The identified language.
+    identified_script
+        The identified script.
     response
         The response object.
 
@@ -144,23 +167,33 @@ def _process_identified_language_response(
     """
 
     supported_languages_list = IdentifiedLanguage.get_supported_languages()
+    supported_scripts_list = IdentifiedScript.get_supported_scripts()
 
-    if identified_language in supported_languages_list:
+    language_ok = identified_language in supported_languages_list
+    script_ok = identified_script in supported_scripts_list
+
+    supported_languages_str = ", ".join(supported_languages_list)
+    suported_scripts_str = ", ".join(supported_scripts_list)
+
+    if language_ok and script_ok:
         return response
-
-    supported_languages = ", ".join(supported_languages_list)
-
-    match identified_language:
-        case IdentifiedLanguage.UNINTELLIGIBLE:
+    elif language_ok and not script_ok:
+        error_message = (
+            "Unsupported script. "
+            + f"Only the following scripts are supported: {suported_scripts_str}"
+        )
+        error_type: ErrorType = ErrorType.UNSUPPORTED_SCRIPT
+    else:  # regardless of script, language is not "ok"
+        if identified_language == IdentifiedLanguage.UNINTELLIGIBLE:
             error_message = (
                 "Unintelligible input. "
-                + f"The following languages are supported: {supported_languages}."
+                + f"The following languages are supported: {supported_languages_str}."
             )
-            error_type: ErrorType = ErrorType.UNINTELLIGIBLE_INPUT
-        case _:
+            error_type = ErrorType.UNINTELLIGIBLE_INPUT
+        else:
             error_message = (
                 "Unsupported language. Only the following languages "
-                + f"are supported: {supported_languages}."
+                + f"are supported: {supported_languages_str}."
             )
             error_type = ErrorType.UNSUPPORTED_LANGUAGE
 
@@ -177,8 +210,8 @@ def _process_identified_language_response(
     error_response.debug_info.update(response.debug_info)
 
     logger.info(
-        f"LANGUAGE IDENTIFICATION FAILED due to {identified_language.value} "
-        f"language on query id: {str(response.query_id)}"
+        f"LANGUAGE IDENTIFICATION FAILED due to {error_message} "
+        f"on query id: {str(response.query_id)}"
     )
 
     return error_response
@@ -224,9 +257,10 @@ def translate_question__before(func: Callable) -> Callable:
             The appropriate response object.
         """
 
-        query_refined, response = await _translate_question(
-            query_refined=query_refined, response=response
-        )
+        if not query_refined.chat_query_params:
+            query_refined, response = await _translate_question(
+                query_refined=query_refined, response=response
+            )
         response = await func(query_refined, response, *args, **kwargs)
 
         return response
@@ -464,6 +498,7 @@ def paraphrase_question__before(func: Callable) -> Callable:
             query_refined, response = await _paraphrase_question(
                 query_refined=query_refined, response=response
             )
+
         response = await func(query_refined, response, *args, **kwargs)
 
         return response

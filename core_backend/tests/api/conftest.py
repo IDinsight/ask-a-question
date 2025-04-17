@@ -35,6 +35,7 @@ from core_backend.app.llm_call.llm_prompts import (
     RAG,
     AlignmentScore,
     IdentifiedLanguage,
+    IdentifiedScript,
 )
 from core_backend.app.question_answer.models import (
     ContentFeedbackDB,
@@ -1703,7 +1704,9 @@ async def mock_identify_language(
     """
 
     query_refined.original_language = IdentifiedLanguage.ENGLISH
+    query_refined.original_script = IdentifiedScript.LATIN
     response.debug_info["original_language"] = "ENGLISH"
+    response.debug_info["original_script"] = "LATIN"
 
     return query_refined, response
 
