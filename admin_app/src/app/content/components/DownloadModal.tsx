@@ -11,10 +11,10 @@ import { useAuth } from "@/utils/auth";
 import Papa from "papaparse";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
-import { Content } from "../edit/page";
+import { Content, Tag } from "../types";
 import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
-import { CustomError, handleApiError } from "@/utils/api";
+import { handleApiError } from "@/utils/api";
 
 interface ContentDownload {
   content_id: number | null;
@@ -26,11 +26,6 @@ interface ContentDownload {
   negative_votes: number;
   created_datetime_utc: string;
   updated_datetime_utc: string;
-}
-
-interface Tag {
-  tag_id: string;
-  tag_name: string;
 }
 
 const DownloadModal = ({

@@ -8,7 +8,7 @@ import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { Tag } from "../page";
+import { Tag } from "../types";
 import { LoadingButton } from "@mui/lab";
 import { CustomError } from "@/utils/api";
 import {
@@ -30,24 +30,11 @@ import {
   deleteTag,
   editContent,
   getContent,
+  getContentList,
   getTagList,
 } from "../api";
-
-export interface Content extends EditContentBody {
-  content_id: number | null;
-  display_number: number;
-  positive_votes: number;
-  negative_votes: number;
-  created_datetime_utc: string;
-  updated_datetime_utc: string;
-}
-
-interface EditContentBody {
-  content_title: string;
-  content_text: string;
-  content_tags: number[];
-  content_metadata: Record<string, unknown>;
-}
+import { RelatedContentsAutoComplete } from "../components/RelatedContentsAutoComplete";
+import { Content, EditContentBody } from "../types";
 
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
@@ -164,7 +151,8 @@ const ContentBox = ({
   const [tagToDelete, setTagToDelete] = React.useState<Tag | null>(null);
   const filter = createFilterOptions<Tag>();
   const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
-
+  const [contents, setContents] = React.useState<Content[]>([]);
+  const [selectedContents, setSelectedContents] = React.useState<Content[]>([]);
   const { token } = useAuth();
   const [inputVal, setInputVal] = React.useState<string>("");
   const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
@@ -173,7 +161,10 @@ const ContentBox = ({
     const customError = error as CustomError;
     let errorMessage = defaultMessage;
     if (customError && customError.message) {
-      errorMessage = customError.message;
+      errorMessage =
+        typeof customError.message === "string"
+          ? customError.message
+          : "An unknown error occurred";
     }
     setSnackMessage(errorMessage);
   };
@@ -206,6 +197,31 @@ const ContentBox = ({
     fetchTags();
   }, [refreshKey]);
 
+  React.useEffect(() => {
+    getContentList({
+      token: token!,
+    })
+      .then((data) => {
+        setContents(data);
+        const defaultContents =
+          content && content.related_contents_id.length > 0
+            ? content.related_contents_id.map((content_id) =>
+                data.find((content: Content) => content.content_id === content_id),
+              )
+            : [];
+        setSelectedContents(
+          defaultContents.filter(
+            (content): content is Content => content !== undefined,
+          ),
+        );
+      })
+      .catch((error) => {
+        const customError = error as CustomError;
+        let errorMessage = "Error fetching contents";
+        handleCustomError(customError, errorMessage);
+        console.error(errorMessage);
+      });
+  }, [refreshKey]);
   const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
 
@@ -214,6 +230,7 @@ const ContentBox = ({
       content_text: content.content_text,
       content_metadata: content.content_metadata,
       content_tags: content.content_tags,
+      related_contents_id: content.related_contents_id,
     };
 
     try {
@@ -227,13 +244,16 @@ const ContentBox = ({
     } catch (error: Error | any) {
       const customError = error as CustomError;
       if (error.status === 403) {
-        console.error("Content quota reached.");
+        console.error("Content quota reached. Please contact support for assistance.");
+        console.error("Error details:", customError.message);
         setErrorMessage(customError.message);
         setSaveError(true);
         return null;
       } else {
-        console.error("Failed to save content:", error);
-        setErrorMessage(customError.message);
+        console.error("Failed to save content. Please try again later.", error);
+        setErrorMessage(
+          customError.message || "Failed to save content. Please try again later.",
+        );
         setSaveError(true);
         return null;
       }
@@ -266,6 +286,7 @@ const ContentBox = ({
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
       content_metadata: {},
+      related_contents_id: [],
     };
   }
 
@@ -411,7 +432,6 @@ const ContentBox = ({
         />
         <Layout.Spacer multiplier={0.25} />
         <Autocomplete
-          autoSelect
           selectOnFocus
           clearOnBlur
           handleHomeEndKeys
@@ -527,6 +547,29 @@ const ContentBox = ({
             value.tag_name === option.tag_name || value.tag_name === ""
           }
         />
+        <Layout.Spacer multiplier={1.25} />
+        <RelatedContentsAutoComplete
+          contents={
+            content && content.content_id
+              ? contents.filter((c) => c.content_id !== content.content_id)
+              : contents
+          }
+          selectedContents={selectedContents}
+          handleContentChange={(value: Content[]) => {
+            setSelectedContents(value);
+            if (content) {
+              setContent((prevContent: Content | null) => {
+                return {
+                  ...prevContent!,
+                  related_contents_id: value
+                    .map((content) => content.content_id)
+                    .filter((id): id is number => id !== null),
+                };
+              });
+            }
+            setIsSaved(false);
+          }}
+        />
         <Layout.Spacer multiplier={1.5} />
         <Layout.FlexBox flexDirection="row" sx={{ justifyContent: "space-between" }}>
           <LoadingButton
@@ -567,14 +610,18 @@ const ContentBox = ({
                 setSnackMessage(null);
               }}
               severity={
-                snackMessage?.toLowerCase().includes("successfully")
+                snackMessage &&
+                typeof snackMessage === "string" &&
+                snackMessage.toLowerCase().includes("successfully")
                   ? "success"
                   : "error"
               }
               variant="filled"
               sx={{ width: "100%" }}
             >
-              {snackMessage}
+              {typeof snackMessage === "string"
+                ? snackMessage
+                : "An Error occurred, please try again"}
             </Alert>
           </Snackbar>
         </Layout.FlexBox>

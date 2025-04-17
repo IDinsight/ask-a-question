@@ -39,7 +39,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { IconButton } from "@mui/material";
 
-import type { Content } from "@/app/content/edit/page";
+import type { Content, ContentDisplay, Tag } from "@/app/content/types";
 import { Layout } from "@/components/Layout";
 import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
 import { apiCalls, CustomError } from "@/utils/api";
@@ -62,11 +62,6 @@ import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
 import { ContentViewModal } from "./components/ContentModal";
-
-export interface Tag {
-  tag_id: number;
-  tag_name: string;
-}
 
 interface TagsFilterProps {
   tags: Tag[];
@@ -91,6 +86,7 @@ interface CardsGridProps {
   displayLanguage: string;
   tags: Tag[];
   cards: Content[];
+  allCards: Content[];
   openSidebar: boolean;
   token: string | null;
   editAccess: boolean;
@@ -126,6 +122,7 @@ const CardsPage = () => {
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
   const [cards, setCards] = React.useState<Content[]>([]);
+  const [allCards, setAllCards] = React.useState<Content[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
@@ -214,7 +211,8 @@ const CardsPage = () => {
     } catch (error) {
       console.error("Unexpected error during batch deletion:", error);
       setSnackMessage({
-        message: "An unexpected error occurred during deletion",
+        message:
+          "An unexpected error occurred during deletion. Please try again later.",
         color: "error",
       });
     } finally {
@@ -227,6 +225,7 @@ const CardsPage = () => {
     if (token) {
       getContentList({ token: token, skip: 0 })
         .then((data) => {
+          setAllCards(data);
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
               card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -255,7 +254,9 @@ const CardsPage = () => {
           const customError = error as CustomError;
           console.error("Failed to fetch content:", error);
           setSnackMessage({
-            message: customError.message || "Failed to fetch content",
+            message:
+              customError.message ||
+              "Failed to fetch content. Please try refreshing the page.",
             color: "error",
           });
           setIsLoading(false);
@@ -350,6 +351,7 @@ const CardsPage = () => {
               <CardsGrid
                 displayLanguage={displayLanguage}
                 tags={tags}
+                allCards={allCards}
                 cards={cards}
                 openSidebar={openSearchSidebar || openChatSidebar}
                 token={token}
@@ -736,6 +738,7 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
 const CardsGrid = ({
   tags,
   cards,
+  allCards,
   token,
   editAccess,
   setSnackMessage,
@@ -753,6 +756,7 @@ const CardsGrid = ({
   const [maxPages, setMaxPages] = React.useState<number>(
     Math.ceil(cards.length / maxCardsPerPage),
   );
+
   const [columns, setColumns] = React.useState<number>(1);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
@@ -797,6 +801,10 @@ const CardsGrid = ({
   React.useEffect(() => {
     setPage(1);
   }, [cards]);
+
+  const getRelatedContent = (content_ids: number[]) => {
+    return allCards.filter((content) => content_ids.includes(content.content_id!));
+  };
 
   const onSuccessfulArchive = (content_id: number) => {
     setRefreshKey((prevKey) => prevKey + 1);
@@ -910,6 +918,7 @@ const CardsGrid = ({
                         }
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
+                        related_contents={getRelatedContent(item.related_contents_id)}
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(
                           content_id: number,
@@ -927,6 +936,7 @@ const CardsGrid = ({
                         isSelectMode={selectedContents.length > 0}
                         selectedContents={selectedContents}
                         setSelectedContents={setSelectedContents}
+                        getRelatedContent={getRelatedContent}
                       />
                     </Grid>
                   );

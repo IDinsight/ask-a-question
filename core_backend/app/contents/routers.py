@@ -40,6 +40,7 @@ from .models import (
     mark_content_as_validated,
     save_content_to_db,
     update_content_in_db,
+    validate_related_contents,
 )
 from .schemas import ContentCreate, ContentRetrieve, CustomError, CustomErrorList
 
@@ -137,10 +138,22 @@ async def create_content(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid tag IDs: {content_tags}",
         )
-
     content.content_tags = content_tags
 
     # 3.
+    if content.related_contents_id:
+        is_related_content_valid, related_contents = await validate_related_contents(
+            asession=asession,
+            related_contents=content.related_contents_id,
+            workspace_id=workspace_id,
+        )
+        if not is_related_content_valid and len(related_contents) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid related content IDs: {content.related_contents_id}",
+            )
+        content.related_contents_id = related_contents
+    # 4.
     if CHECK_CONTENT_LIMIT:
         try:
             await _check_content_quota_availability(
@@ -152,7 +165,7 @@ async def create_content(
                 detail=f"Exceeds content quota for workspace. {e}",
             ) from e
 
-    # 4.
+    # 5.
     try:
         content_db = await save_content_to_db(
             asession=asession,
@@ -253,6 +266,18 @@ async def edit_content(
         )
 
     content.content_tags = content_tags
+    if content.related_contents_id:
+        is_related_content_valid, related_contents = await validate_related_contents(
+            asession=asession,
+            related_contents=content.related_contents_id,
+            workspace_id=workspace_id,
+        )
+        if not is_related_content_valid and len(related_contents) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid related content IDs: {content.related_contents_id}",
+            )
+        content.related_contents_id = related_contents
     content.is_archived = old_content.is_archived
     try:
         updated_content = await update_content_in_db(
@@ -783,6 +808,7 @@ async def bulk_upload_contents(
             content_text=row["text"],
             content_title=row["title"],
             content_metadata={},
+            related_contents_id=[],
         )
 
         content_db = await save_content_to_db(
@@ -1228,6 +1254,7 @@ def _convert_record_to_schema(*, record: ContentDB) -> ContentRetrieve:
         is_archived=record.is_archived,
         negative_votes=record.negative_votes,
         positive_votes=record.positive_votes,
+        related_contents_id=record.related_contents_id,
         updated_datetime_utc=record.updated_datetime_utc,
         workspace_id=record.workspace_id,
     )
