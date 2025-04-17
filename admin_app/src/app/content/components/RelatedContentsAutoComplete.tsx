@@ -23,7 +23,7 @@ export const RelatedContentsAutoComplete = ({
   return (
     <Box sx={{ position: "relative" }}>
       <Autocomplete
-        autoSelect
+        selectOnFocus
         clearOnBlur
         handleHomeEndKeys
         multiple

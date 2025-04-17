@@ -432,7 +432,6 @@ const ContentBox = ({
         />
         <Layout.Spacer multiplier={0.25} />
         <Autocomplete
-          autoSelect
           selectOnFocus
           clearOnBlur
           handleHomeEndKeys
@@ -550,7 +549,11 @@ const ContentBox = ({
         />
         <Layout.Spacer multiplier={1.25} />
         <RelatedContentsAutoComplete
-          contents={contents}
+          contents={
+            content && content.content_id
+              ? contents.filter((c) => c.content_id !== content.content_id)
+              : contents
+          }
           selectedContents={selectedContents}
           handleContentChange={(value: Content[]) => {
             setSelectedContents(value);
