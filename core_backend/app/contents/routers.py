@@ -15,7 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..config import CHECK_CONTENT_LIMIT
 from ..database import get_async_session
-from ..tags.models import TagDB, get_list_of_tag_from_db, save_tag_to_db, validate_tags
+from ..tags.models import (
+    TagDB,
+    get_list_of_tag_from_db,
+    save_tag_to_db,
+    validate_tags,
+)
 from ..tags.schemas import TagCreate, TagRetrieve
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
@@ -30,16 +35,14 @@ from .models import (
     delete_content_from_db,
     get_content_from_db,
     get_list_of_content_from_db,
+    get_next_unvalidated_content_card,
+    get_unvalidated_count,
+    mark_content_as_validated,
     save_content_to_db,
     update_content_in_db,
     validate_related_contents,
 )
-from .schemas import (
-    ContentCreate,
-    ContentRetrieve,
-    CustomError,
-    CustomErrorList,
-)
+from .schemas import ContentCreate, ContentRetrieve, CustomError, CustomErrorList
 
 TAG_METADATA = {
     "name": "Content management",
@@ -186,6 +189,7 @@ async def edit_content(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = False,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """Edit pre-existing content.
@@ -202,6 +206,8 @@ async def edit_content(
         The name of the workspace that the content belongs in.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -239,6 +245,7 @@ async def edit_content(
         asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         workspace_id=workspace_id,
     )
 
@@ -294,6 +301,7 @@ async def retrieve_content(
     skip: int = 0,
     limit: int = 50,
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[ContentRetrieve]:
     """Retrieve all contents for the specified workspace.
@@ -308,6 +316,8 @@ async def retrieve_content(
         The maximum number of contents to retrieve.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -316,13 +326,13 @@ async def retrieve_content(
     list[ContentRetrieve]
         The retrieved contents from the specified workspace.
     """
-
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
     records = await get_list_of_content_from_db(
         asession=asession,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         limit=limit,
         offset=skip,
         workspace_id=workspace_db.workspace_id,
@@ -331,12 +341,163 @@ async def retrieve_content(
     return contents
 
 
+@router.get("/next-unvalidated", response_model=ContentRetrieve)
+async def get_next_unvalidated_content(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> ContentRetrieve:
+    """Retrieve the next unvalidated content card for the specified workspace.
+
+    Parameters
+    ----------
+    calling_user_db
+        The user object associated with the user making the request.
+    workspace_name
+        The name of the workspace to retrieve the content from.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Returns
+    -------
+    ContentRetrieve
+        The next unvalidated content card.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to access unvalidated content.
+        If no unvalidated content is found.
+    """
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "User does not have the required role to access "
+                "unvalidated content in the workspace."
+            ),
+        )
+
+    workspace_id = workspace_db.workspace_id
+    content_row = await get_next_unvalidated_content_card(
+        asession=asession, workspace_id=workspace_id
+    )
+
+    if not content_row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No unvalidated content found.",
+        )
+    return _convert_record_to_schema(record=content_row)
+
+
+@router.patch("/validate/{content_id}")
+async def validate_content_card(
+    content_id: int,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> None:
+    """Validate content card by ID
+
+    Parameters
+    ----------
+    content_id
+        The ID of the content to validate.
+    calling_user_db
+        The user object associated with the user that is archiving the content.
+    workspace_name
+        The name of the workspace to validate content in.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+
+    Raises
+    ------
+    HTTPException
+        If the user does not have the required role to validate content
+        in the workspace. If the content is not found.
+    """
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to validate content in the "
+            "workspace.",
+        )
+
+    workspace_id = workspace_db.workspace_id
+    record = await get_content_from_db(
+        asession=asession,
+        content_id=content_id,
+        workspace_id=workspace_id,
+        exclude_unvalidated=False,
+    )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content ID `{content_id}` not found",
+        )
+
+    await mark_content_as_validated(
+        asession=asession, content_id=content_id, workspace_id=workspace_id
+    )
+
+    return
+
+
+@router.get("/unvalidated-count")
+async def get_unvalidated_card_count(
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> int:
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+
+    if not await user_has_required_role_in_workspace(
+        allowed_user_roles=[UserRoles.ADMIN],
+        asession=asession,
+        user_db=calling_user_db,
+        workspace_db=workspace_db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have the required role to validate content in the "
+            "workspace.",
+        )
+    workspace_id = workspace_db.workspace_id
+    count = await get_unvalidated_count(asession=asession, workspace_id=workspace_id)
+    if count is None:
+        return -1
+    return count
+
+
 @router.patch("/{content_id}")
 async def archive_content(
     content_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
+    exclude_unvalidated: bool = False,
 ) -> None:
     """Archive content by ID.
 
@@ -350,6 +511,8 @@ async def archive_content(
         The name of the workspace to archive content in.
     asession
         The SQLAlchemy async session to use for all database connections.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
 
     Raises
     ------
@@ -376,7 +539,10 @@ async def archive_content(
 
     workspace_id = workspace_db.workspace_id
     record = await get_content_from_db(
-        asession=asession, content_id=content_id, workspace_id=workspace_id
+        asession=asession,
+        content_id=content_id,
+        workspace_id=workspace_id,
+        exclude_unvalidated=exclude_unvalidated,
     )
 
     if not record:
@@ -397,6 +563,7 @@ async def delete_content(
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     asession: AsyncSession = Depends(get_async_session),
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = False,
 ) -> None:
     """Delete content by ID.
 
@@ -412,6 +579,8 @@ async def delete_content(
         The SQLAlchemy async session to use for all database connections.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
 
     Raises
     ------
@@ -442,6 +611,7 @@ async def delete_content(
         asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         workspace_id=workspace_id,
     )
 
@@ -468,6 +638,7 @@ async def retrieve_content_by_id(
     content_id: int,
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> ContentRetrieve:
     """Retrieve content by ID.
@@ -480,6 +651,8 @@ async def retrieve_content_by_id(
         The name of the workspace to retrieve content from.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 
@@ -493,7 +666,6 @@ async def retrieve_content_by_id(
     HTTPException
         If the content is not found.
     """
-
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
@@ -501,6 +673,7 @@ async def retrieve_content_by_id(
         asession=asession,
         content_id=content_id,
         exclude_archived=exclude_archived,
+        exclude_unvalidated=exclude_unvalidated,
         workspace_id=workspace_db.workspace_id,
     )
 
@@ -519,6 +692,7 @@ async def bulk_upload_contents(
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
     exclude_archived: bool = True,
+    exclude_unvalidated: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
@@ -536,6 +710,8 @@ async def bulk_upload_contents(
         The name of the workspace to upload the contents to.
     exclude_archived
         Specifies whether to exclude archived contents.
+    exclude_unvalidated
+        Specifies whether to exclude unvalidated contents.
     asession
         The SQLAlchemy async session to use for all database connections.
 

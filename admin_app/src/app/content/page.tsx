@@ -49,13 +49,11 @@ import {
   getContentList,
   getTagList,
   useGetIndexingStatus,
+  useGetNextUnvalidatedCard,
+  useGetUnvalidatedCardsCount,
 } from "./api";
 import { ChatSideBar } from "./components/ChatSideBar";
-import {
-  CARD_HEIGHT,
-  CARD_MIN_WIDTH,
-  ContentCard,
-} from "./components/ContentCard";
+import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
 import { DownloadModal } from "./components/DownloadModal";
 import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
 import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
@@ -63,6 +61,7 @@ import { IndexingStatusModal } from "./components/IndexingStatusModal";
 import { SearchBar, SearchBarProps } from "./components/SearchBar";
 import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
+import { ContentViewModal } from "./components/ContentModal";
 
 interface TagsFilterProps {
   tags: Tag[];
@@ -75,6 +74,7 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   cards: Content[];
   selectedContents: number[];
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   setSnackMessage: React.Dispatch<{
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
@@ -106,7 +106,7 @@ interface CardsGridProps {
 
 const CardsPage = () => {
   const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label
+    LANGUAGE_OPTIONS[0].label,
   );
 
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -126,8 +126,7 @@ const CardsPage = () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
-  const [openBulkDeleteModal, setOpenBulkDeleteModal] =
-    React.useState<boolean>(false);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -229,20 +228,14 @@ const CardsPage = () => {
           setAllCards(data);
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              card.content_text
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesAllTags = filterTags.some((fTag) =>
-              card.content_tags.includes(fTag.tag_id)
+              card.content_tags.includes(fTag.tag_id),
             );
 
-            return (
-              matchesSearchTerm && (filterTags.length === 0 || matchesAllTags)
-            );
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
           });
 
           setCards(filteredData);
@@ -321,13 +314,9 @@ const CardsPage = () => {
                 <Typography variant="h4" align="left" color="primary">
                   Question Answering
                 </Typography>
-                <Typography
-                  variant="body1"
-                  align="left"
-                  color={appColors.darkGrey}
-                >
-                  Add, edit, and test content for question-answering. Questions
-                  sent to the search service will retrieve results from here.
+                <Typography variant="body1" align="left" color={appColors.darkGrey}>
+                  Add, edit, and test content for question-answering. Questions sent to
+                  the search service will retrieve results from here.
                   <br />
                   Content limit is 50.{" "}
                   <a
@@ -354,6 +343,7 @@ const CardsPage = () => {
                 filterTags={filterTags}
                 setFilterTags={setFilterTags}
                 setSnackMessage={setSnackMessage}
+                setRefreshKey={setRefreshKey}
                 handleDelete={() => {
                   setOpenBulkDeleteModal(true);
                 }}
@@ -459,12 +449,21 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   filterTags,
   setFilterTags,
   setSnackMessage,
+  setRefreshKey,
   handleDelete,
 }) => {
+  const { token } = useAuth();
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
+  const [showContentModal, setShowContentModal] = React.useState(false);
+  React.useState<boolean>(false);
 
-  const { data } = useGetIndexingStatus();
+  const { data: indexingStatus } = useGetIndexingStatus(token!);
+  const { data: unvalidatedCardsCount } = useGetUnvalidatedCardsCount(token!);
+  const { data: nextUnvalidatedCard } = useGetNextUnvalidatedCard(
+    token!,
+    showContentModal && unvalidatedCardsCount > 0,
+  );
 
   const handleSelectAll = () => {
     const allContentIds = cards.map((card) => card.content_id!);
@@ -519,6 +518,7 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             alignItems: "center",
             justifyContent: "center",
             gap: sizes.smallGap,
+            alignSelf: "flex-end",
           }}
         >
           <Button
@@ -553,35 +553,66 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
       )}
 
       {/* Right section - Download and Add buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignSelf: "flex-end",
-          alignItems: "center",
-          gap: sizes.smallGap,
-        }}
-      >
-        {typeof data === "boolean" && (
+      {selectedContents.length < 1 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "flex-end",
+            alignItems: "center",
+            gap: sizes.smallGap,
+          }}
+        >
           <>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={() => {
-                setOpenIndexHistoryModal(true);
-              }}
-              startIcon={
-                data === true ? <CircularProgress size={12} color="inherit" /> : null
-              }
-            >
-              {data === true ? "Processing PDF" : "PDF Upload Status"}
-            </Button>
-            <IndexingStatusModal />
+            {unvalidatedCardsCount > 0 && (
+              <>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  onClick={() => setShowContentModal(true)}
+                >
+                  Validate Cards ({unvalidatedCardsCount})
+                </Button>
+                <ContentViewModal
+                  title={nextUnvalidatedCard?.content_title}
+                  text={nextUnvalidatedCard?.content_text}
+                  content_id={nextUnvalidatedCard?.content_id}
+                  display_number={nextUnvalidatedCard?.display_number}
+                  last_modified={nextUnvalidatedCard?.updated_datetime_utc}
+                  tags={[{ tag_id: 0, tag_name: "Unavailable" }]}
+                  positive_votes={nextUnvalidatedCard?.positive_votes}
+                  negative_votes={nextUnvalidatedCard?.negative_votes}
+                  open={showContentModal}
+                  onClose={() => setShowContentModal(false)}
+                  setRefreshKey={setRefreshKey}
+                  editAccess={editAccess}
+                  validation_mode={true}
+                />
+              </>
+            )}
+            {typeof indexingStatus === "boolean" && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  onClick={() => {
+                    setOpenIndexHistoryModal(true);
+                  }}
+                  startIcon={
+                    indexingStatus === true ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : null
+                  }
+                >
+                  {indexingStatus === true ? "Processing PDF" : "PDF Upload Status"}
+                </Button>
+                <IndexingStatusModal />
+              </>
+            )}
           </>
-        )}
-        <Tooltip title="Download all contents">
-          <>
+          <Tooltip title="Download all contents">
             <Button
               variant="outlined"
               size="small"
@@ -592,39 +623,33 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
             >
               <DownloadIcon />
             </Button>
-          </>
-        </Tooltip>
-        <Tooltip title="Add new content">
-          <>
+          </Tooltip>
+          <Tooltip title="Add new content">
             <AddButtonWithDropdown editAccess={editAccess} />
-          </>
-        </Tooltip>
-        <DownloadModal
-          open={openDownloadModal}
-          onClose={() => setOpenDownloadModal(false)}
-          onFailedDownload={(error_message) => {
-            setSnackMessage({
-              message: error_message,
-              color: "error",
-            });
-          }}
-          onNoDataFound={() => {
-            setSnackMessage({
-              message: `No data to download`,
-              color: "info",
-            });
-          }}
-        />
-      </Box>
+          </Tooltip>
+          <DownloadModal
+            open={openDownloadModal}
+            onClose={() => setOpenDownloadModal(false)}
+            onFailedDownload={(error_message) => {
+              setSnackMessage({
+                message: error_message,
+                color: "error",
+              });
+            }}
+            onNoDataFound={() => {
+              setSnackMessage({
+                message: `No data to download`,
+                color: "info",
+              });
+            }}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
 
-const TagsFilter: React.FC<TagsFilterProps> = ({
-  tags,
-  filterTags,
-  setFilterTags,
-}) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
   const truncateTagName = (tagName: string): string => {
     return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
   };
@@ -658,9 +683,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({
   );
 };
 
-const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({
-  editAccess,
-}) => {
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = Boolean(anchorEl);
   const [openCSVModal, setOpenCSVModal] = useState(false);
@@ -706,14 +729,8 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({
           Generate cards from PDF
         </MenuItem>
       </Menu>
-      <ImportFromCSVModal
-        open={openCSVModal}
-        onClose={() => setOpenCSVModal(false)}
-      />
-      <ImportFromPDFModal
-        open={openPDFModal}
-        onClose={() => setOpenPDFModal(false)}
-      />
+      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
+      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
     </>
   );
 };
@@ -737,7 +754,7 @@ const CardsGrid = ({
   const [page, setPage] = React.useState<number>(1);
   const [maxCardsPerPage, setMaxCardsPerPage] = useState(1);
   const [maxPages, setMaxPages] = React.useState<number>(
-    Math.ceil(cards.length / maxCardsPerPage)
+    Math.ceil(cards.length / maxCardsPerPage),
   );
 
   const [columns, setColumns] = React.useState<number>(1);
@@ -761,10 +778,7 @@ const CardsGrid = ({
     const gridWidth = gridRef.current.clientWidth;
     const gridHeight = gridRef.current.clientHeight;
     // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
-    const newColumns = Math.max(
-      1,
-      Math.floor(gridWidth / (CARD_MIN_WIDTH + 10))
-    );
+    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
     const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
     const maxCards = rows * newColumns;
 
@@ -789,9 +803,7 @@ const CardsGrid = ({
   }, [cards]);
 
   const getRelatedContent = (content_ids: number[]) => {
-    return allCards.filter((content) =>
-      content_ids.includes(content.content_id!)
-    );
+    return allCards.filter((content) => content_ids.includes(content.content_id!));
   };
 
   const onSuccessfulArchive = (content_id: number) => {
@@ -900,19 +912,17 @@ const CardsGrid = ({
                         tags={
                           tags
                             ? tags.filter((tag) =>
-                                item.content_tags.includes(tag.tag_id)
+                                item.content_tags.includes(tag.tag_id),
                               )
                             : []
                         }
                         positive_votes={item.positive_votes}
                         negative_votes={item.negative_votes}
-                        related_contents={getRelatedContent(
-                          item.related_contents_id
-                        )}
+                        related_contents={getRelatedContent(item.related_contents_id)}
                         onSuccessfulArchive={onSuccessfulArchive}
                         onFailedArchive={(
                           content_id: number,
-                          error_message: string
+                          error_message: string,
                         ) => {
                           setSnackMessage({
                             message: error_message,
@@ -1075,11 +1085,7 @@ const ConfirmDeleteModal: React.FC<{
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <DeleteIcon />
-              <Typography
-                id="confirm-delete-modal-title"
-                variant="h6"
-                component="h2"
-              >
+              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
                 Confirm Deletion
               </Typography>
             </Box>

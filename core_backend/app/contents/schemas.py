@@ -21,6 +21,7 @@ class ContentCreate(BaseModel):
     )
     is_archived: bool = False
     related_contents_id: Optional[list[int]] = []
+    is_validated: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 
