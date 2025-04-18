@@ -90,8 +90,8 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
             setImportSuccess(true);
             setFiles([]);
           },
-          onError: (error) => {
-            setImportErrorMessages(["An unknown error occurred"]);
+          onError: (error: Error) => {
+            setImportErrorMessages(["An error occurred: " + error.message]);
           },
           onSettled: () => {
             setLoading(false);
