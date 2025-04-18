@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import (
     LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE,
     LITELLM_MODEL_DOCMUNCHER_TITLE,
+    PAGES_TO_CARDS_CONVERSION,
     REDIS_DOC_INGEST_EXPIRY_TIME,
 )
 from ..contents.models import save_content_to_db
@@ -455,6 +456,17 @@ async def process_pdf_file(
 
     finally:
         await redis.set(task_id, job_status_pydantic.model_dump_json())
+
+        temp_docmuncher_contents = await redis.get("temp_docmuncher_contents")
+        num_pages = len(markdown_text["pages"])
+
+        # Update expected contents since task has finished
+        await redis.set(
+            "temp_docmuncher_contents",
+            min(
+                0, int(temp_docmuncher_contents) - num_pages * PAGES_TO_CARDS_CONVERSION
+            ),
+        )
         await asession.close()
 
     return job_status_pydantic
