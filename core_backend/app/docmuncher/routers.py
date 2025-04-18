@@ -16,17 +16,24 @@ from fastapi import (
     UploadFile,
     status,
 )
+from PyPDF2 import PdfReader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..config import REDIS_DOC_INGEST_EXPIRY_TIME as REDIS_EXPIRATION_SECONDS
+from ..config import (
+    CHECK_CONTENT_LIMIT,
+    PAGES_TO_CARDS_CONVERSION,
+    REDIS_DOC_INGEST_EXPIRY_TIME,
+)
+from ..contents.routers import (
+    ExceedsContentQuotaError,
+    _check_content_quota_availability,
+)
 from ..database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger
-from ..workspaces.utils import (
-    get_workspace_by_workspace_name,
-)
+from ..workspaces.utils import get_workspace_by_workspace_name
 from .dependencies import JOB_KEY_PREFIX, process_pdf_file
 from .schemas import (
     DocIngestionStatusZip,
@@ -59,8 +66,9 @@ async def upload_document(
     The process is as follows:
 
     1. Parameters for the endpoint are checked first.
-    2. Create a copy of the file and asession
-    3. Start a document ingestion job and return a job ID.
+    2. Check if content / page limits are reached
+    3. Create a copy of the file and asession
+    4. Start a document ingestion job and return a job ID.
 
     Parameters
     ----------
@@ -86,6 +94,7 @@ async def upload_document(
         If the file is not a .pdf or .zip file.
     """
     logger.info("Document upload request received.")
+    redis = request.app.state.redis
 
     # 1.
     workspace_db = await get_workspace_by_workspace_name(
@@ -110,6 +119,7 @@ async def upload_document(
         )
 
     pdf_files = []
+    num_pages = 0
     parent_file_name = None
     if file.filename.endswith(".zip"):
         parent_file_name = file.filename
@@ -123,10 +133,14 @@ async def upload_document(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="The zip file does not contain any PDF files.",
                 )
+            num_pages = sum(
+                len(PdfReader(BytesIO(content)).pages) for _, content in pdf_files
+            )
         await file.close()
     elif file.filename.endswith(".pdf"):
         file_content = await file.read()
         pdf_files = [(file.filename, file_content)]
+        num_pages = len(PdfReader(BytesIO(file_content)).pages)
         await file.close()
 
     else:
@@ -135,17 +149,41 @@ async def upload_document(
             detail="Only PDF files are supported for document ingestion.",
         )
 
-    # 2.
+    # 3.
+    # Get temporary log of expected contents to be created by running jobs
+    temp_docmuncher_contents = await redis.get(
+        f"{workspace_db.workspace_id}_docmuncher_contents"
+    )
+    if not temp_docmuncher_contents:
+        temp_docmuncher_contents = 0
+    else:
+        temp_docmuncher_contents = int(temp_docmuncher_contents.decode("utf-8"))
+    num_expected_contents = (
+        num_pages * PAGES_TO_CARDS_CONVERSION + temp_docmuncher_contents
+    )
+
+    if CHECK_CONTENT_LIMIT:
+        try:
+            await _check_content_quota_availability(
+                asession=asession,
+                n_contents_to_add=num_expected_contents,
+                workspace_id=workspace_db.workspace_id,
+            )
+        except ExceedsContentQuotaError as e:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Document ingestion could exceed content quota:\n\
+                    {e}",
+            ) from e
+
     upload_id = str(uuid4())
     tasks: list[DocUploadResponsePdf] = []
     zip_created_datetime_utc = datetime.now(timezone.utc)
 
     for filename, content in pdf_files:
         bg_asession = AsyncSession(asession.bind)
-
         # 3.
         # Log task in redis
-        redis = request.app.state.redis
         task_id = f"{JOB_KEY_PREFIX}{str(uuid4())}"
         task_status = DocUploadResponsePdf(
             upload_id=upload_id,
@@ -160,7 +198,11 @@ async def upload_document(
         tasks.append(task_status)
 
         await redis.set(
-            task_id, task_status.model_dump_json(), ex=REDIS_EXPIRATION_SECONDS
+            task_id, task_status.model_dump_json(), ex=REDIS_DOC_INGEST_EXPIRY_TIME
+        )
+        # Update expected contents from running jobs
+        await redis.set(
+            f"{workspace_db.workspace_id}_docmuncher_contents", num_expected_contents
         )
 
         background_tasks.add_task(
@@ -173,6 +215,7 @@ async def upload_document(
             asession=bg_asession,
         )
 
+    # 4.
     if len(pdf_files) == 1:
         return tasks[0]
     else:

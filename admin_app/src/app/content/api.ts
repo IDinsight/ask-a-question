@@ -313,7 +313,11 @@ const usePostDocumentToIndex = (token: string) => {
           },
         });
         return { status: response.status, detail: response.data };
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response) {
+          const errorResponse = error.response.data;
+          throw new Error(errorResponse.detail || "Error indexing document");
+        }
         throw new Error("Error indexing document");
       }
     },
