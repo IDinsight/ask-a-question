@@ -23,9 +23,7 @@ from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..config import (
     CHECK_CONTENT_LIMIT,
     PAGES_TO_CARDS_CONVERSION,
-)
-from ..config import (
-    REDIS_DOC_INGEST_EXPIRY_TIME as REDIS_EXPIRATION_SECONDS,
+    REDIS_DOC_INGEST_EXPIRY_TIME,
 )
 from ..contents.routers import (
     ExceedsContentQuotaError,
@@ -153,7 +151,9 @@ async def upload_document(
 
     # 3.
     # Get temporary log of expected contents to be created by running jobs
-    temp_docmuncher_contents = await redis.get("temp_docmuncher_contents")
+    temp_docmuncher_contents = await redis.get(
+        f"{workspace_db.workspace_id}_docmuncher_contents"
+    )
     if not temp_docmuncher_contents:
         temp_docmuncher_contents = 0
     else:
@@ -182,7 +182,6 @@ async def upload_document(
 
     for filename, content in pdf_files:
         bg_asession = AsyncSession(asession.bind)
-
         # 3.
         # Log task in redis
         task_id = f"{JOB_KEY_PREFIX}{str(uuid4())}"
@@ -199,10 +198,12 @@ async def upload_document(
         tasks.append(task_status)
 
         await redis.set(
-            task_id, task_status.model_dump_json(), ex=REDIS_EXPIRATION_SECONDS
+            task_id, task_status.model_dump_json(), ex=REDIS_DOC_INGEST_EXPIRY_TIME
         )
         # Update expected contents from running jobs
-        await redis.set("temp_docmuncher_contents", num_expected_contents)
+        await redis.set(
+            f"{workspace_db.workspace_id}_docmuncher_contents", num_expected_contents
+        )
 
         background_tasks.add_task(
             process_pdf_file,
