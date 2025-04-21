@@ -351,7 +351,6 @@ async def admin_user_2_in_workspace_2(
         json={
             "api_daily_quota": TEST_WORKSPACE_API_QUOTA_2,
             "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_2,
-            "page_quota": 40,  # TODO: Make this into a test # pragma: allowlist secret
             "workspace_name": TEST_WORKSPACE_NAME_2,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
@@ -398,7 +397,6 @@ async def admin_user_3_in_workspace_3(
         json={
             "api_daily_quota": TEST_WORKSPACE_API_QUOTA_3,
             "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_3,
-            "page_quota": 40,  # TODO: Make this into a test # pragma: allowlist secret
             "workspace_name": TEST_WORKSPACE_NAME_3,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
@@ -445,7 +443,6 @@ async def admin_user_4_in_workspace_4(
         json={
             "api_daily_quota": TEST_WORKSPACE_API_QUOTA_4,
             "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_4,
-            "page_quota": 40,  # TODO: Make this into a test # pragma: allowlist secret
             "workspace_name": TEST_WORKSPACE_NAME_4,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
@@ -494,7 +491,6 @@ async def admin_user_data_api_1_in_workspace_data_api_1(
         json={
             "api_daily_quota": TEST_WORKSPACE_API_QUOTA_DATA_API_1,
             "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_1,
-            "page_quota": 40,  # TODO: Make this into a test # pragma: allowlist secret
             "workspace_name": TEST_WORKSPACE_NAME_DATA_API_1,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
@@ -543,7 +539,6 @@ async def admin_user_data_api_2_in_workspace_data_api_2(
         json={
             "api_daily_quota": TEST_WORKSPACE_API_QUOTA_DATA_API_2,
             "content_quota": TEST_WORKSPACE_CONTENT_QUOTA_DATA_API_2,
-            "page_quota": 40,  # TODO: Make this into a test # pragma: allowlist secret
             "workspace_name": TEST_WORKSPACE_NAME_DATA_API_2,
         },
         headers={"Authorization": f"Bearer {access_token_admin_1}"},
@@ -1243,7 +1238,6 @@ def temp_workspace_token_and_quota(
 
     temp_workspace_db = WorkspaceDB(
         content_quota=content_quota,
-        page_quota=40,  # TODO: Make this into a test # pragma: allowlist secret
         created_datetime_utc=datetime.now(timezone.utc),
         hashed_api_key=get_key_hash(key="temp_api_key"),
         updated_datetime_utc=datetime.now(timezone.utc),

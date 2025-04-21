@@ -13,7 +13,7 @@ from ..auth.dependencies import (
     get_current_workspace_name,
 )
 from ..auth.schemas import AuthenticationDetails
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_PAGE_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -123,7 +123,6 @@ async def create_workspaces(
             api_daily_quota=DEFAULT_API_QUOTA,  # workspace.api_daily_quota,
             asession=asession,
             content_quota=DEFAULT_CONTENT_QUOTA,  # workspace.content_quota,
-            page_quota=DEFAULT_PAGE_QUOTA,  # workspace.page_quota,
             user=UserCreate(
                 role=UserRoles.ADMIN,
                 username=calling_user_db.username,
@@ -149,7 +148,6 @@ async def create_workspaces(
                     api_key_first_characters=workspace_db.api_key_first_characters,
                     api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,  # noqa: E501
                     content_quota=workspace_db.content_quota,
-                    page_quota=workspace_db.page_quota,
                     created_datetime_utc=workspace_db.created_datetime_utc,
                     updated_datetime_utc=workspace_db.updated_datetime_utc,
                     workspace_id=workspace_db.workspace_id,
@@ -216,7 +214,6 @@ async def retrieve_all_workspaces(
             api_key_first_characters=workspace_db.api_key_first_characters,
             api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
             content_quota=workspace_db.content_quota,
-            page_quota=workspace_db.page_quota,
             created_datetime_utc=workspace_db.created_datetime_utc,
             updated_datetime_utc=workspace_db.updated_datetime_utc,
             workspace_id=workspace_db.workspace_id,
@@ -257,7 +254,6 @@ async def retrieve_current_workspace(
         api_key_first_characters=workspace_db.api_key_first_characters,
         api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
         content_quota=workspace_db.content_quota,
-        page_quota=workspace_db.page_quota,
         created_datetime_utc=workspace_db.created_datetime_utc,
         updated_datetime_utc=workspace_db.updated_datetime_utc,
         workspace_id=workspace_db.workspace_id,
@@ -337,7 +333,6 @@ async def retrieve_workspace_by_workspace_id(
         api_key_first_characters=matched_workspace_db.api_key_first_characters,
         api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,
         content_quota=matched_workspace_db.content_quota,
-        page_quota=matched_workspace_db.page_quota,
         created_datetime_utc=matched_workspace_db.created_datetime_utc,
         updated_datetime_utc=matched_workspace_db.updated_datetime_utc,
         workspace_id=matched_workspace_db.workspace_id,
@@ -418,7 +413,6 @@ async def retrieve_workspaces_by_user_id(
             api_key_first_characters=db.api_key_first_characters,
             api_key_updated_datetime_utc=db.api_key_updated_datetime_utc,
             content_quota=db.content_quota,
-            page_quota=db.page_quota,
             created_datetime_utc=db.created_datetime_utc,
             updated_datetime_utc=db.updated_datetime_utc,
             workspace_id=db.workspace_id,
@@ -646,11 +640,6 @@ async def update_workspace(
             if workspace_db_updated.content_quota == workspace_db_checked.content_quota
             else workspace_db_updated.content_quota
         )
-        new_page_quota = (
-            workspace_db_checked.page_quota
-            if workspace_db_updated.page_quota == workspace_db_checked.page_quota
-            else workspace_db_updated.page_quota
-        )
         new_workspace_name = (
             workspace_db_checked.workspace_name
             if workspace_db_updated.workspace_name
@@ -660,7 +649,6 @@ async def update_workspace(
         return WorkspaceUpdate(
             api_daily_quota=new_api_daily_quota,
             content_quota=new_content_quota,
-            page_quota=new_page_quota,
             workspace_name=new_workspace_name,
         )
     except SQLAlchemyError as e:
@@ -707,18 +695,15 @@ async def check_update_workspace_call(
 
     api_daily_quota = workspace.api_daily_quota
     content_quota = workspace.content_quota
-    page_quota = workspace.page_quota
     workspace_name = workspace.workspace_name
 
     updating_api_daily_quota = api_daily_quota is None or api_daily_quota >= 0
     updating_content_quota = content_quota is None or content_quota >= 0
-    updating_page_quota = page_quota is None or page_quota >= 0
 
     if not any(
         [
             updating_api_daily_quota,
             updating_content_quota,
-            updating_page_quota,
             workspace_name is not None,
         ]
     ):

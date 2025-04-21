@@ -164,12 +164,15 @@ async def upload_document(
     )
 
     if CHECK_CONTENT_LIMIT:
-        if workspace_db.page_quota and (num_pages > workspace_db.page_quota):
+        if workspace_db.content_quota and (
+            num_pages > workspace_db.content_quota / PAGES_TO_CARDS_CONVERSION
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Document ingestion exceeds page quota:\n\
                     There are {num_pages} pages in your upload, but only\
-                    {workspace_db.page_quota} pages are allowed.",
+                    {workspace_db.content_quota / PAGES_TO_CARDS_CONVERSION}\
+                    pages are allowed.",
             )
         try:
             await _check_content_quota_availability(
