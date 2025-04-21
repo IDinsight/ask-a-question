@@ -1,4 +1,5 @@
 import json
+import re
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
@@ -163,6 +164,13 @@ async def upload_document(
     )
 
     if CHECK_CONTENT_LIMIT:
+        if num_pages > workspace_db.page_quota:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Document ingestion exceeds page quota:\n\
+                    There are {num_pages} pages in your upload, but only\
+                    {workspace_db.page_quota} pages are allowed.",
+            )
         try:
             await _check_content_quota_availability(
                 asession=asession,
@@ -170,10 +178,22 @@ async def upload_document(
                 workspace_id=workspace_db.workspace_id,
             )
         except ExceedsContentQuotaError as e:
+            match = re.search(r"existing (\d+) in the database", str(e))
+            existing_contents = 0
+            if match:
+                existing_contents = int(match.group(1))
+            pages_left = max(
+                0,
+                workspace_db.content_quota
+                - temp_docmuncher_contents
+                - existing_contents,
+            )
+            pages_left = np.floor(pages_left / PAGES_TO_CARDS_CONVERSION).astype(int)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Document ingestion could exceed content quota:\n\
-                    {e}",
+                    There are {num_pages} pages in your upload, but only\
+                    {pages_left} more pages are allowed.",
             ) from e
 
     upload_id = str(uuid4())
