@@ -164,7 +164,7 @@ async def upload_document(
     )
 
     if CHECK_CONTENT_LIMIT:
-        if num_pages > workspace_db.page_quota:
+        if workspace_db.page_quota and (num_pages > workspace_db.page_quota):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Document ingestion exceeds page quota:\n\
