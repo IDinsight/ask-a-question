@@ -41,6 +41,7 @@ async def create_workspace(
     api_daily_quota: Optional[int] = None,
     asession: AsyncSession,
     content_quota: Optional[int] = None,
+    page_quota: Optional[int] = None,
     user: UserCreate,
 ) -> tuple[WorkspaceDB, bool]:
     """Create a workspace in the `WorkspaceDB` database. If the workspace already
@@ -54,6 +55,8 @@ async def create_workspace(
         The SQLAlchemy async session to use for all database connections.
     content_quota
         The content quota for the workspace.
+    page_quota
+        The page quota for the workspace.
     user
         The user object creating the workspace.
 
@@ -66,6 +69,7 @@ async def create_workspace(
 
     assert api_daily_quota is None or api_daily_quota >= 0
     assert content_quota is None or content_quota >= 0
+    assert page_quota is None or page_quota >= 0
 
     result = await asession.execute(
         select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)
@@ -77,6 +81,7 @@ async def create_workspace(
         workspace_db = WorkspaceDB(
             api_daily_quota=api_daily_quota,
             content_quota=content_quota,
+            page_quota=page_quota,
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
             workspace_name=user.workspace_name,

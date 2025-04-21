@@ -114,6 +114,7 @@ class WorkspaceDB(Base):
         DateTime(timezone=True), nullable=True
     )
     content_quota: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    page_quota: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

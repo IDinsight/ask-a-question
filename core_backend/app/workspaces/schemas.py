@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_PAGE_QUOTA
 
 
 class WorkspaceCreate(BaseModel):
@@ -13,6 +13,7 @@ class WorkspaceCreate(BaseModel):
 
     api_daily_quota: int | None = DEFAULT_API_QUOTA
     content_quota: int | None = DEFAULT_CONTENT_QUOTA
+    page_quota: int | None = DEFAULT_PAGE_QUOTA
     workspace_name: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -34,6 +35,7 @@ class WorkspaceRetrieve(BaseModel):
     api_key_first_characters: Optional[str] = None
     api_key_updated_datetime_utc: Optional[datetime] = None
     content_quota: Optional[int] = None
+    page_quota: Optional[int] = None
     created_datetime_utc: datetime
     updated_datetime_utc: Optional[datetime] = None
     workspace_id: int
@@ -60,6 +62,7 @@ class WorkspaceUpdate(BaseModel):
 
     api_daily_quota: int | None = DEFAULT_API_QUOTA
     content_quota: int | None = DEFAULT_CONTENT_QUOTA
+    page_quota: int | None = DEFAULT_PAGE_QUOTA
     workspace_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
