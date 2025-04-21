@@ -1,17 +1,20 @@
 import json
 import os
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Dict
 
 from fastapi import HTTPException, Request, status
 from langchain.text_splitter import MarkdownHeaderTextSplitter
 from langchain_core.documents import Document
 from mistralai import DocumentURLChunk, Mistral
+from PyPDF2 import PdfReader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import (
     LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE,
     LITELLM_MODEL_DOCMUNCHER_TITLE,
+    PAGES_TO_CARDS_CONVERSION,
     REDIS_DOC_INGEST_EXPIRY_TIME,
 )
 from ..contents.models import save_content_to_db
@@ -455,6 +458,19 @@ async def process_pdf_file(
 
     finally:
         await redis.set(task_id, job_status_pydantic.model_dump_json())
+
+        temp_docmuncher_contents = await redis.get(
+            f"{workspace_id}_docmuncher_contents"
+        )
+        num_pages = len(PdfReader(BytesIO(content)).pages)
+
+        # Update expected contents since task has finished
+        await redis.set(
+            f"{workspace_id}_docmuncher_contents",
+            max(
+                0, int(temp_docmuncher_contents) - num_pages * PAGES_TO_CARDS_CONVERSION
+            ),
+        )
         await asession.close()
 
     return job_status_pydantic

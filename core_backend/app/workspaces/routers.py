@@ -701,7 +701,11 @@ async def check_update_workspace_call(
     updating_content_quota = content_quota is None or content_quota >= 0
 
     if not any(
-        [updating_api_daily_quota, updating_content_quota, workspace_name is not None]
+        [
+            updating_api_daily_quota,
+            updating_content_quota,
+            workspace_name is not None,
+        ]
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

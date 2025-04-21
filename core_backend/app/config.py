@@ -85,6 +85,7 @@ CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
 DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 CHECK_API_LIMIT = os.environ.get("CHECK_API_LIMIT", True)
+PAGES_TO_CARDS_CONVERSION = int(os.environ.get("PAGES_TO_CARDS_CONVERSION", 2))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
