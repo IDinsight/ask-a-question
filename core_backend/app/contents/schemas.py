@@ -1,6 +1,7 @@
 """This module contains Pydantic models for content endpoints."""
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,6 +20,7 @@ class ContentCreate(BaseModel):
         examples=["Example Content Title"],
     )
     is_archived: bool = False
+    related_contents_id: Optional[list[int]] = []
     is_validated: bool = True
 
     model_config = ConfigDict(from_attributes=True)
@@ -39,6 +41,7 @@ class ContentRetrieve(ContentCreate):
     is_archived: bool
     negative_votes: int
     positive_votes: int
+
     updated_datetime_utc: datetime
     workspace_id: int
 

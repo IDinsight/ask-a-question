@@ -13,28 +13,12 @@ import {
 import Link from "next/link";
 import React from "react";
 import { Layout } from "../../../components/Layout";
-import { Tag } from "@/app/content/page";
+import { Content, ContentDisplay, Tag } from "../types";
 
 const CARD_HEIGHT = 210;
 const CARD_MIN_WIDTH = 280;
 
-const ContentCard = ({
-  title,
-  text,
-  content_id,
-  display_number,
-  last_modified,
-  tags,
-  positive_votes,
-  negative_votes,
-  onSuccessfulArchive,
-  onFailedArchive,
-  archiveContent,
-  editAccess,
-  isSelectMode,
-  selectedContents,
-  setSelectedContents,
-}: {
+interface ContentCardProps {
   title: string;
   text: string;
   content_id: number;
@@ -43,6 +27,7 @@ const ContentCard = ({
   tags: Tag[];
   positive_votes: number;
   negative_votes: number;
+  related_contents: Content[];
   onSuccessfulArchive: (content_id: number) => void;
   onFailedArchive: (content_id: number, error_message: string) => void;
   archiveContent: (content_id: number) => Promise<any>;
@@ -50,6 +35,26 @@ const ContentCard = ({
   isSelectMode: boolean;
   selectedContents: number[];
   setSelectedContents: (selectedContents: number[]) => void;
+  getRelatedContent: (content_id: number[]) => Content[];
+}
+const ContentCard: React.FC<ContentCardProps> = ({
+  title,
+  text,
+  content_id,
+  display_number,
+  last_modified,
+  tags,
+  positive_votes,
+  negative_votes,
+  related_contents,
+  onSuccessfulArchive,
+  onFailedArchive,
+  archiveContent,
+  editAccess,
+  isSelectMode,
+  selectedContents,
+  setSelectedContents,
+  getRelatedContent,
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
@@ -57,6 +62,18 @@ const ContentCard = ({
   const [checked, setChecked] = React.useState<boolean>(
     selectedContents.includes(content_id),
   );
+  const [currentContent, setCurrentContent] = React.useState<ContentDisplay>({
+    title,
+    text,
+    content_id,
+    display_number,
+    last_modified,
+    tags,
+    positive_votes,
+    negative_votes,
+    related_contents,
+  });
+
   const truncateTagName = (tagName: string): string => {
     return tagName.length > 15 ? `${tagName.slice(0, 15)}...` : tagName;
   };
@@ -65,10 +82,37 @@ const ContentCard = ({
     setChecked(selectedContents.includes(content_id));
   }, [selectedContents]);
 
+  const handleRelatedContentClick = (content: Content) => {
+    setCurrentContent({
+      title: content.content_title,
+      text: content.content_text,
+      content_id: content.content_id!,
+      display_number: content.display_number,
+      last_modified: content.updated_datetime_utc,
+      tags: tags.filter((tag) => content.content_tags.includes(tag.tag_id)),
+      positive_votes: content.positive_votes,
+      negative_votes: content.negative_votes,
+      related_contents: getRelatedContent(content.related_contents_id),
+    } as ContentDisplay);
+  };
+
   return (
     <>
       <Card
-        onClick={() => setOpenReadModal(true)}
+        onClick={() => {
+          setCurrentContent({
+            title,
+            text,
+            content_id,
+            display_number,
+            last_modified,
+            tags,
+            positive_votes,
+            negative_votes,
+            related_contents,
+          });
+          setOpenReadModal(true);
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         sx={[
@@ -192,20 +236,19 @@ const ContentCard = ({
         </Layout.FlexBox>
       </Card>
       <ContentViewModal
-        title={title}
-        text={text}
-        content_id={content_id}
-        display_number={display_number}
-        last_modified={last_modified}
-        tags={tags}
+        title={currentContent.title}
+        text={currentContent.text}
+        content_id={currentContent.content_id}
+        display_number={currentContent.display_number}
+        last_modified={currentContent.last_modified}
+        related_contents={currentContent.related_contents}
+        tags={currentContent.tags}
         open={openReadModal}
-        positive_votes={positive_votes}
-        negative_votes={negative_votes}
+        positive_votes={currentContent.positive_votes}
+        negative_votes={currentContent.negative_votes}
         onClose={() => setOpenReadModal(false)}
         editAccess={editAccess}
-        setRefreshKey={function (value: React.SetStateAction<number>): void {
-          throw new Error("Function not implemented.");
-        }}
+        onRelatedContentClick={handleRelatedContentClick}
       />
       <ArchiveContentModal
         content_id={content_id}

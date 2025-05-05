@@ -525,6 +525,192 @@ def test_display_number_increases(
     assert display_number_2 == display_number + 1
 
 
+class TestRelatedContent:
+    """Tests for related content."""
+
+    def test_related_content_invalid(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+    ) -> None:
+        """Test the related content is invalid."""
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_text": "Content text 2",
+                "content_title": "Content title 2",
+                "related_contents_id": [10000000, 12230000, 43340000],
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_related_content_valid(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test the related content is valid."""
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_text": "Content text 2",
+                "content_title": "Content title 2",
+                "related_contents_id": [existing_content_id_in_workspace_1],
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        client.delete(
+            f"/content/{response.json()['content_id']}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+    def test_related_content_wrong_workspace(
+        self,
+        client: TestClient,
+        access_token_admin_2: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test the related content is valid."""
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+            json={
+                "content_metadata": {},
+                "content_text": "Content text 2",
+                "content_title": "Content title 2",
+                "related_contents_id": [existing_content_id_in_workspace_1],
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_related_content_archived(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test that adding an archived content as a related content is not allowed."""
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_tags": [],
+                "content_text": "Content text 1",
+                "content_title": "Content title 1",
+                "related_contents_id": [existing_content_id_in_workspace_1],
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        content_id = response.json()["content_id"]
+        response = client.patch(
+            f"/content/{content_id}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_tags": [],
+                "content_text": "Content text 2",
+                "content_title": "Content title 2",
+                "related_contents_id": [content_id],
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        client.delete(
+            f"/content/{content_id}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+    def test_related_content_mixed_valid_and_invalid(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test that adding a mixed valid and invalid related content is not allowed."""
+
+        response = client.post(
+            "/content",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_tags": [],
+                "content_text": "Content text 1",
+                "content_title": "Content title 1",
+                "related_contents_id": [10000000, existing_content_id_in_workspace_1],
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["related_contents_id"] == [
+            existing_content_id_in_workspace_1
+        ]
+
+        client.delete(
+            f"/content/{response.json()['content_id']}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+    def test_edit_invalid_related_content(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test that editing a related content is not allowed."""
+
+        response = client.put(
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_tags": [],
+                "content_text": "Content text 1",
+                "content_title": "Content title 1",
+                "related_contents_id": [10000000],
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_edit_valid_related_content(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+        faq_contents_in_workspace_1: list[int],
+    ) -> None:
+        """Test that editing a valid related content is allowed."""
+
+        response = client.put(
+            f"/content/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={
+                "content_metadata": {},
+                "content_tags": [],
+                "content_text": "Content text 1",
+                "content_title": "Content title 1",
+                "related_contents_id": faq_contents_in_workspace_1,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["related_contents_id"] == faq_contents_in_workspace_1
+
+
 async def test_convert_record_to_schema() -> None:
     """Test the conversion of a record to a schema."""
 
