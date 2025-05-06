@@ -1,4 +1,4 @@
-gunicorn==22.0.0
+gunicorn==23.0.0
 uvicorn==0.23.2
 openai-whisper==20231117
 ffmpeg-python==0.2.0
