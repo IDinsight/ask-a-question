@@ -1,4 +1,6 @@
 ---
+authors:
+  - Poornima
 category:
   - Admin App
   - API
@@ -20,4 +22,5 @@ The backend then converts the document into bite-sized chunks that get turned in
 This is the first version that we have for ingesting documents, but we're planning to build clustering for semantically similar cards and paraphrasing them so they're more readable.
 
 ## Doc references
-- [DocMuncher](../../components/docmuncherce/index.md)
+
+- [DocMuncher](../../components/docmuncher/index.md)

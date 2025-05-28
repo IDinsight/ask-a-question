@@ -116,7 +116,7 @@ async def authenticate_key(
     credentials
         The bearer token.
 
-    Returns
+    Returns˜
     -------
     WorkspaceDB
         The workspace object.
