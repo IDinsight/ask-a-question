@@ -4,7 +4,7 @@ authors:
 category:
   - Admin App
   - Workspaces
-date: 2025-04-15
+date: 2025-02-27
 ---
 
 # Introducing Workspaces

@@ -588,6 +588,13 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                   setRefreshKey={setRefreshKey}
                   editAccess={editAccess}
                   validation_mode={true}
+                  related_contents={nextUnvalidatedCard?.related_contents || []}
+                  onRelatedContentClick={(content) => {
+                    setSnackMessage({
+                      message: "Related contents cannot be viewed in validation mode",
+                      color: "warning",
+                    });
+                  }}
                 />
               </>
             )}
