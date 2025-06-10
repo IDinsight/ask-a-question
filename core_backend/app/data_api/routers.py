@@ -1,6 +1,6 @@
 """This module contains FastAPI routers for data API endpoints."""
 
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -142,21 +142,15 @@ async def get_urgency_rules(
 @router.get("/queries", response_model=list[QueryExtract])
 async def get_queries(
     start_date: Annotated[
-        datetime | date,
+        datetime,
         Query(
-            description=(
-                "Can be date or UTC datetime. "
-                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
-            ),
+            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
         ),
     ],
     end_date: Annotated[
-        datetime | date,
+        datetime,
         Query(
-            description=(
-                "Can be date or UTC datetime. "
-                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
-            ),
+            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
         ),
     ],
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
@@ -164,9 +158,6 @@ async def get_queries(
 ) -> list[QueryExtract]:
     """Get all queries including child records for a workspace between a start and end
     date.
-
-    Note that the `start_date` and `end_date` can be provided as a date or `datetime`
-    object.
 
     Parameters
     ----------
@@ -184,11 +175,6 @@ async def get_queries(
     list[QueryExtract]
         A list of QueryExtract objects containing all queries for the user.
     """
-
-    if isinstance(start_date, date):
-        start_date = datetime.combine(start_date, datetime.min.time())
-    if isinstance(end_date, date):
-        end_date = datetime.combine(end_date, datetime.max.time())
 
     start_date = start_date.replace(tzinfo=timezone.utc)
     end_date = end_date.replace(tzinfo=timezone.utc)
@@ -214,21 +200,15 @@ async def get_queries(
 @router.get("/urgency-queries", response_model=list[UrgencyQueryExtract])
 async def get_urgency_queries(
     start_date: Annotated[
-        datetime | date,
+        datetime,
         Query(
-            description=(
-                "Can be date or UTC datetime. "
-                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
-            ),
+            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
         ),
     ],
     end_date: Annotated[
-        datetime | date,
+        datetime,
         Query(
-            description=(
-                "Can be date or UTC datetime. "
-                "Example: `2021-01-01` or `2021-01-01T00:00:00`"
-            ),
+            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
         ),
     ],
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
@@ -236,9 +216,6 @@ async def get_urgency_queries(
 ) -> list[UrgencyQueryExtract]:
     """Get all urgency queries including child records for a workspace between a start
     and end date.
-
-    Note that the `start_date` and `end_date` can be provided as a date or `datetime`
-    object.
 
     Parameters
     ----------
@@ -257,11 +234,6 @@ async def get_urgency_queries(
         A list of `UrgencyQueryExtract` objects containing all urgent queries for the
         workspace.
     """
-
-    if isinstance(start_date, date):
-        start_date = datetime.combine(start_date, datetime.min.time())
-    if isinstance(end_date, date):
-        end_date = datetime.combine(end_date, datetime.max.time())
 
     start_date = start_date.replace(tzinfo=timezone.utc)
     end_date = end_date.replace(tzinfo=timezone.utc)
