@@ -1,7 +1,7 @@
 """This module contains tests for the data API endpoints."""
 
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, AsyncGenerator
 
 import pytest
@@ -230,7 +230,7 @@ class TestUrgencyQueryDataAPI:
         monkeypatch: pytest.MonkeyPatch,
         urgency_rules_workspace_data_api_1: int,
         workspace_data_api_id_1: int,
-    ) -> AsyncGenerator[None, None]:
+    ) -> AsyncGenerator[list[datetime], None]:
         """Create urgency query data for data API workspace 1.
 
         Parameters
@@ -283,7 +283,7 @@ class TestUrgencyQueryDataAPI:
             )
             all_orm_objects.append(urgency_response_db)
 
-        yield
+        yield dates
 
         for orm_object in reversed(all_orm_objects):
             await asession.delete(orm_object)
@@ -336,7 +336,7 @@ class TestUrgencyQueryDataAPI:
         self,
         api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_data_api_data_1: pytest.FixtureRequest,
+        workspace_data_api_data_1: list[datetime],
     ) -> None:
         """Test the urgency query data API.
 
@@ -367,7 +367,7 @@ class TestUrgencyQueryDataAPI:
         days_ago_end: int,
         api_key_workspace_data_api_1: str,
         client: TestClient,
-        workspace_data_api_data_1: pytest.FixtureRequest,
+        workspace_data_api_data_1: list[datetime],
     ) -> None:
         """Test the urgency query data API with date filtering.
 
@@ -426,6 +426,54 @@ class TestUrgencyQueryDataAPI:
         else:
             n_records = days_ago_start - days_ago_end + 1
 
+        assert len(response.json()) == n_records
+
+    @pytest.mark.parametrize(
+        "days_ago_start, days_ago_end",
+        [[0.5, 0], [1.5, 0.5], [5.5, 3.5], [3.2, 1.5], [8.5, 4], [0.5, 0.2]],
+    )
+    def test_urgency_query_data_api_datetime_filter(
+        self,
+        days_ago_start: float,
+        days_ago_end: float,
+        api_key_workspace_data_api_1: str,
+        client: TestClient,
+        workspace_data_api_data_1: list[datetime],
+    ) -> None:
+        """Test the urgency query data API with date filtering.
+
+        Parameters
+        ----------
+        days_ago_start
+            The fraction of days ago to start.
+        days_ago_end
+            The fraction of days ago to end.
+        api_key_workspace_data_api_1
+            The API key of data API workspace 1.
+        client
+            The test client.
+        workspace_data_api_data_1
+            The data of data API workspace 1.
+        """
+
+        start_date = datetime.now(timezone.utc) - timedelta(days=days_ago_start)
+        end_date = datetime.now(timezone.utc) - timedelta(days=days_ago_end)
+
+        date_format = "%Y-%m-%dT%H:%M:%S.%f%z"
+
+        response = client.get(
+            "/data-api/urgency-queries",
+            headers={"Authorization": f"Bearer {api_key_workspace_data_api_1}"},
+            params={
+                "start_date": start_date.strftime(date_format),
+                "end_date": end_date.strftime(date_format),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        n_records = len(
+            [d for d in workspace_data_api_data_1 if start_date <= d <= end_date]
+        )
         assert len(response.json()) == n_records
 
     @pytest.mark.parametrize(
