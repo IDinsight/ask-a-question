@@ -336,6 +336,7 @@ class IdentifiedLanguage(str, Enum):
     # AFRIKAANS = "AFRIKAANS"
     ENGLISH = "ENGLISH"
     FRENCH = "FRENCH"
+    SPANISH = "SPANISH"
     HINDI = "HINDI"
     SWAHILI = "SWAHILI"
     UNINTELLIGIBLE = "UNINTELLIGIBLE"
