@@ -19,6 +19,7 @@ logger = setup_logger(name="Voice utils")
 lang_code_mapping_tts = {
     IdentifiedLanguage.ENGLISH: ("en-US", "Neural2-D"),
     IdentifiedLanguage.HINDI: ("hi-IN", "Neural2-D"),
+    IdentifiedLanguage.SPANISH: ("es-ES", "Neural2-D"),
     # IdentifiedLanguage.SWAHILI: ("sw-TZ", "Neural2-D"), # No support for swahili
     # Add more languages and models as needed
 }
