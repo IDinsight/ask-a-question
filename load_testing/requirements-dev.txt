@@ -22,7 +22,7 @@ pyzmq==26.0.3
 requests==2.32.4
 tomli==2.0.1
 typing_extensions==4.12.2
-urllib3==2.2.2
+urllib3==2.5.0
 Werkzeug==3.0.6
 zipp==3.19.2
 zope.event==5.0
