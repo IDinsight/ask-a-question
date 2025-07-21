@@ -114,7 +114,7 @@ SYSTEM_DOCMUNCHER_TITLE = """
 You are an excellent linguist.
 Look at the content and metadata that the user provides and generate an
 appropriate title of 8 WORDS OR LESS that captures the essence of the content.
-The title should be in English.
+The title should be in the SAME language as the content.
 """
 
 USER_DOCMUNCHER_TITLE = """
@@ -129,7 +129,8 @@ understand technical information.
 Look at the table and metadata that the user provides and PARAPHRASE the
 information in the table so a layman can understand it.
 I will share this information directly with the user, so just give me the
-PARAPHRASED information, without conversational references to the table.
+PARAPHRASED information in the SAME language as the content, without
+conversational references to the table.
 """
 
 USER_DOCMUNCHER_TABLE = """
