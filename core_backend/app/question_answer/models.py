@@ -46,7 +46,7 @@ class QueryDB(Base):
     __tablename__ = "query"
 
     content_feedback: Mapped[list["ContentFeedbackDB"]] = relationship(
-        "ContentFeedbackDB", back_populates="query", lazy=True
+        "ContentFeedbackDB", back_populates="query", lazy="select"
     )
     feedback_secret_key: Mapped[str] = mapped_column(String, nullable=False)
     generate_tts: Mapped[bool] = mapped_column(Boolean, nullable=True)
@@ -60,10 +60,10 @@ class QueryDB(Base):
     query_metadata: Mapped[JSONDict] = mapped_column(JSON, nullable=False)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
     response: Mapped[list["QueryResponseDB"]] = relationship(
-        "QueryResponseDB", back_populates="query", lazy=True
+        "QueryResponseDB", back_populates="query", lazy="select"
     )
     response_feedback: Mapped[list["ResponseFeedbackDB"]] = relationship(
-        "ResponseFeedbackDB", back_populates="query", lazy=True
+        "ResponseFeedbackDB", back_populates="query", lazy="select"
     )
     session_id: Mapped[int] = mapped_column(Integer, nullable=True)
     workspace_id: Mapped[int] = mapped_column(
@@ -102,7 +102,7 @@ class QueryResponseDB(Base):
     error_type: Mapped[str] = mapped_column(String, nullable=True)
     is_error: Mapped[bool] = mapped_column(Boolean, nullable=False)
     query: Mapped[QueryDB] = relationship(
-        "QueryDB", back_populates="response", lazy=True
+        "QueryDB", back_populates="response", lazy="select"
     )
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id", ondelete="CASCADE")
@@ -201,7 +201,7 @@ class ResponseFeedbackDB(Base):
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     query: Mapped[QueryDB] = relationship(
-        "QueryDB", back_populates="response_feedback", lazy=True
+        "QueryDB", back_populates="response_feedback", lazy="select"
     )
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id", ondelete="CASCADE")
@@ -250,7 +250,7 @@ class ContentFeedbackDB(Base):
     feedback_sentiment: Mapped[str] = mapped_column(String, nullable=True)
     feedback_text: Mapped[str] = mapped_column(String, nullable=True)
     query: Mapped[QueryDB] = relationship(
-        "QueryDB", back_populates="content_feedback", lazy=True
+        "QueryDB", back_populates="content_feedback", lazy="select"
     )
     query_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("query.query_id", ondelete="CASCADE")
