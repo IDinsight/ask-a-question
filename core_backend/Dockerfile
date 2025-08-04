@@ -34,7 +34,7 @@ RUN find ${HOME_DIR} -type f -print0 | xargs -0 dos2unix
 RUN chmod +x ${HOME_DIR}/startup.sh
 
 # Stage 2: Final image
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bullseye
 
 # Define runtime arguments
 ARG NAME=aaq_backend
