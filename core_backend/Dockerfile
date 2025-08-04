@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM python:3.10-slim-buster as build
+FROM python:3.10-slim-bullseye as build
 
 LABEL maintainer="IDinsight"
 
