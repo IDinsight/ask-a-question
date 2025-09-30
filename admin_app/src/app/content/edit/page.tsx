@@ -418,7 +418,7 @@ const ContentBox = ({
         <TextField
           required
           placeholder="Add content (required)"
-          inputProps={{ maxLength: 2000 }}
+          inputProps={{ maxLength: 10000 }}
           multiline
           rows={15}
           variant="outlined"
