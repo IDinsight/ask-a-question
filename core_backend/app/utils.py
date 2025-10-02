@@ -35,6 +35,8 @@ SECRET_KEY_N_BYTES = 32
 # To prefix trace_id with project name.
 LANGFUSE_PROJECT_NAME = None
 
+# Signed URL expiry time in hours.
+SIGNED_URL_EXPIRY_HOURS = 24
 if LANGFUSE == "True":
     langFuseLogger = litellm.utils.langFuseLogger
     if langFuseLogger is not None:
@@ -515,7 +517,8 @@ async def upload_file_to_gcs(
     content_type: Optional[str] = None,
     destination_blob_name: str,
     file_stream: BytesIO,
-) -> None:
+    public: bool = True,
+) -> str:
     """Upload a file stream to a Google Cloud Storage bucket and make it public.
 
     Parameters
@@ -528,6 +531,13 @@ async def upload_file_to_gcs(
         The name of the blob in the bucket.
     file_stream
         The file stream to upload.
+    public
+        Whether to make the file public or generate a signed URL.
+
+    Returns
+    -------
+    url
+        The public URL or signed URL that allows access to the GCS file.
     """
 
     client = storage.Client()
@@ -537,3 +547,13 @@ async def upload_file_to_gcs(
 
     file_stream.seek(0)
     blob.upload_from_file(file_stream, content_type=content_type)
+    if public:
+        blob.make_public()
+        url = blob.public_url
+    else:
+        url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(hours=SIGNED_URL_EXPIRY_HOURS),
+            method="GET",
+        )
+    return url

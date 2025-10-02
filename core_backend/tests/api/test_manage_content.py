@@ -1,7 +1,8 @@
 """This module contains tests for the content management API endpoints."""
 
 from datetime import datetime, timezone
-from typing import Generator
+from io import BytesIO
+from typing import Generator, Optional
 
 import pytest
 from fastapi import status
@@ -709,6 +710,115 @@ class TestRelatedContent:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["related_contents_id"] == faq_contents_in_workspace_1
+
+
+class TestPDFGeneration:
+    """Tests for the PDF generation endpoint."""
+
+    def test_generate_pdf_success(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+        existing_content_id_in_workspace_1: int,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test successful PDF generation.
+
+        Parameters
+        ----------
+        client
+            The test client.
+        access_token_admin_1
+            The access token for admin user 1.
+        existing_content_id_in_workspace_1
+            The ID of existing content in workspace 1.
+        monkeypatch
+            The pytest monkeypatch fixture.
+        """
+        mock_content_bytes = b"fake pdf content"
+        mock_public_url = "https://storage.googleapis.com/bucket/file.pdf"
+
+        # Mock PDF generation using monkey patch
+        def mock_markdown_to_pdf(content: str) -> bytes:
+            return mock_content_bytes
+
+        async def mock_upload_to_gcs(
+            *,
+            bucket_name: bytes,
+            content_type: Optional[str] = None,
+            destination_blob_name: str,
+            file_stream: BytesIO,
+        ) -> str:
+            return mock_public_url
+
+        monkeypatch.setattr(
+            "core_backend.app.contents.utils.convert_markdown_to_pdf_bytes",
+            mock_markdown_to_pdf,
+        )
+        monkeypatch.setattr(
+            "core_backend.app.contents.routers.upload_file_to_gcs",
+            mock_upload_to_gcs,
+        )
+
+        response = client.post(
+            f"/content/generate-pdf/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        json_response = response.json()
+        assert json_response["success"] is True
+        assert json_response["url"] == mock_public_url
+        assert "filename" in json_response
+        assert "bucket" in json_response
+        assert "blob_name" in json_response
+
+    def test_generate_pdf_content_not_found(
+        self,
+        client: TestClient,
+        access_token_admin_1: str,
+    ) -> None:
+        """Test PDF generation with non-existent content.
+
+        Parameters
+        ----------
+        client
+            The test client.
+        access_token_admin_1
+            The access token for admin user 1.
+        """
+        non_existent_id = 999999
+
+        response = client.post(
+            f"/content/generate-pdf/{non_existent_id}",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_generate_pdf_wrong_workspace(
+        self,
+        client: TestClient,
+        access_token_admin_2: str,
+        existing_content_id_in_workspace_1: int,
+    ) -> None:
+        """Test PDF generation from different workspace.
+
+        Parameters
+        ----------
+        client
+            The test client.
+        access_token_admin_2
+            The access token for admin user 2 (different workspace).
+        existing_content_id_in_workspace_1
+            The ID of existing content in workspace 1.
+        """
+        response = client.post(
+            f"/content/generate-pdf/{existing_content_id_in_workspace_1}",
+            headers={"Authorization": f"Bearer {access_token_admin_2}"},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 async def test_convert_record_to_schema() -> None:

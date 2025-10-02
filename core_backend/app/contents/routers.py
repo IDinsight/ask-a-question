@@ -50,7 +50,7 @@ from .schemas import (
     CustomErrorList,
     PDFResponse,
 )
-from .utils import markdown_to_pdf_bytes
+from .utils import convert_markdown_to_pdf_bytes
 
 TAG_METADATA = {
     "name": "Content management",
@@ -695,7 +695,7 @@ async def retrieve_content_by_id(
 
 
 @router.post("/generate-pdf/{content_id}", response_model=PDFResponse)
-async def convert_markdown_to_pdf(
+async def generate_content_pdf(
     content_id: int,
     calling_user_db: Annotated[UserDB, Depends(get_current_user)],
     workspace_name: Annotated[str, Depends(get_current_workspace_name)],
@@ -709,6 +709,7 @@ async def convert_markdown_to_pdf(
     workspace_db = await get_workspace_by_workspace_name(
         asession=asession, workspace_name=workspace_name
     )
+
     record = await get_content_from_db(
         asession=asession,
         content_id=content_id,
@@ -721,37 +722,45 @@ async def convert_markdown_to_pdf(
             detail=f"Content ID `{content_id}` not found",
         )
 
-    # try:
-    pdf_content = markdown_to_pdf_bytes(record.content_text)
-    pdf_content_stream = BytesIO(pdf_content)
+    if record.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Content ID `{content_id}` is archived",
+        )
 
-    # Upload to GCS and get public URL
-    filename = record.content_title or f"document_{content_id}"
-    destination_blob_name = f"{workspace_db.workspace_name}/{filename}.pdf"
-    await upload_file_to_gcs(
-        bucket_name=GCS_PDF_BUCKET,
-        content_type="application/pdf",
-        destination_blob_name=destination_blob_name,
-        file_stream=pdf_content_stream,
-    )
-    public_url = (
-        f"https://storage.googleapis.com/{GCS_PDF_BUCKET}/{destination_blob_name}"
-    )
+    if record.content_text is None or record.content_text.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Content ID `{content_id}` has no content to convert",
+        )
+    try:
+        pdf_content = convert_markdown_to_pdf_bytes(record.content_text)
+        pdf_content_stream = BytesIO(pdf_content)
 
-    return PDFResponse(
-        success=True,
-        url=public_url,
-        filename=f"{filename}.pdf",
-        bucket=GCS_PDF_BUCKET,
-        blob_name=destination_blob_name,
-        content_id=content_id,
-    )
+        # Upload to GCS and get public URL
+        filename = record.content_title or f"document_{content_id}"
+        destination_blob_name = f"{workspace_db.workspace_name}/{filename}.pdf"
+        public_url = await upload_file_to_gcs(
+            bucket_name=GCS_PDF_BUCKET,
+            content_type="application/pdf",
+            destination_blob_name=destination_blob_name,
+            file_stream=pdf_content_stream,
+        )
 
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail=f"Error generating PDF: {str(e)}",
-    #     ) from e
+        return PDFResponse(
+            success=True,
+            url=public_url,
+            filename=f"{filename}.pdf",
+            bucket=GCS_PDF_BUCKET,
+            blob_name=destination_blob_name,
+            content_id=content_id,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating PDF: {str(e)}",
+        ) from e
 
 
 @router.post("/csv-upload", response_model=BulkUploadResponse)

@@ -1,22 +1,27 @@
 import os
 import tempfile
+from pathlib import Path
 
 import pypandoc
 
 
-def markdown_to_pdf_bytes(markdown_text: str) -> bytes:
+def convert_markdown_to_pdf_bytes(markdown_text: str) -> bytes:
     """
-    Convert markdown text to PDF bytes.
+    Convert markdown text to PDF bytes using pypandoc.
 
-    Args:
-        markdown_text: The markdown content to convert
+    Parameters
+    ----------
+    markdown_text
+        The markdown content to convert
 
-    Returns:
-        PDF file as bytes
-
-    Raises:
-        Exception: If PDF generation fails
+    Returns
+    -------
+    pdf_content
+        The binary content of the generated PDF file.
     """
+
+    tex_header = Path(__file__).parent / "tex_header.tex"
+
     # Create temporary file for PDF generation
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
         tmp_pdf_path = tmp_pdf.name
@@ -27,7 +32,17 @@ def markdown_to_pdf_bytes(markdown_text: str) -> bytes:
             "pdf",
             format="markdown",
             outputfile=tmp_pdf_path,
-            extra_args=["--pdf-engine=lualatex"],
+            extra_args=[
+                "--pdf-engine=xelatex",
+                "-V",
+                "mainfont=DejaVu Sans",
+                "-V",
+                "geometry:margin=1in",
+                "--include-in-header",
+                str(tex_header),
+                "-V",
+                "linestretch=1.15",
+            ],
         )
 
         # Read the generated PDF

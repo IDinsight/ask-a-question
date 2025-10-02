@@ -10,7 +10,7 @@ ARG WHISPER_MODEL_DIR=/whisper_models
 
 # Set up the build environment
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev python3-dev dos2unix ffmpeg \
+    gcc libpq-dev python3-dev dos2unix ffmpeg pandoc texlive-latex-base texlive-fonts-recommended texlive-xetex \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up the home directory and permissions
@@ -44,7 +44,7 @@ ARG WHISPER_MODEL_DIR=/whisper_models
 
 # Install required shared libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 ffmpeg install pandoc texlive-latex-base texlive-fonts-recommended texlive-xetex \
+    libpq5 ffmpeg pandoc texlive-latex-base texlive-fonts-recommended texlive-xetex \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the Python packages and other dependencies from the build stage
