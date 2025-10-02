@@ -44,7 +44,7 @@ ARG WHISPER_MODEL_DIR=/whisper_models
 
 # Install required shared libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 ffmpeg \
+    libpq5 ffmpeg install pandoc texlive-latex-base texlive-fonts-recommended texlive-xetex \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the Python packages and other dependencies from the build stage

@@ -1,5 +1,6 @@
 """This module contains FastAPI routers for content management endpoints."""
 
+from io import BytesIO
 from typing import Annotated, Optional
 
 import pandas as pd
@@ -13,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..config import CHECK_CONTENT_LIMIT
+from ..config import CHECK_CONTENT_LIMIT, GCS_PDF_BUCKET
 from ..database import get_async_session
 from ..tags.models import (
     TagDB,
@@ -24,7 +25,7 @@ from ..tags.models import (
 from ..tags.schemas import TagCreate, TagRetrieve
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
-from ..utils import EmbeddingCallException, setup_logger
+from ..utils import EmbeddingCallException, setup_logger, upload_file_to_gcs
 from ..workspaces.utils import (
     get_content_quota_by_workspace_id,
     get_workspace_by_workspace_name,
@@ -42,7 +43,14 @@ from .models import (
     update_content_in_db,
     validate_related_contents,
 )
-from .schemas import ContentCreate, ContentRetrieve, CustomError, CustomErrorList
+from .schemas import (
+    ContentCreate,
+    ContentRetrieve,
+    CustomError,
+    CustomErrorList,
+    PDFResponse,
+)
+from .utils import markdown_to_pdf_bytes
 
 TAG_METADATA = {
     "name": "Content management",
@@ -684,6 +692,66 @@ async def retrieve_content_by_id(
         )
 
     return _convert_record_to_schema(record=record)
+
+
+@router.post("/generate-pdf/{content_id}", response_model=PDFResponse)
+async def convert_markdown_to_pdf(
+    content_id: int,
+    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    workspace_name: Annotated[str, Depends(get_current_workspace_name)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> PDFResponse:
+    """
+    Convert markdown content to PDF and upload to GCS.
+    Returns a public URL for use with WhatsApp/Typebot.
+    """
+
+    workspace_db = await get_workspace_by_workspace_name(
+        asession=asession, workspace_name=workspace_name
+    )
+    record = await get_content_from_db(
+        asession=asession,
+        content_id=content_id,
+        workspace_id=workspace_db.workspace_id,
+    )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Content ID `{content_id}` not found",
+        )
+
+    # try:
+    pdf_content = markdown_to_pdf_bytes(record.content_text)
+    pdf_content_stream = BytesIO(pdf_content)
+
+    # Upload to GCS and get public URL
+    filename = record.content_title or f"document_{content_id}"
+    destination_blob_name = f"{workspace_db.workspace_name}/{filename}.pdf"
+    await upload_file_to_gcs(
+        bucket_name=GCS_PDF_BUCKET,
+        content_type="application/pdf",
+        destination_blob_name=destination_blob_name,
+        file_stream=pdf_content_stream,
+    )
+    public_url = (
+        f"https://storage.googleapis.com/{GCS_PDF_BUCKET}/{destination_blob_name}"
+    )
+
+    return PDFResponse(
+        success=True,
+        url=public_url,
+        filename=f"{filename}.pdf",
+        bucket=GCS_PDF_BUCKET,
+        blob_name=destination_blob_name,
+        content_id=content_id,
+    )
+
+    # except Exception as e:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail=f"Error generating PDF: {str(e)}",
+    #     ) from e
 
 
 @router.post("/csv-upload", response_model=BulkUploadResponse)
