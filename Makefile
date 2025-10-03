@@ -86,7 +86,7 @@ setup-llm-proxy:
 	-@docker rm litellm-proxy
 	@docker system prune -f
 	@sleep 2
-	@docker pull ghcr.io/berriai/litellm:main-v1.40.10
+	@docker pull ghcr.io/berriai/litellm:main-v1.77.3-stable
 	@docker run \
 		--name litellm-proxy \
 		--rm \
