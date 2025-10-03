@@ -185,6 +185,7 @@ async def upload_document(
             existing_contents = 0
             if match:
                 existing_contents = int(match.group(1))
+            assert isinstance(workspace_db.content_quota, int)
             pages_left = max(
                 0,
                 workspace_db.content_quota

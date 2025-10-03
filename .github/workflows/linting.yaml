@@ -30,7 +30,7 @@ jobs:
 
       - name: Run MyPy
         run: |
-          mypy core_backend/app
+          mypy core_backend/app --ignore-missing-imports --explicit-package-base
 
       - name: Run ruff
         run: |

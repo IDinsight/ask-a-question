@@ -14,5 +14,6 @@ def test_healthcheck(client: TestClient) -> None:
     """
 
     response = client.get("/healthcheck")
+
     assert response.status_code == status.HTTP_200_OK, f"response: {response.json()}"
     assert response.json() == {"status": "ok"}

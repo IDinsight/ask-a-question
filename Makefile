@@ -15,7 +15,7 @@ clean:
 
 # Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
 fresh-env :
-	conda remove --name $(PROJECT_NAME) --all -y
+	conda remove --name $(PROJECT_NAME) --all -y || true
 	conda create --name $(PROJECT_NAME) python==3.10 -y
 
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \

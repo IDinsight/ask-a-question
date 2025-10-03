@@ -54,19 +54,19 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: on-off-topic
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: translate
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: paraphrase
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: safety
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: dashboard-summary
     litellm_params:
@@ -96,7 +96,7 @@ model_list:
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: urgency-detection
     litellm_params:
-      model: gpt-3.5-turbo-1106
+      model: gpt-4o
       api_key: "os.environ/OPENAI_API_KEY"
   - model_name: docmuncher-title
     litellm_params:

@@ -3,19 +3,17 @@ FastAPI that collects metrics about requests made to the application and exposes
 on the `/metrics` endpoint.
 """
 
-from typing import Callable
-
-from fastapi import FastAPI
 from fastapi.requests import Request
 from prometheus_client import Counter, Histogram
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
+from starlette.types import ASGIApp
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
     """Prometheus middleware for FastAPI."""
 
-    def __init__(self, app: FastAPI) -> None:
+    def __init__(self, app: ASGIApp) -> None:
         """This middleware will collect metrics about requests made to the application
         and expose them on the `/metrics` endpoint.
 
@@ -37,7 +35,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             ["method", "endpoint"],
         )
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Collect metrics about requests made to the application.
 
         Parameters
