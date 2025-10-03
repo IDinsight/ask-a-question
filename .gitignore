@@ -165,3 +165,6 @@ load_testing/outputs/
 
 # PyCharm
 .idea/
+
+# Misc.
+graveyard
