@@ -548,7 +548,6 @@ async def upload_file_to_gcs(
     file_stream.seek(0)
     blob.upload_from_file(file_stream, content_type=content_type)
     if public:
-        blob.make_public()
         url = blob.public_url
     else:
         url = blob.generate_signed_url(

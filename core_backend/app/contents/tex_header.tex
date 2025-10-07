@@ -1,22 +1,10 @@
-% Fonts & table tooling
+% Fonts & basic table support
 \usepackage{fontspec}
-\usepackage[table]{xcolor}
-\usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
-\usepackage{etoolbox}
-\usepackage{caption}
 \usepackage{microtype}
-\usepackage[hyphens]{url}
 
-% Colors similar to your UI
-\definecolor{tblBorder}{HTML}{DDDDDD}   % #ddd
-\definecolor{tblHead}{HTML}{F5F5F5}     % #f5f5f5
-\definecolor{tblStripe}{HTML}{FAFAFA}   % #fafafa
-
-% Thin gray rules & padding analogous to CSS
-\arrayrulecolor{tblBorder}
-\setlength{\arrayrulewidth}{0.4pt}
+% Basic table settings with wrapping
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{8pt}
 
@@ -24,15 +12,6 @@
 \setlength{\LTleft}{0pt}
 \setlength{\LTright}{0pt}
 
-% Zebra striping for body rows
-\AtBeginEnvironment{longtable}{\rowcolors{2}{tblStripe}{white}}
-
-% Gray header row on each page
-\makeatletter
-\pretocmd{\endfirsthead}{\rowcolor{tblHead}}{}{}
-\pretocmd{\endhead}{\rowcolor{tblHead}}{}{}
-\makeatother
-
-% Wrapping behavior
+% Prevent overfull boxes
+\setlength{\emergencystretch}{3em}
 \sloppy
-\emergencystretch=3em

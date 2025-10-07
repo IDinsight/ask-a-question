@@ -20,12 +20,10 @@ def convert_markdown_to_pdf_bytes(markdown_text: str) -> bytes:
         The binary content of the generated PDF file.
     """
 
-    tex_header = Path(__file__).parent / "tex_header.tex"
-
+    tex_header_path = Path(__file__).parent / "tex_header.tex"
     # Create temporary file for PDF generation
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
         tmp_pdf_path = tmp_pdf.name
-
     try:
         pypandoc.convert_text(
             markdown_text,
@@ -39,9 +37,11 @@ def convert_markdown_to_pdf_bytes(markdown_text: str) -> bytes:
                 "-V",
                 "geometry:margin=1in",
                 "--include-in-header",
-                str(tex_header),
+                str(tex_header_path),
                 "-V",
                 "linestretch=1.15",
+                "-V",
+                "tables=no",  # Disable booktabs
             ],
         )
 
