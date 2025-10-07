@@ -1041,6 +1041,7 @@ class TestErrorResponses:
             original_language=language,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 
@@ -1086,6 +1087,7 @@ class TestErrorResponses:
             original_language=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 
@@ -1235,6 +1237,7 @@ class TestErrorResponses:
             original_language=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 

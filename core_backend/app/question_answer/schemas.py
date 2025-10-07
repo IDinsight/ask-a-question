@@ -50,6 +50,7 @@ class QueryRefined(QueryBase):
     generate_tts: bool = Field(False)
     original_language: IdentifiedLanguage | None = None
     query_text_original: str
+    workspace_doc_language: str
     workspace_id: int
 
 

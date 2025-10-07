@@ -54,6 +54,7 @@ async def test_prompt_injection_found(
         generate_tts=False,
         query_text=prompt_injection,
         query_text_original=prompt_injection,
+        workspace_doc_language="ENGLISH",
         workspace_id=124,
     )
     _, response = await _classify_safety(query_refined=question, response=response)
@@ -74,6 +75,7 @@ async def test_safe_message(safe_text: str, response: QueryResponse) -> None:
         generate_tts=False,
         query_text=safe_text,
         query_text_original=safe_text,
+        workspace_doc_language="ENGLISH",
         workspace_id=124,
     )
     _, response = await _classify_safety(query_refined=question, response=response)
@@ -97,6 +99,7 @@ async def test_inappropriate_language(
         generate_tts=False,
         query_text=inappropriate_text,
         query_text_original=inappropriate_text,
+        workspace_doc_language="ENGLISH",
         workspace_id=124,
     )
     _, response = await _classify_safety(query_refined=question, response=response)

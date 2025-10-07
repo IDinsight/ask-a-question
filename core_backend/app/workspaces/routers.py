@@ -13,8 +13,9 @@ from ..auth.dependencies import (
     get_current_workspace_name,
 )
 from ..auth.schemas import AuthenticationDetails
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
 from ..database import get_async_session
+from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..users.models import (
     UserDB,
     UserNotFoundError,
@@ -43,7 +44,7 @@ from .utils import (
     get_workspace_by_workspace_name,
     is_workspace_name_valid,
     update_workspace_api_key,
-    update_workspace_name_and_quotas,
+    update_workspace_attrs,
 )
 
 TAG_METADATA = {
@@ -123,6 +124,7 @@ async def create_workspaces(
             api_daily_quota=DEFAULT_API_QUOTA,  # workspace.api_daily_quota,
             asession=asession,
             content_quota=DEFAULT_CONTENT_QUOTA,  # workspace.content_quota,
+            doc_language=DEFAULT_DOC_LANGUAGE,
             user=UserCreate(
                 role=UserRoles.ADMIN,
                 username=calling_user_db.username,
@@ -149,6 +151,7 @@ async def create_workspaces(
                     api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,  # noqa: E501
                     content_quota=workspace_db.content_quota,
                     created_datetime_utc=workspace_db.created_datetime_utc,
+                    doc_language=workspace_db.doc_language,
                     updated_datetime_utc=workspace_db.updated_datetime_utc,
                     workspace_id=workspace_db.workspace_id,
                     workspace_name=workspace_db.workspace_name,
@@ -215,6 +218,7 @@ async def retrieve_all_workspaces(
             api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
             content_quota=workspace_db.content_quota,
             created_datetime_utc=workspace_db.created_datetime_utc,
+            doc_language=workspace_db.doc_language,
             updated_datetime_utc=workspace_db.updated_datetime_utc,
             workspace_id=workspace_db.workspace_id,
             workspace_name=workspace_db.workspace_name,
@@ -255,6 +259,7 @@ async def retrieve_current_workspace(
         api_key_updated_datetime_utc=workspace_db.api_key_updated_datetime_utc,
         content_quota=workspace_db.content_quota,
         created_datetime_utc=workspace_db.created_datetime_utc,
+        doc_language=workspace_db.doc_language,
         updated_datetime_utc=workspace_db.updated_datetime_utc,
         workspace_id=workspace_db.workspace_id,
         workspace_name=workspace_db.workspace_name,
@@ -334,6 +339,7 @@ async def retrieve_workspace_by_workspace_id(
         api_key_updated_datetime_utc=matched_workspace_db.api_key_updated_datetime_utc,
         content_quota=matched_workspace_db.content_quota,
         created_datetime_utc=matched_workspace_db.created_datetime_utc,
+        doc_language=matched_workspace_db.doc_language,
         updated_datetime_utc=matched_workspace_db.updated_datetime_utc,
         workspace_id=matched_workspace_db.workspace_id,
         workspace_name=matched_workspace_db.workspace_name,
@@ -414,6 +420,7 @@ async def retrieve_workspaces_by_user_id(
             api_key_updated_datetime_utc=db.api_key_updated_datetime_utc,
             content_quota=db.content_quota,
             created_datetime_utc=db.created_datetime_utc,
+            doc_language=db.doc_language,
             updated_datetime_utc=db.updated_datetime_utc,
             workspace_id=db.workspace_id,
             workspace_name=db.workspace_name,
@@ -626,7 +633,7 @@ async def update_workspace(
         # This is necessary to attach the `workspace_db` object to the session.
         asession.add(workspace_db_checked)
         await asession.flush()
-        workspace_db_updated = await update_workspace_name_and_quotas(
+        workspace_db_updated = await update_workspace_attrs(
             asession=asession, workspace=workspace, workspace_db=workspace_db_checked
         )
         new_api_daily_quota = (
@@ -640,6 +647,11 @@ async def update_workspace(
             if workspace_db_updated.content_quota == workspace_db_checked.content_quota
             else workspace_db_updated.content_quota
         )
+        new_doc_language = (
+            workspace_db_checked.doc_language
+            if workspace_db_updated.doc_language == workspace_db_checked.doc_language
+            else workspace_db_updated.doc_language
+        )
         new_workspace_name = (
             workspace_db_checked.workspace_name
             if workspace_db_updated.workspace_name
@@ -649,6 +661,7 @@ async def update_workspace(
         return WorkspaceUpdate(
             api_daily_quota=new_api_daily_quota,
             content_quota=new_content_quota,
+            doc_language=new_doc_language,
             workspace_name=new_workspace_name,
         )
     except SQLAlchemyError as e:
@@ -695,15 +708,18 @@ async def check_update_workspace_call(
 
     api_daily_quota = workspace.api_daily_quota
     content_quota = workspace.content_quota
+    doc_language = workspace.doc_language
     workspace_name = workspace.workspace_name
 
     updating_api_daily_quota = api_daily_quota is None or api_daily_quota >= 0
     updating_content_quota = content_quota is None or content_quota >= 0
+    updating_doc_language = doc_language in IdentifiedLanguage.get_supported_languages()
 
     if not any(
         [
             updating_api_daily_quota,
             updating_content_quota,
+            updating_doc_language,
             workspace_name is not None,
         ]
     ):

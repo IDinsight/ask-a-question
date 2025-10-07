@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
 from ..database import get_async_session
+from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger, update_api_limits
 from ..workspaces.utils import (
     WorkspaceNotFoundError,
@@ -215,14 +216,15 @@ async def create_first_user(
     specify the workspace name and user role for the very first user.
 
     Furthermore, the API daily quota and content quota is set to `None` for the default
-    workspace. After the default workspace is created for the first user, the first
-    user should then create a new workspace with a designated ADMIN user role and set
-    the API daily quota and content quota for that workspace accordingly.
+    workspace and the document language defaults to English. After the default
+    workspace is created for the first user, the first user should then create a new
+    workspace with a designated ADMIN user role and set workspace attributes
+    accordingly.
 
     The process is as follows:
 
-    1. Create the very first workspace for the very first user. No quotas are set and
-        the user role defaults to ADMIN.
+    1. Create the very first workspace for the very first user. No quotas are set, the
+        document language defaults to English, and the user role defaults to ADMIN.
     2. Add the very first user to the default workspace with the ADMIN role and assign
         the workspace as the default workspace for the first user.
     3. Update the API limits for the workspace.
@@ -258,7 +260,9 @@ async def create_first_user(
     # 1.
     user.role = UserRoles.ADMIN
     user.workspace_name = user.workspace_name or f"{user.username}'s Workspace"
-    workspace_db_new, _ = await create_workspace(asession=asession, user=user)
+    workspace_db_new, _ = await create_workspace(
+        asession=asession, doc_language=IdentifiedLanguage.ENGLISH, user=user
+    )
 
     # 2.
     user_new = await add_new_user_to_workspace(

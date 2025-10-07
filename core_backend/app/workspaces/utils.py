@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..users.models import WorkspaceDB
 from ..users.schemas import UserCreate
 from ..utils import get_key_hash
@@ -41,6 +42,7 @@ async def create_workspace(
     api_daily_quota: Optional[int] = None,
     asession: AsyncSession,
     content_quota: Optional[int] = None,
+    doc_language: str,
     user: UserCreate,
 ) -> tuple[WorkspaceDB, bool]:
     """Create a workspace in the `WorkspaceDB` database. If the workspace already
@@ -54,6 +56,8 @@ async def create_workspace(
         The SQLAlchemy async session to use for all database connections.
     content_quota
         The content quota for the workspace.
+    doc_language
+        The default document language for the workspace.
     user
         The user object creating the workspace.
 
@@ -66,6 +70,7 @@ async def create_workspace(
 
     assert api_daily_quota is None or api_daily_quota >= 0
     assert content_quota is None or content_quota >= 0
+    assert doc_language in IdentifiedLanguage.get_supported_languages()
 
     result = await asession.execute(
         select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)
@@ -78,6 +83,7 @@ async def create_workspace(
             api_daily_quota=api_daily_quota,
             content_quota=content_quota,
             created_datetime_utc=datetime.now(timezone.utc),
+            doc_language=doc_language,
             updated_datetime_utc=datetime.now(timezone.utc),
             workspace_name=user.workspace_name,
         )
@@ -252,10 +258,10 @@ async def update_workspace_api_key(
     return workspace_db
 
 
-async def update_workspace_name_and_quotas(
+async def update_workspace_attrs(
     *, asession: AsyncSession, workspace: WorkspaceUpdate, workspace_db: WorkspaceDB
 ) -> WorkspaceDB:
-    """Update workspace name and/or quotas.
+    """Update workspace attributes (doc language, name, and/or quotas).
 
     NB: Workspace quotas cannot be changed currently. These values are assigned to
     reasonable defaults when a workspace is created and are not meant to be changed
@@ -280,6 +286,8 @@ async def update_workspace_name_and_quotas(
     #     workspace_db.api_daily_quota = workspace.api_daily_quota
     # if workspace.content_quota is None or workspace.content_quota >= 0:
     #     workspace_db.content_quota = workspace.content_quota
+    if workspace.doc_language in IdentifiedLanguage.get_supported_languages():
+        workspace_db.doc_language = workspace.doc_language
     if workspace.workspace_name is not None:
         workspace_db.workspace_name = workspace.workspace_name
     workspace_db.updated_datetime_utc = datetime.now(timezone.utc)

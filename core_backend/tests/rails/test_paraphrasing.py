@@ -42,6 +42,7 @@ async def test_paraphrasing(test_data: dict) -> None:
         generate_tts=False,
         query_text=message,
         query_text_original=message,
+        workspace_doc_language="ENGLISH",
         workspace_id=124,
     )
     response = QueryResponse(

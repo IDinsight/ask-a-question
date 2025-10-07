@@ -14,7 +14,7 @@ from .utils import format_prompt, remove_json_markdown
 # ----  Translation bot
 TRANSLATE_FAILED_MESSAGE = "ERROR: CAN'T TRANSLATE"
 TRANSLATE_PROMPT = f"""You are a high-performing translation bot. \
-Translate the user's input from {{language}} to English.
+Translate the user's input from {{from_language}} to {{to_language}}.
 Do not answer the question, just translate it.
 If you are unable to translate the user's input, \
 respond with "{TRANSLATE_FAILED_MESSAGE}".""".strip()
