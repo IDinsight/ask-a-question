@@ -697,6 +697,8 @@ async def get_search_response(
             f"`n_similar`({n_similar})."
         )
 
+    logger.info(f"Searching for similar content to: {query_refined.query_text}")
+
     search_results = await get_similar_content_async(
         asession=asession,
         exclude_archived=exclude_archived,

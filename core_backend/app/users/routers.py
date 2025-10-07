@@ -1,5 +1,6 @@
 """This module contains FastAPI routers for user creation and registration endpoints."""
 
+import os
 from typing import Annotated
 
 import sqlalchemy
@@ -216,15 +217,15 @@ async def create_first_user(
     specify the workspace name and user role for the very first user.
 
     Furthermore, the API daily quota and content quota is set to `None` for the default
-    workspace and the document language defaults to English. After the default
-    workspace is created for the first user, the first user should then create a new
-    workspace with a designated ADMIN user role and set workspace attributes
-    accordingly.
+    workspace and the document language defaults to the one set by the global config
+    (or English if not set). After the default workspace is created for the first user,
+    the first user should then create a new workspace with a designated ADMIN user role
+    and set workspace attributes accordingly.
 
     The process is as follows:
 
     1. Create the very first workspace for the very first user. No quotas are set, the
-        document language defaults to English, and the user role defaults to ADMIN.
+        default document language is set, and the user role defaults to ADMIN.
     2. Add the very first user to the default workspace with the ADMIN role and assign
         the workspace as the default workspace for the first user.
     3. Update the API limits for the workspace.
@@ -258,10 +259,11 @@ async def create_first_user(
         )
 
     # 1.
+    default_doc_language = os.getenv("DEFAULT_DOC_LANGUAGE", IdentifiedLanguage.ENGLISH)
     user.role = UserRoles.ADMIN
     user.workspace_name = user.workspace_name or f"{user.username}'s Workspace"
     workspace_db_new, _ = await create_workspace(
-        asession=asession, doc_language=IdentifiedLanguage.ENGLISH, user=user
+        asession=asession, doc_language=default_doc_language, user=user
     )
 
     # 2.
