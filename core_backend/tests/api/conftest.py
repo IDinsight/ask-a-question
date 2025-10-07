@@ -1170,6 +1170,7 @@ def temp_workspace_api_key_and_api_quota(
     temp_workspace_db = WorkspaceDB(
         api_daily_quota=api_daily_quota,
         created_datetime_utc=datetime.now(timezone.utc),
+        doc_language="ENGLISH",
         hashed_api_key=get_key_hash(key="temp_api_key"),
         updated_datetime_utc=datetime.now(timezone.utc),
         workspace_name=workspace_name,
@@ -1239,6 +1240,7 @@ def temp_workspace_token_and_quota(
     temp_workspace_db = WorkspaceDB(
         content_quota=content_quota,
         created_datetime_utc=datetime.now(timezone.utc),
+        doc_language="ENGLISH",
         hashed_api_key=get_key_hash(key="temp_api_key"),
         updated_datetime_utc=datetime.now(timezone.utc),
         workspace_name=workspace_name,

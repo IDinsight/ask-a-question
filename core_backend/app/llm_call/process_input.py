@@ -263,8 +263,6 @@ async def _translate_question(
         If the language hasn't been identified.
     """
 
-    query_refined.workspace_doc_language = IdentifiedLanguage.FRENCH
-
     # Skip if error or if the original language is the same as the workspace document
     # language.
     if (
@@ -287,7 +285,7 @@ async def _translate_question(
         metadata=metadata,
         system_message=TRANSLATE_PROMPT.format(
             from_language=query_refined.original_language.value,
-            to_language=query_refined.workspace_doc_language.value,
+            to_language=query_refined.workspace_doc_language,
         ),
         user_message=query_refined.query_text,
     )
