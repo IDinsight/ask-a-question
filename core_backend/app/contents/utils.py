@@ -52,15 +52,14 @@ def convert_markdown_to_pdf_bytes(markdown_text: str) -> bytes:
         with open(css_path, "w", encoding="utf-8") as f:
             f.write(TABLE_CSS)
 
-        # Pandoc: Markdown -> HTML -> PDF (WeasyPrint), apply CSS for borders
-        # Use GFM reader for robust pipe tables
+        # Generate PDF: Markdown -> HTML -> PDF
         cmd = [
             "pandoc",
             "-f",
-            "gfm",  # better for Markdown tables than plain 'markdown'
+            "gfm",
             "-t",
             "html5",
-            "-s",  # standalone HTML (so CSS applies)
+            "-s",
             md_path,
             "--css",
             css_path,
