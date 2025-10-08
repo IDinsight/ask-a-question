@@ -172,7 +172,6 @@ class TestWorkspaceKeyManagement:
         assert updated_workspace_db.hashed_api_key is not None
         assert updated_workspace_db.hashed_api_key == get_key_hash(key="new_key")
 
-    @pytest.mark.order(after="test_update_workspace_api_key")
     async def test_update_workspace_with_allowed_changes(
         self, access_token_admin_1: str, client: TestClient
     ) -> None:
@@ -196,6 +195,14 @@ class TestWorkspaceKeyManagement:
         response_json = update_workspace_response.json()
         assert response_json["doc_language"] == "FRENCH"
         assert response_json["workspace_name"] == "NEW_NAME"
+
+        # Revert changes.
+        update_workspace_response = client.put(
+            "/workspace/1",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"doc_language": "ENGLISH", "workspace_name": TEST_WORKSPACE_NAME_1},
+        )
+        assert update_workspace_response.status_code == status.HTTP_200_OK
 
     async def test_update_workspace_with_no_changes(
         self, access_token_admin_1: str, client: TestClient
