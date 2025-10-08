@@ -111,6 +111,7 @@ REDIS_DOC_INGEST_EXPIRY_TIME = 3600 * 24
 
 # Google Cloud storage
 GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
+GCS_PDF_BUCKET = os.environ.get("GCS_PDF_BUCKET", "aaq-pdf-test")
 
 # Sentry config
 SENTRY_DSN = os.environ.get("SENTRY_DSN", None)

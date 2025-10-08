@@ -29,6 +29,7 @@
     "react-dom": "^18",
     "react-dropzone": "^14.3.8",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
