@@ -733,34 +733,34 @@ async def generate_content_pdf(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Content ID `{content_id}` has no content to convert",
         )
+    try:
+        pdf_content = convert_markdown_to_pdf_bytes(record.content_text)
+        pdf_content_stream = BytesIO(pdf_content)
 
-    pdf_content = convert_markdown_to_pdf_bytes(record.content_text)
-    pdf_content_stream = BytesIO(pdf_content)
+        # Upload to GCS and get public URL
+        filename = record.content_title or f"document_{content_id}"
+        destination_blob_name = f"{workspace_db.workspace_name}/{filename}.pdf"
+        public_url = await upload_file_to_gcs(
+            bucket_name=GCS_PDF_BUCKET,
+            content_type="application/pdf",
+            destination_blob_name=destination_blob_name,
+            file_stream=pdf_content_stream,
+        )
 
-    # Upload to GCS and get public URL
-    filename = record.content_title or f"document_{content_id}"
-    destination_blob_name = f"{workspace_db.workspace_name}/{filename}.pdf"
-    public_url = await upload_file_to_gcs(
-        bucket_name=GCS_PDF_BUCKET,
-        content_type="application/pdf",
-        destination_blob_name=destination_blob_name,
-        file_stream=pdf_content_stream,
-    )
+        return PDFResponse(
+            success=True,
+            url=public_url,
+            filename=f"{filename}.pdf",
+            bucket=GCS_PDF_BUCKET,
+            blob_name=destination_blob_name,
+            content_id=content_id,
+        )
 
-    return PDFResponse(
-        success=True,
-        url=public_url,
-        filename=f"{filename}.pdf",
-        bucket=GCS_PDF_BUCKET,
-        blob_name=destination_blob_name,
-        content_id=content_id,
-    )
-
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail=f"Error generating PDF: {str(e)}",
-    #     ) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating PDF: {str(e)}",
+        ) from e
 
 
 @router.post("/csv-upload", response_model=BulkUploadResponse)
