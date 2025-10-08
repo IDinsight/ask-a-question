@@ -43,6 +43,7 @@ async def test_language_identification(
         generate_tts=False,
         query_text=content,
         query_text_original=content,
+        workspace_doc_language="ENGLISH",
         workspace_id=124,
     )
 

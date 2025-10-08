@@ -240,7 +240,8 @@ async def _translate_question(
     query_refined: QueryRefined,
     response: QueryResponse | QueryResponseError,
 ) -> tuple[QueryRefined, QueryResponse | QueryResponseError]:
-    """Translate the question to English.
+    """Translate the question to match the same language as the indexed documents in
+    the workspace.
 
     Parameters
     ----------
@@ -262,10 +263,11 @@ async def _translate_question(
         If the language hasn't been identified.
     """
 
-    # Skip if error or already in English.
+    # Skip if error or if the original language is the same as the workspace document
+    # language.
     if (
         isinstance(response, QueryResponseError)
-        or query_refined.original_language == IdentifiedLanguage.ENGLISH
+        or query_refined.original_language == query_refined.workspace_doc_language
     ):
         return query_refined, response
 
@@ -282,7 +284,8 @@ async def _translate_question(
         litellm_model=LITELLM_MODEL_TRANSLATE,
         metadata=metadata,
         system_message=TRANSLATE_PROMPT.format(
-            language=query_refined.original_language.value
+            from_language=query_refined.original_language.value,
+            to_language=query_refined.workspace_doc_language,
         ),
         user_message=query_refined.query_text,
     )

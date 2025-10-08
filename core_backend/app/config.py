@@ -117,3 +117,6 @@ SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
 SENTRY_TRACES_SAMPLE_RATE = os.environ.get(
     "SENTRY_TRACES_SAMPLE_RATE", 1.0
 )  # 1.0 means 100% of traces are sent to Sentry
+
+# Language
+DEFAULT_DOC_LANGUAGE = os.environ.get("DEFAULT_DOC_LANGUAGE", "ENGLISH")

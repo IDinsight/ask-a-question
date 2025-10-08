@@ -1041,6 +1041,7 @@ class TestErrorResponses:
             original_language=language,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 
@@ -1086,6 +1087,7 @@ class TestErrorResponses:
             original_language=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 
@@ -1127,13 +1129,17 @@ class TestErrorResponses:
             )
 
     @pytest.mark.parametrize(
-        "user_query_refined,should_error,expected_error_type",
-        [("ENGLISH", False, None), (SUPPORTED_LANGUAGE, False, None)],
+        "user_query_refined,workspace_doc_language, should_error,expected_error_type",
+        [
+            ("ENGLISH", "ENGLISH", False, None),
+            ("ENGLISH", SUPPORTED_LANGUAGE, False, None),
+        ],
         indirect=["user_query_refined"],
     )
     async def test_translate_error(
         self,
         user_query_refined: QueryRefined,
+        workspace_doc_language: str,
         should_error: bool,
         expected_error_type: ErrorType,
         monkeypatch: pytest.MonkeyPatch,
@@ -1145,6 +1151,8 @@ class TestErrorResponses:
         ----------
         user_query_refined
             The user query refined object.
+        workspace_doc_language
+            The workspace document language.
         should_error
             Specifies whether an error is expected.
         expected_error_type
@@ -1178,6 +1186,7 @@ class TestErrorResponses:
         monkeypatch.setattr(
             "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
+        user_query_refined.workspace_doc_language = workspace_doc_language
         query, response = await _translate_question(
             query_refined=user_query_refined, response=user_query_response
         )
@@ -1187,7 +1196,10 @@ class TestErrorResponses:
             assert response.error_type == expected_error_type
         else:
             assert isinstance(response, QueryResponse)
-            if query.original_language == "ENGLISH":
+            if (
+                query.original_language == "ENGLISH"
+                and workspace_doc_language == "ENGLISH"
+            ):
                 assert query.query_text == "This is a basic query"
             else:
                 assert query.query_text == "This is a translated LLM response"
@@ -1235,6 +1247,7 @@ class TestErrorResponses:
             original_language=None,
             query_text="This is a basic query",
             query_text_original="This is a query original",
+            workspace_doc_language="ENGLISH",
             workspace_id=124,
         )
 

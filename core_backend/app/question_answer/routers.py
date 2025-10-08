@@ -141,8 +141,7 @@ async def chat(
             user_query=user_query,
         )
 
-        # 2
-
+        # 2.
         response = await search(
             user_query=user_query,
             request=request,
@@ -208,6 +207,7 @@ async def search(
                 asession=asession,
                 generate_tts=False,
                 user_query=user_query,
+                workspace_doc_language=workspace_db.doc_language,
                 workspace_id=workspace_id,
             )
         )
@@ -365,6 +365,7 @@ async def voice_search(
             asession=asession,
             generate_tts=True,
             user_query=user_query,
+            workspace_doc_language=workspace_db.doc_language,
             workspace_id=workspace_id,
         )
         assert isinstance(user_query_db, QueryDB)
@@ -545,6 +546,7 @@ async def voice_chat(
             asession=asession,
             generate_tts=True,
             user_query=user_query,
+            workspace_doc_language=workspace_db.doc_language,
             workspace_id=workspace_id,
         )
         assert isinstance(user_query_db, QueryDB)
@@ -695,6 +697,8 @@ async def get_search_response(
             f"`n_similar`({n_similar})."
         )
 
+    logger.info(f"Searching for similar content to: {query_refined.query_text}")
+
     search_results = await get_similar_content_async(
         asession=asession,
         exclude_archived=exclude_archived,
@@ -808,6 +812,7 @@ async def get_user_query_and_response(
     asession: AsyncSession,
     generate_tts: bool,
     user_query: QueryBase,
+    workspace_doc_language: str,
     workspace_id: int,
 ) -> tuple[QueryDB, QueryRefined, QueryResponse]:
     """Save the user query to the `QueryDB` database and construct placeholder query
@@ -819,6 +824,8 @@ async def get_user_query_and_response(
         The SQLAlchemy async session to use for all database connections.
     generate_tts
         Specifies whether to generate a TTS audio response
+    workspace_doc_language
+        The document language of the workspace.
     workspace_id
         The ID of the workspace that the user belongs to.
     user_query
@@ -841,6 +848,7 @@ async def get_user_query_and_response(
         **user_query.model_dump(),
         generate_tts=generate_tts,
         query_text_original=user_query.query_text,
+        workspace_doc_language=workspace_doc_language,
         workspace_id=workspace_id,
     )
     if user_query_refined.chat_query_params:

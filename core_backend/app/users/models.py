@@ -117,6 +117,7 @@ class WorkspaceDB(Base):
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    doc_language: Mapped[str] = mapped_column(String, nullable=False)
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

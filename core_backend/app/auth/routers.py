@@ -7,7 +7,7 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
 from ..database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserNotFoundError,
@@ -240,6 +240,7 @@ async def authenticate_or_create_google_user(
             api_daily_quota=DEFAULT_API_QUOTA,
             asession=asession,
             content_quota=DEFAULT_CONTENT_QUOTA,
+            doc_language=DEFAULT_DOC_LANGUAGE,
             user=user,
         )
         if not is_new_workspace:
