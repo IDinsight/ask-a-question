@@ -738,8 +738,12 @@ async def check_update_workspace_call(
             detail=f"Workspace ID {workspace_id} not found.",
         ) from e
 
-    if workspace_name is not None and not await is_workspace_name_valid(
-        asession=asession, workspace_name=workspace_name
+    if (
+        workspace_name is not None
+        and workspace_name != workspace_db.workspace_name
+        and not await is_workspace_name_valid(
+            asession=asession, workspace_name=workspace_name
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

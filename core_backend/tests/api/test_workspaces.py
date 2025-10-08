@@ -17,7 +17,11 @@ from core_backend.app.workspaces.utils import (
     update_workspace_api_key,
 )
 
-from .conftest import TEST_WORKSPACE_API_KEY_1, TEST_WORKSPACE_NAME_2
+from .conftest import (
+    TEST_WORKSPACE_API_KEY_1,
+    TEST_WORKSPACE_NAME_1,
+    TEST_WORKSPACE_NAME_2,
+)
 
 
 @pytest.mark.order(-100000)  # Ensure this class always runs last!
@@ -167,3 +171,94 @@ class TestWorkspaceKeyManagement:
         )
         assert updated_workspace_db.hashed_api_key is not None
         assert updated_workspace_db.hashed_api_key == get_key_hash(key="new_key")
+
+    @pytest.mark.order(after="test_update_workspace_api_key")
+    async def test_update_workspace_with_allowed_changes(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that workspace can be updated with allowed changes.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Access token for admin 1 in workspace 1.
+        client
+            Test client.
+        """
+
+        update_workspace_response = client.put(
+            "/workspace/1",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"doc_language": "FRENCH", "workspace_name": "NEW_NAME"},
+        )
+        assert update_workspace_response.status_code == status.HTTP_200_OK
+
+        response_json = update_workspace_response.json()
+        assert response_json["doc_language"] == "FRENCH"
+        assert response_json["workspace_name"] == "NEW_NAME"
+
+    async def test_update_workspace_with_no_changes(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that workspace can be updated even though nothing is changed.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Access token for admin 1 in workspace 1.
+        client
+            Test client.
+        """
+
+        update_workspace_response = client.put(
+            "/workspace/1",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"doc_language": "ENGLISH", "workspace_name": TEST_WORKSPACE_NAME_1},
+        )
+        assert update_workspace_response.status_code == status.HTTP_200_OK
+
+        response_json = update_workspace_response.json()
+        assert response_json["api_daily_quota"] is None
+        assert response_json["content_quota"] is None
+        assert response_json["doc_language"] == "ENGLISH"
+        assert response_json["workspace_name"] == TEST_WORKSPACE_NAME_1
+
+    async def test_update_workspace_with_non_existing_workspace_fails(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that updating a non-existing workspace fails.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Access token for admin 1 in workspace 1.
+        client
+            Test client.
+        """
+
+        update_workspace_response = client.put(
+            "/workspace/-1",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"doc_language": "ENGLISH", "workspace_name": TEST_WORKSPACE_NAME_1},
+        )
+        assert update_workspace_response.status_code == status.HTTP_404_NOT_FOUND
+
+    async def test_update_workspace_using_existing_workspace_name_fails(
+        self, access_token_admin_1: str, client: TestClient
+    ) -> None:
+        """Test that updating a workspace name to an existing workspace name fails.
+
+        Parameters
+        ----------
+        access_token_admin_1
+            Access token for admin 1 in workspace 1.
+        client
+            Test client.
+        """
+
+        update_workspace_response = client.put(
+            "/workspace/1",
+            headers={"Authorization": f"Bearer {access_token_admin_1}"},
+            json={"doc_language": "ENGLISH", "workspace_name": TEST_WORKSPACE_NAME_2},
+        )
+        assert update_workspace_response.status_code == status.HTTP_400_BAD_REQUEST
