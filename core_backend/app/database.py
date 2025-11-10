@@ -4,7 +4,8 @@
 import contextlib
 import os
 from collections.abc import AsyncGenerator, Generator
-from typing import ContextManager
+from functools import wraps
+from typing import Any, Callable, ContextManager
 
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -143,3 +144,52 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
+
+
+def with_new_session(func: Callable) -> Callable:
+    """Decorator that creates a new database session for background tasks.
+
+    This decorator ensures that background tasks get their own database session
+    rather than reusing a dependency-injected session that may already be closed.
+
+    Usage:
+        @with_new_session
+        async def background_task_function(..., asession: AsyncSession):
+            # Use asession here
+            ...
+
+    The decorated function will automatically receive an 'asession' parameter
+    with a fresh AsyncSession instance.
+
+    Parameters
+    ----------
+    func
+        The async function to decorate. Must accept 'asession' as a parameter.
+
+    Returns
+    -------
+    wrapper
+        The wrapped function that creates a new session before calling func.
+    """
+
+    @wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        """Wrapper that creates a new AsyncSession and passes it to func.
+
+        Parameters
+        ----------
+        args
+            Positional arguments to pass to func.
+        kwargs
+            Keyword arguments to pass to func.
+
+        Returns
+        -------
+        Any
+            The result of calling func with a new AsyncSession.
+        """
+
+        async for asession in get_async_session():
+            return await func(*args, asession=asession, **kwargs)
+
+    return wrapper
