@@ -200,7 +200,6 @@ async def chat(
     asession: AsyncSession = Depends(get_async_session),
     workspace_db: WorkspaceDB = Depends(authenticate_key),
     reset_chat_history: bool = False,
-    use_callback_url: bool = True,
 ) -> QueryResponse | JSONResponse | dict[str, Any]:
     """Chat endpoint manages a conversation between the user and the LLM agent. The
     conversation history is stored in a Redis cache.
@@ -227,8 +226,6 @@ async def chat(
         The authenticated workspace object.
     reset_chat_history
         Specifies whether to reset the chat history.
-    use_callback_url
-        Specifies whether to use the callback URL to return the response.
 
     Returns
     -------
@@ -241,7 +238,7 @@ async def chat(
     user_query.session_id = int(user_query.session_id or get_random_int32())
 
     # 2.
-    if use_callback_url:
+    if user_query.turnio_api_key and user_query.wa_id:
         background_tasks.add_task(
             _chat,
             request=request,

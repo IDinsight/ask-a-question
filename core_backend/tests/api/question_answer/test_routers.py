@@ -94,10 +94,10 @@ def make_request_with_app() -> Request:
 
 
 @pytest.mark.asyncio
-async def test_chat_use_callback_url_schedules_task_and_returns_ack(
+async def test_chat_schedules_task_and_returns_ack_when_using_turnio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """When use_callback_url=True, chat() should:
+    """When using Turn.io, chat() should:
 
         1. Assign a random session_id if missing.
         2. Enqueue _chat via background_tasks.add_task(...).
@@ -116,7 +116,11 @@ async def test_chat_use_callback_url_schedules_task_and_returns_ack(
 
     # user_query without a session_id so that get_random_int32 is used.
     user_query = QueryBase(
-        generate_llm_response=True, query_text="hello", session_id=None
+        generate_llm_response=True,
+        query_text="hello",
+        session_id=None,
+        turnio_api_key="test-turn-key",
+        wa_id="whatsapp:+1234567890",
     )
 
     # Always return this session id from get_random_int32.
@@ -132,7 +136,6 @@ async def test_chat_use_callback_url_schedules_task_and_returns_ack(
         asession=dummy_session,
         workspace_db=workspace,
         reset_chat_history=False,
-        use_callback_url=True,
     )
 
     # Session ID should now be set from get_random_int32.
