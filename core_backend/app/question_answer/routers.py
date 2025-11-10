@@ -98,7 +98,7 @@ router = APIRouter(
 @with_new_session
 async def _chat(
     *,
-    asession: AsyncSession = None,
+    asession: AsyncSession | None = None,
     request: Request,
     reset_chat_history: bool,
     user_query: QueryBase,
@@ -154,7 +154,7 @@ async def _chat(
         )
 
         # 3.
-        if user_query.wa_id:
+        if user_query.turnio_api_key and user_query.wa_id:
             payload = TurnTextMessage.model_validate(
                 {"to": user_query.wa_id, "text": {"body": response.llm_response}}
             )
@@ -162,6 +162,7 @@ async def _chat(
             response_json = await send_turn_text_message(
                 httpx_client=request.app.state.httpx_client,
                 text=payload_dict["text"]["body"],
+                turnio_api_key=user_query.turnio_api_key,
                 whatsapp_id=user_query.wa_id,
             )
             payload_dict.update(response_json)

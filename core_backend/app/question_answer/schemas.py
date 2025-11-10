@@ -37,7 +37,7 @@ class QueryBase(BaseModel):
     )
     query_text: str = Field(..., examples=["What is AAQ?"])
     session_id: int | None = Field(default=None)
-    wa_api_key: Optional[str] = None
+    turnio_api_key: Optional[str] = None
     wa_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
