@@ -120,3 +120,10 @@ SENTRY_TRACES_SAMPLE_RATE = os.environ.get(
 
 # Language
 DEFAULT_DOC_LANGUAGE = os.environ.get("DEFAULT_DOC_LANGUAGE", "ENGLISH")
+
+# HTTPX
+HTTPX_TIMEOUT: float = 10.0
+
+# Turn.io
+TURNIO_API_BASE: str = os.environ.get("TURNIO_API_BASE", "https://whatsapp.turn.io/v1/")
+TURNIO_API_KEY: str
