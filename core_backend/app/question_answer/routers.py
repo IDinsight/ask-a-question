@@ -5,9 +5,11 @@ endpoints.
 import json
 import os
 from io import BytesIO
+from typing import Any
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
+from fastapi.background import BackgroundTasks
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from langfuse.decorators import langfuse_context, observe  # type: ignore
@@ -26,7 +28,7 @@ from ..contents.models import (
     increment_query_count,
     update_votes_in_db,
 )
-from ..database import get_async_session
+from ..database import get_async_session, with_new_session
 from ..llm_call.llm_prompts import ChatHistory
 from ..llm_call.process_input import (
     classify_safety__before,
@@ -46,6 +48,8 @@ from ..llm_call.utils import (
     init_chat_history,
 )
 from ..schemas import QuerySearchResult
+from ..turnio.requests import send_turn_text_message
+from ..turnio.schemas import TurnTextMessage
 from ..users.models import WorkspaceDB
 from ..utils import (
     generate_random_filename,
@@ -91,48 +95,48 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/chat",
-    response_model=QueryResponse,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": QueryResponseError,
-            "description": "Guardrail failure",
-        }
-    },
-)
-@observe()
-async def chat(
-    user_query: QueryBase,
+@with_new_session
+async def _chat(
+    *,
+    asession: AsyncSession = None,
     request: Request,
-    asession: AsyncSession = Depends(get_async_session),
-    workspace_db: WorkspaceDB = Depends(authenticate_key),
-    reset_chat_history: bool = False,
-) -> QueryResponse | JSONResponse:
-    """Chat endpoint manages a conversation between the user and the LLM agent. The
-    conversation history is stored in a Redis cache. The process is as follows:
+    reset_chat_history: bool,
+    user_query: QueryBase,
+    workspace_db: WorkspaceDB,
+) -> QueryResponse | JSONResponse | dict[str, Any]:
+    """Internal chat function to process chat requests either in the background or
+    directly via the `/chat` endpoint.
 
-    1. Initialize chat histories and update the user query object.
-    2. Call the search function to get the appropriate response.
+    The process is as follows:
+
+    1. Initialize the user query and chat histories.
+    2. Call the `search` function to get the response.
+    3. If the user query contains a WhatsApp ID, send the response via Turn.io and
+         return the payload dictionary.
+    4. If not a WhatsApp query, return the response directly.
 
     Parameters
     ----------
-    user_query
-        The user query object.
+    asession
+        The SQLAlchemy async session to use for all database connections. The default
+        for this should be `None` since it is provided by the `with_new_session`
+        decorator.
     request
         The FastAPI request object.
-    asession
-        The SQLAlchemy async session to use for all database connections.
-    workspace_db
-        The authenticated workspace object.
     reset_chat_history
         Specifies whether to reset the chat history.
+    user_query
+        The user query object.
+    workspace_db
+        The authenticated workspace object.
 
     Returns
     -------
-    QueryResponse | JSONResponse
-        The query response object or an appropriate JSON response.
+    QueryResponse | JSONResponse | dict[str, Any]
+        The query response object, an appropriate JSON response, or a dictionary
+        (for WhatsApp responses).
     """
+
     try:
         # 1.
         user_query = await init_user_query_and_chat_histories(
@@ -148,7 +152,23 @@ async def chat(
             asession=asession,
             workspace_db=workspace_db,
         )
-        langfuse_context.update_current_trace(name="chat")
+
+        # 3.
+        if user_query.wa_id:
+            payload = TurnTextMessage.model_validate(
+                {"to": user_query.wa_id, "text": {"body": response.llm_response}}
+            )
+            payload_dict = payload.model_dump()
+            response_json = await send_turn_text_message(
+                httpx_client=request.app.state.httpx_client,
+                text=payload_dict["text"]["body"],
+                whatsapp_id=user_query.wa_id,
+            )
+            payload_dict.update(response_json)
+            langfuse_context.update_current_trace(name="chat")
+            return payload_dict
+
+        # 4.
         return response
     except LLMCallException:
         return JSONResponse(
@@ -159,6 +179,92 @@ async def chat(
                 )
             },
         )
+
+
+@router.post(
+    "/chat",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+@observe()
+async def chat(
+    background_tasks: BackgroundTasks,
+    user_query: QueryBase,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+    workspace_db: WorkspaceDB = Depends(authenticate_key),
+    reset_chat_history: bool = False,
+    use_callback_url: bool = True,
+) -> QueryResponse | JSONResponse | dict[str, Any]:
+    """Chat endpoint manages a conversation between the user and the LLM agent. The
+    conversation history is stored in a Redis cache.
+
+    The process is as follows:
+
+    1. Assign a random int32 session ID for the chat session if not provided.
+    2. If `use_callback_url` is `True`, add the chat processing task to the background
+         tasks and return an immediate response to the user.
+    3. If `use_callback_url` is `False`, process the chat request asynchronously and
+        return the response.
+
+    Parameters
+    ----------
+    background_tasks
+        The FastAPI background tasks object.
+    user_query
+        The user query object.
+    request
+        The FastAPI request object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    workspace_db
+        The authenticated workspace object.
+    reset_chat_history
+        Specifies whether to reset the chat history.
+    use_callback_url
+        Specifies whether to use the callback URL to return the response.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse | dict[str, Any]
+        The query response object, an appropriate JSON response, or a dictionary
+        (for WhatsApp responses).
+    """
+
+    # 1.
+    user_query.session_id = int(user_query.session_id or get_random_int32())
+
+    # 2.
+    if use_callback_url:
+        background_tasks.add_task(
+            _chat,
+            request=request,
+            reset_chat_history=reset_chat_history,
+            user_query=user_query,
+            workspace_db=workspace_db,
+        )
+
+        return QueryResponse(
+            feedback_secret_key=None,
+            llm_response="Hang on tight while we process your request!",
+            query_id=None,
+            search_results=None,
+            session_id=user_query.session_id,
+        )
+
+    # 3.
+    return await _chat(
+        asession=asession,
+        request=request,
+        reset_chat_history=reset_chat_history,
+        user_query=user_query,
+        workspace_db=workspace_db,
+    )
 
 
 @router.post(
@@ -1007,18 +1113,17 @@ async def init_user_query_and_chat_histories(
 ) -> QueryBase:
     """Initialize chat histories. The process is as follows:
 
-    1. Assign a random int32 session ID if not provided.
-    2. Initialize the user assistant chat history and the user assistant chat
+    1. Initialize the user assistant chat history and the user assistant chat
         parameters.
-    3. Initialize the search query chat history. NB: The chat parameters for the search
+    2. Initialize the search query chat history. NB: The chat parameters for the search
         query chat are the same as the chat parameters for the user assistant chat.
-    4. Invoke the LLM to construct a relevant database search query that is
+    3. Invoke the LLM to construct a relevant database search query that is
         contextualized on the latest user message and the user assistant chat history.
         The search query chat contains a system message that instructs the LLM to
         construct a refined search query using the latest user message and the
         conversation history from the user assistant chat (**without** the user
         assistant chat's system message).
-    5. Update the user query object with the chat query parameters, set the flag to
+    4. Update the user query object with the chat query parameters, set the flag to
         generate the LLM response, and assign the session ID. For the chat endpoint,
         the LLM response generation is always done.
 
@@ -1037,10 +1142,9 @@ async def init_user_query_and_chat_histories(
         The updated user query object.
     """
 
-    # 1.
-    session_id = str(user_query.session_id or get_random_int32())
+    session_id = str(user_query.session_id)
 
-    # 2.
+    # 1.
     chat_cache_key = f"chatCache:{session_id}"
     chat_params_cache_key = f"chatParamsCache:{session_id}"
     _, _, user_assistant_chat_history, chat_params = await init_chat_history(
@@ -1053,7 +1157,7 @@ async def init_user_query_and_chat_histories(
     assert isinstance(chat_params, dict)
     assert isinstance(user_assistant_chat_history, list)
 
-    # 3.
+    # 2.
     search_query_chat_history: list[dict[str, str | None]] = []
     append_message_content_to_chat_history(
         chat_history=search_query_chat_history,
@@ -1065,7 +1169,7 @@ async def init_user_query_and_chat_histories(
         total_tokens_for_next_generation=int(chat_params["max_output_tokens"]),
     )
 
-    # 4.
+    # 3.
     index = 1 if user_assistant_chat_history[0]["role"] == "system" else 0
     search_query_chat_history += user_assistant_chat_history[index:]
     search_query_json_str = await get_chat_response(
@@ -1078,7 +1182,7 @@ async def init_user_query_and_chat_histories(
         chat_type="search", json_str=search_query_json_str
     )
 
-    # 5.
+    # 4.
     user_query.chat_query_params = {
         "chat_cache_key": chat_cache_key,
         "chat_history": user_assistant_chat_history,
