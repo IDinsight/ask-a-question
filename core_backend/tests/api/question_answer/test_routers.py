@@ -111,7 +111,6 @@ async def test_chat_schedules_task_and_returns_ack_when_using_turnio(
 
     request = make_request_with_app()
     workspace = DummyWorkspaceDB()
-    dummy_session = object()
     background_tasks = FakeBackgroundTasks()
 
     # user_query without a session_id so that get_random_int32 is used.
@@ -133,7 +132,6 @@ async def test_chat_schedules_task_and_returns_ack_when_using_turnio(
         background_tasks=background_tasks,
         user_query=user_query,
         request=request,
-        asession=dummy_session,
         workspace_db=workspace,
         reset_chat_history=False,
     )
@@ -174,7 +172,6 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
     3. Update the langfuse trace name to "chat".
     """
 
-    dummy_session = object()
     request = make_request_with_app()
     workspace = DummyWorkspaceDB()
 
@@ -294,7 +291,6 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
     monkeypatch.setattr(routers, "langfuse_context", dummy_langfuse_context)
 
     result = await _chat.__wrapped__(  # type: ignore
-        asession=dummy_session,
         request=request,
         reset_chat_history=False,
         user_query=user_query,
