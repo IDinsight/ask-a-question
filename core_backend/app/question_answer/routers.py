@@ -197,7 +197,6 @@ async def chat(
     background_tasks: BackgroundTasks,
     user_query: QueryBase,
     request: Request,
-    asession: AsyncSession = Depends(get_async_session),
     workspace_db: WorkspaceDB = Depends(authenticate_key),
     reset_chat_history: bool = False,
 ) -> QueryResponse | JSONResponse | dict[str, Any]:
@@ -220,8 +219,6 @@ async def chat(
         The user query object.
     request
         The FastAPI request object.
-    asession
-        The SQLAlchemy async session to use for all database connections.
     workspace_db
         The authenticated workspace object.
     reset_chat_history
@@ -257,7 +254,6 @@ async def chat(
 
     # 3.
     return await _chat(
-        asession=asession,
         request=request,
         reset_chat_history=reset_chat_history,
         user_query=user_query,
