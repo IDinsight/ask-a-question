@@ -77,10 +77,8 @@ def make_request_with_app() -> Request:
 
     scope = {
         "type": "http",
-        "asgi": {"version": "3.0", "spec_version": "2.3"},
         "method": "POST",
         "path": "/chat",
-        "raw_path": b"/chat",
         "query_string": b"",
         "headers": [],
         "client": ("testclient", 50000),
