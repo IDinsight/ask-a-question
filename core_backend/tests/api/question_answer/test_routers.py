@@ -3,7 +3,8 @@
 from typing import Any
 
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 
 from core_backend.app.question_answer import routers
 from core_backend.app.question_answer.routers import _chat, chat
@@ -123,10 +124,8 @@ async def test_chat_schedules_task_and_returns_ack_when_using_turnio(
     # Always return this session id from get_random_int32.
     monkeypatch.setattr(routers, "get_random_int32", lambda: 424242)
 
-    # We don't want the background task to actually run real _chat logic. In this
-    # branch, _chat is only scheduled, not awaited, so we only need to assert that it
-    # was passed correctly to add_task.
-    result = await chat.__wrapped__(
+    # In this branch, _chat is only scheduled, not awaited.
+    result = await chat.__wrapped__(  # type: ignore[misc]
         background_tasks=background_tasks,
         user_query=user_query,
         request=request,
@@ -160,14 +159,21 @@ async def test_chat_schedules_task_and_returns_ack_when_using_turnio(
 
 
 @pytest.mark.asyncio
-async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
+async def test__chat_whatsapp_sends_turn_message_and_merges_payload_with_query_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """When wa_id and turnio_api_key are present, _chat should:
+    """When wa_id and turnio_api_key are present and search returns QueryResponse,
+    _chat should:
 
-    1. Send a Turn.io text message using send_turn_text_message.
-    2. Return a dict that merges TurnTextMessage payload + Turn.io JSON response.
-    3. Update the langfuse trace name to "chat".
+    1. Build a TurnTextMessage from response.llm_response.
+    2. Send a Turn.io text message using send_turn_text_message.
+    3. Return a dict that merges TurnTextMessage payload + Turn.io JSON response.
+    4. Update the langfuse trace name to "chat".
+
+    Parameters
+    ----------
+    monkeypatch
+        Pytest monkeypatch fixture for mocking functions.
     """
 
     request = make_request_with_app()
@@ -184,24 +190,24 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
     async def fake_init_user_query_and_chat_histories(
         *, redis_client: Any, reset_chat_history: bool, user_query: QueryBase
     ) -> QueryBase:
-        """Fake init_user_query_and_chat_histories that returns the user_query as-is.
-        For this test we don't need to modify user_query, just return it.
+        """Fake init_user_query_and_chat_histories that just returns user_query.
 
         Parameters
         ----------
         redis_client
-            The Redis client (not used in this fake).
+            The Redis client from app.state.
         reset_chat_history
-            Whether to reset chat history (not used in this fake).
+            Whether to reset chat history.
         user_query
-            The user query to initialize.
+            The user query object.
 
         Returns
         -------
         QueryBase
-            The initialized user query (unchanged).
+            The unmodified user_query.
         """
 
+        # For this test we don't need to modify user_query, just return it.
         return user_query
 
     async def fake_search(
@@ -209,25 +215,25 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
         user_query: QueryBase,
         request: Request,
         asession: Any,
-        workspace_db: DummyWorkspaceDB
+        workspace_db: DummyWorkspaceDB,
     ) -> QueryResponse:
-        """Fake search that returns a dummy QueryResponse.
+        """Fake search that always returns a QueryResponse with llm_response.
 
         Parameters
         ----------
         user_query
-            The user query for which to perform the search.
+            The user query object.
         request
             The FastAPI request object.
         asession
-            The async session (not used in this fake).
+            The async session (e.g. HTTPX client).
         workspace_db
-            The workspace database (not used in this fake).
+            The workspace database object.
 
         Returns
         -------
         QueryResponse
-            A dummy QueryResponse with a preset llm_response.
+            A dummy QueryResponse with llm_response set.
         """
 
         return QueryResponse(
@@ -245,24 +251,24 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
     async def fake_send_turn_text_message(
         *, httpx_client: object, text: str, turnio_api_key: str, whatsapp_id: str
     ) -> dict[str, str]:
-        """Fake send_turn_text_message that records its arguments and returns a
-        simulated Turn.io response.
+        """Fake send_turn_text_message that records its arguments and simulates
+        a Turn.io JSON response.
 
         Parameters
         ----------
         httpx_client
-            The HTTPX client used to send the message.
+            The HTTPX client to use for sending the message.
         text
             The text message to send.
         turnio_api_key
             The Turn.io API key.
         whatsapp_id
-            The recipient WhatsApp ID.
+            The WhatsApp ID to send the message to.
 
         Returns
         -------
         dict[str, str]
-            A simulated Turn.io JSON response.
+            Simulated Turn.io JSON response.
         """
 
         # Capture what _chat passes to the Turn client.
@@ -312,5 +318,159 @@ async def test__chat_whatsapp_sends_turn_message_and_merges_payload(
     assert recorded_send_args["whatsapp_id"] == user_query.wa_id
 
     # langfuse trace should be updated.
+    assert dummy_langfuse_context.updated is True
+    assert dummy_langfuse_context.last_name == "chat"
+
+
+@pytest.mark.asyncio
+async def test__chat_whatsapp_uses_error_message_when_search_returns_jsonresponse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When wa_id and turnio_api_key are present and search returns JSONResponse
+    (e.g. guardrail failure), _chat should:
+
+    1. Use the 'error_message' from the JSONResponse body as the WhatsApp text.
+    2. Send that text via Turn.io.
+    3. Return the merged payload dict.
+
+    Parameters
+    ----------
+    monkeypatch
+        Pytest monkeypatch fixture for mocking functions.
+    """
+
+    request = make_request_with_app()
+    workspace = DummyWorkspaceDB()
+
+    user_query = QueryBase(
+        generate_llm_response=True,
+        query_text="hello via WhatsApp",
+        session_id=999,
+        turnio_api_key="test-turn-key",
+        wa_id="whatsapp:+1234567890",
+    )
+
+    async def fake_init_user_query_and_chat_histories(
+        *, redis_client: Any, reset_chat_history: bool, user_query: QueryBase
+    ) -> QueryBase:
+        """Fake init_user_query_and_chat_histories that just returns user_query.
+
+        Parameters
+        ----------
+        redis_client
+            The Redis client from app.state.
+        reset_chat_history
+            Whether to reset chat history.
+        user_query
+            The user query object.
+
+        Returns
+        -------
+        QueryBase
+            The unmodified user_query.
+        """
+
+        # Just return user_query as-is for this test.
+        return user_query
+
+    async def fake_search(
+        *,
+        user_query: QueryBase,
+        request: Request,
+        asession: Any,
+        workspace_db: DummyWorkspaceDB,
+    ) -> JSONResponse:
+        """Fake search that simulates a guardrail / validation error by returning
+        a JSONResponse with an error message.
+
+        Parameters
+        ----------
+        user_query
+            The user query object.
+        request
+            The FastAPI request object.
+        asession
+            The async session (e.g. HTTPX client).
+        workspace_db
+            The workspace database object.
+
+        Returns
+        -------
+        JSONResponse
+            A simulated JSONResponse indicating a guardrail failure.
+        """
+
+        # Simulate a guardrail/validation error response from the search endpoint.
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error_message": "Guardrail failure: bad query"},
+        )
+
+    recorded_send_args: dict[str, object] = {}
+
+    async def fake_send_turn_text_message(
+        *, httpx_client: object, text: str, turnio_api_key: str, whatsapp_id: str
+    ) -> dict[str, str]:
+        """Fake send_turn_text_message that records its arguments and simulates a
+        Turn.io JSON response.
+
+        Parameters
+        ----------
+        httpx_client
+            The HTTPX client to use for sending the message.
+        text
+            The text message to send.
+        turnio_api_key
+            The Turn.io API key.
+        whatsapp_id
+            The WhatsApp ID to send the message to.
+
+        Returns
+        -------
+        dict[str, str]
+            Simulated Turn.io JSON response.
+        """
+
+        recorded_send_args["httpx_client"] = httpx_client
+        recorded_send_args["text"] = text
+        recorded_send_args["turnio_api_key"] = turnio_api_key
+        recorded_send_args["whatsapp_id"] = whatsapp_id
+        return {"id": "turn-msg-error-1", "status": "queued"}
+
+    dummy_langfuse_context = DummyLangfuseContext()
+    monkeypatch.setattr(
+        routers,
+        "init_user_query_and_chat_histories",
+        fake_init_user_query_and_chat_histories,
+    )
+    monkeypatch.setattr(routers, "search", fake_search)
+    monkeypatch.setattr(
+        routers,
+        "send_turn_text_message",
+        fake_send_turn_text_message,
+    )
+    monkeypatch.setattr(routers, "langfuse_context", dummy_langfuse_context)
+
+    result = await _chat.__wrapped__(  # type: ignore
+        request=request,
+        reset_chat_history=False,
+        user_query=user_query,
+        workspace_db=workspace,
+    )
+
+    assert isinstance(result, dict)
+
+    # WhatsApp payload text should be the error_message from the JSONResponse.
+    assert result["to"] == user_query.wa_id
+    assert result["text"]["body"] == "Guardrail failure: bad query"
+    assert result["id"] == "turn-msg-error-1"
+    assert result["status"] == "queued"
+
+    # send_turn_text_message called with error message text.
+    assert recorded_send_args["httpx_client"] is request.app.state.httpx_client
+    assert recorded_send_args["text"] == "Guardrail failure: bad query"
+    assert recorded_send_args["turnio_api_key"] == user_query.turnio_api_key
+    assert recorded_send_args["whatsapp_id"] == user_query.wa_id
+
     assert dummy_langfuse_context.updated is True
     assert dummy_langfuse_context.last_name == "chat"

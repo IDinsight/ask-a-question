@@ -155,8 +155,16 @@ async def _chat(
 
         # 3.
         if user_query.turnio_api_key and user_query.wa_id:
+            if isinstance(response, JSONResponse):
+                raw = response.body
+                if isinstance(raw, memoryview):
+                    raw = raw.tobytes()
+                data = json.loads(raw.decode("utf-8"))
+                text_body = data["error_message"]
+            else:
+                text_body = response.llm_response
             payload = TurnTextMessage.model_validate(
-                {"to": user_query.wa_id, "text": {"body": response.llm_response}}
+                {"to": user_query.wa_id, "text": {"body": text_body}}
             )
             payload_dict = payload.model_dump()
             response_json = await send_turn_text_message(
