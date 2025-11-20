@@ -16,6 +16,7 @@ from core_backend.app.llm_call.utils import (
 )
 from core_backend.app.question_answer.routers import init_user_query_and_chat_histories
 from core_backend.app.question_answer.schemas import QueryBase
+from core_backend.app.utils import get_random_int32
 
 
 async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) -> None:
@@ -33,6 +34,7 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
     user_query_object = QueryBase(generate_llm_response=False, query_text=query_text)
     assert user_query_object.generate_llm_response is False
     assert user_query_object.session_id is None
+    user_query_object.session_id = get_random_int32()
 
     # Mock return values
     mock_init_chat_history_return_value = (

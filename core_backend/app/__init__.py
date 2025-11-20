@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Callable
 
+import httpx
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +28,7 @@ from . import (
 from .config import (
     CROSS_ENCODER_MODEL,
     DOMAIN,
+    HTTPX_TIMEOUT,
     LANGFUSE,
     REDIS_HOST,
     SENTRY_DSN,
@@ -103,6 +105,15 @@ if LANGFUSE == "True":
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifespan events for the FastAPI application.
 
+    The process is as follows:
+
+    1. Connect to redis.
+    2. Load the cross-encoder model if enabled.
+    3. Set up HTTPX client for making HTTP requests.
+    4. Yield control to the application.
+    5. Close the Redis connection when the application finishes.
+    6. Close the HTTPX client when the application finishes.
+
     Parameters
     ----------
     app
@@ -110,15 +121,35 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
 
     logger.info("Application started")
+
+    # 1.
     app.state.redis = await aioredis.from_url(REDIS_HOST)
+
+    # 2.
     if USE_CROSS_ENCODER == "True":
         app.state.crossencoder = CrossEncoder(
             CROSS_ENCODER_MODEL,
         )
 
+    # 3.
+    logger.info("Setting up HTTPX client for making HTTP requests...")
+    timeout = httpx.Timeout(HTTPX_TIMEOUT, read=None)
+    app.state.httpx_client = httpx.AsyncClient(timeout=timeout)
+    logger.info("Finished setting up HTTPX client!")
+
+    # 4.
     yield
 
-    await app.state.redis.close()
+    # 5.
+    logger.info("Closing Redis connection...")
+    await app.state.redis.aclose()
+    logger.info("Redis connection closed!")
+
+    # 6.
+    logger.info("Closing HTTPX client...")
+    await app.state.httpx_client.aclose()
+    logger.info("HTTPX client closed!")
+
     logger.info("Application finished")
 
 

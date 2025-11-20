@@ -37,6 +37,8 @@ class QueryBase(BaseModel):
     )
     query_text: str = Field(..., examples=["What is AAQ?"])
     session_id: int | None = Field(default=None)
+    turnio_api_key: Optional[str] = None
+    wa_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,10 +60,10 @@ class QueryResponse(BaseModel):
     """Pydantic model for response to a question answering query."""
 
     debug_info: dict = Field(default_factory=dict, examples=[{"example": "debug-info"}])
-    feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
+    feedback_secret_key: str | None = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
     message_type: Optional[str] = None
-    query_id: int = Field(..., examples=[1])
+    query_id: int | None = Field(..., examples=[1])
     search_results: dict[int, QuerySearchResult] | None = Field(
         examples=[
             {
