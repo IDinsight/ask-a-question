@@ -11,6 +11,11 @@ on:
   release:
     types: [released]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment name"
+        type: environment
+        required: true
 
 jobs:
   set-env:
@@ -23,6 +28,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "env_name=${{ github.event.inputs.environment }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
