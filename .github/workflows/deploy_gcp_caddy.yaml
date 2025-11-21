@@ -15,8 +15,12 @@ on:
     inputs:
       environment:
         description: "Deployment environment name"
-        type: environment
         required: true
+        type: choice
+        options:
+          - testing
+          - production
+
 
 jobs:
   set-env:
