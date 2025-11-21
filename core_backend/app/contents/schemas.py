@@ -67,3 +67,12 @@ class CustomErrorList(BaseModel):
     """Pydantic model for list of custom errors."""
 
     errors: list[CustomError]
+
+
+class PDFResponse(BaseModel):
+    success: bool
+    content_id: int
+    url: str
+    filename: str
+    bucket: str
+    blob_name: str

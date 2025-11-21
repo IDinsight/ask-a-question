@@ -7,12 +7,22 @@ ARG NAME=aaq_backend
 ARG PORT=8000
 ARG HOME_DIR=/usr/src/${NAME}
 ARG WHISPER_MODEL_DIR=/whisper_models
+ARG PANDOC_VERSION=3.2
 
 # Install packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev python3-dev ffmpeg \
+    libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 \
+    libgdk-pixbuf-2.0-0 libglib2.0-0 libharfbuzz0b libfribidi0 \
+    libjpeg62-turbo libpng16-16 \
+    fonts-dejavu fonts-liberation fonts-noto fonts-noto-cjk \
+    curl xz-utils ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Install pandoc
+RUN curl -L https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz \
+    | tar xz -C /usr/local --strip-components=1 \
+    && pandoc --version
 # Set up directories
 RUN mkdir -p ${HOME_DIR} ${WHISPER_MODEL_DIR} /tmp/prometheus
 

@@ -12,6 +12,7 @@ import { Layout } from "@/components/Layout";
 import { CustomError } from "@/utils/api";
 import { Content, Tag } from "../types";
 import { useValidateContentCard, useArchiveContentCard } from "../api";
+import remarkGfm from "remark-gfm";
 
 const ContentViewModal = ({
   title,
@@ -122,9 +123,24 @@ const ContentViewModal = ({
               sx={{
                 overflowWrap: "break-word",
                 hyphens: "auto",
+                "& table": {
+                  borderCollapse: "collapse",
+                  width: "100%",
+                  marginTop: 2,
+                  marginBottom: 2,
+                },
+                "& th, & td": {
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "left",
+                },
+                "& th": {
+                  backgroundColor: "#f5f5f5",
+                  fontWeight: "bold",
+                },
               }}
             >
-              <ReactMarkdown>{text}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
             </Typography>
           </Layout.FlexBox>
           {related_contents && related_contents.length > 0 && (
