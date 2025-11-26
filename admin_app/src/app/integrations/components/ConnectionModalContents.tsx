@@ -120,7 +120,7 @@ const GlificModalContent: React.FC = () => {
       <Typography variant="body1" marginBottom={sizes.baseGap}>
         You can also refer to our{" "}
         <Link
-          href="https://docs.ask-a-question.com/integrations/chat_managers/glific/glific/"
+          href="https://docs.ask-a-question.com/latest/integrations/chat_managers/glific/glific/"
           target="_blank"
           rel="noopener noreferrer"
         >
