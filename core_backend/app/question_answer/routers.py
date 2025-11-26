@@ -438,7 +438,7 @@ async def voice_search(
         unique_filename = generate_random_filename(extension=file_extension)
         destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
-        await upload_file_to_gcs(
+        _ = await upload_file_to_gcs(
             bucket_name=GCS_SPEECH_BUCKET,
             content_type=content_type,
             destination_blob_name=destination_blob_name,
@@ -610,7 +610,7 @@ async def voice_chat(
         unique_filename = generate_random_filename(extension=file_extension)
         destination_blob_name = f"stt-voice-notes/{unique_filename}"
 
-        await upload_file_to_gcs(
+        _ = await upload_file_to_gcs(
             bucket_name=GCS_SPEECH_BUCKET,
             content_type=content_type,
             destination_blob_name=destination_blob_name,
