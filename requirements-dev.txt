@@ -16,7 +16,7 @@ pytest-xdist==3.5.0
 httpx>=0.28.1
 trio==0.22.2
 mkdocs-material==9.5.3
-pymdown-extensions==10.3
+pymdown-extensions==10.16.1
 mkdocs-glightbox==0.3.4
 mkdocs-open-in-new-tab==1.0.3
 types-PyYAML==6.0.12.12
