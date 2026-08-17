@@ -54,7 +54,7 @@ services:
       - .base.env
 
   litellm_proxy:
-    image: ghcr.io/berriai/litellm:main-v1.40.10
+    image: ghcr.io/berriai/litellm:v1.97.0
     restart: always
     env_file:
       - .litellm_proxy.env

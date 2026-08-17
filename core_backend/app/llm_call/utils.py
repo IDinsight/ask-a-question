@@ -80,7 +80,7 @@ async def _ask_llm_async(
 
     llm_generation_params = llm_generation_params or {
         "max_tokens": 1024,
-        "temperature": 0,
+        "temperature": 1,
     }
 
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
@@ -381,8 +381,7 @@ async def get_chat_response(
             "max_tokens": total_tokens_for_next_generation,
             "n": 1,
             "presence_penalty": 0.0,
-            "temperature": 0.7,
-            "top_p": 0.9,
+            "temperature": 1,
         },
         messages=chat_history,
         **kwargs,
@@ -446,16 +445,10 @@ async def init_chat_history(
     logger.info(f"Using chat cache ID: {chat_cache_key}")
     logger.info(f"Using chat params cache ID: {chat_params_cache_key}")
 
-    chat_cache_exists = await redis_client.exists(chat_cache_key)
-    chat_params_cache_exists = await redis_client.exists(chat_params_cache_key)
-    chat_history = (
-        json.loads(await redis_client.get(chat_cache_key)) if chat_cache_exists else []
-    )
-    chat_params = (
-        json.loads(await redis_client.get(chat_params_cache_key))
-        if chat_params_cache_exists
-        else {}
-    )
+    cached_chat_history = await redis_client.get(chat_cache_key)
+    cached_chat_params = await redis_client.get(chat_params_cache_key)
+    chat_history = json.loads(cached_chat_history) if cached_chat_history else []
+    chat_params = json.loads(cached_chat_params) if cached_chat_params else {}
 
     if chat_history and chat_params and reset is False:
         logger.info(
@@ -484,7 +477,9 @@ async def init_chat_history(
     logger.info(f"Finished initializing chat parameters for session: {session_id}")
 
     logger.info(f"Initializing chat history for session: {session_id}")
-    chat_params = json.loads(await redis_client.get(chat_params_cache_key))
+    cached_chat_params = await redis_client.get(chat_params_cache_key)
+    assert cached_chat_params is not None
+    chat_params = json.loads(cached_chat_params)
     assert isinstance(chat_params, dict) and chat_params, f"{chat_params = }"
     chat_history = []
     append_message_content_to_chat_history(

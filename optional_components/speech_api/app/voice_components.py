@@ -50,11 +50,7 @@ async def synthesize_speech(*, language: IdentifiedLanguage, text: str) -> Bytes
         voice = PiperVoice.load(model_path)
 
         with wave.open("output.wav", "wb") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(voice.config.sample_rate)
-
-            voice.synthesize(text, wav_file)
+            voice.synthesize_wav(text, wav_file)
 
         logger.info("Speech synthesis completed successfully.")
 

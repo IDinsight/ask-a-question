@@ -6,7 +6,7 @@ This submodule extends the core functionality of the `locust` load-testing libra
 
 ## How to run
 
-1. Create a new python 3.9 environment
+1. Create a new python 3.12 environment
 
 2. Install libraries in `requirements-dev.txt`
 

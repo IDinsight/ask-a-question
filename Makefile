@@ -16,7 +16,7 @@ clean:
 # Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
 fresh-env :
 	conda remove --name $(PROJECT_NAME) --all -y || true
-	conda create --name $(PROJECT_NAME) python==3.10 -y
+	conda create --name $(PROJECT_NAME) python==3.12 -y
 
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	pip install -r core_backend/requirements.txt --ignore-installed; \
@@ -86,7 +86,7 @@ setup-llm-proxy:
 	-@docker rm litellm-proxy
 	@docker system prune -f
 	@sleep 2
-	@docker pull ghcr.io/berriai/litellm:main-v1.77.3-stable
+	@docker pull ghcr.io/berriai/litellm:v1.97.0
 	@docker run \
 		--name litellm-proxy \
 		--rm \
@@ -94,7 +94,7 @@ setup-llm-proxy:
 		-v "$(CURDIR)/deployment/docker-compose/.gcp_credentials.json":/app/credentials.json \
 		--env-file "$(CURDIR)/deployment/docker-compose/.litellm_proxy.env" \
 		-p 4000:4000 \
-		-d ghcr.io/berriai/litellm:main-v1.40.10 \
+		-d ghcr.io/berriai/litellm:v1.97.0 \
 		--config /app/config.yaml --detailed_debug
 
 teardown-llm-proxy:

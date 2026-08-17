@@ -152,7 +152,7 @@ procedures.
     ??? note "Setting up the Python environment manually"
         **Create virtual environment**
 
-            conda create --name aaq python=3.10
+            conda create --name aaq python=3.12
 
         **Install Python packages**
 

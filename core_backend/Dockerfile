@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM python:3.10-slim-bullseye as build
+FROM python:3.12-slim-bookworm as build
 
 LABEL maintainer="IDinsight"
 
@@ -34,7 +34,7 @@ RUN find ${HOME_DIR} -type f -print0 | xargs -0 dos2unix
 RUN chmod +x ${HOME_DIR}/startup.sh
 
 # Stage 2: Final image
-FROM python:3.10-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 # Define runtime arguments
 ARG NAME=aaq_backend
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the Python packages and other dependencies from the build stage
-COPY --from=build /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Copy the application files and directories from the build stage
