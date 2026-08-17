@@ -37,7 +37,7 @@ An example content data will look like
 
 1. Create a new python environment:
     ```shell
-    conda create -n "aaq-validate" python=3.10
+    conda create -n "aaq-validate" python=3.12
     ```
     You can also copy the existing `aaq` environment.
 2. Install requirements. This assumes you are in project root `ask-a-question`.

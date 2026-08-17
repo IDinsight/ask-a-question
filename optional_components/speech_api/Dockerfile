@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster
+FROM python:3.12-slim-bookworm
 LABEL maintainer="IDinsight"
 
 ENV DEBIAN_FRONTEND=noninteractive

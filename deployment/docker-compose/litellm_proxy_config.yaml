@@ -10,13 +10,13 @@ model_list:
   #     api_base: "os.environ/HUGGINGFACE_EMBEDDINGS_ENDPOINT"
   - model_name: default
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: chat
     litellm_params:
-      # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
-      api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.5-flash
+      model: vertex_ai/gemini-3.7-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
@@ -29,12 +29,12 @@ model_list:
   - model_name: chat-fallback
     litellm_params:
       api_key: "os.environ/OPENAI_API_KEY"
-      model: gpt-4o-mini
+      model: gpt-5.6-luna
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: generate-response
     litellm_params:
-      # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
-      api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.5-flash
+      model: vertex_ai/gemini-3.7-flash
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
@@ -46,41 +46,55 @@ model_list:
           threshold: BLOCK_ONLY_HIGH
   - model_name: generate-response-fallback
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: detect-language
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: on-off-topic
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: translate
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: paraphrase
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: safety
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: dashboard-summary
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: topic-label
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: alignscore
     litellm_params:
-      # Set VERTEXAI_ENDPOINT environment variable or directly enter the value:
-      api_base: "os.environ/VERTEXAI_ENDPOINT"
-      model: vertex_ai/gemini-2.5-pro
+      model: vertex_ai/gemini-3.1-pro-preview
       safety_settings:
         - category: HARM_CATEGORY_HARASSMENT
           threshold: BLOCK_ONLY_HIGH
@@ -92,27 +106,37 @@ model_list:
           threshold: BLOCK_ONLY_HIGH
   - model_name: alignscore-fallback
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-sol
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: urgency-detection
     litellm_params:
-      model: gpt-4o
+      model: gpt-5.6-terra
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: docmuncher-title
     litellm_params:
-      model: gpt-4o-mini
+      model: gpt-5.6-luna
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: docmuncher-paraphrase-table
     litellm_params:
-      model: gpt-4o-mini
+      model: gpt-5.6-luna
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
   - model_name: docmuncher-single-line
     litellm_params:
-      model: gpt-4o-mini
+      model: gpt-5.6-luna
       api_key: "os.environ/OPENAI_API_KEY"
+      temperature: 1
+      additional_drop_params: ["top_p"]
 litellm_settings:
   num_retries: 2 # retry call 3 times on each model_name (e.g. translate).
-  request_timeout: 100 # raise Timeout error if call takes longer than 10s. Sets litellm.request_timeout
+  request_timeout: 100 # raise Timeout error if call takes longer than 100s. Sets litellm.request_timeout
   # fallbacks: [{"paraphrase": ["default"]}] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
   # To use Vertex AI API, uncomment the following lines:
