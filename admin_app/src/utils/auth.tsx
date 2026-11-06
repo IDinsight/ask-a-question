@@ -48,7 +48,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
     return null;
   };
-  const [workspaceName, setWorkspaceName] = useState<string | null>(getInitialWorkspaceName);
+  const [workspaceName, setWorkspaceName] = useState<string | null>(
+    getInitialWorkspaceName,
+  );
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("token");

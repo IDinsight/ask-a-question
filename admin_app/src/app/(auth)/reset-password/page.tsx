@@ -100,13 +100,11 @@ export default function ResetPasswordPage() {
           <IconCircleCheck className="size-6" aria-hidden="true" />
         </span>
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Password reset
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Password reset</h1>
           <p className="text-muted-foreground">
             The password for{" "}
-            <span className="font-medium text-foreground">{resetFor}</span> has
-            been changed. Sign in with your new password.
+            <span className="font-medium text-foreground">{resetFor}</span> has been
+            changed. Sign in with your new password.
           </p>
         </div>
         <Link
@@ -149,9 +147,7 @@ export default function ResetPasswordPage() {
               <InputGroupInput
                 {...field}
                 id={id}
-                type={
-                  options.isPassword && !showPasswords ? "password" : "text"
-                }
+                type={options.isPassword && !showPasswords ? "password" : "text"}
                 autoComplete={options.autoComplete}
                 autoFocus={options.autoFocus}
                 placeholder={options.placeholder}
@@ -163,9 +159,7 @@ export default function ResetPasswordPage() {
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     size="icon-sm"
-                    aria-label={
-                      showPasswords ? "Hide passwords" : "Show passwords"
-                    }
+                    aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
                     aria-pressed={showPasswords}
                     onClick={() => setShowPasswords((shown) => !shown)}
                   >
@@ -195,9 +189,7 @@ export default function ResetPasswordPage() {
       </Link>
 
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Reset password
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Reset password</h1>
         <p className="text-muted-foreground">
           Use one of your recovery codes to set a new password.
         </p>

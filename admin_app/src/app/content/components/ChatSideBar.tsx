@@ -148,8 +148,7 @@ const ChatSideBar = ({
               </EmptyMedia>
               <EmptyTitle>Start a test conversation</EmptyTitle>
               <EmptyDescription>
-                Ask a question to see how the chat service answers using your
-                content.
+                Ask a question to see how the chat service answers using your content.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -220,7 +219,12 @@ const MessageBox = (message: Message) => {
   const isQuestion = message.type === "question";
 
   return (
-    <div className={cn("flex items-end gap-2", isQuestion ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "flex items-end gap-2",
+        isQuestion ? "justify-end" : "justify-start",
+      )}
+    >
       {!isQuestion && <BotAvatar />}
 
       <div

@@ -71,9 +71,14 @@ test.describe("content page", () => {
     expect(menuBox.y).toBeGreaterThanOrEqual(arrowBox.y + arrowBox.height);
     expect(menuBox.y).toBeLessThan(arrowBox.y + arrowBox.height + 20);
     // Right-aligned with the arrow (align="end").
-    expect(Math.abs(menuBox.x + menuBox.width - (arrowBox.x + arrowBox.width))).toBeLessThan(2);
+    expect(
+      Math.abs(menuBox.x + menuBox.width - (arrowBox.x + arrowBox.width)),
+    ).toBeLessThan(2);
 
-    await page.screenshot({ path: "test-results/add-content-menu.png", animations: "disabled" });
+    await page.screenshot({
+      path: "test-results/add-content-menu.png",
+      animations: "disabled",
+    });
 
     // Choosing CSV opens the import dialog.
     await csvItem.click();
@@ -170,11 +175,10 @@ test.describe("edit content page", () => {
     await page.getByRole("option", { name: 'Create "Vaccines"' }).click();
 
     // The new tag is saved to the API and shown as a chip.
-    await expect
-      .poll(() => api.tags.map((t) => t.tag_name))
-      .toContain("Vaccines");
-    await expect(page.locator('[data-slot="combobox-chip"]', { hasText: "Vaccines" }))
-      .toBeVisible();
+    await expect.poll(() => api.tags.map((t) => t.tag_name)).toContain("Vaccines");
+    await expect(
+      page.locator('[data-slot="combobox-chip"]', { hasText: "Vaccines" }),
+    ).toBeVisible();
   });
 
   test("the delete icon on a tag asks to delete it instead of selecting it", async ({
@@ -198,7 +202,9 @@ test.describe("edit content page", () => {
     await expect.poll(() => api.tags.map((t) => t.tag_name)).not.toContain("Nutrition");
   });
 
-  test("save stays disabled until something changes, then validates", async ({ page }) => {
+  test("save stays disabled until something changes, then validates", async ({
+    page,
+  }) => {
     await mockAuth(page);
     await mockBackend(page, { tags: TAGS, contents: CONTENTS });
     await page.goto("/content/edit");

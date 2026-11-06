@@ -87,11 +87,17 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
             <Button
               variant="outline"
               size="icon-sm"
-              aria-label={plotVisible ? "Collapse topic visualization" : "Expand topic visualization"}
+              aria-label={
+                plotVisible
+                  ? "Collapse topic visualization"
+                  : "Expand topic visualization"
+              }
             />
           }
         >
-          <IconChevronDown className={cn("transition-transform", plotVisible && "rotate-180")} />
+          <IconChevronDown
+            className={cn("transition-transform", plotVisible && "rotate-180")}
+          />
         </CollapsibleTrigger>
       </div>
 
@@ -102,12 +108,19 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           className="flex flex-wrap items-center justify-center gap-5 py-6 opacity-80"
         >
           {[64, 44, 86, 36, 54, 28, 70].map((size, i) => (
-            <span key={i} className="block bg-muted" style={{ width: size, height: size }} />
+            <span
+              key={i}
+              className="block bg-muted"
+              style={{ width: size, height: size }}
+            />
           ))}
         </div>
       )}
 
-      <CollapsibleContent keepMounted className="flex flex-col gap-4 data-closed:hidden">
+      <CollapsibleContent
+        keepMounted
+        className="flex flex-col gap-4 data-closed:hidden"
+      >
         {loadError && (
           <Alert variant="destructive">
             <AlertDescription>{loadError}</AlertDescription>
@@ -124,25 +137,26 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
           </CollapsibleTrigger>
           <CollapsibleContent className="flex flex-col gap-3 border-t px-4 py-3 text-sm text-muted-foreground">
             <p>
-              The plot below shows queries and content grouped by their topic similarity.
-              Any ungrouped points/outliers are shown in grey, while points in the same
-              cluster are shown as the same color. Content points are shown as black
-              boxes. If there are no content points near query points, you may want to add
-              content so that the query is more likely to be accurately matched to a
-              relevant content point.
+              The plot below shows queries and content grouped by their topic
+              similarity. Any ungrouped points/outliers are shown in grey, while points
+              in the same cluster are shown as the same color. Content points are shown
+              as black boxes. If there are no content points near query points, you may
+              want to add content so that the query is more likely to be accurately
+              matched to a relevant content point.
             </p>
             <ul className="flex list-disc flex-col gap-2 pl-5">
               <li>
                 Use the mouse wheel to zoom in and out with the{" "}
-                <ToolIcon src={scrollZoomIcon.src} alt="Scroll Zoom" /> tool (activated by
-                default). Pan around using the <ToolIcon src={moveIcon.src} alt="Pan Tool" />{" "}
-                tool (activated by default).
+                <ToolIcon src={scrollZoomIcon.src} alt="Scroll Zoom" /> tool (activated
+                by default). Pan around using the{" "}
+                <ToolIcon src={moveIcon.src} alt="Pan Tool" /> tool (activated by
+                default).
               </li>
               <li>
                 Hover over points to see the text and topic information using the{" "}
                 <ToolIcon src={tooltipIcon.src} alt="Tooltip" /> tool (activated by
-                default). If you want to stop this behaviour, simply de-select the tool in
-                the sidebar.
+                default). If you want to stop this behaviour, simply de-select the tool
+                in the sidebar.
               </li>
               <li>
                 Use the lasso tool <ToolIcon src={lassoIcon.src} alt="Lasso Tool" /> (in
@@ -150,9 +164,9 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
                 their details in the table.
               </li>
               <li>
-                Click the reset tool <ToolIcon src={refreshIcon.src} alt="Reset Tool" /> to
-                return the plot to its original state and de-select any points you have
-                currently selected.
+                Click the reset tool <ToolIcon src={refreshIcon.src} alt="Reset Tool" />{" "}
+                to return the plot to its original state and de-select any points you
+                have currently selected.
               </li>
               <li>
                 Select the &quot;Content&quot; checkbox in the legend to toggle the

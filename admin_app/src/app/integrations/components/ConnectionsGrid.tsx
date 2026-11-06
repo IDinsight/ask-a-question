@@ -52,7 +52,9 @@ const CONNECTIONS: ConnectionInfo[] = [
  */
 const ConnectionLogo = ({ item }: { item: ConnectionInfo }) => (
   <span
-    className={`flex size-10 shrink-0 items-center justify-center border ${item.logo_src ? "bg-card" : "bg-muted"}`}
+    className={`flex size-10 shrink-0 items-center justify-center border ${
+      item.logo_src ? "bg-card" : "bg-muted"
+    }`}
   >
     {item.logo_src ? (
       // eslint-disable-next-line @next/next/no-img-element
@@ -82,7 +84,9 @@ const ConnectionsGrid = () => {
                 <ConnectionLogo item={item} />
                 <span className="text-sm font-semibold">{item.name}</span>
               </span>
-              <span className="text-[13px] text-muted-foreground">{item.description}</span>
+              <span className="text-[13px] text-muted-foreground">
+                {item.description}
+              </span>
               <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-[13px] font-medium text-primary">
                 View setup guide
                 <IconArrowRight className="size-3.5" aria-hidden="true" />

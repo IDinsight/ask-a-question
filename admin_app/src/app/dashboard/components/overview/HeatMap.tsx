@@ -46,21 +46,30 @@ const HeatMap = ({ data }: { data: DayHourUsageData }) => {
         aria-label={
           max === 0
             ? "No queries yet"
-            : `Busiest time: ${busiest.day} ${getLocalTime(busiest.time)}, ${busiest.n} queries`
+            : `Busiest time: ${busiest.day} ${getLocalTime(busiest.time)}, ${
+                busiest.n
+              } queries`
         }
         className="grid w-fit grid-cols-[auto_repeat(7,16px)] items-center gap-1.5 self-center"
       >
         {/* Header row: day initials */}
         <span />
         {DAYS.map((d) => (
-          <span key={d} className="text-center text-[10px] text-muted-foreground" aria-hidden="true">
+          <span
+            key={d}
+            className="text-center text-[10px] text-muted-foreground"
+            aria-hidden="true"
+          >
             {d[0]}
           </span>
         ))}
         {times.map((t, row) => (
           <React.Fragment key={t}>
             {/* Label every other row to keep it readable */}
-            <span className="pr-1 text-right text-[10px] text-muted-foreground tabular-nums" aria-hidden="true">
+            <span
+              className="pr-1 text-right text-[10px] text-muted-foreground tabular-nums"
+              aria-hidden="true"
+            >
               {row % 2 === 0 ? getLocalTime(t) : ""}
             </span>
             {DAYS.map((d) => {
@@ -70,13 +79,18 @@ const HeatMap = ({ data }: { data: DayHourUsageData }) => {
               return (
                 <span
                   key={d}
-                  title={`${d} ${getLocalTime(t)}: ${n} ${n === 1 ? "query" : "queries"}`}
+                  title={`${d} ${getLocalTime(t)}: ${n} ${
+                    n === 1 ? "query" : "queries"
+                  }`}
                   className="block size-4"
                   style={{
                     background:
                       n === 0
                         ? "var(--muted)"
-                        : `color-mix(in oklch, var(--chart-1) ${Math.max(pct, 15)}%, var(--muted))`,
+                        : `color-mix(in oklch, var(--chart-1) ${Math.max(
+                            pct,
+                            15,
+                          )}%, var(--muted))`,
                   }}
                 />
               );

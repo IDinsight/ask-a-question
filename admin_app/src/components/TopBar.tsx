@@ -43,7 +43,8 @@ const pageCrumbs = (pathname: string, searchParams: URLSearchParams): Crumb[] =>
     return [{ label: DASHBOARD_TITLES[searchParams.get("page") ?? ""] ?? "Overview" }];
   }
   if (pathname.startsWith("/integrations")) return [{ label: "Integrations" }];
-  if (pathname.startsWith("/workspace-management")) return [{ label: "Manage workspace" }];
+  if (pathname.startsWith("/workspace-management"))
+    return [{ label: "Manage workspace" }];
   return [];
 };
 
@@ -73,11 +74,16 @@ export function TopBar() {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem className="min-w-0">
                   {crumb.href && i < crumbs.length - 1 ? (
-                    <BreadcrumbLink render={<Link href={crumb.href} />} className="truncate">
+                    <BreadcrumbLink
+                      render={<Link href={crumb.href} />}
+                      className="truncate"
+                    >
                       {crumb.label}
                     </BreadcrumbLink>
                   ) : (
-                    <BreadcrumbPage className="truncate font-medium">{crumb.label}</BreadcrumbPage>
+                    <BreadcrumbPage className="truncate font-medium">
+                      {crumb.label}
+                    </BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
               </React.Fragment>

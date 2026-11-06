@@ -42,8 +42,7 @@ export default function AuthLayout({
 
         <div className="flex max-w-130 flex-col gap-8">
           <h2 className="text-3xl leading-tight font-semibold tracking-tight md:text-4xl">
-            Integrate automated question answering into your chatbot in 3 simple
-            steps
+            Integrate automated question answering into your chatbot in 3 simple steps
           </h2>
 
           <ol className="flex flex-col gap-5">

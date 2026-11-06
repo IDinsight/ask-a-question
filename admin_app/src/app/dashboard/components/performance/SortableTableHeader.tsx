@@ -29,9 +29,16 @@ const SortableTableHeader = <K extends string>({
   className,
 }: SortableTableHeaderProps<K>) => {
   const active = sortColumn === columnKey;
-  const Icon = !active ? IconSelector : sortOrder === "ascending" ? IconChevronUp : IconChevronDown;
+  const Icon = !active
+    ? IconSelector
+    : sortOrder === "ascending"
+    ? IconChevronUp
+    : IconChevronDown;
   return (
-    <TableHead aria-sort={active ? sortOrder : "none"} className={cn("px-4", className)}>
+    <TableHead
+      aria-sort={active ? sortOrder : "none"}
+      className={cn("px-4", className)}
+    >
       <button
         type="button"
         onClick={() => onSort(columnKey)}
@@ -39,7 +46,10 @@ const SortableTableHeader = <K extends string>({
       >
         {label}
         <Icon
-          className={cn("size-3.5", active ? "text-foreground" : "text-muted-foreground/60")}
+          className={cn(
+            "size-3.5",
+            active ? "text-foreground" : "text-muted-foreground/60",
+          )}
           aria-hidden="true"
         />
       </button>

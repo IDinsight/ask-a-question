@@ -15,7 +15,9 @@ async function openOverview(page: Page, data: Parameters<typeof mockBackend>[1] 
 }
 
 test.describe("dashboard overview", () => {
-  test("empty workspace shows the setup checklist and empty charts", async ({ page }) => {
+  test("empty workspace shows the setup checklist and empty charts", async ({
+    page,
+  }) => {
     await openOverview(page);
 
     await expect(page.getByRole("heading", { name: "Get set up" })).toBeVisible();
@@ -32,7 +34,9 @@ test.describe("dashboard overview", () => {
 
     await page.screenshot({ path: "test-results/overview-empty.png", fullPage: true });
     await page
-      .locator("section", { has: page.getByRole("heading", { name: "Queries over time" }) })
+      .locator("section", {
+        has: page.getByRole("heading", { name: "Queries over time" }),
+      })
       .locator("..")
       .screenshot({ path: "test-results/overview-empty-charts.png" });
   });
@@ -42,7 +46,9 @@ test.describe("dashboard overview", () => {
     await expect(page.getByText("2 of 4")).toBeVisible();
   });
 
-  test("with data: stat cards, chart, heatmap and table, no checklist", async ({ page }) => {
+  test("with data: stat cards, chart, heatmap and table, no checklist", async ({
+    page,
+  }) => {
     await openOverview(page, {
       overview: makeOverview({
         queriesPerDay: 6,
@@ -71,17 +77,23 @@ test.describe("dashboard overview", () => {
     await expect(page.getByText("No queries in this period")).toHaveCount(0);
     // Recharts draws one rect per bar segment: 7 days × 3 series
     await expect(page.locator(".recharts-bar-rectangle")).toHaveCount(21);
-    await expect(page.getByRole("img", { name: /80% upvotes, 20% downvotes/ })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /80% upvotes, 20% downvotes/ }),
+    ).toBeVisible();
     await expect(page.getByText("[DELETED] Old card")).toBeVisible();
 
     await page.waitForTimeout(1600); // let Recharts finish its grow-in animation
     await page.screenshot({ path: "test-results/overview-data.png", fullPage: true });
     await page
-      .locator("section", { has: page.getByRole("heading", { name: "Queries over time" }) })
+      .locator("section", {
+        has: page.getByRole("heading", { name: "Queries over time" }),
+      })
       .locator("..")
       .screenshot({ path: "test-results/overview-data-charts.png" });
     await page
-      .locator("section", { has: page.getByRole("heading", { name: "Most sent content" }) })
+      .locator("section", {
+        has: page.getByRole("heading", { name: "Most sent content" }),
+      })
       .screenshot({ path: "test-results/overview-data-table.png" });
   });
 
@@ -110,17 +122,24 @@ test.describe("dashboard overview", () => {
 
     // Pick the 3rd and 10th of the first visible month
     const month = dialog.locator("table").first();
-    await month.getByRole("button", { name: /\b3(rd)?\b/ }).first().click();
-    await month.getByRole("button", { name: /\b10(th)?\b/ }).first().click();
+    await month
+      .getByRole("button", { name: /\b3(rd)?\b/ })
+      .first()
+      .click();
+    await month
+      .getByRole("button", { name: /\b10(th)?\b/ })
+      .first()
+      .click();
     await expect(dialog.getByText("(8 days)")).toBeVisible();
     await dialog.getByRole("button", { name: "Apply" }).click();
 
     await expect(dialog).toBeHidden();
-    await expect(page.getByRole("button", { name: "Custom", exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await expect(page.getByRole("button", { name: "Edit custom date range" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Custom", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("button", { name: "Edit custom date range" }),
+    ).toBeVisible();
     await expect
       .poll(() => api.requests.some((r) => r.path === "/dashboard/overview/custom"))
       .toBe(true);

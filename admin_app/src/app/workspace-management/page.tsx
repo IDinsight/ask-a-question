@@ -199,8 +199,6 @@ const UserManagement: React.FC = () => {
     setShowCreateModal(false);
   }
 
-
-
   return (
     <div className="px-4 pt-8 pb-16 sm:px-8 md:pt-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -250,7 +248,10 @@ const UserManagement: React.FC = () => {
         </header>
 
         <section aria-labelledby="users-heading" className="border bg-card shadow-xs">
-          <h2 id="users-heading" className="border-b px-4 py-3 text-base font-semibold tracking-tight">
+          <h2
+            id="users-heading"
+            className="border-b px-4 py-3 text-base font-semibold tracking-tight"
+          >
             Users
             {!loading && (
               <span className="ml-2 text-sm font-normal text-muted-foreground tabular-nums">
@@ -259,7 +260,11 @@ const UserManagement: React.FC = () => {
             )}
           </h2>
           {loading ? (
-            <div className="flex flex-col gap-3 p-4" role="status" aria-label="Loading users">
+            <div
+              className="flex flex-col gap-3 p-4"
+              role="status"
+              aria-label="Loading users"
+            >
               {[0, 1, 2].map((i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="size-9 rounded-full" />
@@ -298,7 +303,11 @@ const UserManagement: React.FC = () => {
             isEdit={true}
             existingWorkspace={currentWorkspace}
             onCreate={(workspaceToEdit: Workspace) => {
-              return editWorkspace(currentWorkspace.workspace_id!, workspaceToEdit, token!);
+              return editWorkspace(
+                currentWorkspace.workspace_id!,
+                workspaceToEdit,
+                token!,
+              );
             }}
             loginWorkspace={(workspace: Workspace) => {
               return loginWorkspace(workspace.workspace_name, pathname);
@@ -314,7 +323,12 @@ const UserManagement: React.FC = () => {
             return checkIfUsernameExists(username, token!);
           }}
           addUserToWorkspace={(username: string, role: string) => {
-            return addUserToWorkspace(username, currentWorkspace!.workspace_name, role, token!);
+            return addUserToWorkspace(
+              username,
+              currentWorkspace!.workspace_name,
+              role,
+              token!,
+            );
           }}
           createUser={(username: string, password: string, role: UserRole) => {
             return createNewUser(

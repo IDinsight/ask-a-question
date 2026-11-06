@@ -105,7 +105,10 @@ export const makeUrgencyRule = (id: number, text: string): MockUrgencyRule => ({
 });
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const HOURS = Array.from({ length: 12 }, (_, i) => `${String(i * 2).padStart(2, "0")}:00`);
+const HOURS = Array.from(
+  { length: 12 },
+  (_, i) => `${String(i * 2).padStart(2, "0")}:00`,
+);
 
 /**
  * Build a dashboard overview response. With no arguments every count is zero
@@ -125,7 +128,10 @@ export const makeOverview = ({
   const series = (n: number) => Object.fromEntries(days.map((d) => [d, n]));
   return {
     stats_cards: {
-      query_stats: { n_questions: queriesPerDay * 7, percentage_increase: queriesPerDay ? 0.25 : 0 },
+      query_stats: {
+        n_questions: queriesPerDay * 7,
+        percentage_increase: queriesPerDay ? 0.25 : 0,
+      },
       response_feedback_stats: {
         n_positive: 0,
         n_negative: queriesPerDay ? 2 : 0,
@@ -141,7 +147,10 @@ export const makeOverview = ({
       },
     },
     heatmap: Object.fromEntries(
-      HOURS.map((h, i) => [h, Object.fromEntries(DAYS.map((d, j) => [d, queriesPerDay ? (i + j) % 5 : 0]))]),
+      HOURS.map((h, i) => [
+        h,
+        Object.fromEntries(DAYS.map((d, j) => [d, queriesPerDay ? (i + j) % 5 : 0])),
+      ]),
     ),
     time_series: {
       normal: series(queriesPerDay),
@@ -312,8 +321,10 @@ export async function mockBackend(
 
       // --- Content ---
       if (method === "GET" && path === "/content/") return json(route, state.contents);
-      if (method === "GET" && path === "/content/unvalidated-count") return json(route, 0);
-      if (method === "GET" && path === "/content/next-unvalidated") return json(route, null);
+      if (method === "GET" && path === "/content/unvalidated-count")
+        return json(route, 0);
+      if (method === "GET" && path === "/content/next-unvalidated")
+        return json(route, null);
       if (method === "POST" && path === "/content/") {
         const id = Math.max(0, ...state.contents.map((c) => c.content_id)) + 1;
         const created = makeContent(id, body as Partial<MockContent>);
@@ -325,7 +336,9 @@ export async function mockBackend(
         const id = Number(contentMatch[1]);
         const existing = state.contents.find((c) => c.content_id === id);
         if (method === "GET") {
-          return existing ? json(route, existing) : json(route, { detail: "Not found" }, 404);
+          return existing
+            ? json(route, existing)
+            : json(route, { detail: "Not found" }, 404);
         }
         if (method === "PUT" && existing) {
           Object.assign(existing, body);
@@ -342,10 +355,14 @@ export async function mockBackend(
       if (method === "GET" && path === "/docmuncher/status/is_job_running") {
         return json(route, false);
       }
-      if (method === "GET" && path === "/docmuncher/status/data") return json(route, []);
+      if (method === "GET" && path === "/docmuncher/status/data")
+        return json(route, []);
 
       // --- Dashboard overview ---
-      if (method === "GET" && /^\/dashboard\/overview\/(day|week|month|year|custom)$/.test(path)) {
+      if (
+        method === "GET" &&
+        /^\/dashboard\/overview\/(day|week|month|year|custom)$/.test(path)
+      ) {
         return json(route, state.overview);
       }
 
@@ -353,14 +370,27 @@ export async function mockBackend(
       if (method === "GET" && path === "/user/") return json(route, state.users);
       if (method === "POST" && path === "/user/") {
         const b = body as { username: string; role: "admin" | "read_only" };
-        const user = makeUser(Math.max(0, ...state.users.map((u) => u.user_id)) + 1, b.username, b.role);
+        const user = makeUser(
+          Math.max(0, ...state.users.map((u) => u.user_id)) + 1,
+          b.username,
+          b.role,
+        );
         state.users.push(user);
         // Placeholder codes for the test only
-        return json(route, { username: b.username, recovery_codes: ["code-1111", "code-2222"] });
+        return json(route, {
+          username: b.username,
+          recovery_codes: ["code-1111", "code-2222"],
+        });
       }
       if (method === "POST" && path === "/user/add-existing-user-to-workspace") {
         const b = body as { username: string; role: "admin" | "read_only" };
-        state.users.push(makeUser(Math.max(0, ...state.users.map((u) => u.user_id)) + 1, b.username, b.role));
+        state.users.push(
+          makeUser(
+            Math.max(0, ...state.users.map((u) => u.user_id)) + 1,
+            b.username,
+            b.role,
+          ),
+        );
         return json(route, {});
       }
       const userIdMatch = path.match(/^\/user\/(\d+)$/);
@@ -368,7 +398,10 @@ export async function mockBackend(
         const id = Number(userIdMatch[1]);
         if (method === "PUT") {
           const u = state.users.find((x) => x.user_id === id);
-          if (u) u.user_workspaces[0].user_role = (body as { role: "admin" | "read_only" }).role;
+          if (u)
+            u.user_workspaces[0].user_role = (
+              body as { role: "admin" | "read_only" }
+            ).role;
           return json(route, u ?? {});
         }
         if (method === "DELETE") {
@@ -380,17 +413,25 @@ export async function mockBackend(
       const userNameMatch = path.match(/^\/user\/([^/]+)$/);
       if (method === "HEAD" && userNameMatch) {
         const name = decodeURIComponent(userNameMatch[1]);
-        const exists = name === "outsider" || state.users.some((u) => u.username === name);
+        const exists =
+          name === "outsider" || state.users.some((u) => u.username === name);
         return route.fulfill({ status: exists ? 200 : 404, headers: CORS_HEADERS });
       }
       const wsMatch = path.match(/^\/workspace\/(\d+)$/);
       if (method === "PUT" && wsMatch) {
-        return json(route, { workspace_id: 1, workspace_name: (body as { workspace_name: string }).workspace_name });
+        return json(route, {
+          workspace_id: 1,
+          workspace_name: (body as { workspace_name: string }).workspace_name,
+        });
       }
 
       // --- Workspace / API key ---
       if (method === "GET" && path === "/workspace/current-workspace") {
-        return json(route, { workspace_id: 1, workspace_name: "Test workspace", ...state.workspace });
+        return json(route, {
+          workspace_id: 1,
+          workspace_name: "Test workspace",
+          ...state.workspace,
+        });
       }
       if (method === "PUT" && path === "/workspace/rotate-key") {
         // Placeholder key: 32 characters, never a real secret
@@ -401,7 +442,9 @@ export async function mockBackend(
       }
 
       // --- Dashboard content performance ---
-      const perfMatch = path.match(/^\/dashboard\/performance\/(day|week|month|year|custom)(?:\/(\d+))?(\/ai-summary)?$/);
+      const perfMatch = path.match(
+        /^\/dashboard\/performance\/(day|week|month|year|custom)(?:\/(\d+))?(\/ai-summary)?$/,
+      );
       if (method === "GET" && perfMatch) {
         const [, , id, ai] = perfMatch;
         if (!id) return json(route, { content_time_series: state.performance });
@@ -430,7 +473,9 @@ export async function mockBackend(
       }
 
       // --- Dashboard query topics ---
-      const insightsMatch = path.match(/^\/dashboard\/insights\/(day|week|month|year|custom)(\/refresh)?$/);
+      const insightsMatch = path.match(
+        /^\/dashboard\/insights\/(day|week|month|year|custom)(\/refresh)?$/,
+      );
       if (method === "GET" && insightsMatch) {
         if (insightsMatch[2]) {
           state.insights = state.insightsAfterRefresh;
@@ -459,7 +504,9 @@ export async function mockBackend(
           return json(route, existing);
         }
         if (method === "DELETE") {
-          state.urgencyRules = state.urgencyRules.filter((r) => r.urgency_rule_id !== id);
+          state.urgencyRules = state.urgencyRules.filter(
+            (r) => r.urgency_rule_id !== id,
+          );
           return json(route, {});
         }
       }

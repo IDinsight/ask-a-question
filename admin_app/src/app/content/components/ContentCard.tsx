@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "cn";
-import { ArchiveContentModal, ContentViewModal, EditContentButton } from "./ContentModal";
+import {
+  ArchiveContentModal,
+  ContentViewModal,
+  EditContentButton,
+} from "./ContentModal";
 import { Content, ContentDisplay, Tag } from "../types";
 
 // Used by the cards grid on the content page to work out how many cards fit.

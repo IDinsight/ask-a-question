@@ -131,8 +131,7 @@ export function AppSidebar() {
   const searchParams = useSearchParams();
   const dashboardPage = searchParams.get("page") ?? "overview";
   const { token, loginWorkspace } = useAuth();
-  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] =
-    React.useState(false);
+  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
 
   return (
     <Sidebar aria-label="Workspace navigation">
@@ -215,11 +214,7 @@ function WorkspaceUsage() {
     <div className="mx-2 mb-1 flex flex-col gap-3 border border-sidebar-border p-3 text-xs">
       <div className="font-medium">Workspace usage</div>
       <UsageMeter label="Content cards" unit="content cards" {...contentCards} />
-      <UsageMeter
-        label="API calls today"
-        unit="daily API calls"
-        {...apiCallsToday}
-      />
+      <UsageMeter label="API calls today" unit="daily API calls" {...apiCallsToday} />
       <a
         href={CONTACT_HREF}
         className="text-sidebar-primary underline-offset-2 hover:underline"

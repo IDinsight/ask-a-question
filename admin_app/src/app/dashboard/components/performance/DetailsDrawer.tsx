@@ -73,7 +73,11 @@ const ContentLineChart = ({ rows }: { rows: DrawerData["line_chart_data"] }) => 
         }
       />
       {/* itemSorter={null} keeps series order (Recharts sorts by key otherwise) */}
-      <ChartLegend verticalAlign="top" itemSorter={null} content={<ChartLegendContent className="pb-3" />} />
+      <ChartLegend
+        verticalAlign="top"
+        itemSorter={null}
+        content={<ChartLegendContent className="pb-3" />}
+      />
       {(Object.keys(chartConfig) as (keyof typeof chartConfig)[]).map((key) => (
         <Line
           key={key}
@@ -155,7 +159,10 @@ const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
               <TableBody>
                 {data.user_feedback.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={3} className="px-3 py-6 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={3}
+                      className="px-3 py-6 text-center text-muted-foreground"
+                    >
                       No feedback in this period.
                     </TableCell>
                   </TableRow>

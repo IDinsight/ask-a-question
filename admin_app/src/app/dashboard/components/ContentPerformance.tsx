@@ -95,7 +95,10 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
   // Chart whatever rows the table is currently showing
   useEffect(() => {
     setLineChartData(
-      itemsToDisplay.map((row) => ({ name: row.title, data: row.query_count_timeseries })),
+      itemsToDisplay.map((row) => ({
+        name: row.title,
+        data: row.query_count_timeseries,
+      })),
     );
   }, [itemsToDisplay]);
 
@@ -104,9 +107,17 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
     if (!token) return;
     setDrawerAISummary(null);
     const isCustom =
-      timePeriod === "custom" && customDateParams?.startDate && customDateParams?.endDate;
+      timePeriod === "custom" &&
+      customDateParams?.startDate &&
+      customDateParams?.endDate;
     const args: [Period, number, string, string?, string?] = isCustom
-      ? ["custom", contentId, token, customDateParams!.startDate!, customDateParams!.endDate!]
+      ? [
+          "custom",
+          contentId,
+          token,
+          customDateParams!.startDate!,
+          customDateParams!.endDate!,
+        ]
       : [timePeriod, contentId, token];
 
     getPerformanceDrawerData(...args).then((response) => {
@@ -172,7 +183,9 @@ const ContentPerformance: React.FC<PerformanceProps> = ({
             Ordered by {SORT_LABELS[selectedOrderColumn] ?? selectedOrderColumn},{" "}
             {selectedOrderDirection === "descending" ? "highest" : "lowest"} first
             {/* Total pages live in the table footer (it knows about search filtering) */}
-            {(page > 1 || contentTableData.length > N_TOP_CONTENT) && ` · page ${page} of results`}.
+            {(page > 1 || contentTableData.length > N_TOP_CONTENT) &&
+              ` · page ${page} of results`}
+            .
           </p>
         </div>
         <LineChart data={lineChartData} chartColors={SERIES_COLORS} />

@@ -115,7 +115,10 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
           <DialogTitle className="text-lg font-semibold">Custom date range</DialogTitle>
           <DialogDescription className="text-sm">
             {startDate && endDate
-              ? `${format(startDate, "MMM d, yyyy")} – ${format(endDate, "MMM d, yyyy")} (${diffDays} days)`
+              ? `${format(startDate, "MMM d, yyyy")} – ${format(
+                  endDate,
+                  "MMM d, yyyy",
+                )} (${diffDays} days)`
               : "Pick a start date, then an end date."}
           </DialogDescription>
         </DialogHeader>
@@ -153,8 +156,8 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         </Field>
 
         <p className="bg-muted p-3 text-xs text-muted-foreground">
-          Frequency only changes the bar chart on the Overview page. It doesn’t
-          affect Content Performance or Query Topics.
+          Frequency only changes the bar chart on the Overview page. It doesn’t affect
+          Content Performance or Query Topics.
         </p>
 
         <DialogFooter>

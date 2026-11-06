@@ -73,7 +73,9 @@ const IntegrationsPage = () => {
               onKeyRotated={() => setRefreshKey((k) => k + 1)}
             />
           )}
-          <DailyLimit quota={workspace === undefined ? undefined : workspace.dailyQuota} />
+          <DailyLimit
+            quota={workspace === undefined ? undefined : workspace.dailyQuota}
+          />
         </div>
 
         <section aria-labelledby="connect" className="flex flex-col gap-3.5">
@@ -154,7 +156,11 @@ const KeyManagement = ({
       </CardHeading>
 
       {workspace === undefined ? (
-        <div className="flex flex-col gap-2" role="status" aria-label="Checking for current API key">
+        <div
+          className="flex flex-col gap-2"
+          role="status"
+          aria-label="Checking for current API key"
+        >
           <Skeleton className="h-9" />
           <Skeleton className="h-4 w-48" />
         </div>
@@ -259,7 +265,9 @@ const DailyLimit = ({ quota }: { quota: number | null | undefined }) => (
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
         {quota === null ? "No daily limit" : `${quota.toLocaleString()} requests`}
         {quota !== null && (
-          <span className="ml-1.5 text-sm font-normal text-muted-foreground">per day</span>
+          <span className="ml-1.5 text-sm font-normal text-muted-foreground">
+            per day
+          </span>
         )}
       </p>
     )}

@@ -23,12 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -70,20 +65,13 @@ function AdminAlertModal({ open, onContinue, onClose }: AdminAlertModalProps) {
     >
       <DialogContent className={SETUP_DIALOG_CLASSES}>
         <DialogHeader className="gap-1.5">
-          <DialogTitle className="text-lg font-semibold">
-            Initial setup
-          </DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Initial setup</DialogTitle>
           <DialogDescription className="text-sm">
             You need to register an admin user before proceeding.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            size="lg"
-            className="h-10 text-sm"
-            onClick={onContinue}
-            autoFocus
-          >
+          <Button size="lg" className="h-10 text-sm" onClick={onContinue} autoFocus>
             Continue
           </Button>
         </DialogFooter>
@@ -173,9 +161,7 @@ function RegisterModal({
               <InputGroupInput
                 {...field}
                 id={id}
-                type={
-                  options.isPassword && !showPasswords ? "password" : "text"
-                }
+                type={options.isPassword && !showPasswords ? "password" : "text"}
                 autoComplete={options.autoComplete}
                 autoFocus={options.autoFocus}
                 aria-invalid={fieldState.invalid}
@@ -186,9 +172,7 @@ function RegisterModal({
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     size="icon-sm"
-                    aria-label={
-                      showPasswords ? "Hide passwords" : "Show passwords"
-                    }
+                    aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
                     aria-pressed={showPasswords}
                     onClick={() => setShowPasswords((shown) => !shown)}
                   >

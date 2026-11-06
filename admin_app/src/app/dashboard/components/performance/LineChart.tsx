@@ -2,7 +2,13 @@
 
 import React, { useMemo } from "react";
 import { format } from "date-fns";
-import { CartesianGrid, Line, LineChart as RechartsLineChart, XAxis, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  Line,
+  LineChart as RechartsLineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import {
   ChartContainer,
@@ -91,7 +97,9 @@ const LineChart: React.FC<LineChartProps> = ({ data, chartColors }) => {
             <ChartLegend
               verticalAlign="top"
               itemSorter={null} // keep table order, not alphabetical by key
-              content={<ChartLegendContent className="flex-wrap justify-start pb-4 pl-4" />}
+              content={
+                <ChartLegendContent className="flex-wrap justify-start pb-4 pl-4" />
+              }
             />
           )}
           {data.map((_, i) => (

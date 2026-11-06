@@ -51,12 +51,12 @@ const DocsLink = ({ href }: { href: string }) => (
 const TypebotModalContent: React.FC = () => (
   <div className="flex flex-col gap-4">
     <p>
-      In Typebot, you can use the &quot;HTTPS request&quot; card to call AAQ and receive its
-      response.
+      In Typebot, you can use the &quot;HTTPS request&quot; card to call AAQ and receive
+      its response.
     </p>
     <p>
-      To get a head start, you can download our template below and load it into Typebot by
-      going to &quot;Create a typebot &gt; Import a file&quot;.
+      To get a head start, you can download our template below and load it into Typebot
+      by going to &quot;Create a typebot &gt; Import a file&quot;.
     </p>
     <ExternalButton
       icon="download"
@@ -65,8 +65,8 @@ const TypebotModalContent: React.FC = () => (
       AI response with feedback
     </ExternalButton>
     <p>
-      Once loaded, you need to update the <Code>API_KEY</Code> field inside the &quot;HTTP
-      request&quot; card with your own API key before trying the flow.
+      Once loaded, you need to update the <Code>API_KEY</Code> field inside the
+      &quot;HTTP request&quot; card with your own API key before trying the flow.
     </p>
   </div>
 );
@@ -91,9 +91,9 @@ const TurnModalContent: React.FC = () => (
 const GlificModalContent: React.FC = () => (
   <div className="flex flex-col gap-4">
     <p>
-      You can download a pre-made flow from the link below, and <Code>Import</Code> it into
-      Glific. Then replace <Code>INSERT_AAQ_API_KEY</Code> in Authorization with your own
-      API key.
+      You can download a pre-made flow from the link below, and <Code>Import</Code> it
+      into Glific. Then replace <Code>INSERT_AAQ_API_KEY</Code> in Authorization with
+      your own API key.
     </p>
     <ExternalButton href="https://github.com/IDinsight/ask-a-question/blob/main/chat_managers/glific/search_flow_without_feedback.json">
       Open Glific Flow
@@ -101,7 +101,8 @@ const GlificModalContent: React.FC = () => (
     <p>
       You can also refer to our{" "}
       <DocsLink href="https://docs.ask-a-question.com/latest/integrations/chat_managers/glific/glific/" />{" "}
-      for more detailed instructions on how to import the flow and get going with Glific.
+      for more detailed instructions on how to import the flow and get going with
+      Glific.
     </p>
   </div>
 );
@@ -110,7 +111,8 @@ const RestApiContent: React.FC = () => (
   <div className="flex flex-col gap-4">
     <p>
       You can use REST APIs to interact with AAQ from your own application, using your
-      workspace API key as a Bearer token. Click on the link below to see the documentation.
+      workspace API key as a Bearer token. Click on the link below to see the
+      documentation.
     </p>
     <ExternalButton href="https://app.ask-a-question.com/api/docs">
       REST API documentation

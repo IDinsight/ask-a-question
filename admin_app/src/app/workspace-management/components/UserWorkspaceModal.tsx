@@ -2,7 +2,11 @@
 
 import type React from "react";
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { IconAlertCircle, IconCircleCheckFilled, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconCircleCheckFilled,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -227,7 +231,8 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
   const getDescription = (formType: "add" | "create" | "edit") => {
     const descriptions = {
       add: "Check the username first, then choose their role in this workspace.",
-      create: "The new user is added to this workspace. You’ll see their recovery codes once.",
+      create:
+        "The new user is added to this workspace. You’ll see their recovery codes once.",
       edit: "Change this user’s role in the workspace.",
     };
     return descriptions[formType];
@@ -251,7 +256,8 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     }
   }, [user, formType, user?.role]);
 
-  const showPasswordFields = (isVerified && userExists === false) || formType == "create";
+  const showPasswordFields =
+    (isVerified && userExists === false) || formType == "create";
   const showRole =
     (formType == "add" && isVerified) ||
     formType === "create" ||
@@ -271,8 +277,12 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           className="flex flex-col gap-5"
         >
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">{getTitle(formType)}</DialogTitle>
-            <DialogDescription className="text-sm">{getDescription(formType)}</DialogDescription>
+            <DialogTitle className="text-lg font-semibold">
+              {getTitle(formType)}
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              {getDescription(formType)}
+            </DialogDescription>
           </DialogHeader>
 
           <Field>
@@ -321,7 +331,9 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
                 <IconInfoCircle aria-hidden="true" />
               )}
               <AlertDescription
-                className={error.severity === "error" ? "text-sm text-destructive" : "text-sm"}
+                className={
+                  error.severity === "error" ? "text-sm text-destructive" : "text-sm"
+                }
               >
                 {error.text}
               </AlertDescription>
@@ -381,7 +393,13 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={handleClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button

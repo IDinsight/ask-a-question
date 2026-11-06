@@ -117,8 +117,8 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
             Generate new content from PDF
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Generate new contents from PDF files into AAQ. The system will
-            automatically create cards from the file content.
+            Generate new contents from PDF files into AAQ. The system will automatically
+            create cards from the file content.
           </DialogDescription>
         </DialogHeader>
 
@@ -169,7 +169,9 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
         {importSuccess && (
           <Alert>
             <IconCircleCheck />
-            <AlertDescription>Card generation task successfully started!</AlertDescription>
+            <AlertDescription>
+              Card generation task successfully started!
+            </AlertDescription>
             <AlertAction>
               <Button
                 variant="outline"

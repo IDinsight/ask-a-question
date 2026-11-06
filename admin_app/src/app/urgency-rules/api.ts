@@ -19,7 +19,7 @@ const addUrgencyRule = async (rule_text: string, token: string) => {
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return response.data;
   } catch (customError) {
@@ -28,18 +28,14 @@ const addUrgencyRule = async (rule_text: string, token: string) => {
   }
 };
 
-const updateUrgencyRule = async (
-  rule_id: number,
-  rule_text: string,
-  token: string
-) => {
+const updateUrgencyRule = async (rule_id: number, rule_text: string, token: string) => {
   try {
     const response = await api.put(
       `/urgency-rules/${rule_id}`,
       { urgency_rule_text: rule_text },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return response.data;
   } catch (customError) {
@@ -59,9 +55,4 @@ const deleteUrgencyRule = async (rule_id: number, token: string) => {
     handleApiError(customError, error_message);
   }
 };
-export {
-  addUrgencyRule,
-  getUrgencyRuleList,
-  updateUrgencyRule,
-  deleteUrgencyRule,
-};
+export { addUrgencyRule, getUrgencyRuleList, updateUrgencyRule, deleteUrgencyRule };

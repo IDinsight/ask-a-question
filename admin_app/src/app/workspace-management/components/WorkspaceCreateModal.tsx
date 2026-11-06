@@ -78,7 +78,9 @@ const WorkspaceCreateModal = ({
         const workspace = Array.isArray(response) ? response[0] : response;
         loginWorkspace(workspace);
         setSnackMessage?.({
-          message: isEdit ? "Workspace edited successfully" : "Workspace created successfully",
+          message: isEdit
+            ? "Workspace edited successfully"
+            : "Workspace created successfully",
           severity: "success",
         });
         setTimeout(() => {
@@ -92,7 +94,8 @@ const WorkspaceCreateModal = ({
     } catch (error) {
       const customError = error as CustomError;
       setErrorMessage(
-        customError?.message || (isEdit ? "Error editing workspace" : "Error creating workspace"),
+        customError?.message ||
+          (isEdit ? "Error editing workspace" : "Error creating workspace"),
       );
     } finally {
       setSubmitting(false);
@@ -105,7 +108,10 @@ const WorkspaceCreateModal = ({
         <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2.5 text-lg font-semibold">
-              <IconFolderPlus className="size-5 text-muted-foreground" aria-hidden="true" />
+              <IconFolderPlus
+                className="size-5 text-muted-foreground"
+                aria-hidden="true"
+              />
               {isEdit ? "Rename workspace" : "Create a workspace"}
             </DialogTitle>
             <DialogDescription className="text-sm">
@@ -138,7 +144,9 @@ const WorkspaceCreateModal = ({
               className="h-10 text-sm md:text-sm"
               onChange={() => setIsWorkspaceNameEmpty(false)}
             />
-            {isWorkspaceNameEmpty && <FieldError>Please enter a workspace name</FieldError>}
+            {isWorkspaceNameEmpty && (
+              <FieldError>Please enter a workspace name</FieldError>
+            )}
           </Field>
 
           <DialogFooter>

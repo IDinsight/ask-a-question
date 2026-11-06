@@ -67,7 +67,11 @@ const ConfirmationModal = ({
               setIsClicked(true);
             }}
           >
-            {isClicked ? <IconCheck data-icon="inline-start" /> : <IconCopy data-icon="inline-start" />}
+            {isClicked ? (
+              <IconCheck data-icon="inline-start" />
+            ) : (
+              <IconCopy data-icon="inline-start" />
+            )}
             {isClicked ? "Copied" : "Copy codes"}
           </Button>
         </div>

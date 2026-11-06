@@ -79,7 +79,9 @@ export const EditContentButton = ({
       size={size}
       className={className}
       nativeButton={false}
-      render={<Link href={`/content/edit?content_id=${content_id}`} onClick={onClick} />}
+      render={
+        <Link href={`/content/edit?content_id=${content_id}`} onClick={onClick} />
+      }
     >
       {children}
     </Button>

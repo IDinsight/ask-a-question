@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { IconAlertTriangle, IconCheck, IconCopy, IconRefresh } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconCopy,
+  IconRefresh,
+} from "@tabler/icons-react";
 
 import {
   AlertDialog,
@@ -43,11 +48,14 @@ export const KeyRenewConfirmationModal = ({
         <AlertDialogMedia className="text-destructive">
           <IconAlertTriangle />
         </AlertDialogMedia>
-        <AlertDialogTitle className="text-base">Regenerate the workspace API key?</AlertDialogTitle>
+        <AlertDialogTitle className="text-base">
+          Regenerate the workspace API key?
+        </AlertDialogTitle>
         <AlertDialogDescription className="text-sm">
           Your current key beginning with{" "}
-          <b className="font-mono font-semibold text-foreground">{currentKey}</b> will stop
-          working straight away. You’ll need to update your applications with the new key.
+          <b className="font-mono font-semibold text-foreground">{currentKey}</b> will
+          stop working straight away. You’ll need to update your applications with the
+          new key.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -61,7 +69,11 @@ export const KeyRenewConfirmationModal = ({
           disabled={isLoading}
           autoFocus
         >
-          {isLoading ? <Spinner data-icon="inline-start" /> : <IconRefresh data-icon="inline-start" />}
+          {isLoading ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <IconRefresh data-icon="inline-start" />
+          )}
           {isLoading ? "Generating…" : "Generate new key"}
         </AlertDialogAction>
       </AlertDialogFooter>
@@ -98,7 +110,8 @@ export const NewKeyModal = ({
             <b className="font-semibold text-foreground">
               You won’t be able to view the full key again here.
             </b>{" "}
-            If you lose it, you’ll need to generate a new one. The key has 32 characters.
+            If you lose it, you’ll need to generate a new one. The key has 32
+            characters.
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
@@ -117,7 +130,11 @@ export const NewKeyModal = ({
               setIsClicked(true);
             }}
           >
-            {isClicked ? <IconCheck data-icon="inline-start" /> : <IconCopy data-icon="inline-start" />}
+            {isClicked ? (
+              <IconCheck data-icon="inline-start" />
+            ) : (
+              <IconCopy data-icon="inline-start" />
+            )}
             {isClicked ? "Copied" : "Copy"}
           </Button>
         </div>

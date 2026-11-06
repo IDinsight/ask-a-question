@@ -101,7 +101,12 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
               <ChartTooltipContent
                 labelFormatter={(_, payload) => {
                   const ts = payload?.[0]?.payload?.timestamp;
-                  return ts ? format(ts, frequency === "Hour" ? "EEE d MMM, HH:mm" : "EEE d MMM yyyy") : "";
+                  return ts
+                    ? format(
+                        ts,
+                        frequency === "Hour" ? "EEE d MMM, HH:mm" : "EEE d MMM yyyy",
+                      )
+                    : "";
                 }}
               />
             }

@@ -224,8 +224,8 @@ const UrgencyRulesPage = () => {
                 Urgency detection
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                Messages sent to the urgency detection service are flagged as urgent
-                if any rule matches.
+                Messages sent to the urgency detection service are flagged as urgent if
+                any rule matches.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -265,8 +265,7 @@ const UrgencyRulesPage = () => {
                   </EmptyTitle>
                   <EmptyDescription className="text-sm">
                     Rules help you spot messages that need a human right away. Create
-                    your first rule and test it on sample messages before it goes
-                    live.
+                    your first rule and test it on sample messages before it goes live.
                   </EmptyDescription>
                 </EmptyHeader>
                 {editAccess && (

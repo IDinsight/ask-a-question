@@ -71,7 +71,10 @@ const describeRange = (period: Period, custom: CustomDateParams): string | null 
   }
   // Only repeat the year when the range crosses into a new one.
   const sameYear = start.getFullYear() === end.getFullYear();
-  return `${format(start, sameYear ? "MMM d" : "MMM d, yyyy")} – ${format(end, "MMM d, yyyy")}`;
+  return `${format(start, sameYear ? "MMM d" : "MMM d, yyyy")} – ${format(
+    end,
+    "MMM d, yyyy",
+  )}`;
 };
 
 const Dashboard: React.FC = () => {
@@ -150,7 +153,9 @@ const Dashboard: React.FC = () => {
     <div className="px-4 pt-8 pb-16 sm:px-8 md:pt-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{dashboardPage.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {dashboardPage.title}
+          </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             {dashboardPage.description}
           </p>
@@ -168,7 +173,9 @@ const Dashboard: React.FC = () => {
               )
             }
           />
-          {rangeText && <span className="text-xs text-muted-foreground">{rangeText}</span>}
+          {rangeText && (
+            <span className="text-xs text-muted-foreground">{rangeText}</span>
+          )}
         </div>
         <div className="min-w-0">{showPage()}</div>
       </div>

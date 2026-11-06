@@ -300,9 +300,8 @@ const CardsPage = () => {
               Question Answering
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Add, edit, and test content for question-answering. Questions sent to
-              the search service will retrieve results from here. Content limit is
-              50.{" "}
+              Add, edit, and test content for question-answering. Questions sent to the
+              search service will retrieve results from here. Content limit is 50.{" "}
               <a
                 href="https://docs.ask-a-question.com/latest/contact_us/"
                 className="underline underline-offset-4 hover:text-foreground"
@@ -692,7 +691,10 @@ const CardsGrid = ({
       1,
       Math.floor((gridWidth + GRID_GAP) / (CARD_MIN_WIDTH + GRID_GAP)),
     );
-    const rows = Math.max(1, Math.floor((gridHeight + GRID_GAP) / (CARD_HEIGHT + GRID_GAP)));
+    const rows = Math.max(
+      1,
+      Math.floor((gridHeight + GRID_GAP) / (CARD_HEIGHT + GRID_GAP)),
+    );
 
     setColumns(newColumns);
     setMaxCardsPerPage(rows * newColumns);
@@ -765,8 +767,7 @@ const CardsGrid = ({
                 </EmptyMedia>
                 <EmptyTitle>No content yet</EmptyTitle>
                 <EmptyDescription>
-                  Content you add here is what the search and chat services answer
-                  from.
+                  Content you add here is what the search and chat services answer from.
                 </EmptyDescription>
               </EmptyHeader>
               {editAccess && (
@@ -922,8 +923,8 @@ const ConfirmDeleteModal: React.FC<{
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to permanently delete{" "}
-            <strong className="text-foreground">{selectedContentsCount}</strong>{" "}
-            content{selectedContentsCount === 1 ? "" : "s"}.
+            <strong className="text-foreground">{selectedContentsCount}</strong> content
+            {selectedContentsCount === 1 ? "" : "s"}.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Alert variant="destructive">

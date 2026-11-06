@@ -163,7 +163,9 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => 
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         {statCardData.length === 0
-          ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-[104px]" />)
+          ? Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} className="h-[104px]" />
+            ))
           : statCardData.map((data) => <StatCard {...data} key={data.title} />)}
       </div>
 
@@ -173,7 +175,10 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => 
           className="flex min-w-0 flex-[2_1_520px] flex-col gap-4 border bg-card p-5 shadow-xs"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="queries-over-time" className="text-base font-semibold tracking-tight">
+            <h2
+              id="queries-over-time"
+              className="text-base font-semibold tracking-tight"
+            >
               Queries over time
             </h2>
             <QueriesLegend />

@@ -79,7 +79,10 @@ const TabPanel: React.FC<TabPanelProps> = ({
             {label}
           </Segment>
         ))}
-        <Segment selected={tabValue === "custom"} onClick={() => handleChange("custom")}>
+        <Segment
+          selected={tabValue === "custom"}
+          onClick={() => handleChange("custom")}
+        >
           Custom
         </Segment>
       </div>

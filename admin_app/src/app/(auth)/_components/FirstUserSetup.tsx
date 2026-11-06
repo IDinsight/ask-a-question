@@ -12,10 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  getRegisterOption,
-  registerUser,
-} from "@/app/workspace-management/api";
+import { getRegisterOption, registerUser } from "@/app/workspace-management/api";
 import { AdminAlertModal, RegisterModal } from "./RegisterModal";
 
 /*
@@ -48,10 +45,7 @@ export function FirstUserSetup() {
         if (!cancelled && data?.require_register) setStep("alert");
       })
       .catch((error) => {
-        console.error(
-          "Could not check whether first-user setup is needed:",
-          error,
-        );
+        console.error("Could not check whether first-user setup is needed:", error);
       });
     // Avoid setting state if the page unmounts before the request returns.
     return () => {
@@ -106,11 +100,7 @@ interface RecoveryCodesModalProps {
  * Lists the recovery codes with a copy button. Backdrop clicks are ignored so
  * the codes (which can't be shown again) aren't lost to a stray click.
  */
-function RecoveryCodesModal({
-  open,
-  recoveryCodes,
-  onDone,
-}: RecoveryCodesModalProps) {
+function RecoveryCodesModal({ open, recoveryCodes, onDone }: RecoveryCodesModalProps) {
   const [copied, setCopied] = useState(false);
 
   // After a copy, show "Copied" for a few seconds, then go back to "Copy codes".
@@ -154,8 +144,8 @@ function RecoveryCodesModal({
               Admin user created
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Save these recovery codes somewhere safe. You need one to reset
-              your password, each works once, and you won&apos;t see them again.
+              Save these recovery codes somewhere safe. You need one to reset your
+              password, each works once, and you won&apos;t see them again.
             </DialogDescription>
           </div>
         </DialogHeader>

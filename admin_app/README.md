@@ -1,7 +1,9 @@
 # Project management
 
 ## Sign in
+
 - we need to use google auth sign in tied to backend, not frontend
+
 ## Sidebar: API work
 
 The new app sidebar (`src/components/AppSidebar.tsx`) is UI only for now. The

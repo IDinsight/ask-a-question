@@ -405,7 +405,9 @@ const ContentBox = ({
             <AlertDialogMedia className="bg-destructive/10 text-destructive">
               <IconTrash />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete tag &quot;{tagToDelete?.tag_name}&quot;?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete tag &quot;{tagToDelete?.tag_name}&quot;?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This tag will be removed from all contents and will no longer be an
               option. This action cannot be undone.
@@ -413,7 +415,11 @@ const ContentBox = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleDeleteTag} autoFocus>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteTag}
+              autoFocus
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -500,7 +506,9 @@ const ContentBox = ({
                 </ComboboxValue>
               </ComboboxChips>
               <ComboboxContent anchor={tagsAnchor}>
-                <ComboboxEmpty>No tags found. Start typing to create one.</ComboboxEmpty>
+                <ComboboxEmpty>
+                  No tags found. Start typing to create one.
+                </ComboboxEmpty>
                 <ComboboxList>
                   {(tag: TagOption) =>
                     tag.isNew ? (
@@ -510,7 +518,9 @@ const ContentBox = ({
                       </ComboboxItem>
                     ) : (
                       <ComboboxItem key={tag.tag_id} value={tag}>
-                        <span className="min-w-0 flex-1 break-words">{tag.tag_name}</span>
+                        <span className="min-w-0 flex-1 break-words">
+                          {tag.tag_name}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon-xs"
@@ -597,7 +607,8 @@ const Header = ({
       <h1 className="text-2xl font-semibold tracking-tight">
         {display_number ? (
           <>
-            Edit content <span className="text-muted-foreground">#{display_number}</span>
+            Edit content{" "}
+            <span className="text-muted-foreground">#{display_number}</span>
           </>
         ) : (
           "Add content"

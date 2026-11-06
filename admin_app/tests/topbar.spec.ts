@@ -27,11 +27,18 @@ test.describe("top bar", () => {
       const crumb = page.getByRole("navigation", { name: "breadcrumb" });
       await expect(crumb.getByRole("listitem").first()).toHaveText("Test workspace");
       // The last crumb is the current page
-      await expect(crumb.locator('[aria-current="page"]')).toHaveText(trail[trail.length - 1]);
+      await expect(crumb.locator('[aria-current="page"]')).toHaveText(
+        trail[trail.length - 1],
+      );
       if (trail.length > 1) {
-        await expect(crumb.getByRole("link", { name: trail[0] })).toHaveAttribute("href", "/content");
+        await expect(crumb.getByRole("link", { name: trail[0] })).toHaveAttribute(
+          "href",
+          "/content",
+        );
       }
-      await expect(page.getByRole("button", { name: "Search or jump to a page" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Search or jump to a page" }),
+      ).toBeVisible();
     });
   }
 

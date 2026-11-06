@@ -123,8 +123,12 @@ const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
               {task.task_status}
             </TableCell>
             <TableCell />
-            <TableCell>{handleEmptyDate(formatDate(task.created_datetime_utc))}</TableCell>
-            <TableCell>{handleEmptyDate(formatDate(task.finished_datetime_utc))}</TableCell>
+            <TableCell>
+              {handleEmptyDate(formatDate(task.created_datetime_utc))}
+            </TableCell>
+            <TableCell>
+              {handleEmptyDate(formatDate(task.finished_datetime_utc))}
+            </TableCell>
             <TableCell
               className={cn(WRAP, task.task_status === "Failed" && "text-destructive")}
             >
@@ -172,7 +176,10 @@ export const IndexingStatusModal: React.FC = () => {
         <TableHeader className="sticky top-0 z-10 bg-popover">
           <TableRow className="hover:bg-transparent">
             {COLUMNS.map((column) => (
-              <TableHead key={column.key} className={cn(column.className, "whitespace-normal")}>
+              <TableHead
+                key={column.key}
+                className={cn(column.className, "whitespace-normal")}
+              >
                 {column.label}
               </TableHead>
             ))}

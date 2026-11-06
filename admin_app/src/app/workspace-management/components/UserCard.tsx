@@ -57,7 +57,9 @@ const UserCard: React.FC<UserCardProps> = ({
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-2 text-sm font-medium break-words">
           {username}
-          {isYou && <span className="text-xs font-normal text-muted-foreground">(You)</span>}
+          {isYou && (
+            <span className="text-xs font-normal text-muted-foreground">(You)</span>
+          )}
         </span>
         <span className="text-xs text-muted-foreground">
           {userRole == "admin" ? "Admin" : "Read only"}

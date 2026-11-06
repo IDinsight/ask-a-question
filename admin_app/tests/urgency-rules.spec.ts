@@ -1,5 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { makeUrgencyRule, mockAuth, mockBackend, type MockUrgencyRule } from "./helpers/mockApi";
+import {
+  makeUrgencyRule,
+  mockAuth,
+  mockBackend,
+  type MockUrgencyRule,
+} from "./helpers/mockApi";
 
 /**
  * /urgency-rules, run against a mocked backend and a fake login
@@ -14,12 +19,17 @@ const RULES = [
 /** Open /urgency-rules and wait for the page heading. */
 async function openRulesPage(
   page: Page,
-  { rules = RULES, role = "admin" as "admin" | "read_only" }: { rules?: MockUrgencyRule[]; role?: "admin" | "read_only" } = {},
+  {
+    rules = RULES,
+    role = "admin" as "admin" | "read_only",
+  }: { rules?: MockUrgencyRule[]; role?: "admin" | "read_only" } = {},
 ) {
   await mockAuth(page, { role });
   const api = await mockBackend(page, { urgencyRules: rules });
   await page.goto("/urgency-rules");
-  await expect(page.getByRole("heading", { name: "Urgency detection", level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Urgency detection", level: 1 }),
+  ).toBeVisible();
   return api;
 }
 
@@ -28,13 +38,20 @@ test.describe("urgency rules page", () => {
     await openRulesPage(page, { rules: [] });
 
     await expect(page.getByText("No urgency rules yet")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Create your first rule" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "How urgency detection works" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create your first rule" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "How urgency detection works" }),
+    ).toBeVisible();
     // Nothing to test without rules
     await expect(page.getByRole("button", { name: "Test rules" })).toBeDisabled();
     await expect(page.locator('[class*="Mui"]')).toHaveCount(0);
 
-    await page.screenshot({ path: "test-results/urgency-rules-empty.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/urgency-rules-empty.png",
+      fullPage: true,
+    });
   });
 
   test("lists rules with their last-updated time", async ({ page }) => {
@@ -45,7 +62,10 @@ test.describe("urgency rules page", () => {
     await expect(page.getByText(/Last updated:/)).toHaveCount(2);
     await expect(page.locator('[class*="Mui"]')).toHaveCount(0);
 
-    await page.screenshot({ path: "test-results/urgency-rules-list.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/urgency-rules-list.png",
+      fullPage: true,
+    });
   });
 
   test("creates a rule from the empty state with Enter", async ({ page }) => {
@@ -59,7 +79,9 @@ test.describe("urgency rules page", () => {
 
     await expect(page.getByText("Severe headache")).toBeVisible();
     await expect(page.getByText(/Last updated:/)).toBeVisible();
-    expect(api.urgencyRules.map((r) => r.urgency_rule_text)).toEqual(["Severe headache"]);
+    expect(api.urgencyRules.map((r) => r.urgency_rule_text)).toEqual([
+      "Severe headache",
+    ]);
   });
 
   test("Escape discards a new unsaved rule", async ({ page }) => {
@@ -139,7 +161,9 @@ test.describe("urgency rules page", () => {
     await openRulesPage(page);
 
     await page.getByRole("button", { name: "Test rules" }).click();
-    await expect(page.getByRole("heading", { name: "Test Urgency Detection" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Test Urgency Detection" }),
+    ).toBeVisible();
     await expect(page.getByText("Test your rules")).toBeVisible();
 
     const question = page.getByRole("textbox", { name: "Question" });
@@ -156,6 +180,9 @@ test.describe("urgency rules page", () => {
     await page.getByRole("button", { name: "<json>" }).click();
     await expect(page.getByRole("dialog")).toContainText('"is_urgent": false');
 
-    await page.screenshot({ path: "test-results/urgency-rules-test-panel.png", fullPage: true });
+    await page.screenshot({
+      path: "test-results/urgency-rules-test-panel.png",
+      fullPage: true,
+    });
   });
 });

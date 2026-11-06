@@ -96,7 +96,7 @@ const TestSidebar = ({
       </div>
 
       {ResponseBox && (
-        <div className="flex min-h-[200px] flex-1 flex-col overflow-y-auto border-t pt-4">
+        <div className="flex min-h-50 flex-1 flex-col overflow-y-auto border-t pt-4">
           <ResponseBox loading={loading} responseBoxData={response} token={token} />
         </div>
       )}

@@ -11,7 +11,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Table,
   TableBody,
@@ -24,10 +28,10 @@ import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
 import { SortableTableHeader } from "./SortableTableHeader";
 
 /** Tiny line of query counts over the period, in the row's chart colour. */
-const QueryCountTimeSeries: React.FC<{ queryCount: ApexTSDataPoint[]; color: string }> = ({
-  queryCount,
-  color,
-}) => (
+const QueryCountTimeSeries: React.FC<{
+  queryCount: ApexTSDataPoint[];
+  color: string;
+}> = ({ queryCount, color }) => (
   <ChartContainer
     config={{ y: { label: "Sent", color } }}
     className="aspect-auto h-6 w-full min-w-24"
@@ -45,7 +49,14 @@ const QueryCountTimeSeries: React.FC<{ queryCount: ApexTSDataPoint[]; color: str
           />
         }
       />
-      <Line dataKey="y" type="monotone" stroke="var(--color-y)" strokeWidth={2} dot={false} isAnimationActive={false} />
+      <Line
+        dataKey="y"
+        type="monotone"
+        stroke="var(--color-y)"
+        strokeWidth={2}
+        dot={false}
+        isAnimationActive={false}
+      />
     </LineChart>
   </ChartContainer>
 );
@@ -72,7 +83,8 @@ const percentageIncrease = (queryCount: number[]): number => {
     Math.floor((queryLength / 4) * 2),
     Math.floor((queryLength / 4) * 3),
   );
-  const thirdQuarterValue = thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
+  const thirdQuarterValue =
+    thirdQuarter.reduce((a, b) => a + b, 0) / thirdQuarter.length;
   return (lastQuarterValue - thirdQuarterValue) / (thirdQuarterValue || 1);
 };
 
@@ -84,8 +96,12 @@ const sortRows = <K extends keyof RowDataType>(
   return [...data].sort((a, b) => {
     let cmp = 0;
     if (byParam === "query_count_timeseries") {
-      const diffA = percentageIncrease((a[byParam] as ApexTSDataPoint[]).map((p) => p.y));
-      const diffB = percentageIncrease((b[byParam] as ApexTSDataPoint[]).map((p) => p.y));
+      const diffA = percentageIncrease(
+        (a[byParam] as ApexTSDataPoint[]).map((p) => p.y),
+      );
+      const diffB = percentageIncrease(
+        (b[byParam] as ApexTSDataPoint[]).map((p) => p.y),
+      );
       cmp = diffA - diffB;
     } else {
       cmp = (a[byParam] as number) - (b[byParam] as number);
@@ -146,7 +162,10 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
 
   return (
-    <section aria-label="Content table" className="overflow-hidden border bg-card shadow-xs">
+    <section
+      aria-label="Content table"
+      className="overflow-hidden border bg-card shadow-xs"
+    >
       <div className="flex flex-wrap gap-2 px-4 py-3">
         <InputGroup className="h-9 w-full sm:w-75">
           <InputGroupAddon>
@@ -238,11 +257,17 @@ const ContentsTable: React.FC<ContentsTableProps> = ({
         <div className="flex flex-col items-center gap-1.5 px-5 py-12 text-center">
           <b className="text-sm font-semibold">No content performance yet</b>
           <span className="max-w-100 text-[13px] text-muted-foreground">
-            Once your chatbot starts sending answers, you will see how each card performs
-            and how people rate it. Try a longer time range if you expected data.
+            Once your chatbot starts sending answers, you will see how each card
+            performs and how people rate it. Try a longer time range if you expected
+            data.
           </span>
           {longerRange && (
-            <Button variant="outline" size="sm" className="mt-2" onClick={longerRange.onSelect}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={longerRange.onSelect}
+            >
               {longerRange.label}
             </Button>
           )}

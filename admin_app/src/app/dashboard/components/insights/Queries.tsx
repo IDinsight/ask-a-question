@@ -73,8 +73,8 @@ const Queries: React.FC<QueriesProps> = ({
             {refreshing
               ? "Running discovery…"
               : data.length > 0
-                ? "Rerun discovery"
-                : "Run discovery"}
+              ? "Rerun discovery"
+              : "Run discovery"}
           </Button>
         </div>
       </div>
@@ -96,7 +96,9 @@ const Queries: React.FC<QueriesProps> = ({
                     <TableCell className="px-3 align-top text-muted-foreground tabular-nums">
                       {formatDateTime(row.query_datetime_utc)}
                     </TableCell>
-                    <TableCell className="px-3 whitespace-normal">{row.query_text}</TableCell>
+                    <TableCell className="px-3 whitespace-normal">
+                      {row.query_text}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
