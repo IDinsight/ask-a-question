@@ -1,21 +1,29 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  TextField,
-  Typography,
-} from "@mui/material";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import CheckIcon from "@mui/icons-material/Check";
-import { Layout } from "@/components/Layout";
-import { sizes } from "@/utils";
-import { LoadingButton } from "@mui/lab";
+import { IconAlertTriangle, IconCheck, IconCopy, IconRefresh } from "@tabler/icons-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+
+/** Confirm before rotating the key, since the old key stops working at once. */
 export const KeyRenewConfirmationModal = ({
   open,
   currentKey,
@@ -29,36 +37,39 @@ export const KeyRenewConfirmationModal = ({
   onRenew: () => void;
   isLoading: boolean;
 }) => (
-  <Dialog open={open} onClose={onClose}>
-    <DialogTitle>{"Are you sure you want to renew the workspace API key?"}</DialogTitle>
-    <DialogContent>
-      <DialogContentText>
-        {`If you proceed, your current key beginning with `}
-        <Typography component="span" style={{ fontWeight: "bold" }}>
-          "{currentKey}" will stop working
-        </Typography>
-        {` and you will need to update your applications with the new key.`}
-      </DialogContentText>
-    </DialogContent>
-    <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-      <Button onClick={onClose} color="primary">
-        Cancel
-      </Button>
-      <LoadingButton
-        onClick={onRenew}
-        autoFocus
-        variant="contained"
-        color="error"
-        loading={isLoading}
-        loadingPosition="start"
-        startIcon={<AutorenewIcon />}
-      >
-        {isLoading ? "Generating..." : "Generate New Key"}
-      </LoadingButton>
-    </DialogActions>
-  </Dialog>
+  <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <AlertDialogContent className="p-6">
+      <AlertDialogHeader>
+        <AlertDialogMedia className="text-destructive">
+          <IconAlertTriangle />
+        </AlertDialogMedia>
+        <AlertDialogTitle className="text-base">Regenerate the workspace API key?</AlertDialogTitle>
+        <AlertDialogDescription className="text-sm">
+          Your current key beginning with{" "}
+          <b className="font-mono font-semibold text-foreground">{currentKey}</b> will stop
+          working straight away. You’ll need to update your applications with the new key.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel size="lg" disabled={isLoading}>
+          Cancel
+        </AlertDialogCancel>
+        <AlertDialogAction
+          size="lg"
+          variant="destructive"
+          onClick={onRenew}
+          disabled={isLoading}
+          autoFocus
+        >
+          {isLoading ? <Spinner data-icon="inline-start" /> : <IconRefresh data-icon="inline-start" />}
+          {isLoading ? "Generating…" : "Generate new key"}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 );
 
+/** Shows a newly generated key once, with a copy button. */
 export const NewKeyModal = ({
   newKey,
   open,
@@ -78,58 +89,44 @@ export const NewKeyModal = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>{"Save your new key"}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Please save this secret key somewhere safe and accessible. For security
-          reasons,
-          <Typography component="span" style={{ fontWeight: "bold" }}>
-            {" you won't be able to view the full key again here. "}
-          </Typography>
-          If you lose this secret key, you'll need to generate a new one.
-        </DialogContentText>
-        <Layout.Spacer multiplier={1} />
-        <DialogContentText>Note: The API key has 32 characters.</DialogContentText>
-        <Layout.Spacer multiplier={2} />
-        <Layout.FlexBox
-          flexDirection="row"
-          gap={sizes.baseGap}
-          sx={{
-            width: "96%",
-            margin: "auto",
-          }}
-        >
-          <TextField
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">Save your new key</DialogTitle>
+          <DialogDescription className="text-sm">
+            Save this secret key somewhere safe and accessible.{" "}
+            <b className="font-semibold text-foreground">
+              You won’t be able to view the full key again here.
+            </b>{" "}
+            If you lose it, you’ll need to generate a new one. The key has 32 characters.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <input
             value={newKey}
-            variant="outlined"
-            color="primary"
-            fullWidth
+            readOnly
             autoFocus
-            inputProps={{
-              readOnly: true,
-              style: { height: "36px", padding: "0 10px" },
-              onFocus: (event) => event.target.select(),
-            }}
+            aria-label="New API key"
+            onFocus={(event) => event.target.select()}
+            className="h-9 min-w-0 flex-1 border border-input bg-transparent px-3 font-mono text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
           />
           <Button
-            variant="contained"
+            size="lg"
             onClick={() => {
               onCopy();
               setIsClicked(true);
             }}
-            startIcon={isClicked ? <CheckIcon /> : <ContentCopyIcon />}
-            style={{ paddingLeft: "20px", paddingRight: "20px" }}
           >
+            {isClicked ? <IconCheck data-icon="inline-start" /> : <IconCopy data-icon="inline-start" />}
             {isClicked ? "Copied" : "Copy"}
           </Button>
-        </Layout.FlexBox>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="lg" onClick={handleClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={handleClose} color="primary">
-          Close
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

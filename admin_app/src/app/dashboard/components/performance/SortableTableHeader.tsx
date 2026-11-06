@@ -1,7 +1,8 @@
 import React from "react";
-import { TableCell, Box } from "@mui/material";
-import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { IconChevronDown, IconChevronUp, IconSelector } from "@tabler/icons-react";
+
+import { TableHead } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type SortOrder = "ascending" | "descending";
 
@@ -11,43 +12,39 @@ interface SortableTableHeaderProps<K> {
   sortColumn: K;
   sortOrder: SortOrder;
   onSort: (column: K) => void;
+  className?: string;
 }
 
+/**
+ * Column header that sorts the table when clicked. The active column shows
+ * its direction; others show a faint up/down hint. `aria-sort` tells screen
+ * readers which column is sorted.
+ */
 const SortableTableHeader = <K extends string>({
   label,
   columnKey,
   sortColumn,
   sortOrder,
   onSort,
-}: SortableTableHeaderProps<K>) => (
-  <TableCell
-    onClick={() => onSort(columnKey)}
-    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-  >
-    <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-      {label}
-      <Box
-        sx={{
-          width: "24px",
-          height: "24px",
-          ml: 0.5,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+  className,
+}: SortableTableHeaderProps<K>) => {
+  const active = sortColumn === columnKey;
+  const Icon = !active ? IconSelector : sortOrder === "ascending" ? IconChevronUp : IconChevronDown;
+  return (
+    <TableHead aria-sort={active ? sortOrder : "none"} className={cn("px-4", className)}>
+      <button
+        type="button"
+        onClick={() => onSort(columnKey)}
+        className="-mx-1 inline-flex items-center gap-1 px-1 whitespace-nowrap outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {sortColumn === columnKey ? (
-          sortOrder === "ascending" ? (
-            <ArrowDropUpIcon sx={{ color: "#1565c0" }} />
-          ) : (
-            <ArrowDropDownIcon sx={{ color: "#1565c0" }} />
-          )
-        ) : (
-          <Box sx={{ width: "24px", height: "24px", visibility: "hidden" }} />
-        )}
-      </Box>
-    </Box>
-  </TableCell>
-);
+        {label}
+        <Icon
+          className={cn("size-3.5", active ? "text-foreground" : "text-muted-foreground/60")}
+          aria-hidden="true"
+        />
+      </button>
+    </TableHead>
+  );
+};
 
 export { SortableTableHeader };

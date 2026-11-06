@@ -194,7 +194,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
 
-      {/* Still the MUI modal; opened from the workspace switcher. */}
+      {/* Opened from the workspace switcher. */}
       <WorkspaceCreateModal
         open={openCreateWorkspaceModal}
         onClose={() => setOpenCreateWorkspaceModal(false)}

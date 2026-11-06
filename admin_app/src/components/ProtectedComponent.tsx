@@ -2,7 +2,15 @@
 import { useAuth } from "@/utils/auth";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { Layout } from "./Layout";
+import { IconLock } from "@tabler/icons-react";
+
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 interface ProtectedComponentProps {
   children: React.ReactNode;
@@ -31,24 +39,25 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({ children }) => 
   }
 };
 
+/** Renders children for workspace admins only; everyone else sees a notice. */
 const FullAccessComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
-  const router = useRouter();
   const { token, userRole } = useAuth();
 
   if (token && userRole == "admin") {
     return <>{children}</>;
   } else {
     return (
-      <Layout.FlexBox
-        sx={{
-          justifyContent: "center",
-          alignItems: "center",
-          height: "70vh",
-          typography: "body1",
-        }}
-      >
-        Not Authorised
-      </Layout.FlexBox>
+      <Empty className="h-[70vh]">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconLock />
+          </EmptyMedia>
+          <EmptyTitle className="text-base">Not authorised</EmptyTitle>
+          <EmptyDescription className="text-sm">
+            Only workspace admins can do this.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 };

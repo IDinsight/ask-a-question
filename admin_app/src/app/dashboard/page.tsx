@@ -1,23 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
-import { PageName } from "@/app/dashboard/components/Sidebar";
+import { format, subDays, subMonths, subWeeks, subYears } from "date-fns";
+
 import TabPanel from "@/app/dashboard/components/TabPanel";
-import {
-  Period,
-  CustomDateParams,
-  CustomDashboardFrequency,
-} from "./types";
+import { PageName, Period, CustomDateParams, CustomDashboardFrequency } from "./types";
 import Overview from "@/app/dashboard/components/Overview";
 import ContentPerformance from "@/app/dashboard/components/ContentPerformance";
 import Insights from "./components/Insights";
-import { appColors } from "@/utils";
 import DateRangePickerDialog from "@/app/dashboard/components/DateRangePicker";
 
 type Page = {
   name: PageName;
+  /** Heading shown on the page (sentence case, per the design boards). */
+  title: string;
   /** Value of the ?page= search param used by the app sidebar links. */
   slug: string;
   description: string;
@@ -26,20 +23,56 @@ type Page = {
 const pages: Page[] = [
   {
     name: "Overview",
+    title: "Overview",
     slug: "overview",
-    description: "Overview of user engagement and satisfaction",
+    description: "See how people use your chatbot and whether the answers are helping.",
   },
   {
     name: "Content Performance",
+    title: "Content performance",
     slug: "content-performance",
-    description: "Track performance of contents...",
+    description: "Find the cards your users rely on most, and the ones that need work.",
   },
   {
     name: "Query Topics",
+    title: "Query topics",
     slug: "query-topics",
-    description: "Find out what users are asking...",
+    description: "Find out what your users are asking about.",
   },
 ];
+
+/**
+ * Human-readable span for the selected period, e.g. "Oct 31 – Nov 6, 2026".
+ * Mirrors the backend's ranges (see core_backend dashboard routers).
+ * Returns null for a custom period that hasn't been set yet.
+ */
+const describeRange = (period: Period, custom: CustomDateParams): string | null => {
+  const now = new Date();
+  let start: Date;
+  let end = now;
+  switch (period) {
+    case "day":
+      start = subDays(now, 1);
+      break;
+    case "week":
+      start = subWeeks(now, 1);
+      break;
+    case "month":
+      start = subMonths(now, 1);
+      break;
+    case "year":
+      start = subYears(now, 1);
+      break;
+    case "custom":
+      if (!custom.startDate || !custom.endDate) return null;
+      start = new Date(custom.startDate);
+      end = new Date(custom.endDate);
+      break;
+  }
+  // Only repeat the year when the range crosses into a new one.
+  const sameYear = start.getFullYear() === end.getFullYear();
+  return `${format(start, sameYear ? "MMM d" : "MMM d, yyyy")} – ${format(end, "MMM d, yyyy")}`;
+};
 
 const Dashboard: React.FC = () => {
   // The sub-page is picked from the app sidebar via ?page=<slug>.
@@ -55,7 +88,8 @@ const Dashboard: React.FC = () => {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: Period) => {
+  // Picking "Custom" before a range exists opens the dialog instead.
+  const handleTabChange = (newValue: Period) => {
     if (newValue === "custom") {
       if (customDateParams.startDate && customDateParams.endDate) {
         setTimePeriod("custom");
@@ -95,6 +129,7 @@ const Dashboard: React.FC = () => {
           <ContentPerformance
             timePeriod={timePeriod}
             customDateParams={timePeriod === "custom" ? customDateParams : undefined}
+            onTimePeriodChange={setTimePeriod}
           />
         );
       case "Query Topics":
@@ -109,50 +144,18 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const rangeText = describeRange(timePeriod, customDateParams);
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        paddingTop: 5,
-        flexDirection: "row",
-        minWidth: "900px",
-        maxWidth: "1900px",
-      }}
-    >
-      <Box
-        sx={{
-          paddingInline: 3,
-          height: "100%",
-          flexGrow: 1,
-          width: "100%",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: "100%",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              paddingInline: 2,
-              paddingBottom: 1,
-              gap: 2,
-              borderBottom: "1px solid",
-              borderBottomColor: "divider",
-            }}
-          >
-            <Typography variant="h4" color={appColors.primary}>
-              {dashboardPage.name}
-            </Typography>
-            <Typography variant="body1" align="left" color={appColors.darkGrey}>
-              {dashboardPage.description}
-            </Typography>
-          </Box>
+    <div className="px-4 pt-8 pb-16 sm:px-8 md:pt-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{dashboardPage.title}</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            {dashboardPage.description}
+          </p>
+        </header>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <TabPanel
             tabValue={timePeriod}
             handleChange={handleTabChange}
@@ -165,9 +168,10 @@ const Dashboard: React.FC = () => {
               )
             }
           />
-          <Box sx={{ flexGrow: 1, height: "100%" }}>{showPage()}</Box>
-        </Box>
-      </Box>
+          {rangeText && <span className="text-xs text-muted-foreground">{rangeText}</span>}
+        </div>
+        <div className="min-w-0">{showPage()}</div>
+      </div>
 
       <DateRangePickerDialog
         open={isDialogOpen}
@@ -177,7 +181,7 @@ const Dashboard: React.FC = () => {
         initialEndDate={customDateParams.endDate}
         initialFrequency={customDateParams.frequency}
       />
-    </Box>
+    </div>
   );
 };
 

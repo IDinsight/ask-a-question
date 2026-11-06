@@ -1,23 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { format, differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
+import type { DateRange } from "react-day-picker";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-  Typography,
-} from "@mui/material";
-import DatePicker from "react-datepicker";
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { CustomDashboardFrequency } from "@/app/dashboard/types";
-import "react-datepicker/dist/react-datepicker.css";
 
 interface DateRangePickerDialogProps {
   open: boolean;
@@ -32,6 +29,23 @@ interface DateRangePickerDialogProps {
   initialFrequency?: CustomDashboardFrequency;
 }
 
+// Longest range (in days) each frequency allows, so charts don't get too many bars.
+const frequencyLimits: Record<CustomDashboardFrequency, number> = {
+  Hour: 14,
+  Day: 100,
+  Week: 365,
+  Month: 1825,
+};
+
+const frequencyOptions: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
+
+const frequencyLabels: Record<CustomDashboardFrequency, string> = {
+  Hour: "Hourly",
+  Day: "Daily",
+  Week: "Weekly",
+  Month: "Monthly",
+};
+
 const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   open,
   onClose,
@@ -40,45 +54,45 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
   initialEndDate = null,
   initialFrequency = "Day",
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [frequency, setFrequency] =
     useState<CustomDashboardFrequency>(initialFrequency);
 
-  const frequencyLimits: Record<CustomDashboardFrequency, number> = {
-    Hour: 14,
-    Day: 100,
-    Week: 365,
-    Month: 1825,
-  };
+  const startDate = range?.from ?? null;
+  const endDate = range?.to ?? null;
 
-  const frequencyOptions: CustomDashboardFrequency[] = ["Hour", "Day", "Week", "Month"];
-
+  // Inclusive number of days in the range, or null until both ends are picked.
   const diffDays: number | null =
     startDate && endDate
       ? Math.abs(differenceInCalendarDays(endDate, startDate)) + 1
       : null;
 
+  // Reset to the last applied range each time the dialog opens.
   useEffect(() => {
     if (open) {
-      setStartDate(initialStartDate ? new Date(initialStartDate) : null);
-      setEndDate(initialEndDate ? new Date(initialEndDate) : null);
+      setRange(
+        initialStartDate
+          ? {
+              from: new Date(initialStartDate),
+              to: initialEndDate ? new Date(initialEndDate) : undefined,
+            }
+          : undefined,
+      );
       setFrequency(initialFrequency || "Day");
     }
   }, [open, initialStartDate, initialEndDate, initialFrequency]);
 
+  // If the range is too long for the chosen frequency, step up to the first one that fits.
   useEffect(() => {
-    if (diffDays !== null) {
-      if (diffDays > frequencyLimits[frequency]) {
-        const validOption = frequencyOptions.find(
-          (option) => diffDays <= frequencyLimits[option],
-        );
-        if (validOption && validOption !== frequency) {
-          setFrequency(validOption);
-        }
+    if (diffDays !== null && diffDays > frequencyLimits[frequency]) {
+      const validOption = frequencyOptions.find(
+        (option) => diffDays <= frequencyLimits[option],
+      );
+      if (validOption && validOption !== frequency) {
+        setFrequency(validOption);
       }
     }
-  }, [diffDays, frequency, frequencyOptions, frequencyLimits]);
+  }, [diffDays, frequency]);
 
   const handleOk = () => {
     if (startDate && endDate) {
@@ -86,106 +100,80 @@ const DateRangePickerDialog: React.FC<DateRangePickerDialogProps> = ({
         startDate.getTime() > endDate.getTime()
           ? [endDate, startDate]
           : [startDate, endDate];
-      const formattedStartDate = format(finalStartDate, "yyyy-MM-dd");
-      const formattedEndDate = format(finalEndDate, "yyyy-MM-dd");
-      onSelectDateRange(formattedStartDate, formattedEndDate, frequency);
+      onSelectDateRange(
+        format(finalStartDate, "yyyy-MM-dd"),
+        format(finalEndDate, "yyyy-MM-dd"),
+        frequency,
+      );
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          height: "35vh",
-          width: "750px",
-          overflow: "visible",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
-      <DialogTitle>Select Date Range and Frequency</DialogTitle>
-      <DialogContent
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "visible",
-        }}
-      >
-        <Box display="flex" flexDirection="row" gap={2} mt={1}>
-          <DatePicker
-            selected={startDate}
-            onChange={(date: Date | null) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            customInput={<TextField label="Start Date" variant="outlined" fullWidth />}
-            dateFormat="MMMM d, yyyy"
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">Custom date range</DialogTitle>
+          <DialogDescription className="text-sm">
+            {startDate && endDate
+              ? `${format(startDate, "MMM d, yyyy")} – ${format(endDate, "MMM d, yyyy")} (${diffDays} days)`
+              : "Pick a start date, then an end date."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex justify-center overflow-x-auto border">
+          <Calendar
+            mode="range"
+            numberOfMonths={2}
+            defaultMonth={startDate ?? undefined}
+            selected={range}
+            onSelect={setRange}
           />
-          <DatePicker
-            selected={endDate}
-            onChange={(date: Date | null) => setEndDate(date)}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            customInput={<TextField label="End Date" variant="outlined" fullWidth />}
-            dateFormat="MMMM d, yyyy"
-          />
-          <FormControl variant="outlined" sx={{ minWidth: 180 }}>
-            <InputLabel id="frequency-label" sx={{ whiteSpace: "nowrap" }}>
-              Frequency
-            </InputLabel>
-            <Select
-              labelId="frequency-label"
-              value={frequency}
-              onChange={(event: SelectChangeEvent<CustomDashboardFrequency>) =>
-                setFrequency(event.target.value as CustomDashboardFrequency)
-              }
-              label="Frequency"
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              {frequencyOptions.map((option) => (
-                <MenuItem
-                  key={option}
-                  value={option}
-                  disabled={diffDays !== null && diffDays > frequencyLimits[option]}
-                >
-                  {option === "Hour"
-                    ? "Hourly"
-                    : option === "Day"
-                    ? "Daily"
-                    : option === "Week"
-                    ? "Weekly"
-                    : "Monthly"}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <Box mt="auto" p={2} bgcolor="#e8f3fe" borderRadius={1} textAlign="center">
-          <Typography variant="caption">
-            Note: Frequency setting for custom timeframes will only affect bar graphs in
-            the Overview page. The selected frequency will not affect Content
-            Performance or Query Topics pages.
-          </Typography>
-        </Box>
+        </div>
+
+        <Field className="max-w-48">
+          <FieldLabel htmlFor="frequency-select">Frequency</FieldLabel>
+          <NativeSelect
+            id="frequency-select"
+            className="w-full"
+            value={frequency}
+            onChange={(event) =>
+              setFrequency(event.target.value as CustomDashboardFrequency)
+            }
+          >
+            {frequencyOptions.map((option) => (
+              <NativeSelectOption
+                key={option}
+                value={option}
+                disabled={diffDays !== null && diffDays > frequencyLimits[option]}
+              >
+                {frequencyLabels[option]}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </Field>
+
+        <p className="bg-muted p-3 text-xs text-muted-foreground">
+          Frequency only changes the bar chart on the Overview page. It doesn’t
+          affect Content Performance or Query Topics.
+        </p>
+
+        <DialogFooter>
+          <Button variant="outline" size="lg" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleOk}
+            disabled={
+              !startDate ||
+              !endDate ||
+              (diffDays !== null && diffDays > frequencyLimits[frequency])
+            }
+          >
+            Apply
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={handleOk}
-          disabled={
-            !startDate ||
-            !endDate ||
-            (diffDays !== null && diffDays > frequencyLimits[frequency])
-          }
-        >
-          OK
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

@@ -1,22 +1,21 @@
-import { TopContentData } from "@/app/dashboard/types";
-import theme from "@/theme";
-import { appColors } from "@/utils/index";
-import { Box, Typography } from "@mui/material";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
+import Link from "next/link";
 import { format } from "date-fns";
-import dynamic from "next/dynamic";
 
-const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { TopContentData } from "@/app/dashboard/types";
 
-const UpvoteDownvoteBarChart = ({
+/**
+ * Share of upvotes vs. downvotes as one split bar with the percentages beside it.
+ * A grey bar means no votes yet.
+ */
+const UpvoteDownvoteBar = ({
   positiveVotes,
   negativeVotes,
 }: {
@@ -24,61 +23,27 @@ const UpvoteDownvoteBarChart = ({
   negativeVotes: number;
 }) => {
   const totalVotes = positiveVotes + negativeVotes;
-  const positiveVotesPercentage =
-    totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
-  const negativeVotesPercentage =
-    totalVotes > 0 ? Math.round((negativeVotes / totalVotes) * 100) : 0;
+  const up = totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
+  const down = totalVotes > 0 ? 100 - up : 0;
+
   return (
-    <ReactApexcharts
-      options={{
-        chart: {
-          type: "bar",
-          stacked: true,
-          toolbar: { show: false },
-          parentHeightOffset: 0,
-          sparkline: {
-            enabled: true,
-          },
-        },
-        plotOptions: {
-          bar: { horizontal: true, barHeight: "100%", columnWidth: "100%" },
-        },
-        xaxis: {
-          labels: { show: false },
-          max: 100,
-          axisBorder: { show: false },
-          axisTicks: { show: false },
-          position: "bottom",
-          floating: true,
-        },
-        yaxis: { show: false, labels: { show: false } },
-        colors: [appColors.dashboardUpvote, appColors.dashboardDownvote],
-        legend: { show: false },
-        dataLabels: {
-          enabled: true,
-          formatter: (val, _) => {
-            return `${val}%`;
-          },
-        },
-        tooltip: { x: { show: false } },
-        grid: {
-          show: false,
-          padding: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-          },
-        },
-      }}
-      series={[
-        { name: "Upvotes", data: [positiveVotesPercentage] },
-        { name: "Downvotes", data: [negativeVotesPercentage] },
-      ]}
-      type="bar"
-      height={30}
-      width="100%"
-    />
+    <div className="flex items-center gap-3">
+      <div
+        role="img"
+        aria-label={
+          totalVotes > 0
+            ? `${up}% upvotes, ${down}% downvotes (${totalVotes} votes)`
+            : "No votes yet"
+        }
+        className="flex h-2 min-w-24 flex-1 overflow-hidden bg-muted"
+      >
+        <span className="h-full bg-chart-1" style={{ width: `${up}%` }} />
+        <span className="h-full bg-destructive" style={{ width: `${down}%` }} />
+      </div>
+      <span className="w-20 shrink-0 text-right text-xs text-muted-foreground tabular-nums" aria-hidden="true">
+        {totalVotes > 0 ? `${up}% / ${down}%` : "No votes"}
+      </span>
+    </div>
   );
 };
 
@@ -86,65 +51,59 @@ const isDeleted = (title: string) => title.startsWith("[DELETED]");
 
 const TopContentTable = ({ rows }: { rows: TopContentData[] }) => {
   return (
-    <Box sx={{ width: "100%" }}>
-      <Typography
-        variant="h6"
-        gutterBottom
-        component="div"
-        sx={{ p: 3, py: 2, fontWeight: 500 }}
-      >
-        Most Sent Content
-      </Typography>
-      <Box sx={{ mx: 3 }}>
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 700 }} size="small" aria-label="top-content-table">
-            <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
-              <TableRow>
-                <TableCell>Content</TableCell>
-                <TableCell align="right">Last Updated</TableCell>
-                <TableCell align="right" style={{ whiteSpace: "nowrap" }}>
-                  Total Sent
-                </TableCell>
-                <TableCell align="right">All-time upvotes vs. downvotes</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row, i) => (
-                <TableRow
-                  key={i}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+    <section aria-labelledby="most-sent" className="overflow-hidden border bg-card shadow-xs">
+      <h2 id="most-sent" className="px-5 py-4 text-base font-semibold tracking-tight">
+        Most sent content
+      </h2>
+      <Table className="min-w-[640px] text-sm">
+        <TableHeader className="bg-muted">
+          <TableRow>
+            <TableHead className="px-4">Content</TableHead>
+            <TableHead className="px-4">Last updated</TableHead>
+            <TableHead className="px-4 text-right">Total sent</TableHead>
+            <TableHead className="w-[40%] px-4">All-time upvotes vs. downvotes</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 ? (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
+                Nothing has been sent yet.{" "}
+                <Link
+                  href="/content"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
                 >
-                  <TableCell component="th" scope="row">
-                    {isDeleted(row.title) ? (
-                      <span
-                        style={{
-                          color: appColors.lightGrey,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {row.title}
-                      </span>
-                    ) : (
-                      row.title
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    {format(new Date(row.last_updated), "yyyy-MM-dd HH:mm")}
-                  </TableCell>
-                  <TableCell align="right">{row.query_count}</TableCell>
-                  <TableCell align="right" sx={{ width: 500 }}>
-                    <UpvoteDownvoteBarChart
-                      positiveVotes={row.positive_votes}
-                      negativeVotes={row.negative_votes}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    </Box>
+                  Add content
+                </Link>
+              </TableCell>
+            </TableRow>
+          ) : (
+            rows.map((row, i) => (
+              <TableRow key={i}>
+                <TableCell className="px-4 whitespace-normal">
+                  {/* Deleted content keeps its row but is greyed out */}
+                  {isDeleted(row.title) ? (
+                    <span className="font-semibold text-muted-foreground">{row.title}</span>
+                  ) : (
+                    row.title
+                  )}
+                </TableCell>
+                <TableCell className="px-4 text-muted-foreground tabular-nums">
+                  {format(new Date(row.last_updated), "yyyy-MM-dd HH:mm")}
+                </TableCell>
+                <TableCell className="px-4 text-right tabular-nums">{row.query_count}</TableCell>
+                <TableCell className="px-4">
+                  <UpvoteDownvoteBar
+                    positiveVotes={row.positive_votes}
+                    negativeVotes={row.negative_votes}
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </section>
   );
 };
 

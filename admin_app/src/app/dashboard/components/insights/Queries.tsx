@@ -1,18 +1,18 @@
-import { AutoFixHigh } from "@mui/icons-material";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import { LoadingButton } from "@mui/lab";
-import { Box } from "@mui/material";
-import { grey, orange } from "@mui/material/colors";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
 import React from "react";
+import Link from "next/link";
+import { IconArrowRight, IconCategory, IconSparkles } from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { QueryData } from "../../types";
-import theme from "@/theme";
 
 interface QueriesProps {
   data: QueryData[];
@@ -22,55 +22,25 @@ interface QueriesProps {
   aiSummary: string;
 }
 
-interface AISummaryProps {
-  aiSummary: string;
-}
-
-const AISummary: React.FC<AISummaryProps> = ({ aiSummary }) => {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexGrow: 1,
-        flexDirection: "column",
-        maxheight: 400,
-        border: 1,
-        borderColor: "secondary.main",
-        borderRadius: 2,
-        background: "linear-gradient(to bottom, rgba(176,198,255,0.5), #ffffff)",
-        p: 2,
-        mb: 1,
-      }}
-    >
-      <Box sx={{ display: "flex", flexDirection: "row", mb: 2 }}>
-        <AutoAwesomeIcon sx={{ fontSize: 25, mr: 1, color: "#9eb2e5" }} />
-        <Typography
-          sx={{
-            lineHeight: "24px",
-            fontWeight: 600,
-            fontColor: "black",
-            textAlign: "center",
-          }}
-        >
-          AI Overview
-        </Typography>
-      </Box>
-      <Typography
-        sx={{
-          whiteSpace: "pre-wrap",
-          lineHeight: "15px",
-          fontWeight: 300,
-          fontSize: "small",
-          fontColor: "black",
-          textAlign: "left",
-        }}
-      >
-        {aiSummary}
-      </Typography>
-    </Box>
+const formatDateTime = (value: string) =>
+  Intl.DateTimeFormat("en-ZA", { dateStyle: "short", timeStyle: "short" }).format(
+    new Date(value),
   );
-};
 
+/** AI-written summary of the selected topic. */
+const AISummary: React.FC<{ aiSummary: string }> = ({ aiSummary }) => (
+  <div className="flex flex-col gap-2 border bg-muted/50 p-4">
+    <span className="flex items-center gap-2 text-sm font-semibold">
+      <IconSparkles className="size-4 text-chart-1" aria-hidden="true" />
+      AI overview
+    </span>
+    <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+      {aiSummary}
+    </p>
+  </div>
+);
+
+/** Example queries for the selected topic, plus the "Run discovery" control. */
 const Queries: React.FC<QueriesProps> = ({
   data,
   onRefreshClick,
@@ -79,115 +49,80 @@ const Queries: React.FC<QueriesProps> = ({
   aiSummary,
 }) => {
   const formattedLastRefreshed =
-    lastRefreshed.length > 0
-      ? Intl.DateTimeFormat("en-ZA", {
-          dateStyle: "short",
-          timeStyle: "short",
-        }).format(new Date(lastRefreshed))
-      : "Never";
+    lastRefreshed.length > 0 ? formatDateTime(lastRefreshed) : "Never";
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Header and Refresh Button */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          mb: 1,
-        }}
-      >
-        <Box sx={{ fontSize: 22, fontWeight: 700 }}>Example Queries</Box>
-        <Box sx={{ display: "flex", flexDirection: "row" }}>
-          <Box
-            sx={{
-              display: "flex",
-              mr: 2,
-              fontSize: "small",
-              alignItems: "center",
-              color: grey[600],
-            }}
-          >
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold tracking-tight">Example queries</h2>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
             Last run: {formattedLastRefreshed}
-          </Box>
-          <LoadingButton
-            variant="contained"
-            startIcon={<AutoFixHigh />}
+          </span>
+          <Button
+            size="lg"
+            className="bg-warning text-warning-foreground hover:bg-warning/90"
             disabled={refreshing}
-            loading={refreshing}
-            loadingPosition="start"
-            sx={{
-              bgcolor: orange[600],
-              width: 220,
-              "&:hover": {
-                bgcolor: orange[800],
-              },
-            }}
             onClick={onRefreshClick}
           >
-            {data.length > 0 ? "Rerun Discovery" : "Run Discovery"}
-          </LoadingButton>
-        </Box>
-      </Box>
+            {refreshing ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <IconSparkles data-icon="inline-start" />
+            )}
+            {refreshing
+              ? "Running discovery…"
+              : data.length > 0
+                ? "Rerun discovery"
+                : "Run discovery"}
+          </Button>
+        </div>
+      </div>
 
-      {/* AI Summary */}
-      {data.length > 0 && <AISummary aiSummary={aiSummary} />}
-
-      {/* Table Container */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          flexGrow: 1, // Adjust height dynamically to handle the sidebar being toggled
-        }}
-      >
-        {data.length > 0 ? (
-          <TableContainer
-            sx={{
-              flexGrow: 1, // Fills available space as per above
-              border: 1,
-              borderColor: grey[300],
-              borderRadius: 1,
-              overflowY: "auto",
-            }}
-          >
-            <Table size="small">
-              <TableHead>
-                <TableRow
-                  sx={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    backgroundColor: theme.palette.lightgray.main,
-                  }}
-                >
-                  <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
-                  <TableCell sx={{ fontWeight: 800 }}>User Question</TableCell>
+      {data.length > 0 ? (
+        <>
+          <AISummary aiSummary={aiSummary} />
+          <div className="min-h-0 flex-1 overflow-y-auto border">
+            <Table className="text-sm">
+              <TableHeader className="sticky top-0 z-10 bg-muted">
+                <TableRow>
+                  <TableHead className="w-[20%] px-3">Timestamp</TableHead>
+                  <TableHead className="px-3">User question</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {data.map((row, index) => (
                   <TableRow key={index}>
-                    <TableCell width="20%">
-                      {Intl.DateTimeFormat("en-ZA", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      }).format(new Date(row.query_datetime_utc))}
+                    <TableCell className="px-3 align-top text-muted-foreground tabular-nums">
+                      {formatDateTime(row.query_datetime_utc)}
                     </TableCell>
-                    <TableCell>{row.query_text}</TableCell>
+                    <TableCell className="px-3 whitespace-normal">{row.query_text}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
-        ) : (
-          <Typography>
-            Click "Run Discovery" to generate insights for this time period.
-          </Typography>
-        )}
-      </Box>
-    </Box>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+          <div className="mb-1.5 flex size-11 items-center justify-center border bg-muted">
+            <IconCategory className="size-5" aria-hidden="true" />
+          </div>
+          <b className="text-base font-semibold">Discover what people ask about</b>
+          <span className="max-w-100 text-[13px] text-muted-foreground">
+            Run discovery to group recent queries into topics and see real examples of
+            each. It needs queries from your chatbot in this period to find anything.
+          </span>
+          <Link
+            href="/integrations"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Connect your chatbot
+            <IconArrowRight className="size-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+      )}
+    </div>
   );
 };
 

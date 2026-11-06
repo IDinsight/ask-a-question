@@ -18,7 +18,7 @@ import {
 import { apiCalls } from "@/utils/api";
 import { TestSidebar } from "@/components/SidebarCommon";
 import TypingAnimation from "@/components/TypingAnimation";
-import { JsonDialog } from "./JsonDialog";
+import { JsonDialog } from "@/components/JsonDialog";
 
 interface SearchResult {
   index: string;

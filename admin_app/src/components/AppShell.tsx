@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ProtectedComponent } from "@/components/ProtectedComponent";
+import { TopBar } from "@/components/TopBar";
 
 /**
- * Authenticated app frame: sidebar on the left, page content on the right.
- * On small screens the sidebar becomes a sheet opened from the top bar.
+ * Authenticated app frame: sidebar on the left; top bar (breadcrumb, search)
+ * and page content on the right. On small screens the sidebar becomes a
+ * sheet opened from the top bar.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -15,10 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="h-svh overflow-auto">
-          {/* Mobile-only top bar with the sidebar toggle */}
-          <header className="flex h-12 shrink-0 items-center border-b px-2 md:hidden">
-            <SidebarTrigger />
-          </header>
+          <TopBar />
           {children}
         </SidebarInset>
       </SidebarProvider>

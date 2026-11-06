@@ -28,7 +28,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { CustomError } from "@/utils/api";
 import { MARKDOWN_CLASSES } from "./ContentModal";
-import { JsonDialog } from "./JsonDialog";
+import { JsonDialog } from "@/components/JsonDialog";
 
 interface ResponseSummary {
   index: string;

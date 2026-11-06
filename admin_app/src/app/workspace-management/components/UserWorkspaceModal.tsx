@@ -2,19 +2,22 @@
 
 import type React from "react";
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { IconAlertCircle, IconCircleCheckFilled, IconInfoCircle } from "@tabler/icons-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  Avatar,
   Dialog,
   DialogContent,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  MenuItem,
-} from "@mui/material";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Spinner } from "@/components/ui/spinner";
 
 import { UserBody } from "../api";
 import { CustomError } from "@/utils/api";
@@ -32,12 +35,10 @@ interface UserCreateModalProps {
   editUser?: (username: string, role: UserRole) => Promise<void>;
   users: UserBody[];
   user?: UserBody;
-  setSnackMessage: React.Dispatch<
-    React.SetStateAction<{
-      message: string;
-      severity: "success" | "error" | "info" | "warning";
-    }>
-  >;
+  setSnackMessage: (message: {
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }) => void;
   onContinue: (data: string[]) => void;
 }
 
@@ -216,20 +217,29 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
 
   const getTitle = (formType: "add" | "create" | "edit") => {
     const titles = {
-      add: "Add Existing User",
-      create: "Create User",
-      edit: "Edit User",
+      add: "Add an existing user",
+      create: "Create a user",
+      edit: "Edit user",
     };
-    return titles[formType] || "Create User";
+    return titles[formType] || "Create a user";
+  };
+
+  const getDescription = (formType: "add" | "create" | "edit") => {
+    const descriptions = {
+      add: "Check the username first, then choose their role in this workspace.",
+      create: "The new user is added to this workspace. You’ll see their recovery codes once.",
+      edit: "Change this user’s role in the workspace.",
+    };
+    return descriptions[formType];
   };
 
   const getButtonTitle = (formType: "add" | "create" | "edit") => {
     const buttonTitles = {
-      add: "Add To Workspace",
-      create: "Create",
-      edit: "Edit",
+      add: "Add to workspace",
+      create: "Create user",
+      edit: "Save",
     };
-    return buttonTitles[formType] || "Create";
+    return buttonTitles[formType] || "Create user";
   };
 
   useEffect(() => {
@@ -241,108 +251,149 @@ const UserCreateModal: React.FC<UserCreateModalProps> = ({
     }
   }, [user, formType, user?.role]);
 
+  const showPasswordFields = (isVerified && userExists === false) || formType == "create";
+  const showRole =
+    (formType == "add" && isVerified) ||
+    formType === "create" ||
+    (formType == "edit" && user && user.role);
+  // Admins can't demote themselves here
+  const roleLocked = formType == "edit" && user?.username === adminUsername;
+
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogContent>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          flexDirection="column"
-          gap={2}
-          margin="auto"
-          sx={{ paddingInline: 2, paddingBottom: 2 }}
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="p-6 sm:max-w-md">
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!(loading || (formType == "add" && !isVerified))) handleAction();
+          }}
+          className="flex flex-col gap-5"
         >
-          <Avatar sx={{ bgcolor: "secondary.main", margin: "0 auto" }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography variant="h6" align="center">
-            {getTitle(formType)}
-          </Typography>
-          {/* {formType === "edit" && user?.username === adminUsername && (
-            <Alert severity="warning" sx={{ width: "200px" }}>
-              Editing the current user will require to log in again.
-            </Alert>
-          )} */}
-          <Box display="flex" gap={1} width="100%">
-            <TextField
-              disabled={formType === "edit"}
-              fullWidth
-              label="Username"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setIsVerified(false);
-              }}
-            />
-            {formType == "add" && (
-              <Button onClick={handleVerifyUser} disabled={loading || !username}>
-                {isVerified && userExists ? (
-                  <VerifiedIcon color="success" fontSize="large" />
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">{getTitle(formType)}</DialogTitle>
+            <DialogDescription className="text-sm">{getDescription(formType)}</DialogDescription>
+          </DialogHeader>
+
+          <Field>
+            <FieldLabel htmlFor="user-username" className="text-sm">
+              Username
+            </FieldLabel>
+            <div className="flex gap-2">
+              <Input
+                id="user-username"
+                autoFocus={formType !== "edit"}
+                autoComplete="off"
+                disabled={formType === "edit"}
+                value={username}
+                className="h-10 text-sm md:text-sm"
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setIsVerified(false);
+                }}
+              />
+              {formType == "add" &&
+                (isVerified && userExists ? (
+                  <span className="flex h-10 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-chart-1">
+                    <IconCircleCheckFilled className="size-5" aria-hidden="true" />
+                    Verified
+                  </span>
                 ) : (
-                  "Verify"
-                )}
-              </Button>
-            )}
-          </Box>
-          {error && <Alert severity={error.severity}>{error.text}</Alert>}
-          {(isVerified && userExists === false) || formType == "create" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 px-4"
+                    onClick={handleVerifyUser}
+                    disabled={loading || !username}
+                  >
+                    {loading && <Spinner data-icon="inline-start" />}
+                    Verify
+                  </Button>
+                ))}
+            </div>
+          </Field>
+
+          {error && (
+            <Alert variant={error.severity === "error" ? "destructive" : "default"}>
+              {error.severity === "error" ? (
+                <IconAlertCircle aria-hidden="true" />
+              ) : (
+                <IconInfoCircle aria-hidden="true" />
+              )}
+              <AlertDescription
+                className={error.severity === "error" ? "text-sm text-destructive" : "text-sm"}
+              >
+                {error.text}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {showPasswordFields && (
             <>
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+              <Field>
+                <FieldLabel htmlFor="user-password" className="text-sm">
+                  Password
+                </FieldLabel>
+                <Input
+                  id="user-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  className="h-10 text-sm md:text-sm"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="user-confirm-password" className="text-sm">
+                  Confirm password
+                </FieldLabel>
+                <Input
+                  id="user-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  className="h-10 text-sm md:text-sm"
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </Field>
             </>
-          ) : null}
-          {(formType == "add" && isVerified) ||
-          formType === "create" ||
-          (formType == "edit" && user && user.role) ? (
-            <TextField
-              select
-              fullWidth
-              label="Role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              SelectProps={{
-                native: false,
-              }}
-              disabled={formType == "edit" && user?.username === adminUsername}
-            >
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="read_only">Read Only</MenuItem>
-            </TextField>
-          ) : null}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: 1,
-              width: "100%",
-            }}
-          >
-            <Button variant="outlined" onClick={handleClose} disabled={loading}>
+          )}
+
+          {showRole && (
+            <Field>
+              <FieldLabel htmlFor="user-role" className="text-sm">
+                Role
+              </FieldLabel>
+              <NativeSelect
+                id="user-role"
+                className="w-full [&_select]:h-10 [&_select]:text-sm"
+                value={role}
+                disabled={roleLocked}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+              >
+                <NativeSelectOption value="admin">Admin</NativeSelectOption>
+                <NativeSelectOption value="read_only">Read only</NativeSelectOption>
+              </NativeSelect>
+              {roleLocked && (
+                <FieldDescription>You can’t change your own role.</FieldDescription>
+              )}
+            </Field>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button
-              variant="contained"
-              color="primary"
+              type="submit"
+              size="lg"
               disabled={loading || (formType == "add" && !isVerified)}
-              onClick={handleAction}
             >
+              {loading && formType !== "add" && <Spinner data-icon="inline-start" />}
               {getButtonTitle(formType)}
             </Button>
-          </Box>
-        </Box>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

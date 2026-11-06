@@ -7,7 +7,7 @@ import {
 
 /**
  * Shows the raw API response behind a test search or chat message.
- * Used by the test sidebars on the content page.
+ * Used by the test sidebars on the content and urgency rules pages.
  */
 export const JsonDialog = ({
   open,

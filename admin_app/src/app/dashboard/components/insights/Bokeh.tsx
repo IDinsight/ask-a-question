@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useRef, SyntheticEvent } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { IconChevronDown } from "@tabler/icons-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Paper,
-  Box,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CircularProgress from "@mui/material/CircularProgress";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { getEmbeddingData } from "../../api";
 import { Period } from "@/app/dashboard/types";
 
@@ -23,6 +24,16 @@ interface BokehPlotProps {
   token: string | null;
 }
 
+/** Inline screenshot of a Bokeh toolbar button, sized to the text. */
+const ToolIcon = ({ src, alt }: { src: string; alt: string }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img src={src} alt={alt} className="inline-block w-7 align-middle" />
+);
+
+/**
+ * Collapsible card holding the Bokeh topic plot. The plot is fetched the first
+ * time the card is opened; the panel stays mounted so it survives collapsing.
+ */
 const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
   const [loadError, setLoadError] = useState("");
   const plotId = "myplot";
@@ -54,133 +65,114 @@ const BokehPlot: React.FC<BokehPlotProps> = ({ timePeriod, token }) => {
         }
       } catch (error: any) {
         console.error("Error fetching the plot:", error);
-        setLoadError(`There was a system failure. Ensure you have both content and queries present
-          and clicked the "Run Discovery" button.`);
+        setLoadError(
+          'There was a system failure. Ensure you have both content and queries present and clicked the "Run discovery" button.',
+        );
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const handleAccordionChange = (event: SyntheticEvent, isExpanded: boolean) => {
-    setPlotVisible(isExpanded);
-  };
-
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-        mt: 2,
-        pb: 2,
-      }}
+    <Collapsible
+      open={plotVisible}
+      onOpenChange={setPlotVisible}
+      className="flex flex-col gap-4 border bg-card p-5 shadow-xs"
     >
-      <Accordion onChange={handleAccordionChange} sx={{ width: "100%" }}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="bokeh-plot-content"
-          id="bokeh-plot-header"
-          sx={{ width: "100%" }}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold tracking-tight">Topic visualization</h2>
+        <CollapsibleTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label={plotVisible ? "Collapse topic visualization" : "Expand topic visualization"}
+            />
+          }
         >
-          <Typography variant="h6">Topic Visualization</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {loadError && (
-            <Box sx={{ color: "error.main", mb: 2 }}>Error: {loadError}</Box>
-          )}
-          <Accordion elevation={0}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body1">How to use this tool</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2">
-                <p>
-                  The plot below shows queries and content grouped by their topic
-                  similarity. Any ungrouped points/outliers are shown in grey, while
-                  points in the same cluster are shown as the same color. Content points
-                  are shown as black boxes. If there are no content points near query
-                  points, you may want to add content so that the query is more likely
-                  to be accurately matched to a relevant content point.
-                </p>
-                <ul>
-                  <li>
-                    Use the mouse wheel to zoom in and out with the{" "}
-                    <img
-                      src={scrollZoomIcon.src}
-                      alt="Scroll Zoom"
-                      style={{ width: "28px", verticalAlign: "middle" }}
-                    />{" "}
-                    tool (activated by default). Pan around using the{" "}
-                    <img
-                      src={moveIcon.src}
-                      alt="Pan Tool"
-                      style={{ width: "28px", verticalAlign: "middle" }}
-                    />{" "}
-                    tool (activated by default).
-                  </li>
-                  <li>
-                    Hover over points to see the text and topic information using the{" "}
-                    <img
-                      src={tooltipIcon.src}
-                      alt="Tooltip"
-                      style={{ width: "28px", verticalAlign: "middle" }}
-                    />{" "}
-                    tool (activated by default). If you want to stop this behaviour,
-                    simply de-select the tool in the sidebar.
-                  </li>
-                  <li>
-                    Use the lasso tool{" "}
-                    <img
-                      src={lassoIcon.src}
-                      alt="Lasso Tool"
-                      style={{ width: "28px", verticalAlign: "middle" }}
-                    />{" "}
-                    (in the toolbar to the left of the plot) to select multiple points
-                    and see their details in the table.
-                  </li>
-                  <li>
-                    Click the reset tool{" "}
-                    <img
-                      src={refreshIcon.src}
-                      alt="Reset Tool"
-                      style={{ width: "28px", verticalAlign: "middle" }}
-                    />{" "}
-                    to return the plot to its original state and de-select any points
-                    you have currently selected.
-                  </li>
-                  <li>
-                    Select the "Content" checkbox in the legend to toggle the visibility
-                    of content points (which will appear as squares)
-                  </li>
-                </ul>
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
+          <IconChevronDown className={cn("transition-transform", plotVisible && "rotate-180")} />
+        </CollapsibleTrigger>
+      </div>
 
-          {loading && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-              <CircularProgress />
-            </Box>
-          )}
+      {!plotVisible && !plotLoaded && (
+        // Decorative placeholder clusters, as on the design board
+        <div
+          aria-hidden="true"
+          className="flex flex-wrap items-center justify-center gap-5 py-6 opacity-80"
+        >
+          {[64, 44, 86, 36, 54, 28, 70].map((size, i) => (
+            <span key={i} className="block bg-muted" style={{ width: size, height: size }} />
+          ))}
+        </div>
+      )}
 
-          <Paper
-            elevation={0}
-            sx={{
-              width: "100%",
-              padding: 2,
-              overflow: "hidden",
-              borderRadius: 2,
-              mt: 2,
-              display: plotVisible ? "block" : "none",
-            }}
-          >
-            <div id={plotId} className="bk-root" ref={plotRef} />
-          </Paper>
-        </AccordionDetails>
-      </Accordion>
-    </Box>
+      <CollapsibleContent keepMounted className="flex flex-col gap-4 data-closed:hidden">
+        {loadError && (
+          <Alert variant="destructive">
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        <Collapsible className="border">
+          <CollapsibleTrigger className="group/how flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+            How to use this tool
+            <IconChevronDown
+              className="size-4 transition-transform group-data-panel-open/how:rotate-180"
+              aria-hidden="true"
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="flex flex-col gap-3 border-t px-4 py-3 text-sm text-muted-foreground">
+            <p>
+              The plot below shows queries and content grouped by their topic similarity.
+              Any ungrouped points/outliers are shown in grey, while points in the same
+              cluster are shown as the same color. Content points are shown as black
+              boxes. If there are no content points near query points, you may want to add
+              content so that the query is more likely to be accurately matched to a
+              relevant content point.
+            </p>
+            <ul className="flex list-disc flex-col gap-2 pl-5">
+              <li>
+                Use the mouse wheel to zoom in and out with the{" "}
+                <ToolIcon src={scrollZoomIcon.src} alt="Scroll Zoom" /> tool (activated by
+                default). Pan around using the <ToolIcon src={moveIcon.src} alt="Pan Tool" />{" "}
+                tool (activated by default).
+              </li>
+              <li>
+                Hover over points to see the text and topic information using the{" "}
+                <ToolIcon src={tooltipIcon.src} alt="Tooltip" /> tool (activated by
+                default). If you want to stop this behaviour, simply de-select the tool in
+                the sidebar.
+              </li>
+              <li>
+                Use the lasso tool <ToolIcon src={lassoIcon.src} alt="Lasso Tool" /> (in
+                the toolbar to the left of the plot) to select multiple points and see
+                their details in the table.
+              </li>
+              <li>
+                Click the reset tool <ToolIcon src={refreshIcon.src} alt="Reset Tool" /> to
+                return the plot to its original state and de-select any points you have
+                currently selected.
+              </li>
+              <li>
+                Select the &quot;Content&quot; checkbox in the legend to toggle the
+                visibility of content points (which will appear as squares)
+              </li>
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {loading && (
+          <div className="flex justify-center py-4">
+            <Spinner className="size-6" />
+          </div>
+        )}
+
+        <div className="w-full overflow-hidden">
+          <div id={plotId} className="bk-root" ref={plotRef} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 

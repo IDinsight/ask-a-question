@@ -190,9 +190,10 @@ function FieldError({
       return null
     }
 
-    const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
-    ]
+    // Array.from (not spread) so it compiles with this project's TS target
+    const uniqueErrors = Array.from(
+      new Map(errors.map((error) => [error?.message, error])).values()
+    )
 
     if (uniqueErrors?.length == 1) {
       return uniqueErrors[0]?.message

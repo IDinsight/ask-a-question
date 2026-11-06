@@ -1,10 +1,8 @@
-import React, { useEffect } from "react";
-import { Box, Typography } from "@mui/material";
-import Chip from "@mui/material/Chip";
-import ListItemButton from "@mui/material/ListItemButton";
-import { orange } from "@mui/material/colors";
-import Pagination from "@mui/material/Pagination";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { TopicData } from "../../types";
 
 interface TopicProps {
@@ -14,6 +12,7 @@ interface TopicProps {
   topicsPerPage: number;
 }
 
+/** Paged list of discovered topics; clicking one shows its example queries. */
 const Topics: React.FC<TopicProps> = ({
   data = [],
   selectedTopicId,
@@ -21,108 +20,82 @@ const Topics: React.FC<TopicProps> = ({
   topicsPerPage,
 }) => {
   const [page, setPage] = useState(1);
-  const [dataToShow, setDataToShow] = useState<TopicData[]>([]);
+  const pageCount = Math.max(1, Math.ceil(data.length / topicsPerPage));
 
-  const filterPageData = (currentPage: number) => {
-    const startIndex = (currentPage - 1) * topicsPerPage;
-    const endIndex = startIndex + topicsPerPage;
-    setDataToShow(data.slice(startIndex, endIndex));
-  };
-
+  // New data can have fewer pages; don't leave the user on an empty one.
   useEffect(() => {
-    const maxPage = data.length > 0 ? Math.ceil(data.length / topicsPerPage) : 1;
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
-    if (page > maxPage) {
-      setPage(maxPage);
-      filterPageData(maxPage);
-    } else {
-      filterPageData(page);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    filterPageData(page);
-  }, [page]);
-
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value);
-  };
+  const dataToShow = data.slice((page - 1) * topicsPerPage, page * topicsPerPage);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        height: "100%",
-      }}
-    >
-      <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>
-          Topics
-        </Typography>
-        {dataToShow.map((topic) => (
-          <Box
-            key={topic.topic_id}
-            sx={{
-              display: "flex",
-              bgcolor: selectedTopicId === topic.topic_id ? orange[100] : "white",
-              borderRadius: 2,
-              fontSize: 14,
-            }}
-          >
-            <Box
-              bgcolor={selectedTopicId === topic.topic_id ? orange[500] : "white"}
-              sx={{
-                minWidth: 6,
-                borderTopLeftRadius: 8,
-                borderBottomLeftRadius: 8,
-              }}
-            />
-            <ListItemButton
-              dense
-              onClick={() => onClick(topic.topic_id)}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderRadius: 2,
-                my: 0.5,
-                marginLeft: -0.5,
-              }}
-            >
-              <Box>{topic.topic_name}</Box>
-              <Box>
-                <Chip label={topic.topic_popularity} variant="filled" size="small" />
-              </Box>
-            </ListItemButton>
-          </Box>
-        ))}
-        {data.length === 0 && (
-          <Typography sx={{ mt: 2 }}>No topics available.</Typography>
-        )}
-      </Box>
-      {data.length > topicsPerPage && (
-        <Box
-          justifyContent="center"
-          alignItems="flex-end"
-          sx={{
-            display: "flex",
-            mt: 3,
-            flexGrow: 0,
-          }}
-        >
-          <Pagination
-            defaultPage={1}
-            color="primary"
-            siblingCount={0}
-            page={page}
-            onChange={handlePageChange}
-            count={Math.ceil(data.length / topicsPerPage)}
-          />
-        </Box>
+    <div className="flex h-full flex-col gap-3">
+      <h2 className="text-base font-semibold tracking-tight">Topics</h2>
+      {data.length === 0 ? (
+        <>
+          <p className="text-[13px] text-muted-foreground">No topics yet.</p>
+          {/* Fading placeholder rows hint at where topics will appear */}
+          <div className="mt-1 flex flex-col gap-2" aria-hidden="true">
+            {[1, 0.7, 0.45, 0.25].map((opacity) => (
+              <span key={opacity} className="h-8 bg-muted" style={{ opacity }} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <ul className="flex flex-1 flex-col gap-1">
+          {dataToShow.map((topic) => {
+            const selected = selectedTopicId === topic.topic_id;
+            return (
+              <li key={topic.topic_id}>
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onClick(topic.topic_id)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-3 border border-transparent px-3 py-2 text-left text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+                    selected && "border-primary bg-primary/5 font-medium",
+                  )}
+                >
+                  <span className="min-w-0">{topic.topic_name}</span>
+                  <span
+                    className="shrink-0 border bg-background px-1.5 text-xs text-muted-foreground tabular-nums"
+                    aria-label={`${topic.topic_popularity} queries`}
+                  >
+                    {topic.topic_popularity}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </Box>
+      {data.length > topicsPerPage && (
+        <nav aria-label="Topic pages" className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Previous topics"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            <IconChevronLeft />
+          </Button>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {page} / {pageCount}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Next topics"
+            disabled={page >= pageCount}
+            onClick={() => setPage(page + 1)}
+          >
+            <IconChevronRight />
+          </Button>
+        </nav>
+      )}
+    </div>
   );
 };
 

@@ -1,9 +1,7 @@
 // Tailwind v4 entry point + shadcn theme tokens (bg-primary, etc.). Lives at the project root per components.json.
 import "../../globals.css";
 import { PublicEnvScript } from "next-runtime-env";
-import theme from "@/theme";
 import AuthProvider from "@/utils/auth";
-import { CssBaseline, ThemeProvider } from "@mui/material";
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import { inter } from "@/fonts";
@@ -26,12 +24,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <QueryProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Suspense>
-              <AuthProvider>{children}</AuthProvider>
-            </Suspense>
-          </ThemeProvider>
+          <Suspense>
+            <AuthProvider>{children}</AuthProvider>
+          </Suspense>
         </QueryProvider>
       </body>
     </html>
