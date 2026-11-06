@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { TopicData } from "../../types";
 
 interface TopicProps {

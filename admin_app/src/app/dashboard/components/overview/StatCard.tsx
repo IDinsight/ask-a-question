@@ -1,7 +1,7 @@
 import React from "react";
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { Period } from "../../types";
 
 interface StatCardProps {

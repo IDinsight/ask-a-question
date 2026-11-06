@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { ArchiveContentModal, ContentViewModal, EditContentButton } from "./ContentModal";
 import { Content, ContentDisplay, Tag } from "../types";
 

@@ -2,7 +2,7 @@ import React from "react";
 import { IconChevronDown, IconChevronUp, IconSelector } from "@tabler/icons-react";
 
 import { TableHead } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 type SortOrder = "ascending" | "descending";
 

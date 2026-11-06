@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import {

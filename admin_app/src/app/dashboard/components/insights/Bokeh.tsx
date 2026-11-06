@@ -9,7 +9,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getEmbeddingData } from "../../api";
 import { Period } from "@/app/dashboard/types";
 

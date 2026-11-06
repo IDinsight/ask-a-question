@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { usePostDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
 import { useShowIndexingStatusStore } from "../store/indexingStatusStore";

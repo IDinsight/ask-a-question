@@ -2,7 +2,7 @@ import React from "react";
 import { IconPencil } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { Period, TimeFrame } from "../types";
 
 interface TabPanelProps {

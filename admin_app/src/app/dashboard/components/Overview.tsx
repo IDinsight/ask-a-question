@@ -20,7 +20,7 @@ import HeatMap from "@/app/dashboard/components/overview/HeatMap";
 import { StatCard, StatCardProps } from "@/app/dashboard/components/overview/StatCard";
 import TopContentTable from "@/app/dashboard/components/overview/TopContentTable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import {
   CustomDashboardFrequency,
   DayHourUsageData,

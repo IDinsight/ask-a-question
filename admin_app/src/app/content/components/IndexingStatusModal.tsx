@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useAuth } from "@/utils/auth";
 import { DocIndexingStatusRow, formatDate, getDocIndexingStatusData } from "../api";
 import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
