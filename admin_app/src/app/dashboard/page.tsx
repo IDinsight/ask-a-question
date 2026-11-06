@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import { Sidebar, PageName } from "@/app/dashboard/components/Sidebar";
+import { useSearchParams } from "next/navigation";
+import { PageName } from "@/app/dashboard/components/Sidebar";
 import TabPanel from "@/app/dashboard/components/TabPanel";
 import {
   Period,
-  drawerWidth,
   CustomDateParams,
   CustomDashboardFrequency,
 } from "./types";
@@ -18,19 +18,36 @@ import DateRangePickerDialog from "@/app/dashboard/components/DateRangePicker";
 
 type Page = {
   name: PageName;
+  /** Value of the ?page= search param used by the app sidebar links. */
+  slug: string;
   description: string;
 };
 
 const pages: Page[] = [
-  { name: "Overview", description: "Overview of user engagement and satisfaction" },
-  { name: "Content Performance", description: "Track performance of contents..." },
-  { name: "Query Topics", description: "Find out what users are asking..." },
+  {
+    name: "Overview",
+    slug: "overview",
+    description: "Overview of user engagement and satisfaction",
+  },
+  {
+    name: "Content Performance",
+    slug: "content-performance",
+    description: "Track performance of contents...",
+  },
+  {
+    name: "Query Topics",
+    slug: "query-topics",
+    description: "Find out what users are asking...",
+  },
 ];
 
 const Dashboard: React.FC = () => {
-  const [dashboardPage, setDashboardPage] = useState<Page>(pages[0]);
+  // The sub-page is picked from the app sidebar via ?page=<slug>.
+  // Unknown or missing values fall back to Overview.
+  const searchParams = useSearchParams();
+  const dashboardPage =
+    pages.find((p) => p.slug === searchParams.get("page")) ?? pages[0];
   const [timePeriod, setTimePeriod] = useState<Period>("week");
-  const [sideBarOpen, setSideBarOpen] = useState(true);
   const [customDateParams, setCustomDateParams] = useState<CustomDateParams>({
     startDate: null,
     endDate: null,
@@ -92,17 +109,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1075) setSideBarOpen(false);
-      else setSideBarOpen(true);
-    };
-    window.addEventListener("resize", handleResize);
-    // wait 0.75s before first resize (so user can acknowledge the sidebar)
-    setTimeout(handleResize, 750);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   return (
     <Box
       sx={{
@@ -113,21 +119,12 @@ const Dashboard: React.FC = () => {
         maxWidth: "1900px",
       }}
     >
-      <Sidebar
-        open={sideBarOpen}
-        setOpen={setSideBarOpen}
-        setDashboardPage={(pageName: PageName) => {
-          const page = pages.find((p) => p.name === pageName);
-          if (page) setDashboardPage(page);
-        }}
-        selectedDashboardPage={dashboardPage.name}
-      />
       <Box
         sx={{
           paddingInline: 3,
           height: "100%",
           flexGrow: 1,
-          width: `calc(100% - ${sideBarOpen ? drawerWidth : 0}px)`,
+          width: "100%",
         }}
       >
         <Box

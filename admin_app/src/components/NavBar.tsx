@@ -1,6 +1,7 @@
 "use client";
-import logowhite from "@/logo-light.png";
+
 import { appColors, appStyles, sizes } from "@/utils";
+import Image from "next/image";
 import { useAuth } from "@/utils/auth";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box, Button } from "@mui/material";
@@ -38,7 +39,8 @@ interface ScreenMenuProps {
 const NavBar = () => {
   const { token, workspaceName, loginWorkspace } = useAuth();
   const pathname = usePathname();
-  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = React.useState(false);
+  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] =
+    React.useState(false);
   const onWorkspaceModalClose = () => {
     setOpenCreateWorkspaceModal(false);
   };
@@ -102,16 +104,13 @@ const NavBar = () => {
 const Logo = () => {
   return (
     <Link href="/content">
-      <Box
-        component="img"
-        src={logowhite.src}
-        sx={{
-          height: 36,
-          aspect_ratio: 1200 / 214,
-          paddingTop: 0.3,
-          paddingInline: 0.5,
-          display: { xs: "none", sm: "block" },
-        }}
+      <Image
+        src="/logo-light.png"
+        alt="Ask A Question by IDinsight"
+        width={1200}
+        height={214}
+        priority
+        className="h-auto w-60"
       />
     </Link>
   );
@@ -119,9 +118,14 @@ const Logo = () => {
 
 const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
+    null,
+  );
 
-  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
+  const smallMenuPageDict = [
+    ...pageDict,
+    { title: "Dashboard", path: "/dashboard" },
+  ];
 
   return (
     <Box
@@ -184,7 +188,10 @@ const SmallScreenNavMenu = ({ children }: ScreenMenuProps) => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color: pathname === page.path ? appColors.white : appColors.secondary,
+                color:
+                  pathname === page.path
+                    ? appColors.white
+                    : appColors.secondary,
               }}
             >
               {page.title}
@@ -230,7 +237,8 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
               key={page.title}
               sx={{
                 margin: sizes.baseGap,
-                color: pathname === page.path ? appColors.white : appColors.outline,
+                color:
+                  pathname === page.path ? appColors.white : appColors.outline,
                 whiteSpace: "nowrap",
               }}
             >
@@ -242,7 +250,8 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
           variant="outlined"
           onClick={() => router.push("/dashboard")}
           style={{
-            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
+            color:
+              pathname === "/dashboard" ? appColors.white : appColors.outline,
             borderColor:
               pathname === "/dashboard" ? appColors.white : appColors.outline,
             maxHeight: "30px",
@@ -261,9 +270,13 @@ const LargeScreenNavMenu = ({ children }: ScreenMenuProps) => {
 const UserDropdown = () => {
   const { logout, username } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
+    null,
+  );
   const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
-  const [persistedRole, setPersistedRole] = React.useState<UserRole | null>(null);
+  const [persistedRole, setPersistedRole] = React.useState<UserRole | null>(
+    null,
+  );
 
   useEffect(() => {
     // Save user to local storage when it changes
