@@ -1,17 +1,90 @@
 import ReactMarkdown from "react-markdown";
-import { appColors, sizes } from "@/utils";
-import { Close, Delete, Edit, ThumbDown, ThumbUp } from "@mui/icons-material";
-import { Box, Button, Chip, Fade, IconButton, Modal, Typography } from "@mui/material";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
 import Link from "next/link";
-import { Layout } from "@/components/Layout";
+import {
+  IconCheck,
+  IconEdit,
+  IconThumbDown,
+  IconThumbUp,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CustomError } from "@/utils/api";
 import { Content, Tag } from "../types";
 import { useValidateContentCard, useArchiveContentCard } from "../api";
+
+/**
+ * Tailwind classes for markdown rendered without a typography plugin:
+ * restores paragraph spacing, list bullets and link underlines.
+ */
+export const MARKDOWN_CLASSES =
+  "break-words hyphens-auto [&_a]:underline [&_a]:underline-offset-2 [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p:not(:last-child)]:mb-2 [&_ul]:list-disc [&_ul]:pl-5";
+
+/**
+ * "Edit" button that links to the content editor.
+ * A disabled link is not a thing, so without edit access we render a plain
+ * disabled button instead.
+ */
+export const EditContentButton = ({
+  content_id,
+  editAccess,
+  variant = "default",
+  size = "default",
+  className,
+  onClick,
+}: {
+  content_id: number;
+  editAccess: boolean;
+  variant?: "default" | "ghost" | "outline";
+  size?: "default" | "sm" | "lg";
+  className?: string;
+  onClick?: (event: React.MouseEvent) => void;
+}) => {
+  const children = (
+    <>
+      <IconEdit data-icon="inline-start" />
+      Edit
+    </>
+  );
+  if (!editAccess) {
+    return (
+      <Button variant={variant} size={size} className={className} disabled>
+        {children}
+      </Button>
+    );
+  }
+  return (
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      nativeButton={false}
+      render={<Link href={`/content/edit?content_id=${content_id}`} onClick={onClick} />}
+    >
+      {children}
+    </Button>
+  );
+};
 
 const ContentViewModal = ({
   title,
@@ -50,172 +123,93 @@ const ContentViewModal = ({
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const { mutate: validateCard } = useValidateContentCard(token!);
   const { mutate: archiveContent } = useArchiveContentCard(token!);
-  return (
-    <Modal
-      open={open as boolean}
-      onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Fade in={!!open}>
-        <Box
-          sx={{
-            maxWidth: "md",
-            borderRadius: 2,
-            backgroundColor: appColors.white,
-            padding: sizes.doubleBaseGap,
-          }}
-        >
-          <Layout.FlexBox flexDirection={"row"} justifyContent={"space-between"}>
-            <Typography variant="h5">Content #{display_number}</Typography>
-            <IconButton onClick={onClose}>
-              <Close />
-            </IconButton>
-          </Layout.FlexBox>
-          <Layout.Spacer multiplier={0.5} />
-          {tags && tags.length > 0 && (
-            <Layout.FlexBox
-              flexDirection={"column"}
-              sx={{
-                my: sizes.smallGap,
-              }}
-            >
-              <Typography variant="subtitle1" gutterBottom>
-                Tags
-              </Typography>
-              <Layout.FlexBox
-                sx={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  py: sizes.smallGap,
-                  alignItems: "center",
-                  gap: sizes.smallGap,
-                }}
-              >
-                {tags.map((tag) => (
-                  <Chip key={tag.tag_id} label={tag.tag_name} />
-                ))}
-              </Layout.FlexBox>
-            </Layout.FlexBox>
-          )}
 
-          <Layout.FlexBox
-            flexDirection={"column"}
-            sx={{
-              maxHeight: "60vh",
-              padding: sizes.baseGap,
-              marginTop: 1,
-              overflowY: "auto",
-              border: 1,
-              borderColor: appColors.lightGrey,
-              borderRadius: 3,
-            }}
-          >
-            <Typography variant="subtitle1" sx={{ marginBottom: sizes.baseGap }}>
-              {title}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                overflowWrap: "break-word",
-                hyphens: "auto",
-              }}
-            >
-              <ReactMarkdown>{text}</ReactMarkdown>
-            </Typography>
-          </Layout.FlexBox>
-          {related_contents && related_contents.length > 0 && (
-            <Layout.FlexBox
-              flexDirection={"column"}
-              sx={{
-                my: sizes.smallGap,
-              }}
-            >
-              <Typography variant="subtitle1" gutterBottom>
-                Related Contents
-              </Typography>
-              <Layout.FlexBox
-                sx={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  py: sizes.smallGap,
-                  alignItems: "center",
-                  gap: sizes.smallGap,
-                }}
-              >
-                {related_contents.map((content) => (
-                  <Chip
-                    key={content.content_id}
-                    variant="outlined"
-                    onClick={() => {
-                      onRelatedContentClick(content);
-                    }}
-                    label={content.content_title}
-                  />
-                ))}
-              </Layout.FlexBox>
-            </Layout.FlexBox>
-          )}
-          <Layout.FlexBox
-            sx={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: sizes.baseGap,
-              paddingTop: 2,
-              paddingInline: 1,
-            }}
-          >
-            {!validation_mode && (
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent className="gap-5 p-6 text-sm sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            Content #{display_number}
+          </DialogTitle>
+        </DialogHeader>
+
+        {tags && tags.length > 0 && (
+          <section className="flex flex-col gap-2">
+            <h3 className="text-xs font-medium text-muted-foreground">Tags</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <Badge key={tag.tag_id} variant="secondary">
+                  {tag.tag_name}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <article className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto border bg-card p-4">
+          <h2 className="text-base font-semibold">{title}</h2>
+          <div className={MARKDOWN_CLASSES}>
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
+        </article>
+
+        {related_contents && related_contents.length > 0 && (
+          <section className="flex flex-col gap-2">
+            <h3 className="text-xs font-medium text-muted-foreground">
+              Related contents
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {related_contents.map((content) => (
+                <Badge
+                  key={content.content_id}
+                  variant="outline"
+                  className="h-6 max-w-64 cursor-pointer hover:bg-muted"
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => onRelatedContentClick(content)}
+                    />
+                  }
+                >
+                  <span className="truncate">{content.content_title}</span>
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <DialogFooter className="flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {validation_mode ? (
+            <div className="flex gap-2">
               <Button
-                variant="contained"
-                color="primary"
                 disabled={!editAccess}
-                component={Link}
-                href={`/content/edit?content_id=${content_id}`}
-                startIcon={<Edit />}
-              >
-                Edit
-              </Button>
-            )}
-            {validation_mode && (
-              <Layout.FlexBox
-                sx={{
-                  flexDirection: "row",
-                  gap: sizes.baseGap,
+                onClick={() => {
+                  validateCard(content_id);
+                  // Refresh now and again shortly after, so the list picks up
+                  // the change once the mutation settles.
+                  setTimeout(() => {
+                    setRefreshKey?.((prev) => prev + 1);
+                  }, 500);
+                  setRefreshKey?.((prev) => prev + 1);
                 }}
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={!editAccess}
-                  onClick={() => {
-                    validateCard(content_id);
-                    setTimeout(() => {
-                      setRefreshKey?.((prev) => prev + 1);
-                    }, 500);
-                    setRefreshKey?.((prev) => prev + 1);
-                  }}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  disabled={!editAccess}
-                  onClick={() => {
-                    archiveContent(content_id);
-                  }}
-                >
-                  Reject
-                </Button>
-              </Layout.FlexBox>
-            )}
-            <Typography variant="body2" color={appColors.darkGrey}>
+                <IconCheck data-icon="inline-start" />
+                Approve
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!editAccess}
+                onClick={() => archiveContent(content_id)}
+              >
+                <IconX data-icon="inline-start" />
+                Reject
+              </Button>
+            </div>
+          ) : (
+            <EditContentButton content_id={content_id} editAccess={editAccess} />
+          )}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>
               Last modified{" "}
               {new Date(last_modified).toLocaleString(undefined, {
                 day: "numeric",
@@ -225,28 +219,19 @@ const ContentViewModal = ({
                 minute: "numeric",
                 hour12: true,
               })}
-            </Typography>
-            <Layout.FlexBox
-              sx={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: sizes.smallGap,
-              }}
-            >
-              <ThumbUp fontSize="small" color="disabled" />
-              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
-                {positive_votes}
-              </Typography>
-              <ThumbDown fontSize="small" color="disabled" />
-              <Typography variant="body2" sx={{ color: appColors.darkGrey }}>
-                {negative_votes}
-              </Typography>
-            </Layout.FlexBox>
-          </Layout.FlexBox>
-        </Box>
-      </Fade>
-    </Modal>
+            </span>
+            <span className="flex items-center gap-1" title="Upvotes">
+              <IconThumbUp className="size-4" aria-label="Upvotes" />
+              {positive_votes}
+            </span>
+            <span className="flex items-center gap-1" title="Downvotes">
+              <IconThumbDown className="size-4" aria-label="Downvotes" />
+              {negative_votes}
+            </span>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -267,47 +252,37 @@ const ArchiveContentModal: React.FC<ArchiveContentModalProps> = ({
   onFailedArchive,
   archiveContent,
 }) => {
+  const handleRemove = () => {
+    // Fire and forget: close immediately, report the result via callbacks.
+    archiveContent(Number(content_id))
+      .then(() => onSuccessfulArchive(content_id))
+      .catch((err) => {
+        const customError = err as CustomError;
+        onFailedArchive(content_id, customError.message);
+      });
+    onClose();
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">
-        Are you sure you want to remove this content?
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          Removing this content will mean that it can no longer be accessed.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={() => {
-            const handleArchiveContent = async (content_id: number) => {
-              archiveContent(content_id)
-                .then((res) => {
-                  onSuccessfulArchive(content_id);
-                })
-                .catch((err) => {
-                  const customError = err as CustomError;
-                  onFailedArchive(content_id, customError.message);
-                });
-            };
-            handleArchiveContent(Number(content_id));
-            onClose();
-          }}
-          autoFocus
-          variant="contained"
-          color="error"
-          startIcon={<Delete />}
-        >
-          Remove
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <IconTrash />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Remove this content?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Removing this content will mean that it can no longer be accessed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={handleRemove} autoFocus>
+            Remove
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

@@ -1,29 +1,22 @@
-import { keyframes } from "@emotion/react";
-import styled from "@emotion/styled";
-
-import { Box } from "@mui/material";
-
-// For 3-dot typing animation
-const typing = keyframes`
-  from { opacity: 0 }
-  to { opacity: 1 }
-`;
-const Fader = styled("div")`
-  animation: ${typing} 1s infinite;
-  &:nth-of-type(2) {
-    animation-delay: 0.2s;
-  }
-  &:nth-of-type(3) {
-    animation-delay: 0.4s;
-  }
-`;
+/**
+ * Three pulsing dots shown while waiting for a response.
+ * Each dot starts a little later than the one before it.
+ */
 const TypingAnimation = () => {
   return (
-    <Box sx={{ display: "flex", fontSize: "1.3rem" }}>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
-      <Fader>.</Fader>
-    </Box>
+    <div
+      className="flex items-center gap-1 py-2"
+      role="status"
+      aria-label="Waiting for response"
+    >
+      {[0, 200, 400].map((delay) => (
+        <span
+          key={delay}
+          className="size-1.5 animate-pulse rounded-full bg-muted-foreground"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </div>
   );
 };
 

@@ -1,20 +1,23 @@
 import React, { useState } from "react";
+import { IconSend, IconX } from "@tabler/icons-react";
 
-import { Close, Send } from "@mui/icons-material";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Box,
-  Checkbox,
-  CircularProgress,
-  FormControlLabel,
-  IconButton,
-  Paper,
-  Typography,
-  TextField,
-} from "@mui/material";
-
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/utils/auth";
-import { appColors } from "@/utils";
 
+/**
+ * Side panel for trying a question against the API (used by the content
+ * page's "Test search" and the urgency rules page). The caller supplies the
+ * request (`handleSendClick`) and how to render its result (`ResponseBox`).
+ */
 const TestSidebar = ({
   title,
   closeSidebar,
@@ -40,126 +43,64 @@ const TestSidebar = ({
   const [response, setResponse] = useState<any>(null); // could be SearchResponseBoxData or UDResponseBoxData
   const { token } = useAuth();
 
-  const handleQuestionChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setQuestion(event.target.value);
-  };
-
-  const toggleGenerateLLMResponse = () => {
-    setGenerateLLMResponse((prev) => !prev);
-  };
+  const send = () =>
+    handleSendClick(question, generateLLMResponse, setLoading, setResponse, token);
 
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        height: "100%",
-        padding: 3,
-        paddingTop: 4,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 4,
-        }}
-      >
-        <Typography variant="h6">{title}</Typography>
-        <IconButton onClick={closeSidebar}>
-          <Close />
-        </IconButton>
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          padding: 2,
-          marginBottom: 4,
-          border: 1,
-          borderRadius: 1,
-          borderColor: "grey.400",
-        }}
-      >
-        <TextField
-          variant="standard"
-          placeholder="Ask a question..."
-          fullWidth
-          value={question}
-          onChange={handleQuestionChange}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleSendClick(
-                question,
-                generateLLMResponse,
-                setLoading,
-                setResponse,
-                token,
-              );
-            }
-          }}
-          InputProps={{ disableUnderline: true }}
-        />
-        <Box
-          display="flex"
-          flexDirection="row"
-          justifyContent={showLLMResponseToggle ? "space-between" : "flex-end"}
-          paddingTop={2}
+    <aside className="flex h-full flex-col gap-6 border-l bg-card p-6 text-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Close ${title}`}
+          onClick={closeSidebar}
         >
-          {showLLMResponseToggle && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={generateLLMResponse}
-                  onChange={toggleGenerateLLMResponse}
-                  sx={{
-                    color: "#5480D1",
-                    "&.Mui-checked": { color: "#5480D1" },
-                  }}
-                />
-              }
-              label="Also generate AI response"
+          <IconX />
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <InputGroup className="h-10 bg-background">
+          <InputGroupInput
+            aria-label="Question"
+            placeholder="Ask a question..."
+            className="text-sm md:text-sm"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !loading && question !== "") send();
+            }}
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton
+              size="icon-sm"
+              variant="default"
+              aria-label="Send question"
+              disabled={loading || question === ""}
+              onClick={send}
+            >
+              {loading ? <Spinner /> : <IconSend />}
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+        {showLLMResponseToggle && (
+          <Label className="flex items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={generateLLMResponse}
+              onCheckedChange={(checked) => setGenerateLLMResponse(checked)}
             />
-          )}
-          <IconButton
-            onClick={() =>
-              handleSendClick(
-                question,
-                generateLLMResponse,
-                setLoading,
-                setResponse,
-                token,
-              )
-            }
-            sx={{ color: generateLLMResponse ? "#5480D1" : appColors.primary }}
-            disabled={loading || question == "" ? true : false}
-          >
-            {loading ? <CircularProgress size={24} /> : <Send />}
-          </IconButton>
-        </Box>
-      </Box>
-      {/* make sure this is working correctly */}
+            Also generate AI response
+          </Label>
+        )}
+      </div>
+
       {ResponseBox && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            flexGrow: 1,
-            flexShrink: 1,
-            height: 0,
-            minHeight: "200px",
-            padding: 2,
-            overflowY: "auto",
-          }}
-        >
+        <div className="flex min-h-[200px] flex-1 flex-col overflow-y-auto border-t pt-4">
           <ResponseBox loading={loading} responseBoxData={response} token={token} />
-        </Box>
+        </div>
       )}
-    </Paper>
+    </aside>
   );
 };
 

@@ -1,18 +1,21 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@mui/material";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { useAuth } from "@/utils/auth";
+import { IconDownload, IconFileDownload } from "@tabler/icons-react";
 import Papa from "papaparse";
 import { useState } from "react";
-import { LoadingButton } from "@mui/lab";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/utils/auth";
 import { Content, Tag } from "../types";
-import { Layout } from "@/components/Layout";
 import { getContentList, getTagList } from "../api";
 import { handleApiError } from "@/utils/api";
 
@@ -132,43 +135,42 @@ const DownloadModal = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-labelledby="download-dialog-title"
-      aria-describedby="download-dialog-description"
-    >
-      <DialogTitle id="download-dialog-title">
-        Download all contents?
-        <Layout.Spacer horizontal multiplier={50} />
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="download-dialog-description">
-          This action will download all contents as a CSV file.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <LoadingButton
-          variant="contained"
-          autoFocus
-          startIcon={<FileDownloadIcon />}
-          loading={loading}
-          loadingPosition="start"
-          onClick={() =>
-            handleDownloadContent(
-              fetchAndTransformContents,
-              onNoDataFound,
-              onFailedDownload,
-              setLoading,
-              onClose,
-            )
-          }
-        >
-          Download
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia>
+            <IconFileDownload />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Download all contents?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will download all contents as a CSV file.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            autoFocus
+            disabled={loading}
+            onClick={() =>
+              handleDownloadContent(
+                fetchAndTransformContents,
+                onNoDataFound,
+                onFailedDownload,
+                setLoading,
+                onClose,
+              )
+            }
+          >
+            {loading ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <IconDownload data-icon="inline-start" />
+            )}
+            Download
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

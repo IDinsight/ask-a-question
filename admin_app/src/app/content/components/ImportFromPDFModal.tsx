@@ -1,18 +1,24 @@
 import React, { useState, useCallback, useEffect } from "react";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  DialogContentText,
-  Box,
-  Typography,
-  Alert,
-} from "@mui/material";
 import { useDropzone } from "react-dropzone";
-import { Layout } from "@/components/Layout";
-import { LoadingButton } from "@mui/lab";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconFileTypePdf,
+  IconUpload,
+} from "@tabler/icons-react";
+
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { usePostDocumentToIndex } from "../api";
 import { useAuth } from "@/utils/auth";
 import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
@@ -104,125 +110,97 @@ export const ImportFromPDFModal: React.FC<ImportFromPDFModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle id="import-pdf-dialog-title">
-        Generate New Content From PDF
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="import-pdf-dialog-description">
-          <Typography>
-            You can use this feature to generate new contents from PDF files into AAQ.
-            The system will automatically create cards from file content.
-          </Typography>
-          <p>
-            ⚠️ Maximum file size is 100MB.
-            <br />
-            ⚠️ Either upload a single PDF or a ZIP file with multiple PDFs.
-          </p>
-        </DialogContentText>
-        <Layout.Spacer multiplier={1} />
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent className="gap-5 p-6 text-sm sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            Generate new content from PDF
+          </DialogTitle>
+          <DialogDescription className="text-sm">
+            Generate new contents from PDF files into AAQ. The system will
+            automatically create cards from the file content.
+          </DialogDescription>
+        </DialogHeader>
+
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
+          <li>Maximum file size is 100MB.</li>
+          <li>Upload either a single PDF or a ZIP file with multiple PDFs.</li>
+        </ul>
+
         {error && (
-          <>
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-            <Layout.Spacer multiplier={1} />
-          </>
+          <Alert variant="destructive">
+            <IconAlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
-        <Box
+
+        {/* Drop zone: click to browse or drag a file in */}
+        <div
           {...getRootProps()}
-          sx={{
-            border: "2px dashed #cccccc",
-            borderRadius: 2,
-            padding: 3,
-            textAlign: "center",
-            cursor: "pointer",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "20vh",
-            justifyContent: "center",
-            alignItems: "center",
-            "&:hover": {
-              borderColor: "primary.main",
-            },
-          }}
+          className={cn(
+            "flex min-h-[20vh] cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed p-6 text-center text-muted-foreground transition-colors outline-none hover:border-primary focus-visible:border-primary",
+            isDragActive && "border-primary bg-primary/5",
+          )}
         >
           <input {...getInputProps()} />
-          <DialogContentText>
-            {isDragActive ? (
-              <Typography>Drop the PDF files here...</Typography>
-            ) : (
-              <Typography>
-                Drag and drop a PDF/ZIP file here, or click to select file
-              </Typography>
-            )}
-            {files.length > 0 && (
-              <Box mt={2}>
-                {files.map((file) => (
-                  <Typography key={file.name} color="primary">
-                    {file.name}
-                  </Typography>
-                ))}
-              </Box>
-            )}
-          </DialogContentText>
-        </Box>
-        {importErrorMessages.length > 0 && (
-          <>
-            <Layout.Spacer multiplier={2} />
-            {importErrorMessages.map((error, index) => (
-              <React.Fragment key={index}>
-                <Alert variant="outlined" severity="error">
-                  {error}
-                </Alert>
-                <Layout.Spacer multiplier={1} />
-              </React.Fragment>
-            ))}
-          </>
-        )}
-        {importSuccess && (
-          <>
-            <Layout.Spacer multiplier={2} />
-            <Alert
-              variant="standard"
-              severity="success"
-              action={
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      onClose();
-                      setOpenIndexHistoryModal(true);
-                    }}
-                  >
-                    Check Status
-                  </Button>
-                </Box>
-              }
+          <IconUpload className="size-6" />
+          <p>
+            {isDragActive
+              ? "Drop the file here..."
+              : "Drag and drop a PDF/ZIP file here, or click to select a file"}
+          </p>
+          {files.map((file) => (
+            <p
+              key={file.name}
+              className="flex items-center gap-1.5 font-medium text-foreground"
             >
-              Card generation task successfully started!
-            </Alert>
-          </>
+              <IconFileTypePdf className="size-4" />
+              {file.name}
+            </p>
+          ))}
+        </div>
+
+        {importErrorMessages.map((message, index) => (
+          <Alert key={index} variant="destructive">
+            <IconAlertCircle />
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        ))}
+        {importSuccess && (
+          <Alert>
+            <IconCircleCheck />
+            <AlertDescription>Card generation task successfully started!</AlertDescription>
+            <AlertAction>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  setOpenIndexHistoryModal(true);
+                }}
+              >
+                Check status
+              </Button>
+            </AlertAction>
+          </Alert>
         )}
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        {!importSuccess && (
-          <>
-            <LoadingButton
-              variant="contained"
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {importSuccess ? "Close" : "Cancel"}
+          </Button>
+          {!importSuccess && (
+            <Button
               disabled={files.length === 0 || loading || !!error}
               autoFocus
-              loading={loading}
               onClick={handleSubmit}
             >
+              {loading && <Spinner data-icon="inline-start" />}
               Import
-            </LoadingButton>
-          </>
-        )}
-      </DialogActions>
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };
