@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from core_backend.app.llm_call.process_input import _paraphrase_question
-from core_backend.app.question_answer.schemas import (
+from app.llm_call.process_input import _paraphrase_question
+from app.question_answer.schemas import (
     QueryRefined,
     QueryResponse,
     QueryResponseError,

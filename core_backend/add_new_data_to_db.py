@@ -12,6 +12,12 @@ from typing import Any
 
 import pandas as pd
 import urllib3
+from litellm import completion
+from sqlalchemy import (
+    select,
+)
+from urllib3.exceptions import InsecureRequestWarning
+
 from app.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -29,11 +35,6 @@ from app.question_answer.models import (
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from app.users.models import WorkspaceDB
 from app.utils import get_key_hash
-from litellm import completion
-from sqlalchemy import (
-    select,
-)
-from urllib3.exceptions import InsecureRequestWarning
 
 # To disable InsecureRequestWarning.
 urllib3.disable_warnings(InsecureRequestWarning)

@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from core_backend.app.llm_call.llm_prompts import IdentifiedLanguage
-from core_backend.app.llm_call.process_input import _identify_language
-from core_backend.app.question_answer.schemas import QueryRefined, QueryResponse
+from app.llm_call.llm_prompts import IdentifiedLanguage
+from app.llm_call.process_input import _identify_language
+from app.question_answer.schemas import QueryRefined, QueryResponse
 
 pytestmark = pytest.mark.rails
 

@@ -18,10 +18,10 @@ lint.ignore = ["B008"]  # Do not perform function calls in argument defaults.
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["core_backend"]
+known-first-party = ["app"]
 
 [tool.isort]
-known_first_party = ["core_backend"]
+known_first_party = ["app"]
 
 [tool.pytest.ini_options]
 filterwarnings = [

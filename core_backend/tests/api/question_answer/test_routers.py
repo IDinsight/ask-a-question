@@ -6,9 +6,9 @@ import pytest
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from core_backend.app.question_answer import routers
-from core_backend.app.question_answer.routers import _chat, chat
-from core_backend.app.question_answer.schemas import QueryBase, QueryResponse
+from app.question_answer import routers
+from app.question_answer.routers import _chat, chat
+from app.question_answer.schemas import QueryBase, QueryResponse
 
 
 class DummyLangfuseContext:

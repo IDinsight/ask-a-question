@@ -7,7 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
 
-from core_backend.app.users.schemas import UserRoles
+from app.users.schemas import UserRoles
 
 # Define scenario(s).
 scenarios("core_backend/adding_users.feature")

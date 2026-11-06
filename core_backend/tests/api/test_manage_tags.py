@@ -7,8 +7,8 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from core_backend.app.tags.models import TagDB
-from core_backend.app.tags.routers import _convert_record_to_schema
+from app.tags.models import TagDB
+from app.tags.routers import _convert_record_to_schema
 
 
 @pytest.fixture(scope="function", params=["Tag1", ("tag3",)])

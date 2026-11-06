@@ -7,11 +7,11 @@ from httpx import AsyncClient
 from pytest import Item
 from pytest_asyncio import is_async_test
 
-from core_backend.app import create_app
-from core_backend.app.auth.dependencies import create_access_token
-from core_backend.app.database import get_session_context_manager
-from core_backend.app.users.models import UserDB
-from core_backend.app.utils import get_key_hash, get_password_salted_hash
+from app import create_app
+from app.auth.dependencies import create_access_token
+from app.database import get_session_context_manager
+from app.users.models import UserDB
+from app.utils import get_key_hash, get_password_salted_hash
 
 TEST_USERNAME = "test_username"
 TEST_PASSWORD = "test_password"

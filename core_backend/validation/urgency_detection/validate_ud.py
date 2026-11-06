@@ -10,10 +10,10 @@ import pytest
 from dateutil import tz
 from httpx import AsyncClient
 
-from core_backend.app.config import (
+from app.config import (
     LITELLM_MODEL_EMBEDDING,
 )
-from core_backend.app.utils import setup_logger
+from app.utils import setup_logger
 
 logger = setup_logger(name="UDValidation")
 

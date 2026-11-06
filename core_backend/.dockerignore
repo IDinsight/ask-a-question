@@ -6,3 +6,6 @@ __pycache__
 .mypy_cache
 .pytest_cache
 .vscode
+
+# Local secrets must never be baked into the image
+.env

@@ -7,8 +7,8 @@ import httpx
 import pytest
 from fastapi import status
 
-from core_backend.app.config import TURNIO_API_BASE
-from core_backend.app.turnio.requests import send_turn_text_message
+from app.config import TURNIO_API_BASE
+from app.turnio.requests import send_turn_text_message
 
 
 class FakeResponse:

@@ -7,7 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
 
-from core_backend.app.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from app.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 
 # Define scenario(s).
 scenarios("core_backend/retrieving_workspace_information.feature")
