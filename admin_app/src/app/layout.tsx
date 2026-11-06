@@ -1,3 +1,5 @@
+// Tailwind v4 entry point + shadcn theme tokens (bg-primary, etc.). Lives at the project root per components.json.
+import "../../globals.css";
 import { PublicEnvScript } from "next-runtime-env";
 import theme from "@/theme";
 import AuthProvider from "@/utils/auth";
