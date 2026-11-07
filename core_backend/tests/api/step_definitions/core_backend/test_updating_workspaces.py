@@ -7,7 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
 
-from app.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
+from app.core.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA
 
 # Define scenario(s).
 scenarios("core_backend/updating_workspaces.feature")
@@ -16,7 +16,7 @@ scenarios("core_backend/updating_workspaces.feature")
 # Backgrounds.
 @given("Multiple workspaces are setup", target_fixture="user_workspace_responses")
 def reset_databases(
-    setup_multiple_workspaces: dict[str, dict[str, Any]]
+    setup_multiple_workspaces: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Setup multiple workspaces.
 

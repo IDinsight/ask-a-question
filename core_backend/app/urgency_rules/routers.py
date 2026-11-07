@@ -8,7 +8,7 @@ from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..database import get_async_session
+from ..core.database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import EmbeddingCallException, setup_logger
@@ -81,7 +81,6 @@ async def create_urgency_rule(
             "the workspace.",
         )
     try:
-
         urgency_rule_db = await save_urgency_rule_to_db(
             asession=asession,
             urgency_rule=urgency_rule,

@@ -4,8 +4,8 @@ from typing import Any, AsyncGenerator
 
 import pytest
 
-from app import database
-from app.database import with_new_session
+from app.core import database
+from app.core.database import with_new_session
 
 
 @pytest.mark.asyncio

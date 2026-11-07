@@ -18,13 +18,13 @@ from sqlalchemy import (
 )
 from urllib3.exceptions import InsecureRequestWarning
 
-from app.config import (
+from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_GENERATION,
 )
 from app.contents.models import ContentDB
-from app.database import get_session
+from app.core.database import get_session
 from app.llm_call.utils import remove_json_markdown
 from app.question_answer.models import (
     ContentFeedbackDB,
@@ -561,9 +561,9 @@ if __name__ == "__main__":
         else datetime.now()
     )
     assert end_date, "Invalid end date. Please provide a valid date. Format is dd-mm-yy"
-    assert (
-        start_date and start_date < end_date
-    ), "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+    assert start_date and start_date < end_date, (
+        "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+    )
 
     subset = int(args.subset) if args.subset else None
     path = args.csv

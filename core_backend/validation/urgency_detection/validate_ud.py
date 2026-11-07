@@ -10,7 +10,7 @@ import pytest
 from dateutil import tz
 from httpx import AsyncClient
 
-from app.config import (
+from app.core.config import (
     LITELLM_MODEL_EMBEDDING,
 )
 from app.utils import setup_logger
@@ -19,7 +19,6 @@ logger = setup_logger(name="UDValidation")
 
 
 class TestUDPerformance:
-
     @pytest.fixture(scope="class", autouse=True)
     async def setup(
         self,

@@ -10,7 +10,7 @@ from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..database import get_async_session
+from ..core.database import get_async_session
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..utils import setup_logger, update_api_limits
 from ..workspaces.utils import (
@@ -362,12 +362,13 @@ async def remove_user_from_workspace(
 
     # 1 and 2.
     try:
-        (default_workspace_name, removed_from_workspace_name) = (
-            await remove_user_from_dbs(
-                asession=asession,
-                remove_from_workspace_db=remove_from_workspace_db,
-                user_db=user_db,
-            )
+        (
+            default_workspace_name,
+            removed_from_workspace_name,
+        ) = await remove_user_from_dbs(
+            asession=asession,
+            remove_from_workspace_db=remove_from_workspace_db,
+            user_db=user_db,
         )
     except UserNotFoundInWorkspaceError as e:
         raise HTTPException(

@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..config import (
+from ..core.config import (
     CUSTOM_STT_ENDPOINT,
     GCS_SPEECH_BUCKET,
     REDIS_CHAT_CACHE_EXPIRY_TIME,
@@ -28,7 +28,7 @@ from ..contents.models import (
     increment_query_count,
     update_votes_in_db,
 )
-from ..database import get_async_session, with_new_session
+from ..core.database import get_async_session, with_new_session
 from ..llm_call.llm_prompts import ChatHistory
 from ..llm_call.process_input import (
     classify_safety__before,
@@ -310,14 +310,16 @@ async def search(
     """
     try:
         workspace_id = workspace_db.workspace_id
-        user_query_db, user_query_refined_template, response_template = (
-            await get_user_query_and_response(
-                asession=asession,
-                generate_tts=False,
-                user_query=user_query,
-                workspace_doc_language=workspace_db.doc_language,
-                workspace_id=workspace_id,
-            )
+        (
+            user_query_db,
+            user_query_refined_template,
+            response_template,
+        ) = await get_user_query_and_response(
+            asession=asession,
+            generate_tts=False,
+            user_query=user_query,
+            workspace_doc_language=workspace_db.doc_language,
+            workspace_id=workspace_id,
         )
         assert isinstance(user_query_db, QueryDB)
 

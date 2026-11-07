@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from litellm import embedding
 from sqlalchemy.orm import Session
 
-from app.config import (
+from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,

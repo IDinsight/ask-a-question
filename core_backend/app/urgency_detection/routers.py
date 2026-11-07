@@ -7,7 +7,7 @@ from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, rate_limiter
-from ..database import get_async_session
+from ..core.database import get_async_session
 from ..llm_call.entailment import detect_urgency
 from ..urgency_rules.models import (
     get_cosine_distances_from_rules,

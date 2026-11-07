@@ -28,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 from sqlalchemy.sql import case
 
-from ..config import (
+from ..core.config import (
     PGVECTOR_DISTANCE,
     PGVECTOR_EF_CONSTRUCTION,
     PGVECTOR_M,

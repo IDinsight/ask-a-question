@@ -39,7 +39,7 @@ from . import (
     users,
     workspaces,
 )
-from .config import (
+from .core.config import (
     CROSS_ENCODER_MODEL,
     DOMAIN,
     HTTPX_TIMEOUT,
@@ -49,7 +49,7 @@ from .config import (
     SENTRY_TRACES_SAMPLE_RATE,
     USE_CROSS_ENCODER,
 )
-from .prometheus_middleware import PrometheusMiddleware
+from .core.prometheus_middleware import PrometheusMiddleware
 from .utils import setup_logger
 
 logger = setup_logger()

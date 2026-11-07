@@ -13,8 +13,8 @@ from ..auth.dependencies import (
     get_current_workspace_name,
 )
 from ..auth.schemas import AuthenticationDetails
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
-from ..database import get_async_session
+from ..core.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
+from ..core.database import get_async_session
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..users.models import (
     UserDB,

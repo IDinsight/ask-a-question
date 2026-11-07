@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import PGVECTOR_VECTOR_SIZE
+from app.core.config import PGVECTOR_VECTOR_SIZE
 from app.contents.models import ContentDB
 from app.dashboard.models import (
     get_content_feedback_stats,
@@ -636,7 +636,7 @@ class TestHeatmap:
             The heatmap to check.
         """
 
-        total_hourcount = {f"{i*2:02}:00": 0 for i in range(12)}
+        total_hourcount = {f"{i * 2:02}:00": 0 for i in range(12)}
         for _hour, daycount in heatmap.items():
             total_hourcount[_hour.replace("h", "").replace("_", ":")] += sum(
                 list(daycount.values())

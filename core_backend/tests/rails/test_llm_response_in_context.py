@@ -9,7 +9,7 @@ from typing import Literal
 import pytest
 import yaml
 
-from app.config import ALIGN_SCORE_THRESHOLD
+from app.core.config import ALIGN_SCORE_THRESHOLD
 from app.llm_call.process_output import (
     _get_llm_align_score,
 )

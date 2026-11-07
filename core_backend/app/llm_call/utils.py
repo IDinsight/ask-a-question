@@ -8,7 +8,7 @@ import requests  # type: ignore
 from langfuse.decorators import langfuse_context  # type: ignore
 from litellm import acompletion, token_counter
 
-from ..config import (
+from ..core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_CHAT,
@@ -221,9 +221,9 @@ def append_message_content_to_chat_history(
     assert len(name) <= 64, f"`name` must be <= 64 characters: {name}"
     assert role in roles, f"Invalid role: {role}. Valid roles are: {roles}"
     if role not in ["assistant", "function"]:
-        assert (
-            message_content is not None
-        ), "`message_content` can only be `None` for `assistant` and `function` roles."
+        assert message_content is not None, (
+            "`message_content` can only be `None` for `assistant` and `function` roles."
+        )
     message = {"content": message_content, "name": name, "role": role}
     chat_history.append(message)
     if truncate_history:

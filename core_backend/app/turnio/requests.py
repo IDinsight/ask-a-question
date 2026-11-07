@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from ..config import TURNIO_API_BASE
+from ..core.config import TURNIO_API_BASE
 from .schemas import TurnMessageBody, TurnTextMessage
 
 

@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 from ..auth.dependencies import authenticate_key
 from ..contents.models import ContentDB
 from ..contents.schemas import ContentRetrieve
-from ..database import get_async_session
+from ..core.database import get_async_session
 from ..question_answer.models import QueryDB
 from ..urgency_detection.models import UrgencyQueryDB
 from ..urgency_rules.models import UrgencyRuleDB
@@ -144,13 +144,13 @@ async def get_queries(
     start_date: Annotated[
         datetime,
         Query(
-            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
+            description=("A UTC datetime.Example: `2021-01-01T00:00:00`"),
         ),
     ],
     end_date: Annotated[
         datetime,
         Query(
-            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
+            description=("A UTC datetime.Example: `2021-01-01T00:00:00`"),
         ),
     ],
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],
@@ -202,13 +202,13 @@ async def get_urgency_queries(
     start_date: Annotated[
         datetime,
         Query(
-            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
+            description=("A UTC datetime.Example: `2021-01-01T00:00:00`"),
         ),
     ],
     end_date: Annotated[
         datetime,
         Query(
-            description=("A UTC datetime." "Example: `2021-01-01T00:00:00`"),
+            description=("A UTC datetime.Example: `2021-01-01T00:00:00`"),
         ),
     ],
     workspace_db: Annotated[WorkspaceDB, Depends(authenticate_key)],

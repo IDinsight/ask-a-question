@@ -3,7 +3,7 @@
 from functools import wraps
 from typing import Any, Callable, Optional
 
-from ..config import (
+from ..core.config import (
     LITELLM_MODEL_LANGUAGE_DETECT,
     LITELLM_MODEL_PARAPHRASE,
     LITELLM_MODEL_SAFETY,

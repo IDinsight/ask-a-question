@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from app import models
-from app.database import SYNC_DB_API, get_connection_url
+from app.core.database import SYNC_DB_API, get_connection_url
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides

@@ -9,7 +9,7 @@ from pytest_asyncio import is_async_test
 
 from app import create_app
 from app.auth.dependencies import create_access_token
-from app.database import get_session_context_manager
+from app.core.database import get_session_context_manager
 from app.users.models import UserDB
 from app.utils import get_key_hash, get_password_salted_hash
 

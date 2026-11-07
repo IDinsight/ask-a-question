@@ -16,8 +16,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import CHECK_API_LIMIT
-from ..database import get_sqlalchemy_async_engine
+from ..core.config import CHECK_API_LIMIT
+from ..core.database import get_sqlalchemy_async_engine
 from ..users.models import (
     UserDB,
     UserNotFoundError,

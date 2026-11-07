@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from ..config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
+from ..core.config import DEFAULT_API_QUOTA, DEFAULT_CONTENT_QUOTA, DEFAULT_DOC_LANGUAGE
 
 
 class WorkspaceCreate(BaseModel):

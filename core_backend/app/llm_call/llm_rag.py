@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from ..config import LITELLM_MODEL_GENERATION
+from ..core.config import LITELLM_MODEL_GENERATION
 from ..utils import setup_logger
 from .llm_prompts import RAG, RAG_FAILURE_MESSAGE, ChatHistory, IdentifiedLanguage
 from .utils import (

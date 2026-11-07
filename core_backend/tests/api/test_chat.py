@@ -7,7 +7,7 @@ import pytest
 from litellm import token_counter
 from redis import asyncio as aioredis
 
-from app.config import LITELLM_MODEL_CHAT
+from app.core.config import LITELLM_MODEL_CHAT
 from app.llm_call.utils import (
     _ask_llm_async,
     _truncate_chat_history,
@@ -346,15 +346,16 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
         ],
     }
 
-    with patch(
-        "app.llm_call.utils.requests.get", return_value=mock_response
-    ):
+    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
         # Call the function under test
         session_id = "12345"
-        (chat_cache_key, chat_params_cache_key, chat_history, old_chat_params) = (
-            await init_chat_history(
-                redis_client=redis_client, reset=False, session_id=session_id
-            )
+        (
+            chat_cache_key,
+            chat_params_cache_key,
+            chat_history,
+            old_chat_params,
+        ) = await init_chat_history(
+            redis_client=redis_client, reset=False, session_id=session_id
         )
 
         # Check that attributes are generated correctly and that the chat history is
@@ -416,9 +417,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             },
         ],
     }
-    with patch(
-        "app.llm_call.utils.requests.get", return_value=mock_response
-    ):
+    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
         _, _, reset_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=True, session_id=session_id
         )

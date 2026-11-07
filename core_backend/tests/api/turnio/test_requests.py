@@ -7,7 +7,7 @@ import httpx
 import pytest
 from fastapi import status
 
-from app.config import TURNIO_API_BASE
+from app.core.config import TURNIO_API_BASE
 from app.turnio.requests import send_turn_text_message
 
 

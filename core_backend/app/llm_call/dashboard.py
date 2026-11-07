@@ -2,7 +2,7 @@
 
 from bertopic import BERTopic
 
-from ..config import LITELLM_MODEL_DASHBOARD_SUMMARY, LITELLM_MODEL_TOPIC_MODEL
+from ..core.config import LITELLM_MODEL_DASHBOARD_SUMMARY, LITELLM_MODEL_TOPIC_MODEL
 from ..dashboard.config import DISABLE_DASHBOARD_LLM
 from ..utils import setup_logger
 from .llm_prompts import TopicModelLabelling, get_feedback_summary_prompt

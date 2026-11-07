@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app import create_app
 from app.auth.dependencies import create_access_token
-from app.config import (
+from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_EMBEDDING,
@@ -25,7 +25,7 @@ from app.config import (
     REDIS_HOST,
 )
 from app.contents.models import ContentDB
-from app.database import (
+from app.core.database import (
     SYNC_DB_API,
     get_connection_url,
     get_session_context_manager,
@@ -1031,12 +1031,8 @@ def patch_llm_call(monkeysession: pytest.MonkeyPatch) -> None:
         Pytest monkeypatch object.
     """
 
-    monkeysession.setattr(
-        "app.contents.models.embedding", async_fake_embedding
-    )
-    monkeysession.setattr(
-        "app.urgency_rules.models.embedding", async_fake_embedding
-    )
+    monkeysession.setattr("app.contents.models.embedding", async_fake_embedding)
+    monkeysession.setattr("app.urgency_rules.models.embedding", async_fake_embedding)
     monkeysession.setattr(process_input, "_classify_safety", mock_return_args)
     monkeysession.setattr(process_input, "_identify_language", mock_identify_language)
     monkeysession.setattr(process_input, "_paraphrase_question", mock_return_args)
