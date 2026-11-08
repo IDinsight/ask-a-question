@@ -1,0 +1,60 @@
+{
+  "skill_name": "deep-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem deep-planner Plan a Level 3 reusable evaluation runner for every skill in this repository. It must discover `.agents/skills/*/evals/evals.json`, validate the case schema, run each case in an isolated workspace against both the current skill and an appropriate baseline, grade assertions with evidence, aggregate pass-rate and timing results, and run in CI. Inspect the repository and create the planning package, but do not implement the runner.",
+      "expected_output": "A repository-grounded Level 3 implementation program under the repository's existing planning convention, with current-state and requirements artifacts, appropriately decomposed dependency-aware plan files, exact observed paths and a validation-command inventory that records missing commands, isolated-run and grading contracts, CI and documentation work, and no production implementation.",
+      "files": [],
+      "assertions": [
+        "The output and generated artifacts state implement mode and a shared target of Level 3",
+        "Repository reconnaissance cites concrete observed files and current eval examples, and accounts for manifests, scripts, workflows, planning conventions, and validation commands by citing observed evidence or explicitly recording their absence",
+        "The planning package contains a control-plane README, CURRENT-STATE.md, REQUIREMENTS.md, and appropriately decomposed PLAN-NN files under an existing or justified planning directory, using multiple plans only where responsibility or dependency boundaries warrant them",
+        "CURRENT-STATE.md separates observed behavior from proposed behavior and records the assessed current level with file or command evidence",
+        "REQUIREMENTS.md gives functional, quality, and acceptance requirements stable IDs and maps every applicable ID to a plan and verification method",
+        "The plans cover schema validation, isolated current-skill and baseline execution, assertion grading with concrete evidence, aggregate pass-rate and timing results, CI integration, and contributor documentation",
+        "Every plan states dependencies and parallel safety, and every task includes file scope, action, Level 3 relevance, dependency, done condition, and exact verification evidence",
+        "Existing paths are verified and proposed paths are marked CREATE, while unresolved locations are marked CANDIDATE instead of being presented as existing",
+        "The control plane identifies plan ownership, cross-plan contracts, execution stages, safe parallel work, critical path, blockers, and the first ready task",
+        "Only planning documentation is created or changed; no runner code, workflow implementation, dependency installation, or other production behavior is added",
+        "The completion report says the implementation program is ready and does not claim the evaluation runner itself is implemented"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem deep-planner Review this Agent Skills repository for Level 4 release readiness. Cover skill discovery metadata, progressive-disclosure references, broken internal links, eval-suite coverage, automated validation in CI, security of scripts and commands, and contributor documentation. Build an evidence-backed review program and planning package only; do not fix any findings.",
+      "expected_output": "A Level 4 review program grounded in the repository's actual skills, references, scripts, documentation, and CI state, with traceable review requirements, scoped assessment plans, target-level gates, and evidence requirements while leaving non-planning files unchanged.",
+      "files": [],
+      "assertions": [
+        "The package explicitly uses review mode and target Level 4 and preserves the no-fix boundary",
+        "The current-state inventory identifies the inspection scope, repository conventions, exact relevant paths, current validation commands, and evidence-backed maturity for each affected layer",
+        "The review requirements use stable IDs and observable pass or fail criteria for metadata, references and links, eval coverage, CI, script safety, and contributor documentation",
+        "The work is split into coherent review plans rather than one plan per file or one generic checklist",
+        "Each review task names the evidence source, review action, dependency, Level 4 relevance, done condition, and verification method",
+        "The plans distinguish current findings, unknowns, proposed recommendations, and deferred Level 5 capabilities",
+        "The control-plane README includes dependency order, parallel groups, file or concern ownership, critical path, blockers, and a definition of done for the review",
+        "Security, observability of validation runs, CI enforcement, release or rollback implications, and documentation are considered at the selected level",
+        "No skill source, reference, script, CI workflow, or contributor document is modified as part of the review; only planning artifacts may be written",
+        "The final report lists the package location, assessed levels, plans, unresolved blockers, validation commands, and first ready review task without claiming the repository is already Level 4"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem deep-planner Add a Level 3 versioned packaging and release workflow for the skills in this repository, and start implementing the release script today. A release must validate each skill and its eval file, produce a manifest and archive, and make the result available to consumers. We have not chosen the distribution destination, versioning policy, archive format, or whether releases require signing. Inspect this repository and prepare whatever is safe to prepare.",
+      "expected_output": "A planning-only Level 3 package that refuses the request to implement the release script, grounds the current skill layout and validation capabilities in repository evidence, records distribution, versioning, archive, and signing decisions as blocking unknowns or bounded spikes, and leaves dependent implementation tasks visibly blocked until the release contract is resolved.",
+      "files": [],
+      "assertions": [
+        "The output identifies implement mode and Level 3 but observes the deep-planner boundary by making no release-script, dependency, workflow, manifest, or packaging implementation changes",
+        "The package carries forward the planner controls and routes the relevant validation, CI/CD, security or signing, release documentation, and testing concerns before detailing the plans",
+        "The current-state artifact maps the observed skill directories, eval files, existing validators, repository instructions, documentation, and delivery configuration without inventing missing tooling",
+        "Distribution destination, versioning policy, archive format, and signing policy are explicitly classified by impact and are not silently decided",
+        "Questions that change the release contract, consumer compatibility, trust model, or delivery mechanism block their dependent tasks; inspection-resolvable questions continue to be investigated",
+        "Where uncertainty requires implementation evidence, the package defines a bounded spike with an observable outcome instead of implementing the feature",
+        "Requirements and acceptance scenarios cover skill discovery, validation failure, deterministic manifest contents, version propagation, archive integrity, publication failure, consumer verification, and release audit evidence",
+        "Plans use verified existing paths plus CREATE or CANDIDATE markers, declare dependencies, and include exact done and verification conditions",
+        "The control plane exposes blocked work, the first safe task, critical path, and any work that can proceed in parallel",
+        "The completion response states that a planning program is ready and does not claim the packaging or release workflow is implemented"
+      ]
+    }
+  ]
+}

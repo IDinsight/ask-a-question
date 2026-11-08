@@ -1,0 +1,52 @@
+{
+  "skill_name": "nextjs",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem nextjs Give me the pre-flight response you would send before changing files. I want to implement a new Next.js App Router app at Level 1: a disposable /inventory UI spike with static products and one client-side category filter. There is no backend, persistence, or authentication, and the spike will not be shared with real users.",
+      "expected_output": "A concise pre-flight that identifies implement mode, target Level 1, and a new project; restates the static /inventory route and primary filtering interaction; labels the result as a disposable UI spike; and explicitly waits for confirmation before editing. It should keep backend, auth, production state handling, and later-level infrastructure outside the confirmed scope.",
+      "files": [],
+      "assertions": [
+        "States that the operating mode is implement, the target is Level 1, and the work is a new Next.js App Router project.",
+        "Restates the scoped outcome as a /inventory route using static or mock product data with one working category-filter interaction.",
+        "Labels the Level 1 result as a disposable prototype that is not suitable for shared or production use.",
+        "Keeps a real backend, persistence, authentication, Server Actions, and Level 2-plus state or operational requirements out of scope.",
+        "Requests explicit confirmation and does not claim to have started or completed file changes."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem nextjs The pre-flight is already complete and confirmed: implement mode, existing App Router project, target Level 3. Produce the implementation plan to upgrade our Level 2 households feature. The list must be server-rendered from the authenticated API, users can create a household, secrets must never reach the browser, and loading, empty, recoverable error, not-found, unauthenticated, and forbidden outcomes must be handled. Include the verification and explicitly defer Level 4 work.",
+      "expected_output": "A Level 2-to-3 plan that first checks the existing conventions, then keeps page.tsx as a thin async Server Component backed by a server-only API module and browser-safe client boundary. It should place authenticated and authorized mutation logic in a Server Action with pending/validation state and cache revalidation, use the appropriate route convention files, apply the Vitest-versus-Playwright split correctly, include the Level 3 CI, keyboard, and documentation gates, and list Level 4 observability, performance, staging, and audit work as deferred.",
+      "files": [],
+      "assertions": [
+        "Treats this as an existing Level 2 project being implemented to the already-confirmed Level 3 and begins with a read-only current-state discovery pass.",
+        "Keeps app/households/page.tsx thin and asynchronous, with initial server-side fetching delegated to a typed server API module guarded by import 'server-only'.",
+        "Separates server-only access to private credentials from browser-safe client code and does not expose secrets through NEXT_PUBLIC_ variables or Client Components.",
+        "Uses a Server Action for household creation that performs authentication and authorization inside the action, surfaces pending or validation state, and revalidates the affected path or tag.",
+        "Covers loading.tsx, a non-blank empty state, client error.tsx with recovery, not-found.tsx, and forbidden or unauthorized handling where the auth flow requires them.",
+        "Keeps shadcn primitives in components/ui and domain-specific household composition outside that primitive layer, adding 'use client' only where hooks or browser interaction require it.",
+        "Assigns synchronous components and isolated logic to Vitest while assigning the async Server Component, real route rendering, and critical create flow to Playwright.",
+        "Includes Level 3 lint, type-check, Vitest, Playwright, production-build, keyboard-navigation, setup, and architecture-documentation gates.",
+        "Explicitly defers Level 4 feature-module restructuring unless warranted, instrumentation, bundle or performance budgets, full accessibility audit, error tracking, and reproducible staging."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem nextjs Audit only; do not edit files. This is a Next.js 16 App Router app with a target of Level 4. The team says it is already Level 4 because features/orders/ exists and instrumentation.ts is present, but instrumentation.ts is empty. The orders page is a large 'use client' component that fetches in useEffect, its Server Action has no auth check, middleware.ts performs redirects, loading.tsx and error.tsx are absent, and the only test tries to render the async page in Vitest. There are no performance budgets, accessibility audit, or reproducible staging steps. Determine the current level and the required path to Level 4.",
+      "expected_output": "A no-change review that does not award maturity for folder names or empty files and rates the evidence as, at most, a partial connected prototype rather than Level 4. It should prioritize completing Level 2 and Level 3 gates first: thin server rendering and proper client fetching where needed, server-only separation, auth inside every Server Action, Next.js 16 proxy migration and matcher checks, route state files, and the correct Vitest/Playwright split. Only then should it require functioning observability, performance and bundle budgets, accessibility auditing, error tracking, and reproducible staging for Level 4, while treating feature modules as conditional rather than proof.",
+      "files": [],
+      "assertions": [
+        "Operates in review mode, makes no file changes, and reports both the evidence-based current maturity and the Level 4 target.",
+        "Does not treat features/orders/ or an empty instrumentation.ts as proof of Level 4 behavior.",
+        "Identifies the large Client Component and bare useEffect fetching as gaps, recommending a thin async Server Component for initial data or SWR/React Query for justified client-side fetching.",
+        "Requires import 'server-only' on privileged server API access and authentication plus authorization inside every Server Action rather than relying on request redirects.",
+        "Calls for migrating middleware.ts to proxy.ts for Next.js 16 and verifying matcher behavior without presenting proxy checks as a substitute for action-level authorization.",
+        "Requires loading and recoverable error handling and notes that error.tsx must be a Client Component with a recovery action.",
+        "Rejects Vitest for the async Server Component and assigns async route rendering and critical mutations to Playwright while retaining Vitest for supported synchronous components and isolated logic.",
+        "Sequences missing Level 2 and Level 3 gates before Level 4 observability, source-mapped error tracking, performance budgets, accessibility audit, and reproducible staging.",
+        "Treats a features/ module as conditional on complexity and not as a mandatory or sufficient maturity signal."
+      ]
+    }
+  ]
+}

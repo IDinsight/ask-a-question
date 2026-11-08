@@ -1,0 +1,49 @@
+{
+  "skill_name": "ci-cd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem ci-cd Set up Level 3 GitHub Actions for this monorepo. Discovery found a FastAPI service at `apps/api`, a Next.js app at `apps/web`, and an Android app at `apps/mobile`. I have not decided which stacks belong in CI, whether they should share a workflow, or whether and where this repository will deploy. Go ahead and add the workflows.",
+      "expected_output": "The assistant identifies this as Level 3 implementation work but treats stack scope, workflow topology, and deployment target as blocking inputs. It reports the detected stacks, asks for both required confirmations, and makes no workflow changes until they are answered.",
+      "files": [],
+      "assertions": [
+        "The response identifies implement mode and keeps the requested target at Level 3.",
+        "The response lists all three detected stacks with their paths.",
+        "The response asks which stacks are in scope and whether monorepo workflows should be shared or separate.",
+        "The response asks the user to choose a deployment target, including the CI-only/no-deployment option.",
+        "The response does not create, edit, or claim to have completed any workflow while the required confirmations are missing.",
+        "The response explains that Level 3 normally includes a staging deployment, so the deployment answer materially affects scope."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem ci-cd The implementation pre-flight is confirmed. Design the exact Level 2 GitHub Actions workflow for this repository, but return the proposed YAML and administrator handoff without editing files in this eval. Only the FastAPI service in `apps/api` is included, it gets its own workflow, and this is CI-only with no deployment. The default branch is `main`; dependencies use `pyproject.toml` and `uv.lock`. Use the existing local commands `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy app`, `uv run pytest --cov=app --cov-report=xml`, and `uv build`. There is no agreed coverage threshold.",
+      "expected_output": "A complete proposed Level 2 workflow scoped to `apps/api` that runs lint, tests with reported coverage, type checking, and build verification on pushes and pull requests to `main`. It uses lockfile-aware caching and job timeouts, leaves deployment, security scanning, and a coverage gate deferred, states how the YAML should be validated, and hands off the required branch-protection setting without claiming it was applied.",
+      "files": [],
+      "assertions": [
+        "The proposed implementation uses a single CI workflow, which is appropriate at Level 2, and scopes execution to the FastAPI area.",
+        "The workflow triggers on pushes to `main` and pull requests targeting `main`.",
+        "The workflow runs the supplied lint, format-check, test, type-check, and build commands from the correct service context.",
+        "Dependency caching is tied to `uv.lock`, and every job has a finite timeout.",
+        "Coverage is produced or uploaded but is not assigned an invented failure threshold.",
+        "The response leaves Level 3 capabilities such as security scanning and staging deployment out of the implementation and labels them as deferred.",
+        "The handoff tells an administrator to require the resulting CI checks through branch protection, names the workflow validation to run before merge, and does not claim either step was already completed."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem ci-cd Audit this GitHub Actions setup against target Level 5 and do not edit files. `.github/workflows/ci.yml` runs lint, test, type-check, and build on pushes and pull requests to `main`; its cache key includes the lockfile, coverage has an established enforced threshold, supported Python versions run as a matrix, permissions are read-only, superseded branch CI is cancelled, every job has a timeout, all actions use full commit SHAs, and actionlint validates workflows. `.github/workflows/security.yml` runs dependency auditing on pull requests and weekly. `.github/workflows/deploy-staging.yml` deploys a SHA-tagged artifact on merges to `main`, performs a health check, and uses `cancel-in-progress: false`. Protected `main` requires all CI checks. There is no production workflow, approval environment, failure notification, secret scan, SAST, production smoke test, rollback, SBOM, license scan, IaC validation, pipeline SLI tracking, disaster-recovery workflow, or automated action-update configuration.",
+      "expected_output": "The assistant performs a read-only, evidence-based review, detects a complete Level 3 pipeline with one partial Level 4 capability, and compares it with Level 5. It reports named-file evidence, separates Level 4 prerequisites from Level 5 production-delivery gaps, classifies findings by impact, and gives a dependency-aware upgrade order without changing files.",
+      "files": [],
+      "assertions": [
+        "The response explicitly remains in review mode and makes no file changes.",
+        "The response detects Level 3 as the highest fully satisfied cumulative level and cites evidence from the named workflows and branch protection.",
+        "The response treats SHA artifact tagging as a partial Level 4 capability rather than incorrectly grading the entire pipeline as Level 4.",
+        "The Level 4 gap analysis includes production promotion with an approval gate, default-branch failure notification, secret scanning, and SAST.",
+        "The Level 5 gap analysis includes production smoke testing and automatic rollback plus operational controls such as SBOM/license scanning, auditability or SLIs, IaC validation, disaster recovery, and automated dependency/action updates.",
+        "The response preserves non-cancelling deployment concurrency and does not recommend cancelling an in-progress deployment.",
+        "Findings are separated into blocking and advisory items and ordered so Level 4 promotion controls precede Level 5 recovery automation."
+      ]
+    }
+  ]
+}

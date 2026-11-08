@@ -1,0 +1,49 @@
+{
+  "skill_name": "api-skill",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/dsem api-skill Produce the file-level implementation plan for order creation, listing, and deletion in an existing FastAPI + SQLModel API; do not edit files or generate a migration in this eval. Inspection has established Level 3: routers, services, persistence functions, models, schemas, auth dependencies, PostgreSQL/Alembic, and a full pytest suite already exist. The approved contract is `POST /orders` (customer_id, items, delivery_address; 201), `GET /orders?status=` (200), and `DELETE /orders/{id}` (204). Creation and listing require an authenticated user, deletion requires an admin, only one active order per customer is allowed (409 on conflict), and an unknown order is 404. The model needs an `internal_fraud_score`, but responses may contain only id, customer_id, items, delivery_address, status, total, and created_at. Applying any future migration requires my explicit confirmation.",
+      "expected_output": "A Level 3, test-first implementation plan that preserves the supplied architecture: separate persistence and API shapes, thin authenticated routers, framework-agnostic services and explicit invariants, bounded list queries, and complete API/service tests. It places migration generation and review before a separate approval-gated apply step, schedules the Level 3 quality gate, defers unearned Level 4 structure, and does not claim repository changes were made.",
+      "files": [],
+      "assertions": [
+        "Identifies implement mode and Level 3 from the supplied code behavior, preserves the existing project structure, and does not reorganize the API as part of the feature.",
+        "Keeps the ORM model separate from request/response schemas, includes the primary key in the read schema, and excludes `internal_fraud_score` from every response shape.",
+        "Orders the work so tests are written before router and service implementation and covers the applicable 201, 204, 422, 409, 401, 403, and 404 outcomes plus the one-active-order invariant.",
+        "Keeps routers limited to HTTP concerns, applies user/admin authorization through dependencies, uses bounded pagination on the filtered list endpoint, and maps service sentinels to 409 or 404 while returning an empty 204 response for successful deletion.",
+        "Keeps `HTTPException` out of services, enforces the active-order conflict explicitly before insertion, and places SQLModel query construction in the existing Level 3 persistence layer with indexed filter/join fields and explicit transaction ownership.",
+        "Does not introduce a repository at Level 3 and identifies repository/observability additions as higher-level work rather than silently adding them.",
+        "Plans Alembic migration generation and review but makes application a separate confirmation gate, and includes router registration plus the `pytest`, Ruff, and mypy checks in the quality gate and handoff without claiming they ran."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/dsem api-skill Produce the implementation plan for a public `GET /catalog/items?category=` endpoint in our connected FastAPI prototype; do not edit files or generate a migration in this eval. Inspection shows a Level 2 router-to-service-to-model structure, separate schemas, PostgreSQL with Alembic, and an existing `Item` model with id, sku, name, category, and price; `category` is not indexed. The endpoint must sort by name and the table may contain 200,000 rows. This prototype has no test suite, and I have decided not to add test infrastructure now, so include manual verification instead. Do not add authentication.",
+      "expected_output": "A deliberately Level 2 feature design that keeps the public router and service thin, returns a separate read schema, performs indexed filtering, sorting, and bounded pagination in the database, and avoids Level 3+ architecture. It respects the declined test setup, supplies a concrete manual test plan, and requests approval before applying the index migration.",
+      "files": [],
+      "assertions": [
+        "Detects and retains Level 2 rather than upgrading the project, and does not add auth, a persistence package, repositories, structured observability, or Level 3 quality tooling.",
+        "Uses a separate response schema containing the item primary key and only the public item fields.",
+        "Defines bounded `offset` and `limit` parameters with validation and applies category filtering, name ordering, offset, and limit in the database query rather than fetching, filtering, sorting, or slicing 200,000 rows in Python.",
+        "Proposes an index for `category` and plans the corresponding Alembic migration generation and review, with confirmation required before a future apply step.",
+        "Keeps framework HTTP errors in the router and business/data behavior in the service, with no authentication dependency on the public endpoint.",
+        "Acknowledges that test setup was declined and provides a manual verification matrix that includes a valid category, an empty result, invalid pagination bounds, and confirmation that the response is ordered and capped."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/dsem api-skill Review only the invoice search feature in our existing FastAPI service; do not edit files. Inspection established Level 4 from behavior: routers call services, services use persistence functions or repositories for genuinely complex/reused queries, models and schemas are separate, auth is dependency-injected, the full test and CI gates pass, structured logs carry request IDs, and metrics, tracing, and rate limits are wired. For this feature, `GET /invoices/search?customer_id=&status=` returns every match without offset or limit. Product requirements say finance-admin only, but the router uses the general authenticated-user dependency. The service raises `HTTPException(404)` itself, `InvoiceRead` exposes `internal_notes`, and tests cover only one successful request. Its SQLModel query is a straightforward single-table filter used once; it is split across ten lines for readability. A user repository exists, but there is no invoice repository. Should we add one just to match the Level 4 folder structure?",
+      "expected_output": "A read-only Level 4 feature assessment that marks the authorization, data exposure, unbounded collection, service-layer HTTP coupling, and test coverage as gaps. It rejects a repository added only for symmetry because the invoice query is simple and unreused, and gives an impact-ordered remediation and verification list without changing code.",
+      "files": [],
+      "assertions": [
+        "Uses review mode, reports the supplied application as Level 4 while distinguishing the feature's lower-quality gaps, and does not create or modify files.",
+        "Flags the general-user dependency as an authorization defect and requires the finance-admin dependency plus unauthenticated and forbidden coverage.",
+        "Flags `internal_notes` as a sensitive response-field leak and requires it to be removed from `InvoiceRead` and verified absent from responses.",
+        "Flags the unbounded search collection and recommends validated, bounded pagination with filtering, ordering, offset, and limit performed by the query.",
+        "Flags `HTTPException` in the service and requires the service to return domain values or sentinels while the router performs HTTP status translation.",
+        "Does not recommend an invoice repository merely because another repository or folder exists; explains that a simple one-off query has not earned that boundary and that adding one later would require demonstrated query complexity or reuse and user agreement.",
+        "Orders blocking security/data-boundary issues ahead of advisory structure concerns and calls for Level 3+ failure, auth, validation, and edge-case tests in addition to the happy path."
+      ]
+    }
+  ]
+}
