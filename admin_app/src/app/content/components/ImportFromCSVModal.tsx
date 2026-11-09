@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { IconAlertCircle, IconCircleCheck, IconFileUpload } from "@tabler/icons-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  Alert,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogContentText,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-  Typography,
-} from "@mui/material";
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/utils/auth";
-import { LoadingButton } from "@mui/lab";
-import NoteAddIcon from "@mui/icons-material/NoteAdd";
-import { Layout } from "@/components/Layout";
-import { appColors, sizes } from "@/utils";
 import { bulkUploadContents } from "../api";
 
 interface CustomError {
@@ -33,6 +32,7 @@ const ImportFromCSVModal = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importErrorMessages, setImportErrorMessages] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleClose = () => {
     onClose();
@@ -98,105 +98,82 @@ const ImportFromCSVModal = ({
   }, [importSuccess]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="import-csv-dialog-title"
-      aria-describedby="import-csv-dialog-description"
-    >
-      <DialogTitle id="import-csv-dialog-title">
-        Import New Content From CSV
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="import-csv-dialog-description">
-          <p>
-            You can use this feature to import new contents from a CSV file into AAQ.
-          </p>
-          <p>
-            The CSV file should have the following columns:
-            <ul>
-              <li>
-                <strong>
-                  <code>title</code>
-                </strong>
-                : content title, up to 150 characters
-              </li>
-              <li>
-                <strong>
-                  <code>text</code>
-                </strong>
-                : content text, up to 2000 characters
-              </li>
-              <li>
-                (Optional){" "}
-                <strong>
-                  <code>tags</code>
-                </strong>
-                : content tags, e.g. "tag1, tag2, tag3"
-              </li>
-            </ul>
-          </p>
-          <p>⚠️ Duplicate titles or texts will be rejected.</p>
-        </DialogContentText>
-        <Layout.Spacer multiplier={1} />
-        <Layout.FlexBox
-          flexDirection="row"
-          justifyContent="left"
-          alignItems="center"
-          gap={sizes.baseGap}
-        >
-          <Layout.Spacer horizontal />
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
+      <DialogContent className="gap-5 p-6 text-sm sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            Import new content from CSV
+          </DialogTitle>
+          <DialogDescription className="text-sm">
+            Import new contents from a CSV file into AAQ.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-2 text-muted-foreground">
+          <p>The CSV file should have the following columns:</p>
+          <ul className="flex list-disc flex-col gap-1 pl-5">
+            <li>
+              <code className="font-mono font-semibold text-foreground">title</code>:
+              content title, up to 150 characters
+            </li>
+            <li>
+              <code className="font-mono font-semibold text-foreground">text</code>:
+              content text, up to 2000 characters
+            </li>
+            <li>
+              (Optional){" "}
+              <code className="font-mono font-semibold text-foreground">tags</code>:
+              content tags, e.g. &quot;tag1, tag2, tag3&quot;
+            </li>
+          </ul>
+          <p>Duplicate titles or texts will be rejected.</p>
+        </div>
+
+        <div className="flex items-center gap-3">
           <input
+            ref={fileInputRef}
             id="choose-file"
             type="file"
             accept=".csv"
             hidden
             onChange={handleFileChange}
           />
-          <label htmlFor="choose-file">
-            <Button variant="outlined" component="span" startIcon={<NoteAddIcon />}>
-              Attach File
-            </Button>
-          </label>
-          <Typography variant="body1" fontSize={14} color={appColors.primary}>
-            {selectedFile ? selectedFile.name : "Attach new file"}
-          </Typography>
-          <Layout.Spacer horizontal />
-        </Layout.FlexBox>
-        {importErrorMessages.length > 0 && (
-          <>
-            <Layout.Spacer multiplier={2} />
-            {importErrorMessages.map((error, index) => (
-              <React.Fragment key={index}>
-                <Alert variant="outlined" severity="error">
-                  {error}
-                </Alert>
-                <Layout.Spacer multiplier={1} />
-              </React.Fragment>
-            ))}
-          </>
-        )}
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <IconFileUpload data-icon="inline-start" />
+            Attach file
+          </Button>
+          <span className="min-w-0 truncate text-muted-foreground">
+            {selectedFile ? selectedFile.name : "No file selected"}
+          </span>
+        </div>
+
+        {importErrorMessages.map((error, index) => (
+          <Alert key={index} variant="destructive">
+            <IconAlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ))}
         {importSuccess && (
-          <>
-            <Layout.Spacer multiplier={2} />
-            <Alert variant="standard" severity="success">
-              File uploaded successfully!
-            </Alert>
-          </>
+          <Alert>
+            <IconCircleCheck />
+            <AlertDescription>File uploaded successfully!</AlertDescription>
+          </Alert>
         )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!selectedFile || loading}
+            autoFocus
+            onClick={handleImportClick}
+          >
+            {loading && <Spinner data-icon="inline-start" />}
+            {importSuccess ? "Imported" : "Check and import"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={handleClose}>Cancel</Button>
-        <LoadingButton
-          variant="contained"
-          disabled={!selectedFile || loading}
-          autoFocus
-          loading={loading}
-          onClick={handleImportClick}
-        >
-          {importSuccess ? "Imported" : "Check and import"}
-        </LoadingButton>
-      </DialogActions>
     </Dialog>
   );
 };

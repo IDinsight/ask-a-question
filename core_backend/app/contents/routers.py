@@ -13,8 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..config import CHECK_CONTENT_LIMIT
-from ..database import get_async_session
+from ..core.config import CHECK_CONTENT_LIMIT
+from ..core.database import get_async_session
 from ..tags.models import (
     TagDB,
     get_list_of_tag_from_db,

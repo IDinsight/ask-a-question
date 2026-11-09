@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, TypedDict
 
 from pydantic import ValidationError
 
-from ..config import (
+from ..core.config import (
     ALIGN_SCORE_THRESHOLD,
     CUSTOM_TTS_ENDPOINT,
     GCS_SPEECH_BUCKET,

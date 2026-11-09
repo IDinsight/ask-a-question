@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import ValidationError
 
-from ..config import LITELLM_MODEL_URGENCY_DETECT
+from ..core.config import LITELLM_MODEL_URGENCY_DETECT
 from ..utils import setup_logger
 from .llm_prompts import UrgencyDetectionEntailment
 from .utils import _ask_llm_async

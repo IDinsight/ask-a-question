@@ -8,7 +8,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_bdd import given, scenarios, then, when
 
-from core_backend.app.users.schemas import UserRoles
+from app.users.schemas import UserRoles
 
 # Define scenario(s).
 scenarios("core_backend/google_user_sign_in.feature")
@@ -58,7 +58,7 @@ def wamuyu_signs_in_using_gmail(client: TestClient) -> httpx.Response:
     login_data = {"client_id": "fake-client-id", "credential": "fake-credential"}
 
     with patch(
-        "core_backend.app.auth.routers.id_token.verify_oauth2_token",
+        "app.auth.routers.id_token.verify_oauth2_token",
         return_value=mock_id_token_response,
     ):
         create_response = client.post("/login-google", json=login_data)
@@ -100,7 +100,7 @@ def wamuyu_signs_in_again(client: TestClient) -> None:
     login_data = {"client_id": "fake-client-id", "credential": "fake-credential"}
 
     with patch(
-        "core_backend.app.auth.routers.id_token.verify_oauth2_token",
+        "app.auth.routers.id_token.verify_oauth2_token",
         return_value=mock_id_token_response,
     ):
         sign_in_again_response = client.post("/login-google", json=login_data)
@@ -230,7 +230,7 @@ def wamuyu_tries_to_sign_in_using_gmail(client: TestClient) -> httpx.Response:
     login_data = {"client_id": "fake-client-id", "credential": "fake-credential"}
 
     with patch(
-        "core_backend.app.auth.routers.id_token.verify_oauth2_token",
+        "app.auth.routers.id_token.verify_oauth2_token",
         return_value=mock_id_token_response,
     ):
         create_response = client.post("/login-google", json=login_data)

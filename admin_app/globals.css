@@ -1,0 +1,117 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  /* NEW: AAQ-specific tokens (not in stock shadcn). Use as bg-warning, text-urgent, etc. */
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-urgent: var(--urgent);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Light theme only for now. Hex values from the design are noted beside each token. */
+:root {
+  /* Surfaces */
+  --background: oklch(0.962 0.004 286.3); /* #F2F2F5 page background */
+  --foreground: oklch(0.294 0.025 241.8); /* #212E38 body text */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.294 0.025 241.8);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.294 0.025 241.8);
+
+  /* Brand */
+  --primary: oklch(0.32 0.094 265.9); /* #1C2F62 IDinsight navy */
+  --primary-foreground: oklch(1 0 0); /* white on navy */
+  --secondary: oklch(0.95 0.007 277.2); /* #EDEEF3 */
+  --secondary-foreground: oklch(0.32 0.094 265.9);
+  --muted: oklch(0.95 0.007 277.2); /* #EDEEF3 */
+  --muted-foreground: oklch(0.505 0.023 250.6); /* #5B6672, 5.3:1 on background */
+  --accent: oklch(0.95 0.007 277.2); /* hover/selected fill, as in stock shadcn */
+  --accent-foreground: oklch(0.294 0.025 241.8);
+  --destructive: oklch(0.505 0.19 27.5); /* #B91C1C */
+
+  /* Test / "Run discovery" actions (orange in the current product) */
+  --warning: oklch(0.782 0.158 72.3); /* #F5A524 */
+  --warning-foreground: oklch(0.294 0.025 241.8); /* dark text, about 7:1 on orange */
+  --urgent: oklch(0.555 0.146 49); /* #B45309 urgent status text/icons */
+
+  /* Controls */
+  --border: oklch(0.914 0.008 278.6); /* #E1E2E8 */
+  --input: oklch(0.871 0.011 274.9); /* #D2D4DC input borders */
+  --ring: oklch(0.434 0.128 261.6); /* #264D96 focus ring */
+
+  /* Charts: single blue family, dark to light (IDinsight chart palette) */
+  --chart-1: oklch(0.434 0.128 261.6); /* #264D96 primary series */
+  --chart-2: oklch(0.609 0.14 262.5); /* #5480D6 */
+  --chart-3: oklch(0.803 0.068 263.3); /* #A8BFEB */
+  --chart-4: oklch(0.328 0.091 260.4); /* #173363 */
+  --chart-5: oklch(0.251 0.064 260.5); /* #0F2140 */
+
+  --radius: 0.625rem;
+
+  /* Sidebar: navy, with light blue as its highlight */
+  --sidebar: oklch(0.32 0.094 265.9); /* #1C2F62 */
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.83 0.058 244.6); /* #A8CCEB */
+  --sidebar-primary-foreground: oklch(0.32 0.094 265.9);
+  --sidebar-accent: oklch(1 0 0 / 12%); /* active and hover item */
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 16%);
+  --sidebar-ring: oklch(0.83 0.058 244.6);
+}
+
+/* Dark mode is intentionally not defined yet. Add a .dark block when it is in scope. */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

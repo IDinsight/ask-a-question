@@ -1,22 +1,22 @@
-import CheckIcon from "@mui/icons-material/Check";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  TextField,
-} from "@mui/material";
 import React, { useState } from "react";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+/** Shows a new user's recovery codes once, with a copy-all button. */
 const ConfirmationModal = ({
   open,
   onClose,
   recoveryCodes,
   dialogTitle = "Admin User Created",
-
   closeButtonText = "Close",
 }: {
   open: boolean;
@@ -41,48 +41,48 @@ const ConfirmationModal = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{dialogTitle}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          The user has been successfully registered. Please save the recovery codes
-          below. You will not be able to see them again.
-        </DialogContentText>
-        <TextField
-          fullWidth
-          multiline
-          margin="normal"
-          value={recoveryCodes ? recoveryCodes.join("\n") : ""}
-          InputProps={{
-            readOnly: true,
-            sx: {
-              textAlign: "center",
-            },
-          }}
-          inputProps={{
-            style: { textAlign: "center" },
-          }}
-        />
-
-        <Box display="flex" justifyContent="center" mt={1}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="flex flex-col gap-5 p-6 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">{dialogTitle}</DialogTitle>
+          <DialogDescription className="text-sm">
+            The user has been successfully registered. Save the recovery codes below.
+            You will not be able to see them again.
+          </DialogDescription>
+        </DialogHeader>
+        <ul
+          aria-label="Recovery codes"
+          className="grid grid-cols-2 gap-1.5 border bg-muted p-3 text-center font-mono text-sm"
+        >
+          {recoveryCodes.map((code) => (
+            <li key={code}>{code}</li>
+          ))}
+        </ul>
+        <div className="flex justify-center">
           <Button
-            variant="contained"
+            variant="outline"
+            size="lg"
             onClick={() => {
               handleCopyToClipboard();
               setIsClicked(true);
             }}
-            startIcon={isClicked ? <CheckIcon /> : <ContentCopyIcon />}
           >
-            {isClicked ? "Copied" : "Copy"}
+            {isClicked ? (
+              <IconCheck data-icon="inline-start" />
+            ) : (
+              <IconCopy data-icon="inline-start" />
+            )}
+            {isClicked ? "Copied" : "Copy codes"}
           </Button>
-        </Box>
+        </div>
+        <DialogFooter>
+          <Button size="lg" onClick={handleClose} autoFocus>
+            {closeButtonText}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={handleClose} color="primary" variant="contained" autoFocus>
-          {closeButtonText}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };
+
 export { ConfirmationModal };

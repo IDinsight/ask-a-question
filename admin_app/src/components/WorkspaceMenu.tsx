@@ -1,30 +1,36 @@
+"use client";
+
 import * as React from "react";
-import AddIcon from "@mui/icons-material/Add";
-import Paper from "@mui/material/Paper";
-import Divider from "@mui/material/Divider";
-import MenuList from "@mui/material/MenuList";
-import MenuItem from "@mui/material/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
+import { useRouter } from "next/navigation";
 import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
-  Menu,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { appColors, sizes } from "@/utils";
+  IconCheck,
+  IconPlus,
+  IconSelector,
+  IconSettings,
+  IconStar,
+} from "@tabler/icons-react";
 import { useAuth } from "@/utils/auth";
 import { UserBody, UserBodyUpdate } from "@/app/workspace-management/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { SidebarMenuTrigger } from "@/components/SidebarMenuTrigger";
 
 export type Workspace = {
   workspace_id?: number;
@@ -43,59 +49,36 @@ interface WorkspaceMenuProps {
   loginWorkspace: (workspace: Workspace) => void;
 }
 
+/**
+ * Workspace switcher shown at the top of the app sidebar.
+ *
+ * The trigger shows the current workspace; the dropdown lets the user switch
+ * workspace, set the current one as their default, create a new one, and
+ * (admins only) open workspace management.
+ */
 const WorkspaceMenu = ({
   getUserInfo,
   setOpenCreateWorkspaceModal,
   editUser,
   loginWorkspace,
 }: WorkspaceMenuProps) => {
+  const router = useRouter();
   const { workspaceName, userRole } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = React.useState<Workspace | null>(
+  const [user, setUser] = React.useState<UserBody | null>(null);
+
+  // Auth context resets on a hard refresh, so fall back to the values the
+  // auth provider writes to localStorage.
+  const [persistedWorkspaceName, setPersistedWorkspaceName] = React.useState("");
+  const [persistedUserRole, setPersistedUserRole] = React.useState<UserRole | null>(
     null,
   );
-  const [openConfirmSwitchWorkspaceDialog, setOpenConfirmSwitchWorkspaceDialog] =
-    React.useState(false);
-  const [user, setUser] = React.useState<UserBody | null>(null);
-  const [persistedWorkspaceName, setPersistedWorkspaceName] =
-    React.useState<string>("");
-  const [persistedUserRole, setPersistedUserRole] = React.useState<string | null>(null);
-  const [openDefaultWorkspaceModal, setOpenDefaultWorkspaceModal] =
-    React.useState<boolean>(false);
-  const [openSuccessModal, setOpenSuccessModal] = React.useState<boolean>(false);
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
 
-  const handleCloseUserMenu = () => {
-    setAnchorEl(null);
-  };
-  const handleCloseConfirmSwitchWorkspaceDialog = () => {
-    setOpenConfirmSwitchWorkspaceDialog(false);
-  };
-  const handleWorkspaceClick = (workspace: Workspace) => {
-    setSelectedWorkspace(workspace);
-    setOpenConfirmSwitchWorkspaceDialog(true);
-  };
-  const handleConfirmSwitchWorkspace = async (workspace: Workspace) => {
-    loginWorkspace(workspace);
-    handleCloseConfirmSwitchWorkspaceDialog();
-  };
-  const handleConfirmDefaultWorkspace = async (workspace: Workspace) => {
-    const userId = user?.user_id;
-    const updatedUser = {
-      username: user?.username,
-      is_default_workspace: true,
-      workspace_name: workspace.workspace_name,
-    } as UserBodyUpdate;
-    editUser(userId!, updatedUser).then((response) => {
-      if (response && response.username) {
-        setOpenDefaultWorkspaceModal(false);
-        setOpenSuccessModal(true);
-      }
-    });
-  };
+  // Dialog state: which workspace the user wants to switch to, and whether
+  // the "set as default" confirmation / success dialogs are open.
+  const [switchTarget, setSwitchTarget] = React.useState<Workspace | null>(null);
+  const [confirmDefaultOpen, setConfirmDefaultOpen] = React.useState(false);
+  const [defaultSuccessOpen, setDefaultSuccessOpen] = React.useState(false);
 
   React.useEffect(() => {
     getUserInfo().then((returnedUser: UserBody) => {
@@ -103,284 +86,183 @@ const WorkspaceMenu = ({
         user_id: returnedUser.user_id,
         username: returnedUser.username,
       } as UserBody);
-      const workspacesData = returnedUser.user_workspaces as Workspace[];
+      // The API returns default flags as a list parallel to user_workspaces.
+      const workspacesData = (returnedUser.user_workspaces ?? []) as Workspace[];
       workspacesData.forEach((workspace, index) => {
         workspace.is_default = returnedUser.is_default_workspace
           ? returnedUser.is_default_workspace[index]
           : false;
       });
-      setWorkspaces(returnedUser.user_workspaces!);
+      setWorkspaces(workspacesData);
     });
+    // Only fetch once on mount; getUserInfo is a new closure every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   React.useEffect(() => {
-    // Save workspace to local storage when it changes
-    if (workspaceName) {
-      localStorage.setItem("workspaceName", workspaceName);
-    }
-    // Save role to local storage when it changes
-    if (userRole != null) {
-      localStorage.setItem("userRole", userRole);
-    }
-  }, [workspaceName]);
-  React.useEffect(() => {
-    // Retrieve workspace from local storage on component mount
+    if (workspaceName) localStorage.setItem("workspaceName", workspaceName);
+    if (userRole != null) localStorage.setItem("userRole", userRole);
+
     const storedWorkspace = localStorage.getItem("workspaceName");
-    if (storedWorkspace) {
-      setPersistedWorkspaceName(storedWorkspace);
-    }
+    if (storedWorkspace) setPersistedWorkspaceName(storedWorkspace);
     const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      if (storedRole === "admin" || storedRole === "read_only") {
-        setPersistedUserRole(storedRole);
-      }
+    if (storedRole === "admin" || storedRole === "read_only") {
+      setPersistedUserRole(storedRole);
     }
-  }, [workspaceName]);
+  }, [workspaceName, userRole]);
+
+  const isAdmin = persistedUserRole === "admin";
+  const currentWorkspace = workspaces.find(
+    (workspace) => workspace.workspace_name === persistedWorkspaceName,
+  );
+
+  const handleConfirmDefaultWorkspace = async () => {
+    if (!user?.user_id || !currentWorkspace) return;
+    const updatedUser = {
+      username: user.username,
+      is_default_workspace: true,
+      workspace_name: currentWorkspace.workspace_name,
+    } as UserBodyUpdate;
+    const response = await editUser(user.user_id, updatedUser);
+    if (response && response.username) {
+      setConfirmDefaultOpen(false);
+      setDefaultSuccessOpen(true);
+    }
+  };
 
   return (
-    <Paper
-      sx={{
-        backgroundColor: appColors.primary,
-        border: `1px solid ${appColors.white}`,
-        margin: sizes.baseGap,
-        borderRadius: "15px",
-        paddingLeft: sizes.tinyGap,
-        paddingRight: sizes.tinyGap,
-        maxWidth: "fit-content",
-      }}
-    >
-      <Tooltip title="Open settings">
-        <IconButton onClick={handleOpenUserMenu}>
-          <Typography
-            style={{
-              fontSize: sizes.baseGap,
-              color: appColors.white,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {persistedWorkspaceName.length > 20
-              ? `${persistedWorkspaceName.substring(0, 20)}...`
-              : persistedWorkspaceName}
-          </Typography>
-
-          <KeyboardArrowDownIcon
-            sx={{
-              color: appColors.white,
-              width: sizes.icons.small,
-              height: sizes.icons.small,
-              paddingLeft: sizes.tinyGap,
-            }}
-          />
-        </IconButton>
-      </Tooltip>
-      <Menu
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleCloseUserMenu}
-      >
-        <MenuList dense>
-          {persistedUserRole === "admin" && (
-            <MenuItem
-              onClick={() => {
-                window.location.href = "/workspace-management";
-              }}
-              disabled={persistedUserRole !== "admin"}
-            >
-              <ListItemIcon>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText>Manage Workspace</ListItemText>
-            </MenuItem>
-          )}
-          <Divider />
-
-          <Typography
-            variant="subtitle2"
-            sx={{ padding: "4px 16px", fontWeight: "bold", color: "gray" }}
-          >
-            Switch Workspace
-          </Typography>
-          {workspaces.map((workspace) => (
-            <MenuItem
-              key={workspace.workspace_id}
-              disabled={workspace.workspace_name === persistedWorkspaceName}
-            >
-              <ListItemIcon>
-                <LibraryBooksIcon />
-              </ListItemIcon>
-              <ListItemText
-                onClick={(event) => {
-                  handleWorkspaceClick(workspace);
-                }}
-              >
-                {workspace.workspace_name.length > 30
-                  ? `${workspace.workspace_name.substring(0, 30)}...`
-                  : workspace.workspace_name}
-              </ListItemText>
-              <span
-                style={{
-                  border: `1px solid ${appColors.primary}`,
-                  borderRadius: "12px",
-                  padding: "2px 4px",
-                  marginLeft: "auto",
-                  color: appColors.primary,
-                  backgroundColor:
-                    workspace.user_role === "admin"
-                      ? appColors.dashboardLightGray
-                      : "transparent",
-                }}
-              >
-                {workspace.user_role === "admin" ? "Admin" : "Read only"}
-              </span>
-            </MenuItem>
-          ))}
-          <Divider />
-          <MenuItem disabled={persistedUserRole !== "admin"}>
-            <ListItemIcon>
-              <ModeEditIcon />
-            </ListItemIcon>
-            <ListItemText
-              onClick={() => {
-                setOpenDefaultWorkspaceModal(true);
-              }}
-            >
-              Set current workspace as default
-            </ListItemText>
-          </MenuItem>
-          <MenuItem>
-            <ListItemIcon>
-              <AddIcon />
-            </ListItemIcon>
-            <ListItemText
-              onClick={() => {
-                setOpenCreateWorkspaceModal(true);
-              }}
-            >
-              Create new workspace
-            </ListItemText>
-          </MenuItem>
-        </MenuList>
-      </Menu>
-      <ConfirmSwitchWorkspaceDialog
-        open={openConfirmSwitchWorkspaceDialog}
-        onClose={handleCloseConfirmSwitchWorkspaceDialog}
-        onConfirm={handleConfirmSwitchWorkspace}
-        workspace={selectedWorkspace!}
-      />
-      {workspaces.find(
-        (workspace) => workspace.workspace_name == persistedWorkspaceName,
-      ) && (
-        // TODO: Change this to just a pop-up toast
-        <ConfirmDefaultWorkspaceDialog
-          open={openDefaultWorkspaceModal}
-          onClose={() => {
-            setOpenDefaultWorkspaceModal(false);
-          }}
-          onConfirm={handleConfirmDefaultWorkspace}
-          workspace={
-            workspaces.find(
-              (workspace) => workspace.workspace_name == persistedWorkspaceName,
-            )!
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuTrigger
+              size="lg"
+              aria-label="Switch workspace"
+              className="data-popup-open:bg-sidebar-accent"
+            />
           }
-        />
-      )}
-      <DefaultWorkspaceSuccessModal
-        open={openSuccessModal}
-        onClose={() => {
-          setOpenSuccessModal(false);
-        }}
-      />
-    </Paper>
-  );
-};
-const ConfirmSwitchWorkspaceDialog = ({
-  open,
-  onClose,
-  onConfirm,
-  workspace,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (workspace: Workspace) => void;
-  workspace: Workspace;
-}) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>
-        Switch to workspace <strong>{workspace?.workspace_name}</strong>?
-      </DialogTitle>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose} color="primary">
-          Stay
-        </Button>
-        <Button
-          onClick={() => {
-            onConfirm(workspace);
-          }}
-          variant="contained"
-          color="primary"
         >
-          Switch
-        </Button>
-      </DialogActions>
-    </Dialog>
+          {/* Square initial badge for the workspace */}
+          <span className="flex size-8 shrink-0 items-center justify-center bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+            {persistedWorkspaceName.charAt(0).toUpperCase() || "?"}
+          </span>
+          <span className="flex min-w-0 flex-col leading-tight">
+            <b className="truncate text-sm font-semibold">
+              {persistedWorkspaceName || "Workspace"}
+            </b>
+            <span className="truncate text-xs text-sidebar-foreground/70">
+              Ask a Question
+            </span>
+          </span>
+          <IconSelector className="ml-auto text-sidebar-foreground/70" />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent className="min-w-64" align="start" side="bottom">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
+            {workspaces.map((workspace) => {
+              const isCurrent = workspace.workspace_name === persistedWorkspaceName;
+              return (
+                <DropdownMenuItem
+                  key={workspace.workspace_id ?? workspace.workspace_name}
+                  disabled={isCurrent}
+                  onClick={() => setSwitchTarget(workspace)}
+                >
+                  <span className="flex size-5 shrink-0 items-center justify-center border text-[10px] font-semibold">
+                    {workspace.workspace_name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {workspace.workspace_name}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {workspace.user_role === "admin" ? "Admin" : "Read only"}
+                  </span>
+                  {isCurrent && <IconCheck />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              disabled={!isAdmin || !currentWorkspace}
+              onClick={() => setConfirmDefaultOpen(true)}
+            >
+              <IconStar />
+              Set current workspace as default
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOpenCreateWorkspaceModal(true)}>
+              <IconPlus />
+              Create new workspace
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem onClick={() => router.push("/workspace-management")}>
+                <IconSettings />
+                Manage workspace
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Confirm switching workspace */}
+      <AlertDialog
+        open={switchTarget !== null}
+        onOpenChange={(open) => !open && setSwitchTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Switch to <strong>{switchTarget?.workspace_name}</strong>?
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (switchTarget) loginWorkspace(switchTarget);
+                setSwitchTarget(null);
+              }}
+            >
+              Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm setting the current workspace as default */}
+      <AlertDialog open={confirmDefaultOpen} onOpenChange={setConfirmDefaultOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Make <strong>{currentWorkspace?.workspace_name}</strong> your default?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You will go straight to this workspace next time you log in.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDefaultWorkspace}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Default workspace changed */}
+      <AlertDialog open={defaultSuccessOpen} onOpenChange={setDefaultSuccessOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Default workspace changed</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
-const ConfirmDefaultWorkspaceDialog = ({
-  open,
-  onClose,
-  onConfirm,
-  workspace,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (workspace: Workspace) => void;
-  workspace: Workspace;
-}) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>
-        Change default workspace to <strong>{workspace?.workspace_name}</strong>?
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          You will directly enter this workspace next time you log in.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose} color="primary">
-          Cancel
-        </Button>
-        <Button
-          onClick={() => {
-            onConfirm(workspace);
-          }}
-          variant="contained"
-          color="primary"
-        >
-          Confirm
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-const DefaultWorkspaceSuccessModal = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogContent>
-        <DialogContentText>Default workspace changed successfully.</DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose}>Close</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
 export default WorkspaceMenu;

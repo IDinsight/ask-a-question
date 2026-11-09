@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from core_backend.app.llm_call.llm_prompts import SafetyClassification
-from core_backend.app.llm_call.process_input import _classify_safety
-from core_backend.app.question_answer.schemas import (
+from app.llm_call.llm_prompts import SafetyClassification
+from app.llm_call.process_input import _classify_safety
+from app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
     QueryResponse,

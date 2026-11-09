@@ -7,8 +7,8 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from core_backend.app.contents.models import ContentDB
-from core_backend.app.contents.routers import _convert_record_to_schema
+from app.contents.models import ContentDB
+from app.contents.routers import _convert_record_to_schema
 
 from .conftest import async_fake_embedding
 

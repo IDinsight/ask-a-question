@@ -9,9 +9,9 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.config import PGVECTOR_VECTOR_SIZE
-from core_backend.app.contents.models import ContentDB
-from core_backend.app.dashboard.models import (
+from app.core.config import PGVECTOR_VECTOR_SIZE
+from app.contents.models import ContentDB
+from app.dashboard.models import (
     get_content_feedback_stats,
     get_heatmap,
     get_overview_timeseries,
@@ -22,8 +22,8 @@ from core_backend.app.dashboard.models import (
     get_top_content,
     get_urgency_stats,
 )
-from core_backend.app.dashboard.schemas import OverviewTimeSeries, TimeFrequency
-from core_backend.app.question_answer.models import (
+from app.dashboard.schemas import OverviewTimeSeries, TimeFrequency
+from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     ResponseFeedbackDB,
@@ -31,19 +31,19 @@ from core_backend.app.question_answer.models import (
     save_response_feedback_to_db,
     save_user_query_to_db,
 )
-from core_backend.app.question_answer.schemas import (
+from app.question_answer.schemas import (
     ContentFeedback,
     QueryBase,
     ResponseFeedbackBase,
 )
-from core_backend.app.schemas import FeedbackSentiment
-from core_backend.app.urgency_detection.models import (
+from app.schemas import FeedbackSentiment
+from app.urgency_detection.models import (
     UrgencyQueryDB,
     UrgencyResponseDB,
     save_urgency_query_to_db,
     save_urgency_response_to_db,
 )
-from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
+from app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
 
 from .conftest import MockDatetime
 
@@ -242,7 +242,7 @@ class TestQueryStats:
         dates = [datetime.now(timezone.utc) - relativedelta(days=x) for x in range(16)]
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "core_backend.app.question_answer.models.datetime",
+                "app.question_answer.models.datetime",
                 MockDatetime(date=date),
             )
             query = QueryBase(generate_llm_response=False, query_text="Test query")
@@ -636,7 +636,7 @@ class TestHeatmap:
             The heatmap to check.
         """
 
-        total_hourcount = {f"{i*2:02}:00": 0 for i in range(12)}
+        total_hourcount = {f"{i * 2:02}:00": 0 for i in range(12)}
         for _hour, daycount in heatmap.items():
             total_hourcount[_hour.replace("h", "").replace("_", ":")] += sum(
                 list(daycount.values())

@@ -2,7 +2,7 @@ import re
 
 from langchain_core.documents import Document
 
-from ..config import LITELLM_MODEL_DOCMUNCHER_SINGLE_LINE
+from ..core.config import LITELLM_MODEL_DOCMUNCHER_SINGLE_LINE
 from ..llm_call.llm_prompts import SYSTEM_SINGLE_LINE_CARD, USER_SINGLE_LINE_CARD
 from ..llm_call.utils import _ask_llm_async
 

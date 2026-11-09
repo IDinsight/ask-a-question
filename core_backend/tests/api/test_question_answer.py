@@ -10,25 +10,25 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
-from core_backend.app.llm_call.process_input import (
+from app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
+from app.llm_call.process_input import (
     _classify_safety,
     _identify_language,
     _translate_question,
 )
-from core_backend.app.llm_call.process_output import _check_align_score
-from core_backend.app.question_answer.config import N_TOP_CONTENT
-from core_backend.app.question_answer.schemas import (
+from app.llm_call.process_output import _check_align_score
+from app.question_answer.config import N_TOP_CONTENT
+from app.question_answer.schemas import (
     ErrorType,
     QueryRefined,
     QueryResponse,
     QueryResponseError,
     QuerySearchResult,
 )
-from core_backend.app.question_answer.utils import (
+from app.question_answer.utils import (
     get_context_string_from_search_results,
 )
-from core_backend.tests.api.conftest import (
+from tests.api.conftest import (
     TEST_ADMIN_USERNAME_1,
     TEST_ADMIN_USERNAME_2,
 )
@@ -941,23 +941,23 @@ class TestSTTResponse:
             return BytesIO(b"fake audio content")
 
         monkeypatch.setattr(
-            "core_backend.app.question_answer.routers.transcribe_audio",
+            "app.question_answer.routers.transcribe_audio",
             async_fake_transcribe_audio,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.synthesize_speech",
+            "app.llm_call.process_output.synthesize_speech",
             async_fake_generate_tts_on_gcs,
         )
         monkeypatch.setattr(
-            "core_backend.app.question_answer.routers.post_to_speech_stt",
+            "app.question_answer.routers.post_to_speech_stt",
             dummy_post_to_speech_stt,
         )
         monkeypatch.setattr(
-            "core_backend.app.question_answer.routers.download_file_from_url",
+            "app.question_answer.routers.download_file_from_url",
             dummy_download_file_from_url,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.post_to_internal_tts",
+            "app.llm_call.process_output.post_to_internal_tts",
             dummy_post_to_speech_tts,
         )
 
@@ -1112,7 +1112,7 @@ class TestErrorResponses:
             return identified_lang_str
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
+            "app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
 
         query, response = await _identify_language(
@@ -1184,7 +1184,7 @@ class TestErrorResponses:
             return "This is a translated LLM response"
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
+            "app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
         user_query_refined.workspace_doc_language = workspace_doc_language
         query, response = await _translate_question(
@@ -1238,7 +1238,7 @@ class TestErrorResponses:
             return "This is a translated LLM response"
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_input._ask_llm_async", mock_ask_llm
+            "app.llm_call.process_input._ask_llm_async", mock_ask_llm
         )
 
         user_query_refined = QueryRefined(
@@ -1307,7 +1307,7 @@ class TestErrorResponses:
             return llm_response
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_input._ask_llm_async",
+            "app.llm_call.process_input._ask_llm_async",
             partial(mock_ask_llm, classification),
         )
         query, response = await _classify_safety(
@@ -1385,11 +1385,11 @@ class TestAlignScore:
             return AlignmentScore(reason="test - low score", score=0.2)
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output._get_llm_align_score",
+            "app.llm_call.process_output._get_llm_align_score",
             mock_get_align_score,
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.ALIGN_SCORE_THRESHOLD", 0.7
+            "app.llm_call.process_output.ALIGN_SCORE_THRESHOLD", 0.7
         )
         update_query_response = await _check_align_score(response=user_query_response)
         assert isinstance(update_query_response, QueryResponse)
@@ -1430,10 +1430,10 @@ class TestAlignScore:
             return AlignmentScore(reason="test - high score", score=0.9)
 
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output.ALIGN_SCORE_THRESHOLD", 0.7
+            "app.llm_call.process_output.ALIGN_SCORE_THRESHOLD", 0.7
         )
         monkeypatch.setattr(
-            "core_backend.app.llm_call.process_output._get_llm_align_score",
+            "app.llm_call.process_output._get_llm_align_score",
             mock_get_align_score,
         )
         update_query_response = await _check_align_score(response=user_query_response)

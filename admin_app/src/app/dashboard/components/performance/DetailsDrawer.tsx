@@ -1,259 +1,195 @@
-import { DrawerData } from "@/app/dashboard/types";
-import TypingAnimation from "@/components/TypingAnimation";
-import theme from "@/theme";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+"use client";
+
+import React from "react";
+import { format } from "date-fns";
+import { IconSparkles } from "@tabler/icons-react";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
 import {
-  Paper,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-} from "@mui/material";
-import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
-import Typography from "@mui/material/Typography";
-import { ApexOptions } from "apexcharts";
-import dynamic from "next/dynamic";
-import React from "react";
-
-const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+} from "@/components/ui/table";
+import TypingAnimation from "@/components/TypingAnimation";
+import { DrawerData } from "@/app/dashboard/types";
+import { SERIES_COLORS } from "./seriesColors";
 
 interface DetailsDrawerProps {
   open: boolean;
-  onClose: (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => void;
+  onOpenChange: (open: boolean) => void;
   data: DrawerData | null;
   aiSummary: string | null;
 }
 
-const ContentLineChart = ({ seriesData }: { seriesData: any }) => {
-  const options: ApexOptions = {
-    chart: {
-      id: "drawer-line-chart",
-      stacked: false,
-      toolbar: {
-        show: false,
-      },
-      zoom: {
-        enabled: false,
-      },
-      fontFamily: "Inter",
-    },
-    stroke: {
-      width: 3,
-      curve: "straight",
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      },
-    },
-    legend: {
-      position: "top",
-      horizontalAlign: "center",
-      itemMargin: {
-        horizontal: 40,
-      },
-    },
-  };
+const chartConfig = {
+  query_count: { label: "Total sent", color: SERIES_COLORS[0] },
+  positive_count: { label: "Upvotes", color: SERIES_COLORS[2] },
+  negative_count: { label: "Downvotes", color: SERIES_COLORS[1] },
+} satisfies ChartConfig;
 
-  return (
-    <ReactApexcharts
-      type="line"
-      height="100%"
-      width={550}
-      options={options}
-      series={seriesData}
-    />
-  );
-};
+/** Sent / upvotes / downvotes over the period for one content card. */
+const ContentLineChart = ({ rows }: { rows: DrawerData["line_chart_data"] }) => (
+  <ChartContainer config={chartConfig} className="aspect-auto h-60 w-full">
+    <LineChart data={rows} margin={{ left: -16, right: 8, top: 8 }}>
+      <CartesianGrid vertical={false} />
+      <XAxis
+        dataKey="timestamp"
+        type="number"
+        scale="time"
+        domain={["dataMin", "dataMax"]}
+        tickLine={false}
+        axisLine={false}
+        tickMargin={8}
+        minTickGap={24}
+        tickFormatter={(value: number) => format(value, "MMM d")}
+      />
+      <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+      <ChartTooltip
+        content={
+          <ChartTooltipContent
+            labelFormatter={(_, payload) => {
+              const ts = payload?.[0]?.payload?.timestamp;
+              return ts ? format(ts, "EEE d MMM yyyy") : "";
+            }}
+          />
+        }
+      />
+      {/* itemSorter={null} keeps series order (Recharts sorts by key otherwise) */}
+      <ChartLegend
+        verticalAlign="top"
+        itemSorter={null}
+        content={<ChartLegendContent className="pb-3" />}
+      />
+      {(Object.keys(chartConfig) as (keyof typeof chartConfig)[]).map((key) => (
+        <Line
+          key={key}
+          dataKey={key}
+          type="monotone"
+          stroke={`var(--color-${key})`}
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 4 }}
+        />
+      ))}
+    </LineChart>
+  </ChartContainer>
+);
 
-const StatCard: React.FC<{ title: string; value: number }> = ({ title, value }) => {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "left",
-        justifyContent: "center",
-        width: "100%",
-        height: 100,
-      }}
-    >
-      <Typography
-        component="div"
-        sx={{
-          lineHeight: "24px",
-          fontSize: "small",
-          fontWeight: 300,
-          color: "text.secondary",
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{ lineHeight: "16px", fontWeight: 800, fontSize: "small" }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  );
-};
+const Stat = ({ title, value }: { title: string; value: number }) => (
+  <div className="flex flex-col gap-0.5 border bg-background p-3">
+    <span className="text-xs text-muted-foreground">{title}</span>
+    <span className="text-lg font-semibold tabular-nums">{value.toLocaleString()}</span>
+  </div>
+);
 
+/** Side panel with one content card's numbers, chart, AI summary and user feedback. */
 const DetailsDrawer: React.FC<DetailsDrawerProps> = ({
   open,
-  onClose,
+  onOpenChange,
   data,
   aiSummary,
 }) => {
   if (data === null) return null;
   return (
-    <Drawer
-      open={open && data !== null}
-      onClose={onClose(false)}
-      anchor="right"
-      sx={{
-        [`& .MuiDrawer-paper`]: { boxSizing: "border-box" },
-        zIndex: 1000,
-      }}
-    >
-      <Box sx={{ width: 550, pt: 7, margin: 3 }}>
-        <Typography
-          variant="h6"
-          component="div"
-          sx={{ lineHeight: "24px", fontWeight: 600 }}
-        >
-          {data.title}
-        </Typography>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full gap-6 overflow-y-auto p-6 text-sm data-[side=right]:sm:max-w-2xl"
+      >
+        <SheetHeader className="p-0 pr-8">
+          <SheetTitle className="text-lg font-semibold">{data.title}</SheetTitle>
+          <SheetDescription>Performance for the selected time range.</SheetDescription>
+        </SheetHeader>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "stretch",
-            gap: 2,
-            maxWidth: 1387,
-          }}
-        >
-          <StatCard title="Total Sent" value={data.query_count} />
-          <StatCard title="Daily Average Sent" value={data.daily_query_count_avg} />
-          <StatCard title="Total Upvotes" value={data.positive_votes} />
-          <StatCard title="Total Downvotes" value={data.negative_votes} />
-        </Box>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat title="Total sent" value={data.query_count} />
+          <Stat title="Daily average sent" value={data.daily_query_count_avg} />
+          <Stat title="Total upvotes" value={data.positive_votes} />
+          <Stat title="Total downvotes" value={data.negative_votes} />
+        </div>
 
-        <Box
-          sx={{
-            height: 300,
-            width: "100%",
-            border: 1,
-            borderColor: "secondary.main",
-            borderRadius: 2,
-            alignItems: "center",
-            justifyContent: "center",
-            display: "flex",
-            flexGrow: 1,
-          }}
-        >
-          <ContentLineChart seriesData={data.line_chart_data} />
-        </Box>
-        <Divider sx={{ my: 3, borderBottomWidth: 2 }} />
+        <div className="border p-4">
+          <ContentLineChart rows={data.line_chart_data} />
+        </div>
 
-        <Typography
-          variant="h6"
-          component="div"
-          sx={{ lineHeight: "24px", mb: 3, fontWeight: 600 }}
-        >
-          Feedback by Users
-        </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            maxWidth: 1387,
-            maxheight: 400,
-            border: 1,
-            borderColor: "secondary.main",
-            borderRadius: 2,
-            background: "linear-gradient(to bottom, rgba(176,198,255,0.5), #ffffff)",
-            p: 2,
-            mb: 3,
-          }}
-        >
-          <Box sx={{ display: "flex", flexDirection: "row", mb: 2 }}>
-            <AutoAwesomeIcon sx={{ fontSize: 25, mr: 1, color: "#9eb2e5" }} />
-
-            <Typography
-              sx={{
-                lineHeight: "24px",
-                fontWeight: 600,
-                fontColor: "black",
-                textAlign: "center",
-              }}
-            >
-              AI Overview
-            </Typography>
-          </Box>
-
-          <Typography
-            sx={{
-              lineHeight: "15px",
-              fontWeight: 300,
-              fontSize: "small",
-              fontColor: "black",
-              textAlign: "left",
-            }}
-          >
-            {aiSummary === null ? <TypingAnimation /> : aiSummary}
-          </Typography>
-        </Box>
-
-        <TableContainer component={Paper} sx={{ mt: 2 }}>
-          <Table aria-label="user feedback table">
-            <TableHead sx={{ backgroundColor: theme.palette.lightgray.main }}>
-              <TableRow>
-                <TableCell sx={{ fontSize: "small", width: "20%" }}>
-                  Timestamp
-                </TableCell>
-                <TableCell sx={{ fontSize: "small", width: "40%" }}>
-                  User Question
-                </TableCell>
-                <TableCell sx={{ fontSize: "small", width: "40%" }}>
-                  User Feedback
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.user_feedback.map((feedback) => (
-                <TableRow
-                  key={feedback.timestamp}
-                  sx={{
-                    borderBottom: 1,
-                    borderColor: "secondary.main",
-                    fontSize: "x-small",
-                    overflow: "hidden",
-                  }}
-                >
-                  <TableCell>
-                    {Intl.DateTimeFormat("en-ZA", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    }).format(new Date(feedback.timestamp))}
-                  </TableCell>
-                  <TableCell>{feedback.question}</TableCell>
-                  <TableCell>{feedback.feedback}</TableCell>
+        <section aria-labelledby="feedback-heading" className="flex flex-col gap-4">
+          <h3 id="feedback-heading" className="text-base font-semibold tracking-tight">
+            Feedback by users
+          </h3>
+          <div className="flex flex-col gap-2 border bg-muted/50 p-4">
+            <span className="flex items-center gap-2 font-semibold">
+              <IconSparkles className="size-4 text-chart-1" aria-hidden="true" />
+              AI overview
+            </span>
+            {aiSummary === null ? (
+              <TypingAnimation />
+            ) : (
+              <p className="leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                {aiSummary}
+              </p>
+            )}
+          </div>
+          <div className="border">
+            <Table aria-label="User feedback">
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead className="w-[20%] px-3">Timestamp</TableHead>
+                  <TableHead className="w-[40%] px-3">User question</TableHead>
+                  <TableHead className="w-[40%] px-3">User feedback</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    </Drawer>
+              </TableHeader>
+              <TableBody>
+                {data.user_feedback.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell
+                      colSpan={3}
+                      className="px-3 py-6 text-center text-muted-foreground"
+                    >
+                      No feedback in this period.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.user_feedback.map((feedback) => (
+                    <TableRow key={feedback.timestamp}>
+                      <TableCell className="px-3 align-top text-muted-foreground tabular-nums">
+                        {Intl.DateTimeFormat("en-ZA", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        }).format(new Date(feedback.timestamp))}
+                      </TableCell>
+                      <TableCell className="px-3 align-top whitespace-normal">
+                        {feedback.question}
+                      </TableCell>
+                      <TableCell className="px-3 align-top whitespace-normal">
+                        {feedback.feedback}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -1,20 +1,19 @@
-import { ContentViewModal, ArchiveContentModal } from "./ContentModal";
-import { appColors, appStyles, sizes } from "@/utils";
-import { Delete, Edit } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Card,
-  Checkbox,
-  Chip,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import Link from "next/link";
 import React from "react";
-import { Layout } from "../../../components/Layout";
+import { IconTrash } from "@tabler/icons-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "cn";
+import {
+  ArchiveContentModal,
+  ContentViewModal,
+  EditContentButton,
+} from "./ContentModal";
 import { Content, ContentDisplay, Tag } from "../types";
 
+// Used by the cards grid on the content page to work out how many cards fit.
 const CARD_HEIGHT = 210;
 const CARD_MIN_WIDTH = 280;
 
@@ -37,6 +36,7 @@ interface ContentCardProps {
   setSelectedContents: (selectedContents: number[]) => void;
   getRelatedContent: (content_id: number[]) => Content[];
 }
+
 const ContentCard: React.FC<ContentCardProps> = ({
   title,
   text,
@@ -58,11 +58,11 @@ const ContentCard: React.FC<ContentCardProps> = ({
 }) => {
   const [openReadModal, setOpenReadModal] = React.useState<boolean>(false);
   const [openArchiveModal, setOpenArchiveModal] = React.useState<boolean>(false);
-  const [isHovered, setIsHovered] = React.useState<boolean>(false);
-  const [checked, setChecked] = React.useState<boolean>(
-    selectedContents.includes(content_id),
-  );
-  const [currentContent, setCurrentContent] = React.useState<ContentDisplay>({
+  const checked = selectedContents.includes(content_id);
+
+  // The view modal can hop to related contents, so it shows whichever
+  // content is "current" rather than always this card.
+  const thisContent: ContentDisplay = {
     title,
     text,
     content_id,
@@ -72,15 +72,13 @@ const ContentCard: React.FC<ContentCardProps> = ({
     positive_votes,
     negative_votes,
     related_contents,
-  });
+  };
+  const [currentContent, setCurrentContent] =
+    React.useState<ContentDisplay>(thisContent);
 
   const truncateTagName = (tagName: string): string => {
     return tagName.length > 15 ? `${tagName.slice(0, 15)}...` : tagName;
   };
-
-  React.useEffect(() => {
-    setChecked(selectedContents.includes(content_id));
-  }, [selectedContents]);
 
   const handleRelatedContentClick = (content: Content) => {
     setCurrentContent({
@@ -96,144 +94,108 @@ const ContentCard: React.FC<ContentCardProps> = ({
     } as ContentDisplay);
   };
 
+  const openCard = () => {
+    setCurrentContent(thisContent);
+    setOpenReadModal(true);
+  };
+
+  const handleCheckedChange = (newChecked: boolean) => {
+    if (newChecked && !checked) {
+      setSelectedContents([...selectedContents, content_id]);
+    } else if (!newChecked && checked) {
+      setSelectedContents(selectedContents.filter((id) => id !== content_id));
+    }
+  };
+
+  // Hover-revealed controls also show on keyboard focus so they stay reachable.
+  const revealOnHover =
+    "opacity-0 transition-opacity group-hover/content-card:opacity-100 group-focus-within/content-card:opacity-100";
+
   return (
     <>
       <Card
-        onClick={() => {
-          setCurrentContent({
-            title,
-            text,
-            content_id,
-            display_number,
-            last_modified,
-            tags,
-            positive_votes,
-            negative_votes,
-            related_contents,
-          });
-          setOpenReadModal(true);
+        role="button"
+        tabIndex={0}
+        aria-label={`Open content #${display_number}: ${title}`}
+        onClick={openCard}
+        onKeyDown={(event) => {
+          // Only react to keys pressed on the card itself, not its buttons.
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openCard();
+          }
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        sx={[
-          {
-            cursor: "pointer",
-            p: sizes.baseGap,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: CARD_HEIGHT,
-            minWidth: CARD_MIN_WIDTH,
-            position: "relative",
-          },
-          appStyles.hoverShadow,
-          appStyles.shadow,
-        ]}
+        className={cn(
+          "group/content-card relative cursor-pointer justify-between gap-2 p-4 text-sm shadow-sm transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring",
+          checked && "ring-2 ring-primary",
+        )}
+        style={{ height: CARD_HEIGHT, minWidth: CARD_MIN_WIDTH }}
       >
-        <Box
-          sx={{
-            position: "absolute",
-            top: 8,
-            left: 8,
-            opacity: isHovered || isSelectMode ? 1 : 0,
-            transition: "opacity 0.2s ease-in-out",
-            zIndex: 1,
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Checkbox
-            checked={checked}
-            onChange={(e) => {
-              const newChecked = e.target.checked;
-              if (newChecked && !selectedContents.includes(content_id)) {
-                setSelectedContents([...selectedContents, content_id]);
-              } else if (!newChecked && selectedContents.includes(content_id)) {
-                setSelectedContents(selectedContents.filter((id) => id !== content_id));
-              }
-              setChecked(newChecked);
-            }}
-            size="small"
-          />
-        </Box>
-        <Layout.FlexBox flexDirection="row" justifyContent="end" sx={{ width: "98%" }}>
+        <div className="flex h-5 items-center justify-between">
+          {/* Selection checkbox: always visible in select mode, else on hover */}
+          <div
+            className={cn(!isSelectMode && !checked && revealOnHover)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={checked}
+              onCheckedChange={handleCheckedChange}
+              aria-label={`Select content #${display_number}`}
+            />
+          </div>
           {tags && tags.length > 0 && (
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Chip
-                label={truncateTagName(tags[0].tag_name)}
-                size="small"
-                sx={{
-                  bgcolor: appColors.white,
-                  color: appColors.darkGrey,
-                  border: "1px solid",
-                  borderColor: appColors.lightGrey,
-                }}
-              />
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className="text-muted-foreground">
+                {truncateTagName(tags[0].tag_name)}
+              </Badge>
               {tags.length > 1 && (
-                <Typography
-                  variant="overline"
-                  sx={{ marginLeft: 0.3, color: appColors.darkGrey }}
-                >
+                <span className="text-xs text-muted-foreground">
                   +{tags.length - 1}
-                </Typography>
+                </span>
               )}
-            </Box>
+            </div>
           )}
-          {/* else just a space */}
-          {!tags || tags.length === 0 ? <Box height={"22px"} /> : null}
-        </Layout.FlexBox>
-        <Typography variant="h6" noWrap={true}>
-          {title}
-        </Typography>
-        <Typography
-          variant="body2"
-          color={appColors.darkGrey}
-          sx={appStyles.twoLineEllipsis}
-        >
-          {text}
-        </Typography>
-        <Layout.Spacer multiplier={0.5} />
-        <Typography variant="body2" color={appColors.darkGrey}>
-          Last updated:{" "}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-1">
+          <h3 className="truncate text-base font-semibold">{title}</h3>
+          <p className="line-clamp-2 text-muted-foreground">{text}</p>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Last updated{" "}
           {new Date(last_modified).toLocaleString(undefined, {
             day: "numeric",
             month: "short",
             year: "numeric",
           })}
-        </Typography>
-        <Layout.Spacer multiplier={0.75} />
-        <Layout.FlexBox
-          flexDirection={"row"}
-          gap={sizes.tinyGap}
-          sx={{
-            alignItems: "center",
-            opacity: isHovered ? 1 : 0,
-            transition: "opacity 0.2s ease-in-out",
-          }}
-        >
-          <Button
-            disabled={!editAccess}
-            component={Link}
-            href={`/content/edit?content_id=${content_id}`}
+        </p>
+
+        <div className={cn("flex items-center justify-between", revealOnHover)}>
+          <EditContentButton
+            content_id={content_id}
+            editAccess={editAccess}
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
             onClick={(event) => event.stopPropagation()}
-          >
-            <Edit fontSize="small" />
-            <Layout.Spacer horizontal multiplier={0.3} />
-            Edit
-          </Button>
-          <div style={{ marginLeft: "auto" }}></div>
-          <IconButton
+          />
+          <Button
+            variant="ghost"
+            size="icon-sm"
             disabled={!editAccess}
-            aria-label="delete"
-            size="medium"
+            aria-label={`Delete content #${display_number}`}
+            className="text-muted-foreground hover:text-destructive"
             onClick={(event) => {
               event.stopPropagation();
               setSelectedContents(selectedContents.filter((id) => id !== content_id));
               setOpenArchiveModal(true);
             }}
           >
-            <Delete fontSize="inherit" />
-          </IconButton>
-        </Layout.FlexBox>
+            <IconTrash />
+          </Button>
+        </div>
       </Card>
       <ContentViewModal
         title={currentContent.title}

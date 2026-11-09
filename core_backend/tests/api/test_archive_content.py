@@ -7,9 +7,9 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.contents.models import get_search_results
-from core_backend.tests.api.conftest import async_fake_embedding
-from core_backend.tests.api.test_import_content import _dict_to_csv_bytes
+from app.contents.models import get_search_results
+from tests.api.conftest import async_fake_embedding
+from tests.api.test_import_content import _dict_to_csv_bytes
 
 
 class TestArchiveContent:

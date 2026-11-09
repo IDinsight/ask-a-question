@@ -21,7 +21,7 @@ from langfuse.decorators import langfuse_context, observe  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_workspace_name
-from ..database import get_async_session, get_sqlalchemy_async_engine
+from ..core.database import get_async_session, get_sqlalchemy_async_engine
 from ..users.models import WorkspaceDB
 from ..utils import setup_logger
 from ..workspaces.utils import get_workspace_by_workspace_name

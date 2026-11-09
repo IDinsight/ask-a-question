@@ -1,253 +1,141 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { IconAlertCircle, IconChevronDown, IconFileOff } from "@tabler/icons-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  Button,
-  Typography,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Paper,
-  CircularProgress,
-  Alert,
-  DialogActions,
-  IconButton,
-  Collapse,
-  Box,
-} from "@mui/material";
-import { Layout } from "@/components/Layout";
-import { appColors } from "@/utils";
+} from "@/components/ui/table";
+import { cn } from "cn";
 import { useAuth } from "@/utils/auth";
 import { DocIndexingStatusRow, formatDate, getDocIndexingStatusData } from "../api";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useShowIndexingStatusStore } from "../store/indexingStatusStore";
 
-interface RowProps {
-  entry: DocIndexingStatusRow;
-  index: number;
-  columnWidths: { [key: string]: string };
-}
+// Column headers and widths, shared by the header and every row so the
+// nested task rows line up with their parent.
+const COLUMNS = [
+  { key: "expandToggle", label: "", className: "w-10" },
+  { key: "fileName", label: "File name", className: "w-[25%]" },
+  { key: "status", label: "Status", className: "w-[15%]" },
+  { key: "docsIndexed", label: "Documents processed", className: "w-[15%]" },
+  { key: "createdAt", label: "Created at", className: "w-[15%]" },
+  { key: "finishedAt", label: "Finished at", className: "w-[15%]" },
+  { key: "errorTrace", label: "Error trace", className: "w-[15%]" },
+] as const;
 
-const getColumnStyles = () => {
-  return {
-    expandToggle: "48px",
-    fileName: "25%",
-    status: "15%",
-    docsIndexed: "15%",
-    createdAt: "15%",
-    finishedAt: "15%",
-    errorTrace: "15%",
-  };
-};
+const WRAP = "whitespace-normal break-words";
 
-const wrapStyle = {
-  whiteSpace: "normal" as const,
-  wordBreak: "break-word" as const,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-};
 const handleEmptyDate = (dateString: string) => {
   if (!dateString) return "—";
   return dateString;
 };
 
-const Row: React.FC<RowProps> = ({ entry, index, columnWidths }) => {
+/** Text colour for a status. Upload-level and task-level statuses differ. */
+const statusClassName = (status: string) => {
+  switch (status) {
+    case "Done":
+    case "Success":
+      return "text-green-700 dark:text-green-500";
+    case "Ongoing":
+    case "In progress":
+      return "text-amber-700 dark:text-amber-500";
+    case "Failed":
+      return "text-destructive";
+    default:
+      return "";
+  }
+};
+
+const Row: React.FC<{ entry: DocIndexingStatusRow }> = ({ entry }) => {
   const [open, setOpen] = useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Success":
-        return "green";
-      case "In progress":
-        return "darkorange";
-      case "Failed":
-        return "red";
-      default:
-        return "inherit";
-    }
-  };
-
   const hasMultipleTasks = entry.tasks.length > 1;
-
-  const mainCellPadding = {
-    paddingLeft: 2,
-    paddingRight: 2,
-    paddingTop: 1.5,
-    paddingBottom: 1.5,
-  };
-
-  const nestedCellPadding = {
-    paddingLeft: 3.5,
-    paddingRight: 2,
-    paddingTop: 1.5,
-    paddingBottom: 1.5,
-  };
-
-  const toggleCellPadding = {
-    paddingLeft: 1,
-    paddingRight: 1,
-    paddingTop: 1,
-    paddingBottom: 1,
-  };
-
-  const nestedRowStyle = {
-    backgroundColor: "#fafafa",
-  };
+  // For a single-task upload the row's error colour follows that task.
+  const effectiveStatus = hasMultipleTasks ? entry.status : entry.tasks[0]?.task_status;
 
   return (
     <>
       <TableRow
-        sx={{
-          "& > *": { borderBottom: "unset" },
-          cursor: hasMultipleTasks ? "pointer" : "default",
-          "&:hover": hasMultipleTasks ? { backgroundColor: "#f5f5f5" } : {},
-        }}
+        className={cn(hasMultipleTasks && "cursor-pointer")}
         onClick={hasMultipleTasks ? () => setOpen(!open) : undefined}
       >
-        <TableCell sx={{ width: columnWidths.expandToggle, ...toggleCellPadding }}>
+        <TableCell className="px-2">
           {hasMultipleTasks && (
-            <IconButton
-              size="small"
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-expanded={open}
+              aria-label={open ? "Hide files" : "Show files"}
               onClick={(e) => {
                 e.stopPropagation();
                 setOpen(!open);
               }}
             >
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
+              <IconChevronDown
+                className={cn("transition-transform", open && "rotate-180")}
+              />
+            </Button>
           )}
         </TableCell>
-        <TableCell
-          sx={{
-            ...wrapStyle,
-            ...mainCellPadding,
-            fontWeight: "bold",
-            width: columnWidths.fileName,
-          }}
-        >
-          {entry.fileName}
-        </TableCell>
-        <TableCell
-          sx={{
-            ...mainCellPadding,
-            fontWeight: "bold",
-            width: columnWidths.status,
-            color:
-              entry.status === "Done"
-                ? "green"
-                : entry.status === "Ongoing"
-                ? "darkorange"
-                : "red",
-          }}
-        >
+        <TableCell className={cn(WRAP, "font-medium")}>{entry.fileName}</TableCell>
+        <TableCell className={cn("font-medium", statusClassName(entry.status))}>
           {entry.status}
         </TableCell>
-        <TableCell sx={{ ...mainCellPadding, width: columnWidths.docsIndexed }}>
-          {entry.docsIndexed}
-        </TableCell>
-        <TableCell sx={{ ...mainCellPadding, width: columnWidths.createdAt }}>
-          {handleEmptyDate(entry.created_at)}
-        </TableCell>
-        <TableCell sx={{ ...mainCellPadding, width: columnWidths.finishedAt }}>
-          {handleEmptyDate(entry.finished_at)}
-        </TableCell>
+        <TableCell>{entry.docsIndexed}</TableCell>
+        <TableCell>{handleEmptyDate(entry.created_at)}</TableCell>
+        <TableCell>{handleEmptyDate(entry.finished_at)}</TableCell>
         <TableCell
-          sx={{
-            ...wrapStyle,
-            ...mainCellPadding,
-            width: columnWidths.errorTrace,
-            color:
-              (hasMultipleTasks ? entry.status : entry.tasks[0]?.task_status) ===
-              "Failed"
-                ? "error.main"
-                : "inherit",
-          }}
+          className={cn(WRAP, effectiveStatus === "Failed" && "text-destructive")}
         >
           {entry.errorTrace}
         </TableCell>
       </TableRow>
-      {hasMultipleTasks && (
-        <TableRow>
-          <TableCell style={{ padding: 0 }} colSpan={7}>
-            <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box sx={{ padding: 0 }}>
-                <Table size="small" padding="none">
-                  <TableBody>
-                    {entry.tasks.map((task, taskIndex) => (
-                      <TableRow key={taskIndex} sx={nestedRowStyle}>
-                        <TableCell
-                          sx={{
-                            width: columnWidths.expandToggle,
-                            ...toggleCellPadding,
-                          }}
-                        />
-                        <TableCell
-                          sx={{
-                            ...wrapStyle,
-                            ...nestedCellPadding,
-                            width: columnWidths.fileName,
-                          }}
-                        >
-                          {task.doc_name}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            ...nestedCellPadding,
-                            width: columnWidths.status,
-                            color: getStatusColor(task.task_status),
-                          }}
-                        >
-                          {task.task_status}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            ...nestedCellPadding,
-                            width: columnWidths.docsIndexed,
-                          }}
-                        />
-                        <TableCell
-                          sx={{
-                            ...nestedCellPadding,
-                            width: columnWidths.createdAt,
-                          }}
-                        >
-                          {handleEmptyDate(formatDate(task.created_datetime_utc))}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            ...nestedCellPadding,
-                            width: columnWidths.finishedAt,
-                          }}
-                        >
-                          {handleEmptyDate(formatDate(task.finished_datetime_utc))}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            ...wrapStyle,
-                            ...nestedCellPadding,
-                            width: columnWidths.errorTrace,
-                            color:
-                              task.task_status === "Failed" ? "error.main" : "inherit",
-                          }}
-                        >
-                          {task.error_trace}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            </Collapse>
-          </TableCell>
-        </TableRow>
-      )}
+      {/* Per-file rows of a ZIP upload, shown when expanded */}
+      {hasMultipleTasks &&
+        open &&
+        entry.tasks.map((task, taskIndex) => (
+          <TableRow key={taskIndex} className="bg-muted/40 hover:bg-muted/60">
+            <TableCell />
+            <TableCell className={cn(WRAP, "pl-6")}>{task.doc_name}</TableCell>
+            <TableCell className={statusClassName(task.task_status)}>
+              {task.task_status}
+            </TableCell>
+            <TableCell />
+            <TableCell>
+              {handleEmptyDate(formatDate(task.created_datetime_utc))}
+            </TableCell>
+            <TableCell>
+              {handleEmptyDate(formatDate(task.finished_datetime_utc))}
+            </TableCell>
+            <TableCell
+              className={cn(WRAP, task.task_status === "Failed" && "text-destructive")}
+            >
+              {task.error_trace}
+            </TableCell>
+          </TableRow>
+        ))}
     </>
   );
 };
@@ -257,27 +145,10 @@ export const IndexingStatusModal: React.FC = () => {
   const [indexEntries, setIndexEntries] = useState<DocIndexingStatusRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState<boolean>(false);
   const { isOpen, setIsOpen } = useShowIndexingStatusStore();
-  const columnWidths = getColumnStyles();
-
-  const mainCellPadding = {
-    paddingLeft: 2,
-    paddingRight: 2,
-    paddingTop: 1.5,
-    paddingBottom: 1.5,
-  };
-
-  const toggleCellPadding = {
-    paddingLeft: 1,
-    paddingRight: 1,
-    paddingTop: 1,
-    paddingBottom: 1,
-  };
 
   useEffect(() => {
     if (isOpen && token) {
-      setIsClosing(false);
       setLoading(true);
       setError(null);
 
@@ -295,205 +166,83 @@ export const IndexingStatusModal: React.FC = () => {
     }
   }, [isOpen, token]);
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setIsOpen(false);
-  };
+  const handleClose = () => setIsOpen(false);
 
-  const handleExited = () => {
-    if (isClosing) {
-      setError(null);
-    }
-  };
-
-  const renderTable = () => {
-    return (
-      <TableContainer
-        component={Paper}
-        sx={{
-          boxShadow: "none",
-          border: `1px solid ${appColors.outline}`,
-          borderRadius: 1,
-          height: "40vh",
-          maxHeight: "40vh",
-          overflow: "auto",
-          position: "relative",
-        }}
-      >
-        <Table stickyHeader padding="none">
-          <TableHead>
-            <TableRow>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.expandToggle,
-                  ...toggleCellPadding,
-                }}
-              />
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.fileName,
-                  ...mainCellPadding,
-                }}
+  const renderTable = () => (
+    // The inner table container is made non-scrolling so the sticky header
+    // sticks to this outer, height-limited box.
+    <div className="h-[40vh] overflow-auto border [&>[data-slot=table-container]]:overflow-visible">
+      <Table className="table-fixed text-sm">
+        <TableHeader className="sticky top-0 z-10 bg-popover">
+          <TableRow className="hover:bg-transparent">
+            {COLUMNS.map((column) => (
+              <TableHead
+                key={column.key}
+                className={cn(column.className, "whitespace-normal")}
               >
-                File Name
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.status,
-                  ...mainCellPadding,
-                }}
-              >
-                Status
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.docsIndexed,
-                  ...mainCellPadding,
-                }}
-              >
-                Documents Processed
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.createdAt,
-                  ...mainCellPadding,
-                }}
-              >
-                Created At
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.finishedAt,
-                  ...mainCellPadding,
-                }}
-              >
-                Finished At
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: "bold",
-                  color: appColors.primary,
-                  backgroundColor: appColors.white,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  width: columnWidths.errorTrace,
-                  ...mainCellPadding,
-                }}
-              >
-                Error Trace
+                {column.label}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {indexEntries.length === 0 ? (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={COLUMNS.length}>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <IconFileOff />
+                    </EmptyMedia>
+                    <EmptyTitle>No PDF uploads yet</EmptyTitle>
+                    <EmptyDescription>
+                      Files you upload with &quot;Generate cards from PDF&quot; will
+                      show their processing status here.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {indexEntries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  No indexing data available
-                </TableCell>
-              </TableRow>
-            ) : (
-              indexEntries.map((entry, index) => (
-                <Row
-                  key={index}
-                  entry={entry}
-                  index={index}
-                  columnWidths={columnWidths}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  };
+          ) : (
+            indexEntries.map((entry, index) => <Row key={index} entry={entry} />)
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={handleClose}
-      fullWidth
-      maxWidth="md"
-      aria-labelledby="indexing-status-dialog-title"
-      aria-describedby="indexing-status-dialog-description"
-      TransitionProps={{
-        onExited: handleExited,
-      }}
-    >
-      <DialogTitle id="indexing-status-dialog-title">PDF Processing Status</DialogTitle>
-      <DialogContent>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          id="indexing-status-dialog-description"
-        >
-          Processing status of ongoing and previous uploads.
-        </Typography>
-
-        <Layout.Spacer multiplier={2} />
+    <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
+      <DialogContent className="gap-5 p-6 text-sm sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            PDF processing status
+          </DialogTitle>
+          <DialogDescription className="text-sm">
+            Processing status of ongoing and previous uploads.
+          </DialogDescription>
+        </DialogHeader>
 
         {loading ? (
-          <Layout.FlexBox
-            justifyContent="center"
-            alignItems="center"
-            style={{ minHeight: "200px" }}
-          >
-            <CircularProgress size={24} />
-          </Layout.FlexBox>
-        ) : error ? (
+          <div className="flex min-h-[200px] items-center justify-center">
+            <Spinner className="size-6" />
+          </div>
+        ) : (
           <>
-            <Layout.Spacer multiplier={1} />
-            <Alert variant="outlined" severity="error">
-              {error}
-            </Alert>
-            <Layout.Spacer multiplier={2} />
+            {error && (
+              <Alert variant="destructive">
+                <IconAlertCircle />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             {renderTable()}
           </>
-        ) : (
-          renderTable()
         )}
+
+        <DialogFooter>
+          <Button onClick={handleClose}>Back</Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button variant="contained" onClick={handleClose}>
-          Back
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

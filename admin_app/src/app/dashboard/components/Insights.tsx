@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/utils/auth";
-import { Alert, Paper, Slide, SlideProps, Snackbar, Box } from "@mui/material";
+import { toast } from "@/components/ui/toast";
 import { fetchTopicsData, generateNewTopics } from "../api";
 import {
   Period,
@@ -37,13 +37,15 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
     Record<string, Status>
   >({});
   const pollingTimerRef = useRef<Record<string, NodeJS.Timeout | null>>({});
-  const [snackMessage, setSnackMessage] = useState<{
+  // Same { message, color } shape the old Snackbar used; shown by the Toaster in dashboard/layout.tsx.
+  const setSnackMessage = ({
+    message,
+    color,
+  }: {
     message: string | null;
     color: "success" | "info" | "warning" | "error" | undefined;
-  }>({ message: null, color: undefined });
-
-  const SnackbarSlideTransition = (props: SlideProps) => {
-    return <Slide {...props} direction="up" />;
+  }) => {
+    if (message) toast.add({ title: message, type: color });
   };
 
   const timePeriods: Period[] = ["day", "week", "month", "year", "custom"];
@@ -339,35 +341,21 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
   }));
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <Paper
-        elevation={0}
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          height: 500,
-          width: "100%",
-          border: 0.5,
-          borderColor: "lightgrey",
-        }}
+    <div className="flex flex-col gap-6">
+      <section
+        aria-label="Topics and example queries"
+        className="flex min-h-105 flex-wrap overflow-hidden border bg-card shadow-xs"
       >
-        <Box
-          sx={{
-            width: "25%",
-            padding: 2,
-            borderRight: 1,
-            borderColor: "grey.300",
-            borderWidth: 2,
-          }}
-        >
+        {/* Topics column; stacks above the queries on narrow screens */}
+        <div className="flex flex-[1_1_260px] flex-col border-b p-5 md:max-w-85 md:border-r md:border-b-0">
           <Topics
             data={topics}
             selectedTopicId={selectedTopicId}
             onClick={setSelectedTopicId}
             topicsPerPage={7}
           />
-        </Box>
-        <Box sx={{ padding: 2, width: "75%" }}>
+        </div>
+        <div className="flex max-h-150 min-w-0 flex-[3_1_420px] flex-col p-5">
           <Queries
             data={topicQueries}
             onRefreshClick={() => runRefresh(timePeriod)}
@@ -375,27 +363,11 @@ const Insight: React.FC<InsightProps> = ({ timePeriod, customDateParams }) => {
             lastRefreshed={currentData.refreshTimeStamp}
             refreshing={currentRefreshing}
           />
-        </Box>
-      </Paper>
+        </div>
+      </section>
 
       <BokehPlot timePeriod={timePeriod} token={token} />
-
-      <Snackbar
-        open={snackMessage.message !== null}
-        autoHideDuration={5000}
-        onClose={() => setSnackMessage({ message: null, color: undefined })}
-        TransitionComponent={SnackbarSlideTransition}
-      >
-        <Alert
-          variant="filled"
-          severity={snackMessage.color}
-          onClose={() => setSnackMessage({ message: null, color: undefined })}
-          sx={{ width: "100%" }}
-        >
-          {snackMessage.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 };
 

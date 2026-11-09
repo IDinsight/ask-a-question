@@ -1,67 +1,40 @@
 import React from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import { Box, Fade, IconButton, Modal } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import { Layout } from "@/components/Layout";
-import { appColors, sizes } from "@/utils";
-
+/** Dialog holding one connection's setup guide. */
 const ChatManagerModal = ({
-  logo_src,
+  name,
+  logo,
   ModalContent,
   open,
   onClose,
 }: {
-  logo_src: string;
-  ModalContent: React.FC;
+  name: string;
+  logo: React.ReactNode;
+  ModalContent: React.FC | null;
   open: boolean;
   onClose: () => void;
 }) => {
   return (
-    <Modal
-      open={open as boolean}
-      onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Fade in={!!open}>
-        <Box
-          sx={{
-            width: "60%",
-            minWidth: "300px",
-            borderRadius: 2,
-            backgroundColor: appColors.white,
-            p: sizes.doubleBaseGap,
-          }}
-        >
-          <Layout.FlexBox
-            flexDirection={"row"}
-            justifyContent={"space-between"}
-            paddingLeft={sizes.baseGap}
-          >
-            <img src={logo_src} style={{ height: "40px" }} />
-            <IconButton onClick={onClose}>
-              <CloseIcon />
-            </IconButton>
-          </Layout.FlexBox>
-          <Layout.Spacer multiplier={2} />
-          <Layout.FlexBox
-            flexDirection={"column"}
-            sx={{
-              maxHeight: "70vh",
-              p: sizes.baseGap,
-              marginRight: sizes.baseGap,
-              overflowY: "auto",
-            }}
-          >
-            <ModalContent />
-          </Layout.FlexBox>
-        </Box>
-      </Fade>
-    </Modal>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-5 p-6 sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
+            {logo}
+            {name} setup guide
+          </DialogTitle>
+        </DialogHeader>
+        <div className="min-h-0 overflow-y-auto text-sm leading-relaxed">
+          {ModalContent && <ModalContent />}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

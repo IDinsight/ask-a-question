@@ -41,7 +41,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return null;
   };
   const [userRole, setUserRole] = useState<UserRole | null>(getInitialRole);
-  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  // Restored from localStorage like the token and role, so it survives a page reload.
+  const getInitialWorkspaceName = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("workspaceName");
+    }
+    return null;
+  };
+  const [workspaceName, setWorkspaceName] = useState<string | null>(
+    getInitialWorkspaceName,
+  );
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("token");

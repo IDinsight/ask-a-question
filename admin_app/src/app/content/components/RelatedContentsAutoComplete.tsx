@@ -1,10 +1,20 @@
 "use client";
 
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-
 import React from "react";
 
-import { TextField, Paper, Box } from "@mui/material";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Content } from "../types";
 
 interface RelatedContentAutoCompleteProps {
@@ -13,73 +23,67 @@ interface RelatedContentAutoCompleteProps {
   handleContentChange: (contents: Content[]) => void;
 }
 
+/**
+ * Multi-select for linking related contents to the card being edited.
+ * Selected contents show as chips; the dropdown filters by title.
+ */
 export const RelatedContentsAutoComplete = ({
   contents,
   selectedContents,
   handleContentChange,
 }: RelatedContentAutoCompleteProps) => {
-  const [inputVal, setInputVal] = React.useState<string>("");
-  const filter = createFilterOptions<Content>();
+  const anchor = useComboboxAnchor();
+
   return (
-    <Box sx={{ position: "relative" }}>
-      <Autocomplete
-        selectOnFocus
-        clearOnBlur
-        handleHomeEndKeys
+    <Field className="max-w-[500px]">
+      <FieldLabel htmlFor="related-contents-input" className="text-sm">
+        Related contents (optional)
+      </FieldLabel>
+      <Combobox
         multiple
-        limitTags={3}
-        id="contents-autocomplete"
-        options={contents}
-        getOptionLabel={(option) => option!.content_title}
-        noOptionsText="No contents found"
+        autoHighlight
+        items={contents}
         value={selectedContents}
-        onChange={(event: React.SyntheticEvent, updatedContents: Content[]) => {
-          handleContentChange(updatedContents);
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            variant="outlined"
-            label="Related Contents (optional)"
-            placeholder="Find content"
-            onChange={(event) => setInputVal(event.target.value)}
-            InputProps={{
-              ...params.InputProps,
-              style: { backgroundColor: "white" },
-            }}
-          />
-        )}
-        filterOptions={(options, params) => {
-          const filtered = filter(options, params);
-          return filtered.filter(
-            (option) =>
-              !selectedContents.some(
-                (content) => content.content_title === option.content_title,
-              ),
-          );
-        }}
-        PaperComponent={({ children }) => (
-          <Paper
-            sx={{
-              zIndex: 1,
-              width: "100%",
-              overflow: "auto",
-              marginBottom: "10px",
-            }}
-          >
-            {children}
-          </Paper>
-        )}
-        sx={{
-          "& .MuiAutocomplete-popper": {
-            zIndex: 1,
-          },
-          maxWidth: "500px",
-        }}
-        isOptionEqualToValue={(option: Content, value: Content) =>
-          value.content_title === option.content_title || value.content_title === ""
+        onValueChange={(updated) => handleContentChange(updated as Content[])}
+        itemToStringLabel={(content: Content) => content.content_title}
+        // Match on ID when we have one; fall back to title for unsaved items.
+        isItemEqualToValue={(a: Content, b: Content) =>
+          a.content_id !== null && b.content_id !== null
+            ? a.content_id === b.content_id
+            : a.content_title === b.content_title
         }
-      />
-    </Box>
+      >
+        <ComboboxChips ref={anchor} className="min-h-9 bg-card">
+          <ComboboxValue>
+            {(values: Content[]) => (
+              <>
+                {values.map((content) => (
+                  <ComboboxChip key={content.content_id ?? content.content_title}>
+                    <span className="max-w-48 truncate">{content.content_title}</span>
+                  </ComboboxChip>
+                ))}
+                <ComboboxChipsInput
+                  id="related-contents-input"
+                  placeholder={values.length ? "" : "Find content"}
+                />
+              </>
+            )}
+          </ComboboxValue>
+        </ComboboxChips>
+        <ComboboxContent anchor={anchor}>
+          <ComboboxEmpty>No contents found</ComboboxEmpty>
+          <ComboboxList>
+            {(content: Content) => (
+              <ComboboxItem
+                key={content.content_id ?? content.content_title}
+                value={content}
+              >
+                <span className="truncate">{content.content_title}</span>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </Field>
   );
 };

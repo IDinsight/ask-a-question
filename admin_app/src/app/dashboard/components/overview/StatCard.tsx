@@ -1,117 +1,63 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import { SvgIconComponent } from "@mui/icons-material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
+
+import { cn } from "cn";
+import { Period } from "../../types";
 
 interface StatCardProps {
   title: string;
   value: number;
+  /** Change vs. the previous period as a fraction (0.12 = +12%). */
   percentageChange: number;
-  Icon: SvgIconComponent;
-  period: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  /** Extra classes for the icon, e.g. to tint the urgent card. */
+  iconClassName?: string;
+  period: Period;
 }
+
+/** "since last week", or a neutral phrase for custom ranges. */
+const comparisonText = (period: Period) =>
+  period === "custom" ? "vs. previous period" : `since last ${period}`;
 
 const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   percentageChange,
   Icon,
+  iconClassName,
   period,
 }) => {
-  const DirectionIcon =
-    percentageChange < 0 ? TrendingDownIcon : TrendingUpIcon;
+  // The backend reports 0% when the previous period had nothing to compare with,
+  // so a zero value with zero change means there's no trend to show yet.
+  const noChangeData = value === 0 && percentageChange === 0;
+  const DirectionIcon = percentageChange < 0 ? IconTrendingDown : IconTrendingUp;
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        borderRadius: 1,
-        boxShadow: 1,
-        backgroundColor: "white",
-        display: "flex",
-        flex: 1,
-      }}
-    >
-      <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Box sx={{ display: "flex", flexDirection: "row" }}>
-          <Icon
-            sx={{
-              fontSize: "1.2rem",
-              marginRight: 0.5,
-              color: "grey.800",
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: "0.8rem",
-              color: "grey.700",
-              marginBottom: 0.5,
-            }}
-          >
-            {title}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", flexWrap: "wrap", flexDirection: "row" }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontSize: "2rem",
-              fontWeight: "bold",
-              marginRight: 0.5,
-            }}
-          >
-            {value.toLocaleString()}
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "left",
-              marginTop: 0.3,
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-              }}
-              fontWeight="fontWeightHeavy"
-            >
-              <DirectionIcon
-                sx={{
-                  fontSize: "1rem",
-                  color: percentageChange < 0 ? "error.main" : "success.main",
-                  marginRight: 0.5,
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: "0.775rem",
-                  color: percentageChange < 0 ? "error.main" : "success.main",
-                  fontWeight: "bold",
-                }}
-              >
-                {percentageChange.toLocaleString(undefined, {
-                  style: "percent",
-                  minimumFractionDigits: 1,
-                })}
-              </Typography>
-            </Box>
-            <Typography
-              sx={{
-                fontSize: "0.675rem",
-                color: "grey.500",
-                marginLeft: 0.5,
-              }}
-            >
-              since last {period}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+    <div className="flex flex-col gap-1.5 border bg-card p-4 shadow-xs">
+      <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
+        <Icon className={cn("size-4 shrink-0", iconClassName)} aria-hidden="true" />
+        {title}
+      </div>
+      <div className="text-3xl leading-tight font-semibold tracking-tight tabular-nums">
+        {value.toLocaleString()}
+      </div>
+      {noChangeData ? (
+        <span className="text-xs text-muted-foreground">No change data yet</span>
+      ) : (
+        // Percentage and comparison on separate lines so every card wraps the same way
+        <span className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+          <span className="flex items-center gap-0.5 font-medium text-foreground">
+            <DirectionIcon className="size-3.5" aria-hidden="true" />
+            {percentageChange.toLocaleString(undefined, {
+              style: "percent",
+              minimumFractionDigits: 1,
+              signDisplay: "exceptZero",
+            })}
+          </span>
+          {comparisonText(period)}
+        </span>
+      )}
+    </div>
   );
 };
 

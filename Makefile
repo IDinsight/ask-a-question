@@ -101,6 +101,28 @@ teardown-llm-proxy:
 	@docker stop litellm-proxy
 	@docker rm litellm-proxy
 
+# Dev LiteLLM Proxy without Docker: runs the same LiteLLM version as a local
+# process in a throwaway uv environment, so it never touches core_backend/.venv
+# (which pins an older LiteLLM without the proxy extras).
+# FastAPI is pinned because litellm 1.97.0's proxy imports
+# fastapi.dependencies.utils.get_flat_dependant, which newer FastAPI (e.g. 0.162)
+# removed; the Docker image avoids this by shipping its own pinned FastAPI.
+# Reads provider keys from deployment/docker-compose/.litellm_proxy.env.
+# Defaults to port 4001 so it doesn't clash with other gateways on 4000; set
+# LITELLM_LOCAL_PORT to change it, and match LITELLM_ENDPOINT in core_backend/.env.
+LITELLM_LOCAL_PORT ?= 4001
+setup-llm-proxy-local:
+	@test -f deployment/docker-compose/.litellm_proxy.env || \
+		{ echo "Missing deployment/docker-compose/.litellm_proxy.env (copy template.litellm_proxy.env)"; exit 1; }
+	@set -a; . deployment/docker-compose/.litellm_proxy.env; set +a; \
+	case "$$OPENAI_API_KEY" in ""|"[OPENAI_API_KEY]") \
+		echo "Set OPENAI_API_KEY in deployment/docker-compose/.litellm_proxy.env first"; exit 1;; esac; \
+	uvx --from 'litellm[proxy]==1.97.0' \
+		--with 'fastapi==0.136.3' \
+		litellm \
+		--config deployment/docker-compose/litellm_proxy_config.yaml \
+		--port $(LITELLM_LOCAL_PORT)
+
 
 build-embeddings-arm:
 	@git clone https://github.com/huggingface/text-embeddings-inference.git

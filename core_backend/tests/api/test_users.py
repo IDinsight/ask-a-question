@@ -9,13 +9,13 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.users.models import (
+from app.users.models import (
     UserAlreadyExistsError,
     UserNotFoundError,
     get_user_by_username,
     save_user_to_db,
 )
-from core_backend.app.users.schemas import UserCreate, UserRoles
+from app.users.schemas import UserCreate, UserRoles
 
 from .conftest import (
     TEST_ADMIN_USERNAME_1,

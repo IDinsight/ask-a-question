@@ -10,13 +10,13 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.question_answer.models import (
+from app.question_answer.models import (
     save_content_feedback_to_db,
     save_query_response_to_db,
     save_response_feedback_to_db,
     save_user_query_to_db,
 )
-from core_backend.app.question_answer.schemas import (
+from app.question_answer.schemas import (
     ContentFeedback,
     ErrorType,
     QueryBase,
@@ -24,13 +24,13 @@ from core_backend.app.question_answer.schemas import (
     QueryResponseError,
     ResponseFeedbackBase,
 )
-from core_backend.app.schemas import FeedbackSentiment, QuerySearchResult
-from core_backend.app.urgency_detection.models import (
+from app.schemas import FeedbackSentiment, QuerySearchResult
+from app.urgency_detection.models import (
     save_urgency_query_to_db,
     save_urgency_response_to_db,
 )
-from core_backend.app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
-from core_backend.app.urgency_rules.schemas import UrgencyRuleCosineDistance
+from app.urgency_detection.schemas import UrgencyQuery, UrgencyResponse
+from app.urgency_rules.schemas import UrgencyRuleCosineDistance
 
 from .conftest import MockDatetime
 
@@ -256,7 +256,7 @@ class TestUrgencyQueryDataAPI:
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "core_backend.app.urgency_detection.models.datetime",
+                "app.urgency_detection.models.datetime",
                 MockDatetime(date=date),
             )
             urgency_query = UrgencyQuery(message_text=f"query {i}")
@@ -316,7 +316,7 @@ class TestUrgencyQueryDataAPI:
         days_ago = random.randrange(N_DAYS_HISTORY)
         date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
-            "core_backend.app.urgency_detection.models.datetime",
+            "app.urgency_detection.models.datetime",
             MockDatetime(date=date),
         )
         urgency_query = UrgencyQuery(message_text="query")
@@ -564,7 +564,7 @@ class TestQueryDataAPI:
 
         for i, date in enumerate(dates):
             monkeypatch.setattr(
-                "core_backend.app.question_answer.models.datetime",
+                "app.question_answer.models.datetime",
                 MockDatetime(date=date),
             )
             query = QueryBase(generate_llm_response=False, query_text=f"query {i}")
@@ -684,7 +684,7 @@ class TestQueryDataAPI:
         days_ago = random.randrange(N_DAYS_HISTORY)
         date = datetime.now(timezone.utc) - relativedelta(days=days_ago)
         monkeypatch.setattr(
-            "core_backend.app.question_answer.models.datetime", MockDatetime(date=date)
+            "app.question_answer.models.datetime", MockDatetime(date=date)
         )
         query = QueryBase(generate_llm_response=False, query_text="query")
         query_db = await save_user_query_to_db(

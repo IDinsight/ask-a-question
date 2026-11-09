@@ -9,13 +9,13 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import delete
 
-from core_backend.app.dashboard.models import get_content_details
-from core_backend.app.dashboard.routers import (
+from app.dashboard.models import get_content_details
+from app.dashboard.routers import (
     DashboardTimeFilter,
     get_freq_start_end_date,
     retrieve_performance,
 )
-from core_backend.app.question_answer.models import (
+from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
     QueryResponseContentDB,
@@ -23,12 +23,12 @@ from core_backend.app.question_answer.models import (
     save_content_for_query_to_db,
     save_user_query_to_db,
 )
-from core_backend.app.question_answer.schemas import (
+from app.question_answer.schemas import (
     ContentFeedback,
     QueryBase,
     QuerySearchResult,
 )
-from core_backend.app.schemas import FeedbackSentiment
+from app.schemas import FeedbackSentiment
 
 from .conftest import MockDatetime
 
@@ -119,7 +119,7 @@ async def content_with_query_history(
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta
         monkeypatch.setattr(
-            "core_backend.app.question_answer.models.datetime",
+            "app.question_answer.models.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response):
@@ -161,7 +161,7 @@ async def content_with_query_history(
         query_search_results = {}
         time_of_record = datetime.now(timezone.utc) - delta - delta - delta
         monkeypatch.setattr(
-            "core_backend.app.question_answer.models.datetime",
+            "app.question_answer.models.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response // 2):
@@ -201,7 +201,7 @@ async def content_with_query_history(
             datetime.now(timezone.utc) - delta - delta - delta - delta - delta
         )
         monkeypatch.setattr(
-            "core_backend.app.question_answer.models.datetime",
+            "app.question_answer.models.datetime",
             MockDatetime(date=time_of_record),
         )
         for i in range(n_response // 3):

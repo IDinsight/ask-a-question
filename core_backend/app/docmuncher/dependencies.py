@@ -11,7 +11,7 @@ from mistralai import DocumentURLChunk, Mistral
 from PyPDF2 import PdfReader
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import (
+from ..core.config import (
     LITELLM_MODEL_DOCMUNCHER_PARAPHRASE_TABLE,
     LITELLM_MODEL_DOCMUNCHER_TITLE,
     PAGES_TO_CARDS_CONVERSION,

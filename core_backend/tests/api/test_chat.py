@@ -7,16 +7,16 @@ import pytest
 from litellm import token_counter
 from redis import asyncio as aioredis
 
-from core_backend.app.config import LITELLM_MODEL_CHAT
-from core_backend.app.llm_call.utils import (
+from app.core.config import LITELLM_MODEL_CHAT
+from app.llm_call.utils import (
     _ask_llm_async,
     _truncate_chat_history,
     append_message_content_to_chat_history,
     init_chat_history,
 )
-from core_backend.app.question_answer.routers import init_user_query_and_chat_histories
-from core_backend.app.question_answer.schemas import QueryBase
-from core_backend.app.utils import get_random_int32
+from app.question_answer.routers import init_user_query_and_chat_histories
+from app.question_answer.schemas import QueryBase
+from app.utils import get_random_int32
 
 
 async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) -> None:
@@ -49,11 +49,11 @@ async def test_init_user_query_and_chat_histories(redis_client: aioredis.Redis) 
 
     with (
         patch(
-            "core_backend.app.question_answer.routers.init_chat_history",
+            "app.question_answer.routers.init_chat_history",
             new_callable=AsyncMock,
         ) as mock_init_chat_history,
         patch(
-            "core_backend.app.question_answer.routers.get_chat_response",
+            "app.question_answer.routers.get_chat_response",
             new_callable=AsyncMock,
         ) as mock_get_chat_response,
     ):
@@ -102,7 +102,7 @@ async def test__ask_llm_async() -> None:
 
     with (
         patch(
-            "core_backend.app.llm_call.utils.acompletion", new_callable=AsyncMock
+            "app.llm_call.utils.acompletion", new_callable=AsyncMock
         ) as mock_acompletion,
     ):
         mock_acompletion.return_value = mock_acompletion_return_value
@@ -346,15 +346,16 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
         ],
     }
 
-    with patch(
-        "core_backend.app.llm_call.utils.requests.get", return_value=mock_response
-    ):
+    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
         # Call the function under test
         session_id = "12345"
-        (chat_cache_key, chat_params_cache_key, chat_history, old_chat_params) = (
-            await init_chat_history(
-                redis_client=redis_client, reset=False, session_id=session_id
-            )
+        (
+            chat_cache_key,
+            chat_params_cache_key,
+            chat_history,
+            old_chat_params,
+        ) = await init_chat_history(
+            redis_client=redis_client, reset=False, session_id=session_id
         )
 
         # Check that attributes are generated correctly and that the chat history is
@@ -416,9 +417,7 @@ async def test_init_chat_history(redis_client: aioredis.Redis) -> None:
             },
         ],
     }
-    with patch(
-        "core_backend.app.llm_call.utils.requests.get", return_value=mock_response
-    ):
+    with patch("app.llm_call.utils.requests.get", return_value=mock_response):
         _, _, reset_chat_history, _ = await init_chat_history(
             redis_client=redis_client, reset=True, session_id=session_id
         )

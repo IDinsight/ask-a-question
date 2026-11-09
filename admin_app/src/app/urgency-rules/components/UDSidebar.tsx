@@ -1,12 +1,18 @@
 import React, { useState } from "react";
+import { IconAlertTriangle, IconBolt, IconCircleCheck } from "@tabler/icons-react";
 
-import { Close } from "@mui/icons-material";
-import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
-
-import { sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { JsonDialog } from "@/components/JsonDialog";
 import { TestSidebar } from "@/components/SidebarCommon";
 import TypingAnimation from "@/components/TypingAnimation";
+import { apiCalls } from "@/utils/api";
 
 interface UDResults {
   is_urgent: boolean;
@@ -72,129 +78,94 @@ const getUDResponse = (
   }
 };
 
+/** Urgent / not urgent, plus the rules that matched. */
 const RenderUDResponse = ({ parsedData }: { parsedData: UDResults }) => {
+  const single = parsedData.matched_rules.length === 1;
   return (
-    <Box display="flex" flexDirection="column">
-      <Typography component={"span"} variant="subtitle2">
-        Classification
-      </Typography>
-      <Typography
-        component={"span"}
-        variant="subtitle1"
-        paddingBottom={sizes.doubleBaseGap}
-      >
-        {parsedData.is_urgent ? "Urgent" : "Not urgent"}
-      </Typography>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Classification
+        </h3>
+        {parsedData.is_urgent ? (
+          <span className="flex items-center gap-1.5 text-base font-semibold text-urgent">
+            <IconAlertTriangle className="size-4" aria-hidden="true" />
+            Urgent
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-base font-semibold">
+            <IconCircleCheck
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            Not urgent
+          </span>
+        )}
+      </div>
       {parsedData.is_urgent && (
-        <Typography component={"span"} variant="subtitle2" paddingBottom={1}>
-          {parsedData.matched_rules.length === 1 ? "Matched Rule" : "Matched Rules"}
-        </Typography>
+        <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {single ? "Matched Rule" : "Matched Rules"}
+        </h3>
       )}
-      {parsedData.matched_rules.map((text: string) => (
-        <Box sx={{ paddingBottom: 1 }} key={1}>
-          <Typography component={"span"} variant="body2">
-            {parsedData.matched_rules.length === 1 ? "" : "•"} {text}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
+      {parsedData.matched_rules.length > 0 && (
+        // A bulleted list only when there's more than one rule
+        <ul className={single ? "flex flex-col" : "flex list-disc flex-col gap-2 pl-5"}>
+          {parsedData.matched_rules.map((text: string, i: number) => (
+            <li key={i}>{text}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 };
 
 const UDResponseBox: React.FC<UDResponseBoxProps> = ({ loading, responseBoxData }) => {
-  if (!responseBoxData) {
-    return;
-  }
-
+  // Hooks must run before any early return.
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
-  const toggleJsonModal = (): void => setJsonModalOpen(!jsonModalOpen);
 
   if (loading) {
     return <TypingAnimation />;
-  } else {
-    return (
-      <>
-        <Box display="flex" flexDirection="column" justifyContent="center">
-          {/* if type is string, there was an error */}
-          {typeof responseBoxData.parsedData === "string" ? (
-            <Typography variant="body1">{responseBoxData.parsedData}</Typography>
-          ) : (
-            <RenderUDResponse parsedData={responseBoxData.parsedData} />
-          )}
-          <Box
-            style={{
-              marginTop: "5px",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
-            <Link
-              onClick={toggleJsonModal}
-              variant="caption"
-              align="right"
-              underline="hover"
-              sx={{ cursor: "pointer" }}
-            >
-              {"<json>"}
-            </Link>
-          </Box>
-        </Box>
+  }
 
-        <Modal
-          open={jsonModalOpen}
-          onClose={toggleJsonModal}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Fade in={jsonModalOpen}>
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "80%",
-                maxHeight: "80%",
-                flexGrow: 1,
-                p: 4,
-                boxShadow: 24,
-                overflow: "scroll",
-                borderRadius: "10px",
-                bgcolor: "background.paper",
-              }}
-            >
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <IconButton onClick={toggleJsonModal}>
-                  <Close />
-                </IconButton>
-              </Box>
-              <Typography
-                component={"span"}
-                id="modal-modal-description"
-                sx={{ marginTop: 2 }}
-              >
-                <pre
-                  style={{
-                    backgroundColor: "#f5f5f5",
-                    border: "1px solid #ccc",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    overflowX: "auto",
-                    fontFamily: "Courier, monospace",
-                  }}
-                >
-                  {"rawJson" in responseBoxData
-                    ? JSON.stringify(responseBoxData.rawJson, null, 2)
-                    : "No JSON data found"}
-                </pre>
-              </Typography>
-            </Box>
-          </Fade>
-        </Modal>
-      </>
+  if (!responseBoxData) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconBolt />
+          </EmptyMedia>
+          <EmptyTitle>Test your rules</EmptyTitle>
+          <EmptyDescription>
+            Type a sample message to see whether it would be flagged as urgent.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
+
+  return (
+    <>
+      <div className="flex flex-col gap-3">
+        {/* A string means the request failed */}
+        {typeof responseBoxData.parsedData === "string" ? (
+          <p>{responseBoxData.parsedData}</p>
+        ) : (
+          <RenderUDResponse parsedData={responseBoxData.parsedData} />
+        )}
+        <div className="flex items-center justify-end">
+          <Button variant="link" size="xs" onClick={() => setJsonModalOpen(true)}>
+            {"<json>"}
+          </Button>
+        </div>
+      </div>
+
+      <JsonDialog
+        open={jsonModalOpen}
+        onOpenChange={setJsonModalOpen}
+        json={responseBoxData.rawJson}
+      />
+    </>
+  );
 };
 
 const UDSidebar = ({ closeSidebar }: { closeSidebar: () => void }) => {

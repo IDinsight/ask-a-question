@@ -21,7 +21,7 @@ from PyPDF2 import PdfReader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, get_current_workspace_name
-from ..config import (
+from ..core.config import (
     CHECK_CONTENT_LIMIT,
     PAGES_TO_CARDS_CONVERSION,
     REDIS_DOC_INGEST_EXPIRY_TIME,
@@ -30,7 +30,7 @@ from ..contents.routers import (
     ExceedsContentQuotaError,
     _check_content_quota_availability,
 )
-from ..database import get_async_session
+from ..core.database import get_async_session
 from ..users.models import UserDB, user_has_required_role_in_workspace
 from ..users.schemas import UserRoles
 from ..utils import setup_logger

@@ -1,5 +1,7 @@
+/** Dashboard sub-pages, picked from the app sidebar via ?page=<slug>. */
+type PageName = "Overview" | "Content Performance" | "Query Topics";
 type Period = "day" | "week" | "month" | "year" | "custom";
-type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
+type TimeFrame = "Last 24 hours" | "Last 7 days" | "Last month" | "Last year";
 type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
 
 interface CustomDateParams {
@@ -13,12 +15,20 @@ interface DrawerData {
   positive_votes: number;
   negative_votes: number;
   daily_query_count_avg: number;
-  line_chart_data: ApexData[];
+  /** One row per time bucket for the drawer's line chart. */
+  line_chart_data: DrawerChartRow[];
   user_feedback: {
     timestamp: string;
     question: string;
     feedback: string;
   }[];
+}
+
+interface DrawerChartRow {
+  timestamp: number;
+  query_count: number;
+  positive_count: number;
+  negative_count: number;
 }
 
 interface DayHourUsageData {
@@ -106,6 +116,8 @@ interface ContentLineChartTSData {
   zIndex?: number;
 }
 export type {
+  PageName,
+  DrawerChartRow,
   Period,
   TimeFrame,
   DrawerData,

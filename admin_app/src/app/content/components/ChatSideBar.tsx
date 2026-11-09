@@ -1,26 +1,34 @@
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import TypingAnimation from "@/components/TypingAnimation";
-import { Close, Send } from "@mui/icons-material";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import CloseIcon from "@mui/icons-material/Close";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
-  Avatar,
-  Box,
-  CircularProgress,
-  Fade,
-  IconButton,
-  Link,
-  Modal,
-  Paper,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+  IconMessageChatbot,
+  IconRefresh,
+  IconSend,
+  IconSparkles,
+  IconX,
+} from "@tabler/icons-react";
 
-import { appColors, sizes } from "@/utils";
+import TypingAnimation from "@/components/TypingAnimation";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "cn";
 import { CustomError } from "@/utils/api";
+import { MARKDOWN_CLASSES } from "./ContentModal";
+import { JsonDialog } from "@/components/JsonDialog";
 
 interface ResponseSummary {
   index: string;
@@ -64,12 +72,6 @@ const ChatSideBar = ({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
-  const handleQuestionChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setQuestion(event.target.value);
-  };
-
   const processErrorMessage = (error: CustomError) => {
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -124,219 +126,135 @@ const ChatSideBar = ({
   };
 
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        padding: 3,
-        paddingTop: 4,
-        height: "100%",
-      }}
-    >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        marginBottom={4}
-      >
-        <Typography variant="h6">Test Chat</Typography>
-        <IconButton onClick={closeSidebar}>
-          <Close />
-        </IconButton>
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          flexShrink: 1,
-          height: 0,
-          minHeight: "200px",
-          padding: 2,
-          overflowY: "auto",
-        }}
-      >
-        {messages.map((message, index) => (
-          <MessageBox key={index} {...message} />
-        ))}
+    <aside className="flex h-full flex-col gap-4 border-l bg-card p-6 text-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Test chat</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Close test chat"
+          onClick={closeSidebar}
+        >
+          <IconX />
+        </Button>
+      </div>
+
+      <div className="flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto">
+        {messages.length === 0 && !loading ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <IconMessageChatbot />
+              </EmptyMedia>
+              <EmptyTitle>Start a test conversation</EmptyTitle>
+              <EmptyDescription>
+                Ask a question to see how the chat service answers using your content.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          messages.map((message, index) => <MessageBox key={index} {...message} />)
+        )}
         {loading ? (
-          <Box display="flex" alignItems="center">
-            <Avatar
-              alt="FA"
-              sx={{
-                mr: 1,
-                my: 1,
-                width: sizes.icons.medium,
-                height: sizes.icons.medium,
-                bgcolor: "primary.main",
-              }}
-            >
-              <AutoAwesomeIcon />
-            </Avatar>
+          <div className="flex items-end gap-2">
+            <BotAvatar />
             <TypingAnimation />
-          </Box>
+          </div>
         ) : null}
         <div ref={bottomRef}></div>
-      </Box>
-      <Box display="flex" justifyContent="flex-end" margin={1}>
-        <Tooltip title="Reset conversation" aria-label="reset">
-          <IconButton
-            onClick={handleReset}
-            sx={{ color: appColors.primary }}
-            disabled={loading}
-          >
-            <RestartAltIcon />
-            <Typography variant="body2">Reset chat</Typography>
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Box
-        sx={{
-          padding: 2,
-          border: 1,
-          borderRadius: 1,
-          borderColor: "grey.400",
-        }}
-      >
-        <TextField
-          variant="standard"
-          placeholder="Ask a question..."
-          fullWidth
-          value={question}
-          onChange={handleQuestionChange}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && loading === false) {
-              handleSendClick();
-            }
-          }}
-          InputProps={{ disableUnderline: true }}
-        />
-        <Box
-          display="flex"
-          flexDirection="row"
-          justifyContent="flex-end"
-          paddingTop={2}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-end"
+          onClick={handleReset}
+          disabled={loading || messages.length === 0}
         >
-          <IconButton
-            onClick={handleSendClick}
-            sx={{ color: appColors.primary }}
-            disabled={loading || question == "" ? true : false}
-          >
-            {loading ? <CircularProgress size={24} /> : <Send />}
-          </IconButton>
-        </Box>
-      </Box>
-    </Paper>
+          <IconRefresh data-icon="inline-start" />
+          Reset chat
+        </Button>
+        <InputGroup className="h-10 bg-background">
+          <InputGroupInput
+            aria-label="Question"
+            placeholder="Ask a question..."
+            className="text-sm md:text-sm"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !loading && question !== "") {
+                handleSendClick();
+              }
+            }}
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton
+              size="icon-sm"
+              variant="default"
+              aria-label="Send question"
+              disabled={loading || question === ""}
+              onClick={handleSendClick}
+            >
+              {loading ? <Spinner /> : <IconSend />}
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </aside>
   );
 };
+
+/** Round avatar marking messages from the assistant. */
+const BotAvatar = () => (
+  <Avatar size="sm" className="mb-1">
+    <AvatarFallback className="bg-primary text-primary-foreground">
+      <IconSparkles className="size-3.5" />
+    </AvatarFallback>
+  </Avatar>
+);
+
 const MessageBox = (message: Message) => {
   const [open, setOpen] = useState(false);
-  const toggleJsonModal = () => setOpen(!open);
-  const modalStyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "80%",
-    maxHeight: "80%",
-    flexGrow: 1,
-    bgcolor: "background.paper",
-    boxShadow: 24,
-    p: 4,
-    overflow: "scroll",
-    borderRadius: "10px",
-  };
-  const avatarOrder = message.type === "question" ? 2 : 0;
-  const contentOrder = 1;
-  const messageBubbleStyles = {
-    py: 0,
-    px: 2,
-    borderRadius: "15px",
-    bgcolor: message.type === "question" ? appColors.lightGrey : appColors.primary,
-    color: message.type === "question" ? "black" : "white",
-    maxWidth: "75%",
-    wordBreak: "break-word",
-    order: contentOrder,
-  };
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: message.type === "question" ? "flex-end" : "flex-start",
-        mb: 1,
-      }}
-    >
-      {message.type === "response" && (
-        <Avatar
-          alt="FA"
-          sx={{
-            mr: 1,
-            my: 1,
-            width: sizes.icons.medium,
-            height: sizes.icons.medium,
-            bgcolor: "primary.main",
-            alignSelf: "flex-end",
-            order: avatarOrder,
-          }}
-        >
-          <AutoAwesomeIcon />
-        </Avatar>
-      )}
+  const isQuestion = message.type === "question";
 
-      <Box sx={messageBubbleStyles}>
-        <Typography component={"span"} variant="body1" align="left">
+  return (
+    <div
+      className={cn(
+        "flex items-end gap-2",
+        isQuestion ? "justify-end" : "justify-start",
+      )}
+    >
+      {!isQuestion && <BotAvatar />}
+
+      <div
+        className={cn(
+          "max-w-[75%] rounded-2xl px-3 py-2 break-words",
+          isQuestion
+            ? "rounded-br-sm bg-muted text-foreground"
+            : "rounded-bl-sm bg-primary text-primary-foreground",
+        )}
+      >
+        <div className={MARKDOWN_CLASSES}>
           <ReactMarkdown>
             {typeof message.content === "string" ? message.content : ""}
           </ReactMarkdown>
-        </Typography>
-        {message.hasOwnProperty("json") && (
-          <Link
-            onClick={toggleJsonModal}
-            variant="caption"
-            align="right"
-            underline="hover"
-            sx={{ cursor: "pointer", display: "block", color: appColors.white }}
+        </div>
+        {"json" in message && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="mt-1 block w-full text-right text-xs underline-offset-2 opacity-80 hover:underline hover:opacity-100"
           >
             {"<json>"}
-          </Link>
+          </button>
         )}
-      </Box>
+      </div>
 
-      <Modal
-        open={open}
-        onClose={toggleJsonModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Fade in={!!open}>
-          <Box sx={modalStyle}>
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <IconButton onClick={toggleJsonModal}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <Typography component={"span"} id="modal-modal-description" sx={{ mt: 2 }}>
-              <pre
-                style={{
-                  backgroundColor: "#f5f5f5",
-                  border: "1px solid #ccc",
-                  padding: "10px",
-                  borderRadius: "10px",
-                  overflowX: "auto",
-                  fontFamily: "Courier, monospace",
-                }}
-              >
-                {"json" in message
-                  ? JSON.stringify(message.json, null, 2)
-                  : "No JSON message found"}
-              </pre>
-            </Typography>
-          </Box>
-        </Fade>
-      </Modal>
-    </Box>
+      {"json" in message && (
+        <JsonDialog open={open} onOpenChange={setOpen} json={message.json} />
+      )}
+    </div>
   );
 };
 export { ChatSideBar };

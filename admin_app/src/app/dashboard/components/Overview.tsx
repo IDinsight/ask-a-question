@@ -1,23 +1,30 @@
 import React, { useEffect } from "react";
-import { Box } from "@mui/material";
-import { format } from "date-fns";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import NewReleasesOutlinedIcon from "@mui/icons-material/NewReleasesOutlined";
-import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import Link from "next/link";
+import {
+  IconArrowRight,
+  IconBolt,
+  IconCheck,
+  IconMessage,
+  IconThumbDown,
+  IconThumbUp,
+} from "@tabler/icons-react";
+
 import { useAuth } from "@/utils/auth";
 import { getOverviewPageData } from "@/app/dashboard/api";
-import StackedBarChart from "@/app/dashboard/components/overview/StackedChart";
+import { getContentList } from "@/app/content/api";
+import StackedBarChart, {
+  QueriesLegend,
+  type QueriesOverTimeRow,
+} from "@/app/dashboard/components/overview/StackedChart";
 import HeatMap from "@/app/dashboard/components/overview/HeatMap";
 import { StatCard, StatCardProps } from "@/app/dashboard/components/overview/StatCard";
 import TopContentTable from "@/app/dashboard/components/overview/TopContentTable";
-import { Layout } from "@/components/Layout";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "cn";
 import {
-  ApexData,
-  ApexSeriesData,
-  InputSeriesData,
+  CustomDashboardFrequency,
   DayHourUsageData,
+  InputSeriesData,
   Period,
   TopContentData,
   CustomDateParams,
@@ -28,16 +35,22 @@ interface OverviewProps {
   customDateParams?: CustomDateParams;
 }
 
+/** Bar size the backend uses for each preset period (see core_backend routers). */
+const presetFrequency: Record<Exclude<Period, "custom">, CustomDashboardFrequency> = {
+  day: "Hour",
+  week: "Day",
+  month: "Day",
+  year: "Month",
+};
+
 const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => {
   const { token } = useAuth();
   const [statCardData, setStatCardData] = React.useState<StatCardProps[]>([]);
-  const [heatmapData, setHeatmapData] = React.useState<ApexData[]>([
-    { name: "", data: [] },
-  ]);
-  const [timeseriesData, setTimeseriesData] = React.useState<ApexSeriesData[]>([
-    { name: "", data: [], group: "" },
-  ]);
+  const [heatmapData, setHeatmapData] = React.useState<DayHourUsageData>({});
+  const [timeseriesData, setTimeseriesData] = React.useState<QueriesOverTimeRow[]>([]);
   const [topContentData, setTopContentData] = React.useState<TopContentData[]>([]);
+  const [totalQueries, setTotalQueries] = React.useState<number | null>(null);
+  const [hasContent, setHasContent] = React.useState(false);
 
   const parseCardData = (statsCardsData: Record<string, any>, timePeriod: Period) => {
     const {
@@ -47,121 +60,70 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => 
       urgency_stats,
     } = statsCardsData;
 
-    const statCardData: StatCardProps[] = [
+    setTotalQueries(query_stats.n_questions);
+    setStatCardData([
       {
-        title: "Total Queries",
+        title: "Total queries",
         value: query_stats.n_questions,
         percentageChange: query_stats.percentage_increase,
-        Icon: ChatBubbleOutlineIcon,
+        Icon: IconMessage,
         period: timePeriod,
       },
       {
-        title: "Downvoted Responses",
+        title: "Downvoted responses",
         value: response_feedback_stats.n_negative,
         percentageChange: response_feedback_stats.percentage_negative_increase,
-        Icon: ThumbDownOffAltIcon,
+        Icon: IconThumbDown,
         period: timePeriod,
       },
       {
-        title: "Urgent Queries",
+        title: "Urgent queries",
         value: urgency_stats.n_urgent,
         percentageChange: urgency_stats.percentage_increase,
-        Icon: NewReleasesOutlinedIcon,
+        Icon: IconBolt,
+        iconClassName: "text-urgent",
         period: timePeriod,
       },
       {
-        title: "Content Upvotes",
+        title: "Content upvotes",
         value: content_feedback_stats.n_positive,
         percentageChange: content_feedback_stats.percentage_positive_increase,
-        Icon: ThumbUpIcon,
+        Icon: IconThumbUp,
         period: timePeriod,
       },
       {
-        title: "Content Downvotes",
+        title: "Content downvotes",
         value: content_feedback_stats.n_negative,
         percentageChange: content_feedback_stats.percentage_negative_increase,
-        Icon: ThumbDownIcon,
+        Icon: IconThumbDown,
         period: timePeriod,
       },
-    ];
-
-    setStatCardData(statCardData);
+    ]);
   };
 
-  const parseHeatmapData = (heatmapData: DayHourUsageData) => {
-    const parsedData = Object.keys(heatmapData).map((time: string) => {
-      const timeString = getLocalTime(time);
-      return {
-        name: timeString,
-        data: Object.keys(heatmapData[time]).map((day: string) => ({
-          x: day,
-          y: +heatmapData[time][day],
-        })),
-      };
-    });
-
-    setHeatmapData(parsedData);
-  };
-
+  // One row per timestamp with all three counts, the shape Recharts expects.
   const parseTimeseriesData = (timeseriesData: InputSeriesData) => {
-    // We want 3 series but arranged into 2 groups.
-    // "downvoted" + "normal" -> group1
-    // "urgent" -> group2
-
-    // Hard-code the categories in the order we want to render them
-    const categories = ["normal", "downvoted", "urgent"];
-
-    // Create empty series with correct group assignments
-    const seriesData: ApexSeriesData[] = [
-      {
-        name: "Normal",
-        group: "group1",
-        data: [],
-      },
-      {
-        name: "Downvoted",
-        group: "group1",
-        data: [],
-      },
-      {
-        name: "Urgent",
-        group: "group2",
-        data: [],
-      },
-    ];
-    // Get the timestamps from one of the categories (they should match)
-    const sampleCategory = "normal"; // or "downvoted"
-    const timeStamps = Object.keys(timeseriesData[sampleCategory] || {});
-
-    // Build up .data arrays
-    timeStamps.forEach((stamp) => {
-      const date = new Date(stamp).getTime();
-
-      categories.forEach((category, idx) => {
-        const value = Number(timeseriesData[category]?.[stamp]) || 0;
-        seriesData[idx].data.push({
-          x: date,
-          y: value,
-        });
-      });
-    });
-
-    setTimeseriesData(seriesData);
-  };
-
-  const getLocalTime = (time: string) => {
-    const date = format(new Date(), "yyyy-MM-dd");
-    const UTCDateTimeString = `${date}T${time}:00.000000Z`;
-    const localDateTimeString = new Date(UTCDateTimeString);
-    return localDateTimeString.toLocaleString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    // Timestamps should match across categories; read them from "normal".
+    const timeStamps = Object.keys(timeseriesData["normal"] || {});
+    setTimeseriesData(
+      timeStamps.map((stamp) => ({
+        timestamp: new Date(stamp).getTime(),
+        normal: Number(timeseriesData["normal"]?.[stamp]) || 0,
+        downvoted: Number(timeseriesData["downvoted"]?.[stamp]) || 0,
+        urgent: Number(timeseriesData["urgent"]?.[stamp]) || 0,
+      })),
+    );
   };
 
   useEffect(() => {
     if (!token) return;
+
+    const handleData = (data: any) => {
+      parseCardData(data.stats_cards, timePeriod);
+      setHeatmapData(data.heatmap);
+      parseTimeseriesData(data.time_series);
+      setTopContentData(data.top_content);
+    };
 
     if (
       timePeriod === "custom" &&
@@ -175,62 +137,169 @@ const Overview: React.FC<OverviewProps> = ({ timePeriod, customDateParams }) => 
         customDateParams.startDate,
         customDateParams.endDate,
         customDateParams.frequency,
-      ).then((data) => {
-        parseCardData(data.stats_cards, timePeriod);
-        parseHeatmapData(data.heatmap);
-        parseTimeseriesData(data.time_series);
-        setTopContentData(data.top_content);
-      });
+      ).then(handleData);
     } else {
-      getOverviewPageData(timePeriod, token).then((data) => {
-        parseCardData(data.stats_cards, timePeriod);
-        parseHeatmapData(data.heatmap);
-        parseTimeseriesData(data.time_series);
-        setTopContentData(data.top_content);
-      });
+      getOverviewPageData(timePeriod, token).then(handleData);
     }
   }, [timePeriod, token, customDateParams]);
 
+  // Only needed for the setup checklist: does the workspace have any content?
+  useEffect(() => {
+    if (!token) return;
+    getContentList({ token, limit: 1 })
+      .then((data) => setHasContent(Array.isArray(data) && data.length > 0))
+      .catch(() => setHasContent(false));
+  }, [token]);
+
+  const frequency =
+    timePeriod === "custom"
+      ? customDateParams?.frequency ?? "Day"
+      : presetFrequency[timePeriod];
+
   return (
-    <>
-      <Box
-        sx={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: 2 }}
-      >
-        {statCardData.map((data, index) => (
-          <StatCard {...data} key={index} />
-        ))}
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "stretch",
-          gap: 3,
-          paddingTop: 3,
-        }}
-      >
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 1, borderRadius: 1, minWidth: 250, height: 450 }}
+    <div className="flex flex-col gap-6">
+      {/* Setup checklist until real questions start coming in */}
+      {totalQueries === 0 && <GetSetUp hasContent={hasContent} />}
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        {statCardData.length === 0
+          ? Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} className="h-[104px]" />
+            ))
+          : statCardData.map((data) => <StatCard {...data} key={data.title} />)}
+      </div>
+
+      <div className="flex flex-wrap gap-4">
+        <section
+          aria-labelledby="queries-over-time"
+          className="flex min-w-0 flex-[2_1_520px] flex-col gap-4 border bg-card p-5 shadow-xs"
         >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2
+              id="queries-over-time"
+              className="text-base font-semibold tracking-tight"
+            >
+              Queries over time
+            </h2>
+            <QueriesLegend />
+          </div>
           <StackedBarChart
             data={timeseriesData}
+            frequency={frequency}
             showDayOfWeek={timePeriod === "week"}
           />
-        </Box>
-        <Box
-          bgcolor="white"
-          sx={{ flexGrow: 0, borderRadius: 1, width: 300, height: 450 }}
+        </section>
+        <section
+          aria-labelledby="usage-frequency"
+          className="flex min-w-0 flex-[1_1_280px] flex-col gap-4 border bg-card p-5 shadow-xs"
         >
+          <h2 id="usage-frequency" className="text-base font-semibold tracking-tight">
+            Usage frequency
+          </h2>
           <HeatMap data={heatmapData} />
-        </Box>
-      </Box>
-      <Box bgcolor="white" sx={{ marginTop: 2 }}>
-        <TopContentTable rows={topContentData} />
-        <Layout.Spacer multiplier={2} />
-      </Box>
-      <Layout.Spacer multiplier={5} />
-    </>
+        </section>
+      </div>
+
+      <TopContentTable rows={topContentData} />
+    </div>
+  );
+};
+
+/**
+ * Four setup steps. Only "workspace" (always true here) and "content" can be
+ * checked from data the app has; the other two stay as links.
+ */
+const GetSetUp = ({ hasContent }: { hasContent: boolean }) => {
+  const steps = [
+    {
+      title: "Create your workspace",
+      text: "Your workspace is ready.",
+      done: true,
+    },
+    {
+      title: "Add content",
+      text: "Add your FAQs as content cards.",
+      done: hasContent,
+      link: { href: "/content", label: "Add content" },
+    },
+    {
+      title: "Test your answers",
+      text: "Check that responses sound right.",
+      done: false,
+      link: { href: "/content", label: "Open testing" },
+    },
+    {
+      title: "Connect your chatbot",
+      text: "Use your API key and our guides.",
+      done: false,
+      link: { href: "/integrations", label: "View integrations" },
+    },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+
+  return (
+    <section
+      aria-labelledby="get-set-up"
+      className="flex flex-col gap-4 border bg-card p-5 shadow-xs"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="get-set-up" className="text-base font-semibold tracking-tight">
+            Get set up
+          </h2>
+          <p className="text-[13px] text-muted-foreground">
+            Your insights appear here once real questions start coming in.
+          </p>
+        </div>
+        <div className="w-56">
+          <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
+            <span>Progress</span>
+            <b className="font-medium text-foreground tabular-nums">
+              {doneCount} of {steps.length}
+            </b>
+          </div>
+          <div
+            role="img"
+            aria-label={`${doneCount} of ${steps.length} steps complete`}
+            className="h-1.5 bg-muted"
+          >
+            <span
+              className="block h-full bg-primary"
+              style={{ width: `${(doneCount / steps.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+      <ol className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {steps.map((step, i) => (
+          <li key={step.title} className="flex flex-col gap-2 border bg-background p-4">
+            <span
+              className={cn(
+                "flex size-6 items-center justify-center border border-input text-xs font-semibold text-muted-foreground",
+                step.done && "border-primary bg-primary text-primary-foreground",
+              )}
+            >
+              {step.done ? <IconCheck className="size-3.5" aria-label="Done" /> : i + 1}
+            </span>
+            <b className="text-sm font-semibold">{step.title}</b>
+            <span className="text-[13px] text-muted-foreground">{step.text}</span>
+            {step.done ? (
+              <span className="mt-auto text-xs text-muted-foreground">Done</span>
+            ) : (
+              step.link && (
+                <Link
+                  href={step.link.href}
+                  className="mt-auto inline-flex items-center gap-1.5 text-[13px] font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {step.link.label}
+                  <IconArrowRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              )
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 };
 

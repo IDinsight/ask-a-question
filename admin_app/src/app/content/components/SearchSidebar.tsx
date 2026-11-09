@@ -1,18 +1,24 @@
 import React, { useState } from "react";
-
-import { Box, Fade, IconButton, Link, Modal, Typography } from "@mui/material";
 import {
-  Close,
-  ThumbDownAlt,
-  ThumbDownOffAlt,
-  ThumbUpAlt,
-  ThumbUpOffAlt,
-} from "@mui/icons-material";
+  IconSearch,
+  IconThumbDown,
+  IconThumbDownFilled,
+  IconThumbUp,
+  IconThumbUpFilled,
+} from "@tabler/icons-react";
 
-import { sizes } from "@/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { apiCalls } from "@/utils/api";
 import { TestSidebar } from "@/components/SidebarCommon";
 import TypingAnimation from "@/components/TypingAnimation";
+import { JsonDialog } from "@/components/JsonDialog";
 
 interface SearchResult {
   index: string;
@@ -154,30 +160,26 @@ const RenderSearchResponse = ({
   parsedData: SearchResultList | SearchResultListWithLLM;
 }) => {
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {"llm_response" in parsedData && (
-        <Box display="flex" flexDirection="column">
-          <Typography
-            component={"span"}
-            variant="body1"
-            paddingBottom={sizes.doubleBaseGap}
-          >
-            {parsedData.llm_response}
-          </Typography>
-          <Typography component={"span"} variant="subtitle1">
+        <>
+          <p className="leading-relaxed">{parsedData.llm_response}</p>
+          <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             References
-          </Typography>
-        </Box>
+          </h3>
+        </>
       )}
-      {parsedData["search_results"].map((c: SearchResult) => (
-        <Box sx={{ paddingBottom: sizes.smallGap }} key={c.index}>
-          <Typography component={"span"} variant="subtitle2">
-            {Number(c.index) + 1}: {c.title}
-          </Typography>
-          <Typography variant="body2">{c.text}</Typography>
-        </Box>
-      ))}
-    </>
+      <ol className="flex flex-col gap-3">
+        {parsedData["search_results"].map((c: SearchResult) => (
+          <li key={c.index} className="flex flex-col gap-1">
+            <span className="font-medium">
+              {Number(c.index) + 1}: {c.title}
+            </span>
+            <span className="text-muted-foreground">{c.text}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 };
 
@@ -186,28 +188,34 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
   responseBoxData,
   token,
 }) => {
-  if (!responseBoxData) {
-    return;
-  }
-
+  // Hooks must run before any early return.
   const [jsonModalOpen, setJsonModalOpen] = useState<boolean>(false);
-  const toggleJsonModal = (): void => setJsonModalOpen(!jsonModalOpen);
   const [thumbsUp, setThumbsUp] = useState<boolean>(false);
   const [thumbsDown, setThumbsDown] = useState<boolean>(false);
 
+  if (loading) {
+    return <TypingAnimation />;
+  }
+
+  if (!responseBoxData) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconSearch />
+          </EmptyMedia>
+          <EmptyTitle>Test your content</EmptyTitle>
+          <EmptyDescription>
+            Ask a question to see which contents the search service returns.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   const feedbackMapping = {
-    positive: {
-      state: thumbsUp,
-      setState: setThumbsUp,
-      onIcon: <ThumbUpAlt fontSize="small" />,
-      offIcon: <ThumbUpOffAlt fontSize="small" />,
-    },
-    negative: {
-      state: thumbsDown,
-      setState: setThumbsDown,
-      onIcon: <ThumbDownAlt fontSize="small" />,
-      offIcon: <ThumbDownOffAlt fontSize="small" />,
-    },
+    positive: { state: thumbsUp, setState: setThumbsUp },
+    negative: { state: thumbsDown, setState: setThumbsDown },
   };
 
   const sendResponseFeedback = (
@@ -216,7 +224,7 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
     token: string | null,
   ) => {
     if (token) {
-      // Assuming parsedData.rawJson is a JSON string. Parse it if necessary.
+      // rawJson is usually the parsed response object, but may be a string.
       const jsonResponse =
         typeof responseBoxData.rawJson === "string"
           ? JSON.parse(responseBoxData.rawJson)
@@ -247,120 +255,51 @@ const SearchResponseBox: React.FC<SearchResponseBoxProps> = ({
     }
   };
 
-  const feedbackButtonStyle = {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  };
-
-  if (loading) {
-    return <TypingAnimation />;
-  } else {
-    return (
-      <>
-        <Box display="flex" flexDirection="column" justifyContent="center">
-          {/* if type is string, there was an error */}
-          {typeof responseBoxData.parsedData === "string" ? (
-            <Typography variant="body1">{responseBoxData.parsedData}</Typography>
-          ) : (
-            <RenderSearchResponse parsedData={responseBoxData.parsedData} />
-          )}
-          <Box
-            style={{
-              marginTop: "5px",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
-            {responseBoxData.rawJson.hasOwnProperty("feedback_secret_key") ? (
-              <Box sx={{ marginRight: "8px" }}>
-                <IconButton
-                  aria-label="thumbs up"
-                  onClick={() => handleFeedback("positive")}
-                  style={feedbackButtonStyle}
-                >
-                  {feedbackMapping.positive.state == true
-                    ? feedbackMapping.positive.onIcon
-                    : feedbackMapping.positive.offIcon}
-                </IconButton>
-                <IconButton
-                  aria-label="thumbs down"
-                  onClick={() => handleFeedback("negative")}
-                  style={feedbackButtonStyle}
-                >
-                  {feedbackMapping.negative.state == true
-                    ? feedbackMapping.negative.onIcon
-                    : feedbackMapping.negative.offIcon}
-                </IconButton>
-              </Box>
-            ) : null}
-            <Link
-              onClick={toggleJsonModal}
-              variant="caption"
-              align="right"
-              underline="hover"
-              sx={{ cursor: "pointer" }}
-            >
-              {"<json>"}
-            </Link>
-          </Box>
-        </Box>
-
-        <Modal
-          open={jsonModalOpen}
-          onClose={toggleJsonModal}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Fade in={jsonModalOpen}>
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "80%",
-                maxHeight: "80%",
-                flexGrow: 1,
-                p: 4,
-                boxShadow: 24,
-                overflow: "scroll",
-                borderRadius: "10px",
-                bgcolor: "background.paper",
-              }}
-            >
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <IconButton onClick={toggleJsonModal}>
-                  <Close />
-                </IconButton>
-              </Box>
-              <Typography
-                component={"span"}
-                id="modal-modal-description"
-                sx={{ marginTop: 2 }}
+  return (
+    <>
+      <div className="flex flex-col gap-3">
+        {/* A string means the request failed */}
+        {typeof responseBoxData.parsedData === "string" ? (
+          <p>{responseBoxData.parsedData}</p>
+        ) : (
+          <RenderSearchResponse parsedData={responseBoxData.parsedData} />
+        )}
+        <div className="flex items-center justify-end gap-1">
+          {responseBoxData.rawJson.hasOwnProperty("feedback_secret_key") ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Helpful"
+                aria-pressed={thumbsUp}
+                onClick={() => handleFeedback("positive")}
               >
-                <pre
-                  style={{
-                    backgroundColor: "#f5f5f5",
-                    border: "1px solid #ccc",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    overflowX: "auto",
-                    fontFamily: "Courier, monospace",
-                  }}
-                >
-                  {"rawJson" in responseBoxData
-                    ? JSON.stringify(responseBoxData.rawJson, null, 2)
-                    : "No JSON data found"}
-                </pre>
-              </Typography>
-            </Box>
-          </Fade>
-        </Modal>
-      </>
-    );
-  }
+                {thumbsUp ? <IconThumbUpFilled /> : <IconThumbUp />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Not helpful"
+                aria-pressed={thumbsDown}
+                onClick={() => handleFeedback("negative")}
+              >
+                {thumbsDown ? <IconThumbDownFilled /> : <IconThumbDown />}
+              </Button>
+            </>
+          ) : null}
+          <Button variant="link" size="xs" onClick={() => setJsonModalOpen(true)}>
+            {"<json>"}
+          </Button>
+        </div>
+      </div>
+
+      <JsonDialog
+        open={jsonModalOpen}
+        onOpenChange={setJsonModalOpen}
+        json={responseBoxData.rawJson}
+      />
+    </>
+  );
 };
 
 const SearchSidebar = ({ closeSidebar }: { closeSidebar: () => void }) => {

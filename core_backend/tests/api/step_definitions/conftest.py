@@ -9,15 +9,15 @@ from pytest_bdd.parser import Feature, Scenario, Step
 from sqlalchemy import delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.users.models import (
+from app.users.models import (
     UserDB,
     UserWorkspaceDB,
     WorkspaceDB,
     check_if_users_exist,
     get_user_by_username,
 )
-from core_backend.app.users.schemas import UserRoles
-from core_backend.app.workspaces.utils import (
+from app.users.schemas import UserRoles
+from app.workspaces.utils import (
     check_if_workspaces_exist,
     get_workspace_by_workspace_name,
 )

@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_async_session
+from ..core.database import get_async_session
 
 TAG_METADATA = {
     "name": "Admin",

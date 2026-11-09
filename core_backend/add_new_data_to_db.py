@@ -12,13 +12,19 @@ from typing import Any
 
 import pandas as pd
 import urllib3
-from app.config import (
+from litellm import completion
+from sqlalchemy import (
+    select,
+)
+from urllib3.exceptions import InsecureRequestWarning
+
+from app.core.config import (
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
     LITELLM_MODEL_GENERATION,
 )
 from app.contents.models import ContentDB
-from app.database import get_session
+from app.core.database import get_session
 from app.llm_call.utils import remove_json_markdown
 from app.question_answer.models import (
     ContentFeedbackDB,
@@ -29,11 +35,6 @@ from app.question_answer.models import (
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
 from app.users.models import WorkspaceDB
 from app.utils import get_key_hash
-from litellm import completion
-from sqlalchemy import (
-    select,
-)
-from urllib3.exceptions import InsecureRequestWarning
 
 # To disable InsecureRequestWarning.
 urllib3.disable_warnings(InsecureRequestWarning)
@@ -560,9 +561,9 @@ if __name__ == "__main__":
         else datetime.now()
     )
     assert end_date, "Invalid end date. Please provide a valid date. Format is dd-mm-yy"
-    assert (
-        start_date and start_date < end_date
-    ), "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+    assert start_date and start_date < end_date, (
+        "Invalid start date. Please provide a valid start date. Format is dd-mm-yy"
+    )
 
     subset = int(args.subset) if args.subset else None
     path = args.csv

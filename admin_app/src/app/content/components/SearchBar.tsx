@@ -1,8 +1,11 @@
-import { Layout } from "@/components/Layout";
-import { appColors } from "@/utils";
-import { Search } from "@mui/icons-material";
-import { InputAdornment, TextField } from "@mui/material";
 import React from "react";
+import { IconSearch } from "@tabler/icons-react";
+
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 export interface SearchBarProps {
   searchTerm: string;
@@ -11,26 +14,17 @@ export interface SearchBarProps {
 
 export const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm }) => {
   return (
-    <Layout.FlexBox>
-      <TextField
-        sx={{
-          backgroundColor: appColors.white,
-        }}
-        variant="outlined"
-        size="small"
+    <InputGroup className="h-9 bg-card">
+      <InputGroupInput
+        type="search"
+        aria-label="Search content"
         placeholder="Search"
         value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search color="secondary" />
-            </InputAdornment>
-          ),
-        }}
+        onChange={(e) => setSearchTerm(e.target.value)}
       />
-    </Layout.FlexBox>
+      <InputGroupAddon>
+        <IconSearch />
+      </InputGroupAddon>
+    </InputGroup>
   );
 };

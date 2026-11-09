@@ -1,47 +1,68 @@
 "use client";
 import Link from "next/link";
-import React, { MouseEvent, useState } from "react";
-
+import React, { useState } from "react";
 import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  ButtonGroup,
-  CircularProgress,
-  Divider,
-  Fab,
-  Fade,
-  Grid,
-  Menu,
-  MenuItem,
-  Modal,
-  Paper,
-  Slide,
-  SlideProps,
-  Snackbar,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+  IconAlertTriangle,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconDownload,
+  IconFileText,
+  IconFileTypeCsv,
+  IconFileTypePdf,
+  IconPlayerPlay,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 
+import type { Content, Tag } from "@/app/content/types";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Delete,
-  Delete as DeleteIcon,
-  WarningAmber as WarningIcon,
-  Close as CloseIcon,
-} from "@mui/icons-material";
-import AddIcon from "@mui/icons-material/Add";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import DownloadIcon from "@mui/icons-material/Download";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import { IconButton } from "@mui/material";
-
-import type { Content, ContentDisplay, Tag } from "@/app/content/types";
-import { Layout } from "@/components/Layout";
-import { appColors, LANGUAGE_OPTIONS, sizes } from "@/utils";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "cn";
 import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import {
@@ -63,6 +84,22 @@ import { SearchSidebar } from "./components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
 import { ContentViewModal } from "./components/ContentModal";
 
+type SnackMessage = {
+  message: string | null;
+  color: "success" | "info" | "warning" | "error" | undefined;
+};
+
+/**
+ * Show a toast. Kept with the old Snackbar's `{ message, color }` shape so
+ * callers didn't need to change. Rendered by the Toaster in content/layout.tsx.
+ */
+const setSnackMessage = ({ message, color }: SnackMessage) => {
+  if (message) toast.add({ title: message, type: color });
+};
+
+// Spacing between cards in the grid, in px (matches `gap-2.5` / `p-2.5`).
+const GRID_GAP = 10;
+
 interface TagsFilterProps {
   tags: Tag[];
   filterTags: Tag[];
@@ -75,25 +112,15 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   selectedContents: number[];
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
-  setSnackMessage: React.Dispatch<{
-    message: string | null;
-    color: "success" | "info" | "warning" | "error" | undefined;
-  }>;
   handleDelete: () => void;
 }
 
 interface CardsGridProps {
-  displayLanguage: string;
   tags: Tag[];
   cards: Content[];
   allCards: Content[];
-  openSidebar: boolean;
   token: string | null;
   editAccess: boolean;
-  setSnackMessage: React.Dispatch<{
-    message: string | null;
-    color: "success" | "info" | "warning" | "error" | undefined;
-  }>;
   openSearchSidebar: boolean;
   handleSidebarToggle: () => void;
   openChatSidebar: boolean;
@@ -105,19 +132,11 @@ interface CardsGridProps {
 }
 
 const CardsPage = () => {
-  const [displayLanguage, setDisplayLanguage] = React.useState<string>(
-    LANGUAGE_OPTIONS[0].label,
-  );
-
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [filterTags, setFilterTags] = React.useState<Tag[]>([]);
   const [editAccess, setEditAccess] = React.useState(false);
   const { token, userRole } = useAuth();
-  const [snackMessage, setSnackMessage] = React.useState<{
-    message: string | null;
-    color: "success" | "info" | "warning" | "error" | undefined;
-  }>({ message: null, color: undefined });
 
   const [openSearchSidebar, setOpenSideBar] = useState(false);
   const [openChatSidebar, setOpenChatSideBar] = useState(false);
@@ -142,17 +161,13 @@ const CardsPage = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(false);
   };
-  const sidebarGridWidth = openSearchSidebar || openChatSidebar ? 5 : 0;
+  const sidebarOpen = openSearchSidebar || openChatSidebar;
 
   React.useEffect(() => {
     if (token) {
       const fetchTags = async () => {
-        if (token) {
-          const data = await getTagList(token);
-          setTags(data);
-        } else {
-          setTags([]);
-        }
+        const data = await getTagList(token);
+        setTags(data);
       };
       fetchTags();
     } else {
@@ -161,15 +176,13 @@ const CardsPage = () => {
     setEditAccess(userRole === "admin");
   }, [userRole, token]);
 
-  const SnackbarSlideTransition = (props: SlideProps) => {
-    return <Slide {...props} direction="up" />;
-  };
   const handleBulkDeleteModalClose = () => {
     setOpenBulkDeleteModal(false);
     setSelectedContents([]);
   };
 
   const handleDelete = async (selectedContents: number[]) => {
+    // Archive in batches so we don't fire dozens of requests at once.
     const BATCH_SIZE = 20;
     let successCount = 0;
     let failedContentIds: number[] = [];
@@ -178,7 +191,7 @@ const CardsPage = () => {
       for (let i = 0; i < selectedContents.length; i += BATCH_SIZE) {
         const batch = selectedContents.slice(i, i + BATCH_SIZE);
 
-        const results = await Promise.all(
+        await Promise.all(
           batch.map(async (content_id) => {
             try {
               await archiveContent(content_id, token!);
@@ -216,31 +229,36 @@ const CardsPage = () => {
         color: "error",
       });
     } finally {
+      // Leave the failed ones selected so the user can retry.
       setSelectedContents(failedContentIds);
       setOpenBulkDeleteModal(false);
       setRefreshKey((prevKey) => prevKey + 1);
     }
   };
+
   React.useEffect(() => {
     if (token) {
       getContentList({ token: token, skip: 0 })
         .then((data) => {
           setAllCards(data);
+          // Filtering happens client-side: title/text match AND (no tag
+          // filter OR the card has at least one of the chosen tags).
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
               card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
               card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesAllTags = filterTags.some((fTag) =>
+            const matchesAnyTag = filterTags.some((fTag) =>
               card.content_tags.includes(fTag.tag_id),
             );
 
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAllTags);
+            return matchesSearchTerm && (filterTags.length === 0 || matchesAnyTag);
           });
 
           setCards(filteredData);
           setIsLoading(false);
 
+          // The edit page leaves a message here before redirecting back.
           const message = localStorage.getItem("editPageSnackMessage");
           if (message) {
             setSnackMessage({
@@ -266,175 +284,104 @@ const CardsPage = () => {
       setIsLoading(false);
     }
   }, [searchTerm, filterTags, token, refreshKey]);
+
   return (
-    <>
-      <Grid container sx={{ height: "100%" }}>
-        <Grid
-          item
-          xs={12}
-          sm={12}
-          md={12 - sidebarGridWidth}
-          lg={12 - sidebarGridWidth + 1}
-          sx={{
-            display:
-              openSearchSidebar || openChatSidebar
-                ? { xs: "none", sm: "none", md: "block" }
-                : "block",
-            height: "100%",
-            paddingTop: 5,
-            paddingInline: 4,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                width: "100%",
-                maxWidth: "lg",
-                minWidth: "sm",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  paddingBottom: 3,
-                  gap: 2,
-                }}
+    <div className="flex min-h-0 flex-1">
+      {/* On small screens an open test sidebar takes over the whole page */}
+      <div
+        className={cn(
+          "h-full min-w-0 flex-1 px-4 pt-8 sm:px-8 md:pt-10",
+          sidebarOpen && "hidden md:block",
+        )}
+      >
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col">
+          <header className="flex flex-col gap-2 pb-6">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Question Answering
+            </h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Add, edit, and test content for question-answering. Questions sent to the
+              search service will retrieve results from here. Content limit is 50.{" "}
+              <a
+                href="https://docs.ask-a-question.com/latest/contact_us/"
+                className="underline underline-offset-4 hover:text-foreground"
               >
-                <Typography variant="h4" align="left" color="primary">
-                  Question Answering
-                </Typography>
-                <Typography variant="body1" align="left" color={appColors.darkGrey}>
-                  Add, edit, and test content for question-answering. Questions sent to
-                  the search service will retrieve results from here.
-                  <br />
-                  Content limit is 50.{" "}
-                  <a
-                    href="https://docs.ask-a-question.com/latest/contact_us/"
-                    style={{
-                      textDecoration: "underline",
-                      textDecorationColor: appColors.darkGrey,
-                      color: appColors.darkGrey,
-                    }}
-                  >
-                    Contact us
-                  </a>{" "}
-                  for more.
-                </Typography>
-              </Box>
-              <CardsUtilityStrip
-                editAccess={editAccess}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                cards={cards}
-                tags={tags}
-                selectedContents={selectedContents}
-                setSelectedContents={setSelectedContents}
-                filterTags={filterTags}
-                setFilterTags={setFilterTags}
-                setSnackMessage={setSnackMessage}
-                setRefreshKey={setRefreshKey}
-                handleDelete={() => {
-                  setOpenBulkDeleteModal(true);
-                }}
-              />
-              <CardsGrid
-                displayLanguage={displayLanguage}
-                tags={tags}
-                allCards={allCards}
-                cards={cards}
-                openSidebar={openSearchSidebar || openChatSidebar}
-                token={token}
-                editAccess={editAccess}
-                setSnackMessage={setSnackMessage}
-                openSearchSidebar={openSearchSidebar}
-                handleSidebarToggle={handleSidebarToggle}
-                openChatSidebar={openChatSidebar}
-                handleChatSidebarToggle={handleChatSidebarToggle}
-                selectedContents={selectedContents}
-                setSelectedContents={setSelectedContents}
-                isLoading={isLoading}
-                setRefreshKey={setRefreshKey}
-              />
-              <ConfirmDeleteModal
-                open={openBulkDeleteModal}
-                onClose={handleBulkDeleteModalClose}
-                onConfirm={() => {
-                  handleDelete(selectedContents);
-                }}
-                selectedContentsCount={selectedContents.length}
-              />
-            </Box>
-          </Box>
-        </Grid>
-        <Grid
-          item
-          xs={openSearchSidebar ? 12 : 0}
-          sm={openSearchSidebar ? 12 : 0}
-          md={sidebarGridWidth}
-          lg={sidebarGridWidth - 1}
-          sx={{
-            display: openSearchSidebar ? "block" : "none",
-          }}
-        >
-          <SearchSidebar closeSidebar={handleSidebarClose} />
-        </Grid>
-        <Grid
-          item
-          xs={openChatSidebar ? 12 : 0}
-          sm={openChatSidebar ? 12 : 0}
-          md={sidebarGridWidth}
-          lg={sidebarGridWidth - 1}
-          sx={{
-            display: openChatSidebar ? "block" : "none",
-          }}
-        >
-          <ChatSideBar
-            closeSidebar={handleChatSidebarClose}
-            getResponse={(question: string, session_id) => {
-              return session_id
-                ? apiCalls.getChat(question, true, token!, session_id)
-                : apiCalls.getChat(question, true, token!);
-            }}
-            setSnackMessage={(message: string) => {
-              setSnackMessage({
-                message: message,
-                color: "error",
-              });
+                Contact us
+              </a>{" "}
+              for more.
+            </p>
+          </header>
+          <CardsUtilityStrip
+            editAccess={editAccess}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            cards={cards}
+            tags={tags}
+            selectedContents={selectedContents}
+            setSelectedContents={setSelectedContents}
+            filterTags={filterTags}
+            setFilterTags={setFilterTags}
+            setRefreshKey={setRefreshKey}
+            handleDelete={() => {
+              setOpenBulkDeleteModal(true);
             }}
           />
-        </Grid>
-      </Grid>
-      <Snackbar
-        open={snackMessage.message !== null}
-        autoHideDuration={4000}
-        onClose={() => {
-          setSnackMessage({ message: null, color: snackMessage.color });
-        }}
-        TransitionComponent={SnackbarSlideTransition}
+          <CardsGrid
+            tags={tags}
+            allCards={allCards}
+            cards={cards}
+            token={token}
+            editAccess={editAccess}
+            openSearchSidebar={openSearchSidebar}
+            handleSidebarToggle={handleSidebarToggle}
+            openChatSidebar={openChatSidebar}
+            handleChatSidebarToggle={handleChatSidebarToggle}
+            selectedContents={selectedContents}
+            setSelectedContents={setSelectedContents}
+            isLoading={isLoading}
+            setRefreshKey={setRefreshKey}
+          />
+          <ConfirmDeleteModal
+            open={openBulkDeleteModal}
+            onClose={handleBulkDeleteModalClose}
+            onConfirm={() => {
+              handleDelete(selectedContents);
+            }}
+            selectedContentsCount={selectedContents.length}
+          />
+        </div>
+      </div>
+      {/* Sidebars stay mounted while hidden so a test chat survives closing */}
+      <div
+        className={cn(
+          "h-full w-full shrink-0 md:w-5/12 lg:w-1/3",
+          !openSearchSidebar && "hidden",
+        )}
       >
-        <Alert
-          onClose={() => {
-            setSnackMessage({ message: null, color: snackMessage.color });
+        <SearchSidebar closeSidebar={handleSidebarClose} />
+      </div>
+      <div
+        className={cn(
+          "h-full w-full shrink-0 md:w-5/12 lg:w-1/3",
+          !openChatSidebar && "hidden",
+        )}
+      >
+        <ChatSideBar
+          closeSidebar={handleChatSidebarClose}
+          getResponse={(question: string, session_id) => {
+            return session_id
+              ? apiCalls.getChat(question, true, token!, session_id)
+              : apiCalls.getChat(question, true, token!);
           }}
-          severity={snackMessage.color}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackMessage.message}
-        </Alert>
-      </Snackbar>
-    </>
+          setSnackMessage={(message: string) => {
+            setSnackMessage({
+              message: message,
+              color: "error",
+            });
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -448,7 +395,6 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setSelectedContents,
   filterTags,
   setFilterTags,
-  setSnackMessage,
   setRefreshKey,
   handleDelete,
 }) => {
@@ -456,7 +402,6 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [showContentModal, setShowContentModal] = React.useState(false);
-  React.useState<boolean>(false);
 
   const { data: indexingStatus } = useGetIndexingStatus(token!);
   const { data: unvalidatedCardsCount } = useGetUnvalidatedCardsCount(token!);
@@ -473,167 +418,115 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   const handleDeSelectAll = () => {
     setSelectedContents([]);
   };
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignContent: "flex-end",
-        width: "100%",
-        paddingBottom: 2,
-        flexWrap: "wrap",
-        gap: sizes.baseGap,
-      }}
-    >
-      {/* Left section - Search and Filters */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "flex-end",
-          justifyContent: "flex-start",
-          flexWrap: "wrap",
-          gap: sizes.baseGap,
-        }}
-      >
-        <Box sx={{ width: "200px" }}>
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        </Box>
-        <Box sx={{ minWidth: "200px" }}>
-          <TagsFilter
-            tags={tags}
-            filterTags={filterTags}
-            setFilterTags={setFilterTags}
-          />
-        </Box>
-      </Box>
 
-      {/* Middle section - Selection Control Buttons */}
-      {selectedContents.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: sizes.smallGap,
-            alignSelf: "flex-end",
-          }}
-        >
+  return (
+    <div className="flex w-full flex-wrap items-end justify-between gap-4 pb-4">
+      {/* Left: search and tag filter */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-[220px]">
+          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        </div>
+        <TagsFilter tags={tags} filterTags={filterTags} setFilterTags={setFilterTags} />
+      </div>
+
+      {/* Right: bulk actions while cards are selected, otherwise page actions */}
+      {selectedContents.length > 0 ? (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {selectedContents.length} selected
+          </span>
           <Button
-            variant="outlined"
-            size="small"
+            variant="outline"
+            size="lg"
             onClick={handleSelectAll}
             disabled={!editAccess}
           >
-            Select All
+            Select all
           </Button>
           <Button
-            variant="outlined"
-            size="small"
+            variant="outline"
+            size="lg"
             onClick={handleDeSelectAll}
-            disabled={!editAccess || selectedContents.length === 0}
+            disabled={!editAccess}
           >
-            Deselect All
+            Deselect all
           </Button>
           <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => {
-              handleDelete();
-            }}
-            disabled={!editAccess || selectedContents.length === 0}
-            startIcon={<Delete />}
+            variant="destructive"
+            size="lg"
+            onClick={handleDelete}
+            disabled={!editAccess}
           >
+            <IconTrash data-icon="inline-start" />
             Delete
           </Button>
-        </Box>
-      )}
-
-      {/* Right section - Download and Add buttons */}
-      {selectedContents.length < 1 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignSelf: "flex-end",
-            alignItems: "center",
-            gap: sizes.smallGap,
-          }}
-        >
-          <>
-            {unvalidatedCardsCount > 0 && (
-              <>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {unvalidatedCardsCount > 0 && (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowContentModal(true)}
+              >
+                Validate cards
+                <Badge variant="destructive">{unvalidatedCardsCount}</Badge>
+              </Button>
+              <ContentViewModal
+                title={nextUnvalidatedCard?.content_title}
+                text={nextUnvalidatedCard?.content_text}
+                content_id={nextUnvalidatedCard?.content_id}
+                display_number={nextUnvalidatedCard?.display_number}
+                last_modified={nextUnvalidatedCard?.updated_datetime_utc}
+                tags={[{ tag_id: 0, tag_name: "Unavailable" }]}
+                positive_votes={nextUnvalidatedCard?.positive_votes}
+                negative_votes={nextUnvalidatedCard?.negative_votes}
+                open={showContentModal}
+                onClose={() => setShowContentModal(false)}
+                setRefreshKey={setRefreshKey}
+                editAccess={editAccess}
+                validation_mode={true}
+                related_contents={nextUnvalidatedCard?.related_contents || []}
+                onRelatedContentClick={() => {
+                  setSnackMessage({
+                    message: "Related contents cannot be viewed in validation mode",
+                    color: "warning",
+                  });
+                }}
+              />
+            </>
+          )}
+          {typeof indexingStatus === "boolean" && (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setOpenIndexHistoryModal(true)}
+              >
+                {indexingStatus === true && <Spinner data-icon="inline-start" />}
+                {indexingStatus === true ? "Processing PDF" : "PDF upload status"}
+              </Button>
+              <IndexingStatusModal />
+            </>
+          )}
+          <Tooltip>
+            <TooltipTrigger
+              render={
                 <Button
-                  variant="outlined"
-                  size="small"
-                  color="error"
-                  onClick={() => setShowContentModal(true)}
-                >
-                  Validate Cards ({unvalidatedCardsCount})
-                </Button>
-                <ContentViewModal
-                  title={nextUnvalidatedCard?.content_title}
-                  text={nextUnvalidatedCard?.content_text}
-                  content_id={nextUnvalidatedCard?.content_id}
-                  display_number={nextUnvalidatedCard?.display_number}
-                  last_modified={nextUnvalidatedCard?.updated_datetime_utc}
-                  tags={[{ tag_id: 0, tag_name: "Unavailable" }]}
-                  positive_votes={nextUnvalidatedCard?.positive_votes}
-                  negative_votes={nextUnvalidatedCard?.negative_votes}
-                  open={showContentModal}
-                  onClose={() => setShowContentModal(false)}
-                  setRefreshKey={setRefreshKey}
-                  editAccess={editAccess}
-                  validation_mode={true}
-                  related_contents={nextUnvalidatedCard?.related_contents || []}
-                  onRelatedContentClick={(content) => {
-                    setSnackMessage({
-                      message: "Related contents cannot be viewed in validation mode",
-                      color: "warning",
-                    });
-                  }}
+                  variant="outline"
+                  size="icon-lg"
+                  aria-label="Download all contents"
+                  disabled={!editAccess}
+                  onClick={() => setOpenDownloadModal(true)}
                 />
-              </>
-            )}
-            {typeof indexingStatus === "boolean" && (
-              <>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  onClick={() => {
-                    setOpenIndexHistoryModal(true);
-                  }}
-                  startIcon={
-                    indexingStatus === true ? (
-                      <CircularProgress size={12} color="inherit" />
-                    ) : null
-                  }
-                >
-                  {indexingStatus === true ? "Processing PDF" : "PDF Upload Status"}
-                </Button>
-                <IndexingStatusModal />
-              </>
-            )}
-          </>
-          <Tooltip title="Download all contents">
-            <Button
-              variant="outlined"
-              size="small"
-              disabled={!editAccess}
-              onClick={() => {
-                setOpenDownloadModal(true);
-              }}
+              }
             >
-              <DownloadIcon />
-            </Button>
+              <IconDownload />
+            </TooltipTrigger>
+            <TooltipContent>Download all contents</TooltipContent>
           </Tooltip>
-          <Tooltip title="Add new content">
-            <AddButtonWithDropdown editAccess={editAccess} />
-          </Tooltip>
+          <AddButtonWithDropdown editAccess={editAccess} />
           <DownloadModal
             open={openDownloadModal}
             onClose={() => setOpenDownloadModal(false)}
@@ -650,92 +543,111 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
               });
             }}
           />
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 
+/**
+ * Multi-select tag filter. Shows the first chosen tag as a chip and
+ * "+N" for the rest, so the toolbar doesn't grow as tags are added.
+ */
 const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
-  const truncateTagName = (tagName: string): string => {
-    return tagName.length > 20 ? `${tagName.slice(0, 18)}...` : tagName;
-  };
+  const anchor = useComboboxAnchor();
   return (
-    <Autocomplete
+    <Combobox
       multiple
-      size="small"
-      limitTags={1}
-      id="tags-autocomplete"
-      options={tags}
-      getOptionLabel={(option) => truncateTagName(option.tag_name)}
-      noOptionsText="No tags found"
+      autoHighlight
+      items={tags}
       value={filterTags}
-      onChange={(event, updatedTags) => {
-        setFilterTags(updatedTags);
-      }}
-      renderInput={(params) => (
-        <TextField {...params} variant="standard" label="Filter tags" />
-      )}
-      ListboxProps={{
-        sx: {
-          maxWidth: "300px",
-          "& .MuiAutocomplete-option": {
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-          },
-        },
-      }}
-      sx={{ color: appColors.white }}
-    />
+      onValueChange={(updatedTags) => setFilterTags(updatedTags as Tag[])}
+      itemToStringLabel={(tag: Tag) => tag.tag_name}
+      isItemEqualToValue={(a: Tag, b: Tag) => a.tag_id === b.tag_id}
+    >
+      <ComboboxChips ref={anchor} className="min-h-9 w-[240px] flex-nowrap bg-card">
+        <ComboboxValue>
+          {(values: Tag[]) => (
+            <>
+              {values.slice(0, 1).map((tag) => (
+                <ComboboxChip key={tag.tag_id}>
+                  <span className="max-w-24 truncate">{tag.tag_name}</span>
+                </ComboboxChip>
+              ))}
+              {values.length > 1 && (
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  +{values.length - 1}
+                </span>
+              )}
+              <ComboboxChipsInput
+                aria-label="Filter by tag"
+                placeholder={values.length ? "" : "Filter by tag"}
+                className="min-w-10"
+              />
+            </>
+          )}
+        </ComboboxValue>
+      </ComboboxChips>
+      <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>No tags found</ComboboxEmpty>
+        <ComboboxList>
+          {(tag: Tag) => (
+            <ComboboxItem key={tag.tag_id} value={tag}>
+              <span className="break-words">{tag.tag_name}</span>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 };
 
+/** "New" button plus a dropdown for the bulk import options. */
 const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const openMenu = Boolean(anchorEl);
   const [openCSVModal, setOpenCSVModal] = useState(false);
   const [openPDFModal, setOpenPDFModal] = useState(false);
 
-  const handleClick = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   return (
     <>
-      <ButtonGroup variant="contained" size="small" disabled={!editAccess}>
-        <Button component={Link} href="/content/edit" startIcon={<AddIcon />}>
-          New
-        </Button>
-        <Button size="small" onClick={handleClick}>
-          <ArrowDropDownIcon />
-        </Button>
+      {/* Split button: "New" opens the editor, the arrow opens the import menu */}
+      <ButtonGroup aria-label="Add content">
+        {editAccess ? (
+          <Button size="lg" nativeButton={false} render={<Link href="/content/edit" />}>
+            <IconPlus data-icon="inline-start" />
+            New
+          </Button>
+        ) : (
+          <Button size="lg" disabled>
+            <IconPlus data-icon="inline-start" />
+            New
+          </Button>
+        )}
+        {/* Visible divider between the two halves (both are filled navy) */}
+        <ButtonGroupSeparator className="bg-primary-foreground/30" />
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                size="icon-lg"
+                aria-label="Import or generate cards"
+                disabled={!editAccess}
+              />
+            }
+          >
+            <IconChevronDown />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-52">
+            <DropdownMenuItem onClick={() => setOpenCSVModal(true)}>
+              <IconFileTypeCsv />
+              Import cards from CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOpenPDFModal(true)}>
+              <IconFileTypePdf />
+              Generate cards from PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </ButtonGroup>
-      <Menu
-        id="split-button-menu"
-        anchorEl={anchorEl}
-        open={openMenu}
-        onClose={handleMenuClose}
-      >
-        <MenuItem
-          onClick={() => {
-            handleMenuClose();
-            setOpenCSVModal(true);
-          }}
-        >
-          Import cards from CSV
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleMenuClose();
-            setOpenPDFModal(true);
-          }}
-        >
-          Generate cards from PDF
-        </MenuItem>
-      </Menu>
       <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
       <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
     </>
@@ -748,7 +660,6 @@ const CardsGrid = ({
   allCards,
   token,
   editAccess,
-  setSnackMessage,
   openSearchSidebar,
   handleSidebarToggle,
   openChatSidebar,
@@ -765,35 +676,46 @@ const CardsGrid = ({
   );
 
   const [columns, setColumns] = React.useState<number>(1);
-  const gridRef = React.useRef<HTMLDivElement>(null);
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
+  const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
 
-  // Callback ref to handle when the grid element mounts
+  // Work out how many cards fit in the visible grid area, so each page
+  // fills the space without scrolling.
+  const calculateMaxCardsPerPage = () => {
+    if (!gridRef.current) return;
+
+    // Remove the container padding, then fit cards plus the gap between them.
+    const gridWidth = gridRef.current.clientWidth - 2 * GRID_GAP;
+    const gridHeight = gridRef.current.clientHeight - 2 * GRID_GAP;
+    const newColumns = Math.max(
+      1,
+      Math.floor((gridWidth + GRID_GAP) / (CARD_MIN_WIDTH + GRID_GAP)),
+    );
+    const rows = Math.max(
+      1,
+      Math.floor((gridHeight + GRID_GAP) / (CARD_HEIGHT + GRID_GAP)),
+    );
+
+    setColumns(newColumns);
+    setMaxCardsPerPage(rows * newColumns);
+  };
+
+  // Callback ref: the grid only mounts after loading, so observe it when it
+  // appears and stop observing when it goes away.
   const setGridRef = (node: HTMLDivElement | null) => {
-    (gridRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+    gridRef.current = node;
     if (node) {
       calculateMaxCardsPerPage();
       const resizeObserver = new ResizeObserver(() => {
         setTimeout(calculateMaxCardsPerPage, 0);
       });
       resizeObserver.observe(node);
+      resizeObserverRef.current = resizeObserver;
     }
   };
 
-  const calculateMaxCardsPerPage = () => {
-    if (!gridRef.current) return;
-
-    const gridWidth = gridRef.current.clientWidth;
-    const gridHeight = gridRef.current.clientHeight;
-    // add 10 pixels additional for padding (2x5, since padding is 5px on each Grid item)
-    const newColumns = Math.max(1, Math.floor(gridWidth / (CARD_MIN_WIDTH + 10)));
-    const rows = Math.max(1, Math.floor(gridHeight / (CARD_HEIGHT + 10)));
-    const maxCards = rows * newColumns;
-
-    setColumns(newColumns);
-    setMaxCardsPerPage(maxCards);
-  };
-
-  // Optionally, you can still use an effect for window resize
   React.useEffect(() => {
     window.addEventListener("resize", calculateMaxCardsPerPage);
     return () => {
@@ -813,7 +735,7 @@ const CardsGrid = ({
     return allCards.filter((content) => content_ids.includes(content.content_id!));
   };
 
-  const onSuccessfulArchive = (content_id: number) => {
+  const onSuccessfulArchive = () => {
     setRefreshKey((prevKey) => prevKey + 1);
     setSnackMessage({
       message: `Content removed successfully`,
@@ -823,216 +745,150 @@ const CardsGrid = ({
 
   if (isLoading) {
     return (
-      <>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            mx: sizes.baseGap,
-            py: sizes.tinyGap,
-            width: "98%",
-            height: "60vh",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-              height: "60vh",
-            }}
-          >
-            <CircularProgress />
-          </div>
-        </Box>
-      </>
+      <div className="flex h-[60vh] w-full items-center justify-center">
+        <Spinner className="size-6" />
+      </div>
     );
   }
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        flexGrow: 1,
-        minHeight: 0,
-        gap: 2,
-      }}
-    >
-      <Paper
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div
         ref={setGridRef}
-        elevation={0}
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start",
-          height: "100%",
-          minHeight: CARD_HEIGHT * 1.1,
-          maxHeight: CARD_HEIGHT * 4.5,
-          width: "100%",
-          paddingBottom: 2,
-          border: 0.5,
-          borderColor: "lightgrey",
-        }}
+        className="h-full w-full overflow-hidden border bg-muted/30"
+        style={{ minHeight: CARD_HEIGHT * 1.1, maxHeight: CARD_HEIGHT * 4.5 }}
       >
-        <Grid container sx={{ height: "hug-content" }}>
-          {cards.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                flexGrow: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                width: "100%",
-                padding: sizes.doubleBaseGap,
-                gap: 2,
-              }}
-            >
-              <Typography variant="h6" color={appColors.darkGrey}>
-                No content found.
-              </Typography>
-              <Typography variant="body1" color={appColors.darkGrey}>
-                Try adding new content or changing your search or tag filters.
-              </Typography>
-            </Box>
+        {cards.length === 0 ? (
+          allCards.length === 0 ? (
+            <Empty className="h-full">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <IconFileText />
+                </EmptyMedia>
+                <EmptyTitle>No content yet</EmptyTitle>
+                <EmptyDescription>
+                  Content you add here is what the search and chat services answer from.
+                </EmptyDescription>
+              </EmptyHeader>
+              {editAccess && (
+                <EmptyContent>
+                  <Button nativeButton={false} render={<Link href="/content/edit" />}>
+                    <IconPlus data-icon="inline-start" />
+                    Add content
+                  </Button>
+                </EmptyContent>
+              )}
+            </Empty>
           ) : (
-            cards
+            <Empty className="h-full">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <IconFileText />
+                </EmptyMedia>
+                <EmptyTitle>No matching content</EmptyTitle>
+                <EmptyDescription>
+                  Try changing your search or tag filters.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )
+        ) : (
+          <div
+            className="grid gap-2.5 p-2.5"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+          >
+            {cards
               .slice(maxCardsPerPage * (page - 1), maxCardsPerPage * page)
-              .map((item) => {
-                if (item.content_id !== null) {
-                  return (
-                    <Grid
-                      item
-                      xs={12 / columns}
-                      key={item.content_id}
-                      sx={{ p: "5px" }}
-                    >
-                      <ContentCard
-                        title={item.content_title}
-                        text={item.content_text}
-                        content_id={item.content_id}
-                        display_number={item.display_number}
-                        last_modified={item.updated_datetime_utc}
-                        tags={
-                          tags
-                            ? tags.filter((tag) =>
-                                item.content_tags.includes(tag.tag_id),
-                              )
-                            : []
-                        }
-                        positive_votes={item.positive_votes}
-                        negative_votes={item.negative_votes}
-                        related_contents={getRelatedContent(item.related_contents_id)}
-                        onSuccessfulArchive={onSuccessfulArchive}
-                        onFailedArchive={(
-                          content_id: number,
-                          error_message: string,
-                        ) => {
-                          setSnackMessage({
-                            message: error_message,
-                            color: "error",
-                          });
-                        }}
-                        archiveContent={(content_id: number) => {
-                          return archiveContent(content_id, token!);
-                        }}
-                        editAccess={editAccess}
-                        isSelectMode={selectedContents.length > 0}
-                        selectedContents={selectedContents}
-                        setSelectedContents={setSelectedContents}
-                        getRelatedContent={getRelatedContent}
-                      />
-                    </Grid>
-                  );
-                }
-              })
-          )}
-        </Grid>
-      </Paper>
-      {/* PageNav and Test Fabs */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          flexWrap: "wrap",
-          gap: 2,
-          paddingBottom: 4,
-        }}
-      >
-        <Box display={"flex"} flexDirection={"row"} alignItems={"center"}>
-          <IconButton
-            onClick={() => {
-              page > 1 && setPage(page - 1);
-            }}
+              .map((item) =>
+                item.content_id !== null ? (
+                  <ContentCard
+                    key={item.content_id}
+                    title={item.content_title}
+                    text={item.content_text}
+                    content_id={item.content_id}
+                    display_number={item.display_number}
+                    last_modified={item.updated_datetime_utc}
+                    tags={
+                      tags
+                        ? tags.filter((tag) => item.content_tags.includes(tag.tag_id))
+                        : []
+                    }
+                    positive_votes={item.positive_votes}
+                    negative_votes={item.negative_votes}
+                    related_contents={getRelatedContent(item.related_contents_id)}
+                    onSuccessfulArchive={onSuccessfulArchive}
+                    onFailedArchive={(content_id: number, error_message: string) => {
+                      setSnackMessage({
+                        message: error_message,
+                        color: "error",
+                      });
+                    }}
+                    archiveContent={(content_id: number) => {
+                      return archiveContent(content_id, token!);
+                    }}
+                    editAccess={editAccess}
+                    isSelectMode={selectedContents.length > 0}
+                    selectedContents={selectedContents}
+                    setSelectedContents={setSelectedContents}
+                    getRelatedContent={getRelatedContent}
+                  />
+                ) : null,
+              )}
+          </div>
+        )}
+      </div>
+
+      {/* Page navigation and test sidebar launchers */}
+      <div className="flex w-full flex-wrap items-center justify-between gap-4 pb-8">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Previous page"
+            onClick={() => page > 1 && setPage(page - 1)}
             disabled={page <= 1}
-            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
           >
-            <ChevronLeft color={page > 1 ? "primary" : "disabled"} />
-          </IconButton>
-          <Layout.Spacer horizontal multiplier={0.5} />
-          <Typography variant="subtitle2">
+            <IconChevronLeft />
+          </Button>
+          <span className="text-sm tabular-nums text-muted-foreground">
             {maxPages === 0 ? 0 : page} of {maxPages}
-          </Typography>
-          <Layout.Spacer horizontal multiplier={0.5} />
-          <IconButton
-            onClick={() => {
-              page < maxPages && setPage(page + 1);
-            }}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Next page"
+            onClick={() => page < maxPages && setPage(page + 1)}
             disabled={page >= maxPages}
-            sx={{ borderRadius: "50%", height: "30px", width: "30px" }}
           >
-            <ChevronRight color={page < maxPages ? "primary" : "disabled"} />
-          </IconButton>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "flex-end",
-            justifyContent: "flex-end",
-            gap: 1,
-          }}
-        >
-          <Fab
-            variant="extended"
-            size="small"
+            <IconChevronRight />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="lg"
             disabled={openSearchSidebar}
-            sx={{
-              bgcolor: "orange",
-              pr: 2,
-            }}
             onClick={handleSidebarToggle}
           >
-            <PlayArrowIcon />
-            <Layout.Spacer horizontal multiplier={0.3} />
-            test search
-          </Fab>
-          <Fab
-            variant="extended"
-            size="small"
+            <IconPlayerPlay data-icon="inline-start" />
+            Test search
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
             disabled={openChatSidebar}
-            sx={{
-              bgcolor: "orange",
-              pr: 2,
-            }}
             onClick={handleChatSidebarToggle}
           >
-            <PlayArrowIcon />
-            <Layout.Spacer horizontal multiplier={0.3} />
-            test chat
-          </Fab>
-        </Box>
-      </Box>
-    </Box>
+            <IconPlayerPlay data-icon="inline-start" />
+            Test chat
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
+/** Bulk delete confirmation. The user must type "delete" to enable it. */
 const ConfirmDeleteModal: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -1040,142 +896,70 @@ const ConfirmDeleteModal: React.FC<{
   selectedContentsCount: number;
 }> = ({ open, onClose, onConfirm, selectedContentsCount }) => {
   const [confirmationText, setConfirmationText] = React.useState<string>("");
+  const confirmed = confirmationText.toLowerCase() === "delete";
 
   const handleConfirm = () => {
-    if (confirmationText.toLowerCase() === "delete") {
+    if (confirmed) {
       onConfirm();
       setConfirmationText("");
     }
   };
 
-  // Handle enter key press
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && confirmationText.toLowerCase() === "delete") {
-      handleConfirm();
-    }
-  };
-
   return (
-    <Modal
+    <AlertDialog
       open={open}
-      onClose={onClose}
-      closeAfterTransition
-      aria-labelledby="confirm-delete-modal-title"
-      aria-describedby="confirm-delete-modal-description"
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setConfirmationText("");
+          onClose();
+        }
+      }}
     >
-      <Fade in={open}>
-        <Paper
-          elevation={6}
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 450,
-            maxWidth: "90vw",
-            bgcolor: "background.paper",
-            borderRadius: 3,
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              bgcolor: "error.light",
-              py: 2,
-              px: 3,
-              color: "white",
+      <AlertDialogContent className="text-sm">
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <IconTrash />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
+          <AlertDialogDescription>
+            You are about to permanently delete{" "}
+            <strong className="text-foreground">{selectedContentsCount}</strong> content
+            {selectedContentsCount === 1 ? "" : "s"}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Alert variant="destructive">
+          <IconAlertTriangle />
+          <AlertDescription>This action cannot be undone.</AlertDescription>
+        </Alert>
+        <Field>
+          <FieldLabel htmlFor="confirm-delete-input">
+            Type <strong>delete</strong> to confirm
+          </FieldLabel>
+          <Input
+            id="confirm-delete-input"
+            value={confirmationText}
+            onChange={(e) => setConfirmationText(e.target.value)}
+            placeholder="delete"
+            autoComplete="off"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleConfirm();
             }}
+          />
+        </Field>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={!confirmed}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <DeleteIcon />
-              <Typography id="confirm-delete-modal-title" variant="h6" component="h2">
-                Confirm Deletion
-              </Typography>
-            </Box>
-            <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          <Divider />
-
-          {/* Content */}
-          <Box sx={{ p: 3 }}>
-            <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
-              This action cannot be undone
-            </Alert>
-
-            <Typography
-              id="confirm-delete-modal-description"
-              variant="body1"
-              sx={{ mb: 3 }}
-            >
-              You are about to permanently delete{" "}
-              <strong>{selectedContentsCount}</strong> content
-              {selectedContentsCount > 1 ? "s" : ""}.
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Type <strong>delete</strong> to confirm:
-            </Typography>
-
-            <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              value={confirmationText}
-              onChange={(e) => setConfirmationText(e.target.value)}
-              placeholder="Type 'delete' to confirm"
-              onKeyDown={handleKeyDown}
-              autoFocus
-              InputProps={{
-                sx: { borderRadius: 1.5 },
-              }}
-            />
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 2,
-              p: 3,
-              pt: 1,
-            }}
-          >
-            <Button
-              variant="outlined"
-              onClick={onClose}
-              sx={{
-                borderRadius: 1.5,
-                textTransform: "none",
-                fontWeight: 500,
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleConfirm}
-              disabled={confirmationText.toLowerCase() !== "delete"}
-              startIcon={<DeleteIcon />}
-              sx={{
-                borderRadius: 1.5,
-                textTransform: "none",
-                fontWeight: 500,
-                boxShadow: 2,
-              }}
-            >
-              Delete Items
-            </Button>
-          </Box>
-        </Paper>
-      </Fade>
-    </Modal>
+            <IconTrash data-icon="inline-start" />
+            Delete items
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

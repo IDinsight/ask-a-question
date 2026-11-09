@@ -1,19 +1,16 @@
-import NavBar from "@/components/NavBar";
-import { ProtectedComponent } from "@/components/ProtectedComponent";
+import { AppShell } from "@/components/AppShell";
+import { Toaster } from "@/components/ui/toast";
 import React from "react";
-import { Box } from "@mui/material";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Toaster renders toasts raised anywhere under /dashboard via `toast.add(...)`.
   return (
-    <ProtectedComponent>
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-        <NavBar />
-        <Box sx={{ flexGrow: 1, overflow: "auto", paddingTop: "60px" }}>{children}</Box>
-      </Box>
-    </ProtectedComponent>
+    <Toaster timeout={5000}>
+      <AppShell>{children}</AppShell>
+    </Toaster>
   );
 }

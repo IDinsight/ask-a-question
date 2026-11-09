@@ -21,7 +21,7 @@ from langfuse.decorators import langfuse_context  # type: ignore
 from litellm import aembedding
 from redis import asyncio as aioredis
 
-from .config import (
+from .core.config import (
     LANGFUSE,
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,

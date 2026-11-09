@@ -1,29 +1,46 @@
 "use client";
-import { Layout } from "@/components/Layout";
-import { FullAccessComponent } from "@/components/ProtectedComponent";
-import { appColors, appStyles, sizes } from "@/utils";
-import { useAuth } from "@/utils/auth";
-import { ChevronLeft, Delete } from "@mui/icons-material";
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { Tag } from "../types";
-import { LoadingButton } from "@mui/lab";
-import { CustomError } from "@/utils/api";
 import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
-  Snackbar,
-  TextField,
-  Typography,
-} from "@mui/material";
+  IconAlertCircle,
+  IconChevronLeft,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
+
+import { FullAccessComponent } from "@/components/ProtectedComponent";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
+import { useAuth } from "@/utils/auth";
+import { CustomError } from "@/utils/api";
 import {
   createContent,
   createTag,
@@ -34,7 +51,21 @@ import {
   getTagList,
 } from "../api";
 import { RelatedContentsAutoComplete } from "../components/RelatedContentsAutoComplete";
-import { Content, EditContentBody } from "../types";
+import { Content, EditContentBody, Tag } from "../types";
+
+/** A tag option; `isNew` marks the "Create …" entry for a tag that doesn't exist yet. */
+type TagOption = Tag & { isNew?: boolean };
+
+/**
+ * Show a toast. Messages mentioning "successfully" show as success,
+ * everything else as an error (same rule the old Snackbar used).
+ */
+const setSnackMessage = (message: string) => {
+  toast.add({
+    title: message,
+    type: message.toLowerCase().includes("successfully") ? "success" : "error",
+  });
+};
 
 const AddEditContentPage = () => {
   const searchParams = useSearchParams();
@@ -62,31 +93,14 @@ const AddEditContentPage = () => {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-          width: "100%",
-        }}
-      >
-        <CircularProgress />
+      <div className="flex h-full w-full items-center justify-center">
+        <Spinner className="size-6" />
       </div>
     );
   }
   return (
     <FullAccessComponent>
-      <Layout.FlexBox
-        sx={{
-          flexDirection: "column",
-          marginTop: 2,
-          marginBottom: 1,
-          p: sizes.doubleBaseGap,
-          gap: sizes.baseGap,
-        }}
-      >
+      <div className="flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-8 md:py-10">
         <Header
           display_number={content?.display_number || null}
           onBack={() =>
@@ -108,7 +122,7 @@ const AddEditContentPage = () => {
           isSaved={isSaved}
           setIsSaved={setIsSaved}
         />
-      </Layout.FlexBox>
+      </div>
       <DiscardChangesModal
         open={openDiscardChangesModal}
         onClose={() => {
@@ -146,17 +160,15 @@ const ContentBox = ({
   const [tags, setTags] = React.useState<Tag[]>([]);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [contentTags, setContentTags] = React.useState<Tag[]>([]);
-  const [availableTags, setAvailableTags] = React.useState<Tag[]>([]);
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [tagToDelete, setTagToDelete] = React.useState<Tag | null>(null);
-  const filter = createFilterOptions<Tag>();
-  const [snackMessage, setSnackMessage] = React.useState<string | null>(null);
   const [contents, setContents] = React.useState<Content[]>([]);
   const [selectedContents, setSelectedContents] = React.useState<Content[]>([]);
   const { token } = useAuth();
-  const [inputVal, setInputVal] = React.useState<string>("");
-  const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
+  const [tagQuery, setTagQuery] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
+  const tagsAnchor = useComboboxAnchor();
+
   const handleCustomError = (error: unknown, defaultMessage: string) => {
     const customError = error as CustomError;
     let errorMessage = defaultMessage;
@@ -168,6 +180,7 @@ const ContentBox = ({
     }
     setSnackMessage(errorMessage);
   };
+  // The content list page shows this message after we redirect back.
   const setMainPageSnackMessage = (message: string): void => {
     localStorage.setItem("editPageSnackMessage", message);
   };
@@ -185,7 +198,6 @@ const ContentBox = ({
               )
             : [];
         setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
-        setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
         const customError = error as CustomError;
         let errorMessage = "Error fetching tags";
@@ -222,6 +234,7 @@ const ContentBox = ({
         console.error(errorMessage);
       });
   }, [refreshKey]);
+
   const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
 
@@ -244,6 +257,7 @@ const ContentBox = ({
     } catch (error: Error | any) {
       const customError = error as CustomError;
       if (error.status === 403) {
+        // 403 here means the workspace's content quota is used up.
         console.error("Content quota reached. Please contact support for assistance.");
         console.error("Error details:", customError.message);
         setErrorMessage(customError.message);
@@ -265,11 +279,11 @@ const ContentBox = ({
   const handleSaveContent = async (content: Content) => {
     const content_id = await saveContent(content);
     if (content_id) {
-      {
+      setMainPageSnackMessage(
         content.content_id
-          ? setMainPageSnackMessage("Content edited successfully")
-          : setMainPageSnackMessage("Content created successfully");
-      }
+          ? "Content edited successfully"
+          : "Content created successfully",
+      );
       router.push(`/content`);
     }
   };
@@ -318,19 +332,19 @@ const ContentBox = ({
     } else {
       setContent(createEmptyContent(updatedTags));
     }
-
-    setAvailableTags(tags.filter((tag) => !updatedTags.includes(tag)));
   };
-  const handleNewTag = (tag: string) => {
-    const match = tag.match(/"([^"]*)"/);
 
-    tag = match ? match[1] : tag;
-    const isTagExists = tags.filter((t) => t.tag_name === tag);
-    if (isTagExists.length == 0) {
-      const data = addTag(tag).then((data: Tag) => {
-        handleTagsChange([...contentTags, data]);
-        setRefreshKey((prevKey) => prevKey + 1);
-      });
+  const handleNewTag = (tag: string) => {
+    const isTagExists = tags.some(
+      (t) => t.tag_name.toUpperCase() === tag.toUpperCase(),
+    );
+    if (!isTagExists) {
+      addTag(tag)
+        .then((data: Tag) => {
+          handleTagsChange([...contentTags, data]);
+          setRefreshKey((prevKey) => prevKey + 1);
+        })
+        .catch((error) => handleCustomError(error, `Failed to create tag "${tag}"`));
     } else {
       setSnackMessage(`Tag "${tag}" already exists`);
     }
@@ -354,279 +368,227 @@ const ContentBox = ({
     }
   };
 
+  // Offer a "Create …" option when the typed text doesn't match any tag.
+  const trimmedTagQuery = tagQuery.trim();
+  const tagQueryMatchesExisting = tags.some(
+    (tag) => tag.tag_name.toUpperCase() === trimmedTagQuery.toUpperCase(),
+  );
+  const tagOptions: TagOption[] =
+    trimmedTagQuery && !tagQueryMatchesExisting
+      ? [...tags, { tag_id: -1, tag_name: trimmedTagQuery, isNew: true }]
+      : tags;
+
+  // Keeps clicks on the per-tag delete button from also toggling the option.
+  const stopEvent = (event: React.SyntheticEvent) => event.stopPropagation();
+
+  const handleSave = () => {
+    if (!content) {
+      setIsTitleEmpty(true);
+      setIsContentEmpty(true);
+    } else if (content.content_title === "") {
+      setIsTitleEmpty(true);
+    } else if (content.content_text === "") {
+      setIsContentEmpty(true);
+    } else {
+      handleSaveContent(content);
+    }
+  };
+
   return (
-    <Layout.FlexBox>
-      <Dialog
+    <>
+      <AlertDialog
         open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        aria-labelledby="confirm-delete-dialog-title"
-        aria-describedby="confirm-delete-dialog-description"
+        onOpenChange={(nextOpen) => !nextOpen && setOpenDeleteModal(false)}
       >
-        <DialogTitle id="confirm-delete-dialog-title">
-          Are you sure you want to delete tag {tagToDelete?.tag_name}?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="confirm-delete-dialog-description">
-            This tag will be removed from all contents and will no longer be an option.
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-          <Button onClick={() => setOpenDeleteModal(false)} color="primary">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => handleDeleteTag()}
-            autoFocus
-            variant="contained"
-            color="error"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Layout.Spacer />
-      <Layout.FlexBox
-        sx={{
-          maxWidth: "md",
-          minWidth: "sm",
-          border: 0.5,
-          borderColor: appColors.outline,
-          borderRadius: 2,
-          p: sizes.baseGap,
-        }}
-      >
-        <Layout.Spacer multiplier={0.5} />
-        <Typography variant="body1">Title</Typography>
-        <Layout.Spacer multiplier={0.5} />
-        <TextField
-          required
-          placeholder="Add a title (required)"
-          inputProps={{ maxLength: 150 }}
-          variant="outlined"
-          error={isTitleEmpty}
-          helperText={isTitleEmpty ? "Should not be empty" : " "}
-          sx={{
-            "& .MuiInputBase-root": { backgroundColor: appColors.white },
-          }}
-          value={content ? content.content_title : ""}
-          onChange={(e) => handleChange(e, "content_title")}
-        />
-        <Typography variant="body1">Content</Typography>
-        <Layout.Spacer multiplier={0.5} />
-        <TextField
-          required
-          placeholder="Add content (required)"
-          inputProps={{ maxLength: 10000 }}
-          multiline
-          rows={15}
-          variant="outlined"
-          error={isContentEmpty}
-          helperText={isContentEmpty ? "Should not be empty" : " "}
-          sx={{
-            "& .MuiInputBase-root": { backgroundColor: appColors.white },
-          }}
-          value={content ? content.content_text : ""}
-          onChange={(e) => handleChange(e, "content_text")}
-        />
-        <Layout.Spacer multiplier={0.25} />
-        <Autocomplete
-          selectOnFocus
-          clearOnBlur
-          handleHomeEndKeys
-          multiple
-          limitTags={3}
-          id="tags-autocomplete"
-          options={availableTags}
-          getOptionLabel={(option) => option!.tag_name}
-          noOptionsText="No tags found. Start typing to create one."
-          value={contentTags}
-          onChange={(event: React.SyntheticEvent, updatedTags: Tag[]) => {
-            handleTagsChange(updatedTags);
-          }}
-          onHighlightChange={(event, option) => {
-            setHighlightedOption(option);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="outlined"
-              label="Tags (optional)"
-              placeholder="Find or create tags"
-              onChange={(event) => setInputVal(event.target.value)}
-              onKeyDown={(event) => {
-                if (
-                  !highlightedOption ||
-                  highlightedOption.tag_name.startsWith('Add "')
-                ) {
-                  if (
-                    event.key === "Enter" &&
-                    inputVal &&
-                    !availableTags.some(
-                      (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
-                    ) &&
-                    !contentTags.some(
-                      (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
-                    )
-                  ) {
-                    event.preventDefault();
-
-                    handleNewTag(inputVal);
-                  }
-                }
-              }}
-              InputProps={{
-                ...params.InputProps,
-                style: { backgroundColor: "white" },
-              }}
-            />
-          )}
-          filterOptions={(options, params) => {
-            const filtered = filter(options, params);
-            const { inputValue } = params;
-            const isExisting = options.some(
-              (option) => inputValue.toUpperCase() === option.tag_name,
-            );
-
-            const isSelected = contentTags.some(
-              (tag) => inputValue.toUpperCase() === tag.tag_name,
-            );
-
-            if (inputValue !== "" && !isExisting && !isSelected) {
-              filtered.push({ tag_id: 0, tag_name: `Create "${inputValue}"` });
-            }
-
-            return filtered;
-          }}
-          renderOption={(props, option) => {
-            const { key, ...newProps } =
-              props as React.HTMLAttributes<HTMLLIElement> & {
-                key: React.Key;
-              };
-            const { onKeyDown, ...rest } = newProps;
-            if (
-              option.tag_name &&
-              !availableTags.some(
-                (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
-              ) &&
-              !contentTags.some(
-                (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
-              )
-            ) {
-              return (
-                <li key={key} {...rest}>
-                  <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
-                    {option.tag_name}
-                  </Button>
-                </li>
-              );
-            }
-            return (
-              <li
-                key={option.tag_id}
-                {...rest}
-                style={{
-                  justifyContent: "space-between",
-                }}
-              >
-                {option.tag_name}
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeleteConfirmModal(option);
-                  }}
-                >
-                  <Delete fontSize="small" color="secondary" />
-                </IconButton>
-              </li>
-            );
-          }}
-          sx={{ maxWidth: "500px" }}
-          isOptionEqualToValue={(option, value) =>
-            value.tag_name === option.tag_name || value.tag_name === ""
-          }
-        />
-        <Layout.Spacer multiplier={1.25} />
-        <RelatedContentsAutoComplete
-          contents={
-            content && content.content_id
-              ? contents.filter((c) => c.content_id !== content.content_id)
-              : contents
-          }
-          selectedContents={selectedContents}
-          handleContentChange={(value: Content[]) => {
-            setSelectedContents(value);
-            if (content) {
-              setContent((prevContent: Content | null) => {
-                return {
-                  ...prevContent!,
-                  related_contents_id: value
-                    .map((content) => content.content_id)
-                    .filter((id): id is number => id !== null),
-                };
-              });
-            }
-            setIsSaved(false);
-          }}
-        />
-        <Layout.Spacer multiplier={1.5} />
-        <Layout.FlexBox flexDirection="row" sx={{ justifyContent: "space-between" }}>
-          <LoadingButton
-            variant="contained"
-            disabled={isSaved}
-            color="primary"
-            sx={[{ width: "5%" }]}
-            loading={isSaving}
-            onClick={() => {
-              if (!content) {
-                setIsTitleEmpty(true);
-                setIsContentEmpty(true);
-              } else if (content.content_title === "") {
-                setIsTitleEmpty(true);
-              } else if (content.content_text === "") {
-                setIsContentEmpty(true);
-              } else {
-                handleSaveContent(content);
-              }
-            }}
-          >
-            Save
-          </LoadingButton>
-          {saveError ? (
-            <Alert variant="outlined" severity="error" sx={{ px: 3, py: 0 }}>
-              {errorMessage}
-            </Alert>
-          ) : null}
-          <Snackbar
-            open={snackMessage !== null}
-            autoHideDuration={6000}
-            onClose={() => {
-              setSnackMessage(null);
-            }}
-          >
-            <Alert
-              onClose={() => {
-                setSnackMessage(null);
-              }}
-              severity={
-                snackMessage &&
-                typeof snackMessage === "string" &&
-                snackMessage.toLowerCase().includes("successfully")
-                  ? "success"
-                  : "error"
-              }
-              variant="filled"
-              sx={{ width: "100%" }}
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive">
+              <IconTrash />
+            </AlertDialogMedia>
+            <AlertDialogTitle>
+              Delete tag &quot;{tagToDelete?.tag_name}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This tag will be removed from all contents and will no longer be an
+              option. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteTag}
+              autoFocus
             >
-              {typeof snackMessage === "string"
-                ? snackMessage
-                : "An Error occurred, please try again"}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <section className="border bg-card p-6">
+        <FieldGroup className="gap-5">
+          <Field data-invalid={isTitleEmpty || undefined}>
+            <FieldLabel htmlFor="content-title" className="text-sm">
+              Title
+            </FieldLabel>
+            <Input
+              id="content-title"
+              required
+              maxLength={150}
+              placeholder="Add a title (required)"
+              aria-invalid={isTitleEmpty || undefined}
+              className="h-9 text-sm md:text-sm"
+              value={content ? content.content_title : ""}
+              onChange={(e) => handleChange(e, "content_title")}
+            />
+            {isTitleEmpty && <FieldError>Title should not be empty</FieldError>}
+          </Field>
+
+          <Field data-invalid={isContentEmpty || undefined}>
+            <FieldLabel htmlFor="content-text" className="text-sm">
+              Content
+            </FieldLabel>
+            <Textarea
+              id="content-text"
+              required
+              maxLength={10000}
+              rows={15}
+              placeholder="Add content (required)"
+              aria-invalid={isContentEmpty || undefined}
+              className="min-h-72 text-sm md:text-sm"
+              value={content ? content.content_text : ""}
+              onChange={(e) => handleChange(e, "content_text")}
+            />
+            {isContentEmpty && <FieldError>Content should not be empty</FieldError>}
+          </Field>
+
+          <Field className="max-w-[500px]">
+            <FieldLabel htmlFor="content-tags-input" className="text-sm">
+              Tags (optional)
+            </FieldLabel>
+            <Combobox
+              multiple
+              autoHighlight
+              items={tagOptions}
+              value={contentTags}
+              inputValue={tagQuery}
+              onInputValueChange={setTagQuery}
+              onValueChange={(next) => {
+                const updated = next as TagOption[];
+                // Picking the "Create …" option creates the tag instead.
+                const newTag = updated.find((tag) => tag.isNew);
+                if (newTag) {
+                  handleNewTag(newTag.tag_name);
+                  setTagQuery("");
+                  return;
+                }
+                handleTagsChange(updated);
+              }}
+              itemToStringLabel={(tag: TagOption) => tag.tag_name}
+              isItemEqualToValue={(a: TagOption, b: TagOption) => a.tag_id === b.tag_id}
+            >
+              <ComboboxChips ref={tagsAnchor} className="min-h-9">
+                <ComboboxValue>
+                  {(values: Tag[]) => (
+                    <>
+                      {values.map((tag) => (
+                        <ComboboxChip key={tag.tag_id}>
+                          <span className="max-w-40 truncate">{tag.tag_name}</span>
+                        </ComboboxChip>
+                      ))}
+                      <ComboboxChipsInput
+                        id="content-tags-input"
+                        placeholder={values.length ? "" : "Find or create tags"}
+                      />
+                    </>
+                  )}
+                </ComboboxValue>
+              </ComboboxChips>
+              <ComboboxContent anchor={tagsAnchor}>
+                <ComboboxEmpty>
+                  No tags found. Start typing to create one.
+                </ComboboxEmpty>
+                <ComboboxList>
+                  {(tag: TagOption) =>
+                    tag.isNew ? (
+                      <ComboboxItem key="__new__" value={tag}>
+                        <IconPlus />
+                        Create &quot;{tag.tag_name}&quot;
+                      </ComboboxItem>
+                    ) : (
+                      <ComboboxItem key={tag.tag_id} value={tag}>
+                        <span className="min-w-0 flex-1 break-words">
+                          {tag.tag_name}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={`Delete tag ${tag.tag_name}`}
+                          className="pointer-events-auto text-muted-foreground hover:text-destructive"
+                          onPointerDown={stopEvent}
+                          onPointerUp={stopEvent}
+                          onMouseDown={stopEvent}
+                          onMouseUp={stopEvent}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            openDeleteConfirmModal(tag);
+                          }}
+                        >
+                          <IconTrash />
+                        </Button>
+                      </ComboboxItem>
+                    )
+                  }
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </Field>
+
+          <RelatedContentsAutoComplete
+            contents={
+              content && content.content_id
+                ? contents.filter((c) => c.content_id !== content.content_id)
+                : contents
+            }
+            selectedContents={selectedContents}
+            handleContentChange={(value: Content[]) => {
+              setSelectedContents(value);
+              if (content) {
+                setContent((prevContent: Content | null) => {
+                  return {
+                    ...prevContent!,
+                    related_contents_id: value
+                      .map((content) => content.content_id)
+                      .filter((id): id is number => id !== null),
+                  };
+                });
+              }
+              setIsSaved(false);
+            }}
+          />
+        </FieldGroup>
+
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Button
+            size="lg"
+            className="h-10 px-5 text-sm"
+            disabled={isSaved || isSaving}
+            onClick={handleSave}
+          >
+            {isSaving && <Spinner data-icon="inline-start" />}
+            Save
+          </Button>
+          {saveError && (
+            <Alert variant="destructive" className="w-auto flex-1">
+              <IconAlertCircle />
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
-          </Snackbar>
-        </Layout.FlexBox>
-      </Layout.FlexBox>
-    </Layout.FlexBox>
+          )}
+        </div>
+      </section>
+    </>
   );
 };
 
@@ -638,21 +600,21 @@ const Header = ({
   onBack: () => void;
 }) => {
   return (
-    <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
-      <ChevronLeft style={{ cursor: "pointer" }} onClick={onBack} />
-      <Layout.Spacer multiplier={1} horizontal />
-      {display_number ? (
-        <>
-          <Typography variant="h5">Edit Content</Typography>
-          <Layout.Spacer multiplier={2} horizontal />
-          <Typography variant="h5">{`\u2022`}</Typography>
-          <Layout.Spacer multiplier={2} horizontal />
-          <Typography variant="h5">#{display_number}</Typography>
-        </>
-      ) : (
-        <Typography variant="h5">Add Content</Typography>
-      )}
-    </Layout.FlexBox>
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="icon" aria-label="Back to content" onClick={onBack}>
+        <IconChevronLeft />
+      </Button>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {display_number ? (
+          <>
+            Edit content{" "}
+            <span className="text-muted-foreground">#{display_number}</span>
+          </>
+        ) : (
+          "Add content"
+        )}
+      </h1>
+    </div>
   );
 };
 
@@ -666,27 +628,22 @@ const DiscardChangesModal = ({
   onConfirmDiscard: () => void;
 }) => {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-labelledby="alert-dialog-discard-change-title"
-      aria-describedby="alert-dialog-discard-change-description"
-    >
-      <DialogTitle id="alert-dialog-discard-change-title">Discard Changes</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-discard-change-description">
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
-        <Button onClick={onClose} color="primary" variant="contained">
-          Cancel
-        </Button>
-        <Button onClick={onConfirmDiscard} color="error" autoFocus>
-          Discard
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes. Are you sure you want to discard them?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep editing</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={onConfirmDiscard}>
+            Discard
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 export default AddEditContentPage;

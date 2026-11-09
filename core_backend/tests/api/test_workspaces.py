@@ -7,12 +7,12 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core_backend.app.auth.dependencies import (
+from app.auth.dependencies import (
     WorkspaceTokenNotFoundError,
     get_workspace_by_api_key,
 )
-from core_backend.app.utils import get_key_hash
-from core_backend.app.workspaces.utils import (
+from app.utils import get_key_hash
+from app.workspaces.utils import (
     get_workspace_by_workspace_name,
     update_workspace_api_key,
 )

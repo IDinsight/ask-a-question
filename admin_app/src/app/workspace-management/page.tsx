@@ -1,23 +1,20 @@
 "use client";
-import { Layout } from "@/components/Layout";
+import { IconLock, IconPencil, IconUserPlus, IconUsersPlus } from "@tabler/icons-react";
+import { usePathname } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import type { UserRole, Workspace } from "@/components/WorkspaceMenu";
-import { appColors, sizes } from "@/utils";
 import { CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  List,
-  Paper,
-  Snackbar,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { usePathname } from "next/navigation";
 import React, { useEffect } from "react";
 import type { UserBody, UserBodyUpdate } from "./api";
 import {
@@ -48,14 +45,19 @@ const UserManagement: React.FC = () => {
     React.useState<boolean>(false);
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [formType, setFormType] = React.useState<"add" | "create" | "edit">("add");
-  const [hoveredIndex, setHoveredIndex] = React.useState<number>(-1);
   const [adminUsername, setAdminUsername] = React.useState<string>(
     username || localStorage.getItem("username") || "",
   );
-  const [snackbarMessage, setSnackbarMessage] = React.useState<{
+  // Same { message, severity } shape the old Snackbar used; shown by the Toaster in layout.tsx.
+  const setSnackbarMessage = ({
+    message,
+    severity,
+  }: {
     message: string;
     severity: "success" | "error" | "info" | "warning";
-  }>({ message: "", severity: "success" });
+  }) => {
+    if (message) toast.add({ title: message, type: severity });
+  };
   React.useEffect(() => {
     fetchUserData();
   }, [token, showCreateModal]);
@@ -92,6 +94,11 @@ const UserManagement: React.FC = () => {
       setLoading(false);
     }
   }, [token, currentWorkspace]);
+
+  // Show the recovery codes dialog whenever a new user's codes arrive
+  useEffect(() => {
+    setShowConfirmationModal(recoveryCodes.length > 0);
+  }, [recoveryCodes]);
 
   const onWorkspaceModalClose = () => {
     setOpenEditWorkspaceModal(false);
@@ -173,9 +180,17 @@ const UserManagement: React.FC = () => {
   };
   if (userRole !== "admin") {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-        <Typography variant="h6">[403] Access Denied</Typography>
-      </Box>
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconLock />
+          </EmptyMedia>
+          <EmptyTitle className="text-base">Access denied</EmptyTitle>
+          <EmptyDescription className="text-sm">
+            Only workspace admins can manage the workspace and its users.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -184,250 +199,173 @@ const UserManagement: React.FC = () => {
     setShowCreateModal(false);
   }
 
-  const handleSnackbarClose = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string,
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setSnackbarMessage({ message: "", severity: "info" });
-  };
-
-  useEffect(() => {
-    if (recoveryCodes.length > 0) {
-      setShowConfirmationModal(true);
-    } else {
-      setShowConfirmationModal(false);
-    }
-  }, [recoveryCodes]);
-
   return (
-    <Layout.FlexBox
-      sx={{
-        alignItems: "center",
-        paddingTop: 5,
-        paddingInline: 4,
-        gap: sizes.baseGap,
-        height: "100%",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          width: "100%",
-          maxWidth: "lg",
-          minWidth: "sm",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            paddingBottom: 2,
-            gap: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{
-                wordBreak: "break-word",
-                display: "inline-block",
-                color: appColors.primary,
+    <div className="px-4 pt-8 pb-16 sm:px-8 md:pt-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex items-center gap-1">
+              <h1 className="text-2xl font-semibold tracking-tight break-words">
+                {currentWorkspace?.workspace_name ?? "Workspace"}
+              </h1>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Rename workspace"
+                disabled={!currentWorkspace}
+                onClick={() => setOpenEditWorkspaceModal(true)}
+              >
+                <IconPencil />
+              </Button>
+            </div>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Rename the workspace and choose who can use it.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                setFormType("add");
+                setShowCreateModal(true);
               }}
             >
-              Manage Workspace: <strong>{currentWorkspace?.workspace_name}</strong>
-            </Typography>
-            <Tooltip title="Edit workspace name">
-              <IconButton
-                sx={{ color: appColors.primary }}
-                onClick={() => {
-                  setOpenEditWorkspaceModal(true);
-                }}
-              >
-                <ModeEditIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Typography variant="body1" align="left" color={appColors.darkGrey}>
-            Edit workspace and add/remove users to workspace
-          </Typography>
-        </Box>
-        <Layout.FlexBox
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            gap: sizes.tinyGap,
-          }}
-        >
-          <Tooltip title="Add existing user to workspace">
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  setFormType("add");
-                  setShowCreateModal(true);
-                }}
-              >
-                Add existing user
-              </Button>
-            </>
-          </Tooltip>
-          <Tooltip title="Create user">
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  setFormType("create");
-                  setShowCreateModal(true);
-                }}
-              >
-                Create new user
-              </Button>
-            </>
-          </Tooltip>
-        </Layout.FlexBox>
-        <Layout.Spacer />
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <CircularProgress size={24} />
-          </Box>
-        ) : (
-          <Paper
-            elevation={0}
-            sx={{
-              flexGrow: 1,
-              paddingTop: 1,
-              marginBottom: 5,
-              paddingInline: 3,
-              overflowY: "auto",
-              border: 0.5,
-              borderColor: "lightgrey",
-            }}
+              <IconUsersPlus data-icon="inline-start" />
+              Add existing user
+            </Button>
+            <Button
+              size="lg"
+              onClick={() => {
+                setFormType("create");
+                setShowCreateModal(true);
+              }}
+            >
+              <IconUserPlus data-icon="inline-start" />
+              Create new user
+            </Button>
+          </div>
+        </header>
+
+        <section aria-labelledby="users-heading" className="border bg-card shadow-xs">
+          <h2
+            id="users-heading"
+            className="border-b px-4 py-3 text-base font-semibold tracking-tight"
           >
-            <List>
-              {users.map((user, index) => (
-                <Layout.FlexBox key={user.user_id}>
-                  <UserCard
-                    index={index}
-                    adminUsername={adminUsername}
-                    userId={user.user_id!}
-                    username={user.username}
-                    userRole={
-                      getUserRoleInWorkspace(
-                        user.user_workspaces!,
-                        currentWorkspace!.workspace_name,
-                      ) || "read_only"
-                    }
-                    isLastItem={index === users.length - 1}
-                    hoveredIndex={hoveredIndex}
-                    setHoveredIndex={setHoveredIndex}
-                    onRemoveUser={(userId) =>
-                      handleRemoveUser(userId, currentWorkspace!.workspace_name)
-                    }
-                    onEditUser={() => handleEditUser(user)}
-                  />
-                </Layout.FlexBox>
-              ))}
-            </List>
-            {currentWorkspace && (
-              <WorkspaceCreateModal
-                open={openEditWorkspaceModal}
-                onClose={onWorkspaceModalClose}
-                isEdit={true}
-                existingWorkspace={currentWorkspace}
-                onCreate={(workspaceToEdit: Workspace) => {
-                  return editWorkspace(
-                    currentWorkspace.workspace_id!,
-                    workspaceToEdit,
-                    token!,
-                  );
-                }}
-                loginWorkspace={(workspace: Workspace) => {
-                  return loginWorkspace(workspace.workspace_name, pathname);
-                }}
-                setSnackMessage={setSnackbarMessage}
-              />
+            Users
+            {!loading && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground tabular-nums">
+                {users.length}
+              </span>
             )}
-            <UserCreateModal
-              open={showCreateModal}
-              onClose={handleCreateModalClose}
-              adminUsername={adminUsername}
-              checkUserExists={(username: string) => {
-                return checkIfUsernameExists(username, token!);
-              }}
-              addUserToWorkspace={(username: string, role: string) => {
-                return addUserToWorkspace(
-                  username,
-                  currentWorkspace!.workspace_name,
-                  role,
-                  token!,
-                );
-              }}
-              createUser={(username: string, password: string, role: UserRole) => {
-                return createNewUser(
-                  username,
-                  password,
-                  currentWorkspace!.workspace_name,
-                  role,
-                  token!,
-                );
-              }}
-              editUser={(username: string, role: UserRole) => {
-                return editUser(
-                  currentUser!.user_id!,
-                  {
-                    username,
-                    role,
-                    workspace_name: currentWorkspace?.workspace_name,
-                  } as UserBodyUpdate,
-                  token!,
-                );
-              }}
-              setSnackMessage={setSnackbarMessage}
-              onContinue={handleCreateModalContinue}
-              formType={formType}
-              users={users}
-              user={currentUser ? currentUser : undefined}
-            />
-            <ConfirmationModal
-              open={showConfirmationModal}
-              onClose={() => {
-                setShowConfirmationModal(false);
-              }}
-              recoveryCodes={recoveryCodes}
-              dialogTitle="User Created"
-            />
-          </Paper>
+          </h2>
+          {loading ? (
+            <div
+              className="flex flex-col gap-3 p-4"
+              role="status"
+              aria-label="Loading users"
+            >
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="size-9 rounded-full" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul>
+              {users.map((user) => (
+                <UserCard
+                  key={user.user_id}
+                  adminUsername={adminUsername}
+                  userId={user.user_id!}
+                  username={user.username}
+                  userRole={
+                    getUserRoleInWorkspace(
+                      user.user_workspaces!,
+                      currentWorkspace!.workspace_name,
+                    ) || "read_only"
+                  }
+                  onRemoveUser={(userId) =>
+                    handleRemoveUser(userId, currentWorkspace!.workspace_name)
+                  }
+                  onEditUser={() => handleEditUser(user)}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {currentWorkspace && (
+          <WorkspaceCreateModal
+            open={openEditWorkspaceModal}
+            onClose={onWorkspaceModalClose}
+            isEdit={true}
+            existingWorkspace={currentWorkspace}
+            onCreate={(workspaceToEdit: Workspace) => {
+              return editWorkspace(
+                currentWorkspace.workspace_id!,
+                workspaceToEdit,
+                token!,
+              );
+            }}
+            loginWorkspace={(workspace: Workspace) => {
+              return loginWorkspace(workspace.workspace_name, pathname);
+            }}
+            setSnackMessage={setSnackbarMessage}
+          />
         )}
-      </Box>
-      <Snackbar
-        open={snackbarMessage.message !== ""}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarMessage.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage.message}
-        </Alert>
-      </Snackbar>
-    </Layout.FlexBox>
+        <UserCreateModal
+          open={showCreateModal}
+          onClose={handleCreateModalClose}
+          adminUsername={adminUsername}
+          checkUserExists={(username: string) => {
+            return checkIfUsernameExists(username, token!);
+          }}
+          addUserToWorkspace={(username: string, role: string) => {
+            return addUserToWorkspace(
+              username,
+              currentWorkspace!.workspace_name,
+              role,
+              token!,
+            );
+          }}
+          createUser={(username: string, password: string, role: UserRole) => {
+            return createNewUser(
+              username,
+              password,
+              currentWorkspace!.workspace_name,
+              role,
+              token!,
+            );
+          }}
+          editUser={(username: string, role: UserRole) => {
+            return editUser(
+              currentUser!.user_id!,
+              {
+                username,
+                role,
+                workspace_name: currentWorkspace?.workspace_name,
+              } as UserBodyUpdate,
+              token!,
+            );
+          }}
+          setSnackMessage={setSnackbarMessage}
+          onContinue={handleCreateModalContinue}
+          formType={formType}
+          users={users}
+          user={currentUser ? currentUser : undefined}
+        />
+        <ConfirmationModal
+          open={showConfirmationModal}
+          onClose={() => {
+            setShowConfirmationModal(false);
+          }}
+          recoveryCodes={recoveryCodes}
+          dialogTitle="User created"
+        />
+      </div>
+    </div>
   );
 };
 
