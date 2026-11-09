@@ -6,7 +6,7 @@
 
 ## Sidebar: API work
 
-The new app sidebar (`src/components/AppSidebar.tsx`) is UI only for now. The
+The new app sidebar (`src/app/(protected)/_components/AppSidebar.tsx`) is UI only for now. The
 numbers below are hard-coded in `PLACEHOLDER_COUNTS` / `PLACEHOLDER_USAGE` and
 need backend support before they can be wired up.
 

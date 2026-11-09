@@ -32,7 +32,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import { resetPassword } from "@/app/workspace-management/api";
+import { resetPassword } from "@/app/(protected)/workspace-management/api";
 import type { CustomError } from "@/utils/api";
 
 // Same rules and messages as the old UserResetModal, plus a match check on confirm.

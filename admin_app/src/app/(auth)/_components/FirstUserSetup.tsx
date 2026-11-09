@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getRegisterOption, registerUser } from "@/app/workspace-management/api";
+import { getRegisterOption, registerUser } from "@/app/(protected)/workspace-management/api";
 import { AdminAlertModal, RegisterModal } from "./RegisterModal";
 
 /*

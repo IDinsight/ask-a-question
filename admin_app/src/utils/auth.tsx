@@ -1,6 +1,6 @@
 "use client";
-import { getLoginWorkspace } from "@/app/workspace-management/api";
-import { UserRole } from "@/components/WorkspaceMenu";
+import { getLoginWorkspace } from "@/app/(protected)/workspace-management/api";
+import type { UserRole } from "@/app/(protected)/workspace-management/types";
 import { apiCalls, CustomError } from "@/utils/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, createContext, useContext, useState } from "react";
