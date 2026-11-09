@@ -30,7 +30,10 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
 import {
   Combobox,
   ComboboxChip,
@@ -61,7 +64,11 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "cn";
 import { apiCalls, CustomError } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
@@ -73,16 +80,20 @@ import {
   useGetNextUnvalidatedCard,
   useGetUnvalidatedCardsCount,
 } from "./api";
-import { ChatSideBar } from "./components/ChatSideBar";
-import { CARD_HEIGHT, CARD_MIN_WIDTH, ContentCard } from "./components/ContentCard";
-import { DownloadModal } from "./components/DownloadModal";
-import { ImportFromCSVModal } from "./components/ImportFromCSVModal";
-import { ImportFromPDFModal } from "./components/ImportFromPDFModal";
-import { IndexingStatusModal } from "./components/IndexingStatusModal";
-import { SearchBar, SearchBarProps } from "./components/SearchBar";
-import { SearchSidebar } from "./components/SearchSidebar";
+import { ChatSideBar } from "./_components/ChatSideBar";
+import {
+  CARD_HEIGHT,
+  CARD_MIN_WIDTH,
+  ContentCard,
+} from "./_components/ContentCard";
+import { DownloadModal } from "./_components/DownloadModal";
+import { ImportFromCSVModal } from "./_components/ImportFromCSVModal";
+import { ImportFromPDFModal } from "./_components/ImportFromPDFModal";
+import { IndexingStatusModal } from "./_components/IndexingStatusModal";
+import { SearchBar, SearchBarProps } from "./_components/SearchBar";
+import { SearchSidebar } from "./_components/SearchSidebar";
 import { useShowIndexingStatusStore } from "./store/indexingStatusStore";
-import { ContentViewModal } from "./components/ContentModal";
+import { ContentViewModal } from "./_components/ContentModal";
 
 type SnackMessage = {
   message: string | null;
@@ -113,6 +124,10 @@ interface CardsUtilityStripProps extends TagsFilterProps, SearchBarProps {
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   handleDelete: () => void;
+  openSearchSidebar: boolean;
+  handleSidebarToggle: () => void;
+  openChatSidebar: boolean;
+  handleChatSidebarToggle: () => void;
 }
 
 interface CardsGridProps {
@@ -121,10 +136,6 @@ interface CardsGridProps {
   allCards: Content[];
   token: string | null;
   editAccess: boolean;
-  openSearchSidebar: boolean;
-  handleSidebarToggle: () => void;
-  openChatSidebar: boolean;
-  handleChatSidebarToggle: () => void;
   selectedContents: number[];
   setSelectedContents: React.Dispatch<React.SetStateAction<number[]>>;
   isLoading: boolean;
@@ -145,7 +156,8 @@ const CardsPage = () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [selectedContents, setSelectedContents] = React.useState<number[]>([]);
-  const [openBulkDeleteModal, setOpenBulkDeleteModal] = React.useState<boolean>(false);
+  const [openBulkDeleteModal, setOpenBulkDeleteModal] =
+    React.useState<boolean>(false);
   const handleSidebarToggle = () => {
     setOpenChatSideBar(false);
     setOpenSideBar(!openSearchSidebar);
@@ -198,7 +210,10 @@ const CardsPage = () => {
               successCount++;
               return { success: true, content_id };
             } catch (error) {
-              console.error(`Failed to delete content ID ${content_id}:`, error);
+              console.error(
+                `Failed to delete content ID ${content_id}:`,
+                error,
+              );
               failedContentIds.push(content_id);
               return { success: false, content_id };
             }
@@ -245,14 +260,20 @@ const CardsPage = () => {
           // filter OR the card has at least one of the chosen tags).
           const filteredData = data.filter((card: Content) => {
             const matchesSearchTerm =
-              card.content_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              card.content_text.toLowerCase().includes(searchTerm.toLowerCase());
+              card.content_title
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+              card.content_text
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
 
             const matchesAnyTag = filterTags.some((fTag) =>
               card.content_tags.includes(fTag.tag_id),
             );
 
-            return matchesSearchTerm && (filterTags.length === 0 || matchesAnyTag);
+            return (
+              matchesSearchTerm && (filterTags.length === 0 || matchesAnyTag)
+            );
           });
 
           setCards(filteredData);
@@ -300,8 +321,9 @@ const CardsPage = () => {
               Question Answering
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Add, edit, and test content for question-answering. Questions sent to the
-              search service will retrieve results from here. Content limit is 50.{" "}
+              Add, edit, and test content for question-answering. Questions sent
+              to the search service will retrieve results from here. Content
+              limit is 50.{" "}
               <a
                 href="https://docs.ask-a-question.com/latest/contact_us/"
                 className="underline underline-offset-4 hover:text-foreground"
@@ -325,6 +347,10 @@ const CardsPage = () => {
             handleDelete={() => {
               setOpenBulkDeleteModal(true);
             }}
+            openSearchSidebar={openSearchSidebar}
+            handleSidebarToggle={handleSidebarToggle}
+            openChatSidebar={openChatSidebar}
+            handleChatSidebarToggle={handleChatSidebarToggle}
           />
           <CardsGrid
             tags={tags}
@@ -332,10 +358,6 @@ const CardsPage = () => {
             cards={cards}
             token={token}
             editAccess={editAccess}
-            openSearchSidebar={openSearchSidebar}
-            handleSidebarToggle={handleSidebarToggle}
-            openChatSidebar={openChatSidebar}
-            handleChatSidebarToggle={handleChatSidebarToggle}
             selectedContents={selectedContents}
             setSelectedContents={setSelectedContents}
             isLoading={isLoading}
@@ -397,9 +419,14 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
   setFilterTags,
   setRefreshKey,
   handleDelete,
+  openSearchSidebar,
+  handleSidebarToggle,
+  openChatSidebar,
+  handleChatSidebarToggle,
 }) => {
   const { token } = useAuth();
-  const [openDownloadModal, setOpenDownloadModal] = React.useState<boolean>(false);
+  const [openDownloadModal, setOpenDownloadModal] =
+    React.useState<boolean>(false);
   const { setIsOpen: setOpenIndexHistoryModal } = useShowIndexingStatusStore();
   const [showContentModal, setShowContentModal] = React.useState(false);
 
@@ -423,10 +450,14 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
     <div className="flex w-full flex-wrap items-end justify-between gap-4 pb-4">
       {/* Left: search and tag filter */}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="w-[220px]">
+        <div className="w-55">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </div>
-        <TagsFilter tags={tags} filterTags={filterTags} setFilterTags={setFilterTags} />
+        <TagsFilter
+          tags={tags}
+          filterTags={filterTags}
+          setFilterTags={setFilterTags}
+        />
       </div>
 
       {/* Right: bulk actions while cards are selected, otherwise page actions */}
@@ -490,7 +521,8 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 related_contents={nextUnvalidatedCard?.related_contents || []}
                 onRelatedContentClick={() => {
                   setSnackMessage({
-                    message: "Related contents cannot be viewed in validation mode",
+                    message:
+                      "Related contents cannot be viewed in validation mode",
                     color: "warning",
                   });
                 }}
@@ -504,12 +536,35 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
                 size="lg"
                 onClick={() => setOpenIndexHistoryModal(true)}
               >
-                {indexingStatus === true && <Spinner data-icon="inline-start" />}
-                {indexingStatus === true ? "Processing PDF" : "PDF upload status"}
+                {indexingStatus === true && (
+                  <Spinner data-icon="inline-start" />
+                )}
+                {indexingStatus === true
+                  ? "Processing PDF"
+                  : "PDF upload status"}
               </Button>
               <IndexingStatusModal />
             </>
           )}
+          {/* Test launchers live up here so they're visible without scrolling */}
+          <Button
+            variant="secondary"
+            size="lg"
+            disabled={openSearchSidebar}
+            onClick={handleSidebarToggle}
+          >
+            <IconPlayerPlay data-icon="inline-start" />
+            Test search
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            disabled={openChatSidebar}
+            onClick={handleChatSidebarToggle}
+          >
+            <IconPlayerPlay data-icon="inline-start" />
+            Test chat
+          </Button>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -553,7 +608,11 @@ const CardsUtilityStrip: React.FC<CardsUtilityStripProps> = ({
  * Multi-select tag filter. Shows the first chosen tag as a chip and
  * "+N" for the rest, so the toolbar doesn't grow as tags are added.
  */
-const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags }) => {
+const TagsFilter: React.FC<TagsFilterProps> = ({
+  tags,
+  filterTags,
+  setFilterTags,
+}) => {
   const anchor = useComboboxAnchor();
   return (
     <Combobox
@@ -565,7 +624,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
       itemToStringLabel={(tag: Tag) => tag.tag_name}
       isItemEqualToValue={(a: Tag, b: Tag) => a.tag_id === b.tag_id}
     >
-      <ComboboxChips ref={anchor} className="min-h-9 w-[240px] flex-nowrap bg-card">
+      <ComboboxChips ref={anchor} className="min-h-9 w-60 flex-nowrap bg-card">
         <ComboboxValue>
           {(values: Tag[]) => (
             <>
@@ -593,7 +652,7 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
         <ComboboxList>
           {(tag: Tag) => (
             <ComboboxItem key={tag.tag_id} value={tag}>
-              <span className="break-words">{tag.tag_name}</span>
+              <span className="wrap-break-word">{tag.tag_name}</span>
             </ComboboxItem>
           )}
         </ComboboxList>
@@ -603,7 +662,9 @@ const TagsFilter: React.FC<TagsFilterProps> = ({ tags, filterTags, setFilterTags
 };
 
 /** "New" button plus a dropdown for the bulk import options. */
-const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }) => {
+const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({
+  editAccess,
+}) => {
   const [openCSVModal, setOpenCSVModal] = useState(false);
   const [openPDFModal, setOpenPDFModal] = useState(false);
 
@@ -612,7 +673,11 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
       {/* Split button: "New" opens the editor, the arrow opens the import menu */}
       <ButtonGroup aria-label="Add content">
         {editAccess ? (
-          <Button size="lg" nativeButton={false} render={<Link href="/content/edit" />}>
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<Link href="/content/edit" />}
+          >
             <IconPlus data-icon="inline-start" />
             New
           </Button>
@@ -648,8 +713,14 @@ const AddButtonWithDropdown: React.FC<{ editAccess: boolean }> = ({ editAccess }
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
-      <ImportFromCSVModal open={openCSVModal} onClose={() => setOpenCSVModal(false)} />
-      <ImportFromPDFModal open={openPDFModal} onClose={() => setOpenPDFModal(false)} />
+      <ImportFromCSVModal
+        open={openCSVModal}
+        onClose={() => setOpenCSVModal(false)}
+      />
+      <ImportFromPDFModal
+        open={openPDFModal}
+        onClose={() => setOpenPDFModal(false)}
+      />
     </>
   );
 };
@@ -660,10 +731,6 @@ const CardsGrid = ({
   allCards,
   token,
   editAccess,
-  openSearchSidebar,
-  handleSidebarToggle,
-  openChatSidebar,
-  handleChatSidebarToggle,
   selectedContents,
   setSelectedContents,
   isLoading,
@@ -732,7 +799,9 @@ const CardsGrid = ({
   }, [cards]);
 
   const getRelatedContent = (content_ids: number[]) => {
-    return allCards.filter((content) => content_ids.includes(content.content_id!));
+    return allCards.filter((content) =>
+      content_ids.includes(content.content_id!),
+    );
   };
 
   const onSuccessfulArchive = () => {
@@ -767,12 +836,16 @@ const CardsGrid = ({
                 </EmptyMedia>
                 <EmptyTitle>No content yet</EmptyTitle>
                 <EmptyDescription>
-                  Content you add here is what the search and chat services answer from.
+                  Content you add here is what the search and chat services
+                  answer from.
                 </EmptyDescription>
               </EmptyHeader>
               {editAccess && (
                 <EmptyContent>
-                  <Button nativeButton={false} render={<Link href="/content/edit" />}>
+                  <Button
+                    nativeButton={false}
+                    render={<Link href="/content/edit" />}
+                  >
                     <IconPlus data-icon="inline-start" />
                     Add content
                   </Button>
@@ -795,7 +868,9 @@ const CardsGrid = ({
         ) : (
           <div
             className="grid gap-2.5 p-2.5"
-            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+            style={{
+              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            }}
           >
             {cards
               .slice(maxCardsPerPage * (page - 1), maxCardsPerPage * page)
@@ -810,14 +885,21 @@ const CardsGrid = ({
                     last_modified={item.updated_datetime_utc}
                     tags={
                       tags
-                        ? tags.filter((tag) => item.content_tags.includes(tag.tag_id))
+                        ? tags.filter((tag) =>
+                            item.content_tags.includes(tag.tag_id),
+                          )
                         : []
                     }
                     positive_votes={item.positive_votes}
                     negative_votes={item.negative_votes}
-                    related_contents={getRelatedContent(item.related_contents_id)}
+                    related_contents={getRelatedContent(
+                      item.related_contents_id,
+                    )}
                     onSuccessfulArchive={onSuccessfulArchive}
-                    onFailedArchive={(content_id: number, error_message: string) => {
+                    onFailedArchive={(
+                      content_id: number,
+                      error_message: string,
+                    ) => {
                       setSnackMessage({
                         message: error_message,
                         color: "error",
@@ -838,8 +920,8 @@ const CardsGrid = ({
         )}
       </div>
 
-      {/* Page navigation and test sidebar launchers */}
-      <div className="flex w-full flex-wrap items-center justify-between gap-4 pb-8">
+      {/* Page navigation */}
+      <div className="flex w-full items-center pb-8">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -861,26 +943,6 @@ const CardsGrid = ({
             disabled={page >= maxPages}
           >
             <IconChevronRight />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="lg"
-            disabled={openSearchSidebar}
-            onClick={handleSidebarToggle}
-          >
-            <IconPlayerPlay data-icon="inline-start" />
-            Test search
-          </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            disabled={openChatSidebar}
-            onClick={handleChatSidebarToggle}
-          >
-            <IconPlayerPlay data-icon="inline-start" />
-            Test chat
           </Button>
         </div>
       </div>
@@ -923,7 +985,8 @@ const ConfirmDeleteModal: React.FC<{
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to permanently delete{" "}
-            <strong className="text-foreground">{selectedContentsCount}</strong> content
+            <strong className="text-foreground">{selectedContentsCount}</strong>{" "}
+            content
             {selectedContentsCount === 1 ? "" : "s"}.
           </AlertDialogDescription>
         </AlertDialogHeader>
